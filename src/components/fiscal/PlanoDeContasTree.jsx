@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, ChevronDown, Plus, Edit } from "lucide-react";
+import { ChevronRight, ChevronDown, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 /**

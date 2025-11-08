@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -41,13 +42,12 @@ export default function Producao() {
   });
 
   const opsAguardandoMaterial = ops.filter(op => op.status === 'Aguardando Matéria-Prima').length;
-  const opsEmProducao = ops.filter(op => ['Em Corte', 'Em Dobra', 'Em Armação'].includes(op.status)).length;
+  const opsEmProducaoList = ops.filter(op => ['Em Corte', 'Em Dobra', 'Em Armação'].includes(op.status));
+  const opsEmProducao = opsEmProducaoList.length;
   const opsProntas = ops.filter(op => op.status === 'Pronta para Expedição').length;
   const opsBloqueadas = ops.filter(op => op.bloqueio_material).length;
 
-  const pesoTotalEmProducao = ops
-    .filter(op => opsEmProducao)
-    .reduce((sum, op) => sum + (op.peso_teorico_total_kg || 0), 0);
+  const pesoTotalEmProducao = opsEmProducaoList.reduce((sum, op) => sum + (op.peso_teorico_total_kg || 0), 0);
 
   return (
     <div className="p-6 space-y-6">

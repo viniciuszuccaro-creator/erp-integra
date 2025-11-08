@@ -115,7 +115,7 @@ export default function RelatorioDRE({ dre = [] }) {
                   R$ {(dreMaisRecente.deducoes_impostos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className="text-right">
-                  {((dreMaisRecente.deducoes_impostos / dreMaisRecente.receita_bruta) * 100).toFixed(1)}%
+                  {dreMaisRecente.receita_bruta > 0 ? ((dreMaisRecente.deducoes_impostos / dreMaisRecente.receita_bruta) * 100).toFixed(1) : 0}%
                 </TableCell>
               </TableRow>
               <TableRow className="font-semibold bg-green-50">
@@ -124,7 +124,7 @@ export default function RelatorioDRE({ dre = [] }) {
                   R$ {(dreMaisRecente.receita_liquida || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className="text-right">
-                  {((dreMaisRecente.receita_liquida / dreMaisRecente.receita_bruta) * 100).toFixed(1)}%
+                  {dreMaisRecente.receita_bruta > 0 ? ((dreMaisRecente.receita_liquida / dreMaisRecente.receita_bruta) * 100).toFixed(1) : 0}%
                 </TableCell>
               </TableRow>
               <TableRow>
@@ -133,7 +133,7 @@ export default function RelatorioDRE({ dre = [] }) {
                   R$ {(dreMaisRecente.cpv || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className="text-right">
-                  {((dreMaisRecente.cpv / dreMaisRecente.receita_bruta) * 100).toFixed(1)}%
+                  {dreMaisRecente.receita_bruta > 0 ? ((dreMaisRecente.cpv / dreMaisRecente.receita_bruta) * 100).toFixed(1) : 0}%
                 </TableCell>
               </TableRow>
               <TableRow className="font-semibold bg-emerald-50">
@@ -151,7 +151,7 @@ export default function RelatorioDRE({ dre = [] }) {
                   R$ {(dreMaisRecente.despesas_operacionais_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className="text-right">
-                  {((dreMaisRecente.despesas_operacionais_total / dreMaisRecente.receita_bruta) * 100).toFixed(1)}%
+                  {dreMaisRecente.receita_bruta > 0 ? ((dreMaisRecente.despesas_operacionais_total / dreMaisRecente.receita_bruta) * 100).toFixed(1) : 0}%
                 </TableCell>
               </TableRow>
               <TableRow className="font-semibold bg-purple-50">
@@ -169,7 +169,7 @@ export default function RelatorioDRE({ dre = [] }) {
                   R$ {(dreMaisRecente.ir_csll || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </TableCell>
                 <TableCell className="text-right">
-                  {((dreMaisRecente.ir_csll / dreMaisRecente.receita_bruta) * 100).toFixed(1)}%
+                  {dreMaisRecente.receita_bruta > 0 ? ((dreMaisRecente.ir_csll / dreMaisRecente.receita_bruta) * 100).toFixed(1) : 0}%
                 </TableCell>
               </TableRow>
               <TableRow className={`font-bold ${dreMaisRecente.lucro_liquido >= 0 ? 'bg-emerald-100' : 'bg-red-100'}`}>

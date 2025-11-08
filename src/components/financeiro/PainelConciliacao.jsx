@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, CheckCircle2, AlertCircle, Zap, Link2 } from "lucide-react";
+import { Building2, CheckCircle2, AlertCircle, Zap, Link2, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 
@@ -208,43 +208,6 @@ Para cada extrato, sugira os 3 títulos mais prováveis e o % de confiança.`,
                   </TableRow>
                 );
               })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>SPED Gerados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Período</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Registros</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sped.map(s => (
-                <TableRow key={s.id}>
-                  <TableCell className="font-medium">{s.periodo_apuracao}</TableCell>
-                  <TableCell>{s.tipo_sped}</TableCell>
-                  <TableCell>{s.quantidade_registros || 0}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{s.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="sm">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
             </TableBody>
           </Table>
         </CardContent>
