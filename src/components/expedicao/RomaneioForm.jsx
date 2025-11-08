@@ -1,190 +1,377 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Truck, Package, AlertTriangle, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/components/ui/use-toast";
+import { FileText, Truck, CheckCircle, MapPin } from "lucide-react";
 
 /**
- * Formulário de Romaneio - V21.2
- * Com validação de capacidade veículo e entregas
+ * Formulário para Geração de Romaneio
  */
-export default function RomaneioForm({ romaneio, entregas = [], veiculos = [], motoristas = [], onClose, onSuccess }) {
-  const [formData, setFormData] = useState(romaneio || {
-    numero_romaneio: `ROM-${Date.now()}`,
-    data_romaneio: new Date().toISOString().split('T')[0],
-    motorista_id: '',
-    veiculo_id: '',
-    entregas_ids: [],
-    status: 'Aberto'
+export default function RomaneioForm({ isOpen, onClose, empresaId }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const [formData, setFormData] = useState({
+    motorista: "",
+    motorista_telefone: "",
+    veiculo: "",
+    placa: "",
+    tipo_veiculo: "Caminhão",
+    instrucoes_motorista: "",
+    entregas_selecionadas: []
   });
 
-  const [entregasSelecionadas, setEntregasSelecionadas] = useState(romaneio?.entregas_ids || []);
+  const [checklist, setChecklist] = useState({
+    documentos_ok: false,
+    veiculo_ok: false,
+    carga_conferida: false,
+    combustivel_ok: false,
+    observacoes: ""
+  });
 
-  const veiculoSelecionado = veiculos.find(v => v.id === formData.veiculo_id);
-  const pesoTotal = entregasSelecionadas.reduce((sum, id) => {
-    const e = entregas.find(ent => ent.id === id);
-    return sum + (e?.peso_total_kg || 0);
-  }, 0);
-
-  const capacidadeVeiculo = veiculoSelecionado?.capacidade_kg || 0;
-  const sobrepeso = pesoTotal > capacidadeVeiculo;
+  const { data: entregas = [] } = useQuery({
+    queryKey: ['entregas-para-romaneio', empresaId],
+    queryFn: async () => {
+      const todas = await base44.entities.Entrega.list('-created_date');
+      return todas.filter(e => 
+        e.empresa_id === empresaId && 
+        e.status === "Pronto para Expedir" &&
+        !e.romaneio_id
+      );
+    },
+    enabled: isOpen && !!empresaId,
+  });
 
   const toggleEntrega = (entregaId) => {
-    setEntregasSelecionadas(prev => 
-      prev.includes(entregaId) 
-        ? prev.filter(id => id !== entregaId)
-        : [...prev, entregaId]
-    );
+    if (formData.entregas_selecionadas.includes(entregaId)) {
+      setFormData({
+        ...formData,
+        entregas_selecionadas: formData.entregas_selecionadas.filter(id => id !== entregaId)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        entregas_selecionadas: [...formData.entregas_selecionadas, entregaId]
+      });
+    }
   };
 
-  const salvarMutation = useMutation({
+  const gerarRomaneioMutation = useMutation({
     mutationFn: async () => {
-      const data = {
-        ...formData,
-        entregas_ids: entregasSelecionadas,
-        quantidade_entregas: entregasSelecionadas.length,
-        peso_total_kg: pesoTotal,
-        capacidade_veiculo_kg: capacidadeVeiculo,
-        percentual_ocupacao: capacidadeVeiculo > 0 ? (pesoTotal / capacidadeVeiculo) * 100 : 0,
-        alerta_sobrepeso: sobrepeso
-      };
+      const entregasSelecionadas = entregas.filter(e => 
+        formData.entregas_selecionadas.includes(e.id)
+      );
 
-      if (romaneio) {
-        return base44.entities.Romaneio.update(romaneio.id, data);
-      } else {
-        return base44.entities.Romaneio.create(data);
+      if (entregasSelecionadas.length === 0) {
+        throw new Error("Selecione pelo menos uma entrega");
       }
+
+      const pesoTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.peso_total_kg || 0), 0);
+      const volumesTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.volumes || 0), 0);
+      const valorTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.valor_mercadoria || 0), 0);
+
+      const numeroRomaneio = `ROM-${Date.now()}`;
+
+      const romaneio = await base44.entities.Romaneio.create({
+        group_id: entregasSelecionadas[0].group_id,
+        empresa_id: empresaId,
+        numero_romaneio: numeroRomaneio,
+        data_romaneio: new Date().toISOString().split('T')[0],
+        data_saida: new Date().toISOString(),
+        motorista: formData.motorista,
+        motorista_telefone: formData.motorista_telefone,
+        veiculo: formData.veiculo,
+        placa: formData.placa,
+        tipo_veiculo: formData.tipo_veiculo,
+        entregas_ids: formData.entregas_selecionadas,
+        quantidade_entregas: entregasSelecionadas.length,
+        quantidade_volumes: volumesTotal,
+        peso_total_kg: pesoTotal,
+        valor_total_mercadoria: valorTotal,
+        status: "Aprovado",
+        instrucoes_motorista: formData.instrucoes_motorista,
+        checklist_saida: checklist,
+        entregas_realizadas: 0,
+        entregas_frustradas: 0
+      });
+
+      // Atualizar entregas
+      for (const entrega of entregasSelecionadas) {
+        await base44.entities.Entrega.update(entrega.id, {
+          romaneio_id: romaneio.id,
+          status: "Saiu para Entrega",
+          data_saida: new Date().toISOString(),
+          historico_status: [
+            ...(entrega.historico_status || []),
+            {
+              status: "Saiu para Entrega",
+              data_hora: new Date().toISOString(),
+              usuario: "Sistema",
+              observacao: `Incluído no romaneio ${numeroRomaneio}`
+            }
+          ]
+        });
+      }
+
+      return romaneio;
     },
     onSuccess: () => {
-      toast.success('Romaneio salvo!');
-      onSuccess();
+      queryClient.invalidateQueries({ queryKey: ['entregas'] });
+      queryClient.invalidateQueries({ queryKey: ['romaneios'] });
+      toast({ title: "✅ Romaneio gerado com sucesso!" });
+      onClose();
     },
   });
 
-  const entregasDisponiveis = entregas.filter(e => 
-    e.status === 'Pronto para Expedir' && !e.romaneio_id
-  );
+  const entregasSelecionadas = entregas.filter(e => formData.entregas_selecionadas.includes(e.id));
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Número do Romaneio</Label>
-          <Input
-            value={formData.numero_romaneio}
-            onChange={(e) => setFormData({...formData, numero_romaneio: e.target.value})}
-          />
-        </div>
-        <div>
-          <Label>Data</Label>
-          <Input
-            type="date"
-            value={formData.data_romaneio}
-            onChange={(e) => setFormData({...formData, data_romaneio: e.target.value})}
-          />
-        </div>
-      </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="w-6 h-6 text-purple-600" />
+            Gerar Romaneio de Entrega
+          </DialogTitle>
+        </DialogHeader>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Motorista *</Label>
-          <Select value={formData.motorista_id} onValueChange={(v) => setFormData({...formData, motorista_id: v})}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent>
-              {motoristas.map(m => (
-                <SelectItem key={m.id} value={m.id}>{m.nome_completo}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Veículo *</Label>
-          <Select value={formData.veiculo_id} onValueChange={(v) => setFormData({...formData, veiculo_id: v})}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent>
-              {veiculos.filter(v => v.status === 'Disponível').map(v => (
-                <SelectItem key={v.id} value={v.id}>
-                  {v.placa} - {v.modelo} ({v.capacidade_kg} kg)
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+        <form onSubmit={(e) => { e.preventDefault(); gerarRomaneioMutation.mutate(); }} className="space-y-6">
+          {/* Dados do Motorista */}
+          <Card>
+            <CardHeader className="bg-blue-50 border-b">
+              <CardTitle className="text-base">Dados do Motorista e Veículo</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Motorista *</Label>
+                  <Input
+                    value={formData.motorista}
+                    onChange={(e) => setFormData({ ...formData, motorista: e.target.value })}
+                    required
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label>Telefone Motorista</Label>
+                  <Input
+                    value={formData.motorista_telefone}
+                    onChange={(e) => setFormData({ ...formData, motorista_telefone: e.target.value })}
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label>Veículo</Label>
+                  <Input
+                    value={formData.veiculo}
+                    onChange={(e) => setFormData({ ...formData, veiculo: e.target.value })}
+                    placeholder="Ex: Caminhão Iveco"
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label>Placa</Label>
+                  <Input
+                    value={formData.placa}
+                    onChange={(e) => setFormData({ ...formData, placa: e.target.value })}
+                    placeholder="ABC-1234"
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      {veiculoSelecionado && (
-        <div className={`p-3 rounded-lg ${sobrepeso ? 'bg-red-50 border border-red-200' : 'bg-green-50 border border-green-200'}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {sobrepeso ? (
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-              ) : (
-                <Package className="w-5 h-5 text-green-600" />
+          {/* Seleção de Entregas */}
+          <Card>
+            <CardHeader className="bg-green-50 border-b">
+              <CardTitle className="text-base">
+                Selecionar Entregas ({formData.entregas_selecionadas.length} selecionadas)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={formData.entregas_selecionadas.length === entregas.length}
+                        onCheckedChange={(checked) => {
+                          setFormData({
+                            ...formData,
+                            entregas_selecionadas: checked ? entregas.map(e => e.id) : []
+                          });
+                        }}
+                      />
+                    </TableHead>
+                    <TableHead>Pedido</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Destino</TableHead>
+                    <TableHead>Volumes</TableHead>
+                    <TableHead>Peso</TableHead>
+                    <TableHead>Prioridade</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {entregas.map(entrega => (
+                    <TableRow key={entrega.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={formData.entregas_selecionadas.includes(entrega.id)}
+                          onCheckedChange={() => toggleEntrega(entrega.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{entrega.numero_pedido || '-'}</TableCell>
+                      <TableCell>{entrega.cliente_nome}</TableCell>
+                      <TableCell className="text-sm">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-blue-600" />
+                          {entrega.endereco_entrega_completo?.cidade}/{entrega.endereco_entrega_completo?.estado}
+                        </div>
+                      </TableCell>
+                      <TableCell>{entrega.volumes || 0}</TableCell>
+                      <TableCell>{entrega.peso_total_kg?.toFixed(1) || 0} kg</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={
+                          entrega.prioridade === 'Urgente' ? 'border-red-500 text-red-700' :
+                          entrega.prioridade === 'Alta' ? 'border-orange-500 text-orange-700' :
+                          'border-slate-400'
+                        }>
+                          {entrega.prioridade}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {entregas.length === 0 && (
+                <div className="text-center py-12 text-slate-500">
+                  <Truck className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>Nenhuma entrega pronta para romaneio</p>
+                </div>
               )}
-              <span className="font-semibold text-sm">
-                Carga: {pesoTotal.toFixed(0)} kg / {capacidadeVeiculo} kg
-              </span>
-            </div>
-            <Badge className={sobrepeso ? 'bg-red-600 text-white' : 'bg-green-600 text-white'}>
-              {((pesoTotal / capacidadeVeiculo) * 100).toFixed(0)}%
-            </Badge>
-          </div>
-          {sobrepeso && (
-            <p className="text-xs text-red-600 mt-2">⚠️ Sobrepeso detectado! Reduza a carga.</p>
-          )}
-        </div>
-      )}
+            </CardContent>
+          </Card>
 
-      <div>
-        <Label>Entregas Disponíveis ({entregasDisponiveis.length})</Label>
-        <div className="mt-2 space-y-2 max-h-[300px] overflow-y-auto border rounded-lg p-3">
-          {entregasDisponiveis.map(e => {
-            const selected = entregasSelecionadas.includes(e.id);
-            return (
-              <div
-                key={e.id}
-                onClick={() => toggleEntrega(e.id)}
-                className={`p-2 border rounded cursor-pointer transition-all ${
-                  selected ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={selected} />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{e.cliente_nome}</p>
-                    <p className="text-xs text-slate-600">
-                      {e.endereco_entrega_completo?.cidade} - {e.peso_total_kg?.toFixed(0) || 0} kg
+          {/* Resumo */}
+          {entregasSelecionadas.length > 0 && (
+            <Card className="bg-purple-50 border-purple-200">
+              <CardContent className="p-5">
+                <div className="grid grid-cols-4 gap-4 text-center">
+                  <div>
+                    <p className="text-xs text-purple-700">Entregas</p>
+                    <p className="text-2xl font-bold text-purple-900">{entregasSelecionadas.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-purple-700">Volumes</p>
+                    <p className="text-2xl font-bold text-purple-900">
+                      {entregasSelecionadas.reduce((sum, e) => sum + (e.volumes || 0), 0)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-purple-700">Peso Total</p>
+                    <p className="text-2xl font-bold text-purple-900">
+                      {entregasSelecionadas.reduce((sum, e) => sum + (e.peso_total_kg || 0), 0).toFixed(1)} kg
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-purple-700">Valor</p>
+                    <p className="text-xl font-bold text-purple-900">
+                      R$ {entregasSelecionadas.reduce((sum, e) => sum + (e.valor_mercadoria || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+              </CardContent>
+            </Card>
+          )}
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button variant="outline" onClick={onClose}>
-          Cancelar
-        </Button>
-        <Button 
-          onClick={() => salvarMutation.mutate()}
-          disabled={salvarMutation.isPending || sobrepeso || entregasSelecionadas.length === 0}
-        >
-          {salvarMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {romaneio ? 'Atualizar' : 'Criar Romaneio'}
-        </Button>
-      </div>
-    </div>
+          {/* Checklist */}
+          <Card>
+            <CardHeader className="bg-orange-50 border-b">
+              <CardTitle className="text-base">Checklist de Saída</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-3">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={checklist.documentos_ok}
+                  onCheckedChange={(v) => setChecklist({ ...checklist, documentos_ok: v })}
+                />
+                <Label>Documentos conferidos (NF-e, romaneio, etc.)</Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={checklist.veiculo_ok}
+                  onCheckedChange={(v) => setChecklist({ ...checklist, veiculo_ok: v })}
+                />
+                <Label>Veículo em boas condições</Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={checklist.carga_conferida}
+                  onCheckedChange={(v) => setChecklist({ ...checklist, carga_conferida: v })}
+                />
+                <Label>Carga conferida e amarrada</Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={checklist.combustivel_ok}
+                  onCheckedChange={(v) => setChecklist({ ...checklist, combustivel_ok: v })}
+                />
+                <Label>Combustível suficiente</Label>
+              </div>
+              <div className="mt-3">
+                <Label>Observações do Checklist</Label>
+                <Textarea
+                  value={checklist.observacoes}
+                  onChange={(e) => setChecklist({ ...checklist, observacoes: e.target.value })}
+                  rows={2}
+                  className="mt-2"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Instruções */}
+          <div>
+            <Label>Instruções para o Motorista</Label>
+            <Textarea
+              value={formData.instrucoes_motorista}
+              onChange={(e) => setFormData({ ...formData, instrucoes_motorista: e.target.value })}
+              rows={3}
+              placeholder="Observações e instruções especiais..."
+              className="mt-2"
+            />
+          </div>
+
+          {/* Botões */}
+          <div className="flex gap-3 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={
+                !formData.motorista ||
+                formData.entregas_selecionadas.length === 0 ||
+                gerarRomaneioMutation.isPending
+              }
+              className="flex-1 bg-purple-600 hover:bg-purple-700"
+            >
+              {gerarRomaneioMutation.isPending ? 'Gerando...' : 'Gerar Romaneio'}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

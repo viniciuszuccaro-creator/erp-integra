@@ -1,129 +1,351 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts";
+import { Factory, Clock, TrendingUp, DollarSign, AlertTriangle } from "lucide-react";
 
-/**
- * Relatórios de Produção - V21.2
- * OEE, eficiência, custos e desvios
- */
-export default function RelatoriosProducao({ ops = [] }) {
-  const opsFinalizadas = ops.filter(op => op.status === 'Finalizada');
+export default function RelatoriosProducao({ ops }) {
+  const [periodoInicio, setPeriodoInicio] = useState("");
+  const [periodoFim, setPeriodoFim] = useState("");
 
-  const oeeTotal = opsFinalizadas.reduce((sum, op) => {
-    const oee = op.oee_calculado?.oee_total || 0;
-    return sum + oee;
-  }, 0);
+  const opsFiltradas = ops.filter(op => {
+    if (periodoInicio && op.data_emissao < periodoInicio) return false;
+    if (periodoFim && op.data_emissao > periodoFim) return false;
+    return true;
+  });
 
-  const oeeMedio = opsFinalizadas.length > 0 ? oeeTotal / opsFinalizadas.length : 0;
+  const totalOPs = opsFiltradas.length;
+  const opsFinalizadas = opsFiltradas.filter(op => op.status === "Finalizada").length;
+  const taxaConclusao = totalOPs > 0 ? ((opsFinalizadas / totalOPs) * 100).toFixed(1) : 0;
 
-  const custoOrçadoTotal = ops.reduce((sum, op) => sum + (op.custos_previstos?.total || 0), 0);
-  const custoRealTotal = ops.reduce((sum, op) => sum + (op.custos_reais?.total || 0), 0);
-  const variacaoCusto = custoRealTotal - custoOrçadoTotal;
+  const pesoTotal = opsFiltradas.reduce((sum, op) => sum + (op.peso_teorico_total_kg || 0), 0);
+  const pesoReal = opsFiltradas.reduce((sum, op) => sum + (op.peso_real_total_kg || 0), 0);
+  const perdaTotal = opsFiltradas.reduce((sum, op) => sum + (op.perda_kg_real || 0), 0);
+  const taxaPerda = pesoTotal > 0 ? ((perdaTotal / pesoTotal) * 100).toFixed(2) : 0;
 
-  const opsAtrasadas = ops.filter(op => op.dias_atraso > 0).length;
+  const custoPrevisto = opsFiltradas.reduce((sum, op) => sum + (op.custos_previstos?.total || 0), 0);
+  const custoReal = opsFiltradas.reduce((sum, op) => sum + (op.custos_reais?.total || 0), 0);
+  const variacaoCusto = custoPrevisto > 0 ? (((custoReal - custoPrevisto) / custoPrevisto) * 100).toFixed(1) : 0;
+
+  const tempoEstimado = opsFiltradas.reduce((sum, op) => sum + (op.tempo_estimado_horas || 0), 0);
+  const tempoReal = opsFiltradas.reduce((sum, op) => sum + (op.tempo_real_horas || 0), 0);
+  const eficienciaMedia = tempoEstimado > 0 && tempoReal > 0 
+    ? ((tempoEstimado / tempoReal) * 100).toFixed(1)
+    : 0;
+
+  const porStatus = {};
+  opsFiltradas.forEach(op => {
+    const status = op.status || "Rascunho";
+    if (!porStatus[status]) {
+      porStatus[status] = 0;
+    }
+    porStatus[status] += 1;
+  });
+  const dadosStatus = Object.entries(porStatus).map(([status, quantidade]) => ({
+    status,
+    quantidade
+  }));
+
+  const porTipo = {};
+  opsFiltradas.forEach(op => {
+    const tipo = op.tipo_producao || "outro";
+    if (!porTipo[tipo]) {
+      porTipo[tipo] = { tipo, quantidade: 0, peso: 0 };
+    }
+    porTipo[tipo].quantidade += 1;
+    porTipo[tipo].peso += op.peso_real_total_kg || 0;
+  });
+  const dadosTipo = Object.values(porTipo);
+
+  const porOperador = {};
+  opsFiltradas.forEach(op => {
+    (op.apontamentos || []).forEach(apt => {
+      const operador = apt.operador || "Não informado";
+      if (!porOperador[operador]) {
+        porOperador[operador] = { operador, ops: 0, peso: 0, tempo: 0, refugo: 0 };
+      }
+      porOperador[operador].peso += apt.peso_produzido_kg || 0;
+      porOperador[operador].tempo += apt.tempo_minutos || 0;
+      porOperador[operador].refugo += apt.peso_refugado_kg || 0;
+    });
+  });
+  const dadosOperadores = Object.values(porOperador);
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-blue-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">OEE Médio</CardTitle>
-            <BarChart3 className="w-5 h-5 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{oeeMedio.toFixed(1)}%</div>
-            <p className="text-xs text-slate-500 mt-1">Overall Equipment Effectiveness</p>
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex gap-4">
+            <div>
+              <Label>Período Início</Label>
+              <Input
+                type="date"
+                value={periodoInicio}
+                onChange={(e) => setPeriodoInicio(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+            <div>
+              <Label>Período Fim</Label>
+              <Input
+                type="date"
+                value={periodoFim}
+                onChange={(e) => setPeriodoFim(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <Factory className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+            <p className="text-xs text-slate-600">Total OPs</p>
+            <p className="text-2xl font-bold">{totalOPs}</p>
           </CardContent>
         </Card>
 
-        <Card className="border-green-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Custo Orçado</CardTitle>
-            <TrendingUp className="w-5 h-5 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-600">
-              R$ {custoOrçadoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
+        <Card className="bg-green-50">
+          <CardContent className="p-4 text-center">
+            <TrendingUp className="w-6 h-6 mx-auto mb-2 text-green-600" />
+            <p className="text-xs text-green-700">Finalizadas</p>
+            <p className="text-2xl font-bold text-green-900">{opsFinalizadas}</p>
+            <p className="text-xs text-green-600">{taxaConclusao}%</p>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Custo Real</CardTitle>
-            <TrendingDown className="w-5 h-5 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-orange-600">
-              R$ {custoRealTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-            <p className={`text-xs mt-1 ${variacaoCusto > 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {variacaoCusto > 0 ? '+' : ''}{variacaoCusto.toFixed(2)} vs orçado
+        <Card className="bg-red-50">
+          <CardContent className="p-4 text-center">
+            <AlertTriangle className="w-6 h-6 mx-auto mb-2 text-red-600" />
+            <p className="text-xs text-red-700">Perda Total</p>
+            <p className="text-2xl font-bold text-red-900">{perdaTotal.toFixed(0)} kg</p>
+            <p className="text-xs text-red-600">{taxaPerda}%</p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-purple-50">
+          <CardContent className="p-4 text-center">
+            <DollarSign className="w-6 h-6 mx-auto mb-2 text-purple-600" />
+            <p className="text-xs text-purple-700">Custo Real</p>
+            <p className="text-xl font-bold text-purple-900">
+              R$ {custoReal.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            </p>
+            <p className="text-xs text-purple-600">
+              {variacaoCusto > 0 ? '+' : ''}{variacaoCusto}% vs previsto
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">OPs Atrasadas</CardTitle>
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-red-600">{opsAtrasadas}</div>
+        <Card className="bg-blue-50">
+          <CardContent className="p-4 text-center">
+            <Clock className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+            <p className="text-xs text-blue-700">Eficiência</p>
+            <p className="text-2xl font-bold text-blue-900">{eficienciaMedia}%</p>
+            <p className="text-xs text-blue-600">
+              {tempoReal.toFixed(0)}h reais
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Desvios de Custo (Custo Real vs Orçado)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>OP</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead className="text-right">Custo Orçado</TableHead>
-                <TableHead className="text-right">Custo Real</TableHead>
-                <TableHead className="text-right">Variação</TableHead>
-                <TableHead className="text-right">% Desvio</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ops
-                .filter(op => op.custos_reais?.total && op.custos_previstos?.total)
-                .map(op => {
-                  const orcado = op.custos_previstos.total;
-                  const real = op.custos_reais.total;
-                  const variacao = real - orcado;
-                  const percentual = ((variacao / orcado) * 100);
-                  
-                  return (
-                    <TableRow key={op.id}>
-                      <TableCell className="font-medium">{op.numero_op}</TableCell>
-                      <TableCell>{op.cliente_nome}</TableCell>
-                      <TableCell className="text-right">R$ {orcado.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">R$ {real.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
-                        <span className={variacao > 0 ? 'text-red-600' : 'text-green-600'}>
-                          R$ {variacao.toFixed(2)}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Badge className={percentual > 5 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
-                          {percentual > 0 ? '+' : ''}{percentual.toFixed(1)}%
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="geral">
+        <TabsList className="bg-white border flex-wrap h-auto">
+          <TabsTrigger value="geral">Geral</TabsTrigger>
+          <TabsTrigger value="tipo">Por Tipo</TabsTrigger>
+          <TabsTrigger value="operadores">Por Operador</TabsTrigger>
+          <TabsTrigger value="custos">Custos</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="geral">
+          <Card>
+            <CardHeader className="bg-slate-50 border-b">
+              <CardTitle className="text-base">Distribuição por Status</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={dadosStatus}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ status, quantidade }) => `${status}: ${quantidade}`}
+                    outerRadius={100}
+                    dataKey="quantidade"
+                  >
+                    {dadosStatus.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="tipo">
+          <Card>
+            <CardHeader className="bg-slate-50 border-b">
+              <CardTitle className="text-base">Produção por Tipo</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dadosTipo}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="tipo" />
+                  <YAxis yAxisId="left" orientation="left" stroke="#3b82f6" />
+                  <YAxis yAxisId="right" orientation="right" stroke="#10b981" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="quantidade" fill="#3b82f6" name="Quantidade" />
+                  <Bar yAxisId="right" dataKey="peso" fill="#10b981" name="Peso (kg)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="operadores">
+          <Card>
+            <CardHeader className="bg-slate-50 border-b">
+              <CardTitle className="text-base">Desempenho por Operador</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead>Operador</TableHead>
+                    <TableHead className="text-right">Peso Produzido</TableHead>
+                    <TableHead className="text-right">Tempo (h)</TableHead>
+                    <TableHead className="text-right">Refugo</TableHead>
+                    <TableHead className="text-right">Produtividade</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {dadosOperadores.map((op, idx) => {
+                    const produtividade = op.tempo > 0 ? (op.peso / (op.tempo / 60)).toFixed(2) : 0;
+                    const taxaRefugo = op.peso > 0 ? ((op.refugo / op.peso) * 100).toFixed(1) : 0;
+                    
+                    return (
+                      <TableRow key={idx}>
+                        <TableCell className="font-medium">{op.operador}</TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {op.peso.toFixed(1)} kg
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {(op.tempo / 60).toFixed(1)}h
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge className={parseFloat(taxaRefugo) > 5 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}>
+                            {op.refugo.toFixed(1)} kg ({taxaRefugo}%)
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-bold text-blue-600">
+                          {produtividade} kg/h
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+
+              {dadosOperadores.length === 0 && (
+                <div className="text-center py-12 text-slate-500">
+                  <Factory className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>Nenhum apontamento registrado</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="custos">
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader className="bg-blue-50">
+                <CardTitle className="text-base">Custo Previsto vs Real</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={[
+                    { tipo: 'Previsto', valor: custoPrevisto },
+                    { tipo: 'Real', valor: custoReal }
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="tipo" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
+                    <Bar dataKey="valor" fill="#3b82f6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="bg-purple-50">
+                <CardTitle className="text-base">Análise de Variação</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-700">Custo Previsto:</span>
+                    <span className="font-bold text-lg">
+                      R$ {custoPrevisto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-700">Custo Real:</span>
+                    <span className="font-bold text-lg">
+                      R$ {custoReal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="h-px bg-slate-300"></div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-900 font-semibold">Variação:</span>
+                    <span className={`font-bold text-xl ${parseFloat(variacaoCusto) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      {parseFloat(variacaoCusto) > 0 ? '+' : ''}{variacaoCusto}%
+                    </span>
+                  </div>
+
+                  {parseFloat(variacaoCusto) > 10 && (
+                    <Alert className="border-red-200 bg-red-50 mt-4">
+                      <AlertTriangle className="h-5 w-5 text-red-600" />
+                      <AlertDescription>
+                        <strong>Atenção:</strong> Custo real {parseFloat(variacaoCusto)}% acima do previsto.
+                        Revisar perdas e tempos de produção.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

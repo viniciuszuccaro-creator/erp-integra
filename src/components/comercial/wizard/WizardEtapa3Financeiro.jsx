@@ -1,118 +1,109 @@
-import React from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { DollarSign, CreditCard, Calendar } from 'lucide-react';
+import PriceBrain from '../PriceBrain';
 
-/**
- * Wizard Etapa 3 - Financeiro e Entrega
- * Conexão Hub V16.1: Lê FormaPagamento.json e Endereços do Cliente
- */
-export default function WizardEtapa3Financeiro({ dadosPedido, onChange }) {
-  const { data: formasPagamento = [] } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
-  });
+export default function WizardEtapa3Financeiro({ dados, onChange }) {
+  const calcularTotal = () => {
+    const totalRevenda = (dados.itens_revenda || []).reduce((sum, i) => sum + (i.valor_item || 0), 0);
+    const totalProducao = (dados.itens_producao || []).reduce((sum, i) => sum + (i.preco_venda_total || 0), 0);
+    return totalRevenda + totalProducao + (dados.valor_frete || 0);
+  };
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
-  });
+  const total = calcularTotal();
 
-  const clienteSelecionado = clientes.find(c => c.id === dadosPedido.cliente_id);
-  const enderecosEntrega = clienteSelecionado?.locais_entrega || [];
+  React.useEffect(() => {
+    onChange({ valor_total: total });
+  }, [total]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <Label>Forma de Pagamento *</Label>
-        <Select 
-          value={dadosPedido.forma_pagamento} 
-          onValueChange={(val) => onChange({...dadosPedido, forma_pagamento: val})}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione a forma de pagamento" />
-          </SelectTrigger>
-          <SelectContent>
-            {formasPagamento.map(forma => (
-              <SelectItem key={forma.id} value={forma.descricao}>
-                {forma.descricao}
-                {forma.percentual_desconto_padrao > 0 && (
-                  <span className="text-green-600 ml-2">
-                    ({forma.percentual_desconto_padrao}% desc)
-                  </span>
-                )}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* PriceBrain - IA de Precificação */}
+      <PriceBrain
+        pedido={dados}
+        onSugestaoAplicada={(novoPedido) => onChange(novoPedido)}
+      />
 
-      <div>
-        <Label>Tipo de Frete</Label>
-        <Select 
-          value={dadosPedido.tipo_frete} 
-          onValueChange={(val) => onChange({...dadosPedido, tipo_frete: val})}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="CIF">CIF (Por conta do vendedor)</SelectItem>
-            <SelectItem value="FOB">FOB (Por conta do comprador)</SelectItem>
-            <SelectItem value="Retirada">Retirada no local</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <Card className="border-green-200 bg-green-50">
+        <CardHeader className="bg-white/80 border-b">
+          <CardTitle className="text-base flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-green-600" />
+            Forma de Pagamento
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          <div>
+            <Label>Forma de Pagamento *</Label>
+            <Select
+              value={dados.forma_pagamento || ''}
+              onValueChange={(value) => onChange({ forma_pagamento: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="À Vista">À Vista</SelectItem>
+                <SelectItem value="PIX">PIX</SelectItem>
+                <SelectItem value="Boleto">Boleto</SelectItem>
+                <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                <SelectItem value="Parcelado">Parcelado</SelectItem>
+                <SelectItem value="Transferência">Transferência</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      {enderecosEntrega.length > 0 && (
-        <div>
-          <Label>Endereço de Entrega</Label>
-          <Select 
-            value={dadosPedido.endereco_entrega_id} 
-            onValueChange={(val) => onChange({...dadosPedido, endereco_entrega_id: val})}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o endereço" />
-            </SelectTrigger>
-            <SelectContent>
-              {enderecosEntrega.map((end, idx) => (
-                <SelectItem key={idx} value={idx.toString()}>
-                  {end.apelido || `Endereço ${idx + 1}`} - {end.cidade}/{end.estado}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+          <div>
+            <Label>Condição de Pagamento *</Label>
+            <Select
+              value={dados.condicao_pagamento || ''}
+              onValueChange={(value) => onChange({ condicao_pagamento: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="À Vista">À Vista</SelectItem>
+                <SelectItem value="7 dias">7 dias</SelectItem>
+                <SelectItem value="15 dias">15 dias</SelectItem>
+                <SelectItem value="30 dias">30 dias</SelectItem>
+                <SelectItem value="45 dias">45 dias</SelectItem>
+                <SelectItem value="60 dias">60 dias</SelectItem>
+                <SelectItem value="Parcelado">Parcelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      <div>
-        <Label>Valor do Frete</Label>
-        <Input
-          type="number"
-          value={dadosPedido.valor_frete || 0}
-          onChange={(e) => {
-            const frete = parseFloat(e.target.value) || 0;
-            onChange({
-              ...dadosPedido, 
-              valor_frete: frete,
-              valor_total: (dadosPedido.valor_produtos || 0) + frete
-            });
-          }}
-          min="0"
-          step="0.01"
-        />
-      </div>
+          <div>
+            <Label>Valor do Frete</Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={dados.valor_frete || 0}
+              onChange={(e) => onChange({ valor_frete: parseFloat(e.target.value) || 0 })}
+              placeholder="0.00"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-      <Card className="bg-slate-50">
-        <CardContent className="p-4">
+      <Card className="border-0 bg-gradient-to-r from-green-50 to-blue-50">
+        <CardContent className="p-6">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-slate-700">Valor Total do Pedido:</span>
-            <span className="text-2xl font-bold text-blue-600">
-              R$ {(dadosPedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </span>
+            <div>
+              <p className="text-sm text-slate-600">Valor Total do Pedido</p>
+              <p className="text-xs text-slate-500 mt-1">
+                {(dados.itens_revenda?.length || 0) + (dados.itens_producao?.length || 0)} itens
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-4xl font-bold text-green-600">
+                R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -1,87 +1,125 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, ChevronDown, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { ChevronRight, ChevronDown, Plus, Edit, TrendingUp, TrendingDown } from "lucide-react";
 
 /**
- * Plano de Contas Tree - V21.3
- * Visualização hierárquica do plano de contas
+ * Componente de Plano de Contas em árvore hierárquica
  */
-export default function PlanoDeContasTree({ planoContas = [] }) {
+export default function PlanoDeContasTree({ empresaId }) {
   const [expandido, setExpandido] = useState({});
+  const [search, setSearch] = useState("");
+
+  const { data: contas = [] } = useQuery({
+    queryKey: ['plano-contas', empresaId],
+    queryFn: () => base44.entities.PlanoDeContas.filter({ empresa_id: empresaId }),
+    enabled: !!empresaId
+  });
 
   const toggleExpand = (contaId) => {
-    setExpandido(prev => ({...prev, [contaId]: !prev[contaId]}));
+    setExpandido(prev => ({ ...prev, [contaId]: !prev[contaId] }));
   };
 
-  const contasNivel1 = planoContas.filter(c => c.nivel === 1);
-
-  const getContasFilhas = (contaId) => {
-    return planoContas.filter(c => c.conta_superior_id === contaId);
+  const buildTree = (contas, parentId = null) => {
+    return contas
+      .filter(c => c.conta_superior_id === parentId)
+      .sort((a, b) => a.codigo_conta.localeCompare(b.codigo_conta));
   };
 
   const renderConta = (conta, nivel = 0) => {
-    const filhas = getContasFilhas(conta.id);
-    const temFilhas = filhas.length > 0;
-    const isExpandido = expandido[conta.id];
+    const filhos = buildTree(contas, conta.id);
+    const temFilhos = filhos.length > 0;
+    const estaExpandido = expandido[conta.id];
+
+    const matchSearch = search === "" || 
+      conta.codigo_conta.toLowerCase().includes(search.toLowerCase()) ||
+      conta.descricao_conta.toLowerCase().includes(search.toLowerCase());
+
+    if (!matchSearch && search !== "") return null;
 
     return (
-      <div key={conta.id} style={{ marginLeft: `${nivel * 24}px` }}>
-        <div className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded group">
-          {temFilhas && (
-            <button onClick={() => toggleExpand(conta.id)} className="p-1">
-              {isExpandido ? (
-                <ChevronDown className="w-4 h-4 text-slate-600" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-slate-600" />
-              )}
-            </button>
+      <div key={conta.id}>
+        <div
+          className={`flex items-center gap-2 p-2 hover:bg-slate-50 rounded cursor-pointer ${
+            nivel === 0 ? 'font-bold' : ''
+          }`}
+          style={{ paddingLeft: `${nivel * 24 + 8}px` }}
+          onClick={() => temFilhos && toggleExpand(conta.id)}
+        >
+          {temFilhos ? (
+            estaExpandido ? (
+              <ChevronDown className="w-4 h-4 text-slate-400" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            )
+          ) : (
+            <div className="w-4"></div>
           )}
-          {!temFilhas && <div className="w-6" />}
-          
-          <div className="flex-1 flex items-center gap-3">
-            <span className="font-mono text-sm text-slate-600">{conta.codigo_conta}</span>
-            <span className="font-medium text-sm">{conta.descricao_conta}</span>
-            <Badge variant="outline" className="text-xs">{conta.tipo}</Badge>
-            {!conta.aceita_lancamento && (
-              <Badge className="bg-slate-200 text-slate-600 text-xs">Sintética</Badge>
-            )}
-          </div>
 
-          <div className="text-sm text-slate-600 font-semibold min-w-[120px] text-right">
-            R$ {(conta.saldo_atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </div>
+          <span className="font-mono text-sm text-slate-600 min-w-[120px]">
+            {conta.codigo_conta}
+          </span>
+
+          <span className="flex-1 text-sm">{conta.descricao_conta}</span>
+
+          <Badge variant="outline" className="text-xs">
+            {conta.tipo}
+          </Badge>
+
+          {conta.saldo_atual !== 0 && (
+            <Badge className={conta.saldo_atual > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+              R$ {Math.abs(conta.saldo_atual).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </Badge>
+          )}
+
+          <Button variant="ghost" size="icon" className="h-7 w-7">
+            <Edit className="w-3 h-3" />
+          </Button>
         </div>
 
-        {temFilhas && isExpandido && (
+        {temFilhos && estaExpandido && (
           <div>
-            {filhas.map(filha => renderConta(filha, nivel + 1))}
+            {filhos.map(filho => renderConta(filho, nivel + 1))}
           </div>
         )}
       </div>
     );
   };
 
+  const contasRaiz = buildTree(contas, null);
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>Plano de Contas Hierárquico</CardTitle>
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Conta
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-1 max-h-[600px] overflow-y-auto">
-          {contasNivel1.map(conta => renderConta(conta, 0))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <div className="flex gap-3">
+        <Input
+          placeholder="Buscar conta..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex-1"
+        />
+        <Button className="bg-blue-600">
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Conta
+        </Button>
+      </div>
+
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-4">
+          {contasRaiz.length > 0 ? (
+            contasRaiz.map(conta => renderConta(conta, 0))
+          ) : (
+            <div className="text-center py-12 text-slate-500">
+              <TrendingUp className="w-16 h-16 mx-auto mb-4 opacity-30" />
+              <p>Nenhuma conta cadastrada</p>
+              <p className="text-sm mt-2">Crie o plano de contas da empresa</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

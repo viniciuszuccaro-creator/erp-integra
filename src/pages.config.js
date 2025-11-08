@@ -1,12 +1,14 @@
 import Dashboard from './pages/Dashboard';
 import Comercial from './pages/Comercial';
 import Expedicao from './pages/Expedicao';
+import Financeiro from './pages/Financeiro';
 import Compras from './pages/Compras';
 import RH from './pages/RH';
 import Estoque from './pages/Estoque';
 import Cadastros from './pages/Cadastros';
 import Acessos from './pages/Acessos';
 import Integracoes from './pages/Integracoes';
+import Fiscal from './pages/Fiscal';
 import CRM from './pages/CRM';
 import Agenda from './pages/Agenda';
 import Relatorios from './pages/Relatorios';
@@ -29,12 +31,14 @@ export const PAGES = {
     "Dashboard": Dashboard,
     "Comercial": Comercial,
     "Expedicao": Expedicao,
+    "Financeiro": Financeiro,
     "Compras": Compras,
     "RH": RH,
     "Estoque": Estoque,
     "Cadastros": Cadastros,
     "Acessos": Acessos,
     "Integracoes": Integracoes,
+    "Fiscal": Fiscal,
     "CRM": CRM,
     "Agenda": Agenda,
     "Relatorios": Relatorios,

@@ -1,128 +1,161 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, TrendingUp, DollarSign } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertTriangle, TrendingDown } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 /**
- * Controle de Refugo - V21.2
- * Análise de perdas, custos e alertas IA
+ * Controle de Refugo/Perdas
  */
-export default function ControleRefugo({ ops = [] }) {
-  const opsComRefugo = ops.filter(op => 
-    (op.refugos && op.refugos.length > 0) || op.peso_refugado_kg > 0
+export default function ControleRefugo({ ops }) {
+  // Agregar refugos de todas as OPs
+  const todosRefugos = ops.flatMap(op => 
+    (op.refugos || []).map(r => ({
+      ...r,
+      op_numero: op.numero_op,
+      cliente: op.cliente_nome
+    }))
   );
 
-  const refugoTotalKg = ops.reduce((sum, op) => {
-    const refugoOp = (op.refugos || []).reduce((s, r) => s + (r.peso_refugado_kg || 0), 0);
-    return sum + refugoOp;
-  }, 0);
-
-  const custoRefugoTotal = ops.reduce((sum, op) => sum + (op.custo_refugo_calculado || 0), 0);
-
-  const refugosPorMotivo = {};
-  ops.forEach(op => {
-    (op.refugos || []).forEach(r => {
-      const motivo = r.motivo || 'Não especificado';
-      refugosPorMotivo[motivo] = (refugosPorMotivo[motivo] || 0) + (r.peso_refugado_kg || 0);
-    });
+  // Por motivo
+  const porMotivo = {};
+  todosRefugos.forEach(r => {
+    const motivo = r.motivo || "Não informado";
+    if (!porMotivo[motivo]) {
+      porMotivo[motivo] = { quantidade: 0, peso: 0, custo: 0 };
+    }
+    porMotivo[motivo].quantidade += r.quantidade_refugada || 0;
+    porMotivo[motivo].peso += r.peso_refugado_kg || 0;
+    porMotivo[motivo].custo += r.custo_perdido || 0;
   });
+
+  const dadosMotivos = Object.entries(porMotivo)
+    .map(([motivo, dados]) => ({
+      motivo,
+      ...dados
+    }))
+    .sort((a, b) => b.peso - a.peso);
+
+  const pesoTotalRefugo = todosRefugos.reduce((sum, r) => sum + (r.peso_refugado_kg || 0), 0);
+  const custoTotalRefugo = todosRefugos.reduce((sum, r) => sum + (r.custo_perdido || 0), 0);
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-red-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Refugo Total</CardTitle>
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-red-600">{refugoTotalKg.toFixed(2)} kg</div>
-            <p className="text-xs text-slate-500 mt-1">{opsComRefugo.length} OP(s) afetadas</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-orange-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Custo Refugo</CardTitle>
-            <DollarSign className="w-5 h-5 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-orange-600">
-              R$ {custoRefugoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+      {/* KPIs */}
+      <div className="grid grid-cols-3 gap-4">
+        <Card className="border-0 shadow-md bg-red-50">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs text-red-700">Total Ocorrências</p>
+                <p className="text-2xl font-bold text-red-900">{todosRefugos.length}</p>
+              </div>
+              <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-purple-200">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">% Médio Refugo</CardTitle>
-            <TrendingUp className="w-5 h-5 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-purple-600">
-              {opsComRefugo.length > 0 
-                ? ((refugoTotalKg / ops.reduce((s, op) => s + (op.peso_teorico_total_kg || 0), 0)) * 100).toFixed(1)
-                : 0}%
+        <Card className="border-0 shadow-md bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs text-orange-700">Peso Refugado</p>
+                <p className="text-2xl font-bold text-orange-900">{pesoTotalRefugo.toFixed(0)} kg</p>
+              </div>
+              <TrendingDown className="w-8 h-8 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md bg-purple-50">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs text-purple-700">Custo Perdido</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  R$ {custoTotalRefugo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+              <AlertTriangle className="w-8 h-8 text-purple-500" />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Refugo por Motivo</CardTitle>
+      {/* Gráfico por Motivo */}
+      <Card className="border-0 shadow-md">
+        <CardHeader className="bg-slate-50 border-b">
+          <CardTitle className="text-base">Refugo por Motivo</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4">
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={dadosMotivos}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="motivo" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="peso" fill="#ef4444" name="Peso (kg)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Tabela Detalhada */}
+      <Card className="border-0 shadow-md">
+        <CardHeader className="bg-slate-50 border-b">
+          <CardTitle className="text-base">Detalhamento de Refugos</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-slate-50">
+                <TableHead>Data</TableHead>
+                <TableHead>OP</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Item</TableHead>
                 <TableHead>Motivo</TableHead>
+                <TableHead className="text-right">Qtd</TableHead>
                 <TableHead className="text-right">Peso (kg)</TableHead>
-                <TableHead className="text-right">% do Total</TableHead>
+                <TableHead className="text-right">Custo</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(refugosPorMotivo)
-                .sort((a, b) => b[1] - a[1])
-                .map(([motivo, peso]) => (
-                  <TableRow key={motivo}>
-                    <TableCell className="font-medium">{motivo}</TableCell>
-                    <TableCell className="text-right">{peso.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">
-                      {((peso / refugoTotalKg) * 100).toFixed(1)}%
+              {todosRefugos
+                .sort((a, b) => new Date(b.data) - new Date(a.data))
+                .slice(0, 50)
+                .map((r, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell className="text-sm">
+                      {new Date(r.data).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                    <TableCell className="font-medium">{r.op_numero}</TableCell>
+                    <TableCell>{r.cliente}</TableCell>
+                    <TableCell>{r.item_elemento}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {r.motivo}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">{r.quantidade_refugada}</TableCell>
+                    <TableCell className="text-right font-semibold text-red-600">
+                      {r.peso_refugado_kg?.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-red-600">
+                      R$ {r.custo_perdido?.toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>OPs com Refugo Acima do Esperado</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {ops
-              .filter(op => op.alerta_refugo_alto)
-              .map(op => (
-                <div key={op.id} className="p-3 border border-red-200 rounded-lg bg-red-50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold text-sm">{op.numero_op}</p>
-                      <p className="text-xs text-slate-600">{op.cliente_nome}</p>
-                    </div>
-                    <Badge className="bg-red-600 text-white">
-                      Refugo Alto: {op.perda_percentual_real?.toFixed(1) || 0}%
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-          </div>
+          {todosRefugos.length === 0 && (
+            <div className="text-center py-12 text-slate-500">
+              <AlertTriangle className="w-16 h-16 mx-auto mb-4 opacity-30" />
+              <p>Nenhum refugo registrado</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

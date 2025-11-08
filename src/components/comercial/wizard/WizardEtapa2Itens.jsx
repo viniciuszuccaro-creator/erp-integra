@@ -1,177 +1,156 @@
-import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Trash2, Package, Wrench } from 'lucide-react';
+import AdicionarItemRevendaModal from '../AdicionarItemRevendaModal';
+import ItemProducaoForm from '../ItemProducaoForm';
 
-/**
- * Wizard Etapa 2 - Itens
- * Conexão Hub V16.1: Lê Produto.json e TabelaPreco.json
- */
-export default function WizardEtapa2Itens({ dadosPedido, onChange }) {
-  const [itemForm, setItemForm] = useState({
-    produto_id: '',
-    quantidade: 1,
-    preco_unitario: 0,
-    desconto_percentual: 0,
-  });
+export default function WizardEtapa2Itens({ dados, onChange }) {
+  const [modalRevenda, setModalRevenda] = useState(false);
+  const [modalProducao, setModalProducao] = useState(false);
 
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
-  });
+  const totalItens = (dados.itens_revenda?.length || 0) + (dados.itens_producao?.length || 0);
 
-  const { data: tabelasPreco = [] } = useQuery({
-    queryKey: ['tabelas-preco'],
-    queryFn: () => base44.entities.TabelaPreco.list(),
-  });
-
-  const adicionarItem = () => {
-    if (!itemForm.produto_id) {
-      toast.error('Selecione um produto');
-      return;
-    }
-
-    const produto = produtos.find(p => p.id === itemForm.produto_id);
-    const valorTotal = itemForm.quantidade * itemForm.preco_unitario * (1 - itemForm.desconto_percentual / 100);
-
-    const novoItem = {
-      id: Date.now().toString(),
-      produto_id: itemForm.produto_id,
-      codigo_produto: produto?.codigo || '',
-      descricao: produto?.descricao || '',
-      quantidade: itemForm.quantidade,
-      unidade: produto?.unidade_medida || 'UN',
-      preco_unitario: itemForm.preco_unitario,
-      desconto_percentual: itemForm.desconto_percentual,
-      valor_total: valorTotal,
-    };
-
-    const novosItens = [...(dadosPedido.itens_revenda || []), novoItem];
-    const valorTotalPedido = novosItens.reduce((sum, item) => sum + item.valor_total, 0);
-
-    onChange({
-      ...dadosPedido,
-      itens_revenda: novosItens,
-      valor_total: valorTotalPedido,
-      valor_produtos: valorTotalPedido,
-    });
-
-    setItemForm({ produto_id: '', quantidade: 1, preco_unitario: 0, desconto_percentual: 0 });
+  const removerItemRevenda = (index) => {
+    const novosItens = [...(dados.itens_revenda || [])];
+    novosItens.splice(index, 1);
+    onChange({ itens_revenda: novosItens });
   };
 
-  const removerItem = (itemId) => {
-    const novosItens = dadosPedido.itens_revenda.filter(i => i.id !== itemId);
-    const valorTotalPedido = novosItens.reduce((sum, item) => sum + item.valor_total, 0);
-
-    onChange({
-      ...dadosPedido,
-      itens_revenda: novosItens,
-      valor_total: valorTotalPedido,
-      valor_produtos: valorTotalPedido,
-    });
+  const removerItemProducao = (index) => {
+    const novosItens = [...(dados.itens_producao || [])];
+    novosItens.splice(index, 1);
+    onChange({ itens_producao: novosItens });
   };
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
-        <div className="col-span-2">
-          <Label>Produto</Label>
-          <Select 
-            value={itemForm.produto_id} 
-            onValueChange={(val) => {
-              const produto = produtos.find(p => p.id === val);
-              setItemForm({
-                ...itemForm, 
-                produto_id: val,
-                preco_unitario: produto?.preco_venda || 0
-              });
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione" />
-            </SelectTrigger>
-            <SelectContent>
-              {produtos.map(produto => (
-                <SelectItem key={produto.id} value={produto.id}>
-                  {produto.descricao} - R$ {(produto.preco_venda || 0).toFixed(2)}
-                </SelectItem>
+      <Card className="border-blue-200 bg-blue-50">
+        <CardHeader className="bg-white/80 border-b">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">Itens do Pedido</CardTitle>
+            <Badge className="bg-blue-600 text-white">
+              {totalItens} {totalItens === 1 ? 'item' : 'itens'}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
+          <Tabs defaultValue="revenda">
+            <TabsList className="w-full">
+              <TabsTrigger value="revenda" className="flex-1">
+                <Package className="w-4 h-4 mr-2" />
+                Revenda ({dados.itens_revenda?.length || 0})
+              </TabsTrigger>
+              <TabsTrigger value="producao" className="flex-1">
+                <Wrench className="w-4 h-4 mr-2" />
+                Produção ({dados.itens_producao?.length || 0})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="revenda" className="space-y-3 mt-4">
+              <Button
+                onClick={() => setModalRevenda(true)}
+                variant="outline"
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Item de Revenda
+              </Button>
+
+              {(dados.itens_revenda || []).map((item, idx) => (
+                <div key={idx} className="p-3 bg-white border rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{item.descricao}</p>
+                      <p className="text-xs text-slate-600">
+                        Qtd: {item.quantidade} {item.unidade} × R$ {item.preco_unitario?.toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-green-600">
+                        R$ {item.valor_item?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-600"
+                        onClick={() => removerItemRevenda(idx)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
+            </TabsContent>
 
-        <div>
-          <Label>Quantidade</Label>
-          <Input
-            type="number"
-            value={itemForm.quantidade}
-            onChange={(e) => setItemForm({...itemForm, quantidade: parseFloat(e.target.value) || 0})}
-            min="0"
-            step="0.01"
-          />
-        </div>
+            <TabsContent value="producao" className="space-y-3 mt-4">
+              <Button
+                onClick={() => setModalProducao(true)}
+                variant="outline"
+                className="w-full"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Item de Produção
+              </Button>
 
-        <div>
-          <Label>Desconto %</Label>
-          <Input
-            type="number"
-            value={itemForm.desconto_percentual}
-            onChange={(e) => setItemForm({...itemForm, desconto_percentual: parseFloat(e.target.value) || 0})}
-            min="0"
-            max="100"
-            step="0.1"
-          />
-        </div>
+              {(dados.itens_producao || []).map((item, idx) => (
+                <div key={idx} className="p-3 bg-white border rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{item.tipo_peca} - {item.identificador}</p>
+                      <p className="text-xs text-slate-600">
+                        Qtd: {item.quantidade} | {item.comprimento}cm × {item.largura}cm
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Bitola: {item.ferro_principal_bitola} | {item.peso_total_kg}kg
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-green-600">
+                        R$ {item.preco_venda_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-red-600"
+                        onClick={() => removerItemProducao(idx)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
-        <div className="col-span-4">
-          <Button onClick={adicionarItem} className="w-full">
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Item
-          </Button>
-        </div>
-      </div>
+      {/* Modais */}
+      {modalRevenda && (
+        <AdicionarItemRevendaModal
+          isOpen={modalRevenda}
+          onClose={() => setModalRevenda(false)}
+          onAdd={(item) => {
+            const novosItens = [...(dados.itens_revenda || []), item];
+            onChange({ itens_revenda: novosItens });
+            setModalRevenda(false);
+          }}
+        />
+      )}
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Produto</TableHead>
-            <TableHead>Qtd</TableHead>
-            <TableHead>Preço Unit.</TableHead>
-            <TableHead>Desc %</TableHead>
-            <TableHead className="text-right">Total</TableHead>
-            <TableHead></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {dadosPedido.itens_revenda?.map(item => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium">{item.descricao}</TableCell>
-              <TableCell>{item.quantidade} {item.unidade}</TableCell>
-              <TableCell>R$ {item.preco_unitario.toFixed(2)}</TableCell>
-              <TableCell>{item.desconto_percentual}%</TableCell>
-              <TableCell className="text-right font-semibold">
-                R$ {item.valor_total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </TableCell>
-              <TableCell>
-                <Button variant="ghost" size="sm" onClick={() => removerItem(item.id)}>
-                  <Trash2 className="w-4 h-4 text-red-600" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {dadosPedido.itens_revenda?.length === 0 && (
-        <div className="text-center py-12 text-slate-500">
-          <p>Nenhum item adicionado</p>
-        </div>
+      {modalProducao && (
+        <ItemProducaoForm
+          onSubmit={(item) => {
+            const novosItens = [...(dados.itens_producao || []), item];
+            onChange({ itens_producao: novosItens });
+            setModalProducao(false);
+          }}
+          onCancel={() => setModalProducao(false)}
+        />
       )}
     </div>
   );

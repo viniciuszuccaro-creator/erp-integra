@@ -1,145 +1,188 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Phone, Mail, MessageCircle } from "lucide-react";
-import { toast } from "sonner";
+import { Calendar, Mail, MessageCircle, Phone } from "lucide-react";
 
-/**
- * Agendar Follow-Up - V21.1
- * Cria interação e atualiza oportunidade
- */
-export default function AgendarFollowUp({ open, onOpenChange, oportunidade }) {
-  const [form, setForm] = useState({
-    tipo: 'WhatsApp',
-    titulo: '',
-    descricao: '',
-    data_proxima_acao: '',
-  });
-  const queryClient = useQueryClient();
-
-  const agendarMutation = useMutation({
-    mutationFn: async () => {
-      await base44.entities.Interacao.create({
-        tipo: form.tipo,
-        titulo: form.titulo,
-        descricao: form.descricao,
-        data_interacao: new Date().toISOString(),
-        cliente_id: oportunidade.cliente_id,
-        cliente_nome: oportunidade.cliente_nome,
-        oportunidade_id: oportunidade.id,
-        responsavel: oportunidade.responsavel,
-        responsavel_id: oportunidade.responsavel_id,
-        resultado: 'Neutro'
-      });
-
-      await base44.entities.Oportunidade.update(oportunidade.id, {
-        data_ultima_interacao: new Date().toISOString(),
-        dias_sem_contato: 0,
-        proxima_acao: form.titulo,
-        data_proxima_acao: form.data_proxima_acao
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['oportunidades']);
-      queryClient.invalidateQueries(['interacoes']);
-      toast.success('Follow-up agendado!');
-      onOpenChange(false);
-      setForm({ tipo: 'WhatsApp', titulo: '', descricao: '', data_proxima_acao: '' });
-    },
+export default function AgendarFollowUp({ oportunidade, open, onClose, onSalvar }) {
+  const [followUp, setFollowUp] = useState({
+    data: "",
+    tipo: "E-mail",
+    mensagem: ""
   });
 
-  if (!oportunidade) return null;
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const followUps = [
+      ...(oportunidade.follow_ups_agendados || []),
+      {
+        ...followUp,
+        data: new Date(followUp.data).toISOString(),
+        enviado: false
+      }
+    ];
+
+    onSalvar({
+      ...oportunidade,
+      follow_ups_agendados: followUps
+    });
+  };
+
+  const templatesMensagens = {
+    "E-mail": `Olá ${oportunidade?.cliente_nome},
+
+Gostaria de acompanhar nossa conversa sobre ${oportunidade?.titulo}.
+
+Você teve tempo de avaliar nossa proposta?
+
+Fico à disposição para esclarecer qualquer dúvida.
+
+Atenciosamente,
+${oportunidade?.responsavel}`,
+
+    "WhatsApp": `Olá ${oportunidade?.cliente_nome}! 👋
+
+Passando aqui para saber se você já teve tempo de avaliar nossa proposta sobre ${oportunidade?.titulo}.
+
+Posso ajudar em algo? 😊`,
+
+    "Ligação": `Roteiro de ligação:
+- Cumprimentar cliente
+- Perguntar sobre análise da proposta
+- Esclarecer dúvidas
+- Agendar próximos passos`,
+
+    "Reunião": `Pauta da reunião:
+- Revisar proposta
+- Alinhamento de expectativas
+- Próximos passos`
+  };
+
+  const handleSelecionarTemplate = (tipo) => {
+    setFollowUp({
+      ...followUp,
+      tipo: tipo,
+      mensagem: templatesMensagens[tipo]
+    });
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Agendar Follow-Up - {oportunidade.cliente_nome}</DialogTitle>
+          <DialogTitle>Agendar Follow-up Automático</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div>
-            <Label>Tipo de Interação</Label>
-            <Select value={form.tipo} onValueChange={(val) => setForm({...form, tipo: val})}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="WhatsApp">
-                  <div className="flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-green-600" />
-                    WhatsApp
-                  </div>
-                </SelectItem>
-                <SelectItem value="E-mail">
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-blue-600" />
-                    E-mail
-                  </div>
-                </SelectItem>
-                <SelectItem value="Ligação">
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-purple-600" />
-                    Ligação
-                  </div>
-                </SelectItem>
-                <SelectItem value="Reunião">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-orange-600" />
-                    Reunião
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="p-3 bg-blue-50 rounded border border-blue-200">
+            <p className="text-sm text-blue-900">
+              <strong>📌 Automação:</strong> O follow-up será enviado automaticamente na data agendada
+            </p>
           </div>
 
           <div>
-            <Label>Título da Ação</Label>
-            <Input
-              placeholder="Ex: Enviar proposta atualizada"
-              value={form.titulo}
-              onChange={(e) => setForm({...form, titulo: e.target.value})}
-            />
+            <Label>Oportunidade</Label>
+            <p className="font-semibold">{oportunidade?.titulo}</p>
+            <p className="text-sm text-slate-600">{oportunidade?.cliente_nome}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Data/Hora do Follow-up *</Label>
+              <Input
+                type="datetime-local"
+                value={followUp.data}
+                onChange={(e) => setFollowUp({ ...followUp, data: e.target.value })}
+                required
+                min={new Date().toISOString().slice(0, 16)}
+              />
+            </div>
+
+            <div>
+              <Label>Tipo *</Label>
+              <Select
+                value={followUp.tipo}
+                onValueChange={(value) => handleSelecionarTemplate(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="E-mail">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4" />
+                      E-mail
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="WhatsApp">
+                    <div className="flex items-center gap-2">
+                      <MessageCircle className="w-4 h-4" />
+                      WhatsApp
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Ligação">
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4" />
+                      Ligação
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Reunião">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Reunião
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div>
-            <Label>Descrição</Label>
+            <Label>Mensagem/Roteiro *</Label>
             <Textarea
-              placeholder="Detalhe o que será feito..."
-              value={form.descricao}
-              onChange={(e) => setForm({...form, descricao: e.target.value})}
-              rows={4}
+              value={followUp.mensagem}
+              onChange={(e) => setFollowUp({ ...followUp, mensagem: e.target.value })}
+              rows={10}
+              required
+              placeholder="Digite a mensagem ou roteiro do follow-up..."
             />
+            <p className="text-xs text-slate-500 mt-1">
+              A mensagem será enviada automaticamente na data agendada
+            </p>
           </div>
 
-          <div>
-            <Label>Data da Próxima Ação</Label>
-            <Input
-              type="date"
-              value={form.data_proxima_acao}
-              onChange={(e) => setForm({...form, data_proxima_acao: e.target.value})}
-            />
-          </div>
+          {oportunidade?.follow_ups_agendados?.length > 0 && (
+            <div className="p-3 bg-slate-50 rounded">
+              <h4 className="text-sm font-semibold mb-2">Follow-ups Agendados:</h4>
+              <div className="space-y-1">
+                {oportunidade.follow_ups_agendados.map((fu, idx) => (
+                  <div key={idx} className="text-xs flex items-center justify-between">
+                    <span>
+                      {fu.tipo} - {new Date(fu.data).toLocaleString('pt-BR')}
+                    </span>
+                    <span className={fu.enviado ? "text-green-600" : "text-orange-600"}>
+                      {fu.enviado ? "✓ Enviado" : "⏳ Agendado"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-          <div className="flex gap-2 pt-4">
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+          <div className="flex justify-end gap-3 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button 
-              onClick={() => agendarMutation.mutate()} 
-              disabled={!form.titulo || agendarMutation.isPending}
-              className="flex-1"
-            >
-              {agendarMutation.isPending ? 'Agendando...' : 'Agendar Follow-Up'}
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Calendar className="w-4 h-4 mr-2" />
+              Agendar Follow-up
             </Button>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
