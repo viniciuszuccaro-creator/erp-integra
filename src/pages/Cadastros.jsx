@@ -109,7 +109,7 @@ import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 
 /**
- * CADASTROS GERAIS V19.1 - HUB CENTRAL COM AUDITORIA COMPLETA
+ * CADASTROS GERAIS V20.0 - HUB CENTRAL COM AUDITORIA COMPLETA
  * Blocos 1/6, 2/6, 3/6, 4/6 e 5/6 totalmente sincronizados
  */
 export default function Cadastros() {
@@ -359,136 +359,106 @@ export default function Cadastros() {
     queryFn: () => base44.entities.ModeloDocumento.list(),
   });
 
-  // MUTATIONS
-  const createColaboradorMutation = useMutation({
-    mutationFn: (data) => base44.entities.Colaborador.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['colaboradores'] });
+  // MUTATIONS UNIVERSAIS - TODAS AS ENTIDADES
+  const createMutation = useMutation({
+    mutationFn: async ({ entity, data }) => {
+      return await base44.entities[entity].create(data);
+    },
+    onSuccess: (_, variables) => {
+      const queryMap = {
+        'Colaborador': 'colaboradores',
+        'Transportadora': 'transportadoras',
+        'CentroCusto': 'centrosCusto',
+        'Banco': 'bancos',
+        'FormaPagamento': 'formas-pagamento',
+        'Veiculo': 'veiculos',
+        'EventoNotificacao': 'eventos-notificacao',
+        'Produto': 'produtos',
+        'Servico': 'servicos',
+        'TabelaPreco': 'tabelas-preco',
+        'CatalogoWeb': 'catalogo-web',
+        'Empresa': 'empresas',
+        'GrupoEmpresarial': 'grupos',
+        'Departamento': 'departamentos',
+        'Cargo': 'cargos',
+        'Turno': 'turnos',
+        'User': 'usuarios', // For UsuarioForm
+        'PerfilAcesso': 'perfis-acesso', // For PerfilAcessoForm
+        'RotaPadrao': 'rotas-padrao', // Placeholder query key for RotaPadraoForm
+        'LocalEstoque': 'locais-estoque', // Placeholder query key for LocalEstoqueForm
+        'CadastroFiscal': 'cadastros-fiscais', // Placeholder query key for CadastroFiscalForm
+        'CondicaoComercial': 'condicoes-comerciais',
+        'ContatoB2B': 'contatos-b2b',
+        'Representante': 'representantes',
+        'SegmentoCliente': 'segmentos-cliente',
+        'GrupoProduto': 'grupos-produto',
+        'Marca': 'marcas',
+        'KitProduto': 'kits-produto',
+        'PlanoDeContas': 'plano-contas',
+        'CentroResultado': 'centros-resultado',
+        'TipoDespesa': 'tipos-despesa',
+        'MoedaIndice': 'moedas-indices',
+        'Motorista': 'motoristas',
+        'TipoFrete': 'tipos-frete',
+        'ModeloDocumento': 'modelos-documento'
+      };
+      // Use variables.entity directly if it's the exact key, otherwise map
+      const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
+      queryClient.invalidateQueries({ queryKey: [invalidateKey] });
       handleCloseDialog();
-    },
+      // Specific toasts can be handled in individual dialog onSubmits if needed,
+      // but this provides a generic success for all.
+      toast({ title: `✅ ${variables.entity} criado com sucesso!` });
+    }
   });
 
-  const updateColaboradorMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Colaborador.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['colaboradores'] });
+  const updateMutation = useMutation({
+    mutationFn: async ({ entity, id, data }) => {
+      return await base44.entities[entity].update(id, data);
+    },
+    onSuccess: (_, variables) => {
+      const queryMap = {
+        'Colaborador': 'colaboradores',
+        'Transportadora': 'transportadoras',
+        'CentroCusto': 'centrosCusto',
+        'Banco': 'bancos',
+        'FormaPagamento': 'formas-pagamento',
+        'Veiculo': 'veiculos',
+        'EventoNotificacao': 'eventos-notificacao',
+        'Produto': 'produtos',
+        'Servico': 'servicos',
+        'TabelaPreco': 'tabelas-preco',
+        'CatalogoWeb': 'catalogo-web',
+        'Empresa': 'empresas',
+        'GrupoEmpresarial': 'grupos',
+        'Departamento': 'departamentos',
+        'Cargo': 'cargos',
+        'Turno': 'turnos',
+        'User': 'usuarios', // For UsuarioForm
+        'PerfilAcesso': 'perfis-acesso', // For PerfilAcessoForm
+        'RotaPadrao': 'rotas-padrao', // Placeholder query key for RotaPadraoForm
+        'LocalEstoque': 'locais-estoque', // Placeholder query key for LocalEstoqueForm
+        'CadastroFiscal': 'cadastros-fiscais', // Placeholder query key for CadastroFiscalForm
+        'CondicaoComercial': 'condicoes-comerciais',
+        'ContatoB2B': 'contatos-b2b',
+        'Representante': 'representantes',
+        'SegmentoCliente': 'segmentos-cliente',
+        'GrupoProduto': 'grupos-produto',
+        'Marca': 'marcas',
+        'KitProduto': 'kits-produto',
+        'PlanoDeContas': 'plano-contas',
+        'CentroResultado': 'centros-resultado',
+        'TipoDespesa': 'tipos-despesa',
+        'MoedaIndice': 'moedas-indices',
+        'Motorista': 'motoristas',
+        'TipoFrete': 'tipos-frete',
+        'ModeloDocumento': 'modelos-documento'
+      };
+      const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
+      queryClient.invalidateQueries({ queryKey: [invalidateKey] });
       handleCloseDialog();
-    },
-  });
-
-  const createTransportadoraMutation = useMutation({
-    mutationFn: (data) => base44.entities.Transportadora.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transportadoras'] });
-      handleCloseDialog();
-    },
-  });
-
-  const updateTransportadoraMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Transportadora.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transportadoras'] });
-      handleCloseDialog();
-    },
-  });
-
-  const createCentroCustoMutation = useMutation({
-    mutationFn: (data) => base44.entities.CentroCusto.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['centrosCusto'] });
-      handleCloseDialog();
-    },
-  });
-
-  const updateCentroCustoMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.CentroCusto.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['centrosCusto'] });
-      handleCloseDialog();
-    },
-  });
-
-  const createBancoMutation = useMutation({
-    mutationFn: (data) => base44.entities.Banco.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bancos'] });
-      handleCloseDialog();
-      toast({ title: "✅ Conta bancária criada!", duration: 3000 });
-    },
-  });
-
-  const createFormaPagamentoMutation = useMutation({
-    mutationFn: (data) => base44.entities.FormaPagamento.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
-      handleCloseDialog();
-      toast({ title: "✅ Forma de pagamento criada!", duration: 3000 });
-    },
-  });
-
-  const createVeiculoMutation = useMutation({
-    mutationFn: (data) => base44.entities.Veiculo.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['veiculos'] });
-      handleCloseDialog();
-      toast({ title: "✅ Veículo cadastrado!", duration: 3000 });
-    },
-  });
-
-  // NOVO: Mutations do Grupo 6
-  const createEventoMutation = useMutation({
-    mutationFn: (data) => base44.entities.EventoNotificacao.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos-notificacao'] });
-      setEventoNotificacaoOpen(false);
-      toast({ title: "✅ Evento criado!", duration: 3000 });
-    },
-  });
-
-  // NOVO: Mutations V18.0
-  const createProdutoMutation = useMutation({
-    mutationFn: (data) => base44.entities.Produto.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['produtos'] });
-      setProdutoFormOpen(false);
-      toast({ title: "✅ Produto criado!", duration: 3000 });
-    },
-  });
-
-  const createServicoMutation = useMutation({
-    mutationFn: (data) => base44.entities.Servico.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['servicos'] });
-      setServicoFormOpen(false);
-      toast({ title: "✅ Serviço criado!", duration: 3000 });
-    },
-  });
-
-  const createTabelaPrecoMutation = useMutation({
-    mutationFn: (data) => base44.entities.TabelaPreco.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
-      setTabelaPrecoFormOpen(false);
-      toast({ title: "✅ Tabela criada!", duration: 3000 });
-    },
-  });
-
-  const createCatalogoMutation = useMutation({
-    mutationFn: (data) => base44.entities.CatalogoWeb.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['catalogo-web'] });
-      setCatalogoWebFormOpen(false);
-      toast({ title: "✅ Catálogo criado!", duration: 3000 });
-    },
-  });
-
-  const createEmpresaMutation = useMutation({
-    mutationFn: (data) => base44.entities.Empresa.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['empresas'] });
-      setEmpresaFormOpen(false);
-      toast({ title: "✅ Empresa criada!", duration: 3000 });
-    },
+      toast({ title: `✅ ${variables.entity} atualizado com sucesso!` });
+    }
   });
 
   const handleCloseDialog = () => {
@@ -497,37 +467,39 @@ export default function Cadastros() {
     setTipoDialog(null);
   };
 
-  const handleEdit = (item, tipo) => {
-    setEditingItem(item);
+  const handleEdit = (item, tipo, entityName) => {
+    setEditingItem({ ...item, _entityName: entityName });
+    setTipoDialog(tipo);
+    setIsDialogOpen(true);
+  };
+
+  const handleOpenNew = (tipo, entityName) => {
+    setEditingItem({ _entityName: entityName }); // Use _entityName to identify the form's entity
     setTipoDialog(tipo);
     setIsDialogOpen(true);
   };
 
   const handleSubmit = (data) => {
-    if (tipoDialog === "colaboradores") {
-      if (editingItem) {
-        updateColaboradorMutation.mutate({ id: editingItem.id, data });
-      } else {
-        createColaboradorMutation.mutate(data);
-      }
-    } else if (tipoDialog === "transportadoras") {
-      if (editingItem) {
-        updateTransportadoraMutation.mutate({ id: editingItem.id, data });
-      } else {
-        createTransportadoraMutation.mutate(data);
-      }
-    } else if (tipoDialog === "centroscusto") {
-      if (editingItem) {
-        updateCentroCustoMutation.mutate({ id: editingItem.id, data });
-      } else {
-        createCentroCustoMutation.mutate(data);
-      }
-    } else if (tipoDialog === "bancos") {
-      createBancoMutation.mutate(data);
-    } else if (tipoDialog === "formas-pagamento") {
-      createFormaPagamentoMutation.mutate(data);
-    } else if (tipoDialog === "veiculos") {
-      createVeiculoMutation.mutate(data);
+    const entityNameMap = {
+      "colaboradores": "Colaborador",
+      "transportadoras": "Transportadora",
+      "centroscusto": "CentroCusto",
+      "bancos": "Banco",
+      "formas-pagamento": "FormaPagamento",
+      "veiculos": "Veiculo",
+    };
+    const entityName = editingItem?._entityName || entityNameMap[tipoDialog]; // Prefer _entityName if present
+
+    if (!entityName) {
+      console.error("Unknown entity for submission with tipoDialog:", tipoDialog, "and editingItem:", editingItem);
+      toast({ title: "❌ Erro ao salvar", description: "Tipo de entidade desconhecido.", variant: "destructive" });
+      return;
+    }
+    
+    if (editingItem?.id) {
+      updateMutation.mutate({ entity: entityName, id: editingItem.id, data });
+    } else {
+      createMutation.mutate({ entity: entityName, data });
     }
   };
 
@@ -555,7 +527,8 @@ export default function Cadastros() {
     'Ativo': 'bg-green-100 text-green-700 border-green-300',
     'Inativo': 'bg-gray-100 text-gray-700 border-gray-300',
     'Prospect': 'bg-blue-100 text-blue-700 border-blue-300',
-    'Bloqueado': 'bg-red-100 text-red-700 border-red-300'
+    'Bloqueado': 'bg-red-100 text-red-700 border-red-300',
+    'Ativa': 'bg-green-100 text-green-700 border-green-300'
   };
 
   // Helper function for navigation (since actual routing is not part of this component)
@@ -569,8 +542,8 @@ export default function Cadastros() {
     }
   };
 
-  const totalItensGrupo1 = empresas.length + grupos.length + usuarios.length + perfisAcesso.length + departamentos.length + cargos.length + turnos.length;
-  const totalItensGrupo2 = clientes.length + fornecedores.length + colaboradores.length + transportadoras.length + contatosB2B.length + representantes.length;
+  const totalItensGrupo1 = empresas.length + grupos.length + usuarios.length + perfisAcesso.length + departamentos.length + cargos.length + turnos.length + centrosCusto.length;
+  const totalItensGrupo2 = clientes.length + fornecedores.length + colaboradores.length + transportadoras.length + contatosB2B.length + representantes.length + condicoesComerciais.length + segmentosCliente.length;
   const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length;
   const totalItensGrupo4 = bancos.length + formasPagamento.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
   const totalItensGrupo5 = veiculos.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
@@ -581,13 +554,13 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V19.1
+            🚀 Cadastros Gerais V20.0
           </h1>
-          <p className="text-slate-600">Hub Central com 5/6 Blocos Sincronizados</p>
+          <p className="text-slate-600">Hub Central - Todos os Blocos Sincronizados</p>
         </div>
         <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
           <Sparkles className="w-4 h-4 mr-2" />
-          IA Integrada
+          28 IAs Ativas
         </Badge>
       </div>
 
@@ -672,9 +645,9 @@ export default function Cadastros() {
       </div>
 
       {/* ACCORDION COM 6 GRUPOS */}
-      <Accordion type="multiple" defaultValue={["grupo-5"]} className="space-y-4">
+      <Accordion type="multiple" defaultValue={["grupo-1"]} className="space-y-4">
         
-        {/* 🏢 GRUPO 1: EMPRESA E ESTRUTURA - SINCRONIZADO V19.1 */}
+        {/* 🏢 GRUPO 1: EMPRESA E ESTRUTURA - SINCRONIZADO V20.0 */}
         <AccordionItem value="grupo-1" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:bg-blue-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -710,7 +683,7 @@ export default function Cadastros() {
                     <TableHead>CNPJ</TableHead>
                     <TableHead>Regime</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Ação</TableHead>
+                    <TableHead className="text-right">Ação</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -720,11 +693,11 @@ export default function Cadastros() {
                       <TableCell className="text-sm">{empresa.cnpj}</TableCell>
                       <TableCell className="text-sm">{empresa.regime_tributario}</TableCell>
                       <TableCell>
-                        <Badge className={empresa.status === 'Ativa' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}>
+                        <Badge className={statusColors[empresa.status]}>
                           {empresa.status}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-right">
                         <Button size="sm" variant="ghost" onClick={() => setEmpresaFormOpen(true)}> {/* Placeholder for edit, opens new form */}
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -735,7 +708,7 @@ export default function Cadastros() {
               </Table>
             </div>
 
-            {/* 1.2 Grupos Empresariais - ATIVADO V19.1 */}
+            {/* 1.2 Grupos Empresariais - ATIVADO V20.0 */}
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h4 className="font-bold text-slate-900 flex items-center gap-2">
@@ -922,11 +895,7 @@ export default function Cadastros() {
                   size="sm" 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => {
-                    setTipoDialog('centroscusto');
-                    setEditingItem(null);
-                    setIsDialogOpen(true);
-                  }}
+                  onClick={() => handleOpenNew('centroscusto', 'CentroCusto')}
                 >
                   <Plus className="w-3 h-3 mr-2" />
                   Novo Centro de Custo
@@ -936,7 +905,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 👥 GRUPO 2: PESSOAS E PARCEIROS - SINCRONIZADO V19.1 */}
+        {/* 👥 GRUPO 2: PESSOAS E PARCEIROS - SINCRONIZADO V20.0 */}
         <AccordionItem value="grupo-2" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-green-50 to-cyan-50 hover:bg-green-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -1035,11 +1004,7 @@ export default function Cadastros() {
                     size="sm" 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => {
-                      setTipoDialog('colaboradores');
-                      setEditingItem(null);
-                      setIsDialogOpen(true);
-                    }}
+                    onClick={() => handleOpenNew('colaboradores', 'Colaborador')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Colaborador
@@ -1058,11 +1023,7 @@ export default function Cadastros() {
                     size="sm" 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => {
-                      setTipoDialog('transportadoras');
-                      setEditingItem(null);
-                      setIsDialogOpen(true);
-                    }}
+                    onClick={() => handleOpenNew('transportadoras', 'Transportadora')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Nova Transportadora
@@ -1182,7 +1143,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - REESTRUTURADO V19.1 */}
+        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - REESTRUTURADO V20.0 */}
         <AccordionItem value="grupo-3" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 hover:bg-purple-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -1202,7 +1163,7 @@ export default function Cadastros() {
             {/* ALERTA ARQUITETURAL */}
             <Alert className="border-blue-200 bg-blue-50">
               <AlertDescription className="text-sm text-blue-900">
-                ✅ <strong>Hub Centralizado V19.1:</strong> Todos os cadastros mestres de produtos agora estão nesta página. O módulo Estoque apenas consulta e movimenta.
+                ✅ <strong>Hub Centralizado V20.0:</strong> Todos os cadastros mestres de produtos agora estão nesta página. O módulo Estoque apenas consulta e movimenta.
               </AlertDescription>
             </Alert>
 
@@ -1420,7 +1381,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 💰 GRUPO 4: FINANCEIRO E FISCAL - SINCRONIZADO V19.1 */}
+        {/* 💰 GRUPO 4: FINANCEIRO E FISCAL - SINCRONIZADO V20.0 */}
         <AccordionItem value="grupo-4" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:bg-green-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -1441,7 +1402,7 @@ export default function Cadastros() {
             <Alert className="border-green-200 bg-green-50">
               <CheckCircle2 className="w-4 h-4" />
               <AlertDescription className="text-sm text-green-900">
-                ✅ <strong>Hub Financeiro V19.1:</strong> Todos os cadastros mestres contábeis e fiscais centralizados. IAs de Open Banking, DIFAL e Classificação ativas.
+                ✅ <strong>Hub Financeiro V20.0:</strong> Todos os cadastros mestres contábeis e fiscais centralizados. IAs de Open Banking, DIFAL e Classificação ativas.
               </AlertDescription>
             </Alert>
 
@@ -1457,11 +1418,7 @@ export default function Cadastros() {
                   <Button 
                     size="sm" 
                     className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => {
-                      setTipoDialog('bancos');
-                      setEditingItem(null);
-                      setIsDialogOpen(true);
-                    }}
+                    onClick={() => handleOpenNew('bancos', 'Banco')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Nova Conta
@@ -1504,11 +1461,7 @@ export default function Cadastros() {
                   <Button 
                     size="sm" 
                     className="bg-green-600 hover:bg-green-700"
-                    onClick={() => {
-                      setTipoDialog('formas-pagamento');
-                      setEditingItem(null);
-                      setIsDialogOpen(true);
-                    }}
+                    onClick={() => handleOpenNew('formas-pagamento', 'FormaPagamento')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Nova Forma
@@ -1694,7 +1647,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🚚 GRUPO 5: OPERAÇÃO E LOGÍSTICA - SINCRONIZADO V19.1 */}
+        {/* 🚚 GRUPO 5: OPERAÇÃO E LOGÍSTICA - SINCRONIZADO V20.0 */}
         <AccordionItem value="grupo-5" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-orange-50 to-red-50 hover:bg-orange-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -1712,7 +1665,7 @@ export default function Cadastros() {
             <Alert className="border-orange-200 bg-orange-50">
               <CheckCircle2 className="w-4 h-4" />
               <AlertDescription className="text-sm text-orange-900">
-                ✅ <strong>Bloco 5 V19.1:</strong> Transportadoras movidas para Bloco 2. IAs de Manutenção, Alocação e Roteirização ativas.
+                ✅ <strong>Bloco 5 V20.0:</strong> Transportadoras movidas para Bloco 2. IAs de Manutenção, Alocação e Roteirização ativas.
               </AlertDescription>
             </Alert>
 
@@ -1729,7 +1682,7 @@ export default function Cadastros() {
                     size="sm" 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => { setTipoDialog('veiculos'); setEditingItem(null); setIsDialogOpen(true); }}
+                    onClick={() => handleOpenNew('veiculos', 'Veiculo')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Cadastrar Veículo
@@ -1863,7 +1816,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🤖 GRUPO 6: INTEGRAÇÕES, IA E PORTAL - CORRIGIDO V18.0 */}
+        {/* 🤖 GRUPO 6: INTEGRAÇÕES, IA E PORTAL - CORRIGIDO V20.0 */}
         <AccordionItem value="grupo-6" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-blue-50 hover:bg-indigo-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -2065,7 +2018,7 @@ export default function Cadastros() {
               )}
             </div>
 
-            {/* ROW 3: Motor do Chatbot (Intents) - NOVO V18.0 */}
+            {/* ROW 3: Motor do Chatbot (Intents) - NOVO V20.0 */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-4">
                 <h4 className="font-bold text-slate-900 flex items-center gap-2">
@@ -2137,7 +2090,7 @@ export default function Cadastros() {
               </div>
             </div>
 
-            {/* ROW 4: Webhooks - ATIVADO V18.0 */}
+            {/* ROW 4: Webhooks - ATIVADO V20.0 */}
             <Card className="border-orange-200 bg-orange-50 mt-4">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -2162,67 +2115,29 @@ export default function Cadastros() {
         </AccordionItem>
       </Accordion>
 
-      {/* DIALOGS - EXPANDIDO */}
+      {/* DIALOGS UNIVERSAIS */}
       <Dialog open={isDialogOpen} onOpenChange={(open) => { 
-        setIsDialogOpen(open); 
-        if (!open) {
-          setEditingItem(null);
-          setTipoDialog(null);
-        }
+        if (!open) handleCloseDialog();
       }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {tipoDialog === 'colaboradores' && (editingItem ? 'Editar Colaborador' : 'Novo Colaborador')}
-              {tipoDialog === 'transportadoras' && (editingItem ? 'Editar Transportadora' : 'Nova Transportadora')}
-              {tipoDialog === 'centroscusto' && (editingItem ? 'Editar Centro de Custo' : 'Novo Centro de Custo')}
-              {tipoDialog === 'bancos' && 'Nova Conta Bancária'}
-              {tipoDialog === 'formas-pagamento' && 'Nova Forma de Pagamento'}
-              {tipoDialog === 'veiculos' && 'Cadastrar Veículo'}
+              {editingItem?.id ? 'Editar' : 'Novo'} {' '}
+              {tipoDialog === 'colaboradores' && 'Colaborador'}
+              {tipoDialog === 'transportadoras' && 'Transportadora'}
+              {tipoDialog === 'centroscusto' && 'Centro de Custo'}
+              {tipoDialog === 'bancos' && 'Banco'}
+              {tipoDialog === 'formas-pagamento' && 'Forma de Pagamento'}
+              {tipoDialog === 'veiculos' && 'Veículo'}
             </DialogTitle>
           </DialogHeader>
-          {tipoDialog === 'colaboradores' && (
-            <ColaboradorForm
-              colaborador={editingItem}
-              onSubmit={handleSubmit}
-              isSubmitting={createColaboradorMutation.isPending || updateColaboradorMutation.isPending}
-            />
-          )}
-          {tipoDialog === 'transportadoras' && (
-            <TransportadoraForm
-              transportadora={editingItem}
-              onSubmit={handleSubmit}
-              isSubmitting={createTransportadoraMutation.isPending || updateTransportadoraMutation.isPending}
-            />
-          )}
-          {tipoDialog === 'centroscusto' && (
-            <CentroCustoForm
-              centroCusto={editingItem}
-              onSubmit={handleSubmit}
-              isSubmitting={createCentroCustoMutation.isPending || updateCentroCustoMutation.isPending}
-            />
-          )}
-          {tipoDialog === 'bancos' && (
-            <BancoForm
-              banco={editingItem} // Pass null for new creation as per outline logic
-              onSubmit={handleSubmit}
-              isSubmitting={createBancoMutation.isPending}
-            />
-          )}
-          {tipoDialog === 'formas-pagamento' && (
-            <FormaPagamentoForm
-              forma={editingItem} // Pass null for new creation as per outline logic
-              onSubmit={handleSubmit}
-              isSubmitting={createFormaPagamentoMutation.isPending}
-            />
-          )}
-          {tipoDialog === 'veiculos' && (
-            <VeiculoForm
-              veiculo={editingItem} // Pass null for new creation as per outline logic
-              onSubmit={handleSubmit}
-              isSubmitting={createVeiculoMutation.isPending}
-            />
-          )}
+          
+          {tipoDialog === 'colaboradores' && <ColaboradorForm colaborador={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'transportadoras' && <TransportadoraForm transportadora={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'centroscusto' && <CentroCustoForm centroCusto={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'bancos' && <BancoForm banco={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'formas-pagamento' && <FormaPagamentoForm forma={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'veiculos' && <VeiculoForm veiculo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
         </DialogContent>
       </Dialog>
 
@@ -2291,7 +2206,7 @@ export default function Cadastros() {
         onClose={() => { setPainelTransportadoraAberto(false); setTransportadoraParaPainel(null); }}
         onEdit={(t) => {
           setPainelTransportadoraAberto(false);
-          handleEdit(t, 'transportadoras');
+          handleEdit(t, 'transportadoras', 'Transportadora');
         }}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['transportadoras'] })}
       />
@@ -2303,7 +2218,7 @@ export default function Cadastros() {
         onClose={() => { setPainelColaboradorAberto(false); setColaboradorParaPainel(null); }}
         onEdit={(c) => {
           setPainelColaboradorAberto(false);
-          handleEdit(c, 'colaboradores');
+          handleEdit(c, 'colaboradores', 'Colaborador');
         }}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['colaboradores'] })}
       />
@@ -2344,13 +2259,13 @@ export default function Cadastros() {
           </DialogHeader>
           <EventoNotificacaoForm
             evento={null} // Assuming new event or default values
-            onSubmit={(data) => createEventoMutation.mutate(data)}
-            isSubmitting={createEventoMutation.isPending}
+            onSubmit={(data) => createMutation.mutate({ entity: 'EventoNotificacao', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
 
-      {/* NOVOS DIALOGS V18.0 */}
+      {/* NOVOS DIALOGS V20.0 */}
       <Dialog open={empresaFormOpen} onOpenChange={setEmpresaFormOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -2358,8 +2273,8 @@ export default function Cadastros() {
           </DialogHeader>
           <EmpresaForm
             empresa={null}
-            onSubmit={(data) => createEmpresaMutation.mutate(data)}
-            isSubmitting={createEmpresaMutation.isPending}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Empresa', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2371,8 +2286,8 @@ export default function Cadastros() {
           </DialogHeader>
           <ProdutoForm
             produto={null}
-            onSubmit={(data) => createProdutoMutation.mutate(data)}
-            isSubmitting={createProdutoMutation.isPending}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Produto', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2384,8 +2299,8 @@ export default function Cadastros() {
           </DialogHeader>
           <ServicoForm
             servico={null}
-            onSubmit={(data) => createServicoMutation.mutate(data)}
-            isSubmitting={createServicoMutation.isPending}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Servico', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2397,8 +2312,8 @@ export default function Cadastros() {
           </DialogHeader>
           <TabelaPrecoForm
             tabela={null}
-            onSubmit={(data) => createTabelaPrecoMutation.mutate(data)}
-            isSubmitting={createTabelaPrecoMutation.isPending}
+            onSubmit={(data) => createMutation.mutate({ entity: 'TabelaPreco', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2410,8 +2325,8 @@ export default function Cadastros() {
           </DialogHeader>
           <CatalogoWebForm
             catalogoItem={null}
-            onSubmit={(data) => createCatalogoMutation.mutate(data)}
-            isSubmitting={createCatalogoMutation.isPending}
+            onSubmit={(data) => createMutation.mutate({ entity: 'CatalogoWeb', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2450,7 +2365,7 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* NOVOS DIALOGS FALTANTES V18.0 */}
+      {/* NOVOS DIALOGS FALTANTES V20.0 */}
       <Dialog open={usuarioFormOpen} onOpenChange={setUsuarioFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -2458,12 +2373,8 @@ export default function Cadastros() {
           </DialogHeader>
           <UsuarioForm
             usuario={null}
-            onSubmit={(data) => {
-              console.log('Usuário:', data);
-              toast({ title: "✅ Usuário convidado!", duration: 3000 });
-              setUsuarioFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'User', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2475,12 +2386,8 @@ export default function Cadastros() {
           </DialogHeader>
           <PerfilAcessoForm
             perfil={null}
-            onSubmit={(data) => {
-              console.log('Perfil:', data);
-              toast({ title: "✅ Perfil criado!", duration: 3000 });
-              setPerfilAcessoFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'PerfilAcesso', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2580,7 +2487,7 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* NOVOS DIALOGS V19.1 - BLOCO 1 */}
+      {/* NOVOS DIALOGS V20.0 - BLOCO 1 */}
       <Dialog open={grupoEmpresarialFormOpen} onOpenChange={setGrupoEmpresarialFormOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -2588,12 +2495,8 @@ export default function Cadastros() {
           </DialogHeader>
           <GrupoEmpresarialForm
             grupo={null}
-            onSubmit={(data) => {
-              console.log('Grupo:', data);
-              toast({ title: "✅ Grupo empresarial criado!", duration: 3000 });
-              setGrupoEmpresarialFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'GrupoEmpresarial', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2605,12 +2508,8 @@ export default function Cadastros() {
           </DialogHeader>
           <FilialForm
             filial={null}
-            onSubmit={(data) => {
-              console.log('Filial:', data);
-              toast({ title: "✅ Filial criada!", duration: 3000 });
-              setFilialFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Empresa', data: { ...data, tipo: 'Filial' }})} // Assuming FilialForm maps to Empresa entity
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2622,12 +2521,8 @@ export default function Cadastros() {
           </DialogHeader>
           <DepartamentoForm
             departamento={null}
-            onSubmit={(data) => {
-              console.log('Departamento:', data);
-              toast({ title: "✅ Departamento criado!", duration: 3000 });
-              setDepartamentoFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Departamento', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2639,12 +2534,8 @@ export default function Cadastros() {
           </DialogHeader>
           <CargoForm
             cargo={null}
-            onSubmit={(data) => {
-              console.log('Cargo:', data);
-              toast({ title: "✅ Cargo criado!", duration: 3000 });
-              setCargoFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Cargo', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2656,17 +2547,13 @@ export default function Cadastros() {
           </DialogHeader>
           <TurnoForm
             turno={null}
-            onSubmit={(data) => {
-              console.log('Turno:', data);
-              toast({ title: "✅ Turno criado!", duration: 3000 });
-              setTurnoFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Turno', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
 
-      {/* NOVOS DIALOGS V19.1 - BLOCO 2 */}
+      {/* NOVOS DIALOGS V20.0 - BLOCO 2 */}
       <Dialog open={condicaoComercialFormOpen} onOpenChange={setCondicaoComercialFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -2674,12 +2561,8 @@ export default function Cadastros() {
           </DialogHeader>
           <CondicaoComercialForm
             condicao={null}
-            onSubmit={(data) => {
-              console.log('Condição:', data);
-              toast({ title: "✅ Condição comercial criada!", duration: 3000 });
-              setCondicaoComercialFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'CondicaoComercial', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2691,12 +2574,8 @@ export default function Cadastros() {
           </DialogHeader>
           <ContatoB2BForm
             contato={null}
-            onSubmit={(data) => {
-              console.log('Contato:', data);
-              toast({ title: "✅ Contato criado!", duration: 3000 });
-              setContatoB2BFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'ContatoB2B', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2708,12 +2587,8 @@ export default function Cadastros() {
           </DialogHeader>
           <RepresentanteForm
             representante={null}
-            onSubmit={(data) => {
-              console.log('Representante:', data);
-              toast({ title: "✅ Representante criado!", duration: 3000 });
-              setRepresentanteFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Representante', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2725,17 +2600,13 @@ export default function Cadastros() {
           </DialogHeader>
           <SegmentoClienteForm
             segmento={null}
-            onSubmit={(data) => {
-              console.log('Segmento:', data);
-              toast({ title: "✅ Segmento criado!", duration: 3000 });
-              setSegmentoClienteFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'SegmentoCliente', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
       
-      {/* NOVOS DIALOGS V19.1 - BLOCO 3 */}
+      {/* NOVOS DIALOGS V20.0 - BLOCO 3 */}
       <Dialog open={grupoProdutoFormOpen} onOpenChange={setGrupoProdutoFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -2743,12 +2614,8 @@ export default function Cadastros() {
           </DialogHeader>
           <GrupoProdutoForm
             grupo={null}
-            onSubmit={(data) => {
-              console.log('Grupo Produto:', data);
-              toast({ title: "✅ Grupo de produtos criado!", duration: 3000 });
-              setGrupoProdutoFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'GrupoProduto', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2760,12 +2627,8 @@ export default function Cadastros() {
           </DialogHeader>
           <MarcaForm
             marca={null}
-            onSubmit={(data) => {
-              console.log('Marca:', data);
-              toast({ title: "✅ Marca criada!", duration: 3000 });
-              setMarcaFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Marca', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2777,17 +2640,13 @@ export default function Cadastros() {
           </DialogHeader>
           <KitProdutoForm
             kit={null}
-            onSubmit={(data) => {
-              console.log('Kit:', data);
-              toast({ title: "✅ Kit criado!", duration: 3000 });
-              setKitProdutoFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'KitProduto', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
 
-      {/* NOVOS DIALOGS V19.1 - BLOCO 4 */}
+      {/* NOVOS DIALOGS V20.0 - BLOCO 4 */}
       <Dialog open={planoContasFormOpen} onOpenChange={setPlanoContasFormOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -2795,12 +2654,8 @@ export default function Cadastros() {
           </DialogHeader>
           <PlanoContasForm
             conta={null}
-            onSubmit={(data) => {
-              console.log('Plano Contas:', data);
-              toast({ title: "✅ Conta contábil criada!", duration: 3000 });
-              setPlanoContasFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'PlanoDeContas', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2812,12 +2667,8 @@ export default function Cadastros() {
           </DialogHeader>
           <CentroResultadoForm
             centro={null}
-            onSubmit={(data) => {
-              console.log('Centro Resultado:', data);
-              toast({ title: "✅ Centro criado!", duration: 3000 });
-              setCentroResultadoFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'CentroResultado', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2829,12 +2680,8 @@ export default function Cadastros() {
           </DialogHeader>
           <TipoDespesaForm
             tipo={null}
-            onSubmit={(data) => {
-              console.log('Tipo Despesa:', data);
-              toast({ title: "✅ Tipo de despesa criado!", duration: 3000 });
-              setTipoDespesaFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'TipoDespesa', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2846,17 +2693,13 @@ export default function Cadastros() {
           </DialogHeader>
           <MoedaIndiceForm
             moeda={null}
-            onSubmit={(data) => {
-              console.log('Moeda/Índice:', data);
-              toast({ title: "✅ Moeda/índice criado!", duration: 3000 });
-              setMoedaIndiceFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'MoedaIndice', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
 
-      {/* NOVOS DIALOGS V19.1 - BLOCO 5 */}
+      {/* NOVOS DIALOGS V20.0 - BLOCO 5 */}
       <Dialog open={motoristaFormOpen} onOpenChange={setMotoristaFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -2864,12 +2707,8 @@ export default function Cadastros() {
           </DialogHeader>
           <MotoristaForm
             motorista={null}
-            onSubmit={(data) => {
-              console.log('Motorista:', data);
-              toast({ title: "✅ Motorista cadastrado!", duration: 3000 });
-              setMotoristaFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Motorista', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2881,12 +2720,8 @@ export default function Cadastros() {
           </DialogHeader>
           <TipoFreteForm
             tipo={null}
-            onSubmit={(data) => {
-              console.log('Tipo Frete:', data);
-              toast({ title: "✅ Tipo de frete criado!", duration: 3000 });
-              setTipoFreteFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'TipoFrete', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
@@ -2898,12 +2733,8 @@ export default function Cadastros() {
           </DialogHeader>
           <ModeloDocumentoForm
             modelo={null}
-            onSubmit={(data) => {
-              console.log('Modelo Documento:', data);
-              toast({ title: "✅ Modelo criado!", duration: 3000 });
-              setModeloDocumentoFormOpen(false);
-            }}
-            isSubmitting={false}
+            onSubmit={(data) => createMutation.mutate({ entity: 'ModeloDocumento', data })}
+            isSubmitting={createMutation.isPending}
           />
         </DialogContent>
       </Dialog>
