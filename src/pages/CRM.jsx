@@ -1,194 +1,178 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  TrendingUp, Users, Calendar, MessageCircle, Target, 
-  DollarSign, Phone, Mail, AlertTriangle 
-} from "lucide-react";
-import FunilVisual from "@/components/crm/FunilVisual";
+import { Badge } from "@/components/ui/badge";
+import { Users, Target, TrendingUp, AlertCircle, Zap, Plus } from "lucide-react";
+import FunilVisual from "../components/crm/FunilVisual";
+import AgendarFollowUp from "../components/crm/AgendarFollowUp";
+import ConverterOportunidade from "../components/crm/ConverterOportunidade";
 import { useUser } from "@/components/lib/UserContext";
+import { toast } from "sonner";
 
 /**
- * CRM - RELACIONAMENTO V21.1
- * Funil Visual, Oportunidades e IA de Lead Scoring
+ * Módulo CRM - V21.1 Fase 1
+ * Funil de Vendas + IA Lead Scoring + Gestão de Oportunidades
  */
 export default function CRM() {
   const { user } = useUser();
-  const [activeTab, setActiveTab] = useState('funil');
+  const [oportunidadeSelecionada, setOportunidadeSelecionada] = useState(null);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [converterOpen, setConverterOpen] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { data: oportunidades = [] } = useQuery({
+  const { data: oportunidades = [], isLoading } = useQuery({
     queryKey: ['oportunidades'],
-    queryFn: async () => {
-      if (user?.role !== 'admin') {
-        return await base44.entities.Oportunidade.filter({ responsavel_id: user.id });
-      }
-      return await base44.entities.Oportunidade.list('-created_date');
-    }
+    queryFn: () => base44.entities.Oportunidade.list('-data_abertura'),
   });
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list()
+    queryFn: () => base44.entities.Cliente.list(),
   });
 
   const { data: interacoes = [] } = useQuery({
     queryKey: ['interacoes'],
-    queryFn: () => base44.entities.Interacao.list('-data_interacao', 50)
+    queryFn: () => base44.entities.Interacao.list('-data_interacao'),
   });
 
-  const clientesRiscoChurn = clientes.filter(c => c.risco_churn === 'Alto' || c.risco_churn === 'Crítico');
-  const oportEmAberto = oportunidades.filter(o => o.status === 'Aberto' || o.status === 'Em Andamento');
-  const valorPipeline = oportunidades.reduce((sum, o) => sum + (o.valor_estimado || 0), 0);
+  // KPIs
+  const oportunidadesAbertas = oportunidades.filter(o => o.status === 'Aberto');
+  const oportunidadesGanhas = oportunidades.filter(o => o.status === 'Ganho');
+  const oportunidadesPerdidas = oportunidades.filter(o => o.status === 'Perdido');
+  
+  const valorTotalPipeline = oportunidadesAbertas.reduce((sum, o) => sum + (o.valor_estimado || 0), 0);
+  const valorGanho = oportunidadesGanhas.reduce((sum, o) => sum + (o.valor_estimado || 0), 0);
+  
   const taxaConversao = oportunidades.length > 0 
-    ? (oportunidades.filter(o => o.status === 'Ganho').length / oportunidades.length * 100).toFixed(1)
+    ? ((oportunidadesGanhas.length / oportunidades.length) * 100).toFixed(1) 
     : 0;
+
+  // Oportunidades em risco (sem contato há mais de 7 dias)
+  const oportunidadesEmRisco = oportunidadesAbertas.filter(o => {
+    return o.dias_sem_contato > 7;
+  });
+
+  // Oportunidades do chatbot pendentes
+  const oportunidadesChatbot = oportunidades.filter(o => 
+    o.origem === 'Chatbot' && o.etapa === 'Prospecção'
+  );
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">🎯 CRM - Relacionamento</h1>
-        <p className="text-slate-600">Pipeline de Vendas e Gestão de Oportunidades</p>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">CRM - Relacionamento com Cliente</h1>
+          <p className="text-slate-600">Funil de vendas, oportunidades e gestão de leads</p>
+        </div>
+        
+        <div className="flex gap-2">
+          {oportunidadesChatbot.length > 0 && (
+            <Badge className="bg-purple-100 text-purple-700 px-4 py-2">
+              <Zap className="w-4 h-4 mr-2" />
+              {oportunidadesChatbot.length} lead(s) do chatbot
+            </Badge>
+          )}
+          {oportunidadesEmRisco.length > 0 && (
+            <Badge className="bg-orange-100 text-orange-700 px-4 py-2">
+              <AlertCircle className="w-4 h-4 mr-2" />
+              {oportunidadesEmRisco.length} em risco de churn
+            </Badge>
+          )}
+        </div>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-0 shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Target className="w-5 h-5 text-blue-600" />
-              <TrendingUp className="w-4 h-4 text-slate-400" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Pipeline Total</CardTitle>
+            <Target className="w-5 h-5 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-blue-600">
+              R$ {valorTotalPipeline.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
-            <div className="text-2xl font-bold text-blue-600">{oportEmAberto.length}</div>
-            <p className="text-xs text-slate-600">Oportunidades Ativas</p>
+            <p className="text-xs text-slate-500 mt-1">
+              {oportunidadesAbertas.length} oportunidade(s)
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <DollarSign className="w-5 h-5 text-green-600" />
-            </div>
-            <div className="text-2xl font-bold text-green-600">
-              R$ {(valorPipeline/1000).toFixed(0)}k
-            </div>
-            <p className="text-xs text-slate-600">Valor Pipeline</p>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Oportunidades Ganhas</CardTitle>
+            <TrendingUp className="w-5 h-5 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600">{oportunidadesGanhas.length}</div>
+            <p className="text-xs text-slate-500 mt-1">
+              R$ {valorGanho.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
-            </div>
-            <div className="text-2xl font-bold text-purple-600">{taxaConversao}%</div>
-            <p className="text-xs text-slate-600">Taxa Conversão</p>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Taxa de Conversão</CardTitle>
+            <Target className="w-5 h-5 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-purple-600">{taxaConversao}%</div>
+            <p className="text-xs text-slate-500 mt-1">
+              {oportunidadesGanhas.length} / {oportunidades.length} total
+            </p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
-            </div>
-            <div className="text-2xl font-bold text-orange-600">{clientesRiscoChurn.length}</div>
-            <p className="text-xs text-slate-600">Risco Churn (IA)</p>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Total de Clientes</CardTitle>
+            <Users className="w-5 h-5 text-indigo-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-indigo-600">{clientes.length}</div>
+            <p className="text-xs text-slate-500 mt-1">
+              {clientes.filter(c => c.status === 'Ativo').length} ativo(s)
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="funil">
-            <Target className="w-4 h-4 mr-2" />
-            Funil de Vendas
-          </TabsTrigger>
-          <TabsTrigger value="interacoes">
-            <MessageCircle className="w-4 h-4 mr-2" />
-            Interações
-          </TabsTrigger>
-          <TabsTrigger value="churn">
-            <AlertTriangle className="w-4 h-4 mr-2" />
-            Alerta Churn
-          </TabsTrigger>
-        </TabsList>
+      <Card className="border-green-200 bg-green-50">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 text-sm text-green-900">
+            <Zap className="w-4 h-4" />
+            <span className="font-semibold">IAs CRM Ativas:</span>
+            <span>Lead Scoring • Priorização Inteligente • Detecção de Churn • Sentimento de Oportunidade</span>
+          </div>
+        </CardContent>
+      </Card>
 
-        <TabsContent value="funil">
-          <FunilVisual />
-        </TabsContent>
+      <FunilVisual 
+        oportunidades={oportunidades}
+        isLoading={isLoading}
+        onSelectOportunidade={(op) => {
+          setOportunidadeSelecionada(op);
+          setFollowUpOpen(true);
+        }}
+        onConverterOportunidade={(op) => {
+          setOportunidadeSelecionada(op);
+          setConverterOpen(true);
+        }}
+      />
 
-        <TabsContent value="interacoes">
-          <Card>
-            <CardHeader>
-              <CardTitle>Histórico de Interações</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {interacoes.slice(0, 10).map(int => (
-                  <div key={int.id} className="p-3 border rounded">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="font-semibold text-sm">{int.titulo}</p>
-                        <p className="text-xs text-slate-600">{int.cliente_nome}</p>
-                      </div>
-                      <Badge className="text-xs">{int.tipo}</Badge>
-                    </div>
-                    <p className="text-sm text-slate-700">{int.descricao}</p>
-                    <p className="text-xs text-slate-500 mt-2">{int.responsavel} • {int.data_interacao}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+      <AgendarFollowUp 
+        open={followUpOpen}
+        onOpenChange={setFollowUpOpen}
+        oportunidade={oportunidadeSelecionada}
+      />
 
-        <TabsContent value="churn">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-orange-600" />
-                Clientes em Risco de Churn (IA)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3">
-                {clientesRiscoChurn.map(cliente => (
-                  <Card key={cliente.id} className="border-orange-200 bg-orange-50">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-semibold">{cliente.nome}</p>
-                          <p className="text-sm text-slate-600">
-                            {cliente.dias_sem_comprar} dias sem comprar
-                          </p>
-                        </div>
-                        <Badge className="bg-orange-600 text-white">
-                          {cliente.risco_churn}
-                        </Badge>
-                      </div>
-                      <Button size="sm" className="mt-3 w-full" variant="outline">
-                        Criar Oportunidade Recuperação
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-
-                {clientesRiscoChurn.length === 0 && (
-                  <div className="text-center py-8 text-slate-500">
-                    <Target className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>Nenhum cliente em risco detectado pela IA</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <ConverterOportunidade
+        open={converterOpen}
+        onOpenChange={setConverterOpen}
+        oportunidade={oportunidadeSelecionada}
+      />
     </div>
   );
 }

@@ -1,111 +1,112 @@
 import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, FileText, ArrowRight, CheckCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, TrendingUp, DollarSign } from "lucide-react";
+import { toast } from "sonner";
+import { createPageUrl } from "@/utils";
 
-export default function ConverterOportunidade({ oportunidade, open, onClose, onConverter }) {
-  const [tipoConversao, setTipoConversao] = useState("orcamento");
+/**
+ * Converter Oportunidade - V21.1
+ * Gera Pedido a partir da Oportunidade
+ */
+export default function ConverterOportunidade({ open, onOpenChange, oportunidade }) {
+  const queryClient = useQueryClient();
 
-  const handleConverter = () => {
-    onConverter(oportunidade, tipoConversao);
-  };
+  const converterMutation = useMutation({
+    mutationFn: async () => {
+      // Gerar número de pedido
+      const pedidos = await base44.entities.Pedido.list();
+      const numeroPedido = `PED${(pedidos.length + 1).toString().padStart(6, '0')}`;
+
+      // Criar pedido
+      const pedido = await base44.entities.Pedido.create({
+        numero_pedido: numeroPedido,
+        tipo: 'Pedido',
+        tipo_pedido: 'Revenda',
+        origem_pedido: 'CRM',
+        cliente_id: oportunidade.cliente_id,
+        cliente_nome: oportunidade.cliente_nome,
+        vendedor: oportunidade.responsavel,
+        vendedor_id: oportunidade.responsavel_id,
+        data_pedido: new Date().toISOString().split('T')[0],
+        valor_total: oportunidade.valor_estimado || 0,
+        status: 'Rascunho',
+        observacoes_internas: `Convertido da oportunidade: ${oportunidade.titulo}`,
+        itens_revenda: [],
+      });
+
+      // Atualizar oportunidade
+      await base44.entities.Oportunidade.update(oportunidade.id, {
+        status: 'Ganho',
+        etapa: 'Fechamento',
+        data_fechamento: new Date().toISOString().split('T')[0],
+        pedido_gerado_id: pedido.id
+      });
+
+      return pedido;
+    },
+    onSuccess: (pedido) => {
+      queryClient.invalidateQueries(['oportunidades']);
+      queryClient.invalidateQueries(['pedidos']);
+      toast.success('Oportunidade convertida em pedido!');
+      onOpenChange(false);
+      
+      // Redirecionar para o pedido
+      setTimeout(() => {
+        window.location.href = createPageUrl('Comercial');
+      }, 1500);
+    },
+  });
+
+  if (!oportunidade) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Converter Oportunidade em Venda</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-green-600" />
+            Converter em Pedido
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="p-4 bg-green-50 rounded border border-green-200">
-            <div className="flex items-center gap-3 mb-3">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-              <div>
-                <h4 className="font-semibold text-green-900">Pronto para Converter!</h4>
-                <p className="text-sm text-green-700">
-                  A oportunidade será convertida em um documento de venda
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <Label>Oportunidade</Label>
-            <div className="p-3 bg-slate-50 rounded">
-              <p className="font-semibold">{oportunidade?.titulo}</p>
-              <p className="text-sm text-slate-600">{oportunidade?.cliente_nome}</p>
-              <p className="text-sm text-green-600 font-semibold mt-1">
-                Valor: R$ {(oportunidade?.valor_estimado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        <div className="space-y-4 py-4">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h4 className="font-semibold text-blue-900 mb-2">{oportunidade.titulo}</h4>
+            <div className="space-y-1 text-sm text-blue-700">
+              <p><strong>Cliente:</strong> {oportunidade.cliente_nome}</p>
+              <p><strong>Responsável:</strong> {oportunidade.responsavel}</p>
+              <p>
+                <strong>Valor Estimado:</strong> R$ {(oportunidade.valor_estimado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>
 
-          <div>
-            <Label>Converter em *</Label>
-            <Select value={tipoConversao} onValueChange={setTipoConversao}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="orcamento">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-blue-600" />
-                    <div>
-                      <p className="font-semibold">Orçamento</p>
-                      <p className="text-xs text-slate-600">Gerar proposta formal para o cliente</p>
-                    </div>
-                  </div>
-                </SelectItem>
-                <SelectItem value="pedido">
-                  <div className="flex items-center gap-2">
-                    <ShoppingCart className="w-4 h-4 text-green-600" />
-                    <div>
-                      <p className="font-semibold">Pedido Direto</p>
-                      <p className="text-xs text-slate-600">Converter diretamente em pedido</p>
-                    </div>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="p-3 bg-blue-50 rounded border border-blue-200">
-            <h4 className="text-sm font-semibold text-blue-900 mb-2">
-              O que acontecerá:
-            </h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li className="flex items-start gap-2">
-                <ArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>Um novo {tipoConversao === "orcamento" ? "orçamento" : "pedido"} será criado</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <ArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>Os dados da oportunidade serão transferidos</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <ArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>A oportunidade será marcada como "Ganho"</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <ArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>Você poderá editar os detalhes na tela de {tipoConversao === "orcamento" ? "orçamento" : "pedido"}</span>
-              </li>
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingUp className="w-5 h-5 text-green-600" />
+              <span className="font-semibold text-green-900">O que acontecerá:</span>
+            </div>
+            <ul className="space-y-1 text-sm text-green-700">
+              <li>✓ Um pedido em Rascunho será criado</li>
+              <li>✓ Você será redirecionado para finalizá-lo</li>
+              <li>✓ A oportunidade será marcada como "Ganho"</li>
             </ul>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex gap-2 pt-4">
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
               Cancelar
             </Button>
             <Button 
-              onClick={handleConverter}
-              className="bg-green-600 hover:bg-green-700"
+              onClick={() => converterMutation.mutate()} 
+              disabled={converterMutation.isPending}
+              className="flex-1 bg-green-600 hover:bg-green-700"
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Converter Agora
+              {converterMutation.isPending ? 'Convertendo...' : 'Converter em Pedido'}
             </Button>
           </div>
         </div>
