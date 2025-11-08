@@ -1,336 +1,101 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from "recharts";
-import { TrendingUp, TrendingDown, DollarSign, CreditCard, Download, Filter } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, BarChart3, PieChart } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from "recharts";
 
 /**
- * Relatórios Financeiros Avançados
+ * Relatório Financeiro - V21.3
+ * Análises de recebimento, pagamento e margem
  */
-export default function RelatorioFinanceiro({ empresaId }) {
-  const [periodoInicio, setPeriodoInicio] = useState("");
-  const [periodoFim, setPeriodoFim] = useState("");
-  const [filtroCliente, setFiltroCliente] = useState("todos");
+export default function RelatorioFinanceiro({ contasReceber = [], contasPagar = [] }) {
+  const totalRecebido = contasReceber
+    .filter(c => c.status === 'Recebido')
+    .reduce((sum, c) => sum + (c.valor_recebido || c.valor || 0), 0);
 
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list('-data_vencimento'),
+  const totalPago = contasPagar
+    .filter(c => c.status === 'Pago')
+    .reduce((sum, c) => sum + (c.valor_pago || c.valor || 0), 0);
+
+  const saldoLiquido = totalRecebido - totalPago;
+
+  // Receitas por mês
+  const receitasPorMes = {};
+  contasReceber.filter(c => c.status === 'Recebido').forEach(c => {
+    const mes = c.data_recebimento?.slice(0, 7) || 'Sem data';
+    receitasPorMes[mes] = (receitasPorMes[mes] || 0) + (c.valor_recebido || c.valor || 0);
   });
 
-  const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar'],
-    queryFn: () => base44.entities.ContaPagar.list('-data_vencimento'),
-  });
-
-  // Filtrar por empresa se necessário
-  const receberFiltradas = empresaId 
-    ? contasReceber.filter(c => c.empresa_id === empresaId)
-    : contasReceber;
-
-  const pagarFiltradas = empresaId
-    ? contasPagar.filter(c => c.empresa_id === empresaId)
-    : contasPagar;
-
-  // Por Forma de Pagamento
-  const porFormaPagamento = {};
-  receberFiltradas.filter(c => c.status === "Recebido").forEach(c => {
-    const forma = c.forma_recebimento || "Outros";
-    if (!porFormaPagamento[forma]) {
-      porFormaPagamento[forma] = { forma, valor: 0, quantidade: 0 };
-    }
-    porFormaPagamento[forma].valor += c.valor_recebido || c.valor || 0;
-    porFormaPagamento[forma].quantidade += 1;
-  });
-
-  const dadosFormaPagamento = Object.values(porFormaPagamento);
-
-  // Cobranças Enviadas vs Pagas
-  const cobrancasGeradas = receberFiltradas.filter(c => 
-    c.status_cobranca && c.status_cobranca !== "nao_gerada"
-  ).length;
-
-  const cobrancasPagas = receberFiltradas.filter(c => 
-    c.status_cobranca === "paga" || c.status === "Recebido"
-  ).length;
-
-  const taxaEfetividade = cobrancasGeradas > 0 
-    ? ((cobrancasPagas / cobrancasGeradas) * 100).toFixed(1)
-    : 0;
-
-  // Baixas Automáticas vs Manuais
-  const baixasAutomaticas = receberFiltradas.filter(c => 
-    c.status === "Recebido" && c.webhook_status === "pago"
-  ).length;
-
-  const baixasManuais = receberFiltradas.filter(c => 
-    c.status === "Recebido" && !c.webhook_status
-  ).length;
-
-  // Provisão de Recebimento
-  const hoje = new Date();
-  const em30dias = new Date(hoje.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const em60dias = new Date(hoje.getTime() + 60 * 24 * 60 * 60 * 1000);
-  const em90dias = new Date(hoje.getTime() + 90 * 24 * 60 * 60 * 1000);
-
-  const provisao = {
-    ate30: receberFiltradas
-      .filter(c => c.status === "Pendente" && new Date(c.data_vencimento) <= em30dias)
-      .reduce((sum, c) => sum + (c.valor || 0), 0),
-    ate60: receberFiltradas
-      .filter(c => c.status === "Pendente" && new Date(c.data_vencimento) <= em60dias && new Date(c.data_vencimento) > em30dias)
-      .reduce((sum, c) => sum + (c.valor || 0), 0),
-    ate90: receberFiltradas
-      .filter(c => c.status === "Pendente" && new Date(c.data_vencimento) <= em90dias && new Date(c.data_vencimento) > em60dias)
-      .reduce((sum, c) => sum + (c.valor || 0), 0)
-  };
-
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+  const dadosGrafico = Object.entries(receitasPorMes)
+    .sort()
+    .slice(-6)
+    .map(([mes, valor]) => ({
+      mes,
+      receita: valor,
+      despesa: contasPagar
+        .filter(c => c.status === 'Pago' && c.data_pagamento?.slice(0, 7) === mes)
+        .reduce((s, c) => s + (c.valor_pago || c.valor || 0), 0)
+    }));
 
   return (
     <div className="space-y-6">
-      {/* Filtros */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-green-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Total Recebido</CardTitle>
+            <TrendingUp className="w-5 h-5 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-green-600">
+              R$ {totalRecebido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-red-200">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Total Pago</CardTitle>
+            <TrendingDown className="w-5 h-5 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-red-600">
+              R$ {totalPago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`border-0 shadow-md ${saldoLiquido >= 0 ? 'border-blue-200' : 'border-orange-200'}`}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Saldo Líquido</CardTitle>
+            <DollarSign className={`w-5 h-5 ${saldoLiquido >= 0 ? 'text-blue-600' : 'text-orange-600'}`} />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-3xl font-bold ${saldoLiquido >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+              R$ {saldoLiquido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4">
-            <div>
-              <Label>Período Início</Label>
-              <Input
-                type="date"
-                value={periodoInicio}
-                onChange={(e) => setPeriodoInicio(e.target.value)}
-                className="mt-2"
-              />
-            </div>
-            <div>
-              <Label>Período Fim</Label>
-              <Input
-                type="date"
-                value={periodoFim}
-                onChange={(e) => setPeriodoFim(e.target.value)}
-                className="mt-2"
-              />
-            </div>
-            <div>
-              <Label>Cliente</Label>
-              <Select value={filtroCliente} onValueChange={setFiltroCliente}>
-                <SelectTrigger className="mt-2 w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+        <CardHeader>
+          <CardTitle>Receitas vs Despesas (Últimos 6 Meses)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={dadosGrafico}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="mes" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="receita" fill="#10b981" name="Receitas" />
+              <Bar dataKey="despesa" fill="#ef4444" name="Despesas" />
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
-
-      <Tabs defaultValue="formas-pagamento">
-        <TabsList className="bg-white border flex-wrap h-auto">
-          <TabsTrigger value="formas-pagamento">
-            <CreditCard className="w-4 h-4 mr-2" />
-            Formas de Pagamento
-          </TabsTrigger>
-          <TabsTrigger value="efetividade">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Efetividade
-          </TabsTrigger>
-          <TabsTrigger value="provisao">
-            <DollarSign className="w-4 h-4 mr-2" />
-            Provisão
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="formas-pagamento">
-          <div className="grid lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader className="bg-slate-50 border-b">
-                <CardTitle className="text-base">Recebimentos por Forma</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                {dadosFormaPagamento.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={dadosFormaPagamento}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ forma, valor }) => `${forma}: R$ ${valor.toFixed(0)}`}
-                        outerRadius={100}
-                        dataKey="valor"
-                      >
-                        {dadosFormaPagamento.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="text-center py-12 text-slate-500">
-                    <CreditCard className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p>Nenhum recebimento registrado</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="bg-slate-50 border-b">
-                <CardTitle className="text-base">Detalhamento</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead>Forma</TableHead>
-                      <TableHead className="text-right">Qtd</TableHead>
-                      <TableHead className="text-right">Valor</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dadosFormaPagamento.map((forma, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-medium">{forma.forma}</TableCell>
-                        <TableCell className="text-right">{forma.quantidade}</TableCell>
-                        <TableCell className="text-right font-semibold">
-                          R$ {forma.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="efetividade">
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader className="bg-blue-50">
-                <CardTitle className="text-sm">Cobranças Geradas</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 text-center">
-                <p className="text-4xl font-bold text-blue-900">{cobrancasGeradas}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="bg-green-50">
-                <CardTitle className="text-sm">Cobranças Pagas</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 text-center">
-                <p className="text-4xl font-bold text-green-900">{cobrancasPagas}</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="bg-purple-50">
-                <CardTitle className="text-sm">Taxa de Efetividade</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 text-center">
-                <p className="text-4xl font-bold text-purple-900">{taxaEfetividade}%</p>
-              </CardContent>
-            </Card>
-
-            <Card className="md:col-span-3">
-              <CardHeader className="bg-slate-50 border-b">
-                <CardTitle className="text-base">Baixas Automáticas vs Manuais</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={[
-                    { tipo: 'Automáticas', quantidade: baixasAutomaticas },
-                    { tipo: 'Manuais', quantidade: baixasManuais }
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="tipo" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="quantidade" fill="#3b82f6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="provisao">
-          <Card>
-            <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-base">Provisão de Recebimento (Aging)</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-3 gap-6 mb-6">
-                <Card className="bg-green-50 border-green-200">
-                  <CardContent className="p-6 text-center">
-                    <p className="text-sm text-green-700 mb-2">Até 30 dias</p>
-                    <p className="text-3xl font-bold text-green-900">
-                      R$ {provisao.ate30.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-yellow-50 border-yellow-200">
-                  <CardContent className="p-6 text-center">
-                    <p className="text-sm text-yellow-700 mb-2">31 a 60 dias</p>
-                    <p className="text-3xl font-bold text-yellow-900">
-                      R$ {provisao.ate60.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-orange-50 border-orange-200">
-                  <CardContent className="p-6 text-center">
-                    <p className="text-sm text-orange-700 mb-2">61 a 90 dias</p>
-                    <p className="text-3xl font-bold text-orange-900">
-                      R$ {provisao.ate90.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={[
-                  { periodo: '0-30 dias', valor: provisao.ate30 },
-                  { periodo: '31-60 dias', valor: provisao.ate60 },
-                  { periodo: '61-90 dias', valor: provisao.ate90 }
-                ]}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="periodo" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} />
-                  <Bar dataKey="valor" fill="#3b82f6" />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }
