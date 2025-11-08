@@ -1,0 +1,605 @@
+import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Building2, 
+  Plus, 
+  Search, 
+  Edit, 
+  MapPin,
+  Phone,
+  Mail,
+  FileText,
+  TrendingUp,
+  Users,
+  ShoppingCart,
+  DollarSign,
+  Package,
+  Eye
+} from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+
+export default function Empresas() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingEmpresa, setEditingEmpresa] = useState(null);
+  const [viewingEmpresa, setViewingEmpresa] = useState(null);
+  const [formData, setFormData] = useState({
+    razao_social: "",
+    nome_fantasia: "",
+    cnpj: "",
+    inscricao_estadual: "",
+    regime_tributario: "Simples Nacional",
+    tipo: "Matriz",
+    endereco: {
+      logradouro: "",
+      numero: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+      cep: ""
+    },
+    contato: {
+      telefone: "",
+      email: ""
+    },
+    status: "Ativa",
+    permite_emissao_fiscal: true
+  });
+
+  const queryClient = useQueryClient();
+
+  const { data: empresas = [], isLoading } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list('-created_date'),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.Empresa.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['empresas'] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast.success("Empresa cadastrada com sucesso!");
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.Empresa.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['empresas'] });
+      setIsDialogOpen(false);
+      setEditingEmpresa(null);
+      resetForm();
+      toast.success("Empresa atualizada com sucesso!");
+    },
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editingEmpresa) {
+      updateMutation.mutate({ id: editingEmpresa.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (empresa) => {
+    setEditingEmpresa(empresa);
+    setFormData({
+      ...empresa,
+      endereco: empresa.endereco || { logradouro: "", numero: "", bairro: "", cidade: "", estado: "", cep: "" },
+      contato: empresa.contato || { telefone: "", email: "" }
+    });
+    setIsDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      razao_social: "",
+      nome_fantasia: "",
+      cnpj: "",
+      inscricao_estadual: "",
+      regime_tributario: "Simples Nacional",
+      tipo: "Matriz",
+      endereco: {
+        logradouro: "",
+        numero: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        cep: ""
+      },
+      contato: {
+        telefone: "",
+        email: ""
+      },
+      status: "Ativa",
+      permite_emissao_fiscal: true
+    });
+  };
+
+  const filteredEmpresas = empresas.filter(e =>
+    e.razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.nome_fantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.cnpj?.includes(searchTerm)
+  );
+
+  const statusColors = {
+    'Ativa': 'bg-green-100 text-green-700 border-green-200',
+    'Inativa': 'bg-gray-100 text-gray-700 border-gray-200',
+    'Suspensa': 'bg-red-100 text-red-700 border-red-200'
+  };
+
+  const tipoColors = {
+    'Matriz': 'bg-blue-500 text-white',
+    'Filial': 'bg-purple-500 text-white'
+  };
+
+  // KPIs gerais
+  const totalEmpresas = empresas.length;
+  const empresasAtivas = empresas.filter(e => e.status === 'Ativa').length;
+  const matrizes = empresas.filter(e => e.tipo === 'Matriz').length;
+  const filiais = empresas.filter(e => e.tipo === 'Filial').length;
+
+  return (
+    <div className="p-6 lg:p-8 space-y-6">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+            <Building2 className="w-8 h-8 text-blue-600" />
+            Gestão de Empresas e Filiais
+          </h1>
+          <p className="text-slate-600">Controle multi-empresa e consolidação corporativa</p>
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-600">Total de Empresas</p>
+                <p className="text-2xl font-bold text-blue-600">{totalEmpresas}</p>
+              </div>
+              <Building2 className="w-8 h-8 text-blue-400 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-600">Empresas Ativas</p>
+                <p className="text-2xl font-bold text-green-600">{empresasAtivas}</p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-green-400 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-600">Matrizes</p>
+                <p className="text-2xl font-bold text-indigo-600">{matrizes}</p>
+              </div>
+              <Building2 className="w-8 h-8 text-indigo-400 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-600">Filiais</p>
+                <p className="text-2xl font-bold text-purple-600">{filiais}</p>
+              </div>
+              <Building2 className="w-8 h-8 text-purple-400 opacity-50" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filtros e Ações */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+          <Input
+            placeholder="Buscar empresa..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) {
+            setEditingEmpresa(null);
+            resetForm();
+          }
+        }}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Empresa
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingEmpresa ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="razao_social">Razão Social *</Label>
+                  <Input
+                    id="razao_social"
+                    value={formData.razao_social}
+                    onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                  <Input
+                    id="nome_fantasia"
+                    value={formData.nome_fantasia}
+                    onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="cnpj">CNPJ *</Label>
+                  <Input
+                    id="cnpj"
+                    value={formData.cnpj}
+                    onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                  <Input
+                    id="inscricao_estadual"
+                    value={formData.inscricao_estadual}
+                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="regime_tributario">Regime Tributário</Label>
+                  <Select
+                    value={formData.regime_tributario}
+                    onValueChange={(value) => setFormData({ ...formData, regime_tributario: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
+                      <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
+                      <SelectItem value="Lucro Real">Lucro Real</SelectItem>
+                      <SelectItem value="MEI">MEI</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="tipo">Tipo</Label>
+                  <Select
+                    value={formData.tipo}
+                    onValueChange={(value) => setFormData({ ...formData, tipo: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Matriz">Matriz</SelectItem>
+                      <SelectItem value="Filial">Filial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Endereço */}
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-3">Endereço</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="cep">CEP</Label>
+                    <Input
+                      id="cep"
+                      value={formData.endereco.cep}
+                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value }})}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="logradouro">Logradouro</Label>
+                    <Input
+                      id="logradouro"
+                      value={formData.endereco.logradouro}
+                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, logradouro: e.target.value }})}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 mt-3">
+                  <div>
+                    <Label htmlFor="numero">Número</Label>
+                    <Input
+                      id="numero"
+                      value={formData.endereco.numero}
+                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value }})}
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="bairro">Bairro</Label>
+                    <Input
+                      id="bairro"
+                      value={formData.endereco.bairro}
+                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value }})}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4 mt-3">
+                  <div className="col-span-2">
+                    <Label htmlFor="cidade">Cidade</Label>
+                    <Input
+                      id="cidade"
+                      value={formData.endereco.cidade}
+                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value }})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="estado">UF</Label>
+                    <Input
+                      id="estado"
+                      maxLength={2}
+                      value={formData.endereco.estado}
+                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value }})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contato */}
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-3">Contato</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="telefone">Telefone</Label>
+                    <Input
+                      id="telefone"
+                      value={formData.contato.telefone}
+                      onChange={(e) => setFormData({ ...formData, contato: { ...formData.contato, telefone: e.target.value }})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email">E-mail</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.contato.email}
+                      onChange={(e) => setFormData({ ...formData, contato: { ...formData.contato, email: e.target.value }})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {editingEmpresa ? 'Atualizar' : 'Cadastrar'}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Lista de Empresas */}
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead>Empresa</TableHead>
+                <TableHead>CNPJ</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Regime</TableHead>
+                <TableHead>Localização</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-center">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredEmpresas.map((empresa) => (
+                <TableRow key={empresa.id} className="hover:bg-slate-50">
+                  <TableCell>
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-slate-900">{empresa.nome_fantasia || empresa.razao_social}</p>
+                        <p className="text-xs text-slate-500">{empresa.razao_social}</p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-mono text-sm">{empresa.cnpj}</span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={tipoColors[empresa.tipo]}>
+                      {empresa.tipo}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm">{empresa.regime_tributario}</span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 text-sm">
+                      <MapPin className="w-3 h-3 text-slate-400" />
+                      <span>{empresa.endereco?.cidade || '-'}/{empresa.endereco?.estado || '-'}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={statusColors[empresa.status]}>
+                      {empresa.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setViewingEmpresa(empresa)}
+                        title="Ver detalhes"
+                      >
+                        <Eye className="w-4 h-4 text-blue-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleEdit(empresa)}
+                        title="Editar"
+                      >
+                        <Edit className="w-4 h-4 text-slate-600" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {filteredEmpresas.length === 0 && (
+            <div className="text-center py-12 text-slate-500">
+              <Building2 className="w-16 h-16 mx-auto mb-4 opacity-30" />
+              <p>Nenhuma empresa encontrada</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Dialog de Visualização */}
+      <Dialog open={!!viewingEmpresa} onOpenChange={() => setViewingEmpresa(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              {viewingEmpresa?.nome_fantasia || viewingEmpresa?.razao_social}
+            </DialogTitle>
+          </DialogHeader>
+          {viewingEmpresa && (
+            <div className="space-y-6">
+              {/* Informações Básicas */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Informações Cadastrais</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-slate-600">Razão Social</p>
+                      <p className="font-medium">{viewingEmpresa.razao_social}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600">Nome Fantasia</p>
+                      <p className="font-medium">{viewingEmpresa.nome_fantasia || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-slate-600">CNPJ</p>
+                      <p className="font-medium font-mono">{viewingEmpresa.cnpj}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600">Inscrição Estadual</p>
+                      <p className="font-medium">{viewingEmpresa.inscricao_estadual || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-slate-600">Regime Tributário</p>
+                      <p className="font-medium">{viewingEmpresa.regime_tributario}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600">Tipo</p>
+                      <Badge className={tipoColors[viewingEmpresa.tipo]}>
+                        {viewingEmpresa.tipo}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Endereço */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-blue-600" />
+                    Endereço
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm">
+                    {viewingEmpresa.endereco?.logradouro}, {viewingEmpresa.endereco?.numero}<br/>
+                    {viewingEmpresa.endereco?.bairro} - {viewingEmpresa.endereco?.cidade}/{viewingEmpresa.endereco?.estado}<br/>
+                    CEP: {viewingEmpresa.endereco?.cep}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Contato */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Phone className="w-5 h-5 text-green-600" />
+                    Contato
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm">{viewingEmpresa.contato?.telefone || '-'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-slate-400" />
+                    <span className="text-sm">{viewingEmpresa.contato?.email || '-'}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}

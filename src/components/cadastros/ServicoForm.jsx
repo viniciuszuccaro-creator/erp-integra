@@ -1,0 +1,124 @@
+import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Loader2 } from "lucide-react";
+
+export default function ServicoForm({ servico, onSubmit, isSubmitting }) {
+  const [formData, setFormData] = useState(servico || {
+    descricao: '',
+    codigo_servico: '',
+    tipo_servico: 'Produção',
+    unidade: 'HORA',
+    preco_servico: 0,
+    custo_hora_homem: 0,
+    tempo_execucao_medio_min: 0,
+    margem_servico: 30,
+    requer_especializacao: false,
+    aliquota_iss: 5,
+    ativo: true,
+    observacoes: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.descricao || !formData.preco_servico) {
+      alert('Preencha os campos obrigatórios');
+      return;
+    }
+    onSubmit(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label>Descrição do Serviço *</Label>
+        <Input
+          value={formData.descricao}
+          onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+          placeholder="Ex: Corte de Aço, Dobra, Soldagem"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Código</Label>
+          <Input
+            value={formData.codigo_servico}
+            onChange={(e) => setFormData({...formData, codigo_servico: e.target.value})}
+            placeholder="SRV-001"
+          />
+        </div>
+
+        <div>
+          <Label>Tipo de Serviço</Label>
+          <Select value={formData.tipo_servico} onValueChange={(v) => setFormData({...formData, tipo_servico: v})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Produção">Produção</SelectItem>
+              <SelectItem value="Manutenção">Manutenção</SelectItem>
+              <SelectItem value="Consultoria">Consultoria</SelectItem>
+              <SelectItem value="Logística">Logística</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Unidade de Cobrança</Label>
+          <Select value={formData.unidade} onValueChange={(v) => setFormData({...formData, unidade: v})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="HORA">Hora</SelectItem>
+              <SelectItem value="KG">Quilograma</SelectItem>
+              <SelectItem value="PEÇA">Peça</SelectItem>
+              <SelectItem value="MT">Metro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label>Preço do Serviço *</Label>
+          <Input
+            type="number"
+            step="0.01"
+            value={formData.preco_servico}
+            onChange={(e) => setFormData({...formData, preco_servico: parseFloat(e.target.value)})}
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label>Observações</Label>
+        <Textarea
+          value={formData.observacoes}
+          onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+          rows={3}
+        />
+      </div>
+
+      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+        <Label>Serviço Ativo</Label>
+        <Switch
+          checked={formData.ativo}
+          onCheckedChange={(v) => setFormData({...formData, ativo: v})}
+        />
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          {servico ? 'Atualizar' : 'Criar Serviço'}
+        </Button>
+      </div>
+    </form>
+  );
+}

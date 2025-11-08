@@ -1,0 +1,826 @@
+import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Edit, CheckCircle2, Send, Star } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+
+export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingOC, setEditingOC] = useState(null);
+  const [isAvaliacaoDialogOpen, setIsAvaliacaoDialogOpen] = useState(false);
+  const [ocSelecionada, setOcSelecionada] = useState(null);
+  const [isRecebimentoDialogOpen, setIsRecebimentoDialogOpen] = useState(false);
+
+  const [formData, setFormData] = useState({
+    numero_oc: "",
+    fornecedor_id: "",
+    fornecedor_nome: "",
+    data_solicitacao: new Date().toISOString().split('T')[0],
+    data_entrega_prevista: "",
+    valor_total: "",
+    prazo_entrega_acordado: "",
+    condicao_pagamento: "À Vista",
+    forma_pagamento: "Boleto",
+    observacoes: "",
+    itens: []
+  });
+
+  const [avaliacaoFormData, setAvaliacaoFormData] = useState({
+    nota: 5,
+    qualidade: 5,
+    prazo: 5,
+    preco: 5,
+    atendimento: 5,
+    comentario: ""
+  });
+
+  const [recebimentoFormData, setRecebimentoFormData] = useState({
+    data_entrega_real: new Date().toISOString().split('T')[0],
+    nota_fiscal_entrada: "",
+    observacoes: ""
+  });
+
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.OrdemCompra.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['ordensCompra']);
+      setIsDialogOpen(false);
+      resetForm();
+      toast({ title: "✅ Ordem de Compra criada com sucesso!" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.OrdemCompra.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['ordensCompra']);
+      setIsDialogOpen(false);
+      resetForm();
+      toast({ title: "✅ Ordem de Compra atualizada com sucesso!" });
+    },
+  });
+
+  const aprovarMutation = useMutation({
+    mutationFn: async ({ id, oc }) => {
+      const hoje = new Date().toISOString().split('T')[0];
+      
+      await base44.entities.OrdemCompra.update(id, {
+        status: 'Aprovada',
+        data_aprovacao: hoje,
+        historico: [
+          ...(oc.historico || []),
+          {
+            data: new Date().toISOString(),
+            status_anterior: oc.status,
+            status_novo: 'Aprovada',
+            usuario: 'Sistema',
+            observacao: 'Ordem de compra aprovada'
+          }
+        ]
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['ordensCompra']);
+      toast({ title: "✅ Ordem de Compra aprovada!" });
+    },
+  });
+
+  const enviarFornecedorMutation = useMutation({
+    mutationFn: async ({ id, oc }) => {
+      const hoje = new Date().toISOString().split('T')[0];
+      
+      await base44.entities.OrdemCompra.update(id, {
+        status: 'Enviada ao Fornecedor',
+        data_envio_fornecedor: hoje,
+        historico: [
+          ...(oc.historico || []),
+          {
+            data: new Date().toISOString(),
+            status_anterior: oc.status,
+            status_novo: 'Enviada ao Fornecedor',
+            usuario: 'Sistema',
+            observacao: 'Ordem enviada ao fornecedor'
+          }
+        ]
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['ordensCompra']);
+      toast({ 
+        title: "✅ OC Enviada ao Fornecedor!",
+        description: "E-mail enviado (se configurado)"
+      });
+    },
+  });
+
+  const receberMutation = useMutation({
+    mutationFn: async ({ id, oc, dados }) => {
+      const dataEnvio = new Date(oc.data_envio_fornecedor);
+      const dataRecebimento = new Date(dados.data_entrega_real);
+      const leadTimeReal = Math.floor((dataRecebimento - dataEnvio) / (1000 * 60 * 60 * 24));
+
+      // Atualizar OC
+      await base44.entities.OrdemCompra.update(id, {
+        status: 'Recebida',
+        data_entrega_real: dados.data_entrega_real,
+        nota_fiscal_entrada: dados.nota_fiscal_entrada,
+        lead_time_real: leadTimeReal,
+        historico: [
+          ...(oc.historico || []),
+          {
+            data: new Date().toISOString(),
+            status_anterior: oc.status,
+            status_novo: 'Recebida',
+            usuario: 'Sistema',
+            observacao: `Recebida. Lead time: ${leadTimeReal} dias`
+          }
+        ]
+      });
+
+      // Atualizar estatísticas do fornecedor
+      const fornecedor = fornecedores.find(f => f.id === oc.fornecedor_id);
+      if (fornecedor) {
+        const qtdCompras = (fornecedor.quantidade_compras || 0) + 1;
+        const valorTotal = (fornecedor.valor_total_compras || 0) + (oc.valor_total || 0);
+        
+        // Calcular lead time médio
+        const leadTimesAnteriores = fornecedor.lead_time_medio ? [fornecedor.lead_time_medio] : [];
+        const leadTimes = [...leadTimesAnteriores, leadTimeReal];
+        const leadTimeMedio = leadTimes.reduce((sum, lt) => sum + lt, 0) / leadTimes.length;
+
+        // Calcular % entregas no prazo
+        const prazoAcordado = oc.prazo_entrega_acordado || fornecedor.prazo_entrega_padrao || 0;
+        const noPrazo = leadTimeReal <= prazoAcordado;
+        const totalEntregasPrazo = (fornecedor.percentual_entregas_prazo || 0) * (qtdCompras - 1);
+        const novoPercentual = ((totalEntregasPrazo + (noPrazo ? 1 : 0)) / qtdCompras) * 100;
+
+        await base44.entities.Fornecedor.update(fornecedor.id, {
+          quantidade_compras: qtdCompras,
+          valor_total_compras: valorTotal,
+          ultima_compra: dados.data_entrega_real,
+          lead_time_medio: Math.round(leadTimeMedio),
+          percentual_entregas_prazo: Math.round(novoPercentual)
+        });
+      }
+
+      // Criar movimentação de estoque (entrada) para cada item
+      if (oc.itens && oc.itens.length > 0) {
+        for (const item of oc.itens) {
+          await base44.entities.MovimentacaoEstoque.create({
+            produto_id: item.produto_id,
+            produto_descricao: item.descricao,
+            tipo_movimentacao: 'Entrada',
+            quantidade: item.quantidade_solicitada,
+            data_movimentacao: dados.data_entrega_real,
+            documento: `OC-${oc.numero_oc}`,
+            motivo: `Recebimento de Ordem de Compra`,
+            valor_unitario: item.valor_unitario,
+            valor_total: item.valor_total,
+            responsavel: 'Sistema',
+            observacoes: dados.observacoes
+          });
+
+          // Atualizar estoque do produto
+          if (item.produto_id) {
+            const produto = await base44.entities.Produto.filter({ id: item.produto_id });
+            if (produto && produto.length > 0) {
+              const produtoAtual = produto[0];
+              await base44.entities.Produto.update(item.produto_id, {
+                estoque_atual: (produtoAtual.estoque_atual || 0) + item.quantidade_solicitada
+              });
+            }
+          }
+        }
+      }
+
+      return { leadTimeReal, fornecedorNome: oc.fornecedor_nome };
+    },
+    onSuccess: ({ leadTimeReal, fornecedorNome }) => {
+      queryClient.invalidateQueries(['ordensCompra']);
+      queryClient.invalidateQueries(['fornecedores']);
+      queryClient.invalidateQueries(['movimentacoes']);
+      queryClient.invalidateQueries(['produtos']);
+      
+      setIsRecebimentoDialogOpen(false);
+      
+      toast({ 
+        title: "✅ Recebimento Registrado!",
+        description: `Lead time: ${leadTimeReal} dias | Estoque atualizado`
+      });
+
+      // Abrir dialog de avaliação
+      setTimeout(() => {
+        setOcSelecionada(ocSelecionada); // Manter OC selecionada
+        setIsAvaliacaoDialogOpen(true);
+      }, 500);
+    },
+  });
+
+  const avaliarFornecedorMutation = useMutation({
+    mutationFn: async ({ oc, avaliacao }) => {
+      const notaMedia = (
+        avaliacao.qualidade +
+        avaliacao.prazo +
+        avaliacao.preco +
+        avaliacao.atendimento
+      ) / 4;
+
+      // Atualizar OC com avaliação
+      await base44.entities.OrdemCompra.update(oc.id, {
+        avaliacao_fornecedor: {
+          realizada: true,
+          data: new Date().toISOString(),
+          nota: notaMedia,
+          criterios: {
+            qualidade: avaliacao.qualidade,
+            prazo: avaliacao.prazo,
+            preco: avaliacao.preco,
+            atendimento: avaliacao.atendimento
+          },
+          comentario: avaliacao.comentario
+        }
+      });
+
+      // Adicionar avaliação ao histórico do fornecedor
+      const fornecedor = fornecedores.find(f => f.id === oc.fornecedor_id);
+      if (fornecedor) {
+        const novasAvaliacoes = [
+          ...(fornecedor.avaliacoes || []),
+          {
+            data: new Date().toISOString(),
+            nota: notaMedia,
+            criterios: {
+              qualidade: avaliacao.qualidade,
+              prazo: avaliacao.prazo,
+              preco: avaliacao.preco,
+              atendimento: avaliacao.atendimento
+            },
+            ordem_compra_id: oc.id,
+            avaliador: 'Sistema',
+            comentario: avaliacao.comentario
+          }
+        ];
+
+        // Calcular nota média do fornecedor
+        const somaNotas = novasAvaliacoes.reduce((sum, av) => sum + av.nota, 0);
+        const notaMediaFornecedor = somaNotas / novasAvaliacoes.length;
+
+        await base44.entities.Fornecedor.update(fornecedor.id, {
+          avaliacoes: novasAvaliacoes,
+          nota_media: parseFloat(notaMediaFornecedor.toFixed(2))
+        });
+      }
+
+      return { notaMedia, fornecedorNome: oc.fornecedor_nome };
+    },
+    onSuccess: ({ notaMedia, fornecedorNome }) => {
+      queryClient.invalidateQueries(['ordensCompra']);
+      queryClient.invalidateQueries(['fornecedores']);
+      setIsAvaliacaoDialogOpen(false);
+      setAvaliacaoFormData({
+        nota: 5,
+        qualidade: 5,
+        prazo: 5,
+        preco: 5,
+        atendimento: 5,
+        comentario: ""
+      });
+      toast({ 
+        title: "✅ Avaliação Registrada!",
+        description: `${fornecedorNome}: ${notaMedia.toFixed(1)} estrelas`
+      });
+    },
+  });
+
+  const resetForm = () => {
+    setFormData({
+      numero_oc: "",
+      fornecedor_id: "",
+      fornecedor_nome: "",
+      data_solicitacao: new Date().toISOString().split('T')[0],
+      data_entrega_prevista: "",
+      valor_total: "",
+      prazo_entrega_acordado: "",
+      condicao_pagamento: "À Vista",
+      forma_pagamento: "Boleto",
+      observacoes: "",
+      itens: []
+    });
+    setEditingOC(null);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    const fornecedorSelecionado = fornecedores.find(f => f.id === formData.fornecedor_id);
+    
+    const data = {
+      ...formData,
+      fornecedor_nome: fornecedorSelecionado?.nome || formData.fornecedor_nome,
+      valor_total: parseFloat(formData.valor_total),
+      prazo_entrega_acordado: parseInt(formData.prazo_entrega_acordado) || null
+    };
+
+    if (editingOC) {
+      updateMutation.mutate({ id: editingOC.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (oc) => {
+    setEditingOC(oc);
+    setFormData({
+      numero_oc: oc.numero_oc || "",
+      fornecedor_id: oc.fornecedor_id || "",
+      fornecedor_nome: oc.fornecedor_nome || "",
+      data_solicitacao: oc.data_solicitacao || new Date().toISOString().split('T')[0],
+      data_entrega_prevista: oc.data_entrega_prevista || "",
+      valor_total: oc.valor_total || "",
+      prazo_entrega_acordado: oc.prazo_entrega_acordado || "",
+      condicao_pagamento: oc.condicao_pagamento || "À Vista",
+      forma_pagamento: oc.forma_pagamento || "Boleto",
+      observacoes: oc.observacoes || "",
+      itens: oc.itens || []
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleReceberClick = (oc) => {
+    setOcSelecionada(oc);
+    setRecebimentoFormData({
+      data_entrega_real: new Date().toISOString().split('T')[0],
+      nota_fiscal_entrada: "",
+      observacoes: ""
+    });
+    setIsRecebimentoDialogOpen(true);
+  };
+
+  const filteredOCs = ordensCompra.filter(oc =>
+    oc.numero_oc?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    oc.fornecedor_nome?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const statusColors = {
+    'Solicitada': 'bg-blue-100 text-blue-700',
+    'Aprovada': 'bg-purple-100 text-purple-700',
+    'Enviada ao Fornecedor': 'bg-indigo-100 text-indigo-700',
+    'Em Processo': 'bg-yellow-100 text-yellow-700',
+    'Parcialmente Recebida': 'bg-cyan-100 text-cyan-700',
+    'Recebida': 'bg-green-100 text-green-700',
+    'Cancelada': 'bg-gray-100 text-gray-700'
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder="Buscar ordem..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) resetForm();
+        }}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Ordem de Compra
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{editingOC ? 'Editar OC' : 'Nova Ordem de Compra'}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="numero_oc">Número da OC *</Label>
+                  <Input
+                    id="numero_oc"
+                    value={formData.numero_oc}
+                    onChange={(e) => setFormData({...formData, numero_oc: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="fornecedor">Fornecedor *</Label>
+                  <Select
+                    value={formData.fornecedor_id}
+                    onValueChange={(value) => setFormData({...formData, fornecedor_id: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fornecedores.filter(f => f.status === 'Ativo').map(fornecedor => (
+                        <SelectItem key={fornecedor.id} value={fornecedor.id}>
+                          {fornecedor.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="data_solicitacao">Data Solicitação *</Label>
+                  <Input
+                    id="data_solicitacao"
+                    type="date"
+                    value={formData.data_solicitacao}
+                    onChange={(e) => setFormData({...formData, data_solicitacao: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="data_entrega_prevista">Entrega Prevista</Label>
+                  <Input
+                    id="data_entrega_prevista"
+                    type="date"
+                    value={formData.data_entrega_prevista}
+                    onChange={(e) => setFormData({...formData, data_entrega_prevista: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="valor_total">Valor Total *</Label>
+                  <Input
+                    id="valor_total"
+                    type="number"
+                    step="0.01"
+                    value={formData.valor_total}
+                    onChange={(e) => setFormData({...formData, valor_total: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="prazo_entrega">Prazo Entrega (dias)</Label>
+                  <Input
+                    id="prazo_entrega"
+                    type="number"
+                    value={formData.prazo_entrega_acordado}
+                    onChange={(e) => setFormData({...formData, prazo_entrega_acordado: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="condicao_pagamento">Condição Pagamento</Label>
+                  <Select
+                    value={formData.condicao_pagamento}
+                    onValueChange={(value) => setFormData({...formData, condicao_pagamento: value})}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="À Vista">À Vista</SelectItem>
+                      <SelectItem value="30 dias">30 dias</SelectItem>
+                      <SelectItem value="60 dias">60 dias</SelectItem>
+                      <SelectItem value="90 dias">90 dias</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="forma_pagamento">Forma Pagamento</Label>
+                  <Select
+                    value={formData.forma_pagamento}
+                    onValueChange={(value) => setFormData({...formData, forma_pagamento: value})}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Boleto">Boleto</SelectItem>
+                      <SelectItem value="Transferência">Transferência</SelectItem>
+                      <SelectItem value="Cartão">Cartão</SelectItem>
+                      <SelectItem value="PIX">PIX</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2">
+                  <Label htmlFor="observacoes">Observações</Label>
+                  <Textarea
+                    id="observacoes"
+                    value={formData.observacoes}
+                    onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+                    rows={3}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  {editingOC ? 'Atualizar' : 'Criar'} OC
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card className="border-0 shadow-md">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead>Número OC</TableHead>
+                <TableHead>Fornecedor</TableHead>
+                <TableHead>Data Solicitação</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Lead Time</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredOCs.map((oc) => (
+                <TableRow key={oc.id} className="hover:bg-slate-50">
+                  <TableCell className="font-medium">{oc.numero_oc}</TableCell>
+                  <TableCell>{oc.fornecedor_nome}</TableCell>
+                  <TableCell>{new Date(oc.data_solicitacao).toLocaleDateString('pt-BR')}</TableCell>
+                  <TableCell className="font-semibold">
+                    R$ {oc.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={statusColors[oc.status]}>
+                      {oc.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {oc.lead_time_real ? (
+                      <Badge variant="outline" className="text-xs">
+                        {oc.lead_time_real} dias
+                      </Badge>
+                    ) : (
+                      <span className="text-slate-400 text-xs">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(oc)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+
+                      {oc.status === 'Solicitada' && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => aprovarMutation.mutate({ id: oc.id, oc })}
+                          disabled={aprovarMutation.isPending}
+                          className="text-purple-600"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      {oc.status === 'Aprovada' && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => enviarFornecedorMutation.mutate({ id: oc.id, oc })}
+                          disabled={enviarFornecedorMutation.isPending}
+                          className="text-indigo-600"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      {(oc.status === 'Enviada ao Fornecedor' || oc.status === 'Em Processo') && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleReceberClick(oc)}
+                          className="text-green-600"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      {oc.status === 'Recebida' && !oc.avaliacao_fornecedor?.realizada && (
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => {
+                            setOcSelecionada(oc);
+                            setIsAvaliacaoDialogOpen(true);
+                          }}
+                          className="text-amber-600"
+                        >
+                          <Star className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {filteredOCs.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-slate-500">Nenhuma ordem de compra encontrada</p>
+          </div>
+        )}
+      </Card>
+
+      {/* Dialog de Recebimento */}
+      <Dialog open={isRecebimentoDialogOpen} onOpenChange={setIsRecebimentoDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Registrar Recebimento</DialogTitle>
+          </DialogHeader>
+          {ocSelecionada && (
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              receberMutation.mutate({ 
+                id: ocSelecionada.id, 
+                oc: ocSelecionada, 
+                dados: recebimentoFormData 
+              });
+            }} className="space-y-4">
+              <div className="p-4 bg-slate-50 rounded">
+                <p className="font-semibold">{ocSelecionada.numero_oc}</p>
+                <p className="text-sm text-slate-600">{ocSelecionada.fornecedor_nome}</p>
+                <p className="text-sm">Valor: R$ {ocSelecionada.valor_total?.toFixed(2)}</p>
+              </div>
+
+              <div>
+                <Label htmlFor="data_entrega_real">Data de Recebimento *</Label>
+                <Input
+                  id="data_entrega_real"
+                  type="date"
+                  value={recebimentoFormData.data_entrega_real}
+                  onChange={(e) => setRecebimentoFormData({...recebimentoFormData, data_entrega_real: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="nota_fiscal_entrada">Nota Fiscal de Entrada</Label>
+                <Input
+                  id="nota_fiscal_entrada"
+                  value={recebimentoFormData.nota_fiscal_entrada}
+                  onChange={(e) => setRecebimentoFormData({...recebimentoFormData, nota_fiscal_entrada: e.target.value})}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="observacoes_recebimento">Observações</Label>
+                <Textarea
+                  id="observacoes_recebimento"
+                  value={recebimentoFormData.observacoes}
+                  onChange={(e) => setRecebimentoFormData({...recebimentoFormData, observacoes: e.target.value})}
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsRecebimentoDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={receberMutation.isPending} className="bg-green-600">
+                  {receberMutation.isPending ? 'Processando...' : 'Confirmar Recebimento'}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Avaliação */}
+      <Dialog open={isAvaliacaoDialogOpen} onOpenChange={setIsAvaliacaoDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Avaliar Fornecedor</DialogTitle>
+          </DialogHeader>
+          {ocSelecionada && (
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              avaliarFornecedorMutation.mutate({ 
+                oc: ocSelecionada, 
+                avaliacao: avaliacaoFormData 
+              });
+            }} className="space-y-4">
+              <div className="p-4 bg-slate-50 rounded">
+                <p className="font-semibold">{ocSelecionada.fornecedor_nome}</p>
+                <p className="text-sm text-slate-600">OC: {ocSelecionada.numero_oc}</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Qualidade do Produto</Label>
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setAvaliacaoFormData({...avaliacaoFormData, qualidade: star})}
+                      >
+                        <Star 
+                          className={`w-6 h-6 ${star <= avaliacaoFormData.qualidade ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label>Cumprimento de Prazo</Label>
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setAvaliacaoFormData({...avaliacaoFormData, prazo: star})}
+                      >
+                        <Star 
+                          className={`w-6 h-6 ${star <= avaliacaoFormData.prazo ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label>Preço Competitivo</Label>
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setAvaliacaoFormData({...avaliacaoFormData, preco: star})}
+                      >
+                        <Star 
+                          className={`w-6 h-6 ${star <= avaliacaoFormData.preco ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label>Atendimento</Label>
+                  <div className="flex gap-1">
+                    {[1,2,3,4,5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setAvaliacaoFormData({...avaliacaoFormData, atendimento: star})}
+                      >
+                        <Star 
+                          className={`w-6 h-6 ${star <= avaliacaoFormData.atendimento ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="comentario">Comentários</Label>
+                <Textarea
+                  id="comentario"
+                  value={avaliacaoFormData.comentario}
+                  onChange={(e) => setAvaliacaoFormData({...avaliacaoFormData, comentario: e.target.value})}
+                  rows={3}
+                  placeholder="Comentários sobre a compra..."
+                />
+              </div>
+
+              <div className="p-4 bg-blue-50 rounded text-center">
+                <p className="text-sm text-slate-600">Nota Média</p>
+                <p className="text-3xl font-bold text-blue-600">
+                  {((avaliacaoFormData.qualidade + avaliacaoFormData.prazo + avaliacaoFormData.preco + avaliacaoFormData.atendimento) / 4).toFixed(1)}
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={() => setIsAvaliacaoDialogOpen(false)}>
+                  Pular
+                </Button>
+                <Button type="submit" disabled={avaliarFornecedorMutation.isPending} className="bg-amber-600">
+                  {avaliarFornecedorMutation.isPending ? 'Salvando...' : 'Salvar Avaliação'}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
