@@ -153,6 +153,7 @@ export default function Financeiro() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">A Receber</CardTitle>
+            <TrendingUp className="w-5 h-5 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -167,6 +168,7 @@ export default function Financeiro() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">A Pagar</CardTitle>
+            <TrendingDown className="w-5 h-5 text-red-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
@@ -181,6 +183,7 @@ export default function Financeiro() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Saldo Previsto</CardTitle>
+            <DollarSign className={`w-5 h-5 ${saldo >= 0 ? 'text-emerald-600' : 'text-orange-600'}`} />
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-emerald-600' : 'text-orange-600'}`}>
@@ -192,6 +195,7 @@ export default function Financeiro() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Alertas</CardTitle>
+            <AlertCircle className="w-5 h-5 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-600">
@@ -215,6 +219,7 @@ export default function Financeiro() {
                   {empresasComGateway} empresa(s) configurada(s)
                 </p>
               </div>
+              <Link2 className="w-8 h-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -227,6 +232,7 @@ export default function Financeiro() {
                 <p className="text-2xl font-bold text-purple-900">{rateios.length}</p>
                 <p className="text-xs text-purple-600 mt-1">Total distribuído</p>
               </div>
+              <Split className="w-8 h-8 text-purple-400" />
             </div>
           </CardContent>
         </Card>
@@ -241,6 +247,7 @@ export default function Financeiro() {
                   R$ {valorNaoConciliado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
+              <CheckCircle2 className="w-8 h-8 text-orange-400" />
             </div>
           </CardContent>
         </Card>
@@ -252,23 +259,29 @@ export default function Financeiro() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="caixa" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <DollarSign className="w-4 h-4 mr-2" />
             Caixa Diário
           </TabsTrigger>
           <TabsTrigger value="contas-receber" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+            <TrendingUp className="w-4 h-4 mr-2" />
             Contas a Receber
           </TabsTrigger>
           <TabsTrigger value="contas-pagar" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <TrendingDown className="w-4 h-4 mr-2" />
             Contas a Pagar
           </TabsTrigger>
           <TabsTrigger value="conciliacao" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
+            <FileText className="w-4 h-4 mr-2" />
             Conciliação
           </TabsTrigger>
           {estaNoGrupo && (
             <TabsTrigger value="rateios" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+              <Split className="w-4 h-4 mr-2" />
               Rateios
             </TabsTrigger>
           )}
           <TabsTrigger value="relatorios" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white">
+            <BarChart3 className="w-4 h-4 mr-2" />
             Relatórios
           </TabsTrigger>
           {/* A tab para Régua IA foi removida daqui, pois o componente foi movido para fora das tabs */}

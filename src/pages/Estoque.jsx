@@ -256,6 +256,7 @@ export default function Estoque() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Total de Produtos</CardTitle>
+            <Box className="w-5 h-5 text-indigo-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-indigo-600">{produtosAtivos}</div>
@@ -266,6 +267,7 @@ export default function Estoque() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Estoque Baixo</CardTitle>
+            <AlertTriangle className="w-5 h-5 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-orange-600">{produtosBaixoEstoque}</div>
@@ -276,6 +278,7 @@ export default function Estoque() {
         <Card className="border-0 shadow-md bg-blue-50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-blue-700">Reservado</CardTitle>
+            <PackageOpen className="w-5 h-5 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-900">
@@ -288,6 +291,7 @@ export default function Estoque() {
         <Card className="border-0 shadow-md bg-green-50">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-green-700">Disponível</CardTitle>
+            <TrendingUp className="w-5 h-5 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-900">
@@ -374,24 +378,31 @@ export default function Estoque() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="produtos" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <Box className="w-4 h-4 mr-2" />
             Produtos
           </TabsTrigger>
           <TabsTrigger value="movimentacoes" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <TrendingUp className="w-4 h-4 mr-2" />
             Movimentações
           </TabsTrigger>
           <TabsTrigger value="recebimento" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <PackageCheck className="w-4 h-4 mr-2" />
             Recebimento
           </TabsTrigger>
           <TabsTrigger value="requisicoes-almox" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <PackageMinus className="w-4 h-4 mr-2" />
             Requisições Almox.
           </TabsTrigger>
           <TabsTrigger value="solicitacoes" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <PackageOpen className="w-4 h-4 mr-2" />
             Solicitações Compra
           </TabsTrigger>
           <TabsTrigger value="lotes" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <Clock className="w-4 h-4 mr-2" />
             Lotes e Validade
           </TabsTrigger>
           <TabsTrigger value="relatorios" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <BarChart3 className="w-4 h-4 mr-2" />
             Relatórios
           </TabsTrigger>
           
@@ -399,6 +410,7 @@ export default function Estoque() {
             value="ia-reposicao" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
+            <Brain className="w-4 h-4 mr-2" />
             IA Reposição
           </TabsTrigger>
         </TabsList>

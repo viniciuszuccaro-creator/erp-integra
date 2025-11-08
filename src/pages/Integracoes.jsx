@@ -106,30 +106,39 @@ export default function Integracoes() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="status" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            Status
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Status Integrações
           </TabsTrigger>
           <TabsTrigger value="notificacoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            Notificações
+            <Bell className="w-4 h-4 mr-2" />
+            Notificações Automáticas
           </TabsTrigger>
           <TabsTrigger value="nfe" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <FileText className="w-4 h-4 mr-2" />
             NF-e
           </TabsTrigger>
           <TabsTrigger value="boletos" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+            <DollarSign className="w-4 h-4 mr-2" />
             Boletos/PIX
           </TabsTrigger>
           <TabsTrigger value="whatsapp" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <MessageCircle className="w-4 h-4 mr-2" />
             WhatsApp
           </TabsTrigger>
           <TabsTrigger value="transportadoras" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
+            <Truck className="w-4 h-4 mr-2" />
             Transportadoras
           </TabsTrigger>
           <TabsTrigger value="maps" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <MapPin className="w-4 h-4 mr-2" />
             Google Maps
           </TabsTrigger>
           <TabsTrigger value="ia-projeto" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <Zap className="w-4 h-4 mr-2" />
             IA e Automações
           </TabsTrigger>
           <TabsTrigger value="marketplaces" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <ShoppingCart className="w-4 h-4 mr-2" />
             Marketplaces
           </TabsTrigger>
         </TabsList>

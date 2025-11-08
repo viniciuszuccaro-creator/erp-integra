@@ -64,6 +64,7 @@ const navigationItems = [
   { title: "Recursos Humanos", url: createPageUrl("RH"), icon: UserCircle, group: "administrativo" },
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
+  // Removed item: { title: "Gestão de Empresas", url: createPageUrl("Empresas"), icon: Building2, group: "sistema" },
   { title: "Integrações", url: createPageUrl("Integracoes"), icon: Link2, group: "sistema" },
   { title: "Configurações do Sistema", url: createPageUrl("ConfiguracoesSistema"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
@@ -243,6 +244,7 @@ function LayoutContent({ children, currentPageName }) {
                               }`}
                             >
                               <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
+                                <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
                                 <span className="font-medium">{item.title}</span>
                               </Link>
                             </SidebarMenuButton>

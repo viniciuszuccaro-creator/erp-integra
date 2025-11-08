@@ -125,6 +125,7 @@ export default function Comercial() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Clientes</CardTitle>
+            <Users className="w-5 h-5 text-blue-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">{clientes.length}</div>
@@ -137,6 +138,7 @@ export default function Comercial() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Pedidos</CardTitle>
+            <ShoppingCart className="w-5 h-5 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-purple-600">{pedidos.length}</div>
@@ -146,6 +148,7 @@ export default function Comercial() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Total Vendas</CardTitle>
+            <TrendingUp className="w-5 h-5 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
@@ -157,6 +160,7 @@ export default function Comercial() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Ticket Médio</CardTitle>
+            <FileText className="w-5 h-5 text-orange-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-orange-600">
@@ -168,6 +172,7 @@ export default function Comercial() {
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Tabelas Preço</CardTitle>
+            <DollarSign className="w-5 h-5 text-emerald-600" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-emerald-600">{tabelasPreco.length}</div>
@@ -184,30 +189,35 @@ export default function Comercial() {
             value="clientes" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
+            <Users className="w-4 h-4 mr-2" />
             Clientes
           </TabsTrigger>
           <TabsTrigger 
             value="pedidos" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
+            <ShoppingCart className="w-4 h-4 mr-2" />
             Pedidos
           </TabsTrigger>
           <TabsTrigger 
             value="tabelas-preco" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
+            <DollarSign className="w-4 h-4 mr-2" />
             Tabelas de Preço
           </TabsTrigger>
           <TabsTrigger 
             value="comissoes" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
+            <TrendingUp className="w-4 h-4 mr-2" />
             Comissões
           </TabsTrigger>
           <TabsTrigger 
             value="notas" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
+            <FileText className="w-4 h-4 mr-2" />
             Notas Fiscais
           </TabsTrigger>
           {/* NOVO: Tab Vendas Externas */}
@@ -215,6 +225,7 @@ export default function Comercial() {
             value="externos" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative"
           >
+            <ShoppingCart className="w-4 h-4 mr-2" />
             Vendas Externas
             {pedidosExternosPendentes > 0 && (
               <Badge className="ml-2 bg-orange-500 text-white">
