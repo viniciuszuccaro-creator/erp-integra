@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Target } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function CentroResultadoForm({ centro, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(centro || {
@@ -13,14 +13,13 @@ export default function CentroResultadoForm({ centro, onSubmit, isSubmitting }) 
     descricao: '',
     tipo: 'Receita',
     categoria: 'Operacional',
-    responsavel_nome: '',
     meta_mensal: 0,
     ativo: true
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.codigo || !formData.descricao) {
+    if (!formData.codigo || !formData.descricao || !formData.tipo) {
       alert('Preencha os campos obrigatórios');
       return;
     }
@@ -35,10 +34,9 @@ export default function CentroResultadoForm({ centro, onSubmit, isSubmitting }) 
           <Input
             value={formData.codigo}
             onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-            placeholder="CR-001"
+            placeholder="Ex: CR001"
           />
         </div>
-
         <div>
           <Label>Tipo *</Label>
           <Select value={formData.tipo} onValueChange={(v) => setFormData({...formData, tipo: v})}>
@@ -60,7 +58,7 @@ export default function CentroResultadoForm({ centro, onSubmit, isSubmitting }) 
         <Input
           value={formData.descricao}
           onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-          placeholder="Ex: Vendas Região Sul, Custos Produção"
+          placeholder="Descrição do centro de resultado"
         />
       </div>
 
@@ -78,15 +76,6 @@ export default function CentroResultadoForm({ centro, onSubmit, isSubmitting }) 
             <SelectItem value="Industrial">Industrial</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-
-      <div>
-        <Label>Responsável</Label>
-        <Input
-          value={formData.responsavel_nome}
-          onChange={(e) => setFormData({...formData, responsavel_nome: e.target.value})}
-          placeholder="Nome do gestor"
-        />
       </div>
 
       <div>

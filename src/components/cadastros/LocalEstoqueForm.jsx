@@ -2,26 +2,26 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Boxes } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 
 export default function LocalEstoqueForm({ local, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(local || {
-    nome_centro: '',
-    tipo: 'CD',
-    endereco: {},
-    permite_estoque: true,
-    capacidade_m3: 0,
-    area_m2: 0,
+    nome_local: '',
+    codigo: '',
+    tipo: 'Almoxarifado',
+    endereco_completo: '',
+    responsavel_nome: '',
+    permite_entrada: true,
+    permite_saida: true,
     ativo: true
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.nome_centro || !formData.tipo) {
-      alert('Preencha os campos obrigatórios');
+    if (!formData.nome_local) {
+      alert('Preencha o nome do local');
       return;
     }
     onSubmit(formData);
@@ -32,53 +32,63 @@ export default function LocalEstoqueForm({ local, onSubmit, isSubmitting }) {
       <div>
         <Label>Nome do Local *</Label>
         <Input
-          value={formData.nome_centro}
-          onChange={(e) => setFormData({...formData, nome_centro: e.target.value})}
-          placeholder="Ex: CD Guarulhos, Obra Cliente X"
+          value={formData.nome_local}
+          onChange={(e) => setFormData({...formData, nome_local: e.target.value})}
+          placeholder="Ex: CD Principal, Almoxarifado Filial 2"
         />
-      </div>
-
-      <div>
-        <Label>Tipo *</Label>
-        <Select value={formData.tipo} onValueChange={(v) => setFormData({...formData, tipo: v})}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="CD">CD (Centro de Distribuição)</SelectItem>
-            <SelectItem value="Obra">Obra</SelectItem>
-            <SelectItem value="Loja">Loja</SelectItem>
-            <SelectItem value="Depósito">Depósito</SelectItem>
-            <SelectItem value="Fábrica">Fábrica</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Área (m²)</Label>
+          <Label>Código</Label>
           <Input
-            type="number"
-            value={formData.area_m2}
-            onChange={(e) => setFormData({...formData, area_m2: parseFloat(e.target.value)})}
+            value={formData.codigo}
+            onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+            placeholder="Ex: ALM001"
           />
         </div>
-
         <div>
-          <Label>Capacidade (m³)</Label>
+          <Label>Tipo</Label>
           <Input
-            type="number"
-            value={formData.capacidade_m3}
-            onChange={(e) => setFormData({...formData, capacidade_m3: parseFloat(e.target.value)})}
+            value={formData.tipo}
+            onChange={(e) => setFormData({...formData, tipo: e.target.value})}
+            placeholder="Almoxarifado, CD, Depósito"
           />
         </div>
       </div>
 
+      <div>
+        <Label>Endereço Completo</Label>
+        <Textarea
+          value={formData.endereco_completo}
+          onChange={(e) => setFormData({...formData, endereco_completo: e.target.value})}
+          rows={2}
+          placeholder="Endereço completo do local"
+        />
+      </div>
+
+      <div>
+        <Label>Responsável</Label>
+        <Input
+          value={formData.responsavel_nome}
+          onChange={(e) => setFormData({...formData, responsavel_nome: e.target.value})}
+          placeholder="Nome do responsável"
+        />
+      </div>
+
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-        <Label>Controle de Estoque Ativo</Label>
+        <Label>Permite Entrada</Label>
         <Switch
-          checked={formData.permite_estoque}
-          onCheckedChange={(v) => setFormData({...formData, permite_estoque: v})}
+          checked={formData.permite_entrada}
+          onCheckedChange={(v) => setFormData({...formData, permite_entrada: v})}
+        />
+      </div>
+
+      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+        <Label>Permite Saída</Label>
+        <Switch
+          checked={formData.permite_saida}
+          onCheckedChange={(v) => setFormData({...formData, permite_saida: v})}
         />
       </div>
 

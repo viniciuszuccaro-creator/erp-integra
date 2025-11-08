@@ -3,9 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, DollarSign } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function CondicaoComercialForm({ condicao, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(condicao || {
@@ -16,9 +15,6 @@ export default function CondicaoComercialForm({ condicao, onSubmit, isSubmitting
     tipo_frete: 'CIF',
     permite_parcelamento: false,
     maximo_parcelas: 1,
-    dia_vencimento_preferencial: 10,
-    limite_credito_sugerido: 0,
-    segmento_aplicavel: 'Todos',
     ativo: true
   });
 
@@ -44,25 +40,23 @@ export default function CondicaoComercialForm({ condicao, onSubmit, isSubmitting
 
       <div>
         <Label>Descrição</Label>
-        <Textarea
+        <Input
           value={formData.descricao}
           onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-          rows={2}
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Prazo (dias)</Label>
+          <Label>Prazo Pagamento (dias)</Label>
           <Input
             type="number"
             value={formData.prazo_pagamento_dias}
             onChange={(e) => setFormData({...formData, prazo_pagamento_dias: parseInt(e.target.value)})}
           />
         </div>
-
         <div>
-          <Label>Desconto (%)</Label>
+          <Label>Desconto Padrão (%)</Label>
           <Input
             type="number"
             step="0.01"
@@ -70,26 +64,26 @@ export default function CondicaoComercialForm({ condicao, onSubmit, isSubmitting
             onChange={(e) => setFormData({...formData, percentual_desconto: parseFloat(e.target.value)})}
           />
         </div>
+      </div>
 
-        <div>
-          <Label>Tipo Frete</Label>
-          <Select value={formData.tipo_frete} onValueChange={(v) => setFormData({...formData, tipo_frete: v})}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="CIF">CIF (Paga)</SelectItem>
-              <SelectItem value="FOB">FOB (Cliente paga)</SelectItem>
-              <SelectItem value="Retirada">Retirada</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <Label>Tipo de Frete</Label>
+        <Select value={formData.tipo_frete} onValueChange={(v) => setFormData({...formData, tipo_frete: v})}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="CIF">CIF - Empresa paga</SelectItem>
+            <SelectItem value="FOB">FOB - Cliente paga</SelectItem>
+            <SelectItem value="Retirada">Retirada</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
         <div>
           <Label>Permite Parcelamento</Label>
-          <p className="text-xs text-slate-500">Habilitar parcelas</p>
+          <p className="text-xs text-slate-500">Habilita parcelamento de pagamento</p>
         </div>
         <Switch
           checked={formData.permite_parcelamento}
@@ -104,8 +98,6 @@ export default function CondicaoComercialForm({ condicao, onSubmit, isSubmitting
             type="number"
             value={formData.maximo_parcelas}
             onChange={(e) => setFormData({...formData, maximo_parcelas: parseInt(e.target.value)})}
-            min="1"
-            max="36"
           />
         </div>
       )}

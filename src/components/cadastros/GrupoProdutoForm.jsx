@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Boxes } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(grupo || {
@@ -14,15 +14,13 @@ export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting }) {
     natureza: 'Revenda',
     ncm_padrao: '',
     margem_sugerida: 0,
-    icone: 'Package',
-    cor: '#3b82f6',
     ativo: true
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.nome_grupo) {
-      alert('Preencha o nome do grupo');
+    if (!formData.nome_grupo || !formData.natureza) {
+      alert('Preencha os campos obrigatórios');
       return;
     }
     onSubmit(formData);
@@ -45,12 +43,11 @@ export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting }) {
           <Input
             value={formData.codigo}
             onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-            placeholder="Ex: FERR, BIT, ELET"
+            placeholder="Ex: FERR001"
           />
         </div>
-
         <div>
-          <Label>Natureza</Label>
+          <Label>Natureza *</Label>
           <Select value={formData.natureza} onValueChange={(v) => setFormData({...formData, natureza: v})}>
             <SelectTrigger>
               <SelectValue />
@@ -65,45 +62,24 @@ export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting }) {
         </div>
       </div>
 
-      <div>
-        <Label>NCM Padrão (V16.1)</Label>
-        <Input
-          value={formData.ncm_padrao}
-          onChange={(e) => setFormData({...formData, ncm_padrao: e.target.value})}
-          placeholder="0000.00.00"
-        />
-      </div>
-
-      <div>
-        <Label>Margem Sugerida (%)</Label>
-        <Input
-          type="number"
-          step="0.01"
-          value={formData.margem_sugerida}
-          onChange={(e) => setFormData({...formData, margem_sugerida: parseFloat(e.target.value)})}
-        />
-      </div>
-
-      <div>
-        <Label>Cor (UI)</Label>
-        <div className="flex gap-2 items-center">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>NCM Padrão</Label>
           <Input
-            type="color"
-            value={formData.cor}
-            onChange={(e) => setFormData({...formData, cor: e.target.value})}
-            className="w-20 h-10"
+            value={formData.ncm_padrao}
+            onChange={(e) => setFormData({...formData, ncm_padrao: e.target.value})}
+            placeholder="Ex: 7213.10.00"
           />
-          <span className="text-sm text-slate-600">{formData.cor}</span>
         </div>
-      </div>
-
-      <div>
-        <Label>Descrição</Label>
-        <Textarea
-          value={formData.descricao}
-          onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-          rows={2}
-        />
+        <div>
+          <Label>Margem Sugerida (%)</Label>
+          <Input
+            type="number"
+            step="0.01"
+            value={formData.margem_sugerida}
+            onChange={(e) => setFormData({...formData, margem_sugerida: parseFloat(e.target.value)})}
+          />
+        </div>
       </div>
 
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">

@@ -4,8 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Loader2, TrendingUp } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, TrendingUp, Sparkles } from "lucide-react";
 
 export default function MoedaIndiceForm({ moeda, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(moeda || {
@@ -14,7 +14,7 @@ export default function MoedaIndiceForm({ moeda, onSubmit, isSubmitting }) {
     tipo: 'Moeda',
     simbolo: '',
     valor_atual: 0,
-    fonte_dados: 'BCB',
+    fonte_dados: '',
     atualiza_automaticamente: false,
     frequencia_atualizacao: 'Diário',
     ativo: true
@@ -22,7 +22,7 @@ export default function MoedaIndiceForm({ moeda, onSubmit, isSubmitting }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.codigo || !formData.nome) {
+    if (!formData.codigo || !formData.nome || !formData.tipo) {
       alert('Preencha os campos obrigatórios');
       return;
     }
@@ -37,10 +37,9 @@ export default function MoedaIndiceForm({ moeda, onSubmit, isSubmitting }) {
           <Input
             value={formData.codigo}
             onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-            placeholder="BRL, USD, SELIC, IPCA"
+            placeholder="Ex: USD, IPCA, SELIC"
           />
         </div>
-
         <div>
           <Label>Tipo *</Label>
           <Select value={formData.tipo} onValueChange={(v) => setFormData({...formData, tipo: v})}>
@@ -56,11 +55,11 @@ export default function MoedaIndiceForm({ moeda, onSubmit, isSubmitting }) {
       </div>
 
       <div>
-        <Label>Nome *</Label>
+        <Label>Nome Completo *</Label>
         <Input
           value={formData.nome}
           onChange={(e) => setFormData({...formData, nome: e.target.value})}
-          placeholder="Ex: Real Brasileiro, Taxa Selic"
+          placeholder="Ex: Dólar Americano, Índice IPCA"
         />
       </div>
 
@@ -70,10 +69,9 @@ export default function MoedaIndiceForm({ moeda, onSubmit, isSubmitting }) {
           <Input
             value={formData.simbolo}
             onChange={(e) => setFormData({...formData, simbolo: e.target.value})}
-            placeholder="R$, $, €, %"
+            placeholder="Ex: $, €, %"
           />
         </div>
-
         <div>
           <Label>Valor Atual</Label>
           <Input
@@ -85,19 +83,10 @@ export default function MoedaIndiceForm({ moeda, onSubmit, isSubmitting }) {
         </div>
       </div>
 
-      <div>
-        <Label>Fonte de Dados</Label>
-        <Input
-          value={formData.fonte_dados}
-          onChange={(e) => setFormData({...formData, fonte_dados: e.target.value})}
-          placeholder="BCB, IBGE, API Awesome"
-        />
-      </div>
-
-      <div className="flex items-center justify-between p-3 bg-blue-50 rounded border border-blue-200">
+      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
         <div>
           <Label>Atualização Automática (IA)</Label>
-          <p className="text-xs text-slate-500">API do Banco Central</p>
+          <p className="text-xs text-slate-500">Via API BCB/IBGE</p>
         </div>
         <Switch
           checked={formData.atualiza_automaticamente}
@@ -106,29 +95,38 @@ export default function MoedaIndiceForm({ moeda, onSubmit, isSubmitting }) {
       </div>
 
       {formData.atualiza_automaticamente && (
-        <div>
-          <Label>Frequência</Label>
-          <Select value={formData.frequencia_atualizacao} onValueChange={(v) => setFormData({...formData, frequencia_atualizacao: v})}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Tempo Real">Tempo Real</SelectItem>
-              <SelectItem value="Diário">Diário</SelectItem>
-              <SelectItem value="Semanal">Semanal</SelectItem>
-              <SelectItem value="Mensal">Mensal</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+        <>
+          <div>
+            <Label>Fonte de Dados</Label>
+            <Input
+              value={formData.fonte_dados}
+              onChange={(e) => setFormData({...formData, fonte_dados: e.target.value})}
+              placeholder="Ex: Banco Central, IBGE"
+            />
+          </div>
+          
+          <div>
+            <Label>Frequência de Atualização</Label>
+            <Select value={formData.frequencia_atualizacao} onValueChange={(v) => setFormData({...formData, frequencia_atualizacao: v})}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Tempo Real">Tempo Real</SelectItem>
+                <SelectItem value="Diário">Diário</SelectItem>
+                <SelectItem value="Semanal">Semanal</SelectItem>
+                <SelectItem value="Mensal">Mensal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-      {formData.atualiza_automaticamente && (
-        <Alert className="border-purple-200 bg-purple-50">
-          <Sparkles className="w-4 h-4" />
-          <AlertDescription className="text-sm">
-            🤖 IA ativa: Cotação será atualizada automaticamente via API
-          </AlertDescription>
-        </Alert>
+          <Alert className="border-blue-200 bg-blue-50">
+            <TrendingUp className="w-4 h-4" />
+            <AlertDescription className="text-sm">
+              🤖 IA atualizará automaticamente via job agendado
+            </AlertDescription>
+          </Alert>
+        </>
       )}
 
       <div className="flex justify-end gap-3 pt-4 border-t">

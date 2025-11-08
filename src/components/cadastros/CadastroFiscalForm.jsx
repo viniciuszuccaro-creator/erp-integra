@@ -3,66 +3,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2, FileText } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, FileText, Sparkles } from "lucide-react";
-import { base44 } from "@/api/base44Client";
-import { toast } from "sonner";
 
 export default function CadastroFiscalForm({ cadastroFiscal, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(cadastroFiscal || {
-    ncm: '',
-    descricao_ncm: '',
-    cest: '',
-    cfop_padrao: '',
-    ipi_aliquota: 0,
-    pis_aliquota: 1.65,
-    cofins_aliquota: 7.6,
-    origem_mercadoria: '0 - Nacional'
+    tipo_cadastro: 'NCM',
+    codigo: '',
+    descricao: '',
+    aliquota_padrao: 0,
+    observacoes: ''
   });
-
-  const [buscandoIA, setBuscandoIA] = useState(false);
-
-  const buscarNCMIA = async () => {
-    if (!formData.descricao_ncm) {
-      toast.error('Digite uma descrição primeiro');
-      return;
-    }
-
-    setBuscandoIA(true);
-
-    const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Baseado na descrição: "${formData.descricao_ncm}", sugira:
-      - NCM correto (8 dígitos)
-      - CEST (se aplicável)
-      - Alíquota de IPI
-      - Origem da mercadoria`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          ncm: { type: "string" },
-          cest: { type: "string" },
-          ipi_aliquota: { type: "number" },
-          origem_sugerida: { type: "string" }
-        }
-      }
-    });
-
-    setFormData({
-      ...formData,
-      ncm: resultado.ncm,
-      cest: resultado.cest,
-      ipi_aliquota: resultado.ipi_aliquota
-    });
-
-    setBuscandoIA(false);
-    toast.success('✨ NCM sugerido pela IA!');
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.ncm) {
-      alert('Preencha o NCM');
+    if (!formData.tipo_cadastro || !formData.codigo) {
+      alert('Preencha os campos obrigatórios');
       return;
     }
     onSubmit(formData);
@@ -71,82 +28,76 @@ export default function CadastroFiscalForm({ cadastroFiscal, onSubmit, isSubmitt
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label>Descrição do Produto</Label>
-        <div className="flex gap-2">
-          <Input
-            value={formData.descricao_ncm}
-            onChange={(e) => setFormData({...formData, descricao_ncm: e.target.value})}
-            placeholder="Ex: Vergalhão de aço CA-50"
-          />
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={buscarNCMIA}
-            disabled={buscandoIA}
-          >
-            {buscandoIA ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          </Button>
-        </div>
+        <Label>Tipo de Cadastro *</Label>
+        <Select value={formData.tipo_cadastro} onValueChange={(v) => setFormData({...formData, tipo_cadastro: v})}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="NCM">NCM - Nomenclatura Comum Mercosul</SelectItem>
+            <SelectItem value="CFOP">CFOP - Código Fiscal de Operações</SelectItem>
+            <SelectItem value="CEST">CEST - Código Especificador ST</SelectItem>
+            <SelectItem value="CST">CST - Código de Situação Tributária</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>NCM *</Label>
-          <Input
-            value={formData.ncm}
-            onChange={(e) => setFormData({...formData, ncm: e.target.value})}
-            placeholder="0000.00.00"
-            maxLength={10}
-          />
-        </div>
-
-        <div>
-          <Label>CEST</Label>
-          <Input
-            value={formData.cest}
-            onChange={(e) => setFormData({...formData, cest: e.target.value})}
-            placeholder="00.000.00"
-          />
-        </div>
+      <div>
+        <Label>Código *</Label>
+        <Input
+          value={formData.codigo}
+          onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+          placeholder={
+            formData.tipo_cadastro === 'NCM' ? 'Ex: 7213.10.00' :
+            formData.tipo_cadastro === 'CFOP' ? 'Ex: 5102' :
+            formData.tipo_cadastro === 'CEST' ? 'Ex: 01.001.00' :
+            'Ex: 00'
+          }
+        />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div>
+        <Label>Descrição *</Label>
+        <Textarea
+          value={formData.descricao}
+          onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+          rows={2}
+          placeholder="Descrição completa"
+        />
+      </div>
+
+      {formData.tipo_cadastro === 'NCM' && (
         <div>
-          <Label>IPI (%)</Label>
+          <Label>Alíquota Padrão IPI (%)</Label>
           <Input
             type="number"
             step="0.01"
-            value={formData.ipi_aliquota}
-            onChange={(e) => setFormData({...formData, ipi_aliquota: parseFloat(e.target.value)})}
+            value={formData.aliquota_padrao}
+            onChange={(e) => setFormData({...formData, aliquota_padrao: parseFloat(e.target.value)})}
           />
         </div>
+      )}
 
-        <div>
-          <Label>PIS (%)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={formData.pis_aliquota}
-            onChange={(e) => setFormData({...formData, pis_aliquota: parseFloat(e.target.value)})}
-          />
-        </div>
-
-        <div>
-          <Label>COFINS (%)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={formData.cofins_aliquota}
-            onChange={(e) => setFormData({...formData, cofins_aliquota: parseFloat(e.target.value)})}
-          />
-        </div>
+      <div>
+        <Label>Observações</Label>
+        <Textarea
+          value={formData.observacoes}
+          onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+          rows={2}
+        />
       </div>
+
+      <Alert className="border-purple-200 bg-purple-50">
+        <FileText className="w-4 h-4" />
+        <AlertDescription className="text-sm">
+          🤖 IA DIFAL atualiza alíquotas automaticamente via API Sefaz
+        </AlertDescription>
+      </Alert>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          Salvar
+          {cadastroFiscal ? 'Atualizar' : 'Criar Cadastro Fiscal'}
         </Button>
       </div>
     </form>

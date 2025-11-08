@@ -2,22 +2,18 @@ import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, UserCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { Loader2 } from "lucide-react";
 
 export default function CargoForm({ cargo, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(cargo || {
     nome_cargo: '',
     descricao: '',
     codigo_cbo: '',
-    departamento_id: '',
     nivel_hierarquico: 'Operacional',
     salario_base: 0,
-    competencias_requeridas: [],
     ativo: true
   });
 
@@ -37,7 +33,7 @@ export default function CargoForm({ cargo, onSubmit, isSubmitting }) {
         <Input
           value={formData.nome_cargo}
           onChange={(e) => setFormData({...formData, nome_cargo: e.target.value})}
-          placeholder="Ex: Vendedor, Operador de CNC"
+          placeholder="Ex: Analista Financeiro, Operador de Produção"
         />
       </div>
 
@@ -46,7 +42,7 @@ export default function CargoForm({ cargo, onSubmit, isSubmitting }) {
         <Input
           value={formData.codigo_cbo}
           onChange={(e) => setFormData({...formData, codigo_cbo: e.target.value})}
-          placeholder="0000-00"
+          placeholder="Ex: 2522-10"
         />
       </div>
 
@@ -67,13 +63,12 @@ export default function CargoForm({ cargo, onSubmit, isSubmitting }) {
       </div>
 
       <div>
-        <Label>Salário Base</Label>
+        <Label>Salário Base (R$)</Label>
         <Input
           type="number"
           step="0.01"
           value={formData.salario_base}
           onChange={(e) => setFormData({...formData, salario_base: parseFloat(e.target.value)})}
-          placeholder="R$ 0,00"
         />
       </div>
 

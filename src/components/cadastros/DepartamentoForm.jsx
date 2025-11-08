@@ -4,17 +4,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Briefcase } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function DepartamentoForm({ departamento, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(departamento || {
     nome: '',
-    descricao: '',
     codigo: '',
-    responsavel_nome: '',
-    responsavel_id: '',
-    custo_mensal: 0,
-    quantidade_colaboradores: 0,
+    descricao: '',
     ativo: true
   });
 
@@ -29,22 +25,23 @@ export default function DepartamentoForm({ departamento, onSubmit, isSubmitting 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label>Nome do Departamento *</Label>
-        <Input
-          value={formData.nome}
-          onChange={(e) => setFormData({...formData, nome: e.target.value})}
-          placeholder="Ex: Comercial, Financeiro, Produção"
-        />
-      </div>
-
-      <div>
-        <Label>Código</Label>
-        <Input
-          value={formData.codigo}
-          onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-          placeholder="Ex: COM, FIN, PROD"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Nome *</Label>
+          <Input
+            value={formData.nome}
+            onChange={(e) => setFormData({...formData, nome: e.target.value})}
+            placeholder="Comercial, TI, RH..."
+          />
+        </div>
+        <div>
+          <Label>Código</Label>
+          <Input
+            value={formData.codigo}
+            onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+            placeholder="DEP001"
+          />
+        </div>
       </div>
 
       <div>
@@ -52,16 +49,7 @@ export default function DepartamentoForm({ departamento, onSubmit, isSubmitting 
         <Textarea
           value={formData.descricao}
           onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-          rows={2}
-        />
-      </div>
-
-      <div>
-        <Label>Responsável</Label>
-        <Input
-          value={formData.responsavel_nome}
-          onChange={(e) => setFormData({...formData, responsavel_nome: e.target.value})}
-          placeholder="Nome do gestor"
+          rows={3}
         />
       </div>
 

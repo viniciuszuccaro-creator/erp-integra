@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Receipt } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function TipoDespesaForm({ tipo, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(tipo || {
@@ -14,14 +14,13 @@ export default function TipoDespesaForm({ tipo, onSubmit, isSubmitting }) {
     natureza: 'Operacional',
     recorrente: false,
     alerta_valor_acima: 0,
-    requer_aprovacao: false,
     ativo: true
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.nome) {
-      alert('Preencha o nome');
+    if (!formData.nome || !formData.categoria) {
+      alert('Preencha os campos obrigatórios');
       return;
     }
     onSubmit(formData);
@@ -30,11 +29,11 @@ export default function TipoDespesaForm({ tipo, onSubmit, isSubmitting }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label>Nome do Tipo *</Label>
+        <Label>Nome *</Label>
         <Input
           value={formData.nome}
           onChange={(e) => setFormData({...formData, nome: e.target.value})}
-          placeholder="Ex: Energia Elétrica, Aluguel, Manutenção"
+          placeholder="Ex: Energia Elétrica, Material de Limpeza"
         />
       </div>
 
@@ -44,12 +43,10 @@ export default function TipoDespesaForm({ tipo, onSubmit, isSubmitting }) {
           <Input
             value={formData.codigo}
             onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-            placeholder="TD-001"
           />
         </div>
-
         <div>
-          <Label>Categoria</Label>
+          <Label>Categoria *</Label>
           <Select value={formData.categoria} onValueChange={(v) => setFormData({...formData, categoria: v})}>
             <SelectTrigger>
               <SelectValue />
@@ -87,26 +84,15 @@ export default function TipoDespesaForm({ tipo, onSubmit, isSubmitting }) {
           step="0.01"
           value={formData.alerta_valor_acima}
           onChange={(e) => setFormData({...formData, alerta_valor_acima: parseFloat(e.target.value)})}
-          placeholder="0.00"
         />
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-          <Label>Despesa Recorrente</Label>
-          <Switch
-            checked={formData.recorrente}
-            onCheckedChange={(v) => setFormData({...formData, recorrente: v})}
-          />
-        </div>
-
-        <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-          <Label>Requer Aprovação</Label>
-          <Switch
-            checked={formData.requer_aprovacao}
-            onCheckedChange={(v) => setFormData({...formData, requer_aprovacao: v})}
-          />
-        </div>
+      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+        <Label>Despesa Recorrente Mensal</Label>
+        <Switch
+          checked={formData.recorrente}
+          onCheckedChange={(v) => setFormData({...formData, recorrente: v})}
+        />
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">

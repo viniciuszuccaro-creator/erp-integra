@@ -3,19 +3,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Clock } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function TurnoForm({ turno, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(turno || {
     nome_turno: '',
-    horario_inicio: '',
-    horario_fim: '',
-    intervalo_inicio: '',
-    intervalo_fim: '',
-    duracao_intervalo_minutos: 60,
+    horario_inicio: '08:00',
+    horario_fim: '17:00',
+    intervalo_inicio: '12:00',
+    intervalo_fim: '13:00',
     dias_semana: ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta'],
     ativo: true
   });
+
+  const diasDisponiveis = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
+  const toggleDia = (dia) => {
+    const dias = formData.dias_semana || [];
+    if (dias.includes(dia)) {
+      setFormData({...formData, dias_semana: dias.filter(d => d !== dia)});
+    } else {
+      setFormData({...formData, dias_semana: [...dias, dia]});
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,7 +44,7 @@ export default function TurnoForm({ turno, onSubmit, isSubmitting }) {
         <Input
           value={formData.nome_turno}
           onChange={(e) => setFormData({...formData, nome_turno: e.target.value})}
-          placeholder="Ex: Manhã, Tarde, Noite, 24h"
+          placeholder="Ex: Manhã, Tarde, Noite"
         />
       </div>
 
@@ -46,7 +57,6 @@ export default function TurnoForm({ turno, onSubmit, isSubmitting }) {
             onChange={(e) => setFormData({...formData, horario_inicio: e.target.value})}
           />
         </div>
-
         <div>
           <Label>Horário Fim *</Label>
           <Input
@@ -66,7 +76,6 @@ export default function TurnoForm({ turno, onSubmit, isSubmitting }) {
             onChange={(e) => setFormData({...formData, intervalo_inicio: e.target.value})}
           />
         </div>
-
         <div>
           <Label>Intervalo Fim</Label>
           <Input
@@ -77,12 +86,23 @@ export default function TurnoForm({ turno, onSubmit, isSubmitting }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-        <Label>Turno Ativo</Label>
-        <Switch
-          checked={formData.ativo}
-          onCheckedChange={(v) => setFormData({...formData, ativo: v})}
-        />
+      <div>
+        <Label className="mb-2 block">Dias da Semana</Label>
+        <div className="flex flex-wrap gap-2">
+          {diasDisponiveis.map(dia => (
+            <Badge
+              key={dia}
+              className={`cursor-pointer ${
+                (formData.dias_semana || []).includes(dia)
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-200 text-slate-700'
+              }`}
+              onClick={() => toggleDia(dia)}
+            >
+              {dia.slice(0, 3)}
+            </Badge>
+          ))}
+        </div>
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
