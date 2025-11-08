@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Download, FileText, FileSpreadsheet } from "lucide-react";
+import { Download, FileText } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 /**
  * Botão de Exportação Universal - V19.1
- * CSV nativo (sem dependências externas)
+ * CSV e JSON nativos (sem dependências externas)
  */
 export default function ExportButton({ data = [], filename = "export", columns = null }) {
   
@@ -46,7 +46,7 @@ export default function ExportButton({ data = [], filename = "export", columns =
     link.click();
     URL.revokeObjectURL(link.href);
 
-    toast.success(`✅ ${data.length} registros exportados!`);
+    toast.success(`✅ ${data.length} registros exportados para CSV!`);
   };
 
   const exportToJSON = () => {
@@ -76,10 +76,6 @@ export default function ExportButton({ data = [], filename = "export", columns =
     toast.success(`✅ ${data.length} registros exportados para JSON!`);
   };
 
-  const exportToPDF = () => {
-    toast.info('💡 Exportação PDF disponível em breve');
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -90,16 +86,12 @@ export default function ExportButton({ data = [], filename = "export", columns =
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={exportToCSV}>
-          <FileSpreadsheet className="w-4 h-4 mr-2 text-green-600" />
-          CSV (.csv)
+          <FileText className="w-4 h-4 mr-2 text-green-600" />
+          CSV (Excel)
         </DropdownMenuItem>
         <DropdownMenuItem onClick={exportToJSON}>
           <FileText className="w-4 h-4 mr-2 text-blue-600" />
-          JSON (.json)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={exportToPDF} disabled>
-          <FileText className="w-4 h-4 mr-2 text-red-600" />
-          PDF (em breve)
+          JSON
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
