@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,7 @@ import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
 import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab";
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
+
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
 import ExportButton from '@/components/ExportButton';
@@ -20,24 +22,17 @@ import { ImprimirPedido } from '@/components/lib/impressao';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useUser } from "@/components/lib/UserContext";
 
 /**
- * Módulo Comercial - V21.1 COMPLETO
- * Com formulário de pedido em 8 abas e integração total
+ * Módulo Comercial - V12.0 COMPLETO
+ * Com atalhos, exportação e impressão
  */
 export default function Comercial() {
-  const { user } = useUser();
-  const [activeTab, setActiveTab] = useState("pedidos");
+  const [activeTab, setActiveTab] = useState("clientes");
   const [painelClienteAberto, setPainelClienteAberto] = useState(false);
   const [clienteParaPainel, setClienteParaPainel] = useState(null);
-  const [pedidoFormOpen, setPedidoFormOpen] = useState(false);
-  const [editingPedido, setEditingPedido] = useState(null);
 
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const queryClient = useQueryClient();
 
   const { data: clientes = [], isLoading: loadingClientes } = useQuery({
     queryKey: ['clientes'],
@@ -71,6 +66,7 @@ export default function Comercial() {
     queryFn: () => base44.entities.Empresa.list(),
   });
 
+  // NOVO: Query para pedidos externos
   const { data: pedidosExternos = [] } = useQuery({
     queryKey: ['pedidos-externos'],
     queryFn: () => base44.entities.PedidoExterno.list('-created_date'),
@@ -86,11 +82,15 @@ export default function Comercial() {
 
   const ticketMedio = pedidos.length > 0 ? totalVendas / pedidos.length : 0;
 
+  // NOVO: Atalhos de teclado (adjusted for component extraction)
   useKeyboardShortcuts({
     'ctrl+s': (e) => {
       e.preventDefault();
+      // Salvar será tratado no formulário, não diretamente no componente pai
       toast.info('Use Ctrl+S dentro do formulário');
     },
+    // ctrl+n (new order) and ctrl+p (print order) logic is now handled within PedidosTab
+    // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
 
   if (loadingPermissions) {
@@ -102,13 +102,14 @@ export default function Comercial() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Comercial e Vendas</h1>
           <p className="text-slate-600">Gestão de clientes, pedidos, preços e vendas</p>
         </div>
         
+        {/* NOVO: Alerta de Pedidos Externos */}
         {pedidosExternosPendentes > 0 && (
           <Badge 
             className="bg-orange-100 text-orange-700 px-4 py-2 cursor-pointer hover:bg-orange-200"
@@ -219,6 +220,7 @@ export default function Comercial() {
             <FileText className="w-4 h-4 mr-2" />
             Notas Fiscais
           </TabsTrigger>
+          {/* NOVO: Tab Vendas Externas */}
           <TabsTrigger 
             value="externos" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative"
@@ -245,29 +247,12 @@ export default function Comercial() {
         </TabsContent>
 
         <TabsContent value="pedidos">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle>Gestão de Pedidos</CardTitle>
-                <Button onClick={() => { setEditingPedido(null); setPedidoFormOpen(true); }}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Pedido V21.1
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <PedidosTab 
-                pedidos={pedidos} 
-                clientes={clientes} 
-                isLoading={loadingPedidos} 
-                empresas={empresas}
-                onEditPedido={(pedido) => {
-                  setEditingPedido(pedido);
-                  setPedidoFormOpen(true);
-                }}
-              />
-            </CardContent>
-          </Card>
+          <PedidosTab 
+            pedidos={pedidos} 
+            clientes={clientes} 
+            isLoading={loadingPedidos} 
+            empresas={empresas} // Added empresas prop for printing or other order details
+          />
         </TabsContent>
 
         <TabsContent value="tabelas-preco">
@@ -282,6 +267,7 @@ export default function Comercial() {
           <NotasFiscaisTab notasFiscais={notasFiscais} pedidos={pedidos} clientes={clientes} />
         </TabsContent>
 
+        {/* NOVO: Conteúdo Tab Vendas Externas */}
         <TabsContent value="externos">
           <Card>
             <CardHeader className="bg-orange-50 border-b">
@@ -336,25 +322,6 @@ export default function Comercial() {
           setClienteParaPainel(null);
         }}
       />
-
-      <Dialog open={pedidoFormOpen} onOpenChange={setPedidoFormOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingPedido ? 'Editar Pedido' : 'Novo Pedido - Formulário Completo V21.1'}
-            </DialogTitle>
-          </DialogHeader>
-          <PedidoFormCompleto
-            pedido={editingPedido}
-            onClose={() => setPedidoFormOpen(false)}
-            onSuccess={() => {
-              queryClient.invalidateQueries(['pedidos']);
-              setPedidoFormOpen(false);
-              setEditingPedido(null);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
