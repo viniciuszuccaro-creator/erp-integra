@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,7 @@ export default function PedidoFormCompleto({ isOpen, onClose, pedido, onSuccess 
       toast.success(`✅ Pedido ${novoPedido.numero_pedido} criado!`);
       onSuccess?.(novoPedido);
       onClose();
+      setEtapaWizard(1); // Reset wizard step on successful creation
     },
     onError: (error) => {
       toast.error(`❌ Erro ao criar pedido: ${error.message}`);
@@ -106,10 +108,38 @@ export default function PedidoFormCompleto({ isOpen, onClose, pedido, onSuccess 
 
   const progressoWizard = ((etapaWizard - 1) / 3) * 100;
 
+  // Reset ao fechar
+  const handleClose = () => {
+    setEtapaWizard(1);
+    setFormData({
+      tipo: 'Pedido',
+      tipo_pedido: 'Revenda',
+      origem_pedido: 'Manual',
+      status: 'Rascunho',
+      data_pedido: new Date().toISOString().split('T')[0],
+      cliente_id: '',
+      cliente_nome: '',
+      obra_destino_id: '',
+      obra_destino_nome: '',
+      itens_revenda: [],
+      itens_armado_padrao: [],
+      itens_corte_dobra: [],
+      forma_pagamento: '',
+      forma_pagamento_id: '',
+      tipo_frete: 'CIF',
+      valor_frete: 0,
+      desconto_geral_pedido_percentual: 0,
+      valor_total: 0,
+      peso_total_kg: 0,
+      etapas_entrega: []
+    });
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden flex flex-col">
-        <DialogHeader className="border-b pb-4">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
+        <DialogHeader className="border-b pb-4 px-6 pt-6">
           <DialogTitle className="flex items-center justify-between">
             <span className="flex items-center gap-2">
               <FileText className="w-6 h-6 text-blue-600" />

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,6 +36,10 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
 
+  // These mutations are now assumed to be handled internally by PedidoFormCompleto
+  // Their presence here is for preserving existing code as per instructions,
+  // but they are no longer directly invoked by this component's render logic
+  // for the PedidoFormCompleto.
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Pedido.create(data),
     onSuccess: () => {
@@ -372,25 +377,19 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
         </CardContent>
       </Card>
 
-      <Dialog open={pedidoDialogOpen} onOpenChange={setPedidoDialogOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[95vh] p-0 overflow-hidden">
-          <PedidoFormCompleto
-            pedido={editingPedido}
-            clientes={clientes}
-            onSubmit={(data) => {
-              if (editingPedido) {
-                updateMutation.mutate({ id: editingPedido.id, data });
-              } else {
-                createMutation.mutate(data);
-              }
-            }}
-            onCancel={() => {
-              setPedidoDialogOpen(false);
-              setEditingPedido(null);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* CORRIGIDO: Passar isOpen e onClose + onSuccess */}
+      <PedidoFormCompleto
+        isOpen={pedidoDialogOpen}
+        onClose={() => {
+          setPedidoDialogOpen(false);
+          setEditingPedido(null);
+        }}
+        pedido={editingPedido}
+        clientes={clientes} {/* Added back clients prop for functionality */}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+        }}
+      />
 
       {nfeModal && (
         <GerarNFeModal
