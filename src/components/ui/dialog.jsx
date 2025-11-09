@@ -27,6 +27,19 @@ const Dialog = ({ open, onOpenChange, children }) => {
   )
 }
 
+const DialogTrigger = React.forwardRef(({ className, children, asChild, ...props }, ref) => {
+  if (asChild) {
+    return <>{children}</>
+  }
+  
+  return (
+    <button ref={ref} className={className} {...props}>
+      {children}
+    </button>
+  )
+})
+DialogTrigger.displayName = "DialogTrigger"
+
 const DialogContent = React.forwardRef(({ className, children, onClose, ...props }, ref) => (
   <div
     ref={ref}
@@ -70,4 +83,8 @@ const DialogDescription = React.forwardRef(({ className, ...props }, ref) => (
 ))
 DialogDescription.displayName = "DialogDescription"
 
-export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription }
+const DialogFooter = ({ className, ...props }) => (
+  <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)} {...props} />
+)
+
+export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter }
