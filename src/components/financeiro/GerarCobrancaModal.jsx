@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -7,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Zap, Copy, CheckCircle, AlertTriangle } from "lucide-react";
+import { Loader2, Zap, Copy, CheckCircle, AlertTriangle, DollarSign } from "lucide-react";
 import { mockGerarBoleto, mockGerarPix, avisoModoSimulacao } from "@/components/integracoes/MockIntegracoes";
 
 /**
