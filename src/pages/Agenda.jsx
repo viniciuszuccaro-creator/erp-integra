@@ -31,7 +31,8 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Switch } from "@/components/ui/switch"; // Import Switch if it's intended to be used, though it's not in the current outline JSX. Keeping it as it was in outline imports.
+import { Switch } from "@/components/ui/switch";
+import SyncGoogleCalendar from "../components/agenda/SyncGoogleCalendar"; // New import
 
 export default function Agenda() {
   const [visualizacao, setVisualizacao] = useState("mes"); // mes, semana, dia
@@ -40,7 +41,7 @@ export default function Agenda() {
   const [editingEvento, setEditingEvento] = useState(null);
   const [visualizandoEvento, setVisualizandoEvento] = useState(null);
   const [filtroUsuario, setFiltroUsuario] = useState("todos");
-  const [syncGoogleDialogOpen, setSyncGoogleDialogOpen] = useState(false);
+  // The state for syncGoogleDialogOpen is moved to SyncGoogleCalendar component
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -57,7 +58,7 @@ export default function Agenda() {
     local: "",
     participantes: [],
     cliente_nome: "",
-    pedido_id: "", // New field
+    pedido_id: "",
     status: "Agendado",
     prioridade: "Normal",
     lembrete: true,
@@ -65,8 +66,8 @@ export default function Agenda() {
     link_reuniao: "",
     observacoes: "",
     cor: "#3b82f6",
-    notificar_email: false, // New field
-    notificar_whatsapp: false // New field
+    notificar_email: false,
+    notificar_whatsapp: false
   });
 
   const { data: eventos = [] } = useQuery({
@@ -93,7 +94,7 @@ export default function Agenda() {
     queryKey: ['configuracaoSistema'],
     queryFn: async () => {
       const configs = await base44.entities.ConfiguracaoSistema.list();
-      return configs[0] || null; // Assuming there's only one system config or we take the first
+      return configs[0] || null;
     },
   });
 
@@ -231,70 +232,7 @@ export default function Agenda() {
     },
   });
 
-  const sincronizarGoogleMutation = useMutation({
-    mutationFn: async () => {
-      toast({
-        title: "🔄 Sincronizando...",
-        description: "Conectando com Google Calendar"
-      });
-
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call delay
-
-      // Simular sincronização: criar um evento de exemplo
-      const eventosGoogle = [
-        {
-          titulo: "Reunião Google Meet (Sync)",
-          descricao: "Evento sincronizado do Google Calendar",
-          tipo: "Reunião",
-          data_inicio: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Tomorrow
-          hora_inicio: "14:00",
-          data_fim: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          hora_fim: "15:00",
-          dia_inteiro: false,
-          local: "Google Meet",
-          participantes: [],
-          cliente_nome: "Acme Corp",
-          pedido_id: null,
-          status: "Agendado",
-          prioridade: "Normal",
-          lembrete: true,
-          tempo_lembrete: 15,
-          link_reuniao: "https://meet.google.com/abc-defg-hij",
-          observacoes: "Evento de demonstração de sincronização.",
-          cor: "#4285f4", // Google Blue
-          notificar_email: false,
-          notificar_whatsapp: false,
-          responsavel: user?.full_name, // Assign to current user
-          responsavel_id: user?.id
-        }
-      ];
-
-      for (const evt of eventosGoogle) {
-        await base44.entities.Evento.create({
-          ...evt,
-          data_inicio: `${evt.data_inicio}T${evt.hora_inicio}:00`,
-          data_fim: `${evt.data_fim}T${evt.hora_fim}:00`
-        });
-      }
-
-      return eventosGoogle.length;
-    },
-    onSuccess: (quantidade) => {
-      queryClient.invalidateQueries({ queryKey: ['eventos'] });
-      setSyncGoogleDialogOpen(false);
-      toast({
-        title: "✅ Sincronização Concluída!",
-        description: `${quantidade} evento(s) importado(s) do Google Calendar`
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "❌ Erro na Sincronização",
-        description: `Não foi possível sincronizar: ${error.message}`
-      });
-    }
-  });
-
+  // The sincronizarGoogleMutation and associated logic is moved to SyncGoogleCalendar component
 
   const resetForm = () => {
     setEventoForm({
@@ -309,7 +247,7 @@ export default function Agenda() {
       local: "",
       participantes: [],
       cliente_nome: "",
-      pedido_id: "", // Reset new field
+      pedido_id: "",
       status: "Agendado",
       prioridade: "Normal",
       lembrete: true,
@@ -317,8 +255,8 @@ export default function Agenda() {
       link_reuniao: "",
       observacoes: "",
       cor: "#3b82f6",
-      notificar_email: false, // Reset new field
-      notificar_whatsapp: false // Reset new field
+      notificar_email: false,
+      notificar_whatsapp: false
     });
     setEditingEvento(null);
   };
@@ -736,7 +674,7 @@ export default function Agenda() {
     { cor: '#64748b', nome: 'Cinza' }
   ];
 
-  const googleSyncAtivo = configuracoes?.integracao_maps?.ativa || false;
+  // googleSyncAtivo is now handled inside SyncGoogleCalendar component
 
 
   return (
@@ -746,57 +684,14 @@ export default function Agenda() {
         <p className="text-slate-600">Gerencie compromissos, reuniões e lembretes com notificações automáticas</p>
       </div>
 
-      {/* Alert Sincronização */}
-      {googleSyncAtivo ? (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <div>
-                  <p className="font-semibold text-green-900">Google Calendar Sincronizado</p>
-                  <p className="text-sm text-green-700">
-                    Última sincronização: {new Date().toLocaleString('pt-BR')}
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => sincronizarGoogleMutation.mutate()}
-                disabled={sincronizarGoogleMutation.isPending}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${sincronizarGoogleMutation.isPending ? 'animate-spin' : ''}`} />
-                Sincronizar Agora
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Info className="w-5 h-5 text-blue-600" />
-                <div>
-                  <p className="font-semibold text-blue-900">Sincronização com Google Calendar</p>
-                  <p className="text-sm text-blue-700">
-                    Configure a integração para sincronizar automaticamente seus eventos
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSyncGoogleDialogOpen(true)}
-              >
-                <Link2 className="w-4 h-4 mr-2" />
-                Configurar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Sincronização Google Calendar */}
+      <SyncGoogleCalendar
+        configuracao={configuracoes}
+        base44={base44}
+        user={user}
+        toast={toast}
+        queryClient={queryClient}
+      />
 
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -1344,65 +1239,6 @@ export default function Agenda() {
               </div>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Sync Google */}
-      <Dialog open={syncGoogleDialogOpen} onOpenChange={setSyncGoogleDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Sincronizar com Google Calendar</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="p-4 bg-blue-50 rounded border border-blue-200">
-              <Info className="w-5 h-5 text-blue-600 mb-2" />
-              <p className="text-sm text-blue-900">
-                <strong>Modo Simulado:</strong> Esta é uma demonstração da funcionalidade.
-                Na produção, você precisará configurar as credenciais OAuth do Google Calendar.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-2">O que será sincronizado:</h4>
-              <ul className="text-sm text-slate-600 space-y-1">
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  Eventos do Google Calendar → Agenda ERP
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  Eventos da Agenda ERP → Google Calendar
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                  Atualização bidirecional em tempo real
-                </li>
-              </ul>
-            </div>
-
-            <div className="flex gap-3 justify-end pt-4">
-              <Button variant="outline" onClick={() => setSyncGoogleDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={() => sincronizarGoogleMutation.mutate()}
-                disabled={sincronizarGoogleMutation.isPending}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {sincronizarGoogleMutation.isPending ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Sincronizando...
-                  </>
-                ) : (
-                  <>
-                    <Link2 className="w-4 h-4 mr-2" />
-                    Iniciar Sincronização
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
         </DialogContent>
       </Dialog>
     </div>
