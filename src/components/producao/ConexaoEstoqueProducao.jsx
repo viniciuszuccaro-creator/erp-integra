@@ -11,7 +11,7 @@ import { converterParaKG } from "@/components/lib/CalculadoraUnidades";
 /**
  * Consumo de Matéria-Prima (SAÍDA)
  */
-export async function consumirMateriaPrimaOP(opId) {
+async function consumirMateriaPrimaOP(opId) {
   console.log('📦 Consumindo matéria-prima da OP...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
@@ -80,7 +80,7 @@ export async function consumirMateriaPrimaOP(opId) {
  * V21.4: NOVO - Entrada de Produto Acabado (ENTRADA)
  * Chamado quando OP muda para "Finalizada"
  */
-export async function entrarProdutoAcabadoOP(opId) {
+async function entrarProdutoAcabadoOP(opId) {
   console.log('📦 Dando entrada de produto acabado...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
@@ -167,7 +167,7 @@ export async function entrarProdutoAcabadoOP(opId) {
  * V21.4: NOVO - Registrar Refugo como Movimentação + Contábil
  * Chamado ao registrar refugo em apontamento
  */
-export async function registrarRefugoEstoque(opId, refugoData) {
+async function registrarRefugoEstoque(opId, refugoData) {
   console.log('🗑️ Registrando refugo no estoque...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
