@@ -52,6 +52,7 @@ import {
   Target, // NEW ICON for Centros de Resultado
   Receipt, // NEW ICON for Tipos de Despesa
   TrendingUp, // NEW ICON for Moedas e Índices
+  Eye, // NEW: Eye icon for view actions
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -109,7 +110,7 @@ import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 
 /**
- * CADASTROS GERAIS V20.0 - HUB CENTRAL COM AUDITORIA COMPLETA
+ * CADASTROS GERAIS V20.1 - HUB CENTRAL COM AUDITORIA COMPLETA
  * Blocos 1/6, 2/6, 3/6, 4/6 e 5/6 totalmente sincronizados
  */
 export default function Cadastros() {
@@ -403,7 +404,7 @@ export default function Cadastros() {
         'ModeloDocumento': 'modelos-documento'
       };
       // Use variables.entity directly if it's the exact key, otherwise map
-      const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
+      const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's'; // Fallback for entities without direct map
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
       handleCloseDialog();
       // Specific toasts can be handled in individual dialog onSubmits if needed,
@@ -480,15 +481,7 @@ export default function Cadastros() {
   };
 
   const handleSubmit = (data) => {
-    const entityNameMap = {
-      "colaboradores": "Colaborador",
-      "transportadoras": "Transportadora",
-      "centroscusto": "CentroCusto",
-      "bancos": "Banco",
-      "formas-pagamento": "FormaPagamento",
-      "veiculos": "Veiculo",
-    };
-    const entityName = editingItem?._entityName || entityNameMap[tipoDialog]; // Prefer _entityName if present
+    const entityName = editingItem?._entityName;
 
     if (!entityName) {
       console.error("Unknown entity for submission with tipoDialog:", tipoDialog, "and editingItem:", editingItem);
@@ -554,9 +547,9 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V20.0
+            🚀 Cadastros Gerais V20.1
           </h1>
-          <p className="text-slate-600">Hub Central - Todos os Blocos Sincronizados</p>
+          <p className="text-slate-600">Hub Central - Visualização e Edição Completa</p>
         </div>
         <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
           <Sparkles className="w-4 h-4 mr-2" />
@@ -647,7 +640,7 @@ export default function Cadastros() {
       {/* ACCORDION COM 6 GRUPOS */}
       <Accordion type="multiple" defaultValue={["grupo-1"]} className="space-y-4">
         
-        {/* 🏢 GRUPO 1: EMPRESA E ESTRUTURA - SINCRONIZADO V20.0 */}
+        {/* 🏢 GRUPO 1: EMPRESA E ESTRUTURA - SINCRONIZADO V20.1 */}
         <AccordionItem value="grupo-1" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:bg-blue-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -664,88 +657,99 @@ export default function Cadastros() {
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
-            {/* 1.1 Empresas - TABELA COM BOTÕES */}
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="font-bold text-slate-900 flex items-center gap-2">
+            {/* 1.1 Empresas - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-blue-600" />
                   Empresas ({empresas.length})
                 </h4>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setEmpresaFormOpen(true)}>
-                  <Plus className="w-3 h-3 mr-2" />
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleOpenNew('empresas', 'Empresa')}>
+                  <Plus className="w-4 h-4 mr-2" />
                   Nova Empresa
                 </Button>
               </div>
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    <TableHead>Razão Social</TableHead>
-                    <TableHead>CNPJ</TableHead>
-                    <TableHead>Regime</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ação</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {empresas.slice(0, 5).map((empresa) => (
-                    <TableRow key={empresa.id} className="hover:bg-slate-50">
-                      <TableCell className="font-medium">{empresa.razao_social}</TableCell>
-                      <TableCell className="text-sm">{empresa.cnpj}</TableCell>
-                      <TableCell className="text-sm">{empresa.regime_tributario}</TableCell>
-                      <TableCell>
-                        <Badge className={statusColors[empresa.status]}>
-                          {empresa.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" onClick={() => setEmpresaFormOpen(true)}> {/* Placeholder for edit, opens new form */}
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
+              
+              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Razão Social</TableHead>
+                      <TableHead>CNPJ</TableHead>
+                      <TableHead>Regime</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {empresas.map((empresa) => (
+                      <TableRow key={empresa.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium">{empresa.razao_social}</TableCell>
+                        <TableCell className="text-sm">{empresa.cnpj}</TableCell>
+                        <TableCell className="text-sm">{empresa.regime_tributario}</TableCell>
+                        <TableCell>
+                          <Badge className={statusColors[empresa.status]}>{empresa.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(empresa, 'empresas', 'Empresa')}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
-            {/* 1.2 Grupos Empresariais - ATIVADO V20.0 */}
+            {/* 1.2 Grupos Empresariais - TABELA COMPLETA */}
             <div>
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="font-bold text-slate-900 flex items-center gap-2">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
                   <Network className="w-5 h-5 text-purple-600" />
                   Grupos Empresariais ({grupos.length})
                 </h4>
-                <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => setGrupoEmpresarialFormOpen(true)}>
-                  <Plus className="w-3 h-3 mr-2" />
+                <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => handleOpenNew('grupos', 'GrupoEmpresarial')}>
+                  <Plus className="w-4 h-4 mr-2" />
                   Novo Grupo
                 </Button>
               </div>
               
-              <div className="grid gap-3">
-                {grupos.map(grupo => (
-                  <Card key={grupo.id} className="border">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Network className="w-4 h-4 text-purple-600" />
-                          <div>
-                            <p className="font-medium text-sm">{grupo.nome_do_grupo}</p>
-                            <p className="text-xs text-slate-500">
-                              {(grupo.empresas_ids || []).length} empresa(s) vinculada(s)
-                            </p>
-                          </div>
-                        </div>
-                        <Badge className="bg-blue-100 text-blue-700">
-                          Score IA: {grupo.score_integracao_erp || 0}%
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Nome do Grupo</TableHead>
+                      <TableHead>CNPJ</TableHead>
+                      <TableHead>Empresas</TableHead>
+                      <TableHead>Score IA</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {grupos.map((grupo) => (
+                      <TableRow key={grupo.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium">{grupo.nome_do_grupo}</TableCell>
+                        <TableCell className="text-sm">{grupo.cnpj_opcional || '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{(grupo.empresas_ids || []).length} empresas</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-blue-100 text-blue-700">{grupo.score_integracao_erp || 0}%</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(grupo, 'grupos', 'GrupoEmpresarial')}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
 
               {grupos.length === 0 && (
-                <Card className="border-dashed border-2">
+                <Card className="border-dashed border-2 mt-4">
                   <CardContent className="p-6 text-center text-slate-500">
                     <Network className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Nenhum grupo empresarial cadastrado</p>
@@ -754,158 +758,246 @@ export default function Cadastros() {
               )}
             </div>
 
-            {/* 1.3 Grid de Gestão Organizacional */}
-            <div className="grid lg:grid-cols-3 gap-4">
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <User className="w-5 h-5 text-blue-600" />
-                    <h4 className="font-semibold">Usuários</h4>
-                    <Badge className="ml-auto">{usuarios.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Controle de acesso
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setUsuarioFormOpen(true)}
-                  >
+            {/* 1.3 Grid de Gestão Organizacional - TABELAS COMPLETAS */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Usuários */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <User className="w-4 h-4 text-blue-600" />
+                    Usuários ({usuarios.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('usuarios', 'User')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Convidar Usuário
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Perfil</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {usuarios.map((u) => (
+                        <TableRow key={u.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{u.full_name}</TableCell>
+                          <TableCell className="text-xs">{u.email}</TableCell>
+                          <TableCell>
+                            <Badge className="text-xs">{u.role === 'admin' ? 'Admin' : 'Usuário'}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(u, 'usuarios', 'User')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Shield className="w-5 h-5 text-purple-600" />
-                    <h4 className="font-semibold">Perfis de Acesso</h4>
-                    <Badge className="ml-auto">{perfisAcesso.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    IA de Compliance (SoD)
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setPerfilAcessoFormOpen(true)}
-                  >
+              {/* Perfis de Acesso */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-purple-600" />
+                    Perfis de Acesso ({perfisAcesso.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('perfis', 'PerfilAcesso')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Perfil
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Nível</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {perfisAcesso.map((p) => (
+                        <TableRow key={p.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{p.nome}</TableCell>
+                          <TableCell className="text-xs">{p.nivel_acesso}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(p, 'perfis', 'PerfilAcesso')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Building2 className="w-5 h-5 text-cyan-600" />
-                    <h4 className="font-semibold">Filiais</h4>
-                    <Badge className="ml-auto">{empresas.filter(e => e.tipo === 'Filial').length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    IA GeoValidador
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setFilialFormOpen(true)}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Nova Filial
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Briefcase className="w-5 h-5 text-indigo-600" />
-                    <h4 className="font-semibold">Departamentos</h4>
-                    <Badge className="ml-auto">{departamentos.length}</Badge>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setDepartamentoFormOpen(true)}
-                  >
+              {/* Departamentos */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-indigo-600" />
+                    Departamentos ({departamentos.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('departamentos', 'Departamento')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Departamento
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Código</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {departamentos.map((d) => (
+                        <TableRow key={d.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{d.nome}</TableCell>
+                          <TableCell className="text-xs">{d.codigo}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(d, 'departamentos', 'Departamento')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <UserCircle className="w-5 h-5 text-pink-600" />
-                    <h4 className="font-semibold">Cargos</h4>
-                    <Badge className="ml-auto">{cargos.length}</Badge>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setCargoFormOpen(true)}
-                  >
+              {/* Cargos */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <UserCircle className="w-4 h-4 text-pink-600" />
+                    Cargos ({cargos.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('cargos', 'Cargo')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Cargo
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Cargo</TableHead>
+                        <TableHead>Nível</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {cargos.map((c) => (
+                        <TableRow key={c.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{c.nome_cargo}</TableCell>
+                          <TableCell className="text-xs">{c.nivel_hierarquico}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'cargos', 'Cargo')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Clock className="w-5 h-5 text-orange-600" />
-                    <h4 className="font-semibold">Turnos</h4>
-                    <Badge className="ml-auto">{turnos.length}</Badge>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setTurnoFormOpen(true)}
-                  >
+              {/* Turnos */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-orange-600" />
+                    Turnos ({turnos.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('turnos', 'Turno')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Turno
                   </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* 1.4 Centros de Custo */}
-            <Card className="border hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <DollarSign className="w-5 h-5 text-purple-600" />
-                  <h4 className="font-semibold">Centros de Custo</h4>
-                  <Badge className="ml-auto">{centrosCusto.length}</Badge>
                 </div>
-                <p className="text-xs text-slate-600 mb-3">
-                  Controle de despesas, receitas e investimentos
-                </p>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => handleOpenNew('centroscusto', 'CentroCusto')}
-                >
-                  <Plus className="w-3 h-3 mr-2" />
-                  Novo Centro de Custo
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Turno</TableHead>
+                        <TableHead>Horário</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {turnos.map((t) => (
+                        <TableRow key={t.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{t.nome_turno}</TableCell>
+                          <TableCell className="text-xs">{t.horario_inicio} - {t.horario_fim}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(t, 'turnos', 'Turno')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Centros de Custo */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-purple-600" />
+                    Centros de Custo ({centrosCusto.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('centroscusto', 'CentroCusto')}>
+                    <Plus className="w-3 h-3 mr-2" />
+                    Novo Centro de Custo
+                  </Button>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {centrosCusto.map((cc) => (
+                        <TableRow key={cc.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{cc.codigo}</TableCell>
+                          <TableCell className="text-sm">{cc.descricao}</TableCell>
+                          <TableCell className="text-xs">{cc.tipo}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(cc, 'centroscusto', 'CentroCusto')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
           </AccordionContent>
         </AccordionItem>
 
-        {/* 👥 GRUPO 2: PESSOAS E PARCEIROS - SINCRONIZADO V20.0 */}
+        {/* 👥 GRUPO 2: PESSOAS E PARCEIROS - SINCRONIZADO V20.1 */}
         <AccordionItem value="grupo-2" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-green-50 to-cyan-50 hover:bg-green-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -920,211 +1012,354 @@ export default function Cadastros() {
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
-            {/* Tabela de Clientes */}
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h4 className="font-bold text-slate-900 flex items-center gap-2">
+            {/* Clientes - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
                   <Users className="w-5 h-5 text-blue-600" />
                   Clientes ({clientes.length})
                 </h4>
                 <Button onClick={handleNovoCliente} size="sm" className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-3 h-3 mr-2" />
+                  <Plus className="w-4 h-4 mr-2" />
                   Novo Cliente
                 </Button>
               </div>
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>CPF/CNPJ</TableHead>
-                    <TableHead>Cidade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ação</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {clientes.slice(0, 5).map((cliente) => (
-                    <TableRow key={cliente.id} className="hover:bg-slate-50">
-                      <TableCell>
-                        <IconeAcessoCliente
-                          cliente={cliente}
-                          variant="inline"
-                          onView={(c) => { setClienteParaPainel(c); setPainelClienteAberto(true); }}
-                          onEdit={(c) => handleEditarCliente(c)}
-                        />
-                      </TableCell>
-                      <TableCell className="text-sm">{cliente.cpf || cliente.cnpj || '-'}</TableCell>
-                      <TableCell className="text-sm">{cliente.endereco_principal?.cidade || '-'}</TableCell>
-                      <TableCell>
-                        <Badge className={statusColors[cliente.status]}>{cliente.status}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <IconeAcessoCliente
-                          cliente={cliente}
-                          variant="default"
-                          onView={(c) => { setClienteParaPainel(c); setPainelClienteAberto(true); }}
-                          onEdit={(c) => handleEditarCliente(c)}
-                        />
-                      </TableCell>
+              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>CPF/CNPJ</TableHead>
+                      <TableHead>Cidade</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {clientes.length > 5 && (
-                <Button variant="link" className="mt-2 text-blue-600">
-                  Ver todos os {clientes.length} clientes →
-                </Button>
-              )}
+                  </TableHeader>
+                  <TableBody>
+                    {clientes.map((cliente) => (
+                      <TableRow key={cliente.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{cliente.nome}</TableCell>
+                        <TableCell className="text-xs">{cliente.cpf || cliente.cnpj || '-'}</TableCell>
+                        <TableCell className="text-xs">{cliente.endereco_principal?.cidade || '-'}</TableCell>
+                        <TableCell>
+                          <Badge className={statusColors[cliente.status]}>{cliente.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => { setClienteParaPainel(cliente); setPainelClienteAberto(true); }}>
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleEditarCliente(cliente)}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
-            {/* Grid EXPANDIDO com cadastros complementares */}
-            <div className="grid lg:grid-cols-3 gap-4 mt-6">
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Building2 className="w-5 h-5 text-cyan-600" />
-                    <h4 className="font-semibold">Fornecedores</h4>
-                    <Badge className="ml-auto">{fornecedores.length}</Badge>
-                  </div>
-                  <Button size="sm" variant="outline" className="w-full" onClick={handleNovoFornecedor}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Fornecedor
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Fornecedores - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-cyan-600" />
+                  Fornecedores ({fornecedores.length})
+                </h4>
+                <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700" onClick={handleNovoFornecedor}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Fornecedor
+                </Button>
+              </div>
+              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Fornecedor</TableHead>
+                      <TableHead>CNPJ</TableHead>
+                      <TableHead>Categoria</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fornecedores.map((f) => (
+                      <TableRow key={f.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{f.nome}</TableCell>
+                        <TableCell className="text-xs">{f.cnpj || '-'}</TableCell>
+                        <TableCell className="text-xs">{f.categoria}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => { setFornecedorParaPainel(f); setPainelFornecedorAberto(true); }}>
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleEditarFornecedor(f)}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
 
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <User className="w-5 h-5 text-pink-600" />
-                    <h4 className="font-semibold">Colaboradores</h4>
-                    <Badge className="ml-auto">{colaboradores.length}</Badge>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handleOpenNew('colaboradores', 'Colaborador')}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Colaborador
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Colaboradores - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <User className="w-5 h-5 text-pink-600" />
+                  Colaboradores ({colaboradores.length})
+                </h4>
+                <Button 
+                  size="sm" 
+                  className="bg-pink-600 hover:bg-pink-700"
+                  onClick={() => handleOpenNew('colaboradores', 'Colaborador')}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Colaborador
+                </Button>
+              </div>
+              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Cargo</TableHead>
+                      <TableHead>Departamento</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {colaboradores.map((c) => (
+                      <TableRow key={c.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{c.nome_completo}</TableCell>
+                        <TableCell className="text-xs">{c.cargo}</TableCell>
+                        <TableCell className="text-xs">{c.departamento}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => { setColaboradorParaPainel(c); setPainelColaboradorAberto(true); }}>
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'colaboradores', 'Colaborador')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
 
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Truck className="w-5 h-5 text-orange-600" />
-                    <h4 className="font-semibold">Transportadoras</h4>
-                    <Badge className="ml-auto">{transportadoras.length}</Badge>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handleOpenNew('transportadoras', 'Transportadora')}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Nova Transportadora
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Transportadoras - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-orange-600" />
+                  Transportadoras ({transportadoras.length})
+                </h4>
+                <Button 
+                  size="sm" 
+                  className="bg-orange-600 hover:bg-orange-700"
+                  onClick={() => handleOpenNew('transportadoras', 'Transportadora')}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Transportadora
+                </Button>
+              </div>
+              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Razão Social</TableHead>
+                      <TableHead>CNPJ</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transportadoras.map((t) => (
+                      <TableRow key={t.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{t.razao_social}</TableCell>
+                        <TableCell className="text-xs">{t.cnpj}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => { setTransportadoraParaPainel(t); setPainelTransportadoraAberto(true); }}>
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(t, 'transportadoras', 'Transportadora')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
 
-              {/* NOVO: Contatos B2B */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Mail className="w-5 h-5 text-purple-600" />
-                    <h4 className="font-semibold">Contatos B2B</h4>
-                    <Badge className="ml-auto">{contatosB2B.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Pessoas de contato dos clientes (LGPD)
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setContatoB2BFormOpen(true)}
-                  >
+            {/* Outros cadastros do Grupo 2 - TABELAS COMPLETAS */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Contatos B2B */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-purple-600" />
+                    Contatos B2B ({contatosB2B.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('contatos', 'ContatoB2B')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Contato
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {contatosB2B.map((c) => (
+                        <TableRow key={c.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{c.nome_contato}</TableCell>
+                          <TableCell className="text-xs">{c.email}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'contatos', 'ContatoB2B')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              {/* NOVO: Condições Comerciais */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <DollarSign className="w-5 h-5 text-green-600" />
-                    <h4 className="font-semibold">Condições Comerciais</h4>
-                    <Badge className="ml-auto">{condicoesComerciais.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Prazos, descontos e parcelamentos
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setCondicaoComercialFormOpen(true)}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Nova Condição
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* NOVO: Representantes */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <UserCheck className="w-5 h-5 text-indigo-600" />
-                    <h4 className="font-semibold">Representantes</h4>
-                    <Badge className="ml-auto">{representantes.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Representantes comerciais
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setRepresentanteFormOpen(true)}
-                  >
+              {/* Representantes */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-indigo-600" />
+                    Representantes ({representantes.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('representantes', 'Representante')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Representante
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Comissão</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {representantes.map((r) => (
+                        <TableRow key={r.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{r.nome}</TableCell>
+                          <TableCell className="text-xs">{r.comissao_percentual}%</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(r, 'representantes', 'Representante')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              {/* NOVO: Segmentos de Cliente */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Users className="w-5 h-5 text-cyan-600" />
-                    <h4 className="font-semibold">Segmentos de Cliente</h4>
-                    <Badge className="ml-auto">{segmentosCliente.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Classificação e critérios
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setSegmentoClienteFormOpen(true)}
-                  >
+              {/* Condições Comerciais */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    Condições Comerciais ({condicoesComerciais.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('condicoes', 'CondicaoComercial')}>
+                    <Plus className="w-3 h-3 mr-2" />
+                    Nova Condição
+                  </Button>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Condição</TableHead>
+                        <TableHead>Prazo</TableHead>
+                        <TableHead>Desconto</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {condicoesComerciais.map((cc) => (
+                        <TableRow key={cc.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{cc.nome_condicao}</TableCell>
+                          <TableCell className="text-xs">{cc.prazo_pagamento_dias} dias</TableCell>
+                          <TableCell className="text-xs">{cc.percentual_desconto}%</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(cc, 'condicoes', 'CondicaoComercial')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Segmentos de Cliente */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Users className="w-4 h-4 text-cyan-600" />
+                    Segmentos de Cliente ({segmentosCliente.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('segmentos', 'SegmentoCliente')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Segmento
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Segmento</TableHead>
+                        <TableHead>Clientes</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {segmentosCliente.map((s) => (
+                        <TableRow key={s.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{s.nome_segmento}</TableCell>
+                          <TableCell className="text-xs">{s.quantidade_clientes || 0}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(s, 'segmentos', 'SegmentoCliente')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             </div>
 
-            {/* NOVO: Alertas IA - KYC/KYB e Churn */}
+            {/* Alertas IA - KYC/KYB e Churn */}
             <div className="grid lg:grid-cols-2 gap-4 mt-6">
               <Alert className="border-red-200 bg-red-50">
                 <AlertTriangle className="w-4 h-4 text-red-600" />
@@ -1143,7 +1378,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - REESTRUTURADO V20.0 */}
+        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - REESTRUTURADO V20.1 */}
         <AccordionItem value="grupo-3" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 hover:bg-purple-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -1167,170 +1402,336 @@ export default function Cadastros() {
               </AlertDescription>
             </Alert>
 
-            {/* Grid Principal 2x4 */}
-            <div className="grid lg:grid-cols-4 gap-4">
-              {/* 3.1 Produtos */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Package className="w-5 h-5 text-purple-600" />
-                    <h4 className="font-semibold">Produtos</h4>
-                    <Badge className="ml-auto">{produtos.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Cadastro mestre com IA de classificação
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setProdutoFormOpen(true)}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Produto
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* PRODUTOS - TABELA COMPLETA COM TODOS OS DETALHES */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Package className="w-5 h-5 text-purple-600" />
+                  Produtos ({produtos.length})
+                </h4>
+                <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => handleOpenNew('produtos', 'Produto')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Produto
+                </Button>
+              </div>
+              
+              <div className="border rounded-lg max-h-[500px] overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50 z-10">
+                    <TableRow>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Grupo</TableHead>
+                      <TableHead>Estoque</TableHead>
+                      <TableHead>Preço</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {produtos.map((p) => (
+                      <TableRow key={p.id} className="hover:bg-slate-50">
+                        <TableCell className="font-mono text-xs">{p.codigo}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium text-sm">{p.descricao}</p>
+                            {p.eh_bitola && (
+                              <Badge className="text-xs bg-purple-100 text-purple-700 mt-1">
+                                Bitola {p.bitola_diametro_mm}mm • {p.peso_teorico_kg_m} kg/m
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">{p.grupo}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <span className="font-bold">{p.estoque_atual || 0}</span>
+                            <span className="text-xs text-slate-500 ml-1">{p.unidade_medida}</span>
+                          </div>
+                          {p.estoque_reservado > 0 && (
+                            <p className="text-xs text-orange-600">Reservado: {p.estoque_reservado}</p>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <p className="text-sm font-semibold text-green-700">
+                            R$ {(p.preco_venda || 0).toFixed(2)}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Custo: R$ {(p.custo_medio || 0).toFixed(2)}
+                          </p>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={statusColors[p.status]}>{p.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(p, 'produtos', 'Produto')}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {produtos.length === 0 && (
+                <div className="text-center py-12 text-slate-500 border rounded-lg">
+                  <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>Nenhum produto cadastrado</p>
+                </div>
+              )}
+            </div>
 
-              {/* 3.2 Serviços */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Factory className="w-5 h-5 text-indigo-600" />
-                    <h4 className="font-semibold">Serviços</h4>
-                    <Badge className="ml-auto">{servicos.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Corte, dobra, soldagem
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setServicoFormOpen(true)}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Serviço
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* SERVIÇOS - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Factory className="w-5 h-5 text-indigo-600" />
+                  Serviços ({servicos.length})
+                </h4>
+                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => handleOpenNew('servicos', 'Servico')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Serviço
+                </Button>
+              </div>
+              
+              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Unidade</TableHead>
+                      <TableHead>Preço</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {servicos.map((s) => (
+                      <TableRow key={s.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{s.descricao}</TableCell>
+                        <TableCell className="text-xs">{s.tipo_servico}</TableCell>
+                        <TableCell className="text-xs">{s.unidade}</TableCell>
+                        <TableCell className="text-sm font-semibold text-green-700">
+                          R$ {(s.preco_servico || 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(s, 'servicos', 'Servico')}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
 
-              {/* 3.3 Grupos de Produtos */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Boxes className="w-5 h-5 text-cyan-600" />
-                    <h4 className="font-semibold">Grupos</h4>
-                    <Badge className="ml-auto">{gruposProduto.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Categorização hierárquica
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setGrupoProdutoFormOpen(true)}
-                  >
+            {/* Grid 2x2 - Outros Cadastros do Grupo 3 - TABELAS COMPLETAS */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Grupos Produto */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Boxes className="w-4 h-4 text-cyan-600" />
+                    Grupos ({gruposProduto.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('grupos-produto', 'GrupoProduto')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Grupo
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Natureza</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {gruposProduto.map((g) => (
+                        <TableRow key={g.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{g.nome_grupo}</TableCell>
+                          <TableCell className="text-xs">{g.natureza}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(g, 'grupos-produto', 'GrupoProduto')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              {/* 3.4 Marcas/Fabricantes */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Award className="w-5 h-5 text-orange-600" />
-                    <h4 className="font-semibold">Marcas</h4>
-                    <Badge className="ml-auto">{marcas.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Fabricantes e certificações
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setMarcaFormOpen(true)}
-                  >
+              {/* Marcas */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Award className="w-4 h-4 text-orange-600" />
+                    Marcas ({marcas.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('marcas', 'Marca')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Nova Marca
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Marca</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {marcas.map((m) => (
+                        <TableRow key={m.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{m.nome_marca}</TableCell>
+                          <TableCell className="text-xs">{m.categoria}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(m, 'marcas', 'Marca')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              {/* 3.5 Tabelas de Preço */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <DollarSign className="w-5 h-5 text-green-600" />
-                    <h4 className="font-semibold">Tabelas de Preço</h4>
-                    <Badge className="ml-auto">{tabelasPreco.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Atacado, varejo, especial
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setTabelaPrecoFormOpen(true)}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Nova Tabela
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* 3.6 Catálogo E-commerce */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Globe className="w-5 h-5 text-cyan-600" />
-                    <h4 className="font-semibold">Catálogo Web</h4>
-                    <Badge className="ml-auto">{catalogoWeb.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    SEO e descrições IA
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setCatalogoWebFormOpen(true)}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Item
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* 3.7 Kits/Conjuntos */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Package className="w-5 h-5 text-pink-600" />
-                    <h4 className="font-semibold">Kits</h4>
-                    <Badge className="ml-auto">{kits.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Combinações de produtos
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setKitProdutoFormOpen(true)}
-                  >
+              {/* Kits */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Package className="w-4 h-4 text-pink-600" />
+                    Kits ({kits.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('kits', 'KitProduto')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Kit
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Itens</TableHead>
+                        <TableHead>Preço</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {kits.map((k) => (
+                        <TableRow key={k.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{k.nome_kit}</TableCell>
+                          <TableCell className="text-xs">{(k.itens_kit || []).length} itens</TableCell>
+                          <TableCell className="text-sm font-semibold text-green-700">
+                            R$ {(k.preco_kit || 0).toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(k, 'kits', 'KitProduto')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              {/* 3.8 Bitolas */}
+              {/* Tabelas Preço */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    Tabelas de Preço ({tabelasPreco.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('tabelas', 'TabelaPreco')}>
+                    <Plus className="w-3 h-3 mr-2" />
+                    Nova Tabela
+                  </Button>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Produtos</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tabelasPreco.map((t) => (
+                        <TableRow key={t.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{t.nome}</TableCell>
+                          <TableCell className="text-xs">{t.tipo}</TableCell>
+                          <TableCell className="text-xs">{t.quantidade_produtos || 0}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(t, 'tabelas', 'TabelaPreco')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Catálogo Web */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-cyan-600" />
+                    Catálogo Web ({catalogoWeb.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
+                    <Plus className="w-3 h-3 mr-2" />
+                    Novo Item
+                  </Button>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Produto</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {catalogoWeb.map((c) => (
+                        <TableRow key={c.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
+                          <TableCell>
+                            {c.exibir_no_site ? (
+                              <Badge className="bg-green-100 text-green-700 text-xs">Ativo</Badge>
+                            ) : (
+                              <Badge className="bg-slate-100 text-slate-700 text-xs">Inativo</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'catalogo', 'CatalogoWeb')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Bitolas */}
               <Card className="border hover:shadow-md transition-shadow border-purple-200 bg-purple-50">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3 mb-3">
@@ -1381,7 +1782,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 💰 GRUPO 4: FINANCEIRO E FISCAL - SINCRONIZADO V20.0 */}
+        {/* 💰 GRUPO 4: FINANCEIRO E FISCAL - SINCRONIZADO V20.1 */}
         <AccordionItem value="grupo-4" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:bg-green-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -1406,13 +1807,13 @@ export default function Cadastros() {
               </AlertDescription>
             </Alert>
 
-            {/* ROW 1: Bancos e Formas de Pagamento */}
-            <div className="grid lg:grid-cols-2 gap-4">
-              {/* 4.1 Bancos - ATIVADO */}
+            {/* ROW 1: Bancos e Formas de Pagamento - TABELAS COMPLETAS */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Bancos */}
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
-                    <Landmark className="w-5 h-5 text-blue-600" />
+                    <Landmark className="w-4 h-4 text-blue-600" />
                     Contas Bancárias ({bancos.length})
                   </h4>
                   <Button 
@@ -1424,39 +1825,42 @@ export default function Cadastros() {
                     Nova Conta
                   </Button>
                 </div>
-                <div className="grid gap-3">
-                  {bancos.slice(0, 3).map(banco => (
-                    <Card key={banco.id} className="border">
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Landmark className="w-4 h-4 text-blue-600" />
-                            <div>
-                              <p className="font-medium text-sm">{banco.nome_banco}</p>
-                              <p className="text-xs text-slate-500">
-                                Ag: {banco.agencia} • CC: {banco.conta}-{banco.conta_digito}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-green-600">
-                              R$ {(banco.saldo_atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                            {banco.principal && <Badge className="text-xs bg-yellow-100 text-yellow-700">Principal</Badge>}
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Banco</TableHead>
+                        <TableHead>Agência/Conta</TableHead>
+                        <TableHead>Saldo</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bancos.map((b) => (
+                        <TableRow key={b.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{b.nome_banco}</TableCell>
+                          <TableCell className="text-xs">{b.agencia} / {b.conta}-{b.conta_digito}</TableCell>
+                          <TableCell className="text-sm font-bold text-green-600">
+                            R$ {(b.saldo_atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(b, 'bancos', 'Banco')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
 
-              {/* 4.2 Formas de Pagamento - ATIVADO */}
+              {/* Formas Pagamento */}
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-green-600" />
-                    Formas de Pagamento ({formasPagamento.length})
+                    <CreditCard className="w-4 h-4 text-green-600" />
+                    Formas Pagamento ({formasPagamento.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -1467,122 +1871,216 @@ export default function Cadastros() {
                     Nova Forma
                   </Button>
                 </div>
-                <div className="grid gap-3">
-                  {formasPagamento.slice(0, 4).map(forma => (
-                    <Card key={forma.id} className="border">
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4 text-green-600" />
-                            <div>
-                              <p className="font-medium text-sm">{forma.descricao}</p>
-                              <p className="text-xs text-slate-500">{forma.tipo}</p>
-                            </div>
-                          </div>
-                          <Badge className={forma.ativa ? 'bg-green-100 text-green-700 text-xs' : 'bg-slate-100 text-slate-700 text-xs'}>
-                            {forma.ativa ? 'Ativa' : 'Inativa'}
-                          </Badge>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {formasPagamento.map((f) => (
+                        <TableRow key={f.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{f.descricao}</TableCell>
+                          <TableCell className="text-xs">{f.tipo}</TableCell>
+                          <TableCell>
+                            <Badge className={f.ativa ? 'bg-green-100 text-green-700 text-xs' : 'bg-slate-100 text-slate-700 text-xs'}>
+                              {f.ativa ? 'Ativa' : 'Inativa'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(f, 'formas-pagamento', 'FormaPagamento')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>
 
-            {/* ROW 2: Grid 2x4 - Cadastros Contábeis e Fiscais */}
-            <div className="grid lg:grid-cols-4 gap-4 mt-6">
-              {/* 4.3 Plano de Contas */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <FileText className="w-5 h-5 text-indigo-600" />
-                    <h4 className="font-semibold">Plano de Contas</h4>
-                    <Badge className="ml-auto">{planoContas.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Hierarquia contábil e DRE
-                  </p>
+            {/* ROW 2: Cadastros Contábeis e Fiscais - TABELAS COMPLETAS */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Plano de Contas */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-indigo-600" />
+                    Plano de Contas ({planoContas.length})
+                  </h4>
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="w-full"
-                    onClick={() => setPlanoContasFormOpen(true)}
+                    onClick={() => handleOpenNew('plano-contas', 'PlanoDeContas')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Nova Conta
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {planoContas.map((pc) => (
+                        <TableRow key={pc.id} className="hover:bg-slate-50">
+                          <TableCell className="font-mono text-xs">{pc.codigo_conta}</TableCell>
+                          <TableCell className="text-sm">{pc.descricao_conta}</TableCell>
+                          <TableCell className="text-xs">{pc.tipo}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(pc, 'plano-contas', 'PlanoDeContas')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              {/* 4.4 Centros de Resultado */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Target className="w-5 h-5 text-purple-600" />
-                    <h4 className="font-semibold">Centros Resultado</h4>
-                    <Badge className="ml-auto">{centrosResultado.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Análise gerencial
-                  </p>
+              {/* Centros de Resultado */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Target className="w-4 h-4 text-purple-600" />
+                    Centros Resultado ({centrosResultado.length})
+                  </h4>
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="w-full"
-                    onClick={() => setCentroResultadoFormOpen(true)}
+                    onClick={() => handleOpenNew('centros-resultado', 'CentroResultado')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Centro
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {centrosResultado.map((cr) => (
+                        <TableRow key={cr.id} className="hover:bg-slate-50">
+                          <TableCell className="font-mono text-xs">{cr.codigo}</TableCell>
+                          <TableCell className="text-sm">{cr.descricao}</TableCell>
+                          <TableCell className="text-xs">{cr.tipo}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(cr, 'centros-resultado', 'CentroResultado')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              {/* 4.5 Tipos de Despesa */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Receipt className="w-5 h-5 text-red-600" />
-                    <h4 className="font-semibold">Tipos Despesa</h4>
-                    <Badge className="ml-auto">{tiposDespesa.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Fixa, variável, recorrente
-                  </p>
+              {/* Tipos de Despesa */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Receipt className="w-4 h-4 text-red-600" />
+                    Tipos Despesa ({tiposDespesa.length})
+                  </h4>
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="w-full"
-                    onClick={() => setTipoDespesaFormOpen(true)}
+                    onClick={() => handleOpenNew('tipos-despesa', 'TipoDespesa')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Novo Tipo
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {tiposDespesa.map((td) => (
+                        <TableRow key={td.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{td.nome}</TableCell>
+                          <TableCell className="text-xs">{td.categoria}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(td, 'tipos-despesa', 'TipoDespesa')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-              {/* 4.6 Moedas e Índices */}
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <TrendingUp className="w-5 h-5 text-cyan-600" />
-                    <h4 className="font-semibold">Moedas/Índices</h4>
-                    <Badge className="ml-auto">{moedasIndices.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    BRL, USD, Selic, IPCA
-                  </p>
+              {/* Moedas e Índices */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-cyan-600" />
+                    Moedas/Índices ({moedasIndices.length})
+                  </h4>
                   <Button 
                     size="sm" 
                     variant="outline" 
-                    className="w-full"
-                    onClick={() => setMoedaIndiceFormOpen(true)}
+                    onClick={() => handleOpenNew('moedas', 'MoedaIndice')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Nova Moeda
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {moedasIndices.map((mi) => (
+                        <TableRow key={mi.id} className="hover:bg-slate-50">
+                          <TableCell className="font-mono text-xs">{mi.codigo}</TableCell>
+                          <TableCell className="text-sm">{mi.nome}</TableCell>
+                          <TableCell className="text-sm font-semibold">
+                            {mi.simbolo} {(mi.valor_atual || 0).toFixed(4)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(mi, 'moedas', 'MoedaIndice')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             </div>
 
             {/* ROW 3: CFOP / NCM / CEST - EXPANDIDO */}
@@ -1647,7 +2145,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🚚 GRUPO 5: OPERAÇÃO E LOGÍSTICA - SINCRONIZADO V20.0 */}
+        {/* 🚚 GRUPO 5: OPERAÇÃO E LOGÍSTICA - SINCRONIZADO V20.1 */}
         <AccordionItem value="grupo-5" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-orange-50 to-red-50 hover:bg-orange-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -1669,67 +2167,162 @@ export default function Cadastros() {
               </AlertDescription>
             </Alert>
 
-            <div className="grid lg:grid-cols-3 gap-4">
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Truck className="w-5 h-5 text-slate-600" />
-                    <h4 className="font-semibold">Veículos / Frota</h4>
-                    <Badge className="ml-auto">{veiculos.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">IA Manutenção Preditiva</p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handleOpenNew('veiculos', 'Veiculo')}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Cadastrar Veículo
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Veículos - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-slate-600" />
+                  Veículos / Frota ({veiculos.length})
+                </h4>
+                <Button size="sm" variant="outline" onClick={() => handleOpenNew('veiculos', 'Veiculo')}>
+                  <Plus className="w-3 h-3 mr-2" />
+                  Cadastrar Veículo
+                </Button>
+              </div>
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Placa</TableHead>
+                      <TableHead>Modelo</TableHead>
+                      <TableHead>Capacidade</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {veiculos.map((v) => (
+                      <TableRow key={v.id} className="hover:bg-slate-50">
+                        <TableCell className="font-mono text-sm">{v.placa}</TableCell>
+                        <TableCell className="text-xs">{v.modelo}</TableCell>
+                        <TableCell className="text-xs">{v.capacidade_kg} kg</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(v, 'veiculos', 'Veiculo')}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
 
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <User className="w-5 h-5 text-blue-600" />
-                    <h4 className="font-semibold">Motoristas</h4>
-                    <Badge className="ml-auto">{motoristas.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">CNH e App GPS</p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setMotoristaFormOpen(true)}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Motorista
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Motoristas - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <User className="w-4 h-4 text-blue-600" />
+                  Motoristas ({motoristas.length})
+                </h4>
+                <Button size="sm" variant="outline" onClick={() => handleOpenNew('motoristas', 'Motorista')}>
+                  <Plus className="w-3 h-3 mr-2" />
+                  Novo Motorista
+                </Button>
+              </div>
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>CNH</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {motoristas.map((m) => (
+                      <TableRow key={m.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{m.nome_completo}</TableCell>
+                        <TableCell className="text-xs">{m.cnh_categoria} - {m.cnh_numero}</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(m, 'motoristas', 'Motorista')}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
 
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <MapPin className="w-5 h-5 text-purple-600" />
-                    <h4 className="font-semibold">Rotas Padrão</h4>
-                    <Badge className="ml-auto">0</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">IA Roteirização</p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setRotaPadraoFormOpen(true)}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Criar Rota
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Tipos Frete - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-green-600" />
+                  Tipos Frete ({tiposFrete.length})
+                </h4>
+                <Button size="sm" variant="outline" onClick={() => handleOpenNew('tipos-frete', 'TipoFrete')}>
+                  <Plus className="w-3 h-3 mr-2" />
+                  Novo Tipo
+                </Button>
+              </div>
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Modalidade</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {tiposFrete.map((tf) => (
+                      <TableRow key={tf.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{tf.descricao}</TableCell>
+                        <TableCell className="text-xs">{tf.modalidade}</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(tf, 'tipos-frete', 'TipoFrete')}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
 
+            {/* Modelos Documento - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-cyan-600" />
+                  Modelos PDF ({modelosDocumento.length})
+                </h4>
+                <Button size="sm" variant="outline" onClick={() => handleOpenNew('modelos', 'ModeloDocumento')}>
+                  <Plus className="w-3 h-3 mr-2" />
+                  Novo Modelo
+                </Button>
+              </div>
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {modelosDocumento.map((md) => (
+                      <TableRow key={md.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{md.nome_modelo}</TableCell>
+                        <TableCell className="text-xs">{md.tipo_documento}</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(md, 'modelos', 'ModeloDocumento')}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Locais Estoque & Rota Padrão - Cards with buttons */}
+            <div className="grid lg:grid-cols-2 gap-6">
               <Card className="border hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3 mb-3">
@@ -1753,39 +2346,19 @@ export default function Cadastros() {
               <Card className="border hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3 mb-3">
-                    <Truck className="w-5 h-5 text-green-600" />
-                    <h4 className="font-semibold">Tipos Frete</h4>
-                    <Badge className="ml-auto">{tiposFrete.length}</Badge>
+                    <MapPin className="w-5 h-5 text-purple-600" />
+                    <h4 className="font-semibold">Rotas Padrão</h4>
+                    <Badge className="ml-auto">0</Badge>
                   </div>
-                  <p className="text-xs text-slate-600 mb-3">CIF, FOB, Terceiro</p>
+                  <p className="text-xs text-slate-600 mb-3">IA Roteirização</p>
                   <Button 
                     size="sm" 
                     variant="outline" 
                     className="w-full"
-                    onClick={() => setTipoFreteFormOpen(true)}
+                    onClick={() => setRotaPadraoFormOpen(true)}
                   >
                     <Plus className="w-3 h-3 mr-2" />
-                    Novo Tipo
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <FileText className="w-5 h-5 text-cyan-600" />
-                    <h4 className="font-semibold">Modelos PDF</h4>
-                    <Badge className="ml-auto">{modelosDocumento.length}</Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">Layouts personalizados</p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setModeloDocumentoFormOpen(true)}
-                  >
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Modelo
+                    Criar Rota
                   </Button>
                 </CardContent>
               </Card>
@@ -1816,7 +2389,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🤖 GRUPO 6: INTEGRAÇÕES, IA E PORTAL - CORRIGIDO V20.0 */}
+        {/* 🤖 GRUPO 6: INTEGRAÇÕES, IA E PORTAL - CORRIGIDO V20.1 */}
         <AccordionItem value="grupo-6" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-blue-50 hover:bg-indigo-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -2129,6 +2702,31 @@ export default function Cadastros() {
               {tipoDialog === 'bancos' && 'Banco'}
               {tipoDialog === 'formas-pagamento' && 'Forma de Pagamento'}
               {tipoDialog === 'veiculos' && 'Veículo'}
+              {tipoDialog === 'empresas' && 'Empresa'}
+              {tipoDialog === 'grupos' && 'Grupo Empresarial'}
+              {tipoDialog === 'departamentos' && 'Departamento'}
+              {tipoDialog === 'cargos' && 'Cargo'}
+              {tipoDialog === 'turnos' && 'Turno'}
+              {tipoDialog === 'usuarios' && 'Usuário'}
+              {tipoDialog === 'perfis' && 'Perfil de Acesso'}
+              {tipoDialog === 'condicoes' && 'Condição Comercial'}
+              {tipoDialog === 'contatos' && 'Contato B2B'}
+              {tipoDialog === 'representantes' && 'Representante'}
+              {tipoDialog === 'segmentos' && 'Segmento de Cliente'}
+              {tipoDialog === 'produtos' && 'Produto'}
+              {tipoDialog === 'servicos' && 'Serviço'}
+              {tipoDialog === 'grupos-produto' && 'Grupo de Produtos'}
+              {tipoDialog === 'marcas' && 'Marca'}
+              {tipoDialog === 'kits' && 'Kit de Produtos'}
+              {tipoDialog === 'tabelas' && 'Tabela de Preço'}
+              {tipoDialog === 'catalogo' && 'Item de Catálogo Web'}
+              {tipoDialog === 'plano-contas' && 'Conta Contábil'}
+              {tipoDialog === 'centros-resultado' && 'Centro de Resultado'}
+              {tipoDialog === 'tipos-despesa' && 'Tipo de Despesa'}
+              {tipoDialog === 'moedas' && 'Moeda/Índice'}
+              {tipoDialog === 'motoristas' && 'Motorista'}
+              {tipoDialog === 'tipos-frete' && 'Tipo de Frete'}
+              {tipoDialog === 'modelos' && 'Modelo de Documento'}
             </DialogTitle>
           </DialogHeader>
           
@@ -2138,6 +2736,31 @@ export default function Cadastros() {
           {tipoDialog === 'bancos' && <BancoForm banco={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'formas-pagamento' && <FormaPagamentoForm forma={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'veiculos' && <VeiculoForm veiculo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'empresas' && <EmpresaForm empresa={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'grupos' && <GrupoEmpresarialForm grupo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'departamentos' && <DepartamentoForm departamento={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'cargos' && <CargoForm cargo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'turnos' && <TurnoForm turno={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'usuarios' && <UsuarioForm usuario={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'perfis' && <PerfilAcessoForm perfil={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'condicoes' && <CondicaoComercialForm condicao={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'contatos' && <ContatoB2BForm contato={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'representantes' && <RepresentanteForm representante={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'segmentos' && <SegmentoClienteForm segmento={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'produtos' && <ProdutoForm produto={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'servicos' && <ServicoForm servico={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'grupos-produto' && <GrupoProdutoForm grupo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'marcas' && <MarcaForm marca={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'kits' && <KitProdutoForm kit={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'tabelas' && <TabelaPrecoForm tabela={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'catalogo' && <CatalogoWebForm catalogoItem={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'plano-contas' && <PlanoContasForm conta={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'centros-resultado' && <CentroResultadoForm centro={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'tipos-despesa' && <TipoDespesaForm tipo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'moedas' && <MoedaIndiceForm moeda={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'motoristas' && <MotoristaForm motorista={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'tipos-frete' && <TipoFreteForm tipo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'modelos' && <ModeloDocumentoForm modelo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
         </DialogContent>
       </Dialog>
 
@@ -2265,71 +2888,9 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* NOVOS DIALOGS V20.0 */}
-      <Dialog open={empresaFormOpen} onOpenChange={setEmpresaFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nova Empresa</DialogTitle>
-          </DialogHeader>
-          <EmpresaForm
-            empresa={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Empresa', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={produtoFormOpen} onOpenChange={setProdutoFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Produto</DialogTitle>
-          </DialogHeader>
-          <ProdutoForm
-            produto={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Produto', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={servicoFormOpen} onOpenChange={setServicoFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Serviço</DialogTitle>
-          </DialogHeader>
-          <ServicoForm
-            servico={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Servico', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={tabelaPrecoFormOpen} onOpenChange={setTabelaPrecoFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nova Tabela de Preço</DialogTitle>
-          </DialogHeader>
-          <TabelaPrecoForm
-            tabela={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'TabelaPreco', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={catalogoWebFormOpen} onOpenChange={setCatalogoWebFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Item do Catálogo Web</DialogTitle>
-          </DialogHeader>
-          <CatalogoWebForm
-            catalogoItem={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'CatalogoWeb', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* NOVOS DIALOGS V20.1 */}
+      {/* These dialogs are now opened directly via state, not through the universal dialog */}
+      {/* They are here for cases where a form is tied to a specific action like "Configurar Webhook" */}
 
       <Dialog open={webhookFormOpen} onOpenChange={setWebhookFormOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -2364,29 +2925,15 @@ export default function Cadastros() {
           />
         </DialogContent>
       </Dialog>
-
-      {/* NOVOS DIALOGS FALTANTES V20.0 */}
-      <Dialog open={usuarioFormOpen} onOpenChange={setUsuarioFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Convidar Usuário</DialogTitle>
-          </DialogHeader>
-          <UsuarioForm
-            usuario={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'User', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={perfilAcessoFormOpen} onOpenChange={setPerfilAcessoFormOpen}>
+      
+      <Dialog open={filialFormOpen} onOpenChange={setFilialFormOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Novo Perfil de Acesso</DialogTitle>
+            <DialogTitle>Nova Filial</DialogTitle>
           </DialogHeader>
-          <PerfilAcessoForm
-            perfil={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'PerfilAcesso', data })}
+          <FilialForm
+            filial={null}
+            onSubmit={(data) => createMutation.mutate({ entity: 'Empresa', data: { ...data, tipo: 'Filial' }})} // Assuming FilialForm maps to Empresa entity
             isSubmitting={createMutation.isPending}
           />
         </DialogContent>
@@ -2484,258 +3031,6 @@ export default function Cadastros() {
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* NOVOS DIALOGS V20.0 - BLOCO 1 */}
-      <Dialog open={grupoEmpresarialFormOpen} onOpenChange={setGrupoEmpresarialFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Grupo Empresarial</DialogTitle>
-          </DialogHeader>
-          <GrupoEmpresarialForm
-            grupo={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'GrupoEmpresarial', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={filialFormOpen} onOpenChange={setFilialFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nova Filial</DialogTitle>
-          </DialogHeader>
-          <FilialForm
-            filial={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Empresa', data: { ...data, tipo: 'Filial' }})} // Assuming FilialForm maps to Empresa entity
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={departamentoFormOpen} onOpenChange={setDepartamentoFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Departamento</DialogTitle>
-          </DialogHeader>
-          <DepartamentoForm
-            departamento={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Departamento', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={cargoFormOpen} onOpenChange={setCargoFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Cargo</DialogTitle>
-          </DialogHeader>
-          <CargoForm
-            cargo={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Cargo', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={turnoFormOpen} onOpenChange={setTurnoFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Turno</DialogTitle>
-          </DialogHeader>
-          <TurnoForm
-            turno={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Turno', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* NOVOS DIALOGS V20.0 - BLOCO 2 */}
-      <Dialog open={condicaoComercialFormOpen} onOpenChange={setCondicaoComercialFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nova Condição Comercial</DialogTitle>
-          </DialogHeader>
-          <CondicaoComercialForm
-            condicao={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'CondicaoComercial', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={contatoB2BFormOpen} onOpenChange={setContatoB2BFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Contato B2B</DialogTitle>
-          </DialogHeader>
-          <ContatoB2BForm
-            contato={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'ContatoB2B', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={representanteFormOpen} onOpenChange={setRepresentanteFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Representante</DialogTitle>
-          </DialogHeader>
-          <RepresentanteForm
-            representante={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Representante', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={segmentoClienteFormOpen} onOpenChange={setSegmentoClienteFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Segmento de Cliente</DialogTitle>
-          </DialogHeader>
-          <SegmentoClienteForm
-            segmento={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'SegmentoCliente', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-      
-      {/* NOVOS DIALOGS V20.0 - BLOCO 3 */}
-      <Dialog open={grupoProdutoFormOpen} onOpenChange={setGrupoProdutoFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Grupo de Produtos</DialogTitle>
-          </DialogHeader>
-          <GrupoProdutoForm
-            grupo={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'GrupoProduto', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={marcaFormOpen} onOpenChange={setMarcaFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nova Marca/Fabricante</DialogTitle>
-          </DialogHeader>
-          <MarcaForm
-            marca={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Marca', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={kitProdutoFormOpen} onOpenChange={setKitProdutoFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Kit de Produtos</DialogTitle>
-          </DialogHeader>
-          <KitProdutoForm
-            kit={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'KitProduto', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* NOVOS DIALOGS V20.0 - BLOCO 4 */}
-      <Dialog open={planoContasFormOpen} onOpenChange={setPlanoContasFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nova Conta Contábil</DialogTitle>
-          </DialogHeader>
-          <PlanoContasForm
-            conta={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'PlanoDeContas', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={centroResultadoFormOpen} onOpenChange={setCentroResultadoFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Centro de Resultado</DialogTitle>
-          </DialogHeader>
-          <CentroResultadoForm
-            centro={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'CentroResultado', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={tipoDespesaFormOpen} onOpenChange={setTipoDespesaFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Tipo de Despesa</DialogTitle>
-          </DialogHeader>
-          <TipoDespesaForm
-            tipo={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'TipoDespesa', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={moedaIndiceFormOpen} onOpenChange={setMoedaIndiceFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nova Moeda/Índice</DialogTitle>
-          </DialogHeader>
-          <MoedaIndiceForm
-            moeda={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'MoedaIndice', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* NOVOS DIALOGS V20.0 - BLOCO 5 */}
-      <Dialog open={motoristaFormOpen} onOpenChange={setMotoristaFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Motorista</DialogTitle>
-          </DialogHeader>
-          <MotoristaForm
-            motorista={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Motorista', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={tipoFreteFormOpen} onOpenChange={setTipoFreteFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Tipo de Frete</DialogTitle>
-          </DialogHeader>
-          <TipoFreteForm
-            tipo={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'TipoFrete', data })}
-            isSubmitting={createMutation.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={modeloDocumentoFormOpen} onOpenChange={setModeloDocumentoFormOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo Modelo de Documento</DialogTitle>
-          </DialogHeader>
-          <ModeloDocumentoForm
-            modelo={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'ModeloDocumento', data })}
-            isSubmitting={createMutation.isPending}
-          />
         </DialogContent>
       </Dialog>
     </div>
