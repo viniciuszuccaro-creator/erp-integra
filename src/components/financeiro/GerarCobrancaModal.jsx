@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Zap, Copy, CheckCircle, AlertTriangle } from "lucide-react";
-import { mockGerarBoleto, mockGerarPIX, avisoModoSimulacao } from "@/components/integracoes/MockIntegracoes";
+import { mockGerarBoleto, mockGerarPix, avisoModoSimulacao } from "@/components/integracoes/MockIntegracoes";
 
 /**
  * V21.3 - Modal de Geração de Cobrança
@@ -37,34 +37,36 @@ export default function GerarCobrancaModal({ isOpen, onClose, conta }) {
 
       let resultado;
       if (tipoCobranca === 'pix') {
-        resultado = await mockGerarPIX({
-          empresa_id: conta.empresa_id,
-          conta: conta,
-          valor: conta.valor
+        resultado = await mockGerarPix({
+          conta_receber_id: conta.id,
+          cliente: conta.cliente,
+          valor: conta.valor,
+          vencimento: conta.data_vencimento
         });
       } else {
         resultado = await mockGerarBoleto({
-          empresa_id: conta.empresa_id,
-          conta: conta,
-          valor: conta.valor
+          conta_receber_id: conta.id,
+          cliente: conta.cliente,
+          valor: conta.valor,
+          vencimento: conta.data_vencimento
         });
       }
 
       // Atualizar conta
       await base44.entities.ContaReceber.update(conta.id, {
         forma_cobranca: tipoCobranca === 'pix' ? 'PIX' : 'Boleto',
-        id_cobranca_externa: resultado.id_cobranca,
+        id_cobranca_externa: resultado.pix_id || resultado.boleto_id,
         status_cobranca: modoSimulacao ? 'gerada_simulada' : 'gerada',
         data_envio_cobranca: new Date().toISOString(),
         ...(tipoCobranca === 'pix' ? {
           pix_qrcode: resultado.qrcode_base64,
           pix_copia_cola: resultado.pix_copia_cola,
-          pix_id_integracao: resultado.id_cobranca
+          pix_id_integracao: resultado.pix_id
         } : {
           linha_digitavel: resultado.linha_digitavel,
           codigo_barras: resultado.codigo_barras,
-          url_boleto_pdf: resultado.url_pdf,
-          boleto_id_integracao: resultado.id_cobranca
+          url_boleto_pdf: resultado.url_boleto,
+          boleto_id_integracao: resultado.boleto_id
         })
       });
 
@@ -252,7 +254,7 @@ export default function GerarCobrancaModal({ isOpen, onClose, conta }) {
 
                       <Button
                         variant="outline"
-                        onClick={() => window.open(cobrancaGerada.url_pdf, '_blank')}
+                        onClick={() => window.open(cobrancaGerada.url_boleto, '_blank')}
                         className="w-full"
                       >
                         Ver Boleto PDF
