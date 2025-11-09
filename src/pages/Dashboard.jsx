@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { useContextoVisual } from '@/components/lib/useContextoVisual'; // Updated import path
+import { useUser } from '@/components/lib/UserContext';
 import {
   DollarSign,
   TrendingUp,
@@ -19,12 +19,12 @@ import {
   Box,
   Calendar,
   BarChart3,
-  PieChart, // This is the Lucide icon
+  PieChart,
   Clock,
   CheckCircle,
   Percent,
-  Trophy, // Added Trophy icon
-  Activity // Added Activity icon for Tempo Real tab
+  Trophy,
+  Activity
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import {
   Line,
   BarChart,
   Bar,
-  PieChart as RechartsPie, // Recharts PieChart component, aliased to avoid conflict with Lucide icon
+  PieChart as RechartsPie,
   Pie,
   Cell,
   XAxis,
@@ -47,7 +47,6 @@ import {
   Area,
   AreaChart
 } from "recharts";
-import PainelOperacoes3D from "../components/dashboard/PainelOperacoes3D";
 import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -55,7 +54,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual } = useUser();
 
   const [periodo, setPeriodo] = useState(() => {
     try {
