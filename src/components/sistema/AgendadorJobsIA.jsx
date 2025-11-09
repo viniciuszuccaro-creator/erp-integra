@@ -2,46 +2,57 @@ import React, { useEffect } from "react";
 import { executarReguaCobranca } from "@/components/financeiro/ReguaCobrancaIA";
 import executarIAPrevisaoPagamento from "@/components/financeiro/JobIAPrevisaoPagamento";
 import executarIADIFALUpdate from "@/components/fiscal/JobIADIFALUpdate";
+import { executarIAReposicaoPreditiva } from "@/components/estoque/JobIAReposicaoPreditiva";
 
 /**
- * V21.3 - Agendador de Jobs de IA (Background)
- * Simula cron jobs para desenvolvimento
+ * V21.4 - Agendador de Jobs de IA (Background) - ATUALIZADO
+ * Jobs Ativos: 4 (Financeiro + Fiscal + Estoque)
  * 
  * EM PRODUÇÃO: Usar cron real ou scheduler do Base44
  */
 export default function AgendadorJobsIA({ empresaId }) {
   useEffect(() => {
-    // Job 1: Régua de Cobrança IA (Diário - 2h)
-    const reguaInterval = setInterval(async () => {
-      const hora = new Date().getHours();
-      if (hora === 2) { // 2h da manhã
-        console.log('⏰ Executando Régua de Cobrança IA...');
-        await executarReguaCobranca(empresaId);
-      }
-    }, 60 * 60 * 1000); // Verificar a cada 1h
-
-    // Job 2: IA Previsão Pagamento (Diário - 3h)
-    const previsaoInterval = setInterval(async () => {
-      const hora = new Date().getHours();
-      if (hora === 3) { // 3h da manhã
-        console.log('⏰ Executando IA Previsão de Pagamento...');
-        await executarIAPrevisaoPagamento(empresaId);
-      }
-    }, 60 * 60 * 1000);
-
-    // Job 3: IA DIFAL Update (Diário - 1h)
+    // Job 1: IA DIFAL Update (Diário - 1h)
     const difalInterval = setInterval(async () => {
       const hora = new Date().getHours();
-      if (hora === 1) { // 1h da manhã
-        console.log('⏰ Executando IA DIFAL Update...');
+      if (hora === 1) {
+        console.log('⏰ [1h] Executando IA DIFAL Update...');
         await executarIADIFALUpdate();
       }
     }, 60 * 60 * 1000);
 
+    // Job 2: Régua de Cobrança IA (Diário - 2h)
+    const reguaInterval = setInterval(async () => {
+      const hora = new Date().getHours();
+      if (hora === 2) {
+        console.log('⏰ [2h] Executando Régua de Cobrança IA...');
+        await executarReguaCobranca(empresaId);
+      }
+    }, 60 * 60 * 1000);
+
+    // Job 3: IA Previsão Pagamento (Diário - 3h)
+    const previsaoInterval = setInterval(async () => {
+      const hora = new Date().getHours();
+      if (hora === 3) {
+        console.log('⏰ [3h] Executando IA Previsão de Pagamento...');
+        await executarIAPrevisaoPagamento(empresaId);
+      }
+    }, 60 * 60 * 1000);
+
+    // Job 4: IA Reposição Preditiva (Diário - 4h) - V21.4 NOVO
+    const reposicaoInterval = setInterval(async () => {
+      const hora = new Date().getHours();
+      if (hora === 4) {
+        console.log('⏰ [4h] Executando IA Reposição Preditiva...');
+        await executarIAReposicaoPreditiva(empresaId);
+      }
+    }, 60 * 60 * 1000);
+
     return () => {
+      clearInterval(difalInterval);
       clearInterval(reguaInterval);
       clearInterval(previsaoInterval);
-      clearInterval(difalInterval);
+      clearInterval(reposicaoInterval);
     };
   }, [empresaId]);
 

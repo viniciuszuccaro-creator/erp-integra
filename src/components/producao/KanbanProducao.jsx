@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 import ProducaoCardDetalhe from "./ProducaoCardDetalhe";
 import OtimizadorCorteIA from "./OtimizadorCorteIA";
+import { consumirMateriaPrimaOP } from "@/components/producao/ConexaoEstoqueProducao";
 
 /**
  * V21.2 - Kanban de Produção com IA MES Preditiva
@@ -32,45 +34,57 @@ export default function KanbanProducao({ empresaId }) {
 
   const { data: ops = [], isLoading } = useQuery({
     queryKey: ['ordens-producao', empresaId],
-    queryFn: () => base44.entities.OrdemProducao.filter({ 
-      empresa_id: empresaId 
+    queryFn: () => base44.entities.OrdemProducao.filter({
+      empresa_id: empresaId
     }, '-prioridade_ia', 100),
     refetchInterval: 30000 // V21.2: Atualiza a cada 30s
   });
 
   const atualizarStatusMutation = useMutation({
-    mutationFn: ({ opId, novoStatus }) => 
-      base44.entities.OrdemProducao.update(opId, { status: novoStatus }),
+    mutationFn: async ({ opId, novoStatus }) => {
+      // V21.4: GATILHO - Consumo de Estoque
+      if (novoStatus === 'Em Corte' || novoStatus === 'Em Dobra') {
+        const op = await base44.entities.OrdemProducao.get(opId);
+
+        if (op && !op.estoque_baixado) {
+          await consumirMateriaPrimaOP(opId);
+        }
+      }
+
+      return base44.entities.OrdemProducao.update(opId, {
+        status: novoStatus
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] }); // Changed to 'ordens-producao' from 'ops-kanban' as per original queryKey
     }
   });
 
   // V21.2: IA MES - Calcular Score de Prioridade
   const calcularScoreIA = (op) => {
     let score = 50; // Base
-    
+
     // Urgência por data
-    const diasRestantes = op.data_prevista_conclusao 
+    const diasRestantes = op.data_prevista_conclusao
       ? Math.floor((new Date(op.data_prevista_conclusao) - new Date()) / (1000 * 60 * 60 * 24))
       : 999;
-    
+
     if (diasRestantes < 0) score += 40; // Atrasado
     else if (diasRestantes < 3) score += 30; // Urgente
     else if (diasRestantes < 7) score += 15;
-    
+
     // Material disponível
     if (!op.bloqueio_material) score += 20;
     else score -= 30;
-    
+
     // OEE histórico (se disponível)
     if (op.oee_calculado?.oee_total > 80) score += 10;
-    
+
     return Math.min(100, Math.max(0, score));
   };
 
   // V21.2: Organizar por prioridade IA se ativo
-  const opsOrganizadas = modoIA 
+  const opsOrganizadas = modoIA
     ? [...ops].sort((a, b) => calcularScoreIA(b) - calcularScoreIA(a))
     : ops;
 
@@ -86,15 +100,15 @@ export default function KanbanProducao({ empresaId }) {
 
   const handleMoverStatus = (op, novoStatus) => {
     // V21.2: Validação IA
-    const scoreAtual = calcularScoreIA(op);
-    
+    // const scoreAtual = calcularScoreIA(op); // This variable was declared but not used, keeping it commented for now as it's not part of the current change
+
     if (op.bloqueio_material && novoStatus !== 'Aguardando Matéria-Prima') {
       const confirmar = window.confirm(
         `⚠️ IA MES DETECTOU:\nMaterial indisponível!\n\n` +
         `Materiais faltantes: ${(op.materiais_faltantes || []).map(m => m.descricao).join(', ')}\n\n` +
         `Deseja prosseguir mesmo assim?`
       );
-      
+
       if (!confirmar) return;
     }
 
@@ -128,8 +142,8 @@ export default function KanbanProducao({ empresaId }) {
                 <button
                   onClick={() => setModoIA(!modoIA)}
                   className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
-                    modoIA 
-                      ? 'bg-purple-600 text-white' 
+                    modoIA
+                      ? 'bg-purple-600 text-white'
                       : 'bg-slate-200 text-slate-600'
                   }`}
                 >
@@ -162,7 +176,7 @@ export default function KanbanProducao({ empresaId }) {
       <div className="grid grid-cols-6 gap-4">
         {colunas.map((coluna) => {
           const opsColuna = opsOrganizadas.filter(op => op.status === coluna.status);
-          
+
           return (
             <Card key={coluna.status} className={`border-2 ${coluna.cor}`}>
               <CardHeader className="p-4">
@@ -174,10 +188,10 @@ export default function KanbanProducao({ empresaId }) {
               <CardContent className="p-2 space-y-2 min-h-[400px]">
                 {opsColuna.map((op) => {
                   const scoreIA = calcularScoreIA(op);
-                  
+
                   return (
-                    <Card 
-                      key={op.id} 
+                    <Card
+                      key={op.id}
                       className={`border hover:shadow-md transition-all cursor-pointer ${
                         op.bloqueio_material ? 'border-red-300 bg-red-50' : 'border-slate-200'
                       }`}
@@ -191,7 +205,7 @@ export default function KanbanProducao({ empresaId }) {
                               {op.cliente_nome}
                             </p>
                           </div>
-                          
+
                           {/* V21.2: Score IA */}
                           {modoIA && (
                             <div className={`text-xs font-bold px-2 py-1 rounded ${
