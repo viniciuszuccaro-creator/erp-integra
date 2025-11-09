@@ -11,7 +11,7 @@ import { converterParaKG } from "@/components/lib/CalculadoraUnidades";
 /**
  * Consumo de Matéria-Prima (SAÍDA)
  */
-async function consumirMateriaPrimaOP(opId) {
+export const consumirMateriaPrimaOP = async (opId) => {
   console.log('📦 Consumindo matéria-prima da OP...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
@@ -74,13 +74,13 @@ async function consumirMateriaPrimaOP(opId) {
 
   console.log(`✅ ${movimentacoes.length} movimentações de saída criadas.`);
   return movimentacoes;
-}
+};
 
 /**
  * V21.4: NOVO - Entrada de Produto Acabado (ENTRADA)
  * Chamado quando OP muda para "Finalizada"
  */
-async function entrarProdutoAcabadoOP(opId) {
+export const entrarProdutoAcabadoOP = async (opId) => {
   console.log('📦 Dando entrada de produto acabado...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
@@ -161,13 +161,13 @@ async function entrarProdutoAcabadoOP(opId) {
 
   console.log(`✅ ${movimentacoes.length} produtos acabados deram entrada no estoque.`);
   return movimentacoes;
-}
+};
 
 /**
  * V21.4: NOVO - Registrar Refugo como Movimentação + Contábil
  * Chamado ao registrar refugo em apontamento
  */
-async function registrarRefugoEstoque(opId, refugoData) {
+export const registrarRefugoEstoque = async (opId, refugoData) => {
   console.log('🗑️ Registrando refugo no estoque...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
@@ -226,6 +226,4 @@ async function registrarRefugoEstoque(opId, refugoData) {
 
   console.log(`✅ Refugo registrado: ${pesoRefugadoKG.toFixed(2)} KG, R$ ${valorPerda.toFixed(2)}`);
   return { movimentacao: mov, lancamento };
-}
-
-export { consumirMateriaPrimaOP, entrarProdutoAcabadoOP, registrarRefugoEstoque };
+};
