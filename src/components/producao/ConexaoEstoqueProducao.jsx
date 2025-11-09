@@ -228,5 +228,4 @@ export async function registrarRefugoEstoque(opId, refugoData) {
   return { movimentacao: mov, lancamento };
 }
 
-export default rastrearOrigem;
-export { registrarRefugoEstoque };
+export { consumirMateriaPrimaOP, entrarProdutoAcabadoOP, registrarRefugoEstoque };

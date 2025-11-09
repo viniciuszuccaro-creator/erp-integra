@@ -5,6 +5,7 @@ import executarIADIFALUpdate from "@/components/fiscal/JobIADIFALUpdate";
 import { executarIAReposicaoPreditiva } from "@/components/estoque/JobIAReposicaoPreditiva";
 import executarIACrossCD from "@/components/estoque/JobIACrossCD";
 import executarIAAuditoriaLocal from "@/components/estoque/JobIAAuditoriaLocal";
+import { base44 } from "@/api/base44Client";
 
 /**
  * V21.4 - Agendador de Jobs de IA (Background) - COMPLETO
@@ -55,7 +56,6 @@ export default function AgendadorJobsIA({ empresaId }) {
       const hora = new Date().getHours();
       if (hora === 5) {
         console.log('⏰ [5h] Executando IA Cross-CD...');
-        // Buscar grupo_id da empresa
         const empresa = await base44.entities.Empresa.get(empresaId);
         if (empresa.grupo_id) {
           await executarIACrossCD(empresa.grupo_id);
