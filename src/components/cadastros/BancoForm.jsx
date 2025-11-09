@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Landmark } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function BancoForm({ banco, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(banco || {
@@ -18,9 +18,11 @@ export default function BancoForm({ banco, onSubmit, isSubmitting }) {
     titular: '',
     cpf_cnpj_titular: '',
     saldo_inicial: 0,
+    saldo_atual: 0,
+    limite_especial: 0,
+    principal: false,
     chave_pix: '',
     tipo_chave_pix: 'CNPJ',
-    principal: false,
     ativo: true
   });
 
@@ -50,7 +52,8 @@ export default function BancoForm({ banco, onSubmit, isSubmitting }) {
           <Input
             value={formData.codigo_banco}
             onChange={(e) => setFormData({...formData, codigo_banco: e.target.value})}
-            placeholder="Ex: 001, 033, 237"
+            placeholder="001, 033, 237"
+            maxLength={3}
           />
         </div>
       </div>
@@ -61,16 +64,16 @@ export default function BancoForm({ banco, onSubmit, isSubmitting }) {
           <Input
             value={formData.agencia}
             onChange={(e) => setFormData({...formData, agencia: e.target.value})}
-            placeholder="0000"
+            placeholder="1234"
           />
         </div>
 
         <div>
-          <Label>Dígito</Label>
+          <Label>Dígito Agência</Label>
           <Input
             value={formData.agencia_digito}
             onChange={(e) => setFormData({...formData, agencia_digito: e.target.value})}
-            placeholder="0"
+            placeholder="5"
             maxLength={1}
           />
         </div>
@@ -96,17 +99,17 @@ export default function BancoForm({ banco, onSubmit, isSubmitting }) {
           <Input
             value={formData.conta}
             onChange={(e) => setFormData({...formData, conta: e.target.value})}
-            placeholder="00000000"
+            placeholder="12345-6"
           />
         </div>
 
         <div>
-          <Label>Dígito</Label>
+          <Label>Dígito Conta</Label>
           <Input
             value={formData.conta_digito}
             onChange={(e) => setFormData({...formData, conta_digito: e.target.value})}
-            placeholder="0"
-            maxLength={1}
+            placeholder="7"
+            maxLength={2}
           />
         </div>
       </div>
@@ -117,7 +120,7 @@ export default function BancoForm({ banco, onSubmit, isSubmitting }) {
           <Input
             value={formData.chave_pix}
             onChange={(e) => setFormData({...formData, chave_pix: e.target.value})}
-            placeholder="Chave PIX"
+            placeholder="00.000.000/0001-00"
           />
         </div>
 
@@ -128,20 +131,44 @@ export default function BancoForm({ banco, onSubmit, isSubmitting }) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="CNPJ">CNPJ</SelectItem>
               <SelectItem value="CPF">CPF</SelectItem>
+              <SelectItem value="CNPJ">CNPJ</SelectItem>
               <SelectItem value="Email">Email</SelectItem>
               <SelectItem value="Telefone">Telefone</SelectItem>
-              <SelectItem value="Aleatória">Aleatória</SelectItem>
+              <SelectItem value="Aleatória">Chave Aleatória</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Saldo Inicial</Label>
+          <Input
+            type="number"
+            step="0.01"
+            value={formData.saldo_inicial}
+            onChange={(e) => setFormData({...formData, saldo_inicial: parseFloat(e.target.value) || 0})}
+            placeholder="0.00"
+          />
+        </div>
+
+        <div>
+          <Label>Limite Especial</Label>
+          <Input
+            type="number"
+            step="0.01"
+            value={formData.limite_especial}
+            onChange={(e) => setFormData({...formData, limite_especial: parseFloat(e.target.value) || 0})}
+            placeholder="0.00"
+          />
         </div>
       </div>
 
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
         <div>
           <Label>Conta Principal</Label>
-          <p className="text-xs text-slate-500">Usar como padrão nas transações</p>
+          <p className="text-xs text-slate-500">Conta padrão para operações</p>
         </div>
         <Switch
           checked={formData.principal}
@@ -150,10 +177,7 @@ export default function BancoForm({ banco, onSubmit, isSubmitting }) {
       </div>
 
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-        <div>
-          <Label>Conta Ativa</Label>
-          <p className="text-xs text-slate-500">Habilitar para uso</p>
-        </div>
+        <Label>Conta Ativa</Label>
         <Switch
           checked={formData.ativo}
           onCheckedChange={(v) => setFormData({...formData, ativo: v})}
@@ -163,7 +187,7 @@ export default function BancoForm({ banco, onSubmit, isSubmitting }) {
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {banco ? 'Atualizar Conta' : 'Criar Conta'}
+          {banco ? 'Atualizar Banco' : 'Criar Banco'}
         </Button>
       </div>
     </form>

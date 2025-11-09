@@ -4,10 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Truck, AlertTriangle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import { Loader2 } from "lucide-react";
 
 export default function VeiculoForm({ veiculo, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(veiculo || {
@@ -16,36 +13,15 @@ export default function VeiculoForm({ veiculo, onSubmit, isSubmitting }) {
     tipo_veiculo: 'Caminhão Toco',
     ano_fabricacao: new Date().getFullYear(),
     capacidade_kg: 0,
+    capacidade_m3: 0,
     tipo_combustivel: 'Diesel',
     consumo_medio_km_l: 0,
     km_atual: 0,
     periodicidade_revisao_km: 10000,
     rastreador_instalado: false,
-    proprio: true,
-    status: 'Disponível'
+    status: 'Disponível',
+    proprio: true
   });
-
-  const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list(),
-  });
-
-  const motoristasHabilitados = colaboradores.filter(c => c.pode_dirigir);
-
-  const calcularProximaRevisao = () => {
-    const proximaRevisao = formData.km_atual + formData.periodicidade_revisao_km;
-    const kmRestante = proximaRevisao - formData.km_atual;
-    
-    if (kmRestante <= 1000) {
-      return {
-        alerta: true,
-        mensagem: `⚠️ Revisão próxima! Faltam apenas ${kmRestante} km`
-      };
-    }
-    return { alerta: false, mensagem: null };
-  };
-
-  const revisoesStatus = calcularProximaRevisao();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -74,7 +50,7 @@ export default function VeiculoForm({ veiculo, onSubmit, isSubmitting }) {
           <Input
             value={formData.modelo}
             onChange={(e) => setFormData({...formData, modelo: e.target.value})}
-            placeholder="Mercedes-Benz Accelo 1016"
+            placeholder="Ex: VW 24.280 Constellation"
           />
         </div>
       </div>
@@ -98,36 +74,46 @@ export default function VeiculoForm({ veiculo, onSubmit, isSubmitting }) {
         </div>
 
         <div>
-          <Label>Ano de Fabricação</Label>
+          <Label>Ano Fabricação</Label>
           <Input
             type="number"
             value={formData.ano_fabricacao}
-            onChange={(e) => setFormData({...formData, ano_fabricacao: parseInt(e.target.value)})}
-            min="1990"
-            max={new Date().getFullYear() + 1}
+            onChange={(e) => setFormData({...formData, ano_fabricacao: parseInt(e.target.value) || new Date().getFullYear()})}
+            placeholder="2024"
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
-          <Label>Capacidade de Carga (kg)</Label>
+          <Label>Capacidade (kg)</Label>
           <Input
             type="number"
             value={formData.capacidade_kg}
-            onChange={(e) => setFormData({...formData, capacidade_kg: parseFloat(e.target.value)})}
+            onChange={(e) => setFormData({...formData, capacidade_kg: parseFloat(e.target.value) || 0})}
             placeholder="5000"
           />
         </div>
 
         <div>
-          <Label>Consumo Médio (km/l)</Label>
+          <Label>Volume (m³)</Label>
+          <Input
+            type="number"
+            step="0.1"
+            value={formData.capacidade_m3}
+            onChange={(e) => setFormData({...formData, capacidade_m3: parseFloat(e.target.value) || 0})}
+            placeholder="15.0"
+          />
+        </div>
+
+        <div>
+          <Label>Consumo (km/l)</Label>
           <Input
             type="number"
             step="0.1"
             value={formData.consumo_medio_km_l}
-            onChange={(e) => setFormData({...formData, consumo_medio_km_l: parseFloat(e.target.value)})}
-            placeholder="8.5"
+            onChange={(e) => setFormData({...formData, consumo_medio_km_l: parseFloat(e.target.value) || 0})}
+            placeholder="5.5"
           />
         </div>
       </div>
@@ -138,35 +124,26 @@ export default function VeiculoForm({ veiculo, onSubmit, isSubmitting }) {
           <Input
             type="number"
             value={formData.km_atual}
-            onChange={(e) => setFormData({...formData, km_atual: parseFloat(e.target.value)})}
-            placeholder="50000"
+            onChange={(e) => setFormData({...formData, km_atual: parseInt(e.target.value) || 0})}
+            placeholder="120000"
           />
         </div>
 
         <div>
-          <Label>Revisar a cada (km)</Label>
+          <Label>Revisão a Cada (km)</Label>
           <Input
             type="number"
             value={formData.periodicidade_revisao_km}
-            onChange={(e) => setFormData({...formData, periodicidade_revisao_km: parseFloat(e.target.value)})}
+            onChange={(e) => setFormData({...formData, periodicidade_revisao_km: parseInt(e.target.value) || 10000})}
             placeholder="10000"
           />
         </div>
       </div>
 
-      {revisoesStatus.alerta && (
-        <Alert className="border-orange-200 bg-orange-50">
-          <AlertTriangle className="w-4 h-4 text-orange-600" />
-          <AlertDescription className="text-sm text-orange-900">
-            {revisoesStatus.mensagem}
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
         <div>
           <Label>Rastreador GPS Instalado</Label>
-          <p className="text-xs text-slate-500">IA de Manutenção Preditiva</p>
+          <p className="text-xs text-slate-500">Para rastreamento em tempo real</p>
         </div>
         <Switch
           checked={formData.rastreador_instalado}

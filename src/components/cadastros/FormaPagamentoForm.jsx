@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 
 export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(forma || {
+    codigo: '',
     descricao: '',
     tipo: 'Dinheiro',
     ativa: true,
@@ -16,8 +17,10 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting }) {
     aplicar_acrescimo: false,
     percentual_acrescimo_padrao: 0,
     prazo_compensacao_dias: 0,
+    gerar_cobranca_online: false,
     permite_parcelamento: false,
-    maximo_parcelas: 1
+    maximo_parcelas: 1,
+    intervalo_parcelas_dias: 30
   });
 
   const handleSubmit = (e) => {
@@ -31,17 +34,28 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label>Descrição *</Label>
-        <Input
-          value={formData.descricao}
-          onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-          placeholder="Ex: Boleto Bancário, PIX à Vista"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Descrição *</Label>
+          <Input
+            value={formData.descricao}
+            onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+            placeholder="Ex: PIX, Boleto 30 dias"
+          />
+        </div>
+
+        <div>
+          <Label>Código (opcional)</Label>
+          <Input
+            value={formData.codigo}
+            onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+            placeholder="PIX-01"
+          />
+        </div>
       </div>
 
       <div>
-        <Label>Tipo *</Label>
+        <Label>Tipo de Pagamento *</Label>
         <Select value={formData.tipo} onValueChange={(v) => setFormData({...formData, tipo: v})}>
           <SelectTrigger>
             <SelectValue />
@@ -60,22 +74,23 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
+          <Label>Prazo Compensação (dias)</Label>
+          <Input
+            type="number"
+            value={formData.prazo_compensacao_dias}
+            onChange={(e) => setFormData({...formData, prazo_compensacao_dias: parseInt(e.target.value) || 0})}
+            placeholder="0"
+          />
+        </div>
+
+        <div>
           <Label>Desconto Padrão (%)</Label>
           <Input
             type="number"
             step="0.01"
             value={formData.percentual_desconto_padrao}
-            onChange={(e) => setFormData({...formData, percentual_desconto_padrao: parseFloat(e.target.value)})}
-          />
-        </div>
-
-        <div>
-          <Label>Acréscimo/Taxa (%)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={formData.percentual_acrescimo_padrao}
-            onChange={(e) => setFormData({...formData, percentual_acrescimo_padrao: parseFloat(e.target.value)})}
+            onChange={(e) => setFormData({...formData, percentual_desconto_padrao: parseFloat(e.target.value) || 0})}
+            placeholder="0.00"
           />
         </div>
       </div>
@@ -83,7 +98,7 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting }) {
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
         <div>
           <Label>Permite Parcelamento</Label>
-          <p className="text-xs text-slate-500">Habilitar parcelamento</p>
+          <p className="text-xs text-slate-500">Habilita parcelamento nesta forma</p>
         </div>
         <Switch
           checked={formData.permite_parcelamento}
@@ -92,23 +107,31 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting }) {
       </div>
 
       {formData.permite_parcelamento && (
-        <div>
-          <Label>Máximo de Parcelas</Label>
-          <Input
-            type="number"
-            value={formData.maximo_parcelas}
-            onChange={(e) => setFormData({...formData, maximo_parcelas: parseInt(e.target.value)})}
-            min="1"
-            max="36"
-          />
+        <div className="grid grid-cols-2 gap-4 p-4 bg-blue-50 rounded border">
+          <div>
+            <Label>Máximo de Parcelas</Label>
+            <Input
+              type="number"
+              value={formData.maximo_parcelas}
+              onChange={(e) => setFormData({...formData, maximo_parcelas: parseInt(e.target.value) || 1})}
+              placeholder="12"
+            />
+          </div>
+
+          <div>
+            <Label>Intervalo (dias)</Label>
+            <Input
+              type="number"
+              value={formData.intervalo_parcelas_dias}
+              onChange={(e) => setFormData({...formData, intervalo_parcelas_dias: parseInt(e.target.value) || 30})}
+              placeholder="30"
+            />
+          </div>
         </div>
       )}
 
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-        <div>
-          <Label>Forma Ativa</Label>
-          <p className="text-xs text-slate-500">Disponível para uso</p>
-        </div>
+        <Label>Forma Ativa</Label>
         <Switch
           checked={formData.ativa}
           onCheckedChange={(v) => setFormData({...formData, ativa: v})}
@@ -118,7 +141,7 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting }) {
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {forma ? 'Atualizar' : 'Criar'}
+          {forma ? 'Atualizar' : 'Criar Forma de Pagamento'}
         </Button>
       </div>
     </form>
