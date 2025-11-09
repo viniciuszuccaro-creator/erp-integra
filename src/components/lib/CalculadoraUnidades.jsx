@@ -1,6 +1,7 @@
+
 import React from "react";
 import { Badge } from "@/components/ui/badge";
-import { Calculator } from "lucide-react";
+import { Calculator, AlertTriangle } from "lucide-react";
 
 /**
  * V22.0: CALCULADORA UNIVERSAL DE CONVERSÃO DE UNIDADES
