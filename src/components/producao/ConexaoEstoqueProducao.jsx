@@ -2,15 +2,16 @@ import { base44 } from "@/api/base44Client";
 import { converterParaKG } from "@/components/lib/CalculadoraUnidades";
 
 /**
- * V21.4 - CONEXÃO: Produção ↔ Estoque
+ * V21.4 - CONEXÃO: Produção ↔ Estoque (COMPLETO)
  * Gatilho 1: OP muda para "Em Corte" → Consome matéria-prima
  * Gatilho 2: OP finalizada → Entrada de produto acabado
+ * Gatilho 3: Refugo → Movimentação de perda + Lançamento contábil
  */
 
 /**
  * Consumo de Matéria-Prima (SAÍDA)
  */
-async function consumirMateriaPrimaOP(opId) {
+export async function consumirMateriaPrimaOP(opId) {
   console.log('📦 Consumindo matéria-prima da OP...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
@@ -76,24 +77,32 @@ async function consumirMateriaPrimaOP(opId) {
 }
 
 /**
- * Entrada de Produto Acabado (ENTRADA)
+ * V21.4: NOVO - Entrada de Produto Acabado (ENTRADA)
+ * Chamado quando OP muda para "Finalizada"
  */
-async function entrarProdutoAcabadoOP(opId) {
+export async function entrarProdutoAcabadoOP(opId) {
   console.log('📦 Dando entrada de produto acabado...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
 
+  if (!op.itens_producao || op.itens_producao.length === 0) {
+    console.log('⚠️ OP sem itens produzidos.');
+    return;
+  }
+
   const movimentacoes = [];
 
-  for (const item of op.itens_producao || []) {
-    if (!item.peso_real_total) continue;
+  for (const item of op.itens_producao) {
+    if (!item.peso_real_total || item.peso_real_total === 0) continue;
 
     // V21.4: Produto acabado SEMPRE entra em KG
     const pesoKG = item.peso_real_total;
 
     // Buscar/criar produto acabado
-    const produtoAcabado = await base44.entities.Produto.filter({
-      descricao: `Peça ${item.elemento} ${item.posicao}`,
+    const descricaoProduto = `Peça ${item.elemento} ${item.posicao}`;
+    
+    let produtoAcabado = await base44.entities.Produto.filter({
+      descricao: descricaoProduto,
       tipo_item: 'Produto Acabado',
       empresa_id: op.empresa_id
     });
@@ -105,9 +114,11 @@ async function entrarProdutoAcabadoOP(opId) {
       const novoProduto = await base44.entities.Produto.create({
         empresa_id: op.empresa_id,
         group_id: op.group_id,
-        descricao: `Peça ${item.elemento} ${item.posicao}`,
+        descricao: descricaoProduto,
         codigo: `PROD-${item.elemento}-${item.posicao}`,
         tipo_item: 'Produto Acabado',
+        grupo: 'Produto Acabado',
+        unidade_principal: 'KG',
         unidade_medida: 'KG',
         unidade_estoque: 'KG',
         estoque_atual: 0,
@@ -131,6 +142,8 @@ async function entrarProdutoAcabadoOP(opId) {
       unidade_medida: 'KG',
       estoque_anterior: produto.estoque_atual || 0,
       estoque_atual: (produto.estoque_atual || 0) + pesoKG,
+      disponivel_anterior: produto.estoque_disponivel || 0,
+      disponivel_atual: (produto.estoque_disponivel || 0) + pesoKG,
       data_movimentacao: new Date().toISOString(),
       documento: op.numero_op,
       motivo: `Entrada de produção - OP ${op.numero_op}`,
@@ -150,4 +163,70 @@ async function entrarProdutoAcabadoOP(opId) {
   return movimentacoes;
 }
 
-export { consumirMateriaPrimaOP, entrarProdutoAcabadoOP };
+/**
+ * V21.4: NOVO - Registrar Refugo como Movimentação + Contábil
+ * Chamado ao registrar refugo em apontamento
+ */
+export async function registrarRefugoEstoque(opId, refugoData) {
+  console.log('🗑️ Registrando refugo no estoque...');
+
+  const op = await base44.entities.OrdemProducao.get(opId);
+
+  // Buscar bitola refugada
+  const bitola = await base44.entities.Produto.get(refugoData.bitola_id);
+
+  const pesoRefugadoKG = refugoData.peso_refugado_kg;
+
+  // Criar movimentação de PERDA
+  const mov = await base44.entities.MovimentacaoEstoque.create({
+    empresa_id: op.empresa_id,
+    group_id: op.group_id,
+    origem_movimento: 'producao',
+    origem_documento_id: opId,
+    tipo_movimento: 'saida',
+    produto_id: refugoData.bitola_id,
+    produto_descricao: `Refugo - ${bitola.descricao}`,
+    quantidade: pesoRefugadoKG,
+    unidade_medida: 'KG',
+    data_movimentacao: new Date().toISOString(),
+    documento: op.numero_op,
+    motivo: `Refugo - ${refugoData.motivo}: ${refugoData.detalhes}`,
+    responsavel: refugoData.operador || 'Produção',
+    valor_unitario: bitola.custo_medio || 0,
+    valor_total: pesoRefugadoKG * (bitola.custo_medio || 0)
+  });
+
+  // V21.4: Lançamento contábil de refugo (Perda)
+  const valorPerda = pesoRefugadoKG * (bitola.custo_medio || 0);
+
+  const lancamento = await base44.entities.LancamentoContabil.create({
+    empresa_id: op.empresa_id,
+    group_id: op.group_id,
+    data_lancamento: new Date().toISOString().split('T')[0],
+    historico: `Perda por refugo - OP ${op.numero_op}`,
+    documento: op.numero_op,
+    tipo_documento: 'Ordem de Produção',
+    documento_origem_id: opId,
+    conta_debito_codigo: '3.1.05',
+    conta_debito_descricao: 'Perdas e Refugos',
+    conta_credito_codigo: '1.1.03',
+    conta_credito_descricao: 'Estoque de Matéria-Prima',
+    valor: valorPerda,
+    origem: 'Produção',
+    automatico: true,
+    status: 'Efetivado',
+    periodo_competencia: new Date().toISOString().substring(0, 7)
+  });
+
+  // Atualizar OP com custo de refugo
+  await base44.entities.OrdemProducao.update(opId, {
+    custo_refugo_calculado: (op.custo_refugo_calculado || 0) + valorPerda,
+    lancamento_contabil_refugo_id: lancamento.id
+  });
+
+  console.log(`✅ Refugo registrado: ${pesoRefugadoKG.toFixed(2)} KG, R$ ${valorPerda.toFixed(2)}`);
+  return { movimentacao: mov, lancamento };
+}
+
+export default rastrearOrigem;
+export { registrarRefugoEstoque };

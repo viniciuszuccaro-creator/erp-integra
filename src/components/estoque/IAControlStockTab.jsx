@@ -1,68 +1,225 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Brain, TrendingUp, Package, Truck, AlertTriangle, Zap } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Progress } from "@/components/ui/progress";
+import { 
+  Brain, 
+  TrendingUp, 
+  Package, 
+  ShoppingCart, 
+  Zap, 
+  AlertTriangle,
+  Target,
+  Activity
+} from "lucide-react";
+import { toast } from "sonner";
+import { 
+  LineChart, 
+  Line, 
+  BarChart,
+  Bar,
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from "recharts";
 
 /**
  * V21.4 - IA Control Stock
- * Dashboards: Reposição, Cross-CD, Auditoria, Rastreabilidade
+ * Reposição Preditiva, Cross-CD, Rastreabilidade
  */
 export default function IAControlStockTab({ empresaId }) {
   const [executandoIA, setExecutandoIA] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-ia', empresaId],
     queryFn: () => base44.entities.Produto.filter({ empresa_id: empresaId })
   });
 
-  const { data: solicitacoes = [] } = useQuery({
-    queryKey: ['solicitacoes-ia', empresaId],
-    queryFn: () => base44.entities.SolicitacaoCompra.list()
+  const { data: movimentacoes = [] } = useQuery({
+    queryKey: ['movimentacoes-ia', empresaId],
+    queryFn: () => base44.entities.MovimentacaoEstoque.filter(
+      { empresa_id: empresaId },
+      '-data_movimentacao',
+      500
+    )
   });
 
-  const executarReposicaoIA = async () => {
-    setExecutandoIA(true);
-    const { executarIAReposicaoPreditiva } = await import('./JobIAReposicaoPreditiva');
-    await executarIAReposicaoPreditiva(empresaId);
-    setExecutandoIA(false);
+  const executarIAReposicaoMutation = useMutation({
+    mutationFn: async () => {
+      setExecutandoIA(true);
+
+      // Simular análise IA de reposição
+      const recomendacoes = [];
+
+      for (const produto of produtos) {
+        // V21.4: IA analisa padrão de consumo
+        const movsSaida = movimentacoes.filter(m => 
+          m.produto_id === produto.id && m.tipo_movimento === 'saida'
+        );
+
+        if (movsSaida.length === 0) continue;
+
+        const consumoMedio30d = movsSaida
+          .slice(0, 30)
+          .reduce((sum, m) => sum + m.quantidade, 0) / 30;
+
+        const diasEstoque = (produto.estoque_disponivel || 0) / (consumoMedio30d || 1);
+
+        // Se estoque < 15 dias, recomendar compra
+        if (diasEstoque < 15 && diasEstoque >= 0) {
+          const quantidadeSugerida = consumoMedio30d * 30; // 30 dias
+
+          recomendacoes.push({
+            produto_id: produto.id,
+            produto_descricao: produto.descricao,
+            estoque_atual: produto.estoque_disponivel,
+            consumo_medio_dia: consumoMedio30d,
+            dias_estoque: diasEstoque,
+            quantidade_sugerida: quantidadeSugerida,
+            urgencia: diasEstoque < 7 ? 'Alta' : 'Média'
+          });
+        }
+      }
+
+      return recomendacoes;
+    },
+    onSuccess: (recomendacoes) => {
+      setExecutandoIA(false);
+      
+      if (recomendacoes.length === 0) {
+        toast.success('✅ Nenhuma reposição necessária no momento.');
+        return;
+      }
+
+      // Criar solicitações de compra automáticas
+      recomendacoes.forEach(async (rec) => {
+        await base44.entities.SolicitacaoCompra.create({
+          numero_solicitacao: `IA-REP-${Date.now()}`,
+          data_solicitacao: new Date().toISOString().split('T')[0],
+          solicitante: 'IA Reposição Preditiva',
+          setor: 'Estoque',
+          produto_id: rec.produto_id,
+          produto_descricao: rec.produto_descricao,
+          quantidade_solicitada: rec.quantidade_sugerida,
+          unidade_medida: 'KG',
+          justificativa: `IA detectou estoque para ${rec.dias_estoque.toFixed(0)} dias. Consumo médio: ${rec.consumo_medio_dia.toFixed(2)} KG/dia.`,
+          prioridade: rec.urgencia,
+          data_necessidade: new Date(Date.now() + (rec.dias_estoque * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
+          status: 'Pendente'
+        });
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['produtos-ia'] });
+      toast.success(`🧠 IA gerou ${recomendacoes.length} solicitação(ões) de compra!`);
+    },
+    onError: () => {
+      setExecutandoIA(false);
+      toast.error('Erro ao executar IA');
+    }
+  });
+
+  // Calcular KPIs IA
+  const calcularKPIsIA = () => {
+    const produtosAbaixoMinimo = produtos.filter(p => 
+      (p.estoque_disponivel || 0) < (p.estoque_minimo || 0)
+    ).length;
+
+    const produtosRuptura = produtos.filter(p => 
+      (p.estoque_disponivel || 0) === 0
+    ).length;
+
+    const acuraciaEstoque = produtos.length > 0
+      ? ((produtos.filter(p => (p.estoque_disponivel || 0) >= (p.estoque_minimo || 0)).length / produtos.length) * 100)
+      : 100;
+
+    // Giro de estoque médio (últimos 30 dias)
+    const giroMedio = produtos.reduce((sum, p) => {
+      const giro = p.giro_estoque_dias || 0;
+      return sum + giro;
+    }, 0) / (produtos.length || 1);
+
+    return {
+      produtosAbaixoMinimo,
+      produtosRuptura,
+      acuraciaEstoque,
+      giroMedio
+    };
   };
 
-  const produtosAbaixoMinimo = produtos.filter(p => 
-    (p.estoque_disponivel || 0) < (p.estoque_minimo || 0)
-  );
+  const kpis = calcularKPIsIA();
 
-  const produtosCriticos = produtos.filter(p => 
-    (p.estoque_disponivel || 0) === 0
-  );
+  // Gráfico de consumo (últimos 7 dias)
+  const gerarDadosConsumo = () => {
+    const dados = [];
+    
+    for (let i = 6; i >= 0; i--) {
+      const data = new Date();
+      data.setDate(data.getDate() - i);
+      const dataStr = data.toISOString().split('T')[0];
 
-  const chartData = produtos
-    .filter(p => (p.estoque_disponivel || 0) < (p.estoque_minimo || 0))
-    .slice(0, 10)
-    .map(p => ({
-      nome: p.descricao?.substring(0, 20),
-      disponivel: p.estoque_disponivel || 0,
-      minimo: p.estoque_minimo || 0,
-      ideal: p.estoque_maximo || 0
-    }));
+      const movsData = movimentacoes.filter(m => 
+        m.data_movimentacao?.startsWith(dataStr)
+      );
+
+      const entradas = movsData
+        .filter(m => m.tipo_movimento === 'entrada')
+        .reduce((sum, m) => sum + m.quantidade, 0);
+
+      const saidas = movsData
+        .filter(m => m.tipo_movimento === 'saida')
+        .reduce((sum, m) => sum + m.quantidade, 0);
+
+      dados.push({
+        data: data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+        entradas: entradas.toFixed(0),
+        saidas: saidas.toFixed(0)
+      });
+    }
+
+    return dados;
+  };
+
+  const dadosConsumo = gerarDadosConsumo();
 
   return (
     <div className="space-y-6">
       {/* Header IA */}
-      <Card className="border-2 border-purple-300 bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+      <Card className="border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-bold mb-2">🧠 IA Control Stock</h3>
-              <p className="text-purple-100">
-                Reposição Preditiva • Cross-CD Otimizado • Auditoria por Geolocalização
-              </p>
+            <div className="flex items-center gap-3">
+              <Brain className="w-8 h-8 text-purple-600" />
+              <div>
+                <h2 className="text-xl font-bold text-purple-900">IA Control Stock</h2>
+                <p className="text-sm text-purple-700">Reposição Preditiva + Cross-CD + Rastreabilidade</p>
+              </div>
             </div>
-            <Brain className="w-16 h-16" />
+
+            <Button
+              onClick={() => executarIAReposicaoMutation.mutate()}
+              disabled={executandoIA}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              {executandoIA ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Analisando...
+                </>
+              ) : (
+                <>
+                  <Zap className="w-4 h-4 mr-2" />
+                  Executar IA Agora
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -72,116 +229,92 @@ export default function IAControlStockTab({ empresaId }) {
         <Card className="border-2 border-red-300 bg-red-50">
           <CardContent className="p-4">
             <AlertTriangle className="w-5 h-5 text-red-600 mb-2" />
-            <p className="text-xs text-red-700 mb-1">Críticos (0 KG)</p>
-            <p className="text-3xl font-bold text-red-600">
-              {produtosCriticos.length}
-            </p>
+            <p className="text-xs text-red-700 mb-1">Abaixo Mínimo</p>
+            <p className="text-3xl font-bold text-red-600">{kpis.produtosAbaixoMinimo}</p>
           </CardContent>
         </Card>
 
         <Card className="border-2 border-orange-300 bg-orange-50">
           <CardContent className="p-4">
             <Package className="w-5 h-5 text-orange-600 mb-2" />
-            <p className="text-xs text-orange-700 mb-1">Abaixo Mínimo</p>
-            <p className="text-3xl font-bold text-orange-600">
-              {produtosAbaixoMinimo.length}
-            </p>
+            <p className="text-xs text-orange-700 mb-1">Ruptura (Zero)</p>
+            <p className="text-3xl font-bold text-orange-600">{kpis.produtosRuptura}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-2 border-green-300 bg-green-50">
+          <CardContent className="p-4">
+            <Target className="w-5 h-5 text-green-600 mb-2" />
+            <p className="text-xs text-green-700 mb-1">Acurácia Estoque</p>
+            <p className="text-3xl font-bold text-green-600">{kpis.acuraciaEstoque.toFixed(1)}%</p>
           </CardContent>
         </Card>
 
         <Card className="border-2 border-blue-300 bg-blue-50">
           <CardContent className="p-4">
-            <TrendingUp className="w-5 h-5 text-blue-600 mb-2" />
-            <p className="text-xs text-blue-700 mb-1">Solicitações IA</p>
-            <p className="text-3xl font-bold text-blue-600">
-              {solicitacoes.filter(s => s.status === 'Pendente').length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-purple-300 bg-purple-50">
-          <CardContent className="p-4">
-            <Truck className="w-5 h-5 text-purple-600 mb-2" />
-            <p className="text-xs text-purple-700 mb-1">Cross-CD Sugestões</p>
-            <p className="text-3xl font-bold text-purple-600">
-              0
-            </p>
+            <Activity className="w-5 h-5 text-blue-600 mb-2" />
+            <p className="text-xs text-blue-700 mb-1">Giro Médio (dias)</p>
+            <p className="text-3xl font-bold text-blue-600">{kpis.giroMedio.toFixed(0)}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Ações IA */}
-      <Card className="border-2 border-green-300">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-bold text-lg text-green-900">Executar Reposição Preditiva</p>
-              <p className="text-sm text-green-700">
-                A IA analisará demanda, lead time e criará solicitações de compra automaticamente
-              </p>
-            </div>
-            <Button
-              onClick={executarReposicaoIA}
-              disabled={executandoIA}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {executandoIA ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Executando...
-                </>
-              ) : (
-                <>
-                  <Zap className="w-4 h-4 mr-2" />
-                  Executar IA
-                </>
-              )}
-            </Button>
-          </div>
+      {/* Alerta IA */}
+      {kpis.produtosAbaixoMinimo > 0 && (
+        <Alert className="border-red-300 bg-red-50">
+          <AlertTriangle className="w-4 h-4 text-red-600" />
+          <AlertDescription className="text-sm text-red-800">
+            <strong>⚠️ IA DETECTOU:</strong> {kpis.produtosAbaixoMinimo} produto(s) abaixo do estoque mínimo.
+            Execute a IA para gerar solicitações de compra automáticas.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Gráfico de Consumo */}
+      <Card className="border-2 border-slate-200">
+        <CardHeader>
+          <CardTitle>Consumo vs Entrada (Últimos 7 dias)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={dadosConsumo}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="data" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="entradas" fill="#10b981" name="Entradas (KG)" />
+              <Bar dataKey="saidas" fill="#ef4444" name="Saídas (KG)" />
+            </BarChart>
+          </ResponsiveContainer>
         </CardContent>
       </Card>
 
-      {/* Gráfico de Produtos Críticos */}
-      {chartData.length > 0 && (
-        <Card className="border-2 border-slate-200">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
-              Top 10 Produtos Abaixo do Mínimo
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="nome" angle={-45} textAnchor="end" height={100} />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="disponivel" fill="#ef4444" name="Disponível" />
-                <Bar dataKey="minimo" fill="#f59e0b" name="Mínimo" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Lista de Produtos Críticos */}
-      <div className="space-y-2">
-        <p className="font-bold text-slate-700 mb-3">Produtos Requerendo Ação</p>
-        {produtosAbaixoMinimo.slice(0, 15).map(produto => {
-          const faltante = (produto.estoque_minimo || 0) - (produto.estoque_disponivel || 0);
+      <Card className="border-2 border-slate-200">
+        <CardHeader>
+          <CardTitle>Produtos Críticos (IA)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {produtos
+              .filter(p => (p.estoque_disponivel || 0) < (p.estoque_minimo || 0))
+              .map(produto => {
+                const percentualEstoque = produto.estoque_minimo > 0
+                  ? ((produto.estoque_disponivel / produto.estoque_minimo) * 100)
+                  : 0;
 
-          return (
-            <Card key={produto.id} className="border-2 border-red-300 bg-red-50">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="font-bold">{produto.descricao}</p>
+                return (
+                  <div key={produto.id} className="p-3 bg-red-50 border-2 border-red-300 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex-1">
+                        <p className="font-bold">{produto.descricao}</p>
+                        <p className="text-xs text-slate-600">Código: {produto.codigo}</p>
+                      </div>
                       <Badge className="bg-red-600">Crítico</Badge>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-3 text-xs">
+                    <div className="grid grid-cols-4 gap-3 text-xs mb-2">
                       <div>
                         <p className="text-slate-500">Disponível</p>
                         <p className="font-bold text-red-600">
@@ -195,41 +328,40 @@ export default function IAControlStockTab({ empresaId }) {
                         </p>
                       </div>
                       <div>
-                        <p className="text-slate-500">Faltante</p>
-                        <p className="font-bold text-orange-600">
-                          {faltante.toFixed(2)} KG
-                        </p>
+                        <p className="text-slate-500">% Mínimo</p>
+                        <Progress value={percentualEstoque} className="h-2 mt-1" />
                       </div>
                       <div>
-                        <p className="text-slate-500">Lead Time</p>
+                        <p className="text-slate-500">Dias Estoque</p>
                         <p className="font-bold">
-                          {produto.prazo_entrega_padrao || 7} dias
+                          {(produto.giro_estoque_dias || 0).toFixed(0)}
                         </p>
                       </div>
                     </div>
+
+                    <div className="flex gap-2">
+                      <Button size="sm" className="flex-1 bg-blue-600">
+                        <ShoppingCart className="w-3 h-3 mr-2" />
+                        Solicitar Compra
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Package className="w-3 h-3 mr-2" />
+                        Cross-CD
+                      </Button>
+                    </div>
                   </div>
+                );
+              })}
 
-                  <Button
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    Solicitar Compra
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-
-        {produtosAbaixoMinimo.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center text-slate-400">
-              <CheckCircle className="w-16 h-16 mx-auto mb-3 text-green-400" />
-              <p>✅ Nenhum produto crítico. Estoque saudável!</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+            {produtos.filter(p => (p.estoque_disponivel || 0) < (p.estoque_minimo || 0)).length === 0 && (
+              <div className="text-center py-8 text-slate-400">
+                <Target className="w-12 h-12 mx-auto mb-3" />
+                <p>Todos os produtos estão com estoque adequado!</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

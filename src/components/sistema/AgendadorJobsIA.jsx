@@ -3,10 +3,12 @@ import { executarReguaCobranca } from "@/components/financeiro/ReguaCobrancaIA";
 import executarIAPrevisaoPagamento from "@/components/financeiro/JobIAPrevisaoPagamento";
 import executarIADIFALUpdate from "@/components/fiscal/JobIADIFALUpdate";
 import { executarIAReposicaoPreditiva } from "@/components/estoque/JobIAReposicaoPreditiva";
+import executarIACrossCD from "@/components/estoque/JobIACrossCD";
+import executarIAAuditoriaLocal from "@/components/estoque/JobIAAuditoriaLocal";
 
 /**
- * V21.4 - Agendador de Jobs de IA (Background) - ATUALIZADO
- * Jobs Ativos: 4 (Financeiro + Fiscal + Estoque)
+ * V21.4 - Agendador de Jobs de IA (Background) - COMPLETO
+ * Jobs Ativos: 6 (Financeiro + Fiscal + Estoque)
  * 
  * EM PRODUÇÃO: Usar cron real ou scheduler do Base44
  */
@@ -39,7 +41,7 @@ export default function AgendadorJobsIA({ empresaId }) {
       }
     }, 60 * 60 * 1000);
 
-    // Job 4: IA Reposição Preditiva (Diário - 4h) - V21.4 NOVO
+    // Job 4: IA Reposição Preditiva (Diário - 4h)
     const reposicaoInterval = setInterval(async () => {
       const hora = new Date().getHours();
       if (hora === 4) {
@@ -48,11 +50,35 @@ export default function AgendadorJobsIA({ empresaId }) {
       }
     }, 60 * 60 * 1000);
 
+    // Job 5: IA Cross-CD (Diário - 5h) - V21.4 NOVO
+    const crossCDInterval = setInterval(async () => {
+      const hora = new Date().getHours();
+      if (hora === 5) {
+        console.log('⏰ [5h] Executando IA Cross-CD...');
+        // Buscar grupo_id da empresa
+        const empresa = await base44.entities.Empresa.get(empresaId);
+        if (empresa.grupo_id) {
+          await executarIACrossCD(empresa.grupo_id);
+        }
+      }
+    }, 60 * 60 * 1000);
+
+    // Job 6: IA Auditoria Local (Diário - 6h) - V21.4 NOVO
+    const auditoriaInterval = setInterval(async () => {
+      const hora = new Date().getHours();
+      if (hora === 6) {
+        console.log('⏰ [6h] Executando IA Auditoria Local...');
+        await executarIAAuditoriaLocal(empresaId);
+      }
+    }, 60 * 60 * 1000);
+
     return () => {
       clearInterval(difalInterval);
       clearInterval(reguaInterval);
       clearInterval(previsaoInterval);
       clearInterval(reposicaoInterval);
+      clearInterval(crossCDInterval);
+      clearInterval(auditoriaInterval);
     };
   }, [empresaId]);
 

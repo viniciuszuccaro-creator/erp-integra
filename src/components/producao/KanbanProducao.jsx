@@ -20,11 +20,11 @@ import {
 } from "lucide-react";
 import ProducaoCardDetalhe from "./ProducaoCardDetalhe";
 import OtimizadorCorteIA from "./OtimizadorCorteIA";
-import { consumirMateriaPrimaOP } from "@/components/producao/ConexaoEstoqueProducao";
+import { consumirMateriaPrimaOP, entrarProdutoAcabadoOP } from "@/components/producao/ConexaoEstoqueProducao";
 
 /**
- * V21.2 - Kanban de Produção com IA MES Preditiva
- * COM: Gêmeo Digital, Priorização IA, Alertas de Material
+ * V21.4 - Kanban de Produção com IA MES Preditiva (COMPLETO)
+ * COM: Gêmeo Digital, Priorização IA, Alertas de Material, Entrada Produto Acabado
  */
 export default function KanbanProducao({ empresaId }) {
   const [opSelecionada, setOpSelecionada] = useState(null);
@@ -42,7 +42,7 @@ export default function KanbanProducao({ empresaId }) {
 
   const atualizarStatusMutation = useMutation({
     mutationFn: async ({ opId, novoStatus }) => {
-      // V21.4: GATILHO - Consumo de Estoque
+      // V21.4: GATILHO 1 - Consumo de Estoque
       if (novoStatus === 'Em Corte' || novoStatus === 'Em Dobra') {
         const op = await base44.entities.OrdemProducao.get(opId);
 
@@ -51,12 +51,20 @@ export default function KanbanProducao({ empresaId }) {
         }
       }
 
+      // V21.4: GATILHO 2 - Entrada Produto Acabado
+      if (novoStatus === 'Finalizada') {
+        await entrarProdutoAcabadoOP(opId);
+      }
+
       return base44.entities.OrdemProducao.update(opId, {
-        status: novoStatus
+        status: novoStatus,
+        ...(novoStatus === 'Finalizada' && { data_conclusao_real: new Date().toISOString() })
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] }); // Changed to 'ordens-producao' from 'ops-kanban' as per original queryKey
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+      queryClient.invalidateQueries({ queryKey: ['produtos-estoque'] });
+      queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
     }
   });
 
@@ -95,7 +103,8 @@ export default function KanbanProducao({ empresaId }) {
     { status: 'Em Corte', titulo: '🔧 Em Corte', cor: 'bg-blue-50 border-blue-300' },
     { status: 'Em Dobra', titulo: '⚙️ Em Dobra', cor: 'bg-purple-50 border-purple-300' },
     { status: 'Em Armação', titulo: '🏗️ Em Armação', cor: 'bg-orange-50 border-orange-300' },
-    { status: 'Pronta para Expedição', titulo: '✅ Pronta', cor: 'bg-teal-50 border-teal-300' }
+    { status: 'Pronta para Expedição', titulo: '✅ Pronta', cor: 'bg-teal-50 border-teal-300' },
+    { status: 'Finalizada', titulo: '✔️ Finalizada', cor: 'bg-gray-50 border-gray-300' } // Added Finalizada column
   ];
 
   const handleMoverStatus = (op, novoStatus) => {

@@ -1,67 +1,65 @@
 import { base44 } from "@/api/base44Client";
 
 /**
- * V21.4 - Job IA: Auditoria de Localização
- * Valida GPS do usuário vs LocalEstoque durante inventário
+ * V21.4 - Job IA: Auditoria de Divergências
+ * Detecta inconsistências entre saldo sistema x movimentações
+ * 
+ * GATILHO: Diário às 6h (via AgendadorJobsIA)
  */
-export async function executarIAAuditoriaLocal(usuarioId, localEstoqueId, latUsuario, lngUsuario) {
-  console.log('🧠 IA Auditoria de Local iniciada...');
+export async function executarIAAuditoriaLocal(empresaId) {
+  console.log('🔍 [IA Auditoria] Iniciando análise...');
 
-  const localEstoque = await base44.entities.LocalEstoque.get(localEstoqueId);
+  const produtos = await base44.entities.Produto.filter({ empresa_id: empresaId });
+  const divergencias = [];
 
-  const latLocal = localEstoque.endereco_completo?.latitude;
-  const lngLocal = localEstoque.endereco_completo?.longitude;
+  for (const produto of produtos) {
+    const movimentacoes = await base44.entities.MovimentacaoEstoque.filter({
+      produto_id: produto.id,
+      empresa_id: empresaId
+    }, '-data_movimentacao', 500);
 
-  if (!latLocal || !lngLocal) {
-    console.log('⚠️ Local sem coordenadas GPS cadastradas.');
-    return { validado: false, motivo: 'local_sem_gps' };
-  }
-
-  // Calcular distância (fórmula de Haversine simplificada)
-  const R = 6371; // Raio da Terra em km
-  const dLat = (latUsuario - latLocal) * Math.PI / 180;
-  const dLng = (lngUsuario - lngLocal) * Math.PI / 180;
-
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(latLocal * Math.PI / 180) * Math.cos(latUsuario * Math.PI / 180) *
-            Math.sin(dLng/2) * Math.sin(dLng/2);
-  
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const distanciaKm = R * c;
-  const distanciaMetros = distanciaKm * 1000;
-
-  // V21.4: Validação por proximidade
-  const raioTolerancia = 100; // 100 metros
-  const dentroDoLocal = distanciaMetros <= raioTolerancia;
-
-  if (!dentroDoLocal) {
-    // Criar alerta de auditoria
-    await base44.entities.Notificacao.create({
-      titulo: '🚨 Auditoria de Local - Divergência GPS',
-      mensagem: `Usuário tentou realizar inventário fora do local!\n\n` +
-        `Local Esperado: ${localEstoque.nome_local}\n` +
-        `Coordenadas Local: ${latLocal}, ${lngLocal}\n` +
-        `Coordenadas Usuário: ${latUsuario}, ${lngUsuario}\n` +
-        `Distância: ${distanciaMetros.toFixed(0)} metros\n\n` +
-        `Ação bloqueada por segurança.`,
-      tipo: 'erro',
-      categoria: 'Estoque',
-      prioridade: 'Alta',
-      destinatario_id: usuarioId
+    // Recalcular saldo baseado em movimentações
+    let saldoCalculado = 0;
+    
+    movimentacoes.reverse().forEach(mov => {
+      if (mov.tipo_movimento === 'entrada') {
+        saldoCalculado += mov.quantidade;
+      } else if (mov.tipo_movimento === 'saida') {
+        saldoCalculado -= mov.quantidade;
+      } else if (mov.tipo_movimento === 'ajuste') {
+        saldoCalculado = mov.estoque_atual;
+      }
     });
+
+    const saldoSistema = produto.estoque_atual || 0;
+    const diferenca = Math.abs(saldoCalculado - saldoSistema);
+
+    // Se divergência > 0.5 KG, registrar
+    if (diferenca > 0.5) {
+      divergencias.push({
+        produto_id: produto.id,
+        produto_descricao: produto.descricao,
+        saldo_sistema: saldoSistema,
+        saldo_calculado: saldoCalculado,
+        diferenca: diferenca,
+        severidade: diferenca > 10 ? 'Alta' : diferenca > 5 ? 'Média' : 'Baixa'
+      });
+
+      // Criar notificação
+      await base44.entities.Notificacao.create({
+        titulo: `Divergência de Estoque: ${produto.descricao}`,
+        mensagem: `IA detectou diferença de ${diferenca.toFixed(2)} KG entre sistema (${saldoSistema.toFixed(2)} KG) e movimentações (${saldoCalculado.toFixed(2)} KG).`,
+        tipo: diferenca > 10 ? 'erro' : 'aviso',
+        categoria: 'Estoque',
+        prioridade: diferenca > 10 ? 'Alta' : 'Normal',
+        entidade_relacionada: 'Produto',
+        registro_id: produto.id
+      });
+    }
   }
 
-  console.log(dentroDoLocal 
-    ? `✅ Usuário validado no local (${distanciaMetros.toFixed(0)}m)` 
-    : `❌ Usuário fora do raio (${distanciaMetros.toFixed(0)}m)`
-  );
-
-  return {
-    validado: dentroDoLocal,
-    distancia_metros: distanciaMetros,
-    raio_tolerancia: raioTolerancia,
-    local_nome: localEstoque.nome_local
-  };
+  console.log(`✅ [IA Auditoria] ${divergencias.length} divergência(s) detectada(s).`);
+  return divergencias;
 }
 
 export default executarIAAuditoriaLocal;
