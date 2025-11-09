@@ -4,17 +4,20 @@ import executarIAPrevisaoPagamento from "@/components/financeiro/JobIAPrevisaoPa
 import executarIADIFALUpdate from "@/components/fiscal/JobIADIFALUpdate";
 import { executarIAReposicaoPreditiva } from "@/components/estoque/JobIAReposicaoPreditiva";
 import executarIACrossCD from "@/components/estoque/JobIACrossCD";
-import executarIAAuditoriaLocal from "@/components/estoque/JobIAAuditoriaLocal";
+import { executarIAAuditoriaLocal } from "@/components/estoque/JobIAAuditoriaLocal";
+import executarIAPrevisaoProducao from "@/components/sistema/JobIAPrevisaoProducao";
 import { base44 } from "@/api/base44Client";
 
 /**
  * V21.4 - Agendador de Jobs de IA (Background) - COMPLETO
- * Jobs Ativos: 6 (Financeiro + Fiscal + Estoque)
+ * Jobs Ativos: 7 (Financeiro + Fiscal + Estoque + Produção)
  * 
  * EM PRODUÇÃO: Usar cron real ou scheduler do Base44
  */
 export default function AgendadorJobsIA({ empresaId }) {
   useEffect(() => {
+    if (!empresaId) return;
+
     // Job 1: IA DIFAL Update (Diário - 1h)
     const difalInterval = setInterval(async () => {
       const hora = new Date().getHours();
@@ -51,7 +54,7 @@ export default function AgendadorJobsIA({ empresaId }) {
       }
     }, 60 * 60 * 1000);
 
-    // Job 5: IA Cross-CD (Diário - 5h) - V21.4 NOVO
+    // Job 5: IA Cross-CD (Diário - 5h) - V21.4
     const crossCDInterval = setInterval(async () => {
       const hora = new Date().getHours();
       if (hora === 5) {
@@ -63,12 +66,24 @@ export default function AgendadorJobsIA({ empresaId }) {
       }
     }, 60 * 60 * 1000);
 
-    // Job 6: IA Auditoria Local (Diário - 6h) - V21.4 NOVO
+    // Job 6: IA Auditoria Local (Diário - 6h) - V21.4
     const auditoriaInterval = setInterval(async () => {
       const hora = new Date().getHours();
       if (hora === 6) {
         console.log('⏰ [6h] Executando IA Auditoria Local...');
         await executarIAAuditoriaLocal(empresaId);
+      }
+    }, 60 * 60 * 1000);
+
+    // Job 7: IA Previsão Produção (Semanal - Domingo 23h) - V21.4 NOVO
+    const previsaoProducaoInterval = setInterval(async () => {
+      const agora = new Date();
+      const hora = agora.getHours();
+      const diaSemana = agora.getDay(); // 0 = domingo
+
+      if (diaSemana === 0 && hora === 23) {
+        console.log('⏰ [Domingo 23h] Executando IA Previsão Produção...');
+        await executarIAPrevisaoProducao(empresaId);
       }
     }, 60 * 60 * 1000);
 
@@ -79,6 +94,7 @@ export default function AgendadorJobsIA({ empresaId }) {
       clearInterval(reposicaoInterval);
       clearInterval(crossCDInterval);
       clearInterval(auditoriaInterval);
+      clearInterval(previsaoProducaoInterval);
     };
   }, [empresaId]);
 

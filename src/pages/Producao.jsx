@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Factory, Layers, FileText, CheckCircle, TrendingUp, BarChart3, Trophy } from "lucide-react";
+import { Factory, Layers, FileText, CheckCircle, TrendingUp, BarChart3, Trophy, Boxes } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import KanbanProducao from "@/components/producao/KanbanProducao";
 import DashboardRefugoIA from "@/components/producao/DashboardRefugoIA";
 import RelatoriosProducao from "@/components/producao/RelatoriosProducao";
 import GameficacaoProducao from "@/components/producao/GameficacaoProducao";
+import GemeoDigital3D from "@/components/producao/GemeoDigital3D";
 
 /**
- * V21.2 - Produção e Manufatura COMPLETO
- * COM: Kanban IA MES, Gêmeo Digital, Otimizador, Dashboard Refugo, Relatórios, Gamificação
+ * V21.4 - Produção e Manufatura COMPLETO
+ * COM: Kanban IA MES, Gêmeo Digital 3D, Otimizador, Dashboard Refugo, Relatórios, Gamificação
  */
 export default function Producao() {
   const { empresaAtual } = useUser();
@@ -24,7 +25,7 @@ export default function Producao() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">Produção e Manufatura</h1>
-                <p className="text-purple-100">v21.2 COMPLETO - IA MES + Gêmeo Digital + Gamificação</p>
+                <p className="text-purple-100">v21.4 COMPLETO - IA MES + Gêmeo Digital 3D + Gamificação</p>
               </div>
               <Factory className="w-16 h-16" />
             </div>
@@ -36,6 +37,10 @@ export default function Producao() {
             <TabsTrigger value="kanban">
               <Layers className="w-4 h-4 mr-2" />
               Kanban IA MES
+            </TabsTrigger>
+            <TabsTrigger value="gemeo3d">
+              <Boxes className="w-4 h-4 mr-2" />
+              Gêmeo Digital 3D
             </TabsTrigger>
             <TabsTrigger value="refugo">
               <TrendingUp className="w-4 h-4 mr-2" />
@@ -53,6 +58,10 @@ export default function Producao() {
 
           <TabsContent value="kanban">
             <KanbanProducao empresaId={empresaAtual?.id} />
+          </TabsContent>
+
+          <TabsContent value="gemeo3d">
+            <GemeoDigital3D empresaId={empresaAtual?.id} />
           </TabsContent>
 
           <TabsContent value="refugo">
