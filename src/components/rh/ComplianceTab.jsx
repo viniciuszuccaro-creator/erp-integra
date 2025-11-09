@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
-import { Shield, AlertTriangle, CheckCircle, Brain, Clock, FileText } from "lucide-react";
+import { Shield, AlertTriangle, CircleCheck, Brain, Clock, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 /**
@@ -315,7 +315,7 @@ export default function ComplianceTab({ empresaId }) {
       {/* Status OK */}
       {status.totalProblemas === 0 && (
         <Alert className="border-green-300 bg-green-50">
-          <CheckCircle className="w-4 h-4 text-green-600" />
+          <CircleCheck className="w-4 h-4 text-green-600" />
           <AlertDescription className="text-sm text-green-800">
             <strong>✅ Compliance 100% OK!</strong> Todos os colaboradores estão com documentação em dia.
           </AlertDescription>
