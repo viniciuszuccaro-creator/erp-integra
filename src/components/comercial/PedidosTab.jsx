@@ -385,7 +385,6 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
           setEditingPedido(null);
         }}
         pedido={editingPedido}
-        clientes={clientes} {/* Added back clients prop for functionality */}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['pedidos'] });
         }}
