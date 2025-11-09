@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserCircle, Calendar, DollarSign, Shield, TrendingUp } from "lucide-react";
+import { Users, UserCircle, Calendar, DollarSign, Shield, TrendingUp, Clock } from "lucide-react";
 import ColaboradorForm from "../components/rh/ColaboradorForm";
 import PontoTab from "../components/rh/PontoTab";
 import FolhaPagamentoTab from "../components/rh/FolhaPagamentoTab";
@@ -121,15 +121,14 @@ export default function RH() {
                   </p>
                 </div>
                 <Link to={createPageUrl('Cadastros') + '?tab=colaboradores'}>
-                  <Button size="sm" className="bg-blue-600">
+                  <button className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
                     Ir para Cadastros
-                  </Button>
+                  </button>
                 </Link>
               </div>
             </CardContent>
           </Card>
 
-          {/* Lista simplificada */}
           <Card className="border-0 shadow-md">
             <CardHeader>
               <CardTitle>Colaboradores Ativos</CardTitle>
@@ -152,10 +151,10 @@ export default function RH() {
                         </p>
                         <div className="flex gap-2 mt-1">
                           {colab.pode_dirigir && (
-                            <Badge variant="outline" className="text-xs">🚗 Motorista</Badge>
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">🚗 Motorista</span>
                           )}
                           {colab.pode_apontar_producao && (
-                            <Badge variant="outline" className="text-xs">🏭 Produção</Badge>
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">🏭 Produção</span>
                           )}
                         </div>
                       </div>
