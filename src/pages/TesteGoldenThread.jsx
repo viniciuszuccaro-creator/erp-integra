@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +39,10 @@ export default function TesteGoldenThread() {
     const ids = {};
 
     try {
+      // Buscar empresa e usuário logado uma vez no início
+      const user = await base44.auth.me();
+      const empresaId = user?.empresa_id || 'empresa-default'; // Usar uma empresa padrão se não houver ou para testes
+
       // ETAPA 1: Cliente no Site/Chatbot
       setEtapaAtual(1);
       const cliente = await base44.entities.Cliente.create({
@@ -165,6 +170,7 @@ Retorne um JSON estruturado com as peças.`,
       setEtapaAtual(4);
       const pedido = await base44.entities.Pedido.create({
         numero_pedido: `PED-GT-${Date.now()}`,
+        empresa_id: empresaId,
         cliente_id: cliente.id,
         cliente_nome: cliente.nome_fantasia,
         data_pedido: new Date().toISOString().split('T')[0],
@@ -206,6 +212,7 @@ Retorne um JSON estruturado com as peças.`,
       setEtapaAtual(5);
       const op = await base44.entities.OrdemProducao.create({
         numero_op: `OP-GT-${Date.now()}`,
+        empresa_id: empresaId,
         pedido_id: pedido.id,
         numero_pedido: pedido.numero_pedido,
         cliente_id: cliente.id,
@@ -246,6 +253,7 @@ Retorne um JSON estruturado com as peças.`,
       // ETAPA 6: Expedição - Criar Entrega
       setEtapaAtual(6);
       const entrega = await base44.entities.Entrega.create({
+        empresa_id: empresaId,
         pedido_id: pedido.id,
         numero_pedido: pedido.numero_pedido,
         op_id: op.id,
@@ -282,6 +290,7 @@ Retorne um JSON estruturado com as peças.`,
       // ETAPA 7: Roteirização IA
       setEtapaAtual(7);
       const rota = await base44.entities.Rota.create({
+        empresa_id: empresaId,
         nome_rota: 'Rota GT-001',
         data_rota: new Date().toISOString().split('T')[0],
         motorista: 'Carlos Motorista',
@@ -383,6 +392,7 @@ Retorne um JSON estruturado com as peças.`,
       // ETAPA 10: Estoque - Entrada de Devolução
       setEtapaAtual(10);
       const movEstoque = await base44.entities.MovimentacaoEstoque.create({
+        empresa_id: empresaId,
         origem_movimento: 'devolucao',
         tipo_movimento: 'entrada',
         produto_descricao: 'Viga V1 - Devolvida (Defeito)',
@@ -433,7 +443,7 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // ETAPA 12: Governança - Auditoria Global (CORRIGIDO)
+      // ETAPA 12: Governança - Auditoria Global
       setEtapaAtual(12);
       const auditLogs = [];
       
@@ -453,19 +463,17 @@ Retorne um JSON estruturado com as peças.`,
 
       for (const audit of modulosAuditados) {
         const log = await base44.entities.AuditoriaGlobal.create({
-          usuario_id: 'sistema-golden-thread',
-          usuario_nome: 'Sistema Golden Thread',
-          usuario_email: 'golden@zuccaro.com',
+          usuario_id: user.id || 'sistema-golden-thread',
+          usuario_nome: user.full_name || 'Sistema Golden Thread',
+          usuario_email: user.email || 'golden@zuccaro.com',
           data_hora: new Date().toISOString(),
           acao: audit.acao,
           modulo: audit.modulo,
           entidade_afetada: audit.entidade,
           registro_id: audit.registro_id,
-          descricao: `Golden Thread v3.0 - ${audit.modulo} - ${audit.acao}`,
           sucesso: true,
-          nivel_risco: 'Baixo',
-          alerta_ia_gerado: false,
-          tipo_alerta: 'Nenhum'
+          ip_address: '127.0.0.1', // Exemplo de IP
+          user_agent: 'Golden Thread Test v3.0' // Exemplo de User Agent
         });
         auditLogs.push(log.id);
       }
@@ -496,13 +504,14 @@ Retorne um JSON estruturado com as peças.`,
       setEtapaAtual(12);
 
     } catch (error) {
-      console.error('Erro no Golden Thread:', error);
-      setErro(error.message || 'Erro desconhecido');
+      console.error('❌ Erro Golden Thread:', error);
+      setErro(`[Etapa ${etapaAtual}] ${error.message || 'Erro desconhecido'}`);
       novasEtapas.push({ 
         id: etapaAtual, 
         nome: 'ERRO', 
         status: 'error', 
-        mensagem: error.message || 'Erro na execução'
+        mensagem: error.message || 'Erro na execução',
+        dados: { erro_completo: error.toString() }
       });
       setEtapas([...novasEtapas]);
     } finally {
@@ -552,7 +561,6 @@ Retorne um JSON estruturado com as peças.`,
         </CardContent>
       </Card>
 
-      {/* Progresso das Etapas */}
       {etapas.length > 0 && (
         <div className="space-y-3">
           {etapas.map((etapa, idx) => {
@@ -592,21 +600,19 @@ Retorne um JSON estruturado com as peças.`,
         </div>
       )}
 
-      {/* Erro */}
       {erro && (
         <Alert className="border-red-300 bg-red-50">
           <AlertCircle className="w-5 h-5 text-red-600" />
           <AlertDescription>
-            <p className="font-semibold text-red-900 mb-1">❌ Erro na Etapa {etapaAtual}</p>
+            <p className="font-semibold text-red-900 mb-1">❌ Erro no Teste</p>
             <p className="text-sm text-red-700">{erro}</p>
             <p className="text-xs text-red-600 mt-2">
-              💡 Verifique o console do navegador (F12) para detalhes
+              💡 Verifique o console do navegador (F12) para detalhes técnicos
             </p>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Resultado Final */}
       {resultado && resultado.sucesso && (
         <Card className="border-2 border-green-300 bg-gradient-to-br from-green-50 to-blue-50">
           <CardHeader className="bg-white/80 border-b">
