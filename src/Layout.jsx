@@ -23,9 +23,7 @@ import {
   Building2,
   BookOpen,
   Search,
-  Rocket,
-  Activity, // Added new icon import
-  TrendingUp // Added new icon import
+  Rocket
 } from "lucide-react";
 import {
   Sidebar,
@@ -53,9 +51,6 @@ import AgendadorJobsIA from "@/components/sistema/AgendadorJobsIA"; // Added imp
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
   { title: "Dashboard Corporativo", url: createPageUrl("DashboardCorporativo"), icon: BarChart3, group: "principal" },
-  { title: "📊 Dashboard Operacional", url: createPageUrl("DashboardOperacional"), icon: Activity, group: "principal" },
-  { title: "📈 Dashboard Executivo", url: createPageUrl("DashboardExecutivo"), icon: TrendingUp, group: "principal" },
-  { title: "🔍 Auditoria Central", url: createPageUrl("AuditoriaCentral"), icon: Shield, group: "principal", adminOnly: true },
   { title: "Relatórios e Análises", url: createPageUrl("Relatorios"), icon: BarChart3, group: "principal" },
   { title: "Agenda e Calendário", url: createPageUrl("Agenda"), icon: Calendar, group: "principal" },
   { title: "CRM - Relacionamento", url: createPageUrl("CRM"), icon: Users, group: "principal" },

@@ -27,9 +27,6 @@ import ChatbotAtendimento from './pages/ChatbotAtendimento';
 import AppMotorista from './pages/AppMotorista';
 import AppEstoqueMobile from './pages/AppEstoqueMobile';
 import IntegracoesIA from './pages/IntegracoesIA';
-import DashboardOperacional from './pages/DashboardOperacional';
-import DashboardExecutivo from './pages/DashboardExecutivo';
-import AuditoriaCentral from './pages/AuditoriaCentral';
 import Layout from './Layout.jsx';
 
 
@@ -63,9 +60,6 @@ export const PAGES = {
     "AppMotorista": AppMotorista,
     "AppEstoqueMobile": AppEstoqueMobile,
     "IntegracoesIA": IntegracoesIA,
-    "DashboardOperacional": DashboardOperacional,
-    "DashboardExecutivo": DashboardExecutivo,
-    "AuditoriaCentral": AuditoriaCentral,
 }
 
 export const pagesConfig = {

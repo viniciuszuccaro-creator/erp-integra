@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -15,9 +14,7 @@ import {
   Loader2,
   Link2,
   Unlink,
-  Info,
-  TrendingUp,
-  Send
+  Info
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
