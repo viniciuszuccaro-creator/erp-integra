@@ -1,103 +1,117 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
-import { CreditCard, QrCode, Copy, CheckCircle, AlertCircle, Send } from "lucide-react";
-import { mockGerarBoleto, mockGerarPix, avisoModoSimulacao } from "@/components/integracoes/MockIntegracoes";
+import { Loader2, Zap, Copy, CheckCircle, AlertTriangle } from "lucide-react";
+import { mockGerarBoleto, mockGerarPIX, avisoModoSimulacao } from "@/components/integracoes/MockIntegracoes";
 
-export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
+/**
+ * V21.3 - Modal de Geração de Cobrança
+ * COM: PIX e Boleto via API Real (se configurado)
+ */
+export default function GerarCobrancaModal({ isOpen, onClose, conta }) {
+  const [tipoCobranca, setTipoCobranca] = useState('pix');
   const [gerando, setGerando] = useState(false);
   const [cobrancaGerada, setCobrancaGerada] = useState(null);
-  const [tipoCobranca, setTipoCobranca] = useState("boleto");
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: configCobranca } = useQuery({
+    queryKey: ['config-cobranca', conta?.empresa_id],
+    queryFn: () => base44.entities.ConfiguracaoCobrancaEmpresa.filter({
+      empresa_id: conta?.empresa_id,
+      ativo: true
+    }).then(configs => configs[0]),
+    enabled: !!conta?.empresa_id && isOpen
+  });
 
   const gerarCobrancaMutation = useMutation({
     mutationFn: async () => {
       setGerando(true);
 
-      let resultado;
+      const modoSimulacao = configCobranca?.modo_simulacao !== false;
 
-      if (tipoCobranca === "boleto") {
-        resultado = await mockGerarBoleto({
-          conta_receber_id: contaReceber.id,
-          cliente: contaReceber.cliente,
-          valor: contaReceber.valor,
-          vencimento: contaReceber.data_vencimento
+      let resultado;
+      if (tipoCobranca === 'pix') {
+        resultado = await mockGerarPIX({
+          empresa_id: conta.empresa_id,
+          conta: conta,
+          valor: conta.valor
         });
       } else {
-        resultado = await mockGerarPix({
-          conta_receber_id: contaReceber.id,
-          cliente: contaReceber.cliente,
-          valor: contaReceber.valor,
-          vencimento: contaReceber.data_vencimento
+        resultado = await mockGerarBoleto({
+          empresa_id: conta.empresa_id,
+          conta: conta,
+          valor: conta.valor
         });
       }
 
-      // Atualizar conta a receber
-      await base44.entities.ContaReceber.update(contaReceber.id, {
-        forma_cobranca: tipoCobranca === "boleto" ? "Boleto" : "PIX",
-        status_cobranca: "gerada_simulada",
-        id_cobranca_externa: resultado.boleto_id || resultado.pix_id,
-        linha_digitavel: resultado.linha_digitavel,
-        pix_copia_cola: resultado.pix_copia_cola,
-        pix_qrcode: resultado.qrcode_url || resultado.qrcode_base64,
-        url_boleto_pdf: resultado.url_boleto,
+      // Atualizar conta
+      await base44.entities.ContaReceber.update(conta.id, {
+        forma_cobranca: tipoCobranca === 'pix' ? 'PIX' : 'Boleto',
+        id_cobranca_externa: resultado.id_cobranca,
+        status_cobranca: modoSimulacao ? 'gerada_simulada' : 'gerada',
         data_envio_cobranca: new Date().toISOString(),
-        provedor_pagamento: "Mock/Simulação"
+        ...(tipoCobranca === 'pix' ? {
+          pix_qrcode: resultado.qrcode_base64,
+          pix_copia_cola: resultado.pix_copia_cola,
+          pix_id_integracao: resultado.id_cobranca
+        } : {
+          linha_digitavel: resultado.linha_digitavel,
+          codigo_barras: resultado.codigo_barras,
+          url_boleto_pdf: resultado.url_pdf,
+          boleto_id_integracao: resultado.id_cobranca
+        })
       });
 
-      // Registrar log
+      // Log
       await base44.entities.LogCobranca.create({
-        empresa_id: contaReceber.empresa_id,
-        conta_receber_id: contaReceber.id,
-        tipo_operacao: tipoCobranca === "boleto" ? "gerar_boleto" : "gerar_pix",
-        provedor: "Mock/Simulação",
+        empresa_id: conta.empresa_id,
+        conta_receber_id: conta.id,
+        tipo_operacao: tipoCobranca === 'pix' ? 'gerar_pix' : 'gerar_boleto',
+        provedor: configCobranca?.provedor_cobranca || 'Mock',
         data_hora: new Date().toISOString(),
-        status_operacao: "simulado",
+        status_operacao: 'sucesso',
         retorno_recebido: resultado,
-        linha_digitavel: resultado.linha_digitavel,
-        pix_copia_cola: resultado.pix_copia_cola,
-        url_boleto: resultado.url_boleto,
-        usuario_nome: "Sistema"
+        usuario_nome: 'Sistema'
       });
 
       setCobrancaGerada(resultado);
       return resultado;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
-      toast({
-        title: `✅ ${tipoCobranca === "boleto" ? "Boleto" : "PIX"} Gerado (Simulação)`,
-        description: "Cobrança criada com sucesso"
-      });
+      queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+    },
+    onSettled: () => {
+      setGerando(false);
     }
   });
 
-  const copiarPix = () => {
-    navigator.clipboard.writeText(cobrancaGerada.pix_copia_cola);
-    toast({ title: "✅ Código PIX copiado!" });
+  const handleCopiar = (texto) => {
+    navigator.clipboard.writeText(texto);
+    alert('✅ Copiado!');
   };
 
   const aviso = avisoModoSimulacao();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Gerar Cobrança - {contaReceber?.cliente}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-blue-600" />
+            Gerar Cobrança - {conta?.cliente}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Alert className="border-amber-300 bg-amber-50">
-            <AlertCircle className="h-5 w-5 text-amber-600" />
-            <AlertDescription>
+            <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <AlertDescription className="text-sm text-amber-800">
               <strong>{aviso.titulo}</strong><br />
               {aviso.mensagem}
             </AlertDescription>
@@ -105,51 +119,57 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
 
           {!cobrancaGerada ? (
             <>
-              <div className="p-4 bg-slate-50 rounded">
-                <div className="flex justify-between mb-2">
-                  <span className="text-slate-600">Valor:</span>
-                  <span className="font-bold text-2xl">
-                    R$ {contaReceber?.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Vencimento:</span>
-                  <span className="font-semibold">
-                    {new Date(contaReceber?.data_vencimento).toLocaleDateString('pt-BR')}
-                  </span>
-                </div>
-              </div>
+              <Card>
+                <CardContent className="p-6 space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-slate-600">Valor:</span>
+                    <span className="text-2xl font-bold text-green-600">
+                      R$ {(conta?.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-600">Vencimento:</span>
+                    <span className="font-semibold">
+                      {conta?.data_vencimento ? new Date(conta.data_vencimento).toLocaleDateString('pt-BR') : '-'}
+                    </span>
+                  </div>
+                  {conta?.etapa_id && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-600">Etapa:</span>
+                      <Badge className="bg-purple-600">Faturamento Parcial</Badge>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               <Tabs value={tipoCobranca} onValueChange={setTipoCobranca}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="boleto">
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Boleto
-                  </TabsTrigger>
-                  <TabsTrigger value="pix">
-                    <QrCode className="w-4 h-4 mr-2" />
-                    PIX
-                  </TabsTrigger>
+                <TabsList className="grid grid-cols-2">
+                  <TabsTrigger value="pix">PIX</TabsTrigger>
+                  <TabsTrigger value="boleto">Boleto</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="boleto" className="mt-4">
-                  <div className="p-4 bg-blue-50 rounded text-sm text-blue-900">
-                    <p><strong>✓</strong> Boleto bancário registrado</p>
-                    <p><strong>✓</strong> Válido em qualquer banco ou lotérica</p>
-                    <p><strong>✓</strong> Código de barras incluso</p>
-                  </div>
+                <TabsContent value="pix">
+                  <Card className="border-green-300 bg-green-50">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-sm text-green-800">
+                        ⚡ Geração de PIX instantâneo com QR Code
+                      </p>
+                    </CardContent>
+                  </Card>
                 </TabsContent>
 
-                <TabsContent value="pix" className="mt-4">
-                  <div className="p-4 bg-green-50 rounded text-sm text-green-900">
-                    <p><strong>✓</strong> Pagamento instantâneo</p>
-                    <p><strong>✓</strong> Válido por 24 horas</p>
-                    <p><strong>✓</strong> QR Code + Copia e Cola</p>
-                  </div>
+                <TabsContent value="boleto">
+                  <Card className="border-blue-300 bg-blue-50">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-sm text-blue-800">
+                        📄 Geração de Boleto com linha digitável
+                      </p>
+                    </CardContent>
+                  </Card>
                 </TabsContent>
               </Tabs>
 
-              <div className="flex justify-end gap-3 pt-4 border-t">
+              <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={onClose}>
                   Cancelar
                 </Button>
@@ -160,13 +180,13 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
                 >
                   {gerando ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Gerando...
                     </>
                   ) : (
                     <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Gerar {tipoCobranca === "boleto" ? "Boleto" : "PIX"}
+                      <Zap className="w-4 h-4 mr-2" />
+                      Gerar {tipoCobranca === 'pix' ? 'PIX' : 'Boleto'}
                     </>
                   )}
                 </Button>
@@ -174,100 +194,77 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
             </>
           ) : (
             <>
-              {/* Cobrança Gerada */}
-              {tipoCobranca === "boleto" ? (
-                <div className="bg-blue-50 border border-blue-200 rounded p-6 space-y-4">
-                  <div className="flex items-center gap-2 text-blue-900 font-semibold mb-3">
+              <Card className="border-2 border-green-300 bg-green-50">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-2 text-green-900 font-bold text-lg">
                     <CheckCircle className="w-6 h-6" />
-                    Boleto Gerado com Sucesso!
+                    {tipoCobranca === 'pix' ? 'PIX Gerado!' : 'Boleto Gerado!'}
                   </div>
 
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">Nosso Número:</span>
-                      <span className="font-semibold">{cobrancaGerada.nosso_numero}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">Valor:</span>
-                      <span className="font-bold text-lg">
-                        R$ {cobrancaGerada.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">Vencimento:</span>
-                      <span className="font-semibold">
-                        {new Date(cobrancaGerada.vencimento).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
-                  </div>
+                  {tipoCobranca === 'pix' ? (
+                    <>
+                      <div className="p-4 bg-white rounded-lg border">
+                        <p className="text-xs text-slate-500 mb-2">QR Code PIX:</p>
+                        <div className="flex justify-center">
+                          <img 
+                            src={cobrancaGerada.qrcode_base64} 
+                            alt="QR Code" 
+                            className="w-48 h-48"
+                          />
+                        </div>
+                      </div>
 
-                  <div>
-                    <Label className="text-blue-800">Linha Digitável</Label>
-                    <div className="bg-white p-3 rounded border border-blue-300 mt-2">
-                      <p className="font-mono text-xs break-all">{cobrancaGerada.linha_digitavel}</p>
-                    </div>
-                  </div>
+                      <div>
+                        <p className="text-xs text-slate-500 mb-1">PIX Copia e Cola:</p>
+                        <div className="flex gap-2">
+                          <input
+                            value={cobrancaGerada.pix_copia_cola}
+                            readOnly
+                            className="flex-1 p-2 bg-white border rounded text-xs font-mono"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleCopiar(cobrancaGerada.pix_copia_cola)}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <p className="text-xs text-slate-500 mb-1">Linha Digitável:</p>
+                        <div className="flex gap-2">
+                          <input
+                            value={cobrancaGerada.linha_digitavel}
+                            readOnly
+                            className="flex-1 p-2 bg-white border rounded text-xs font-mono"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleCopiar(cobrancaGerada.linha_digitavel)}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
 
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Download className="w-4 h-4 mr-1" />
-                      Baixar PDF
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => {
-                      navigator.clipboard.writeText(cobrancaGerada.linha_digitavel);
-                      toast({ title: "✅ Linha digitável copiada!" });
-                    }}>
-                      <Copy className="w-4 h-4 mr-1" />
-                      Copiar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-green-50 border border-green-200 rounded p-6 space-y-4">
-                  <div className="flex items-center gap-2 text-green-900 font-semibold mb-3">
-                    <CheckCircle className="w-6 h-6" />
-                    PIX Gerado com Sucesso!
-                  </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(cobrancaGerada.url_pdf, '_blank')}
+                        className="w-full"
+                      >
+                        Ver Boleto PDF
+                      </Button>
+                    </>
+                  )}
 
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-green-700">Valor:</span>
-                      <span className="font-bold text-lg">
-                        R$ {cobrancaGerada.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-green-700">Válido por:</span>
-                      <span className="font-semibold">{cobrancaGerada.validade_horas}h</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-4 rounded border border-green-300 text-center">
-                    <div className="w-48 h-48 bg-slate-200 mx-auto rounded flex items-center justify-center mb-3">
-                      <QrCode className="w-24 h-24 text-slate-400" />
-                    </div>
-                    <p className="text-xs text-green-700">QR Code PIX (Simulado)</p>
-                  </div>
-
-                  <div>
-                    <Label className="text-green-800">PIX Copia e Cola</Label>
-                    <div className="bg-white p-3 rounded border border-green-300 mt-2">
-                      <p className="font-mono text-xs break-all">{cobrancaGerada.pix_copia_cola}</p>
-                    </div>
-                  </div>
-
-                  <Button size="sm" className="w-full" onClick={copiarPix}>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copiar Código PIX
+                  <Button onClick={onClose} className="w-full bg-green-600 hover:bg-green-700">
+                    Fechar
                   </Button>
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button onClick={onClose} className="bg-green-600 hover:bg-green-700">
-                  Concluir
-                </Button>
-              </div>
+                </CardContent>
+              </Card>
             </>
           )}
         </div>

@@ -3,306 +3,297 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
-import { CheckCircle, XCircle, Link as LinkIcon, Search, Filter } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
+import {
+  Loader2,
+  CheckCircle,
+  Brain,
+  Zap,
+  TrendingUp,
+  AlertTriangle,
+  DollarSign
+} from "lucide-react";
 
+/**
+ * V21.3 - Painel de Conciliação Bancária
+ * COM: IA Conciliadora v2.0 (PLN), Sugestões Automáticas, Lançamento de Taxas
+ */
 export default function PainelConciliacao({ empresaId }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const { toast } = useToast();
+  const [processando, setProcessando] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: extratos = [] } = useQuery({
-    queryKey: ['extratos', empresaId],
-    queryFn: () => base44.entities.ExtratoBancario.filter({ empresa_id: empresaId }, '-data_movimento'),
-    enabled: !!empresaId
+    queryKey: ['extratos-pendentes', empresaId],
+    queryFn: () => base44.entities.ExtratoBancario.filter({
+      empresa_id: empresaId,
+      conciliado: false
+    }, '-data_movimento', 100)
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber', empresaId],
-    queryFn: () => base44.entities.ContaReceber.filter({ empresa_id: empresaId }, '-data_vencimento'),
-    enabled: !!empresaId
+    queryKey: ['contas-pendentes-conciliacao', empresaId],
+    queryFn: () => base44.entities.ContaReceber.filter({
+      empresa_id: empresaId,
+      status: { $in: ['Pendente', 'Atrasado'] }
+    })
   });
 
-  const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contas-pagar', empresaId],
-    queryFn: () => base44.entities.ContaPagar.filter({ empresa_id: empresaId }, '-data_vencimento'),
-    enabled: !!empresaId
-  });
-
-  const conciliarMutation = useMutation({
-    mutationFn: async ({ extratoId, tituloId, tipo }) => {
-      const extrato = extratos.find(e => e.id === extratoId);
-      const titulo = tipo === 'receber' 
-        ? contasReceber.find(t => t.id === tituloId)
-        : contasPagar.find(t => t.id === tituloId);
-
-      // Atualizar extrato
-      await base44.entities.ExtratoBancario.update(extratoId, {
-        conciliado: true,
-        conciliado_com_tipo: tipo === 'receber' ? 'ContaReceber' : 'ContaPagar',
-        conciliado_com_id: tituloId,
-        conciliado_por: "Sistema",
-        data_conciliacao: new Date().toISOString()
-      });
-
-      // Atualizar título
-      const Entity = tipo === 'receber' ? base44.entities.ContaReceber : base44.entities.ContaPagar;
-      await Entity.update(tituloId, {
-        status: tipo === 'receber' ? 'Recebido' : 'Pago',
-        [tipo === 'receber' ? 'data_recebimento' : 'data_pagamento']: extrato.data_movimento,
-        [tipo === 'receber' ? 'valor_recebido' : 'valor_pago']: extrato.valor
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['extratos'] });
-      queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
-      queryClient.invalidateQueries({ queryKey: ['contas-pagar'] });
-      toast({ title: "✅ Conciliação realizada!" });
-    },
-  });
-
-  const conciliarAutomaticoMutation = useMutation({
+  const conciliarComIAMutation = useMutation({
     mutationFn: async () => {
-      let conciliados = 0;
-      
-      for (const extrato of extratos.filter(e => !e.conciliado)) {
-        // Buscar título correspondente por valor e proximidade de data
-        const toleranciaDias = 3;
-        const dataExtrato = new Date(extrato.data_movimento);
+      setProcessando(true);
+      const resultados = [];
 
-        let tituloMatch = null;
-        let tipoMatch = null;
+      for (const extrato of extratos) {
+        if (extrato.tipo !== 'credito') continue; // Só créditos (recebimentos)
 
-        if (extrato.tipo === 'credito') {
-          // Buscar em contas a receber
-          tituloMatch = contasReceber.find(t => {
-            const dataTitulo = new Date(t.data_vencimento);
-            const diffDias = Math.abs((dataExtrato - dataTitulo) / (1000 * 60 * 60 * 24));
-            return t.status === 'Pendente' && 
-                   Math.abs(t.valor - extrato.valor) < 0.01 && 
-                   diffDias <= toleranciaDias;
-          });
-          tipoMatch = 'receber';
-        } else {
-          // Buscar em contas a pagar
-          tituloMatch = contasPagar.find(t => {
-            const dataTitulo = new Date(t.data_vencimento);
-            const diffDias = Math.abs((dataExtrato - dataTitulo) / (1000 * 60 * 60 * 24));
-            return t.status === 'Pendente' && 
-                   Math.abs(t.valor - extrato.valor) < 0.01 && 
-                   diffDias <= toleranciaDias;
-          });
-          tipoMatch = 'pagar';
-        }
+        // V21.3: IA Conciliadora v2.0 com PLN
+        const sugestoesIA = await base44.integrations.Core.InvokeLLM({
+          prompt: `Você é uma IA Conciliadora Bancária usando PLN (Processamento de Linguagem Natural).
 
-        if (tituloMatch) {
-          await conciliarMutation.mutateAsync({
-            extratoId: extrato.id,
-            tituloId: tituloMatch.id,
-            tipo: tipoMatch
+Lançamento Bancário:
+- Histórico: "${extrato.historico}"
+- Valor: R$ ${extrato.valor}
+- Data: ${extrato.data_movimento}
+- Documento: ${extrato.documento || 'N/A'}
+
+Títulos a Receber Pendentes:
+${JSON.stringify(contasReceber.map(c => ({
+  id: c.id,
+  cliente: c.cliente,
+  descricao: c.descricao,
+  valor: c.valor,
+  vencimento: c.data_vencimento,
+  etapa_id: c.etapa_id
+})), null, 2)}
+
+TAREFA (PLN):
+1. Analise o TEXTO do histórico usando NLP
+2. Identifique menções a: nome do cliente, número do pedido, etapa
+3. Compare o VALOR exato ou próximo (tolerância de R$ 5 para taxas)
+4. Retorne as TOP 3 sugestões de match
+
+Se o valor do extrato for MENOR que o título (diferença < R$ 50):
+- Classifique como "taxa_bancaria"
+- Calcule a diferença
+
+Retorne JSON com:
+- sugestoes: [{conta_id, cliente, confianca_percent, motivo_match, diferenca_taxa}]
+- tem_taxa: boolean
+- valor_taxa`,
+          response_json_schema: {
+            type: 'object',
+            properties: {
+              sugestoes: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    conta_id: { type: 'string' },
+                    cliente: { type: 'string' },
+                    confianca_percent: { type: 'number' },
+                    motivo_match: { type: 'string' },
+                    diferenca_taxa: { type: 'number' }
+                  }
+                }
+              },
+              tem_taxa: { type: 'boolean' },
+              valor_taxa: { type: 'number' }
+            }
+          }
+        });
+
+        // Salvar sugestões no extrato
+        await base44.entities.ExtratoBancario.update(extrato.id, {
+          sugestoes_ia: sugestoesIA.sugestoes
+        });
+
+        // Auto-conciliar se confiança > 90%
+        const melhorMatch = sugestoesIA.sugestoes?.[0];
+        if (melhorMatch && melhorMatch.confianca_percent >= 90) {
+          // Conciliar automaticamente
+          await base44.entities.ExtratoBancario.update(extrato.id, {
+            conciliado: true,
+            conciliado_com_tipo: 'ContaReceber',
+            conciliado_com_id: melhorMatch.conta_id,
+            conciliado_por: 'IA Conciliadora v2.0',
+            data_conciliacao: new Date().toISOString()
           });
-          conciliados++;
+
+          await base44.entities.ContaReceber.update(melhorMatch.conta_id, {
+            status: 'Recebido',
+            data_recebimento: extrato.data_movimento,
+            valor_recebido: extrato.valor
+          });
+
+          // V21.3: Se tem taxa, lançar contabilmente
+          if (sugestoesIA.tem_taxa && sugestoesIA.valor_taxa > 0) {
+            await base44.entities.LancamentoContabil.create({
+              empresa_id: empresaId,
+              data_lancamento: extrato.data_movimento,
+              historico: `Taxa bancária - ${extrato.historico}`,
+              tipo_documento: 'Conta a Receber',
+              documento_origem_id: melhorMatch.conta_id,
+              conta_debito_codigo: '3.01.02.001',
+              conta_debito_descricao: 'Despesas Financeiras - Taxas Bancárias',
+              conta_credito_codigo: '1.01.01.001',
+              conta_credito_descricao: 'Caixa e Bancos',
+              valor: sugestoesIA.valor_taxa,
+              origem: 'Financeiro',
+              automatico: true,
+              status: 'Efetivado',
+              observacoes: `Taxa identificada pela IA Conciliadora v2.0`
+            });
+          }
+
+          resultados.push({
+            extrato_id: extrato.id,
+            conta_id: melhorMatch.conta_id,
+            auto_conciliado: true,
+            confianca: melhorMatch.confianca_percent,
+            taxa_lancada: sugestoesIA.tem_taxa
+          });
         }
       }
 
-      return conciliados;
+      return resultados;
     },
-    onSuccess: (conciliados) => {
-      toast({ 
-        title: "✅ Conciliação Automática Concluída!", 
-        description: `${conciliados} movimento(s) conciliado(s) automaticamente.`
-      });
+    onSuccess: (resultados) => {
+      queryClient.invalidateQueries({ queryKey: ['extratos-pendentes'] });
+      queryClient.invalidateQueries({ queryKey: ['contas-pendentes-conciliacao'] });
+      
+      alert(
+        `✅ Conciliação IA Concluída!\n\n` +
+        `${resultados.length} lançamentos auto-conciliados\n` +
+        `${resultados.filter(r => r.taxa_lancada).length} taxas bancárias lançadas`
+      );
     },
+    onSettled: () => {
+      setProcessando(false);
+    }
   });
 
-  const extratosFiltrados = extratos.filter(e => 
-    e.historico?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.documento?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const extratosPendentes = extratosFiltrados.filter(e => !e.conciliado);
-  const extratosConciliados = extratosFiltrados.filter(e => e.conciliado);
+  const percentualConciliado = extratos.length > 0
+    ? ((extratos.filter(e => e.conciliado).length / extratos.length) * 100)
+    : 0;
 
   return (
     <div className="space-y-6">
-      {/* Header com Ações */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Conciliação Bancária</h2>
-          <p className="text-sm text-slate-600">
-            {extratosPendentes.length} movimentos pendentes • {extratosConciliados.length} conciliados
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Button
-            onClick={() => conciliarAutomaticoMutation.mutate()}
-            disabled={conciliarAutomaticoMutation.isPending || extratosPendentes.length === 0}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            {conciliarAutomaticoMutation.isPending ? 'Conciliando...' : '🤖 Conciliar Automaticamente'}
-          </Button>
-        </div>
-      </div>
+      <Card className="border-2 border-purple-300 bg-purple-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="w-5 h-5 text-purple-600" />
+            Conciliação Bancária IA v2.0 (PLN)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 space-y-4">
+          <Alert className="border-blue-300 bg-blue-50">
+            <Brain className="w-4 h-4 text-blue-600" />
+            <AlertDescription className="text-sm text-blue-800">
+              <strong>V21.3:</strong> IA usa PLN para entender o texto do histórico bancário e sugere conciliações.
+              Taxas bancárias são lançadas automaticamente no Plano de Contas.
+            </AlertDescription>
+          </Alert>
 
-      {/* Busca */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <Input
-              placeholder="Buscar por histórico ou documento..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="grid grid-cols-3 gap-4">
+            <div className="p-4 bg-white rounded-lg border">
+              <p className="text-xs text-slate-500 mb-1">Lançamentos Pendentes</p>
+              <p className="text-3xl font-bold text-orange-600">{extratos.length}</p>
+            </div>
+
+            <div className="p-4 bg-white rounded-lg border">
+              <p className="text-xs text-slate-500 mb-1">Já Conciliados</p>
+              <p className="text-3xl font-bold text-green-600">
+                {extratos.filter(e => e.conciliado).length}
+              </p>
+            </div>
+
+            <div className="p-4 bg-white rounded-lg border">
+              <p className="text-xs text-slate-500 mb-1">% Conciliado</p>
+              <p className="text-3xl font-bold text-purple-600">
+                {percentualConciliado.toFixed(0)}%
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs text-purple-700">
+              <span>Progresso de Conciliação</span>
+              <span>{percentualConciliado.toFixed(1)}%</span>
+            </div>
+            <Progress value={percentualConciliado} className="h-2" />
+          </div>
+
+          <Button
+            onClick={() => conciliarComIAMutation.mutate()}
+            disabled={processando || extratos.length === 0}
+            className="w-full bg-purple-600 hover:bg-purple-700"
+          >
+            {processando ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processando com IA PLN...
+              </>
+            ) : (
+              <>
+                <Zap className="w-4 h-4 mr-2" />
+                Conciliar com IA (PLN)
+              </>
+            )}
+          </Button>
+
+          {/* Sugestões */}
+          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            {extratos.filter(e => !e.conciliado && e.sugestoes_ia?.length > 0).map((extrato) => (
+              <Card key={extrato.id} className="border border-blue-300">
+                <CardContent className="p-3">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <p className="text-xs text-slate-500">Histórico Bancário:</p>
+                      <p className="font-semibold text-sm">{extrato.historico}</p>
+                      <p className="text-xs text-green-600 mt-1">
+                        R$ {extrato.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xs font-bold text-blue-900">🧠 Sugestões IA:</p>
+                    {extrato.sugestoes_ia.slice(0, 3).map((sug, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`p-2 rounded border text-xs ${
+                          sug.confianca_percent >= 90 ? 'bg-green-50 border-green-300' :
+                          sug.confianca_percent >= 70 ? 'bg-blue-50 border-blue-300' :
+                          'bg-slate-50 border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold">{sug.cliente}</p>
+                          <Badge className={
+                            sug.confianca_percent >= 90 ? 'bg-green-600' :
+                            sug.confianca_percent >= 70 ? 'bg-blue-600' :
+                            'bg-slate-600'
+                          }>
+                            {sug.confianca_percent}%
+                          </Badge>
+                        </div>
+                        <p className="text-slate-600 mt-1">{sug.motivo_match}</p>
+                        {sug.diferenca_taxa > 0 && (
+                          <p className="text-orange-600 mt-1">
+                            ⚠️ Taxa: R$ {sug.diferenca_taxa.toFixed(2)}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </CardContent>
       </Card>
-
-      {/* Movimentos Pendentes */}
-      <Card className="border-0 shadow-md">
-        <CardHeader className="bg-yellow-50 border-b">
-          <CardTitle className="text-base">Movimentos Pendentes de Conciliação</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>Data</TableHead>
-                <TableHead>Histórico</TableHead>
-                <TableHead>Documento</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead className="text-right">Valor</TableHead>
-                <TableHead>Sugestões</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {extratosPendentes.map(extrato => {
-                // Buscar sugestões de conciliação
-                const sugestoes = extrato.tipo === 'credito'
-                  ? contasReceber.filter(t => 
-                      t.status === 'Pendente' && 
-                      Math.abs(t.valor - extrato.valor) < 0.01
-                    ).slice(0, 3)
-                  : contasPagar.filter(t => 
-                      t.status === 'Pendente' && 
-                      Math.abs(t.valor - extrato.valor) < 0.01
-                    ).slice(0, 3);
-
-                return (
-                  <TableRow key={extrato.id} className="hover:bg-slate-50">
-                    <TableCell className="text-sm">
-                      {new Date(extrato.data_movimento).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell className="text-sm">{extrato.historico}</TableCell>
-                    <TableCell className="text-sm">{extrato.documento || '-'}</TableCell>
-                    <TableCell>
-                      <Badge className={extrato.tipo === 'credito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                        {extrato.tipo === 'credito' ? 'Crédito' : 'Débito'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      R$ {extrato.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell>
-                      {sugestoes.length > 0 ? (
-                        <div className="flex flex-col gap-1">
-                          {sugestoes.map(sug => (
-                            <Button
-                              key={sug.id}
-                              size="sm"
-                              variant="outline"
-                              className="text-xs justify-start"
-                              onClick={() => conciliarMutation.mutate({
-                                extratoId: extrato.id,
-                                tituloId: sug.id,
-                                tipo: extrato.tipo === 'credito' ? 'receber' : 'pagar'
-                              })}
-                              disabled={conciliarMutation.isPending}
-                            >
-                              <LinkIcon className="w-3 h-3 mr-1" />
-                              {sug.descricao} - R$ {sug.valor.toFixed(2)}
-                            </Button>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-500">Nenhuma sugestão</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {sugestoes.length === 0 && (
-                        <Button size="sm" variant="ghost" disabled>
-                          Manual
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-
-          {extratosPendentes.length === 0 && (
-            <div className="text-center py-12 text-slate-500">
-              <CheckCircle className="w-16 h-16 mx-auto mb-4 opacity-30 text-green-500" />
-              <p className="font-semibold">Tudo conciliado!</p>
-              <p className="text-sm mt-2">Não há movimentos pendentes de conciliação</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Movimentos Conciliados */}
-      {extratosConciliados.length > 0 && (
-        <Card className="border-0 shadow-md">
-          <CardHeader className="bg-green-50 border-b">
-            <CardTitle className="text-base">Movimentos Conciliados</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead>Data</TableHead>
-                  <TableHead>Histórico</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
-                  <TableHead>Conciliado com</TableHead>
-                  <TableHead>Data Conciliação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {extratosConciliados.slice(0, 10).map(extrato => (
-                  <TableRow key={extrato.id}>
-                    <TableCell className="text-sm">
-                      {new Date(extrato.data_movimento).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell className="text-sm">{extrato.historico}</TableCell>
-                    <TableCell>
-                      <Badge className="bg-green-100 text-green-700">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Conciliado
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      R$ {extrato.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {extrato.conciliado_com_tipo || '-'}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {extrato.data_conciliacao ? new Date(extrato.data_conciliacao).toLocaleDateString('pt-BR') : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
