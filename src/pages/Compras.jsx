@@ -9,11 +9,14 @@ import FornecedoresTab from "../components/compras/FornecedoresTab";
 import OrdensCompraTab from "../components/compras/OrdensCompraTab";
 import SolicitacoesCompraTab from "../components/compras/SolicitacoesCompraTab";
 import CotacoesTab from "../components/compras/CotacoesTab";
+import EntradasNFeTab from "../components/compras/EntradasNFeTab";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function Compras() {
   const [activeTab, setActiveTab] = useState("fornecedores");
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const { empresaAtual } = useUser();
 
   const { data: fornecedores = [], isLoading: loadingFornecedores } = useQuery({
     queryKey: ['fornecedores'],
@@ -34,7 +37,7 @@ export default function Compras() {
     .filter(o => o.status !== 'Cancelada')
     .reduce((sum, o) => sum + (o.valor_total || 0), 0);
 
-  const fornecedoresAtivos = fornecedores.filter(f => f.status === 'Ativo').length;
+  const fornecedoresAtivos = fornecedores.filter(f => f.status_fornecedor === 'Ativo').length;
 
   if (loadingPermissions) {
     return (
@@ -104,6 +107,10 @@ export default function Compras() {
             <ShoppingCart className="w-4 h-4 mr-2" />
             Ordens de Compra
           </TabsTrigger>
+          <TabsTrigger value="entradas" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
+            <Package className="w-4 h-4 mr-2" />
+            Entradas NF-e
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="fornecedores">
@@ -120,6 +127,10 @@ export default function Compras() {
 
         <TabsContent value="ordens">
           <OrdensCompraTab ordensCompra={ordensCompra} fornecedores={fornecedores} isLoading={loadingOrdens} />
+        </TabsContent>
+
+        <TabsContent value="entradas">
+          <EntradasNFeTab empresaId={empresaAtual?.id} />
         </TabsContent>
       </Tabs>
     </div>

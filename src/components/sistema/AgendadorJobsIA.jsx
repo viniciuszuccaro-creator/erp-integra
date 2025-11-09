@@ -1,22 +1,24 @@
+
 import React, { useEffect } from "react";
 import { executarReguaCobranca } from "@/components/financeiro/ReguaCobrancaIA";
 import executarIAPrevisaoPagamento from "@/components/financeiro/JobIAPrevisaoPagamento";
 import executarIADIFALUpdate from "@/components/fiscal/JobIADIFALUpdate";
 import { executarIAReposicaoPreditiva } from "@/components/estoque/JobIAReposicaoPreditiva";
-import executarIACrossCD from "@/components/estoque/JobIACrossCD";
 import executarIAAuditoriaLocal from "@/components/estoque/JobIAAuditoriaLocal";
 import { base44 } from "@/api/base44Client";
 
 /**
  * V21.4 - Agendador de Jobs de IA (Background) - COMPLETO
  * Jobs Ativos: 6 (Financeiro + Fiscal + Estoque)
- * 
+ *
  * EM PRODUÇÃO: Usar cron real ou scheduler do Base44
  */
 export default function AgendadorJobsIA({ empresaId }) {
   useEffect(() => {
+    console.log('⏰ Agendador de Jobs IA iniciado...');
+
     // Job 1: IA DIFAL Update (Diário - 1h)
-    const difalInterval = setInterval(async () => {
+    const jobDIFAL = setInterval(async () => {
       const hora = new Date().getHours();
       if (hora === 1) {
         console.log('⏰ [1h] Executando IA DIFAL Update...');
@@ -25,7 +27,7 @@ export default function AgendadorJobsIA({ empresaId }) {
     }, 60 * 60 * 1000);
 
     // Job 2: Régua de Cobrança IA (Diário - 2h)
-    const reguaInterval = setInterval(async () => {
+    const jobReguaCobranca = setInterval(async () => {
       const hora = new Date().getHours();
       if (hora === 2) {
         console.log('⏰ [2h] Executando Régua de Cobrança IA...');
@@ -34,7 +36,7 @@ export default function AgendadorJobsIA({ empresaId }) {
     }, 60 * 60 * 1000);
 
     // Job 3: IA Previsão Pagamento (Diário - 3h)
-    const previsaoInterval = setInterval(async () => {
+    const jobPrevisaoPagamento = setInterval(async () => {
       const hora = new Date().getHours();
       if (hora === 3) {
         console.log('⏰ [3h] Executando IA Previsão de Pagamento...');
@@ -43,7 +45,7 @@ export default function AgendadorJobsIA({ empresaId }) {
     }, 60 * 60 * 1000);
 
     // Job 4: IA Reposição Preditiva (Diário - 4h)
-    const reposicaoInterval = setInterval(async () => {
+    const jobReposicao = setInterval(async () => {
       const hora = new Date().getHours();
       if (hora === 4) {
         console.log('⏰ [4h] Executando IA Reposição Preditiva...');
@@ -51,20 +53,21 @@ export default function AgendadorJobsIA({ empresaId }) {
       }
     }, 60 * 60 * 1000);
 
-    // Job 5: IA Cross-CD (Diário - 5h) - V21.4 NOVO
-    const crossCDInterval = setInterval(async () => {
-      const hora = new Date().getHours();
-      if (hora === 5) {
-        console.log('⏰ [5h] Executando IA Cross-CD...');
+    // V21.4: Job IA Cross-CD (5h)
+    const jobCrossCD = setInterval(async () => {
+      const agora = new Date();
+      if (agora.getHours() === 5) {
+        console.log('🚀 Executando Job: IA Cross-CD');
         const empresa = await base44.entities.Empresa.get(empresaId);
-        if (empresa.grupo_id) {
-          await executarIACrossCD(empresa.grupo_id);
+        if (empresa?.grupo_id) {
+          const { executarJobCrossCD } = await import('@/components/compras/JobIACrossCD');
+          await executarJobCrossCD(empresa.grupo_id);
         }
       }
-    }, 60 * 60 * 1000);
+    }, 1000 * 60 * 60); // 1h
 
     // Job 6: IA Auditoria Local (Diário - 6h) - V21.4 NOVO
-    const auditoriaInterval = setInterval(async () => {
+    const jobAuditoria = setInterval(async () => {
       const hora = new Date().getHours();
       if (hora === 6) {
         console.log('⏰ [6h] Executando IA Auditoria Local...');
@@ -73,12 +76,12 @@ export default function AgendadorJobsIA({ empresaId }) {
     }, 60 * 60 * 1000);
 
     return () => {
-      clearInterval(difalInterval);
-      clearInterval(reguaInterval);
-      clearInterval(previsaoInterval);
-      clearInterval(reposicaoInterval);
-      clearInterval(crossCDInterval);
-      clearInterval(auditoriaInterval);
+      clearInterval(jobDIFAL);
+      clearInterval(jobReguaCobranca);
+      clearInterval(jobPrevisaoPagamento);
+      clearInterval(jobReposicao);
+      clearInterval(jobCrossCD);
+      clearInterval(jobAuditoria);
     };
   }, [empresaId]);
 

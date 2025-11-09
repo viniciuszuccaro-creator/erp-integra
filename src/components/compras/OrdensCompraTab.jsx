@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import { verificarAprovacaoNecessaria, notificarAprovadorAutomatico } from "./IAAprovacaoOrcamentaria";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,6 +55,11 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.OrdemCompra.create(data),
     onSuccess: () => {
@@ -75,18 +82,42 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
 
   const aprovarMutation = useMutation({
     mutationFn: async ({ id, oc }) => {
+      // V21.5: IA Aprovação Orçamentária
+      const resultadoIA = await verificarAprovacaoNecessaria(oc, user?.id);
+
+      if (resultadoIA.precisa_aprovacao) {
+        // Notificar aprovador superior
+        await notificarAprovadorAutomatico(oc, resultadoIA.nivel_aprovador);
+
+        toast({
+          title: "⏳ Aguardando Aprovação Superior",
+          description: `${resultadoIA.nivel_aprovador} será notificado. Motivo: ${resultadoIA.motivo}`,
+          variant: "default"
+        });
+
+        // Atualizar status para aguardando aprovação
+        await base44.entities.OrdemCompra.update(id, {
+          status: 'Aguardando Aprovação Superior',
+          observacoes: `Aguardando ${resultadoIA.nivel_aprovador} - ${resultadoIA.motivo}`
+        });
+
+        return;
+      }
+
+      // Aprovação automática se usuário tem alçada
       const hoje = new Date().toISOString().split('T')[0];
       
       await base44.entities.OrdemCompra.update(id, {
         status: 'Aprovada',
         data_aprovacao: hoje,
+        aprovador: user?.full_name,
         historico: [
           ...(oc.historico || []),
           {
             data: new Date().toISOString(),
             status_anterior: oc.status,
             status_novo: 'Aprovada',
-            usuario: 'Sistema',
+            usuario: user?.full_name || 'Sistema',
             observacao: 'Ordem de compra aprovada'
           }
         ]
@@ -376,6 +407,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
 
   const statusColors = {
     'Solicitada': 'bg-blue-100 text-blue-700',
+    'Aguardando Aprovação Superior': 'bg-orange-100 text-orange-700',
     'Aprovada': 'bg-purple-100 text-purple-700',
     'Enviada ao Fornecedor': 'bg-indigo-100 text-indigo-700',
     'Em Processo': 'bg-yellow-100 text-yellow-700',
@@ -556,7 +588,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
                     R$ {oc.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell>
-                    <Badge className={statusColors[oc.status]}>
+                    <Badge className={statusColors[oc.status] || statusColors['Solicitada']}>
                       {oc.status}
                     </Badge>
                   </TableCell>
@@ -575,7 +607,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
                         <Edit className="w-4 h-4" />
                       </Button>
 
-                      {oc.status === 'Solicitada' && (
+                      {(oc.status === 'Solicitada' || oc.status === 'Aguardando Aprovação Superior') && (
                         <Button 
                           variant="ghost" 
                           size="sm" 
