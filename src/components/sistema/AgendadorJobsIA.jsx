@@ -75,6 +75,16 @@ export default function AgendadorJobsIA({ empresaId }) {
       }
     }, 60 * 60 * 1000);
 
+    // V21.5: Job IA CNH/ASO (7h)
+    const jobCNHASO = setInterval(async () => {
+      const agora = new Date();
+      if (agora.getHours() === 7) {
+        console.log('🚀 Executando Job: IA CNH/ASO');
+        const { executarJobCNHASO } = await import('@/components/rh/JobIACNHASO');
+        await executarJobCNHASO(empresaId);
+      }
+    }, 1000 * 60 * 60); // 1h
+
     return () => {
       clearInterval(jobDIFAL);
       clearInterval(jobReguaCobranca);
@@ -82,6 +92,7 @@ export default function AgendadorJobsIA({ empresaId }) {
       clearInterval(jobReposicao);
       clearInterval(jobCrossCD);
       clearInterval(jobAuditoria);
+      clearInterval(jobCNHASO);
     };
   }, [empresaId]);
 

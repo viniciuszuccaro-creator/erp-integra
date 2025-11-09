@@ -1,25 +1,30 @@
+
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Rocket, TestTube, Zap } from "lucide-react";
 import TesteIntegracaoV21_3 from "@/components/sistema/TesteIntegracaoV21_3";
+import TesteIntegracaoV21_5 from "@/components/sistema/TesteIntegracaoV21_5";
+import TesteIntegracaoV21_5_RH from "@/components/sistema/TesteIntegracaoV21_5_RH";
+import { useUser } from "@/hooks/useUser"; // Assuming useUser hook path
 
 /**
  * V21.3 - Página de Testes do Golden Thread
- * Testa todas as fases: V21.1, V21.2, V21.3
+ * Testa todas as fases: V21.1, V21.2, V21.3, V21.5 (Compras e RH)
  */
 export default function TesteGoldenThread() {
   const [aba, setAba] = useState('v21_3');
+  const { empresaAtual } = useUser();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 p-6">
+    <div className="p-6 lg:p-8 space-y-6">
       <div className="max-w-6xl mx-auto space-y-6">
         <Card className="border-0 shadow-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">🧪 Testes Golden Thread</h1>
-                <p className="text-purple-100">Cenários de teste automatizados V21.1 + V21.2 + V21.3</p>
+                <p className="text-purple-100">Cenários de teste automatizados V21.1 + V21.2 + V21.3 + V21.5</p>
               </div>
               <Rocket className="w-16 h-16" />
             </div>
@@ -43,7 +48,7 @@ export default function TesteGoldenThread() {
           </TabsList>
 
           <TabsContent value="v21_3">
-            <TesteIntegracaoV21_3 empresaId="empresa_teste" />
+            <TesteIntegracaoV21_3 empresaId={empresaAtual?.id || "empresa_teste"} />
           </TabsContent>
 
           <TabsContent value="v21_2">
@@ -64,6 +69,12 @@ export default function TesteGoldenThread() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* V21.5: NOVO - Teste Compras */}
+        <TesteIntegracaoV21_5 empresaId={empresaAtual?.id} />
+
+        {/* V21.5: NOVO - Teste RH */}
+        <TesteIntegracaoV21_5_RH empresaId={empresaAtual?.id} />
       </div>
     </div>
   );
