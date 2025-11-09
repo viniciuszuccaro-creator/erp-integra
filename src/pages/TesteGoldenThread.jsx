@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +5,7 @@ import { Rocket, TestTube, Zap } from "lucide-react";
 import TesteIntegracaoV21_3 from "@/components/sistema/TesteIntegracaoV21_3";
 import TesteIntegracaoV21_5 from "@/components/sistema/TesteIntegracaoV21_5";
 import TesteIntegracaoV21_5_RH from "@/components/sistema/TesteIntegracaoV21_5_RH";
-import { useUser } from "@/hooks/useUser"; // Assuming useUser hook path
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * V21.3 - Página de Testes do Golden Thread
