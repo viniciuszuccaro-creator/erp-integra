@@ -642,11 +642,11 @@ export default function Dashboard() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="tempo-real">
+        <TabsContent value="tempo-real" className="space-y-6">
           <DashboardTempoReal empresaId={empresaAtual?.id} />
         </TabsContent>
 
-        <TabsContent value="resumo">
+        <TabsContent value="resumo" className="space-y-6">
           {/* KPIs Principais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statsCards.map((stat, index) => (
