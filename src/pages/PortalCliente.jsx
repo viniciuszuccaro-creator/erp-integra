@@ -11,7 +11,6 @@ import {
   ShoppingCart,
   DollarSign,
   FileText,
-  MessageSquare,
   User,
   Package,
   Truck,
@@ -35,7 +34,6 @@ export default function PortalCliente() {
       try {
         const user = await base44.auth.me();
         
-        // Buscar cliente vinculado ao usuário
         const clientes = await base44.entities.Cliente.filter({ 
           portal_usuario_id: user.id 
         });
@@ -98,7 +96,6 @@ export default function PortalCliente() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
         <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -113,7 +110,6 @@ export default function PortalCliente() {
           </CardHeader>
         </Card>
 
-        {/* Tabs */}
         <Tabs defaultValue="pedidos" className="space-y-6">
           <TabsList className="bg-white p-1 shadow-md">
             <TabsTrigger value="pedidos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
@@ -130,7 +126,6 @@ export default function PortalCliente() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Aba Pedidos */}
           <TabsContent value="pedidos" className="space-y-4">
             {pedidos.length === 0 ? (
               <Card>
@@ -146,7 +141,6 @@ export default function PortalCliente() {
             )}
           </TabsContent>
 
-          {/* Aba Financeiro */}
           <TabsContent value="financeiro" className="space-y-4">
             {contasReceber.length === 0 ? (
               <Card>
@@ -185,7 +179,6 @@ export default function PortalCliente() {
             )}
           </TabsContent>
 
-          {/* Aba Documentos */}
           <TabsContent value="documentos">
             <Card>
               <CardContent className="p-12 text-center text-slate-400">
@@ -206,7 +199,6 @@ export default function PortalCliente() {
 function PedidoCardPortal({ pedido }) {
   const [expandido, setExpandido] = useState(false);
 
-  // V21.1: Buscar etapas do banco
   const { data: etapas = [] } = useQuery({
     queryKey: ['pedido-etapas', pedido.id],
     queryFn: () => base44.entities.PedidoEtapa.filter({ pedido_id: pedido.id }, 'sequencia'),
@@ -219,7 +211,6 @@ function PedidoCardPortal({ pedido }) {
     enabled: expandido
   });
 
-  // Calcular progresso
   const etapasFaturadas = etapas.filter(e => e.faturada).length;
   const percentualFaturado = etapas.length > 0 
     ? (etapasFaturadas / etapas.length) * 100 
@@ -266,7 +257,6 @@ function PedidoCardPortal({ pedido }) {
           </div>
         </div>
 
-        {/* V21.1: NOVO - Progresso de Faturamento por Etapas */}
         {etapas.length > 0 && (
           <div className="mb-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
             <div className="flex items-center justify-between mb-2">
@@ -285,7 +275,6 @@ function PedidoCardPortal({ pedido }) {
           </div>
         )}
 
-        {/* Botão Expandir */}
         <Button
           variant="outline"
           size="sm"
@@ -295,10 +284,8 @@ function PedidoCardPortal({ pedido }) {
           {expandido ? 'Ocultar Detalhes' : 'Ver Detalhes e Etapas'}
         </Button>
 
-        {/* Detalhes Expandidos */}
         {expandido && (
           <div className="mt-6 space-y-4 pt-6 border-t">
-            {/* V21.1: NOVO - Lista de Etapas */}
             {etapas.length > 0 && (
               <div>
                 <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
@@ -306,7 +293,7 @@ function PedidoCardPortal({ pedido }) {
                   Etapas de Entrega / Faturamento
                 </h4>
                 <div className="space-y-3">
-                  {etapas.map((etapa, idx) => (
+                  {etapas.map((etapa) => (
                     <Card key={etapa.id} className={`border ${etapa.faturada ? 'border-green-300 bg-green-50' : 'border-slate-200'}`}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between">
@@ -371,7 +358,6 @@ function PedidoCardPortal({ pedido }) {
               </div>
             )}
 
-            {/* Entregas */}
             {entregas.length > 0 && (
               <div>
                 <h4 className="font-bold text-sm mb-3 flex items-center gap-2">
@@ -402,11 +388,9 @@ function PedidoCardPortal({ pedido }) {
               </div>
             )}
 
-            {/* Itens do Pedido */}
             <div>
               <h4 className="font-bold text-sm mb-3">Itens do Pedido</h4>
               <div className="space-y-2">
-                {/* Revenda */}
                 {(pedido.itens_revenda || []).map((item, idx) => (
                   <div key={`rev-${idx}`} className="p-3 bg-white rounded border text-sm">
                     <div className="flex justify-between">
@@ -428,7 +412,6 @@ function PedidoCardPortal({ pedido }) {
                   </div>
                 ))}
 
-                {/* Produção */}
                 {[...(pedido.itens_armado_padrao || []), ...(pedido.itens_corte_dobra || [])].map((item, idx) => (
                   <div key={`prod-${idx}`} className="p-3 bg-purple-50 rounded border border-purple-200 text-sm">
                     <div className="flex justify-between">
@@ -453,11 +436,5 @@ function PedidoCardPortal({ pedido }) {
         )}
       </CardContent>
     </Card>
-  ))
-)}
-</TabsContent>
-</Tabs>
-</div>
-</div>
-);
+  );
 }
