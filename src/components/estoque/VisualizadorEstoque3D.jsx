@@ -1,88 +1,69 @@
-import React, { useRef, useState } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls, Text, Box } from "@react-three/drei";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Package, Maximize2 } from "lucide-react";
+import { Package, Maximize2, MapPin } from "lucide-react";
 
 /**
- * V21.4 - Visualizador 3D de Almoxarifado
+ * V21.4 - Visualizador de Almoxarifado (Mapa de Calor 2D)
  * Mostra produtos em suas localizações físicas (zona/corredor/prateleira)
  */
 
-function Prateleira({ posicao, codigo, ocupadoKG, capacidadeKG }) {
+function Prateleira({ codigo, ocupadoKG, capacidadeKG, onClick }) {
   const percentualOcupacao = capacidadeKG > 0 ? (ocupadoKG / capacidadeKG) * 100 : 0;
   
-  const cor = percentualOcupacao > 90 ? '#ef4444' :
-              percentualOcupacao > 70 ? '#f59e0b' :
-              percentualOcupacao > 30 ? '#22c55e' : '#64748b';
+  const corBg = percentualOcupacao > 90 ? 'bg-red-600' :
+                percentualOcupacao > 70 ? 'bg-orange-500' :
+                percentualOcupacao > 30 ? 'bg-green-500' : 'bg-slate-300';
+  
+  const corBorder = percentualOcupacao > 90 ? 'border-red-700' :
+                    percentualOcupacao > 70 ? 'border-orange-600' :
+                    percentualOcupacao > 30 ? 'border-green-600' : 'border-slate-400';
 
   return (
-    <group position={posicao}>
-      <Box args={[1, 0.3, 0.5]}>
-        <meshStandardMaterial color={cor} />
-      </Box>
-      <Text
-        position={[0, 0.5, 0]}
-        fontSize={0.15}
-        color="white"
-        anchorX="center"
-      >
-        {codigo}
-      </Text>
-      <Text
-        position={[0, -0.5, 0]}
-        fontSize={0.1}
-        color={cor}
-        anchorX="center"
-      >
-        {percentualOcupacao.toFixed(0)}%
-      </Text>
-    </group>
+    <div
+      onClick={onClick}
+      className={`${corBg} ${corBorder} border-2 rounded-lg p-2 cursor-pointer hover:scale-105 transition-all shadow-md`}
+      title={`${codigo}\n${ocupadoKG.toFixed(0)}/${capacidadeKG.toFixed(0)} KG\n${percentualOcupacao.toFixed(0)}% ocupado`}
+    >
+      <p className="text-white font-bold text-xs text-center">{codigo}</p>
+      <p className="text-white text-xs text-center">{percentualOcupacao.toFixed(0)}%</p>
+    </div>
   );
 }
 
-function Almoxarifado3D({ localEstoque }) {
-  const zonas = localEstoque?.zonas_armazenagem || [];
-  const prateleirasRender = [];
-
-  zonas.forEach((zona, zIdx) => {
-    zona.corredores?.forEach((corredor, cIdx) => {
-      corredor.prateleiras?.forEach((prat, pIdx) => {
-        prateleirasRender.push({
-          ...prat,
-          posicao: [cIdx * 2 - 4, pIdx * 0.8, zIdx * 2 - 2]
-        });
-      });
-    });
-  });
-
+function CorredorVisual({ corredor }) {
   return (
-    <>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
+    <div className="space-y-2">
+      <p className="text-xs font-semibold text-slate-700 mb-1">{corredor.codigo_corredor}</p>
+      <div className="grid grid-cols-4 gap-2">
+        {corredor.prateleiras?.map((prat, idx) => (
+          <Prateleira
+            key={idx}
+            codigo={prat.codigo_prateleira}
+            ocupadoKG={prat.ocupado_kg || 0}
+            capacidadeKG={prat.capacidade_kg || 100}
+            onClick={() => console.log('Prateleira', prat)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
-      {/* Chão */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]}>
-        <planeGeometry args={[20, 15]} />
-        <meshStandardMaterial color="#1e293b" />
-      </mesh>
-
-      {/* Prateleiras */}
-      {prateleirasRender.map((prat, idx) => (
-        <Prateleira
-          key={idx}
-          posicao={prat.posicao}
-          codigo={prat.codigo_prateleira}
-          ocupadoKG={prat.ocupado_kg || 0}
-          capacidadeKG={prat.capacidade_kg || 100}
-        />
-      ))}
-
-      <OrbitControls />
-    </>
+function ZonaVisual({ zona }) {
+  return (
+    <Card className="border-2 border-blue-300">
+      <CardHeader className="bg-blue-50 p-3">
+        <CardTitle className="text-sm">{zona.codigo_zona} - {zona.descricao}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 space-y-4">
+        {zona.corredores?.map((corredor, idx) => (
+          <CorredorVisual key={idx} corredor={corredor} />
+        ))}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -112,8 +93,8 @@ export default function VisualizadorEstoque3D({ localEstoqueId }) {
               <Package className="w-6 h-6 text-white" />
             </div>
             <div>
-              <CardTitle>📦 Visualização 3D - {local?.nome_local}</CardTitle>
-              <p className="text-sm text-slate-600">Mapa físico do almoxarifado</p>
+              <CardTitle>📦 Mapa do Almoxarifado - {local?.nome_local}</CardTitle>
+              <p className="text-sm text-slate-600">Visualização de ocupação por zona</p>
             </div>
           </div>
           <Badge className="bg-cyan-600">
@@ -122,13 +103,20 @@ export default function VisualizadorEstoque3D({ localEstoqueId }) {
         </div>
       </CardHeader>
       <CardContent className="p-6">
-        <div className="w-full h-[500px] bg-slate-900 rounded-lg overflow-hidden">
-          <Canvas camera={{ position: [8, 5, 8], fov: 50 }}>
-            <Almoxarifado3D localEstoque={local} />
-          </Canvas>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {local?.zonas_armazenagem?.map((zona, idx) => (
+            <ZonaVisual key={idx} zona={zona} />
+          ))}
+
+          {(!local?.zonas_armazenagem || local.zonas_armazenagem.length === 0) && (
+            <div className="col-span-2 text-center py-12 text-slate-400">
+              <MapPin className="w-16 h-16 mx-auto mb-3" />
+              <p>Configure as zonas de armazenagem em Cadastros → Locais de Estoque</p>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-4 gap-3 mt-4">
+        <div className="grid grid-cols-4 gap-3 mt-6">
           <div className="p-3 bg-green-100 rounded-lg">
             <p className="text-xs text-green-700">Capacidade OK</p>
             <div className="flex items-center gap-2 mt-1">
