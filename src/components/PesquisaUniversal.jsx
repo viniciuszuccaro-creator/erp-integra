@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -11,7 +12,7 @@ import {
   Truck,
   FileText,
   Building2,
-  DollarSign,
+  DollarSign, // This icon is now explicitly used
   Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -28,21 +29,33 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (query.length >= 2) {
-      buscar();
-    } else {
+    // If query is too short, clear results and stop any pending search indication
+    if (query.length < 2) {
       setResultados([]);
+      setBuscando(false);
+      return; // Exit early
     }
-  }, [query]);
+
+    // Debounce the search for queries of sufficient length
+    // Set buscando to true immediately to show loader while waiting for debounce
+    setBuscando(true); 
+    const handler = setTimeout(() => {
+      buscar();
+    }, 300); // 300ms debounce
+
+    // Cleanup function: clear timeout if query changes before search initiates
+    // This prevents outdated searches from running.
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [query]); // Re-run effect when query changes
 
   const buscar = async () => {
-    setBuscando(true);
-
     try {
       const q = query.toLowerCase();
 
       // Buscar em paralelo em múltiplas entidades
-      const [clientes, pedidos, produtos, entregas, fornecedores, ops] = await Promise.all([
+      const [clientes, pedidos, produtos, entregas, fornecedores, ops, faturas] = await Promise.all([
         base44.entities.Cliente.list().then(list => 
           list.filter(c => 
             c.nome?.toLowerCase().includes(q) ||
@@ -80,6 +93,13 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
             op.numero_op?.toLowerCase().includes(q) ||
             op.cliente_nome?.toLowerCase().includes(q)
           ).slice(0, 3)
+        ),
+        // NEW: Search for Faturas entity
+        base44.entities.Fatura.list().then(list =>
+          list.filter(f =>
+            f.numero_fatura?.toLowerCase().includes(q) ||
+            f.cliente_nome?.toLowerCase().includes(q)
+          ).slice(0, 3)
         )
       ]);
 
@@ -98,7 +118,7 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
           icone: ShoppingCart,
           cor: 'purple',
           titulo: p.numero_pedido,
-          subtitulo: `${p.cliente_nome} - R$ ${p.valor_total?.toLocaleString('pt-BR')}`,
+          subtitulo: `${p.cliente_nome} - R$ ${p.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
           url: createPageUrl('Comercial') + '?tab=pedidos&edit=' + p.id,
           data: p
         })),
@@ -137,6 +157,16 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
           subtitulo: `${op.cliente_nome} - ${op.status}`,
           url: createPageUrl('Producao') + '?op=' + op.id,
           data: op
+        })),
+        // NEW: Map Faturas results
+        ...faturas.map(f => ({
+            tipo: 'Fatura',
+            icone: DollarSign,
+            cor: 'yellow', // Using a new color for Faturas
+            titulo: f.numero_fatura,
+            subtitulo: `${f.cliente_nome} - R$ ${f.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            url: createPageUrl('Financiero') + '?tab=faturas&view=' + f.id,
+            data: f
         }))
       ];
 
@@ -144,6 +174,8 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
 
     } catch (error) {
       console.error('Erro ao buscar:', error);
+      // Clear results or show an error state if search fails
+      setResultados([]); 
     } finally {
       setBuscando(false);
     }
@@ -152,7 +184,7 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
   const handleSelect = (resultado) => {
     navigate(resultado.url);
     onOpenChange(false);
-    setQuery('');
+    setQuery(''); // Clear query after selection
   };
 
   const cores = {
@@ -161,7 +193,8 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
     green: 'bg-green-100 text-green-700',
     orange: 'bg-orange-100 text-orange-700',
     slate: 'bg-slate-100 text-slate-700',
-    indigo: 'bg-indigo-100 text-indigo-700'
+    indigo: 'bg-indigo-100 text-indigo-700',
+    yellow: 'bg-yellow-100 text-yellow-700' // NEW: Added yellow color for Faturas
   };
 
   return (
@@ -173,7 +206,7 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Pesquisar clientes, pedidos, produtos, entregas..."
+              placeholder="Pesquisar clientes, pedidos, produtos, entregas, faturas..." // Updated placeholder
               className="pl-10 text-lg border-0 focus-visible:ring-0"
               autoFocus
             />
@@ -219,7 +252,7 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
             <div className="text-center py-12 text-slate-500">
               <Search className="w-12 h-12 mx-auto mb-2 opacity-30" />
               <p className="text-sm">Digite para buscar em todo o sistema</p>
-              <p className="text-xs mt-2">Clientes • Pedidos • Produtos • Entregas • OPs</p>
+              <p className="text-xs mt-2">Clientes • Pedidos • Produtos • Entregas • OPs • Faturas</p> {/* Updated hint text */}
             </div>
           )}
         </div>
