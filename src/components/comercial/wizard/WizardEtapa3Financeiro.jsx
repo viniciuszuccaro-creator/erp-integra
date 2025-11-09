@@ -1,174 +1,112 @@
-import React from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, DollarSign, CreditCard } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { DollarSign, CreditCard, Calendar } from 'lucide-react';
+import PriceBrain from '../PriceBrain';
 
-/**
- * V21.1: ABA 3 - FINANCEIRO
- * Forma de pagamento, desconto, frete
- */
-export default function WizardEtapa3Financeiro({ formData, onChange, onNext, onBack }) {
-  const { data: formasPagamento = [] } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
-  });
-
-  const formasAtivas = formasPagamento.filter(f => f.ativa);
-
-  const valorProdutos = formData.valor_total || 0;
-  const descontoValor = (valorProdutos * (formData.desconto_geral_pedido_percentual || 0)) / 100;
-  const valorFrete = formData.valor_frete || 0;
-  const valorFinal = valorProdutos - descontoValor + valorFrete;
-
-  const handleFormaChange = (formaId) => {
-    const forma = formasAtivas.find(f => f.id === formaId);
-    onChange({
-      ...formData,
-      forma_pagamento_id: formaId,
-      forma_pagamento: forma?.descricao,
-      numero_parcelas: forma?.permite_parcelamento ? 1 : undefined
-    });
+export default function WizardEtapa3Financeiro({ dados, onChange }) {
+  const calcularTotal = () => {
+    const totalRevenda = (dados.itens_revenda || []).reduce((sum, i) => sum + (i.valor_item || 0), 0);
+    const totalProducao = (dados.itens_producao || []).reduce((sum, i) => sum + (i.preco_venda_total || 0), 0);
+    return totalRevenda + totalProducao + (dados.valor_frete || 0);
   };
+
+  const total = calcularTotal();
+
+  React.useEffect(() => {
+    onChange({ valor_total: total });
+  }, [total]);
 
   return (
     <div className="space-y-6">
+      {/* PriceBrain - IA de Precificação */}
+      <PriceBrain
+        pedido={dados}
+        onSugestaoAplicada={(novoPedido) => onChange(novoPedido)}
+      />
+
       <Card className="border-green-200 bg-green-50">
-        <CardContent className="p-4">
-          <h3 className="font-bold text-green-900 mb-4 flex items-center gap-2">
-            <CreditCard className="w-5 h-5" />
-            Condições Comerciais
-          </h3>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Forma de Pagamento *</Label>
-              <Select 
-                value={formData.forma_pagamento_id} 
-                onValueChange={handleFormaChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a forma" />
-                </SelectTrigger>
-                <SelectContent>
-                  {formasAtivas.map(f => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.descricao}
-                      {f.prazo_compensacao_dias > 0 && ` (${f.prazo_compensacao_dias} dias)`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Tipo de Frete</Label>
-              <Select 
-                value={formData.tipo_frete} 
-                onValueChange={(v) => onChange({...formData, tipo_frete: v})}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CIF">CIF (Pago pela empresa)</SelectItem>
-                  <SelectItem value="FOB">FOB (Cliente paga)</SelectItem>
-                  <SelectItem value="Retirada">Retirada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        <CardHeader className="bg-white/80 border-b">
+          <CardTitle className="text-base flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-green-600" />
+            Forma de Pagamento
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          <div>
+            <Label>Forma de Pagamento *</Label>
+            <Select
+              value={dados.forma_pagamento || ''}
+              onValueChange={(value) => onChange({ forma_pagamento: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="À Vista">À Vista</SelectItem>
+                <SelectItem value="PIX">PIX</SelectItem>
+                <SelectItem value="Boleto">Boleto</SelectItem>
+                <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                <SelectItem value="Parcelado">Parcelado</SelectItem>
+                <SelectItem value="Transferência">Transferência</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {formData.tipo_frete === 'CIF' && (
-            <div className="mt-4">
-              <Label>Valor do Frete</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.valor_frete || 0}
-                onChange={(e) => onChange({...formData, valor_frete: parseFloat(e.target.value) || 0})}
-                placeholder="0.00"
-              />
-            </div>
-          )}
+          <div>
+            <Label>Condição de Pagamento *</Label>
+            <Select
+              value={dados.condicao_pagamento || ''}
+              onValueChange={(value) => onChange({ condicao_pagamento: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="À Vista">À Vista</SelectItem>
+                <SelectItem value="7 dias">7 dias</SelectItem>
+                <SelectItem value="15 dias">15 dias</SelectItem>
+                <SelectItem value="30 dias">30 dias</SelectItem>
+                <SelectItem value="45 dias">45 dias</SelectItem>
+                <SelectItem value="60 dias">60 dias</SelectItem>
+                <SelectItem value="Parcelado">Parcelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-          <div className="mt-4">
-            <Label>Desconto Geral (%)</Label>
+          <div>
+            <Label>Valor do Frete</Label>
             <Input
               type="number"
               step="0.01"
-              max="100"
-              value={formData.desconto_geral_pedido_percentual || 0}
-              onChange={(e) => onChange({...formData, desconto_geral_pedido_percentual: parseFloat(e.target.value) || 0})}
+              value={dados.valor_frete || 0}
+              onChange={(e) => onChange({ valor_frete: parseFloat(e.target.value) || 0 })}
               placeholder="0.00"
             />
           </div>
         </CardContent>
       </Card>
 
-      {/* TOTALIZADOR */}
-      <Card className="border-purple-200 bg-purple-50">
-        <CardContent className="p-4">
-          <h3 className="font-bold text-purple-900 mb-3">💰 Resumo Financeiro</h3>
-          
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-700">Valor dos Produtos:</span>
-              <span className="font-semibold">R$ {valorProdutos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+      <Card className="border-0 bg-gradient-to-r from-green-50 to-blue-50">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-600">Valor Total do Pedido</p>
+              <p className="text-xs text-slate-500 mt-1">
+                {(dados.itens_revenda?.length || 0) + (dados.itens_producao?.length || 0)} itens
+              </p>
             </div>
-            
-            {descontoValor > 0 && (
-              <div className="flex justify-between text-orange-600">
-                <span>Desconto ({formData.desconto_geral_pedido_percentual}%):</span>
-                <span className="font-semibold">- R$ {descontoValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-              </div>
-            )}
-
-            {valorFrete > 0 && (
-              <div className="flex justify-between text-blue-600">
-                <span>Frete:</span>
-                <span className="font-semibold">+ R$ {valorFrete.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-              </div>
-            )}
-
-            <div className="flex justify-between pt-2 border-t-2 border-purple-300">
-              <span className="font-bold text-lg">TOTAL:</span>
-              <span className="font-bold text-lg text-green-700">
-                R$ {valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-
-            <div className="flex justify-between text-xs text-slate-600 pt-1">
-              <span>Peso Total:</span>
-              <span className="font-semibold">{pesoTotal.toFixed(2)} KG</span>
+            <div className="text-right">
+              <p className="text-4xl font-bold text-green-600">
+                R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* NAVEGAÇÃO */}
-      <div className="flex justify-between pt-6 border-t">
-        <Button variant="outline" onClick={onBack}>
-          <ChevronLeft className="w-4 h-4 mr-2" />
-          Voltar
-        </Button>
-        <Button
-          onClick={() => {
-            onChange({ ...formData, valor_total: valorFinal, peso_total_kg: pesoTotal });
-            onNext();
-          }}
-          disabled={!formData.forma_pagamento_id}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          Próximo: Revisão →
-          <ChevronRight className="w-4 h-4 ml-2" />
-        </Button>
-      </div>
     </div>
   );
 }

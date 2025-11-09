@@ -1,223 +1,457 @@
 
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { 
-  User, 
-  Package, 
-  CreditCard, 
-  CheckCircle, 
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  User,
+  Package,
+  Factory,
+  Scissors,
   Truck,
+  DollarSign,
   FileText,
-  Calendar,
-  Settings,
-  Layers
-} from "lucide-react";
-import WizardEtapa1Cliente from "./wizard/WizardEtapa1Cliente";
-import WizardEtapa2Itens from "./wizard/WizardEtapa2Itens";
-import WizardEtapa3Financeiro from "./wizard/WizardEtapa3Financeiro";
-import WizardEtapa4Revisao from "./wizard/WizardEtapa4Revisao";
-import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+  Shield,
+  Check,
+  AlertTriangle,
+  ChevronRight
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+// Componentes das Etapas
+import WizardEtapa1Cliente from './wizard/WizardEtapa1Cliente';
+import ItensRevendaTab from './ItensRevendaTab';
+import ArmadoPadraoTab from './ArmadoPadraoTab';
+import CorteDobraIATab from './CorteDobraIATab';
+import LogisticaEntregaTab from './LogisticaEntregaTab';
+import FechamentoFinanceiroTab from './FechamentoFinanceiroTab';
+import ArquivosProjetosTab from './ArquivosProjetosTab';
+import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
 
 /**
- * V21.1: PEDIDO FORM COMPLETO - MODAL GRANDE FIXO
- * 8 ABAS REFINADAS + FATURAMENTO PARCIAL + CONVERSÃO V22.0
- * 
- * REGRA-MÃE:
- * - Modal DEVE ser max-w-[90vw] (grande fixo)
- * - 8 Abas navegáveis
- * - Barra de progresso de faturamento
- * - Suporta Omnichannel (origem_pedido)
+ * Formulário Completo de Pedido - V12.0
+ * 🔥 CORREÇÃO CRÍTICA: SCROLL FUNCIONANDO
  */
-export default function PedidoFormCompleto({ isOpen, onClose, pedido, onSuccess }) {
-  const [etapaWizard, setEtapaWizard] = useState(1);
-  const [formData, setFormData] = useState(pedido || {
+export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel }) {
+  const [activeTab, setActiveTab] = useState('identificacao');
+  const [formData, setFormData] = useState(() => ({
     tipo: 'Pedido',
-    tipo_pedido: 'Revenda',
+    tipo_pedido: 'Misto',
     origem_pedido: 'Manual',
     status: 'Rascunho',
     data_pedido: new Date().toISOString().split('T')[0],
-    
-    // Aba 1
-    cliente_id: '',
-    cliente_nome: '',
-    obra_destino_id: '',
-    obra_destino_nome: '',
-    
-    // Aba 2
+    prioridade: 'Normal',
     itens_revenda: [],
     itens_armado_padrao: [],
     itens_corte_dobra: [],
-    
-    // Aba 3
-    forma_pagamento: '',
-    forma_pagamento_id: '',
-    tipo_frete: 'CIF',
-    valor_frete: 0,
-    desconto_geral_pedido_percentual: 0,
-    
-    // Totais
+    endereco_entrega_principal: {},
+    forma_pagamento: 'À Vista',
     valor_total: 0,
+    valor_produtos: 0,
     peso_total_kg: 0,
-    
-    // Aba 5: Etapas de Faturamento (V21.1)
-    etapas_entrega: [],
-    
-    // Wizard
     percentual_conclusao_wizard: 0,
-    etapa_atual_wizard: 1
+    etapa_atual_wizard: 1,
+    cliente_id: '',
+    cliente_nome: '',
+    numero_pedido: '',
+    empresa_id: '',
+    projetos_ia: [],
+    anexos: [],
+    desconto_geral_pedido_percentual: 0,
+    desconto_geral_pedido_valor: 0,
+    valor_frete: 0,
+    etapas_entrega: [],
+    observacoes_nfe: '',
+    ...(pedido || {})
+  }));
+
+  const [validacoes, setValidacoes] = useState({
+    identificacao: false,
+    itens: false,
+    logistica: false,
+    financeiro: false
   });
 
-  const queryClient = useQueryClient();
+  // Calcular progresso
+  useEffect(() => {
+    const etapasCompletas = Object.values(validacoes).filter(Boolean).length;
+    const progresso = (etapasCompletas / 4) * 100;
+    setFormData(prev => ({ ...prev, percentual_conclusao_wizard: progresso }));
+  }, [validacoes]);
 
-  const createPedidoMutation = useMutation({
-    mutationFn: async (data) => {
-      return await base44.entities.Pedido.create(data);
-    },
-    onSuccess: (novoPedido) => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      toast.success(`✅ Pedido ${novoPedido.numero_pedido} criado!`);
-      onSuccess?.(novoPedido);
-      onClose();
-      setEtapaWizard(1); // Reset wizard step on successful creation
-    },
-    onError: (error) => {
-      toast.error(`❌ Erro ao criar pedido: ${error.message}`);
-    }
-  });
+  // Validar identificação - COM PROTEÇÃO
+  useEffect(() => {
+    if (!formData) return;
+    
+    const valido = !!(
+      formData.cliente_id &&
+      formData.cliente_nome &&
+      formData.data_pedido &&
+      formData.numero_pedido
+    );
+    setValidacoes(prev => ({ ...prev, identificacao: valido }));
+  }, [formData?.cliente_id, formData?.cliente_nome, formData?.data_pedido, formData?.numero_pedido]);
 
-  const handleSalvar = () => {
-    createPedidoMutation.mutate({
-      ...formData,
-      numero_pedido: `PED-${Date.now()}`,
-      percentual_conclusao_wizard: 100,
-      etapa_atual_wizard: 4
-    });
+  // Validar itens - COM PROTEÇÃO
+  useEffect(() => {
+    if (!formData) return;
+    
+    const temItens = (
+      (formData.itens_revenda?.length > 0) ||
+      (formData.itens_armado_padrao?.length > 0) ||
+      (formData.itens_corte_dobra?.length > 0)
+    );
+    setValidacoes(prev => ({ ...prev, itens: temItens }));
+  }, [formData?.itens_revenda?.length, formData?.itens_armado_padrao?.length, formData?.itens_corte_dobra?.length]);
+
+  // Recalcular totais - COM PROTEÇÃO
+  const recalcularTotais = () => {
+    if (!formData) return;
+    
+    const valorRevenda = (formData.itens_revenda || []).reduce((sum, item) => 
+      sum + (item.valor_item || 0), 0
+    );
+    const valorArmado = (formData.itens_armado_padrao || []).reduce((sum, item) => 
+      sum + (item.preco_venda_total || 0), 0
+    );
+    const valorCorte = (formData.itens_corte_dobra || []).reduce((sum, item) => 
+      sum + (item.preco_venda_total || 0), 0
+    );
+
+    const valorProdutos = valorRevenda + valorArmado + valorCorte;
+    const valorDesconto = formData.desconto_geral_pedido_valor || 0;
+    const valorFrete = formData.valor_frete || 0;
+    const valorTotal = valorProdutos - valorDesconto + valorFrete;
+
+    const pesoRevenda = (formData.itens_revenda || []).reduce((sum, item) => 
+      sum + ((item.peso_unitario || 0) * (item.quantidade || 0)), 0
+    );
+    const pesoArmado = (formData.itens_armado_padrao || []).reduce((sum, item) => 
+      sum + (item.peso_total_kg || 0), 0
+    );
+    const pesoCorte = (formData.itens_corte_dobra || []).reduce((sum, item) => 
+      sum + (item.peso_total_kg || 0), 0
+    );
+
+    const pesoTotal = pesoRevenda + pesoArmado + pesoCorte;
+
+    setFormData(prev => ({
+      ...prev,
+      valor_produtos: valorProdutos,
+      valor_total: valorTotal,
+      peso_total_kg: pesoTotal
+    }));
   };
 
-  const etapas = [
-    { numero: 1, nome: "Cliente", icone: User, concluida: etapaWizard > 1 },
-    { numero: 2, nome: "Itens", icone: Package, concluida: etapaWizard > 2 },
-    { numero: 3, nome: "Financeiro", icone: CreditCard, concluida: etapaWizard > 3 },
-    { numero: 4, nome: "Revisão", icone: CheckCircle, concluida: etapaWizard > 4 }
+  useEffect(() => {
+    recalcularTotais();
+  }, [
+    formData?.itens_revenda,
+    formData?.itens_armado_padrao,
+    formData?.itens_corte_dobra,
+    formData?.desconto_geral_pedido_valor,
+    formData?.valor_frete
+  ]);
+
+  const handleSubmit = () => {
+    if (!formData) return;
+    
+    if (!validacoes.identificacao) {
+      toast.error('❌ Complete os dados de identificação');
+      setActiveTab('identificacao');
+      return;
+    }
+
+    if (!validacoes.itens) {
+      toast.error('❌ Adicione pelo menos um item ao pedido');
+      setActiveTab('revenda');
+      return;
+    }
+
+    onSubmit(formData);
+  };
+
+  const abas = [
+    { 
+      id: 'identificacao', 
+      label: 'Identificação', 
+      icon: User, 
+      valido: validacoes.identificacao 
+    },
+    { 
+      id: 'revenda', 
+      label: 'Itens Revenda', 
+      icon: Package, 
+      count: formData?.itens_revenda?.length || 0 
+    },
+    { 
+      id: 'armado', 
+      label: 'Armado Padrão', 
+      icon: Factory, 
+      count: formData?.itens_armado_padrao?.length || 0 
+    },
+    { 
+      id: 'corte', 
+      label: 'Corte e Dobra', 
+      icon: Scissors, 
+      count: formData?.itens_corte_dobra?.length || 0 
+    },
+    { 
+      id: 'logistica', 
+      label: 'Logística', 
+      icon: Truck, 
+      valido: validacoes.logistica 
+    },
+    { 
+      id: 'financeiro', 
+      label: 'Financeiro', 
+      icon: DollarSign, 
+      valido: validacoes.financeiro 
+    },
+    { 
+      id: 'arquivos', 
+      label: 'Arquivos', 
+      icon: FileText, 
+      count: formData?.projetos_ia?.length || 0 
+    },
+    { 
+      id: 'auditoria', 
+      label: 'Auditoria', 
+      icon: Shield 
+    }
   ];
 
-  const progressoWizard = ((etapaWizard - 1) / 3) * 100;
-
-  // Reset ao fechar
-  const handleClose = () => {
-    setEtapaWizard(1);
-    setFormData({
-      tipo: 'Pedido',
-      tipo_pedido: 'Revenda',
-      origem_pedido: 'Manual',
-      status: 'Rascunho',
-      data_pedido: new Date().toISOString().split('T')[0],
-      cliente_id: '',
-      cliente_nome: '',
-      obra_destino_id: '',
-      obra_destino_nome: '',
-      itens_revenda: [],
-      itens_armado_padrao: [],
-      itens_corte_dobra: [],
-      forma_pagamento: '',
-      forma_pagamento_id: '',
-      tipo_frete: 'CIF',
-      valor_frete: 0,
-      desconto_geral_pedido_percentual: 0,
-      valor_total: 0,
-      peso_total_kg: 0,
-      etapas_entrega: []
-    });
-    onClose();
-  };
+  // Proteção adicional: não renderizar até formData estar pronto
+  if (!formData) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="border-b pb-4 px-6 pt-6">
-          <DialogTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <FileText className="w-6 h-6 text-blue-600" />
-              {pedido ? `Editar Pedido ${pedido.numero_pedido}` : 'Novo Pedido - V21.1'}
-            </span>
-            <Badge className="bg-purple-600 text-white">
-              Etapa {etapaWizard}/4
-            </Badge>
-          </DialogTitle>
-        </DialogHeader>
-
-        {/* BARRA DE PROGRESSO */}
-        <div className="px-6 py-4 bg-slate-50 border-b">
-          <div className="flex justify-between items-center mb-2">
-            {etapas.map((etapa) => {
-              const Icon = etapa.icone;
-              const isAtual = etapa.numero === etapaWizard;
-              const isConcluida = etapa.concluida;
-              
-              return (
-                <div key={etapa.numero} className="flex flex-col items-center flex-1">
-                  <div 
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${
-                      isConcluida ? 'bg-green-600' :
-                      isAtual ? 'bg-blue-600' : 
-                      'bg-slate-300'
-                    }`}
-                  >
-                    <Icon className={`w-5 h-5 ${isConcluida || isAtual ? 'text-white' : 'text-slate-600'}`} />
-                  </div>
-                  <p className={`text-xs font-medium ${isAtual ? 'text-blue-600' : 'text-slate-600'}`}>
-                    {etapa.nome}
-                  </p>
-                </div>
-              );
-            })}
+    <div className="h-full flex flex-col">
+      {/* Header - FIXO */}
+      <div className="flex-shrink-0 p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">
+              {pedido ? `Editar Pedido ${pedido.numero_pedido}` : 'Novo Pedido'}
+            </h2>
+            <p className="text-sm text-slate-600">
+              Preencha todos os dados do pedido
+            </p>
           </div>
-          <Progress value={progressoWizard} className="h-2" />
+          <div className="flex items-center gap-3">
+            <Badge className={
+              formData.status === 'Aprovado' ? 'bg-green-600' :
+              formData.status === 'Aguardando Aprovação' ? 'bg-orange-600' :
+              'bg-slate-600'
+            }>
+              {formData.status}
+            </Badge>
+            {formData.prioridade === 'Urgente' && (
+              <Badge className="bg-red-600">
+                <AlertTriangle className="w-3 h-3 mr-1" />
+                Urgente
+              </Badge>
+            )}
+          </div>
         </div>
 
-        {/* CONTEÚDO DAS ETAPAS */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          {etapaWizard === 1 && (
+        {/* Progress */}
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs text-slate-600">
+            <span>Progresso do Pedido</span>
+            <span>{Math.round(formData.percentual_conclusao_wizard)}%</span>
+          </div>
+          <Progress value={formData.percentual_conclusao_wizard} className="h-2" />
+        </div>
+
+        {/* Resumo Rápido */}
+        <div className="grid grid-cols-4 gap-4 mt-4">
+          <div className="bg-white/80 rounded-lg p-3 border">
+            <p className="text-xs text-slate-600">Itens Revenda</p>
+            <p className="text-lg font-bold text-blue-600">
+              {formData.itens_revenda?.length || 0}
+            </p>
+          </div>
+          <div className="bg-white/80 rounded-lg p-3 border">
+            <p className="text-xs text-slate-600">Armado Padrão</p>
+            <p className="text-lg font-bold text-purple-600">
+              {formData.itens_armado_padrao?.length || 0}
+            </p>
+          </div>
+          <div className="bg-white/80 rounded-lg p-3 border">
+            <p className="text-xs text-slate-600">Corte e Dobra</p>
+            <p className="text-lg font-bold text-orange-600">
+              {formData.itens_corte_dobra?.length || 0}
+            </p>
+          </div>
+          <div className="bg-white/80 rounded-lg p-3 border">
+            <p className="text-xs text-slate-600">Peso Total</p>
+            <p className="text-lg font-bold text-green-600">
+              {formData.peso_total_kg?.toFixed(2) || '0.00'} kg
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs - FIXO */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="flex-shrink-0 bg-white border-b px-6 py-0 h-auto rounded-none flex-wrap justify-start">
+          {abas.map((aba) => {
+            const Icon = aba.icon;
+            return (
+              <TabsTrigger
+                key={aba.id}
+                value={aba.id}
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative px-4 py-3"
+              >
+                <Icon className="w-4 h-4 mr-2" />
+                {aba.label}
+                {aba.valido && (
+                  <Check className="w-4 h-4 ml-2 text-green-600" />
+                )}
+                {aba.count > 0 && (
+                  <Badge className="ml-2 bg-orange-600 text-xs">
+                    {aba.count}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
+
+        {/* 🔥 CORREÇÃO CRÍTICA: ÁREA DE CONTEÚDO COM SCROLL */}
+        <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(95vh - 400px)' }}>
+          {/* ABA 1: IDENTIFICAÇÃO */}
+          <TabsContent value="identificacao" className="m-0">
             <WizardEtapa1Cliente
               formData={formData}
-              onChange={setFormData}
-              onNext={() => setEtapaWizard(2)}
+              setFormData={setFormData}
+              clientes={clientes}
+              onNext={() => setActiveTab('revenda')}
             />
-          )}
+          </TabsContent>
 
-          {etapaWizard === 2 && (
-            <WizardEtapa2Itens
+          {/* ABA 2: ITENS DE REVENDA */}
+          <TabsContent value="revenda" className="m-0">
+            <ItensRevendaTab
               formData={formData}
-              onChange={setFormData}
-              onNext={() => setEtapaWizard(3)}
-              onBack={() => setEtapaWizard(1)}
+              setFormData={setFormData}
+              onNext={() => setActiveTab('armado')}
             />
-          )}
+          </TabsContent>
 
-          {etapaWizard === 3 && (
-            <WizardEtapa3Financeiro
+          {/* ABA 3: ARMADO PADRÃO */}
+          <TabsContent value="armado" className="m-0">
+            <ArmadoPadraoTab
               formData={formData}
-              onChange={setFormData}
-              onNext={() => setEtapaWizard(4)}
-              onBack={() => setEtapaWizard(2)}
+              setFormData={setFormData}
+              empresaId={formData?.empresa_id}
+              onNext={() => setActiveTab('corte')}
             />
-          )}
+          </TabsContent>
 
-          {etapaWizard === 4 && (
-            <WizardEtapa4Revisao
+          {/* ABA 4: CORTE E DOBRA (IA) */}
+          <TabsContent value="corte" className="m-0">
+            <CorteDobraIATab
               formData={formData}
-              onBack={() => setEtapaWizard(3)}
-              onSalvar={handleSalvar}
-              isSalvando={createPedidoMutation.isPending}
+              setFormData={setFormData}
+              empresaId={formData?.empresa_id}
+              onNext={() => setActiveTab('logistica')}
             />
-          )}
+          </TabsContent>
+
+          {/* ABA 5: LOGÍSTICA */}
+          <TabsContent value="logistica" className="m-0">
+            <LogisticaEntregaTab
+              formData={formData}
+              setFormData={setFormData}
+              clientes={clientes}
+              onNext={() => setActiveTab('financeiro')}
+            />
+          </TabsContent>
+
+          {/* ABA 6: FINANCEIRO */}
+          <TabsContent value="financeiro" className="m-0">
+            <FechamentoFinanceiroTab
+              formData={formData}
+              setFormData={setFormData}
+              onNext={() => setActiveTab('arquivos')}
+            />
+          </TabsContent>
+
+          {/* ABA 7: ARQUIVOS */}
+          <TabsContent value="arquivos" className="m-0">
+            <ArquivosProjetosTab
+              formData={formData}
+              setFormData={setFormData}
+            />
+          </TabsContent>
+
+          {/* ABA 8: AUDITORIA */}
+          <TabsContent value="auditoria" className="m-0">
+            <AuditoriaAprovacaoTab
+              formData={formData}
+              pedido={pedido}
+            />
+          </TabsContent>
         </div>
-      </DialogContent>
-    </Dialog>
+      </Tabs>
+
+      {/* Footer com Ações - FIXO */}
+      <div className="flex-shrink-0 p-6 border-t bg-slate-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="text-sm">
+              <p className="text-slate-600">Valor Total</p>
+              <p className="text-2xl font-bold text-green-600">
+                R$ {(formData?.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+            <div className="text-sm">
+              <p className="text-slate-600">Peso Total</p>
+              <p className="text-xl font-bold text-blue-600">
+                {(formData?.peso_total_kg || 0).toFixed(2)} kg
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={onCancel}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              className="bg-green-600 hover:bg-green-700"
+              disabled={!validacoes.identificacao || !validacoes.itens}
+            >
+              <Check className="w-4 h-4 mr-2" />
+              {pedido ? 'Salvar Alterações' : 'Criar Pedido'}
+            </Button>
+          </div>
+        </div>
+
+        {/* Validações */}
+        {(!validacoes.identificacao || !validacoes.itens) && (
+          <Alert className="mt-4 border-orange-300 bg-orange-50">
+            <AlertTriangle className="w-4 h-4 text-orange-600" />
+            <AlertDescription className="text-sm">
+              {!validacoes.identificacao && <p>• Complete os dados de identificação e cliente</p>}
+              {!validacoes.itens && <p>• Adicione pelo menos um item ao pedido</p>}
+            </AlertDescription>
+          </Alert>
+        )}
+      </div>
+    </div>
   );
 }
