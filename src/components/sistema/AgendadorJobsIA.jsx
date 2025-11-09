@@ -7,11 +7,14 @@ import { executarIAReposicaoPreditiva } from "@/components/estoque/JobIAReposica
 import executarIAAuditoriaLocal from "@/components/estoque/JobIAAuditoriaLocal";
 import { base44 } from "@/api/base44Client";
 
+import JobIAMonitoramentoAPI from "./JobIAMonitoramentoAPI";
+import IAWebhookRetry from "./IAWebhookRetry";
+import MotorIntentsCognitivo from "../chatbot/MotorIntentsCognitivo";
+import IARiscoGlobal from "./IARiscoGlobal";
+
 /**
- * V21.4 - Agendador de Jobs de IA (Background) - COMPLETO
- * Jobs Ativos: 6 (Financeiro + Fiscal + Estoque)
- *
- * EM PRODUÇÃO: Usar cron real ou scheduler do Base44
+ * V21.3+ V21.6 - Agendador de Jobs IA em Background
+ * Executa IAs automaticamente em horários programados
  */
 export default function AgendadorJobsIA({ empresaId }) {
   useEffect(() => {
@@ -96,5 +99,13 @@ export default function AgendadorJobsIA({ empresaId }) {
     };
   }, [empresaId]);
 
-  return null; // Componente invisível (background)
+  return (
+    <>
+      {/* V21.6: NOVOS JOBS */}
+      <JobIAMonitoramentoAPI empresaId={empresaId} />
+      <IAWebhookRetry empresaId={empresaId} />
+      <MotorIntentsCognitivo empresaId={empresaId} />
+      <IARiscoGlobal empresaId={empresaId} />
+    </>
+  );
 }
