@@ -10,7 +10,7 @@ import { converterParaKG } from "@/components/lib/CalculadoraUnidades";
 /**
  * Consumo de Matéria-Prima (SAÍDA)
  */
-export async function consumirMateriaPrimaOP(opId) {
+async function consumirMateriaPrimaOP(opId) {
   console.log('📦 Consumindo matéria-prima da OP...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
@@ -78,7 +78,7 @@ export async function consumirMateriaPrimaOP(opId) {
 /**
  * Entrada de Produto Acabado (ENTRADA)
  */
-export async function entrarProdutoAcabadoOP(opId) {
+async function entrarProdutoAcabadoOP(opId) {
   console.log('📦 Dando entrada de produto acabado...');
 
   const op = await base44.entities.OrdemProducao.get(opId);
