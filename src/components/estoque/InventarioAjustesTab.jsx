@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ClipboardList, Edit, TrendingUp, TrendingDown, CircleCheck } from "lucide-react";
+import { ClipboardList, Edit, TrendingUp, TrendingDown, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
 /**
@@ -118,7 +117,7 @@ export default function InventarioAjustesTab({ empresaId }) {
 
         <Card className="border-2 border-green-300 bg-green-50">
           <CardContent className="p-4">
-            <CircleCheck className="w-5 h-5 text-green-600 mb-2" />
+            <CheckCircle className="w-5 h-5 text-green-600 mb-2" />
             <p className="text-xs text-green-700 mb-1">Acurácia</p>
             <p className="text-3xl font-bold text-green-600">
               {produtos.length > 0 ? (((produtos.length - produtosComDivergencia.length) / produtos.length * 100).toFixed(0)) : 0}%

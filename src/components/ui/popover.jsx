@@ -1,60 +1,27 @@
 import * as React from "react"
+import * as PopoverPrimitive from "@radix-ui/react-popover"
+
 import { cn } from "@/lib/utils"
 
-const Popover = ({ open, onOpenChange, children }) => {
-  return (
-    <div className="relative inline-block">
-      {React.Children.map(children, child => {
-        if (React.isValidElement(child)) {
-          return React.cloneElement(child, { open, onOpenChange })
-        }
-        return child
-      })}
-    </div>
-  )
-}
+const Popover = PopoverPrimitive.Root
 
-const PopoverTrigger = React.forwardRef(({ className, children, asChild, open, onOpenChange, ...props }, ref) => {
-  const Comp = asChild ? React.Fragment : "button"
-  
-  if (asChild) {
-    return React.cloneElement(children, {
-      onClick: () => onOpenChange?.(!open)
-    })
-  }
-  
-  return (
-    <button
+const PopoverTrigger = PopoverPrimitive.Trigger
+
+const PopoverAnchor = PopoverPrimitive.Anchor
+
+const PopoverContent = React.forwardRef(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Content
       ref={ref}
-      onClick={() => onOpenChange?.(!open)}
-      className={className}
-      {...props}
-    >
-      {children}
-    </button>
-  )
-})
-PopoverTrigger.displayName = "PopoverTrigger"
-
-const PopoverContent = React.forwardRef(({ className, align = "center", children, open, onOpenChange, ...props }, ref) => {
-  if (!open) return null
-
-  return (
-    <div
-      ref={ref}
+      align={align}
+      sideOffset={sideOffset}
       className={cn(
-        "absolute z-50 mt-2 w-72 rounded-md border bg-white p-4 shadow-md",
-        align === "end" && "right-0",
-        align === "start" && "left-0",
-        align === "center" && "left-1/2 -translate-x-1/2",
+        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         className
       )}
-      {...props}
-    >
-      {children}
-    </div>
-  )
-})
-PopoverContent.displayName = "PopoverContent"
+      {...props} />
+  </PopoverPrimitive.Portal>
+))
+PopoverContent.displayName = PopoverPrimitive.Content.displayName
 
-export { Popover, PopoverContent, PopoverTrigger }
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor }

@@ -13,7 +13,7 @@ import {
   Zap,
   AlertTriangle,
   Package,
-  CircleCheck, // Changed from CheckCircle to CircleCheck
+  CheckCircle,
   Eye,
   Brain,
   TrendingUp

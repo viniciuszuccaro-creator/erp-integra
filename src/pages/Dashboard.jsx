@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { useUser } from '@/components/lib/UserContext';
+import { useContextoVisual } from '@/components/lib/useContextoVisual'; // Updated import path
 import {
   DollarSign,
   TrendingUp,
@@ -19,12 +19,12 @@ import {
   Box,
   Calendar,
   BarChart3,
-  PieChart,
+  PieChart, // This is the Lucide icon
   Clock,
   CheckCircle,
   Percent,
-  Trophy,
-  Activity
+  Trophy, // Added Trophy icon
+  Activity // Added Activity icon for Tempo Real tab
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ import {
   Line,
   BarChart,
   Bar,
-  PieChart as RechartsPie,
+  PieChart as RechartsPie, // Recharts PieChart component, aliased to avoid conflict with Lucide icon
   Pie,
   Cell,
   XAxis,
@@ -47,6 +47,7 @@ import {
   Area,
   AreaChart
 } from "recharts";
+import PainelOperacoes3D from "../components/dashboard/PainelOperacoes3D";
 import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -54,7 +55,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { empresaAtual } = useUser();
+  const { empresaAtual } = useContextoVisual();
 
   const [periodo, setPeriodo] = useState(() => {
     try {
@@ -641,11 +642,11 @@ export default function Dashboard() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="tempo-real" className="space-y-6">
+        <TabsContent value="tempo-real">
           <DashboardTempoReal empresaId={empresaAtual?.id} />
         </TabsContent>
 
-        <TabsContent value="resumo" className="space-y-6">
+        <TabsContent value="resumo">
           {/* KPIs Principais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statsCards.map((stat, index) => (

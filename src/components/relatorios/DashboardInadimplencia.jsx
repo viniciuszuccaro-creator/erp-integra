@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
 import { AlertTriangle, TrendingDown, Download, Clock, DollarSign, Shield } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
-import ExportMenu from "@/components/ui/ExportMenu"; 
+import ExportMenu from "@/components/ui/ExportMenu"; // Added import
 
 export default function DashboardInadimplencia({ empresaId }) {
   const [filtroRisco, setFiltroRisco] = useState("todos");
@@ -159,7 +159,7 @@ export default function DashboardInadimplencia({ empresaId }) {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Dashboard de Inadimplência</h2>
-          <p className="text-sm text-slate-600">Score de risco e análise de inadimplência</p>
+          <p className="text-sm text-slate-600">Score de risco e análise de inadimplência</p> {/* Updated text */}
         </div>
         <div className="flex gap-3">
           <select

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { TrendingUp, TrendingDown, Download, Calendar, DollarSign, Package, BarChart3, PieChart } from "lucide-react";
+import { TrendingUp, TrendingDown, Download, Calendar } from "lucide-react";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 
 import ExportMenu from "@/components/ui/ExportMenu";

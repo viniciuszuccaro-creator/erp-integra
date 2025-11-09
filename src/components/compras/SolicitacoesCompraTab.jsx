@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
-import { executarJobCrossCD, criarTransferenciaAutomatica } from "@/components/compras/JobIACrossCD"; // Added new import
 
 export default function SolicitacoesCompraTab({ solicitacoes }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -133,77 +132,6 @@ export default function SolicitacoesCompraTab({ solicitacoes }) {
       toast({ title: "✅ OC gerada!" });
     },
   });
-
-  // V21.5: NOVO - Botão IA Cross-CD
-  const verificarCrossCDMutation = useMutation({
-    mutationFn: async (solicitacao) => {
-      console.log('🔍 Verificando Cross-CD antes de comprar...');
-
-      const empresa = await base44.entities.Empresa.get(solicitacao.empresa_id);
-      
-      if (!empresa?.grupo_id) {
-        throw new Error('Empresa não pertence a um grupo');
-      }
-
-      const sugestoes = await executarJobCrossCD(empresa.grupo_id);
-
-      // Filtrar sugestões para este produto
-      const sugestoesRelevantes = sugestoes.filter(s => 
-        s.produto_id === solicitacao.produto_id || s.produto_descricao === solicitacao.produto_descricao
-      );
-
-      return { sugestoes: sugestoesRelevantes, solicitacao };
-    },
-    onSuccess: ({ sugestoes, solicitacao }) => {
-      if (sugestoes.length > 0) {
-        const sug = sugestoes[0]; // Assuming the first suggestion is the best/most relevant
-        const confirmar = confirm(
-          `🧠 IA CROSS-CD ENCONTROU:\n\n` +
-          `Empresa ${sug.empresa_destino_nome} tem ${sug.quantidade_sugerida?.toFixed(2) || 'N/A'} ${sug.unidade_medida || ''} de ${sug.produto_descricao} disponível!\n\n` +
-          `Economia estimada: R$ ${sug.economia_compra?.toFixed(2) || 'N/A'}\n\n` +
-          `Deseja criar uma transferência em vez de comprar?`
-        );
-
-        if (confirmar) {
-          // Criar transferência
-          criarTransferenciaAutomatica(sug);
-          
-          // Atualizar solicitação
-          base44.entities.SolicitacaoCompra.update(solicitacao.id, {
-            status: 'Finalizada',
-            observacoes: `Resolvido via Cross-CD de ${sug.empresa_destino_nome}`
-          });
-
-          queryClient.invalidateQueries({ queryKey: ['solicitacoes-compra'] });
-          toast({ 
-            title: '✅ Transferência Cross-CD criada!',
-            description: `Transferência de ${sug.quantidade_sugerida?.toFixed(2)} ${sug.unidade_medida} de ${sug.produto_descricao} da empresa ${sug.empresa_destino_nome} iniciada.`
-          });
-        } else {
-          toast({
-            title: 'ℹ️ Transferência Cross-CD não criada.',
-            description: 'Você optou por não criar a transferência. Prossiga com a compra.',
-            variant: 'info'
-          });
-        }
-      } else {
-        toast({
-          title: 'ℹ️ Nenhuma sugestão Cross-CD encontrada',
-          description: 'Nenhuma filial tem estoque disponível para este produto. Prossiga com a compra.',
-          variant: 'info'
-        });
-      }
-    },
-    onError: (error) => {
-      toast({
-        title: "⚠️ Erro ao verificar Cross-CD",
-        description: error.message || "Não foi possível verificar oportunidades Cross-CD.",
-        variant: "destructive"
-      });
-      console.error("Erro ao verificar Cross-CD:", error);
-    }
-  });
-
 
   // BOTÃO IA - SUGERIR COMPRAS AUTOMÁTICAS
   const sugerirComprasIA = useMutation({
@@ -541,20 +469,6 @@ Retorne JSON com:
                     <div className="flex gap-1">
                       {sol.status === 'Pendente' && (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => verificarCrossCDMutation.mutate(sol)}
-                            disabled={verificarCrossCDMutation.isPending}
-                            title="Verificar Cross-CD"
-                            className="text-purple-600"
-                          >
-                            {verificarCrossCDMutation.isPending ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600" />
-                            ) : (
-                                '🧠 Cross-CD'
-                            )}
-                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"

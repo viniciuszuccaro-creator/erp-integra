@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,7 +14,7 @@ import {
   AlertTriangle,
   TrendingUp,
   Clock,
-  CircleCheck, // Changed from CheckCircle to CircleCheck
+  CheckCircle,
   Box
 } from "lucide-react";
 import Canvas3D from "./Canvas3D";
@@ -224,7 +223,7 @@ export default function ProducaoCardDetalhe({ isOpen, onClose, op, onAtualizarSt
 
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="p-2 bg-green-100 rounded">
-                  <CircleCheck className="w-3 h-3 text-green-600 inline mr-1" /> {/* Updated to CircleCheck */}
+                  <CheckCircle className="w-3 h-3 text-green-600 inline mr-1" />
                   <span className="text-green-800">Concluído: {op.itens_concluidos || 0}</span>
                 </div>
                 <div className="p-2 bg-orange-100 rounded">

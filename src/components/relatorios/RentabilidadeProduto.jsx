@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart } from "recharts";
-import { Package, TrendingUp, Download, AlertCircle, DollarSign } from "lucide-react";
+import { Package, TrendingUp, Download, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import ExportMenu from "@/components/ui/ExportMenu";
 

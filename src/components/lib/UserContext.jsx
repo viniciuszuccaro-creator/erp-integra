@@ -5,7 +5,6 @@ const UserContext = createContext(null);
 
 export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [empresaAtual, setEmpresaAtual] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -17,13 +16,6 @@ export function UserProvider({ children }) {
         const currentUser = await base44.auth.me();
         if (mounted) {
           setUser(currentUser);
-          
-          // Buscar empresa atual do usuário
-          if (currentUser?.empresa_atual_id) {
-            const empresa = await base44.entities.Empresa.get(currentUser.empresa_atual_id);
-            setEmpresaAtual(empresa);
-          }
-          
           setError(null);
         }
       } catch (err) {
@@ -50,12 +42,6 @@ export function UserProvider({ children }) {
     try {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
-      
-      if (currentUser?.empresa_atual_id) {
-        const empresa = await base44.entities.Empresa.get(currentUser.empresa_atual_id);
-        setEmpresaAtual(empresa);
-      }
-      
       setError(null);
     } catch (err) {
       console.error("Erro ao atualizar usuário:", err);
@@ -64,7 +50,7 @@ export function UserProvider({ children }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, empresaAtual, isLoading, error, refreshUser, setEmpresaAtual }}>
+    <UserContext.Provider value={{ user, isLoading, error, refreshUser }}>
       {children}
     </UserContext.Provider>
   );

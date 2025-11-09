@@ -37,7 +37,6 @@ import FunilVisual from "../components/crm/FunilVisual";
 import AgendarFollowUp from "../components/crm/AgendarFollowUp";
 import ConverterOportunidade from "../components/crm/ConverterOportunidade";
 import IALeadsPriorizacao from "../components/crm/IALeadsPriorizacao"; // Added new component import
-import DashboardROICampanhas from "../components/crm/DashboardROICampanhas"; // NEW import
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -574,7 +573,7 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
+        <TabsList className="bg-white border shadow-sm flex-wrap h-auto"> {/* Added flex-wrap h-auto */}
           <TabsTrigger value="funil" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
             Funil Visual
@@ -598,11 +597,6 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
           >
             <Brain className="w-4 h-4 mr-2" />
             IA Leads
-          </TabsTrigger>
-          {/* NOVA: Tab ROI */}
-          <TabsTrigger value="roi" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            ROI Campanhas
           </TabsTrigger>
         </TabsList>
 
@@ -1432,11 +1426,6 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
         {/* NOVA: Conteúdo Tab IA Leads */}
         <TabsContent value="ia-leads">
           <IALeadsPriorizacao oportunidades={oportunidades} />
-        </TabsContent>
-
-        {/* NOVA: Tab ROI */}
-        <TabsContent value="roi">
-          <DashboardROICampanhas />
         </TabsContent>
       </Tabs>
 

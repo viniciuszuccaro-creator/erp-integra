@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Users, TrendingUp, Download, Star, Award, Calendar, DollarSign } from "lucide-react";
+import { Users, TrendingUp, Download, Star, Award, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import ExportMenu from "@/components/ui/ExportMenu"; // Added import
 
