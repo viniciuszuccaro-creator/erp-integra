@@ -10,14 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, CheckCircle, AlertCircle, Download, Eye, Package } from "lucide-react";
+import { FileText, CheckCircle, AlertCircle, Download, Eye, Package, DollarSign } from "lucide-react"; // Added DollarSign
 import { mockEmitirNFe, avisoModoSimulacao } from "@/components/integracoes/MockIntegracoes";
 import IAValidacaoFiscal from "../fiscal/IAValidacaoFiscal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /**
- * Modal de Geração de NF-e
- * V11.0 - Com suporte a faturamento parcial por etapas
+ * V21.1 - Modal de Geração de NF-e
+ * COM: Barra de Progresso no Topo + Faturamento por Etapa
  */
 export default function GerarNFeModal({ isOpen, onClose, pedido }) {
   const [emitindo, setEmitindo] = useState(false);
@@ -34,8 +34,42 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
 
   const cliente = clientes.find(c => c.id === pedido?.cliente_id);
 
-  // Etapas disponíveis para faturamento
-  const etapasPendentes = (pedido?.etapas_entrega || []).filter(e => !e.faturada);
+  // V21.1: Buscar etapas de faturamento do banco
+  const { data: etapasDB = [] } = useQuery({
+    queryKey: ['pedido-etapas', pedido?.id],
+    queryFn: () => base44.entities.PedidoEtapa.filter({ 
+      pedido_id: pedido?.id,
+      faturada: false 
+    }),
+    enabled: !!pedido?.id && isOpen
+  });
+
+  // Fallback para etapas do pedido (combina as do banco com as já existentes no pedido para totalizar)
+  const etapasPendentes = etapasDB.length > 0 
+    ? etapasDB 
+    : (pedido?.etapas_entrega || []).filter(e => !e.faturada);
+
+  // V21.1: NOVO - Calcular progresso de faturamento
+  const calcularProgressoFaturamento = () => {
+    // Considera todas as etapas, faturadas ou não, do array etapas_entrega do pedido
+    const todasEtapasDoPedido = pedido?.etapas_entrega || [];
+    const totalEtapas = todasEtapasDoPedido.length;
+    
+    // Contar etapas faturadas baseadas no status 'faturada' dentro do pedido
+    const etapasFaturadas = todasEtapasDoPedido.filter(e => e.faturada).length;
+    
+    const valorFaturado = todasEtapasDoPedido
+      .filter(e => e.faturada)
+      .reduce((sum, e) => sum + (e.valor_total_etapa || 0), 0);
+    
+    const percentual = pedido?.valor_total > 0 
+      ? (valorFaturado / pedido.valor_total) * 100 
+      : 0;
+
+    return { totalEtapas, etapasFaturadas, valorFaturado, percentual };
+  };
+
+  const progressoFat = calcularProgressoFaturamento();
 
   const gerarNFeMutation = useMutation({
     mutationFn: async () => {
@@ -44,6 +78,7 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
       // Determinar itens a faturar
       let itensFaturar = [];
       let valorFaturar = 0;
+      let etapaObj = null; // Para armazenar o objeto da etapa selecionada do DB
       
       if (etapaSelecionada === 'completo') {
         // Faturar pedido completo
@@ -55,34 +90,41 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
         valorFaturar = pedido.valor_total;
       } else {
         // Faturar apenas uma etapa
-        const etapa = (pedido.etapas_entrega || []).find(e => e.id === etapaSelecionada);
-        if (etapa) {
-          // Filtrar itens da etapa
-          const todosItens = [
-            ...(pedido.itens_revenda || []).map((item, idx) => ({ ...item, tipo: 'revenda', idx })),
-            ...(pedido.itens_armado_padrao || []).map((item, idx) => ({ ...item, tipo: 'armado_padrao', idx })),
-            ...(pedido.itens_corte_dobra || []).map((item, idx) => ({ ...item, tipo: 'corte_dobra', idx }))
-          ];
-
-          itensFaturar = todosItens.filter(item => {
-            const itemId = `${item.tipo}_${item.idx}`;
-            return etapa.itens_ids.includes(itemId);
-          });
-
-          valorFaturar = itensFaturar.reduce((sum, item) => 
-            sum + (item.valor_item || item.preco_venda_total || 0), 0
-          );
+        etapaObj = etapasDB.find(e => e.id === etapaSelecionada);
+        if (etapaObj) {
+          // Usar itens_detalhes da etapa do banco
+          itensFaturar = etapaObj.itens_detalhes || [];
+          valorFaturar = etapaObj.valor_total_etapa;
+        } else {
+          // Fallback para etapas_entrega do pedido, se não encontrar no DB (caso de dados legados ou não sincronizados)
+          const legacyEtapa = (pedido.etapas_entrega || []).find(e => e.id === etapaSelecionada);
+          if (legacyEtapa) {
+            // Reconstroi os itens para faturamento a partir dos IDs no formato antigo
+            const todosItens = [
+              ...(pedido.itens_revenda || []).map((item, idx) => ({ ...item, tipo: 'revenda', idx })),
+              ...(pedido.itens_armado_padrao || []).map((item, idx) => ({ ...item, tipo: 'armado_padrao', idx })),
+              ...(pedido.itens_corte_dobra || []).map((item, idx) => ({ ...item, tipo: 'corte_dobra', idx }))
+            ];
+  
+            itensFaturar = todosItens.filter(item => {
+              const itemId = `${item.tipo}_${item.idx}`;
+              return legacyEtapa.itens_ids.includes(itemId);
+            });
+  
+            valorFaturar = itensFaturar.reduce((sum, item) => 
+              sum + (item.valor_item || item.preco_venda_total || 0), 0
+            );
+            etapaObj = legacyEtapa; // Usar o objeto da etapa do pedido para referência
+          }
         }
       }
 
-      // MOCK: Emitir NF-e simulada
       const resultado = await mockEmitirNFe({
         empresa_id: pedido.empresa_id,
         pedido: { ...pedido, itens: itensFaturar, valor_total: valorFaturar },
         ambiente: "Homologação"
       });
 
-      // Criar registro de NF-e no banco
       const nfe = await base44.entities.NotaFiscal.create({
         empresa_id: pedido.empresa_id || "",
         pedido_id: pedido.id,
@@ -116,16 +158,16 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
         itens: itensFaturar.map((item, idx) => ({
           numero_item: idx + 1,
           produto_id: item.produto_id,
-          codigo_produto: item.codigo_sku || item.codigo,
-          descricao: item.descricao || item.descricao_automatica || `${item.tipo_peca} - ${item.quantidade} un`,
+          codigo_produto: item.codigo_sku || item.codigo || item.codigo_produto, // Adicionado item.codigo_produto
+          descricao: item.descricao || item.descricao_automatica || `${item.tipo_peca || ''} - ${item.quantidade || ''} un`.trim(), // Melhorado fallback
           ncm: item.ncm || "73089090",
           cfop: item.cfop || "5102",
           unidade: item.unidade || "UN",
           quantidade: item.quantidade,
-          valor_unitario: item.preco_unitario || item.preco_venda_unitario,
-          valor_total: item.valor_item || item.preco_venda_total,
-          icms_base_calculo: item.valor_item || item.preco_venda_total,
-          icms_valor: (item.valor_item || item.preco_venda_total) * (item.icms || 0) / 100
+          valor_unitario: item.preco_unitario || item.preco_venda_unitario || item.valor_unitario, // Adicionado item.valor_unitario
+          valor_total: item.valor_item || item.preco_venda_total || item.valor, // Adicionado item.valor
+          icms_base_calculo: item.valor_item || item.preco_venda_total || item.valor, // Adicionado item.valor
+          icms_valor: ((item.valor_item || item.preco_venda_total || item.valor || 0) * (item.icms || 0) / 100) // Cálculo mais robusto para ICMS
         })),
         faturamento_parcial: etapaSelecionada !== 'completo',
         etapa_id: etapaSelecionada !== 'completo' ? etapaSelecionada : null,
@@ -138,16 +180,34 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
       });
 
       // Atualizar etapa como faturada
-      if (etapaSelecionada !== 'completo') {
+      if (etapaSelecionada !== 'completo' && etapaObj) {
+        // Atualiza a entidade PedidoEtapa no banco
+        await base44.entities.PedidoEtapa.update(etapaObj.id, {
+          faturada: true,
+          nfe_id: nfe.id,
+          numero_nfe: resultado.numero_nfe,
+          chave_nfe: resultado.chave_acesso,
+          data_faturamento: new Date().toISOString().split('T')[0],
+          status: 'Faturada'
+        });
+
+        // Atualiza também no array de etapas_entrega do pedido principal, se aplicável
         const etapasAtualizadas = (pedido.etapas_entrega || []).map(e => 
-          e.id === etapaSelecionada ? { ...e, faturada: true, nfe_id: nfe.id } : e
+          e.id === etapaSelecionada ? { 
+            ...e, 
+            faturada: true, 
+            nfe_id: nfe.id, 
+            numero_nfe: resultado.numero_nfe,
+            chave_nfe: resultado.chave_acesso,
+            data_faturamento: new Date().toISOString().split('T')[0],
+            status: 'Faturada'
+          } : e
         );
         
         await base44.entities.Pedido.update(pedido.id, {
           etapas_entrega: etapasAtualizadas
         });
       } else {
-        // Atualizar pedido
         await base44.entities.Pedido.update(pedido.id, {
           status: "Faturado",
           nfe_numero: resultado.numero_nfe,
@@ -155,7 +215,6 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
         });
       }
 
-      // Registrar no histórico do cliente
       await base44.entities.HistoricoCliente.create({
         empresa_id: pedido.empresa_id,
         cliente_id: pedido.cliente_id,
@@ -166,14 +225,13 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
         referencia_numero: resultado.numero_nfe,
         tipo_evento: "Finalizacao",
         titulo_evento: `NF-e Emitida${etapaSelecionada !== 'completo' ? ' (Parcial)' : ''}`,
-        descricao_detalhada: `NF-e ${resultado.numero_nfe} autorizada. ${etapaSelecionada !== 'completo' ? 'Faturamento parcial de etapa.' : ''} Chave: ${resultado.chave_acesso}`,
+        descricao_detalhada: `NF-e ${resultado.numero_nfe} autorizada. ${etapaSelecionada !== 'completo' ? `Faturamento parcial - Etapa: ${etapaObj?.nome_etapa || etapaObj?.nome || 'N/A'}` : ''} Chave: ${resultado.chave_acesso}`,
         usuario_responsavel: "Sistema",
         data_evento: new Date().toISOString(),
         anexo_url: resultado.pdf_url,
         anexo_tipo: "PDF"
       });
 
-      // Criar log fiscal
       await base44.entities.LogFiscal.create({
         empresa_id: pedido.empresa_id,
         nfe_id: nfe.id,
@@ -194,10 +252,11 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
       setNfeGerada({ ...nfe, ...resultado });
       return nfe;
     },
-    onSuccess: (data) => { // Use 'data' directly from the mutation result
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['notasfiscais'] });
       queryClient.invalidateQueries({ queryKey: ['historico-cliente'] });
+      queryClient.invalidateQueries({ queryKey: ['pedido-etapas', pedido?.id] }); // Invalida as etapas pendentes
       
       toast({
         title: "✅ NF-e Autorizada (Simulação)",
@@ -220,6 +279,14 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
 
   const aviso = avisoModoSimulacao();
 
+  const valorFaturarAtual = etapaSelecionada === 'completo' 
+    ? pedido?.valor_total 
+    : (etapasDB.find(e => e.id === etapaSelecionada)?.valor_total_etapa || 0);
+
+  const quantidadeItensFaturarAtual = etapaSelecionada === 'completo'
+    ? (pedido?.itens_revenda?.length || 0) + (pedido?.itens_armado_padrao?.length || 0) + (pedido?.itens_corte_dobra?.length || 0)
+    : (etapasDB.find(e => e.id === etapaSelecionada)?.quantidade_itens || 0);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -231,7 +298,33 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* NOVO: IA de Validação Fiscal */}
+          {/* V21.1: NOVO - Barra de Progresso de Faturamento no Topo */}
+          {(progressoFat.totalEtapas > 0) && (
+            <Card className="border-2 border-blue-300 bg-blue-50">
+              <CardContent className="p-4">
+                <h4 className="text-sm font-bold text-blue-900 mb-3 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Progresso de Faturamento do Pedido
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs text-blue-700">
+                    <span>Faturado: R$ {progressoFat.valorFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} de R$ {(pedido?.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span>{progressoFat.percentual.toFixed(1)}%</span>
+                  </div>
+                  <div className="bg-white rounded-full h-3 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 h-full transition-all"
+                      style={{ width: `${progressoFat.percentual}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-blue-600">
+                    {progressoFat.etapasFaturadas} de {progressoFat.totalEtapas} etapas faturadas
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <IAValidacaoFiscal pedido={pedido} cliente={cliente} />
 
           {/* Aviso de Simulação */}
@@ -245,11 +338,11 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
 
           {!nfeGerada ? (
             <>
-              {/* NOVO: Seleção de Etapa */}
+              {/* V21.1: Seleção de Etapa */}
               {etapasPendentes.length > 0 && (
                 <Card className="border-2 border-purple-300 bg-purple-50">
                   <CardHeader>
-                    <CardTitle className="text-base">Faturamento Parcial por Etapa</CardTitle>
+                    <CardTitle className="text-base">Faturamento Parcial por Etapa (V21.1)</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div>
@@ -260,10 +353,12 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
                         onChange={(e) => setEtapaSelecionada(e.target.value)}
                         className="w-full p-2 border rounded-lg mt-2 text-sm bg-white"
                       >
-                        <option value="completo">🔷 Pedido Completo (R$ {pedido?.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</option>
+                        <option value="completo">
+                          🔷 Pedido Completo - R$ {pedido?.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </option>
                         {etapasPendentes.map((etapa) => (
                           <option key={etapa.id} value={etapa.id}>
-                            📦 {etapa.nome} ({etapa.quantidade_itens} itens)
+                            📦 {etapa.nome_etapa || etapa.nome} ({etapa.quantidade_itens} itens) - R$ {(etapa.valor_total_etapa || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </option>
                         ))}
                       </select>
@@ -273,7 +368,8 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
                       <Alert className="border-blue-300 bg-blue-50">
                         <Package className="w-4 h-4 text-blue-600" />
                         <AlertDescription className="text-sm text-blue-700">
-                          Você está faturando apenas uma etapa do pedido. As demais poderão ser faturadas posteriormente.
+                          <strong>Faturamento Parcial Ativo:</strong> Você está faturando apenas uma etapa.
+                          As demais etapas poderão ser faturadas posteriormente.
                         </AlertDescription>
                       </Alert>
                     )}
@@ -281,22 +377,21 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
                 </Card>
               )}
 
-              {/* Dados do Pedido */}
               <div className="p-4 bg-slate-50 rounded space-y-2">
                 <div className="flex justify-between">
                   <span className="text-sm text-slate-600">Cliente:</span>
                   <span className="font-semibold">{pedido?.cliente_nome}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-slate-600">Valor Total:</span>
-                  <span className="font-semibold text-lg">
-                    R$ {pedido?.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  <span className="text-sm text-slate-600">Valor a Faturar:</span>
+                  <span className="font-semibold text-lg text-purple-600">
+                    R$ {valorFaturarAtual?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-slate-600">Itens:</span>
                   <span className="font-semibold">
-                    {(pedido?.itens_revenda?.length || 0) + (pedido?.itens_armado_padrao?.length || 0) + (pedido?.itens_corte_dobra?.length || 0)}
+                    {quantidadeItensFaturarAtual}
                   </span>
                 </div>
               </div>
@@ -338,7 +433,6 @@ export default function GerarNFeModal({ isOpen, onClose, pedido }) {
             </>
           ) : (
             <>
-              {/* NF-e Autorizada */}
               <div className="bg-green-50 border border-green-200 rounded p-6 space-y-4">
                 <div className="flex items-center gap-2 text-green-900 font-semibold text-lg mb-4">
                   <CheckCircle className="w-6 h-6" />

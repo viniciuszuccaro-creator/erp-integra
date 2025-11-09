@@ -1,381 +1,249 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Save, Calculator } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card"; // New import
+import { Alert, AlertDescription } from "@/components/ui/alert"; // New import
+import { Factory, Scissors, Building2 } from "lucide-react"; // New imports
 
-export default function EditarItemProducaoModal({ open, onClose, item, onSave }) {
-  const [formData, setFormData] = useState(item || {});
+/**
+ * V21.1 - Modal para Editar/Criar Item de Produção
+ * COM CAMPO NOVO: "Vincular à Etapa da Obra"
+ */
+export default function EditarItemProducaoModal({
+  isOpen,
+  onClose,
+  onSalvar,
+  item,
+  tipo = 'armado',
+  empresaId
+}) {
+  const [formData, setFormData] = useState(item || {
+    tipo_peca: tipo === 'armado' ? 'Coluna' : 'Viga',
+    quantidade: 1,
+    bitola_principal: '',
+    comprimento: 0,
+    largura: 0,
+    altura: 0,
+    estribo_bitola: '',
+    estribo_distancia: 0,
+    peso_total_kg: 0,
+    preco_venda_unitario: 0,
+    preco_venda_total: 0,
+    etapa_obra: '' // V21.1: NOVO CAMPO
+  });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (item) {
       setFormData(item);
     }
   }, [item]);
 
-  const calcularPesos = () => {
-    const qtd = parseFloat(formData.quantidade) || 0;
-    const pesoUnit = parseFloat(formData.peso_unitario_kg) || 0;
-    const pesoTotal = qtd * pesoUnit;
-
-    setFormData(prev => ({
-      ...prev,
-      peso_total_kg: pesoTotal
-    }));
-  };
-
-  const calcularCustos = () => {
-    const custoMaterial = parseFloat(formData.custo_material) || 0;
-    const custoMaoObra = parseFloat(formData.custo_mao_obra) || 0;
-    const custoTotal = custoMaterial + custoMaoObra;
-
-    setFormData(prev => ({
-      ...prev,
-      custo_total: custoTotal
-    }));
-  };
-
-  const calcularPrecoVenda = () => {
-    const qtd = parseFloat(formData.quantidade) || 0;
-    const precoUnit = parseFloat(formData.preco_venda_unitario) || 0;
-    const precoTotal = qtd * precoUnit;
-
-    setFormData(prev => ({
-      ...prev,
-      preco_venda_total: precoTotal
-    }));
-  };
-
-  const handleSave = () => {
-    calcularPesos();
-    calcularCustos();
-    calcularPrecoVenda();
-    
-    onSave({
-      ...formData,
-      peso_total_kg: (parseFloat(formData.quantidade) || 0) * (parseFloat(formData.peso_unitario_kg) || 0),
-      custo_total: (parseFloat(formData.custo_material) || 0) + (parseFloat(formData.custo_mao_obra) || 0),
-      preco_venda_total: (parseFloat(formData.quantidade) || 0) * (parseFloat(formData.preco_venda_unitario) || 0)
-    });
-    onClose();
-  };
-
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Item de Produção</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            {tipo === 'armado' ? (
+              <>
+                <Factory className="w-5 h-5 text-purple-600" />
+                {item ? 'Editar' : 'Adicionar'} Peça Armada
+              </>
+            ) : (
+              <>
+                <Scissors className="w-5 h-5 text-orange-600" />
+                {item ? 'Editar' : 'Adicionar'} Peça C/D
+              </>
+            )}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Identificação */}
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Identificador *</Label>
+          {/* V21.1: NOVO - Vincular à Etapa da Obra */}
+          <Card className="border-2 border-green-300 bg-green-50">
+            <CardContent className="p-4">
+              <Label htmlFor="etapa-obra" className="flex items-center gap-2 mb-2">
+                <Building2 className="w-4 h-4 text-green-700" />
+                Vincular à Etapa da Obra (V21.1)
+              </Label>
               <Input
-                value={formData.identificador || ''}
-                onChange={(e) => setFormData({ ...formData, identificador: e.target.value })}
-                placeholder="COLUNA-01"
+                id="etapa-obra"
+                value={formData.etapa_obra || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, etapa_obra: e.target.value }))}
+                placeholder="Ex: Fundação, Estrutura, Cobertura, Piso 1"
+                className="bg-white"
               />
-            </div>
+              <p className="text-xs text-green-700 mt-1">
+                💡 Agrupe peças da mesma etapa para faturamento parcial
+              </p>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label>Tipo de Peça</Label>
+              <Label htmlFor="tipo-peca">Tipo de Peça</Label>
               <Select
-                value={formData.tipo_peca || 'Coluna'}
-                onValueChange={(value) => setFormData({ ...formData, tipo_peca: value })}
+                value={formData.tipo_peca}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, tipo_peca: v }))}
               >
-                <SelectTrigger>
+                <SelectTrigger id="tipo-peca">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Coluna">Coluna</SelectItem>
                   <SelectItem value="Viga">Viga</SelectItem>
-                  <SelectItem value="Sapata">Sapata</SelectItem>
                   <SelectItem value="Bloco">Bloco</SelectItem>
+                  <SelectItem value="Sapata">Sapata</SelectItem>
                   <SelectItem value="Laje">Laje</SelectItem>
                   <SelectItem value="Estaca">Estaca</SelectItem>
-                  <SelectItem value="Corte e Dobra">Corte e Dobra</SelectItem>
+                  <SelectItem value="Estribo">Estribo</SelectItem>
+                  <SelectItem value="Outro">Outro</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
             <div>
-              <Label>Modelo Base</Label>
+              <Label htmlFor="quantidade-peca">Quantidade de Peças</Label>
               <Input
-                value={formData.modelo_base || ''}
-                onChange={(e) => setFormData({ ...formData, modelo_base: e.target.value })}
-                placeholder="Modelo ou referência"
+                id="quantidade-peca"
+                type="number"
+                min="1"
+                value={formData.quantidade}
+                onChange={(e) => {
+                  const newQuantity = parseInt(e.target.value) || 1;
+                  setFormData(prev => ({
+                    ...prev,
+                    quantidade: newQuantity,
+                    preco_venda_total: (prev.preco_venda_unitario || 0) * newQuantity
+                  }));
+                }}
               />
             </div>
           </div>
 
-          {/* Dimensões */}
-          <div>
-            <Label className="text-base font-semibold mb-3 block">Dimensões (cm)</Label>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Comprimento</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={formData.comprimento || 0}
-                  onChange={(e) => setFormData({ ...formData, comprimento: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div>
-                <Label>Largura</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={formData.largura || 0}
-                  onChange={(e) => setFormData({ ...formData, largura: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div>
-                <Label>Altura</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={formData.altura || 0}
-                  onChange={(e) => setFormData({ ...formData, altura: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="comprimento">Comprimento (cm)</Label>
+              <Input
+                id="comprimento"
+                type="number"
+                step="0.1"
+                value={formData.comprimento}
+                onChange={(e) => setFormData(prev => ({ ...prev, comprimento: parseFloat(e.target.value) || 0 }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="largura">Largura (cm)</Label>
+              <Input
+                id="largura"
+                type="number"
+                step="0.1"
+                value={formData.largura}
+                onChange={(e) => setFormData(prev => ({ ...prev, largura: parseFloat(e.target.value) || 0 }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="altura">Altura (cm)</Label>
+              <Input
+                id="altura"
+                type="number"
+                step="0.1"
+                value={formData.altura}
+                onChange={(e) => setFormData(prev => ({ ...prev, altura: parseFloat(e.target.value) || 0 }))}
+              />
             </div>
           </div>
 
-          {/* Ferros (se armado) */}
-          {formData.ferro_principal_bitola && (
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-base font-semibold mb-3 block">Armação</Label>
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <Label>Ferro Principal - Bitola</Label>
-                  <Select
-                    value={formData.ferro_principal_bitola || '10.0mm'}
-                    onValueChange={(value) => setFormData({ ...formData, ferro_principal_bitola: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="6.3mm">6.3mm</SelectItem>
-                      <SelectItem value="8.0mm">8.0mm</SelectItem>
-                      <SelectItem value="10.0mm">10.0mm</SelectItem>
-                      <SelectItem value="12.5mm">12.5mm</SelectItem>
-                      <SelectItem value="16.0mm">16.0mm</SelectItem>
-                      <SelectItem value="20.0mm">20.0mm</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Quantidade</Label>
-                  <Input
-                    type="number"
-                    value={formData.ferro_principal_quantidade || 4}
-                    onChange={(e) => setFormData({ ...formData, ferro_principal_quantidade: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-                <div>
-                  <Label>Estribo - Bitola</Label>
-                  <Select
-                    value={formData.estribo_bitola || '6.3mm'}
-                    onValueChange={(value) => setFormData({ ...formData, estribo_bitola: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="4.2mm">4.2mm</SelectItem>
-                      <SelectItem value="5.0mm">5.0mm</SelectItem>
-                      <SelectItem value="6.3mm">6.3mm</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Distância (cm)</Label>
-                  <Input
-                    type="number"
-                    value={formData.estribo_distancia || 15}
-                    onChange={(e) => setFormData({ ...formData, estribo_distancia: parseInt(e.target.value) || 0 })}
-                  />
-                </div>
-              </div>
+              <Label htmlFor="bitola-principal">Bitola Principal</Label>
+              <Input
+                id="bitola-principal"
+                value={formData.bitola_principal}
+                onChange={(e) => setFormData(prev => ({ ...prev, bitola_principal: e.target.value }))}
+                placeholder="Ex: 12.5mm, 16mm"
+              />
+            </div>
+            <div>
+              <Label htmlFor="estribo-bitola">Estribo (Bitola)</Label>
+              <Input
+                id="estribo-bitola"
+                value={formData.estribo_bitola}
+                onChange={(e) => setFormData(prev => ({ ...prev, estribo_bitola: e.target.value }))}
+                placeholder="Ex: 6.3mm"
+              />
+            </div>
+          </div>
+
+          {formData.estribo_bitola && (
+            <div>
+              <Label htmlFor="estribo-dist">Espaçamento Estribo (cm)</Label>
+              <Input
+                id="estribo-dist"
+                type="number"
+                step="0.1"
+                value={formData.estribo_distancia}
+                onChange={(e) => setFormData(prev => ({ ...prev, estribo_distancia: parseFloat(e.target.value) || 0 }))}
+                placeholder="10"
+              />
             </div>
           )}
 
-          {/* Quantidade e Peso */}
-          <div>
-            <Label className="text-base font-semibold mb-3 block">Quantidade e Peso</Label>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Quantidade de Peças *</Label>
-                <Input
-                  type="number"
-                  value={formData.quantidade || 1}
-                  onChange={(e) => {
-                    setFormData({ ...formData, quantidade: parseInt(e.target.value) || 0 });
-                    setTimeout(calcularPesos, 100);
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Peso Unitário (kg)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.peso_unitario_kg || 0}
-                  onChange={(e) => {
-                    setFormData({ ...formData, peso_unitario_kg: parseFloat(e.target.value) || 0 });
-                    setTimeout(calcularPesos, 100);
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Peso Total (kg)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.peso_total_kg || 0}
-                  disabled
-                  className="bg-slate-100"
-                />
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="peso-total">Peso Total (KG)</Label>
+              <Input
+                id="peso-total"
+                type="number"
+                step="0.01"
+                value={formData.peso_total_kg}
+                onChange={(e) => setFormData(prev => ({ ...prev, peso_total_kg: parseFloat(e.target.value) || 0 }))}
+              />
             </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={calcularPesos}
-              className="mt-2"
-            >
-              <Calculator className="w-4 h-4 mr-2" />
-              Recalcular Peso
-            </Button>
-          </div>
-
-          {/* Custos */}
-          <div>
-            <Label className="text-base font-semibold mb-3 block">Custos</Label>
-            <div className="grid grid-cols-4 gap-4">
-              <div>
-                <Label>Custo Material (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.custo_material || 0}
-                  onChange={(e) => {
-                    setFormData({ ...formData, custo_material: parseFloat(e.target.value) || 0 });
-                    setTimeout(calcularCustos, 100);
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Custo Mão de Obra (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.custo_mao_obra || 0}
-                  onChange={(e) => {
-                    setFormData({ ...formData, custo_mao_obra: parseFloat(e.target.value) || 0 });
-                    setTimeout(calcularCustos, 100);
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Overhead (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.custo_overhead || 0}
-                  onChange={(e) => setFormData({ ...formData, custo_overhead: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div>
-                <Label>Custo Total (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.custo_total || 0}
-                  disabled
-                  className="bg-slate-100 font-bold"
-                />
-              </div>
-            </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={calcularCustos}
-              className="mt-2"
-            >
-              <Calculator className="w-4 h-4 mr-2" />
-              Recalcular Custos
-            </Button>
-          </div>
-
-          {/* Preço de Venda */}
-          <div>
-            <Label className="text-base font-semibold mb-3 block">Preço de Venda</Label>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Preço Unit (R$) *</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.preco_venda_unitario || 0}
-                  onChange={(e) => {
-                    setFormData({ ...formData, preco_venda_unitario: parseFloat(e.target.value) || 0 });
-                    setTimeout(calcularPrecoVenda, 100);
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Preço Total (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.preco_venda_total || 0}
-                  disabled
-                  className="bg-green-100 font-bold text-green-700"
-                />
-              </div>
-              <div>
-                <Label>Margem (%)</Label>
-                <Input
-                  value={
-                    formData.preco_venda_total > 0
-                      ? ((((formData.preco_venda_total || 0) - (formData.custo_total || 0)) / (formData.preco_venda_total || 1)) * 100).toFixed(1)
-                      : 0
-                  }
-                  disabled
-                  className="bg-slate-100 font-bold"
-                />
-              </div>
+            <div>
+              <Label htmlFor="preco-unit">Preço Unitário (R$/peça)</Label>
+              <Input
+                id="preco-unit"
+                type="number"
+                step="0.01"
+                value={formData.preco_venda_unitario}
+                onChange={(e) => {
+                  const preco = parseFloat(e.target.value) || 0;
+                  setFormData(prev => ({
+                    ...prev,
+                    preco_venda_unitario: preco,
+                    preco_venda_total: preco * (prev.quantidade || 1)
+                  }));
+                }}
+              />
             </div>
           </div>
 
-          {/* Observações */}
-          <div>
-            <Label>Observações Técnicas</Label>
-            <Textarea
-              value={formData.observacoes_tecnicas || ''}
-              onChange={(e) => setFormData({ ...formData, observacoes_tecnicas: e.target.value })}
-              rows={3}
-            />
-          </div>
+          {/* Resumo */}
+          <Alert className="border-purple-300 bg-purple-50">
+            <AlertDescription>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <p><strong>Peso Total:</strong> {formData.peso_total_kg?.toFixed(2)} kg</p>
+                <p><strong>Valor Total:</strong> R$ {(formData.preco_venda_total || 0).toFixed(2)}</p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
 
-          {/* Botões */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700">
-              <Save className="w-4 h-4 mr-2" />
-              Salvar Item
-            </Button>
-          </div>
+        {/* Footer */}
+        <div className="flex justify-end gap-3 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => onSalvar(formData)}
+            className={tipo === 'armado' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-orange-600 hover:bg-orange-700'}
+          >
+            {item ? 'Atualizar' : 'Adicionar'} Peça
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
