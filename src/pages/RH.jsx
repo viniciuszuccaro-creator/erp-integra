@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -16,7 +17,7 @@ export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
   const { empresaAtual } = useUser();
 
-  const { data: colaboradores = [] } = useQuery({
+  const { data: colaboradores = [], isLoading } = useQuery({
     queryKey: ['colaboradores', empresaAtual?.id],
     queryFn: () => base44.entities.Colaborador.filter({
       empresa_alocada_id: empresaAtual?.id
@@ -29,12 +30,20 @@ export default function RH() {
     queryFn: () => base44.entities.Ferias.list('-data_solicitacao'),
   });
 
-  const totalFolha = colaboradores
+  const totalFolha = (colaboradores || [])
     .filter(c => c.status === 'Ativo')
     .reduce((sum, c) => sum + (c.salario || 0), 0);
 
-  const colaboradoresAtivos = colaboradores.filter(c => c.status === 'Ativo').length;
-  const feriasPendentes = ferias.filter(f => f.status === 'Solicitado').length;
+  const colaboradoresAtivos = (colaboradores || []).filter(c => c.status === 'Ativo').length;
+  const feriasPendentes = (ferias || []).filter(f => f.status === 'Solicitado').length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
