@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, TrendingUp, FileText, Link2, BarChart3 } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, FileText, Link2, BarChart3 } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import ContasReceberTab from "@/components/financeiro/ContasReceberTab";
+import ContasPagarTab from "@/components/financeiro/ContasPagarTab";
 import DashboardFinanceiro from "@/components/financeiro/DashboardFinanceiro";
 import FluxoCaixaProjetado from "@/components/financeiro/FluxoCaixaProjetado";
 import PainelConciliacao from "@/components/financeiro/PainelConciliacao";
@@ -41,6 +42,10 @@ export default function Financeiro() {
               <TrendingUp className="w-4 h-4 mr-2" />
               Contas a Receber
             </TabsTrigger>
+            <TabsTrigger value="pagar">
+              <TrendingDown className="w-4 h-4 mr-2" />
+              Contas a Pagar
+            </TabsTrigger>
             <TabsTrigger value="fluxo">
               <FileText className="w-4 h-4 mr-2" />
               Fluxo Projetado
@@ -57,6 +62,10 @@ export default function Financeiro() {
 
           <TabsContent value="receber">
             <ContasReceberTab empresaId={empresaAtual?.id} />
+          </TabsContent>
+
+          <TabsContent value="pagar">
+            <ContasPagarTab empresaId={empresaAtual?.id} />
           </TabsContent>
 
           <TabsContent value="fluxo">

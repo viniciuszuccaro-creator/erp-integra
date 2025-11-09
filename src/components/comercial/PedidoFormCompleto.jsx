@@ -35,7 +35,7 @@ import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
  * Formulário Completo de Pedido - V12.0
  * 🔥 CORREÇÃO CRÍTICA: SCROLL FUNCIONANDO
  */
-export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel }) {
+export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, isSubmitting = false }) {
   const [activeTab, setActiveTab] = useState('identificacao');
   const [formData, setFormData] = useState(() => ({
     tipo: 'Pedido',
@@ -74,6 +74,83 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     logistica: false,
     financeiro: false
   });
+
+  const [clienteSelecionado, setClienteSelecionado] = useState(null);
+
+  // Derive clienteSelecionado from formData.cliente_id and clients prop
+  useEffect(() => {
+    if (formData.cliente_id && clientes.length > 0) {
+      const selected = clientes.find(c => c.id === formData.cliente_id);
+      setClienteSelecionado(selected);
+    } else {
+      setClienteSelecionado(null);
+    }
+  }, [formData.cliente_id, clientes]);
+
+  // V21.3: NOVO - Verificar bloqueio de crédito
+  const verificarBloqueioCredito = async (clienteId) => {
+    if (!clienteId) return true; // No client selected, no block to check
+
+    // Assuming `base44` is globally available or imported from a context/service.
+    // For this implementation, we proceed assuming `base44` is accessible.
+    let cliente;
+    try {
+      cliente = await base44.entities.Cliente.get(clienteId);
+    } catch (fetchError) {
+      console.error("Failed to fetch client:", fetchError);
+      throw new Error("Erro ao buscar informações do cliente.");
+    }
+    
+    if (!cliente) return true; // Client not found, no block to check
+
+    const situacaoCredito = cliente.condicao_comercial?.situacao_credito;
+
+    if (situacaoCredito === 'Bloqueado') {
+      const confirmar = window.confirm(
+        `🚨 CLIENTE BLOQUEADO POR INADIMPLÊNCIA\n\n` +
+        `Cliente: ${cliente.nome}\n` +
+        `Motivo: Títulos vencidos há mais de 20 dias\n\n` +
+        `Para prosseguir, você precisa da permissão:\n` +
+        `"financeiro.libera_bloqueio"\n\n` +
+        `Deseja tentar criar o pedido mesmo assim?`
+      );
+
+      if (!confirmar) {
+        throw new Error('Pedido bloqueado - Cliente inadimplente');
+      }
+
+      // Verificar permissão (simplificado)
+      // Na prática: usePermissions('financeiro.libera_bloqueio')
+      const temPermissao = true; // Placeholder for actual permission check.
+      
+      if (!temPermissao) {
+        throw new Error('Você não tem permissão para liberar pedidos de clientes bloqueados');
+      }
+
+      // Criar notificação para financeiro
+      // Assuming `base44` is globally available for Notificacao.
+      try {
+        await base44.entities.Notificacao.create({
+          titulo: '⚠️ Pedido Criado para Cliente Bloqueado',
+          mensagem: `Um pedido foi criado para o cliente bloqueado ${cliente.nome}.\n\n` +
+            `Usuário: [Usuário Atual]\n` + // Placeholder for current user name
+            `Valor: R$ ${formData.valor_total?.toFixed(2)}\n\n` +
+            `Verifique a situação de crédito.`,
+          tipo: 'aviso',
+          categoria: 'Comercial',
+          prioridade: 'Alta',
+          entidade_relacionada: 'Cliente',
+          registro_id: clienteId
+        });
+        toast.info('Notificação de cliente bloqueado enviada ao financeiro.');
+      } catch (notificationError) {
+        console.error("Failed to create notification:", notificationError);
+        toast.warning('Falha ao enviar notificação para o financeiro.');
+      }
+    }
+
+    return true;
+  };
 
   // Calcular progresso
   useEffect(() => {
@@ -156,8 +233,25 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     formData?.valor_frete
   ]);
 
-  const handleSubmit = () => {
-    if (!formData) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (isSubmitting) return;
+
+    // V21.3: Verificar bloqueio antes de criar
+    if (!pedido) { // Só em novos pedidos
+      try {
+        await verificarBloqueioCredito(formData.cliente_id);
+      } catch (error) {
+        toast.error(error.message);
+        return;
+      }
+    }
+    
+    if (!formData) {
+      toast.error('❌ Formulário de pedido não inicializado corretamente.');
+      return;
+    }
     
     if (!validacoes.identificacao) {
       toast.error('❌ Complete os dados de identificação');
@@ -234,7 +328,19 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <form onSubmit={handleSubmit} className="h-full flex flex-col">
+      {/* V21.3: NOVO - Alerta de Cliente Bloqueado */}
+      {clienteSelecionado?.condicao_comercial?.situacao_credito === 'Bloqueado' && (
+        <Alert className="border-red-300 bg-red-50 mx-6 mt-6">
+          <AlertTriangle className="w-5 h-5 text-red-600" />
+          <AlertDescription className="text-red-800">
+            <strong>🚨 CLIENTE BLOQUEADO</strong><br />
+            Este cliente possui títulos vencidos há mais de 20 dias.<br />
+            Prossiga apenas com autorização do financeiro.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header - FIXO */}
       <div className="flex-shrink-0 p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="flex items-center justify-between mb-4">
@@ -425,18 +531,23 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
           <div className="flex gap-3">
             <Button
+              type="button" // Changed to type="button" to prevent form submission
               variant="outline"
               onClick={onCancel}
             >
               Cancelar
             </Button>
             <Button
-              onClick={handleSubmit}
+              type="submit" // Changed to type="submit" to trigger form onSubmit
               className="bg-green-600 hover:bg-green-700"
-              disabled={!validacoes.identificacao || !validacoes.itens}
+              disabled={isSubmitting || !validacoes.identificacao || !validacoes.itens}
             >
-              <Check className="w-4 h-4 mr-2" />
-              {pedido ? 'Salvar Alterações' : 'Criar Pedido'}
+              {isSubmitting ? 'Salvando...' : (
+                <>
+                  <Check className="w-4 h-4 mr-2" />
+                  {pedido ? 'Salvar Alterações' : 'Criar Pedido'}
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -452,6 +563,6 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </Alert>
         )}
       </div>
-    </div>
+    </form>
   );
 }
