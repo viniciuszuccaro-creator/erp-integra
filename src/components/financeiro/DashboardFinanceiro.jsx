@@ -1,3 +1,4 @@
+
 import React from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -10,7 +11,7 @@ import {
   TrendingDown, 
   Clock, 
   AlertTriangle,
-  CheckCircle,
+  CircleCheck, // Changed from CheckCircle to CircleCheck
   Brain
 } from "lucide-react";
 import { 
@@ -121,7 +122,7 @@ export default function DashboardFinanceiro({ empresaId }) {
 
         <Card className="border-2 border-green-300 bg-green-50">
           <CardContent className="p-4">
-            <CheckCircle className="w-5 h-5 text-green-600 mb-2" />
+            <CircleCheck className="w-5 h-5 text-green-600 mb-2" /> {/* Changed from CheckCircle to CircleCheck */}
             <p className="text-xs text-green-700 mb-1">Recebido (Mês)</p>
             <p className="text-2xl font-bold text-green-600">
               R$ {kpis.recebidoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
