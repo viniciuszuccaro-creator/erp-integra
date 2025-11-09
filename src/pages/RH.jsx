@@ -9,6 +9,10 @@ import ColaboradorForm from "../components/rh/ColaboradorForm";
 import PontoTab from "../components/rh/PontoTab";
 import FolhaPagamentoTab from "../components/rh/FolhaPagamentoTab";
 import ComplianceTab from "../components/rh/ComplianceTab";
+import KPIsProductividadeIA from "../components/rh/KPIsprodutividadeIA";
+import AnaliseVariacaoSalarial from "../components/rh/AnaliseVariacaoSalarial";
+import TrackingHorasExtrasIA from "../components/rh/TrackingHorasExtrasIA";
+import AgendamentoAutomaticoRH from "../components/rh/AgendamentoAutomaticoRH";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useUser } from "@/components/lib/UserContext";
@@ -28,6 +32,11 @@ export default function RH() {
   const { data: ferias = [] } = useQuery({
     queryKey: ['ferias'],
     queryFn: () => base44.entities.Ferias.list('-data_solicitacao'),
+  });
+
+  const { data: pontos = [] } = useQuery({
+    queryKey: ['pontos'],
+    queryFn: () => base44.entities.Ponto.list('-data'),
   });
 
   const totalFolha = (colaboradores || [])
@@ -116,6 +125,18 @@ export default function RH() {
             <Shield className="w-4 h-4 mr-2" />
             Compliance & Governança
           </TabsTrigger>
+          <TabsTrigger value="produtividade" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Produtividade IA
+          </TabsTrigger>
+          <TabsTrigger value="salarios" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white">
+            <DollarSign className="w-4 h-4 mr-2" />
+            Análise Salarial
+          </TabsTrigger>
+          <TabsTrigger value="horas-extras" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white">
+            <Clock className="w-4 h-4 mr-2" />
+            Horas Extras
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="colaboradores">
@@ -176,7 +197,7 @@ export default function RH() {
         </TabsContent>
 
         <TabsContent value="ponto">
-          <PontoTab colaboradores={colaboradores} />
+          <PontoTab pontos={pontos} colaboradores={colaboradores} />
         </TabsContent>
 
         <TabsContent value="folha">
@@ -184,7 +205,22 @@ export default function RH() {
         </TabsContent>
 
         <TabsContent value="compliance">
-          <ComplianceTab empresaId={empresaAtual?.id} />
+          <div className="space-y-6">
+            <AgendamentoAutomaticoRH empresaId={empresaAtual?.id} colaboradores={colaboradores} />
+            <ComplianceTab empresaId={empresaAtual?.id} />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="produtividade">
+          <KPIsProductividadeIA empresaId={empresaAtual?.id} />
+        </TabsContent>
+
+        <TabsContent value="salarios">
+          <AnaliseVariacaoSalarial empresaId={empresaAtual?.id} />
+        </TabsContent>
+
+        <TabsContent value="horas-extras">
+          <TrackingHorasExtrasIA empresaId={empresaAtual?.id} />
         </TabsContent>
       </Tabs>
     </div>

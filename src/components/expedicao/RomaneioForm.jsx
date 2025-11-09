@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,22 +9,27 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
-import { FileText, Truck, CheckCircle, MapPin, Loader2 } from "lucide-react";
+import { FileText, Truck, MapPin, Loader2, AlertTriangle, Shield } from "lucide-react";
 
 import baixarEstoqueExpedicao from "@/components/expedicao/ConexaoEstoqueExpedicao";
 
 /**
- * Formulário para Geração de Romaneio ou Visualização/Aprovação de Romaneio Existente
+ * V21.5 - Formulário Romaneio com Validação CNH
+ * Bloqueia motoristas com CNH vencida
  */
 export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
+    motorista_id: romaneio?.motorista_id || "",
     motorista: romaneio?.motorista || "",
     motorista_telefone: romaneio?.motorista_telefone || "",
+    veiculo_id: romaneio?.veiculo_id || "",
     veiculo: romaneio?.veiculo || "",
     placa: romaneio?.placa || "",
     tipo_veiculo: romaneio?.tipo_veiculo || "Caminhão",
@@ -41,16 +45,55 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
     observacoes: ""
   });
 
-  // Fetch available deliveries for new romaneio or deliveries associated with an existing romaneio
+  // V21.5: Buscar motoristas (colaboradores que podem dirigir)
+  const { data: motoristas = [] } = useQuery({
+    queryKey: ['motoristas-disponiveis', empresaId],
+    queryFn: async () => {
+      const colaboradores = await base44.entities.Colaborador.filter({
+        empresa_alocada_id: empresaId,
+        pode_dirigir: true,
+        status: 'Ativo'
+      });
+
+      // Validar CNH
+      const hoje = new Date();
+      return colaboradores.map(colab => {
+        const cnhVencida = colab.cnh_validade
+          ? new Date(colab.cnh_validade) < hoje
+          : false;
+
+        const diasRestantes = colab.cnh_validade
+          ? Math.floor((new Date(colab.cnh_validade) - hoje) / (1000 * 60 * 60 * 24))
+          : 999;
+
+        return {
+          ...colab,
+          cnh_vencida: cnhVencida,
+          cnh_dias_restantes: diasRestantes,
+          bloqueado: cnhVencida
+        };
+      });
+    },
+    enabled: isOpen
+  });
+
+  // V21.5: Buscar veículos
+  const { data: veiculos = [] } = useQuery({
+    queryKey: ['veiculos-disponiveis', empresaId],
+    queryFn: () => base44.entities.Veiculo.filter({
+      empresa_id: empresaId,
+      status: 'Disponível'
+    }),
+    enabled: isOpen
+  });
+
   const { data: entregas = [], isLoading: isLoadingEntregas } = useQuery({
     queryKey: ['entregas-para-romaneio', empresaId, romaneio?.id],
     queryFn: async () => {
       if (romaneio?.id) {
-        // If viewing an existing romaneio, fetch its associated deliveries
         const allEntregas = await base44.entities.Entrega.list('-created_date');
         return allEntregas.filter(e => romaneio.entregas_ids.includes(e.id));
       } else if (empresaId) {
-        // If creating a new romaneio, fetch eligible deliveries
         const todas = await base44.entities.Entrega.list('-created_date');
         return todas.filter(e =>
           e.empresa_id === empresaId &&
@@ -77,6 +120,9 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
     }
   };
 
+  // V21.5: Validar motorista selecionado
+  const motoristaSelecionado = motoristas.find(m => m.id === formData.motorista_id);
+
   const gerarRomaneioMutation = useMutation({
     mutationFn: async () => {
       const entregasSelecionadas = entregas.filter(e =>
@@ -87,8 +133,18 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
         throw new Error("Selecione pelo menos uma entrega");
       }
 
-      if (!formData.motorista) {
-        throw new Error("O campo Motorista é obrigatório.");
+      if (!formData.motorista_id && !formData.motorista) {
+        throw new Error("Selecione um motorista");
+      }
+
+      // V21.5: VALIDAÇÃO CNH
+      if (motoristaSelecionado?.bloqueado) {
+        throw new Error(
+          `❌ MOTORISTA BLOQUEADO!\n\n` +
+          `${motoristaSelecionado.nome_completo} está com CNH VENCIDA!\n` +
+          `Vencimento: ${new Date(motoristaSelecionado.cnh_validade).toLocaleDateString('pt-BR')}\n\n` +
+          `Selecione outro motorista ou renove a CNH.`
+        );
       }
 
       const pesoTotal = entregasSelecionadas.reduce((sum, e) => sum + (e.peso_total_kg || 0), 0);
@@ -103,8 +159,10 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
         numero_romaneio: numeroRomaneio,
         data_romaneio: new Date().toISOString().split('T')[0],
         data_saida: new Date().toISOString(),
-        motorista: formData.motorista,
-        motorista_telefone: formData.motorista_telefone,
+        motorista_id: formData.motorista_id || undefined,
+        motorista: motoristaSelecionado?.nome_completo || formData.motorista,
+        motorista_telefone: motoristaSelecionado?.telefone || formData.motorista_telefone,
+        veiculo_id: formData.veiculo_id || undefined,
         veiculo: formData.veiculo,
         placa: formData.placa,
         tipo_veiculo: formData.tipo_veiculo,
@@ -113,22 +171,23 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
         quantidade_volumes: volumesTotal,
         peso_total_kg: pesoTotal,
         valor_total_mercadoria: valorTotal,
-        status: "Aberto", // Romaneio starts as "Aberto" and can then be "Aprovado"
+        status: "Aberto",
         instrucoes_motorista: formData.instrucoes_motorista,
         checklist_saida: checklist,
         entregas_realizadas: 0,
         entregas_frustradas: 0
       });
 
-      // Atualizar entregas
       for (const entrega of entregasSelecionadas) {
         await base44.entities.Entrega.update(entrega.id, {
           romaneio_id: romaneioCriado.id,
-          // Status remains "Pronto para Expedir" until romaneio is approved
+          motorista: motoristaSelecionado?.nome_completo || formData.motorista,
+          motorista_id: formData.motorista_id || undefined,
+          motorista_telefone: motoristaSelecionado?.telefone || formData.motorista_telefone,
           historico_status: [
             ...(entrega.historico_status || []),
             {
-              status: "Atribuída a Romaneio", // New status indicating it's part of a romaneio
+              status: "Atribuída a Romaneio",
               data_hora: new Date().toISOString(),
               usuario: "Sistema",
               observacao: `Incluído no romaneio ${numeroRomaneio}`
@@ -147,8 +206,8 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
     },
     onError: (error) => {
       toast({
-        title: "Erro ao gerar romaneio",
-        description: error.message || "Não foi possível gerar o romaneio.",
+        title: "❌ Erro ao gerar romaneio",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -160,21 +219,18 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
         throw new Error("ID do romaneio não fornecido para aprovação.");
       }
 
-      // V21.4: GATILHO - Saída de Estoque
       await baixarEstoqueExpedicao(romaneioId);
 
       const updatedRomaneio = await base44.entities.Romaneio.update(romaneioId, {
         status: 'Aprovado',
-        aprovado_por: 'Usuário Atual', // This should ideally come from an auth context
+        aprovado_por: 'Usuário Atual',
         data_aprovacao: new Date().toISOString()
       });
 
-      // Update status of associated deliveries to "Saiu para Entrega"
-      const entregasDoRomaneio = await base44.entities.Entrega.list('id', {
-        filters: { romaneio_id: romaneioId }
-      });
+      const entregasDoRomaneio = await base44.entities.Entrega.list();
+      const entregasRomaneio = entregasDoRomaneio.filter(e => e.romaneio_id === romaneioId);
 
-      for (const entrega of entregasDoRomaneio) {
+      for (const entrega of entregasRomaneio) {
         await base44.entities.Entrega.update(entrega.id, {
           status: "Saiu para Entrega",
           data_saida: new Date().toISOString(),
@@ -194,15 +250,15 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['romaneios'] });
-      queryClient.invalidateQueries({ queryKey: ['entregas-para-romaneio'] }); // Invalidate deliveries as well
-      queryClient.invalidateQueries({ queryKey: ['entregas'] }); // Invalidate all deliveries
+      queryClient.invalidateQueries({ queryKey: ['entregas-para-romaneio'] });
+      queryClient.invalidateQueries({ queryKey: ['entregas'] });
       toast({ title: "✅ Romaneio aprovado com sucesso!" });
       onClose();
     },
     onError: (error) => {
       toast({
         title: "Erro ao aprovar romaneio",
-        description: error.message || "Não foi possível aprovar o romaneio.",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -210,7 +266,6 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
 
   const entregasSelecionadas = entregas.filter(e => formData.entregas_selecionadas.includes(e.id));
 
-  // Determine if the form is in view/edit mode for an existing romaneio
   const isExistingRomaneio = !!romaneio;
   const isRomaneioApproved = romaneio?.status === 'Aprovado';
   const isFormDisabled = isExistingRomaneio && (isRomaneioApproved || romaneio?.status === 'Em Rota' || romaneio?.status === 'Concluído' || romaneio?.status === 'Cancelado');
@@ -225,44 +280,122 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6"> {/* Wrapper div for form and actions */}
+        <div className="space-y-6">
           <form onSubmit={(e) => { e.preventDefault(); gerarRomaneioMutation.mutate(); }}>
-            {/* Dados do Motorista */}
+            {/* V21.5: Seletor de Motorista com Validação CNH */}
             <Card>
               <CardHeader className="bg-blue-50 border-b">
-                <CardTitle className="text-base">Dados do Motorista e Veículo</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-blue-600" />
+                  Dados do Motorista e Veículo
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-6 space-y-4">
+                {/* Seletor de Motorista */}
+                <div>
+                  <Label>Motorista *</Label>
+                  <Select
+                    value={formData.motorista_id}
+                    onValueChange={(value) => {
+                      const motorista = motoristas.find(m => m.id === value);
+                      setFormData({
+                        ...formData,
+                        motorista_id: value,
+                        motorista: motorista?.nome_completo || "",
+                        motorista_telefone: motorista?.telefone || ""
+                      });
+                    }}
+                    disabled={isFormDisabled}
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Selecione o motorista" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {motoristas.map(motorista => (
+                        <SelectItem
+                          key={motorista.id}
+                          value={motorista.id}
+                          disabled={motorista.bloqueado}
+                        >
+                          <div className="flex items-center justify-between w-full gap-3">
+                            <span>{motorista.nome_completo}</span>
+                            {motorista.bloqueado ? (
+                              <Badge className="bg-red-600 text-xs">CNH Vencida</Badge>
+                            ) : motorista.cnh_dias_restantes <= 30 ? (
+                              <Badge className="bg-orange-600 text-xs">CNH vence em {motorista.cnh_dias_restantes}d</Badge>
+                            ) : (
+                              <Badge className="bg-green-600 text-xs">CNH OK</Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* V21.5: Alerta CNH Vencida */}
+                  {motoristaSelecionado?.bloqueado && (
+                    <Alert className="border-red-300 bg-red-50 mt-3">
+                      <AlertTriangle className="w-4 h-4 text-red-600" />
+                      <AlertDescription className="text-sm text-red-800">
+                        <strong>❌ MOTORISTA BLOQUEADO!</strong><br />
+                        CNH vencida em {new Date(motoristaSelecionado.cnh_validade).toLocaleDateString('pt-BR')}.<br />
+                        Não é possível criar romaneio com este motorista.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {motoristaSelecionado && !motoristaSelecionado.bloqueado && motoristaSelecionado.cnh_dias_restantes <= 30 && (
+                    <Alert className="border-orange-300 bg-orange-50 mt-3">
+                      <AlertTriangle className="w-4 h-4 text-orange-600" />
+                      <AlertDescription className="text-xs text-orange-800">
+                        ⚠️ CNH vence em {motoristaSelecionado.cnh_dias_restantes} dia(s) - Providenciar renovação
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+
+                {/* Telefone (auto-preenchido) */}
+                <div>
+                  <Label>Telefone Motorista</Label>
+                  <Input
+                    value={formData.motorista_telefone}
+                    onChange={(e) => setFormData({ ...formData, motorista_telefone: e.target.value })}
+                    className="mt-2"
+                    disabled={isFormDisabled}
+                  />
+                </div>
+
+                {/* Seletor de Veículo */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Motorista *</Label>
-                    <Input
-                      value={formData.motorista}
-                      onChange={(e) => setFormData({ ...formData, motorista: e.target.value })}
-                      required
-                      className="mt-2"
-                      disabled={isFormDisabled}
-                    />
-                  </div>
-                  <div>
-                    <Label>Telefone Motorista</Label>
-                    <Input
-                      value={formData.motorista_telefone}
-                      onChange={(e) => setFormData({ ...formData, motorista_telefone: e.target.value })}
-                      className="mt-2"
-                      disabled={isFormDisabled}
-                    />
-                  </div>
-                  <div>
                     <Label>Veículo</Label>
-                    <Input
-                      value={formData.veiculo}
-                      onChange={(e) => setFormData({ ...formData, veiculo: e.target.value })}
-                      placeholder="Ex: Caminhão Iveco"
-                      className="mt-2"
+                    <Select
+                      value={formData.veiculo_id}
+                      onValueChange={(value) => {
+                        const veiculo = veiculos.find(v => v.id === value);
+                        setFormData({
+                          ...formData,
+                          veiculo_id: value,
+                          veiculo: veiculo?.modelo || "",
+                          placa: veiculo?.placa || "",
+                          tipo_veiculo: veiculo?.tipo_veiculo || "Caminhão"
+                        });
+                      }}
                       disabled={isFormDisabled}
-                    />
+                    >
+                      <SelectTrigger className="mt-2">
+                        <SelectValue placeholder="Selecione o veículo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {veiculos.map(veiculo => (
+                          <SelectItem key={veiculo.id} value={veiculo.id}>
+                            {veiculo.modelo} - {veiculo.placa}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+
                   <div>
                     <Label>Placa</Label>
                     <Input
@@ -294,7 +427,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
                     <TableHeader>
                       <TableRow className="bg-slate-50">
                         <TableHead className="w-12">
-                          {!isExistingRomaneio && ( // Only show checkbox for new romaneio creation
+                          {!isExistingRomaneio && (
                             <Checkbox
                               checked={formData.entregas_selecionadas.length === entregas.length && entregas.length > 0}
                               onCheckedChange={(checked) => {
@@ -319,7 +452,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
                       {entregas.map(entrega => (
                         <TableRow key={entrega.id}>
                           <TableCell>
-                            {!isExistingRomaneio && ( // Only show checkbox for new romaneio creation
+                            {!isExistingRomaneio && (
                               <Checkbox
                                 checked={formData.entregas_selecionadas.includes(entrega.id)}
                                 onCheckedChange={() => toggleEntrega(entrega.id)}
@@ -351,7 +484,6 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
                     </TableBody>
                   </Table>
                 )}
-
 
                 {entregas.length === 0 && (
                   <div className="text-center py-12 text-slate-500">
@@ -458,7 +590,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
               />
             </div>
 
-            {/* Botões para Gerar Romaneio (apenas para criação) */}
+            {/* Botões */}
             {!isExistingRomaneio && (
               <div className="flex gap-3 pt-4 border-t">
                 <Button type="button" variant="outline" onClick={onClose} className="flex-1">
@@ -467,7 +599,8 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
                 <Button
                   type="submit"
                   disabled={
-                    !formData.motorista ||
+                    !formData.motorista_id ||
+                    motoristaSelecionado?.bloqueado ||
                     formData.entregas_selecionadas.length === 0 ||
                     gerarRomaneioMutation.isPending
                   }
@@ -479,7 +612,6 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
             )}
           </form>
 
-          {/* Botão de Aprovação (apenas para romaneios existentes e abertos) */}
           {romaneio && romaneio.status === 'Aberto' && (
             <Button
               onClick={() => aprovarRomaneioMutation.mutate(romaneio.id)}
@@ -497,7 +629,6 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, romaneio }) {
             </Button>
           )}
 
-          {/* Botão para fechar em modo de visualização */}
           {isExistingRomaneio && (isRomaneioApproved || romaneio.status !== 'Aberto') && (
              <div className="flex gap-3 pt-4 border-t">
               <Button type="button" variant="outline" onClick={onClose} className="flex-1">
