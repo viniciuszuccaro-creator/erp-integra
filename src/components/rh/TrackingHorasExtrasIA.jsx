@@ -1,10 +1,11 @@
+
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Brain, Clock, AlertTriangle, TrendingUp, Calendar } from "lucide-react";
+import { Brain, Clock, AlertTriangle, TrendingUp, TrendingDown, Calendar, DollarSign } from "lucide-react";
 
 /**
  * V21.5 - Tracking Inteligente de Horas Extras
@@ -27,31 +28,47 @@ export default function TrackingHorasExtrasIA({ empresaId }) {
   const analisarHorasExtras = () => {
     const hoje = new Date();
     const mes_atual = hoje.getMonth();
-    const mes_passado = new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const ano_atual = hoje.getFullYear();
+    
+    // Calculate previous month, handling year change
+    const mes_passado_data = new Date(hoje);
+    mes_passado_data.setMonth(mes_passado_data.getMonth() - 1);
+    const mes_passado_idx = mes_passado_data.getMonth();
+    const ano_passado_idx = mes_passado_data.getFullYear();
 
-    const pontosMesAtual = pontos.filter(p => new Date(p.data).getMonth() === mes_atual);
-    const pontosMesPassado = pontos.filter(p => new Date(p.data) >= mes_passado && new Date(p.data).getMonth() !== mes_atual);
+    const pontosMesAtual = pontos.filter(p => {
+      const pData = new Date(p.data);
+      return pData.getMonth() === mes_atual && pData.getFullYear() === ano_atual;
+    });
+    
+    const pontosMesPassado = pontos.filter(p => {
+      const pData = new Date(p.data);
+      return pData.getMonth() === mes_passado_idx && pData.getFullYear() === ano_passado_idx;
+    });
 
     const horasExtrasMesAtual = pontosMesAtual.reduce((sum, p) => sum + (p.horas_extras || 0), 0);
     const horasExtrasMesPassado = pontosMesPassado.reduce((sum, p) => sum + (p.horas_extras || 0), 0);
 
     const tendencia = horasExtrasMesPassado > 0
       ? ((horasExtrasMesAtual - horasExtrasMesPassado) / horasExtrasMesPassado * 100)
-      : 0;
+      : (horasExtrasMesAtual > 0 ? 100 : 0); // If previous was 0 but current is > 0, it's 100% increase
 
     // Análise por colaborador
     const analiseColaboradores = colaboradores.map(colab => {
       const pontosColab = pontosMesAtual.filter(p => p.colaborador_nome === colab.nome_completo);
       const horasExtras = pontosColab.reduce((sum, p) => sum + (p.horas_extras || 0), 0);
-      const mediaHorasDia = pontosColab.length > 0 ? horasExtras / pontosColab.length : 0;
+      
+      // Calculate distinct days worked with overtime
+      const diasComHorasExtras = new Set(pontosColab.map(p => new Date(p.data).toDateString())).size;
+      const mediaHorasDia = diasComHorasExtras > 0 ? horasExtras / diasComHorasExtras : 0;
 
       // Custo de hora extra (50% adicional)
-      const salarioHora = (colab.salario || 0) / 220; // 220h mensais
+      const salarioHora = (colab.salario || 0) / 220; // 220h mensais padrão
       const custoHoraExtra = salarioHora * 1.5;
       const custoTotal = horasExtras * custoHoraExtra;
 
-      // Detectar padrão anormal
-      const padraoAnormal = mediaHorasDia > 2; // Mais de 2h extras/dia é anormal
+      // Detectar padrão anormal (ex: mais de 2h extras/dia em média)
+      const padraoAnormal = mediaHorasDia > 2; 
 
       return {
         colaborador: colab.nome_completo,
@@ -110,15 +127,15 @@ export default function TrackingHorasExtrasIA({ empresaId }) {
               <p className="text-xs text-slate-600">Tendência</p>
               <div className="flex items-center gap-2">
                 <p className={`text-2xl font-bold ${
-                  analise.tendencia > 0 ? 'text-red-600' : 'text-green-600'
+                  analise.tendencia > 0 ? 'text-red-600' : (analise.tendencia < 0 ? 'text-green-600' : 'text-slate-600')
                 }`}>
                   {analise.tendencia > 0 ? '+' : ''}{analise.tendencia.toFixed(0)}%
                 </p>
                 {analise.tendencia > 0 ? (
                   <TrendingUp className="w-5 h-5 text-red-600" />
-                ) : (
+                ) : analise.tendencia < 0 ? (
                   <TrendingDown className="w-5 h-5 text-green-600" />
-                )}
+                ) : null}
               </div>
             </div>
 
@@ -144,7 +161,7 @@ export default function TrackingHorasExtrasIA({ empresaId }) {
               {analise.colaboradoresAnormais.map((a, idx) => (
                 <li key={idx}>
                   <strong>{a.colaborador}</strong>: Média de {a.mediaHorasDia.toFixed(1)}h extras/dia
-                  (Total: {a.horasExtras.toFixed(1)}h, Custo: R$ {a.custoTotal.toLocaleString('pt-BR')})
+                  (Total: {a.horasExtras.toFixed(1)}h, Custo: R$ {a.custoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
                 </li>
               ))}
             </ul>
@@ -174,7 +191,7 @@ export default function TrackingHorasExtrasIA({ empresaId }) {
                       <p className="font-bold">{colab.colaborador}</p>
                       <Badge variant="outline">{colab.cargo}</Badge>
                       {colab.padraoAnormal && (
-                        <Badge className="bg-red-600">Padrão Anormal</Badge>
+                        <Badge className="bg-red-600 text-white">Padrão Anormal</Badge>
                       )}
                     </div>
                     <div className="grid grid-cols-3 gap-3 mt-2 text-xs">
