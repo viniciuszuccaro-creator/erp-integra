@@ -24,6 +24,7 @@ import Documentacao from './pages/Documentacao';
 import Seguranca from './pages/Seguranca';
 import TesteGoldenThread from './pages/TesteGoldenThread';
 import ChatbotAtendimento from './pages/ChatbotAtendimento';
+import AppMotorista from './pages/AppMotorista';
 import Layout from './Layout.jsx';
 
 
@@ -54,6 +55,7 @@ export const PAGES = {
     "Seguranca": Seguranca,
     "TesteGoldenThread": TesteGoldenThread,
     "ChatbotAtendimento": ChatbotAtendimento,
+    "AppMotorista": AppMotorista,
 }
 
 export const pagesConfig = {

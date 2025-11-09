@@ -10,19 +10,23 @@ import {
   MapPin, 
   RefreshCcw, 
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Map,
+  Smartphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/components/lib/UserContext";
 import RoteirizadorSmartPlus from "@/components/expedicao/RoteirizadorSmartPlus";
 import ChecklistQualidadeDevolucao from "@/components/expedicao/ChecklistQualidadeDevolucao";
+import MapaRastreamentoRealTime from "@/components/expedicao/MapaRastreamentoRealTime";
+import AppMotoristaCompleto from "@/components/expedicao/AppMotoristaCompleto";
 
 /**
- * V21.2 - Expedição e Logística
- * COM: SmartRoute+, Checklist Qualidade, App Motorista v2
+ * V21.2 - Expedição e Logística COMPLETO
+ * COM: SmartRoute+, Mapa Real-time, App Motorista, Checklist Qualidade
  */
 export default function Expedicao() {
-  const { empresaAtual } = useUser();
+  const { empresaAtual, user } = useUser();
   const [aba, setAba] = useState('entregas');
   const [entregaDevolucao, setEntregaDevolucao] = useState(null);
 
@@ -34,10 +38,22 @@ export default function Expedicao() {
     enabled: !!empresaAtual?.id
   });
 
+  const { data: colaboradores = [] } = useQuery({
+    queryKey: ['colaboradores-motoristas', empresaAtual?.id],
+    queryFn: () => base44.entities.Colaborador.filter({
+      empresa_alocada_id: empresaAtual?.id,
+      pode_dirigir: true
+    }),
+    enabled: !!empresaAtual?.id
+  });
+
   const entregasPendentes = entregas.filter(e => 
     e.status === 'Aguardando Separação' || 
     e.status === 'Pronto para Expedir'
   );
+
+  // Verificar se usuário é motorista
+  const motoristaAtual = colaboradores.find(c => c.vincular_a_usuario_id === user?.id);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
@@ -47,7 +63,7 @@ export default function Expedicao() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">Expedição e Logística</h1>
-                <p className="text-blue-100">v21.2 - SmartRoute+ IA Preditiva</p>
+                <p className="text-blue-100">v21.2 COMPLETO - SmartRoute+ IA + GPS Real-time</p>
               </div>
               <Truck className="w-16 h-16" />
             </div>
@@ -60,10 +76,20 @@ export default function Expedicao() {
               <Package className="w-4 h-4 mr-2" />
               Entregas
             </TabsTrigger>
+            <TabsTrigger value="mapa">
+              <Map className="w-4 h-4 mr-2" />
+              Rastreamento
+            </TabsTrigger>
             <TabsTrigger value="roteirizador">
               <MapPin className="w-4 h-4 mr-2" />
               Roteirizador IA
             </TabsTrigger>
+            {motoristaAtual && (
+              <TabsTrigger value="app-motorista">
+                <Smartphone className="w-4 h-4 mr-2" />
+                App Motorista
+              </TabsTrigger>
+            )}
             <TabsTrigger value="reversa">
               <RefreshCcw className="w-4 h-4 mr-2" />
               Logística Reversa
@@ -72,14 +98,55 @@ export default function Expedicao() {
 
           <TabsContent value="entregas">
             <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold">Todas as Entregas</h2>
+                  <div className="flex gap-2">
+                    <Button size="sm" className="bg-green-600">Nova Entrega</Button>
+                  </div>
+                </div>
+              </CardHeader>
               <CardContent className="p-6">
-                <div className="text-center py-12 text-slate-400">
-                  <Package className="w-16 h-16 mx-auto mb-3 text-slate-300" />
-                  <p>Lista de entregas</p>
-                  <p className="text-sm">{entregas.length} entregas encontradas</p>
+                <div className="space-y-2">
+                  {entregas.map((entrega) => (
+                    <Card key={entrega.id} className="border hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold">{entrega.cliente_nome}</p>
+                            <p className="text-sm text-slate-600">
+                              Pedido: {entrega.numero_pedido}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {entrega.endereco_entrega_completo?.cidade}
+                            </p>
+                          </div>
+                          <Badge className={
+                            entrega.status === 'Entregue' ? 'bg-green-600' :
+                            entrega.status === 'Em Trânsito' ? 'bg-blue-600' :
+                            entrega.status === 'Entrega Frustrada' ? 'bg-red-600' :
+                            'bg-orange-600'
+                          }>
+                            {entrega.status}
+                          </Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {entregas.length === 0 && (
+                    <div className="text-center py-12 text-slate-400">
+                      <Package className="w-16 h-16 mx-auto mb-3 text-slate-300" />
+                      <p>Nenhuma entrega encontrada</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="mapa">
+            <MapaRastreamentoRealTime empresaId={empresaAtual?.id} />
           </TabsContent>
 
           <TabsContent value="roteirizador">
@@ -91,6 +158,12 @@ export default function Expedicao() {
               }}
             />
           </TabsContent>
+
+          {motoristaAtual && (
+            <TabsContent value="app-motorista">
+              <AppMotoristaCompleto motoristaId={motoristaAtual.id} />
+            </TabsContent>
+          )}
 
           <TabsContent value="reversa">
             <Card>
