@@ -24,6 +24,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import ImagemComCotas from "./ImagemComCotas"; // Added new import
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // Added new import for Dialog
 
 const BITOLAS_DISPONIVEIS = [
   { valor: "4.2", peso_metro: 0.109 },
@@ -48,17 +49,17 @@ const FORMATOS_FERRO = [
   { value: "personalizado", label: "Personalizado", medidas: ["medida1", "medida2", "medida3", "medida4"] }
 ];
 
-export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, itemInicial = null }) {
+export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, itemInicial = null, isOpen, onClose, obraDestino }) {
   const [formData, setFormData] = useState(itemInicial ? {
     nome_projeto: itemInicial.nome_projeto || "",
-    // elemento_estrutural is replaced by elementoEstrutural state for the item identifier
     quantidade_elementos: itemInicial.quantidade_elementos || 1,
-    posicoes: itemInicial.posicoes || []
+    posicoes: itemInicial.posicoes || [],
+    obra_destino: obraDestino || itemInicial.obra_destino || "" 
   } : {
     nome_projeto: "",
-    // elemento_estrutural: "", // Removed from formData, now managed by elementoEstrutural state
     quantidade_elementos: 1,
-    posicoes: []
+    posicoes: [],
+    obra_destino: obraDestino || "" 
   });
 
   const [posicaoAtual, setPosicaoAtual] = useState({
@@ -68,8 +69,8 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
     formato: "reto",
     medidas: { comprimento: 0 },
     variavel: false,
-    dobra_lado1: 0, // These are now managed within medidas by handleFormatoChange, but kept for initial state consistency
-    dobra_lado2: 0, // These are now managed within medidas by handleFormatoChange, but kept for initial state consistency
+    dobra_lado1: 0, 
+    dobra_lado2: 0, 
     observacoes: ""
   });
 
@@ -216,9 +217,6 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
         ]
       }));
       setElementoEstrutural("V1"); // Example for AI identified element
-      // For this example, let's assume if IA provides data, it's considered 'origem_ia'
-      // This part might need to be adjusted based on actual IA integration
-      // setElementoObrigatorio(true); // This state is immutable after initialization
     }, 2000);
   };
 
@@ -244,7 +242,7 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
     return resumo;
   };
 
-  const handleSalvar = () => {
+  const handleSalvarInterno = () => {
     // Original validation adapted to new structure
     if (!formData.nome_projeto || !elementoEstrutural.trim()) {
       toast({ title: "❌ Erro", description: "Preencha o nome do projeto e o elemento estrutural", variant: "destructive" });
@@ -271,6 +269,8 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
       tipo_peca: "corte_dobra", // Replaced 'tipo_servico' with 'tipo_peca' as per outline's implied intent
       resumo
     });
+
+    if (onClose) onClose(); // Close the dialog after saving
   };
 
   const resumo = calcularResumoGeral();
@@ -283,15 +283,12 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
   const altura = posicaoAtual.medidas.altura || 0;
   const dobraLado1 = posicaoAtual.medidas.dobra_lado1 || 0;
   const dobraLado2 = posicaoAtual.medidas.dobra_lado2 || 0;
-  // If 'dobra' is a measure for 'L' format:
   const dobra = posicaoAtual.medidas.dobra || 0;
-  // If 'gancho' is a measure for 'gancho' format:
   const gancho = posicaoAtual.medidas.gancho || 0;
-  // If 'diametro' is a measure for 'estribo_circular' format:
   const diametro = posicaoAtual.medidas.diametro || 0;
 
 
-  return (
+  const conteudo = (
     <div className="space-y-6">
       {/* CABEÇALHO */}
       <Card className="border-2 border-amber-500">
@@ -302,7 +299,7 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
-          <div className="grid grid-cols-2 gap-4"> {/* Changed to 2 columns as Elemento Estrutural moved */}
+          <div className="grid grid-cols-2 gap-4"> 
             <div>
               <Label>Nome do Projeto / Obra *</Label>
               <Input
@@ -311,7 +308,6 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
                 placeholder="Ex: Edifício Solar, Casa Sr. João"
               />
             </div>
-            {/* Removed Elemento Estrutural Input from here - now a separate section */}
             <div>
               <Label>Quantidade de Elementos (Repetições)</Label>
               <Input
@@ -572,7 +568,7 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
           <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
             <CardTitle className="flex items-center gap-2">
               <Calculator className="w-6 h-6 text-green-600" />
-              Resumo Geral do Elemento {elementoEstrutural} {/* Updated to use elementoEstrutural state */}
+              Resumo Geral do Elemento {elementoEstrutural} 
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -600,7 +596,7 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
               <div className="grid grid-cols-5 gap-3">
                 {Object.entries(resumo.por_bitola).map(([bitola, dados]) => (
                   <div key={bitola} className="text-center p-3 bg-white rounded border">
-                    <Badge className="bg-blue-600 mb-2">{bitola}mm</Badge>
+                    <Badge className="bg-blue-600 mb-2">{bitola}mm}</Badge>
                     <p className="text-sm font-bold">{dados.peso.toFixed(2)} kg</p>
                     <p className="text-xs text-slate-500">{dados.quantidade} barras</p>
                   </div>
@@ -613,14 +609,29 @@ export default function FormularioCorteDobraCompleto({ onSalvar, onCancelar, ite
 
       {/* BOTÕES FINAIS - Updated styling and text */}
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="button" variant="outline" onClick={onCancelar}>
+        <Button type="button" variant="outline" onClick={onCancelar || onClose}>
           Cancelar
         </Button>
-        <Button type="button" onClick={handleSalvar} className="bg-blue-600 hover:bg-blue-700">
+        <Button type="button" onClick={handleSalvarInterno} className="bg-blue-600 hover:bg-blue-700">
           <Save className="w-4 h-4 mr-2" />
           Adicionar Item
         </Button>
       </div>
     </div>
   );
+
+  if (isOpen !== undefined) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-[85vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Peça Corte/Dobra - {obraDestino || 'Obra'}</DialogTitle>
+          </DialogHeader>
+          {conteudo}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return conteudo;
 }

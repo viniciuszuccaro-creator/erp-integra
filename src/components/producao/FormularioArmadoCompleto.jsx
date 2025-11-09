@@ -13,8 +13,9 @@ import { Calculator, Package, Ruler, Layers, Grid3x3, Building, Columns, Box as 
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import DescricaoAutomaticaArmado from "./DescricaoAutomaticaArmado";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // Import Dialog components
 
-export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemInicial = null }) {
+export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemInicial = null, isOpen, onClose, obraDestino }) {
   const { toast } = useToast();
   const [tipoSelecionado, setTipoSelecionado] = useState(itemInicial?.tipo_peca || null);
 
@@ -72,7 +73,8 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
     custo_overhead: 0,
     custo_total: 0,
     preco_venda_unitario: 0,
-    preco_venda_total: 0
+    preco_venda_total: 0,
+    obra_destino: obraDestino || "" // V21.1: Vincular à obra
   });
 
   const [resumo, setResumo] = useState(null);
@@ -285,7 +287,7 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
     formData.quantidade_ferros_lado1, formData.quantidade_ferros_lado2, formData.quantidade_estribos
   ]);
 
-  const handleSalvar = () => {
+  const handleSalvarInterno = () => {
     if (!tipoSelecionado) {
       toast({
         title: "❌ Erro",
@@ -343,6 +345,7 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
     };
 
     onSalvar(itemCompleto);
+    if (onClose) onClose(); // Close modal if present
     toast({ title: "✅ Item Adicionado ao Pedido!" });
   };
 
@@ -356,7 +359,7 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
     setResumo(null);
   };
 
-  return (
+  const conteudo = (
     <div className="space-y-6">
       <Card>
         <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
@@ -866,11 +869,28 @@ export default function FormularioArmadoCompleto({ onSalvar, onCancelar, itemIni
         <Button type="button" variant="outline" onClick={onCancelar}>
           Cancelar
         </Button>
-        <Button type="button" onClick={handleSalvar} disabled={!resumo} className="bg-blue-600 hover:bg-blue-700">
+        <Button type="button" onClick={handleSalvarInterno} disabled={!resumo} className="bg-blue-600 hover:bg-blue-700">
           <Save className="w-4 h-4 mr-2" />
           Adicionar Item
         </Button>
       </div>
     </div>
   );
+
+  // Se isOpen está definido, usar Dialog wrapper
+  if (isOpen !== undefined) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-[85vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Peça Armada - {obraDestino || 'Obra'}</DialogTitle>
+          </DialogHeader>
+          {conteudo}
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Senão, retornar direto o conteúdo
+  return conteudo;
 }

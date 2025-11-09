@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -35,31 +36,11 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Pedido.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      setPedidoDialogOpen(false);
-      setEditingPedido(null);
-      toast.success("✅ Pedido criado com sucesso!");
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Pedido.update(id, data),
-    onSuccess: async (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      setPedidoDialogOpen(false);
-      setEditingPedido(null);
-      toast.success("✅ Pedido atualizado!");
-
-      const pedidoAtualizado = await base44.entities.Pedido.get(variables.id);
-      
-      if (variables.data.status === 'Aprovado' && pedidoAtualizado.status === 'Aprovado') {
-        await NotificacoesAutomaticas.notificarPedidoAprovado(pedidoAtualizado);
-      }
-    },
-  });
+  // The mutation logic (createMutation, updateMutation) and their onSuccess handlers
+  // are now assumed to be handled internally by PedidoFormCompleto,
+  // which will then call the onSuccess prop provided by PedidosTab.
+  // This approach ensures that the toast messages and NotificacoesAutomaticas
+  // are triggered from within PedidoFormCompleto upon successful save.
 
   const handleEdit = (pedido) => {
     setEditingPedido(pedido);
@@ -372,25 +353,23 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
         </CardContent>
       </Card>
 
-      <Dialog open={pedidoDialogOpen} onOpenChange={setPedidoDialogOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[95vh] p-0 overflow-hidden">
-          <PedidoFormCompleto
-            pedido={editingPedido}
-            clientes={clientes}
-            onSubmit={(data) => {
-              if (editingPedido) {
-                updateMutation.mutate({ id: editingPedido.id, data });
-              } else {
-                createMutation.mutate(data);
-              }
-            }}
-            onCancel={() => {
-              setPedidoDialogOpen(false);
-              setEditingPedido(null);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* CORRIGIDO: PedidoFormCompleto já tem Dialog interno, não precisa wrapper */}
+      <PedidoFormCompleto
+        isOpen={pedidoDialogOpen}
+        onClose={() => {
+          setPedidoDialogOpen(false);
+          setEditingPedido(null);
+        }}
+        pedido={editingPedido}
+        clientes={clientes} // Ensure clientes prop is still passed if PedidoFormCompleto needs it
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+          setPedidoDialogOpen(false);
+          setEditingPedido(null);
+          // Toast messages and NotificacoesAutomaticas calls for creation/update
+          // are now assumed to be handled within PedidoFormCompleto itself.
+        }}
+      />
 
       {nfeModal && (
         <GerarNFeModal
