@@ -28,7 +28,7 @@ async function consumirMateriaPrimaOP(opId) {
     // V22.0: Converter quantidade para KG
     const quantidadeKG = converterParaKG(
       material.quantidade_kg,
-      'KG', // Já está em KG
+      'KG',
       produto
     );
 
