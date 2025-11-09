@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Package, Maximize2, MapPin } from "lucide-react";
+import { Package, MapPin, Maximize2 } from "lucide-react";
 
 /**
  * V21.4 - Visualizador de Almoxarifado (Mapa de Calor 2D)
@@ -30,40 +30,6 @@ function Prateleira({ codigo, ocupadoKG, capacidadeKG, onClick }) {
       <p className="text-white font-bold text-xs text-center">{codigo}</p>
       <p className="text-white text-xs text-center">{percentualOcupacao.toFixed(0)}%</p>
     </div>
-  );
-}
-
-function CorredorVisual({ corredor }) {
-  return (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold text-slate-700 mb-1">{corredor.codigo_corredor}</p>
-      <div className="grid grid-cols-4 gap-2">
-        {corredor.prateleiras?.map((prat, idx) => (
-          <Prateleira
-            key={idx}
-            codigo={prat.codigo_prateleira}
-            ocupadoKG={prat.ocupado_kg || 0}
-            capacidadeKG={prat.capacidade_kg || 100}
-            onClick={() => console.log('Prateleira', prat)}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ZonaVisual({ zona }) {
-  return (
-    <Card className="border-2 border-blue-300">
-      <CardHeader className="bg-blue-50 p-3">
-        <CardTitle className="text-sm">{zona.codigo_zona} - {zona.descricao}</CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 space-y-4">
-        {zona.corredores?.map((corredor, idx) => (
-          <CorredorVisual key={idx} corredor={corredor} />
-        ))}
-      </CardContent>
-    </Card>
   );
 }
 
@@ -94,7 +60,7 @@ export default function VisualizadorEstoque3D({ localEstoqueId }) {
             </div>
             <div>
               <CardTitle>📦 Mapa do Almoxarifado - {local?.nome_local}</CardTitle>
-              <p className="text-sm text-slate-600">Visualização de ocupação por zona</p>
+              <p className="text-sm text-slate-600">Visualização de ocupação por zona (Mapa de Calor)</p>
             </div>
           </div>
           <Badge className="bg-cyan-600">
@@ -105,7 +71,37 @@ export default function VisualizadorEstoque3D({ localEstoqueId }) {
       <CardContent className="p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {local?.zonas_armazenagem?.map((zona, idx) => (
-            <ZonaVisual key={idx} zona={zona} />
+            <div key={idx} className="space-y-3">
+              <div className="p-3 bg-slate-100 rounded-lg border-2 border-slate-300">
+                <p className="font-bold text-sm text-slate-900">{zona.codigo_zona}</p>
+                <p className="text-xs text-slate-600">{zona.descricao}</p>
+                {zona.tipo_produto && (
+                  <Badge variant="outline" className="text-xs mt-1">{zona.tipo_produto}</Badge>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {zona.corredores?.map((corredor, cIdx) => (
+                  <div key={cIdx} className="p-3 bg-white rounded-lg border">
+                    <p className="text-xs font-semibold text-slate-700 mb-2 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {corredor.codigo_corredor}
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {corredor.prateleiras?.map((prat, pIdx) => (
+                        <Prateleira
+                          key={pIdx}
+                          codigo={prat.codigo_prateleira}
+                          ocupadoKG={prat.ocupado_kg || 0}
+                          capacidadeKG={prat.capacidade_kg || 100}
+                          onClick={() => console.log('Prateleira', prat)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           ))}
 
           {(!local?.zonas_armazenagem || local.zonas_armazenagem.length === 0) && (
