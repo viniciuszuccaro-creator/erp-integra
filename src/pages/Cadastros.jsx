@@ -1373,7 +1373,7 @@ export default function Cadastros() {
                 <AlertTriangle className="w-4 h-4 text-orange-600" />
                 <AlertDescription className="text-sm text-orange-900">
                   📊 <strong>IA Churn Risk:</strong> Detecta clientes inativos (+60 dias) e cria oportunidade no CRM automaticamente
-                </Alertcription>
+                </AlertDescription>
               </Alert>
             </div>
           </AccordionContent>
@@ -3037,4 +3037,3 @@ export default function Cadastros() {
     </div>
   );
 }
-
