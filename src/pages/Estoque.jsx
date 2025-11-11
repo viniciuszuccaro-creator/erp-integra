@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Box, MapPin, BarChart3, QrCode, ClipboardList, Brain, Boxes } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import SaldosPorLocal from "@/components/estoque/SaldosPorLocal";

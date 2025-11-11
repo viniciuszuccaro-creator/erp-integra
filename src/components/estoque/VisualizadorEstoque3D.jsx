@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Package, MapPin, Maximize2 } from "lucide-react";
+import { Package, MapPin } from "lucide-react";
 
 /**
  * V21.4 - Visualizador de Almoxarifado (Mapa de Calor 2D)
