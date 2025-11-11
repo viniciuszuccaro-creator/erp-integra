@@ -53,6 +53,7 @@ import {
   Receipt, // NEW ICON for Tipos de Despesa
   TrendingUp, // NEW ICON for Moedas e Índices
   Eye, // NEW: Eye icon for view actions
+  Activity
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -1372,7 +1373,7 @@ export default function Cadastros() {
                 <AlertTriangle className="w-4 h-4 text-orange-600" />
                 <AlertDescription className="text-sm text-orange-900">
                   📊 <strong>IA Churn Risk:</strong> Detecta clientes inativos (+60 dias) e cria oportunidade no CRM automaticamente
-                </AlertDescription>
+                </Alertcription>
               </Alert>
             </div>
           </AccordionContent>
@@ -3036,3 +3037,4 @@ export default function Cadastros() {
     </div>
   );
 }
+
