@@ -50,8 +50,6 @@ import {
 import PainelOperacoes3D from "../components/dashboard/PainelOperacoes3D";
 import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
-import WidgetAlertas from '../components/dashboard/WidgetAlertas';
-import MonitorSaudeGoldenThread from '../components/sistema/MonitorSaudeGoldenThread';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
@@ -645,15 +643,7 @@ export default function Dashboard() {
         </TabsList>
 
         <TabsContent value="tempo-real">
-          <div className="grid lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2">
-              <DashboardTempoReal empresaId={empresaAtual?.id} />
-            </div>
-            <div className="space-y-6">
-              <WidgetAlertas empresaId={empresaAtual?.id} />
-              <MonitorSaudeGoldenThread empresaId={empresaAtual?.id} />
-            </div>
-          </div>
+          <DashboardTempoReal empresaId={empresaAtual?.id} />
         </TabsContent>
 
         <TabsContent value="resumo">

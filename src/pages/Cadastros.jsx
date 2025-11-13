@@ -53,7 +53,6 @@ import {
   Receipt, // NEW ICON for Tipos de Despesa
   TrendingUp, // NEW ICON for Moedas e Índices
   Eye, // NEW: Eye icon for view actions
-  Activity
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";

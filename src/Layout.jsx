@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -22,8 +23,7 @@ import {
   Building2,
   BookOpen,
   Search,
-  Rocket,
-  Brain
+  Rocket
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,12 +46,10 @@ import { UserProvider, useUser } from "@/components/lib/UserContext";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
-import AgendadorJobsIA from "@/components/sistema/AgendadorJobsIA";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
   { title: "Dashboard Corporativo", url: createPageUrl("DashboardCorporativo"), icon: BarChart3, group: "principal" },
-  { title: "🧠 Hub Central de IA", url: createPageUrl("IAHub"), icon: Brain, group: "principal" },
   { title: "Relatórios e Análises", url: createPageUrl("Relatorios"), icon: BarChart3, group: "principal" },
   { title: "Agenda e Calendário", url: createPageUrl("Agenda"), icon: Calendar, group: "principal" },
   { title: "CRM - Relacionamento", url: createPageUrl("CRM"), icon: Users, group: "principal" },
@@ -66,6 +64,7 @@ const navigationItems = [
   { title: "Recursos Humanos", url: createPageUrl("RH"), icon: UserCircle, group: "administrativo" },
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
+  // Removed item: { title: "Gestão de Empresas", url: createPageUrl("Empresas"), icon: Building2, group: "sistema" },
   { title: "Integrações", url: createPageUrl("Integracoes"), icon: Link2, group: "sistema" },
   { title: "Configurações do Sistema", url: createPageUrl("ConfiguracoesSistema"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
@@ -76,7 +75,7 @@ const navigationItems = [
 
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
-  const { user, empresaAtual } = useUser();
+  const { user } = useUser();
   const [pesquisaOpen, setPesquisaOpen] = useState(false);
   const [modoEscuro, setModoEscuro] = useState(false);
 
@@ -197,9 +196,6 @@ function LayoutContent({ children, currentPageName }) {
   return (
     <SidebarProvider>
       {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
-      
-      {/* V21.3: NOVO - Agendador de Jobs IA em Background */}
-      {empresaAtual?.id && <AgendadorJobsIA empresaId={empresaAtual.id} />}
       
       <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
         <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">

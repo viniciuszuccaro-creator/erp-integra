@@ -1,226 +1,172 @@
-import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { MapPin, Navigation, Clock, Truck, Package, AlertTriangle } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Truck, Navigation, Clock } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 
 /**
- * V21.2 - Mapa de Rastreamento Real-time
- * COM: Posição GPS dos veículos, ETA dinâmico, Rotas
+ * Mapa de Rastreamento em Tempo Real
+ * Mostra posições atualizadas dos veículos a cada 60s
  */
-export default function MapaRastreamentoRealTime({ empresaId }) {
-  const [centroMapa, setCentroMapa] = useState([-23.550520, -46.633308]); // São Paulo default
+export default function MapaRastreamentoRealTime({ entregaId, empresaId }) {
+  const [posicaoAtual, setPosicaoAtual] = useState(null);
 
-  // Entregas em andamento
-  const { data: entregasAtivas = [] } = useQuery({
-    queryKey: ['entregas-ativas', empresaId],
-    queryFn: () => base44.entities.Entrega.filter({
-      empresa_id: empresaId,
-      status: { $in: ['Saiu para Entrega', 'Em Trânsito'] }
-    }),
-    refetchInterval: 10000 // Atualiza a cada 10s
+  const { data: posicoes = [], refetch } = useQuery({
+    queryKey: ['posicoes-veiculo', entregaId],
+    queryFn: () => base44.entities.PosicaoVeiculo.filter(
+      { entrega_id: entregaId },
+      '-data_hora',
+      100
+    ),
+    refetchInterval: 60000, // Atualiza a cada 60 segundos
+    enabled: !!entregaId
   });
 
-  // Posições GPS dos veículos
-  const { data: posicoesGPS = [] } = useQuery({
-    queryKey: ['posicoes-veiculos', empresaId],
+  const { data: entrega } = useQuery({
+    queryKey: ['entrega', entregaId],
     queryFn: async () => {
-      const todas = await base44.entities.PosicaoVeiculo.list('-data_hora', 100);
-      
-      // Pegar última posição de cada veículo
-      const ultimasPosicoes = {};
-      todas.forEach(pos => {
-        const key = pos.veiculo_id || pos.motorista_id;
-        if (!ultimasPosicoes[key] || new Date(pos.data_hora) > new Date(ultimasPosicoes[key].data_hora)) {
-          ultimasPosicoes[key] = pos;
-        }
-      });
-
-      return Object.values(ultimasPosicoes);
+      const entregas = await base44.entities.Entrega.filter({ id: entregaId });
+      return entregas[0];
     },
-    refetchInterval: 5000 // Atualiza a cada 5s
+    enabled: !!entregaId
   });
 
-  // Rotas ativas
-  const { data: rotasAtivas = [] } = useQuery({
-    queryKey: ['rotas-ativas', empresaId],
-    queryFn: () => base44.entities.Rota.filter({
-      empresa_id: empresaId,
-      status: 'Em Andamento'
-    })
-  });
-
-  const calcularCorVeiculo = (status) => {
-    switch (status) {
-      case 'Em Movimento': return 'green';
-      case 'Parado': return 'orange';
-      case 'Em Entrega': return 'blue';
-      default: return 'gray';
+  useEffect(() => {
+    if (posicoes.length > 0) {
+      setPosicaoAtual(posicoes[0]); // Posição mais recente
     }
-  };
+  }, [posicoes]);
 
-  return (
-    <div className="space-y-4">
-      <Card className="border-2 border-blue-300">
-        <CardHeader className="bg-blue-50">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-blue-600" />
-              Rastreamento em Tempo Real
-            </CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-green-500 rounded-full" />
-                <span className="text-xs">Em movimento</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-orange-500 rounded-full" />
-                <span className="text-xs">Parado</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 bg-blue-500 rounded-full" />
-                <span className="text-xs">Entregando</span>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="h-[600px] relative">
-            <MapContainer
-              center={centroMapa}
-              zoom={12}
-              style={{ height: '100%', width: '100%' }}
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-
-              {/* Marcadores de Veículos */}
-              {posicoesGPS.map((pos, idx) => (
-                <Marker
-                  key={idx}
-                  position={[pos.latitude, pos.longitude]}
-                  icon={L.divIcon({
-                    html: `<div style="background: ${calcularCorVeiculo(pos.status_movimento)}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
-                    className: '',
-                    iconSize: [24, 24]
-                  })}
-                >
-                  <Popup>
-                    <div className="p-2 min-w-[200px]">
-                      <p className="font-bold text-sm mb-2">
-                        <Truck className="w-4 h-4 inline mr-1" />
-                        {pos.placa || 'Veículo'}
-                      </p>
-                      <div className="space-y-1 text-xs">
-                        <p><strong>Motorista:</strong> {pos.motorista_nome}</p>
-                        <p><strong>Status:</strong> {pos.status_movimento}</p>
-                        <p><strong>Velocidade:</strong> {pos.velocidade_kmh?.toFixed(0)} km/h</p>
-                        <p><strong>Última atualização:</strong> {new Date(pos.data_hora).toLocaleTimeString('pt-BR')}</p>
-                        {pos.distancia_proxima_entrega_km && (
-                          <p className="text-blue-600 font-semibold mt-2">
-                            <Navigation className="w-3 h-3 inline mr-1" />
-                            {pos.distancia_proxima_entrega_km.toFixed(1)} km da próxima entrega
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-
-              {/* Marcadores de Destino (Entregas) */}
-              {entregasAtivas.map((entrega, idx) => {
-                if (!entrega.endereco_entrega_completo?.latitude) return null;
-                
-                return (
-                  <Marker
-                    key={`dest-${idx}`}
-                    position={[
-                      entrega.endereco_entrega_completo.latitude,
-                      entrega.endereco_entrega_completo.longitude
-                    ]}
-                    icon={L.divIcon({
-                      html: `<div style="background: #dc2626; width: 28px; height: 28px; border-radius: 8px; border: 2px solid white; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">📦</div>`,
-                      className: '',
-                      iconSize: [28, 28]
-                    })}
-                  >
-                    <Popup>
-                      <div className="p-2 min-w-[200px]">
-                        <p className="font-bold text-sm mb-2">
-                          <Package className="w-4 h-4 inline mr-1" />
-                          {entrega.cliente_nome}
-                        </p>
-                        <div className="space-y-1 text-xs">
-                          <p><strong>Pedido:</strong> {entrega.numero_pedido}</p>
-                          <p><strong>Status:</strong> {entrega.status}</p>
-                          <p className="text-slate-600">
-                            {entrega.endereco_entrega_completo.logradouro}, {entrega.endereco_entrega_completo.numero}
-                          </p>
-                          {entrega.data_previsao && (
-                            <p className="text-blue-600 font-semibold mt-2">
-                              <Clock className="w-3 h-3 inline mr-1" />
-                              Previsão: {new Date(entrega.data_previsao).toLocaleDateString('pt-BR')}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </Popup>
-                  </Marker>
-                );
-              })}
-
-              {/* Rotas (Polylines) */}
-              {rotasAtivas.map((rota, idx) => {
-                const pontos = (rota.pontos_entrega || [])
-                  .filter(p => p.latitude && p.longitude)
-                  .map(p => [p.latitude, p.longitude]);
-
-                if (pontos.length < 2) return null;
-
-                return (
-                  <Polyline
-                    key={`rota-${idx}`}
-                    positions={pontos}
-                    color="#3b82f6"
-                    weight={3}
-                    opacity={0.6}
-                  />
-                );
-              })}
-            </MapContainer>
-          </div>
-
-          {/* Legenda lateral */}
-          <div className="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg border-2 border-blue-300 max-w-xs">
-            <p className="font-bold text-sm mb-3 text-blue-900">Entregas Ativas</p>
-            <div className="space-y-2 max-h-[200px] overflow-y-auto">
-              {entregasAtivas.map((entrega, idx) => (
-                <div key={idx} className="p-2 bg-slate-50 rounded text-xs">
-                  <p className="font-semibold">{entrega.cliente_nome}</p>
-                  <p className="text-slate-600">Status: {entrega.status}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+  if (!entrega) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center text-slate-500">
+          <MapPin className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p>Selecione uma entrega para rastrear</p>
         </CardContent>
       </Card>
+    );
+  }
 
-      {/* Alertas */}
-      {posicoesGPS.filter(p => p.status_movimento === 'Parado').length > 0 && (
-        <Alert className="border-orange-300 bg-orange-50">
-          <AlertTriangle className="w-4 h-4 text-orange-600" />
-          <AlertDescription className="text-sm text-orange-800">
-            <strong>Alerta:</strong> {posicoesGPS.filter(p => p.status_movimento === 'Parado').length} veículo(s) parado(s) há mais de 5 minutos
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
+  const posicaoDestino = {
+    lat: entrega.endereco_entrega_completo?.latitude,
+    lng: entrega.endereco_entrega_completo?.longitude
+  };
+
+  const posicaoVeiculo = posicaoAtual ? {
+    lat: posicaoAtual.latitude,
+    lng: posicaoAtual.longitude
+  } : null;
+
+  const centerMap = posicaoVeiculo || posicaoDestino || { lat: -23.55, lng: -46.63 };
+
+  return (
+    <Card className="h-full">
+      <CardHeader className="border-b bg-slate-50">
+        <CardTitle className="text-base flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Navigation className="w-5 h-5 text-blue-600" />
+            Rastreamento em Tempo Real
+          </div>
+          {posicaoAtual && (
+            <Badge className="bg-green-100 text-green-700">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse mr-2" />
+              Online
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="h-[500px] relative">
+          <MapContainer
+            center={[centerMap.lat, centerMap.lng]}
+            zoom={13}
+            style={{ height: '100%', width: '100%' }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; OpenStreetMap contributors'
+            />
+
+            {/* Marcador do Destino */}
+            {posicaoDestino.lat && (
+              <Marker position={[posicaoDestino.lat, posicaoDestino.lng]}>
+                <Popup>
+                  <div className="text-sm">
+                    <p className="font-semibold">Destino</p>
+                    <p className="text-slate-600">{entrega.cliente_nome}</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {entrega.endereco_entrega_completo?.logradouro}, {entrega.endereco_entrega_completo?.numero}
+                    </p>
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+
+            {/* Marcador do Veículo */}
+            {posicaoVeiculo && (
+              <Marker position={[posicaoVeiculo.lat, posicaoVeiculo.lng]}>
+                <Popup>
+                  <div className="text-sm">
+                    <p className="font-semibold flex items-center gap-1">
+                      <Truck className="w-4 h-4" />
+                      Veículo
+                    </p>
+                    <p className="text-slate-600">{posicaoAtual.motorista_nome}</p>
+                    <p className="text-xs text-slate-500">
+                      Velocidade: {posicaoAtual.velocidade_kmh?.toFixed(0)} km/h
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Atualizado: {new Date(posicaoAtual.data_hora).toLocaleTimeString('pt-BR')}
+                    </p>
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+
+            {/* Linha da Rota */}
+            {posicaoVeiculo && posicaoDestino.lat && (
+              <Polyline
+                positions={[
+                  [posicaoVeiculo.lat, posicaoVeiculo.lng],
+                  [posicaoDestino.lat, posicaoDestino.lng]
+                ]}
+                color="#3b82f6"
+                dashArray="10, 10"
+              />
+            )}
+          </MapContainer>
+
+          {/* Info Overlay */}
+          {posicaoAtual && (
+            <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 border">
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-slate-500 text-xs">Distância Restante</p>
+                  <p className="font-semibold text-blue-600">
+                    {posicaoAtual.distancia_proxima_entrega_km?.toFixed(1) || '-'} km
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs">Tempo Estimado</p>
+                  <p className="font-semibold text-orange-600">
+                    {posicaoAtual.tempo_estimado_proxima_entrega_min || '-'} min
+                  </p>
+                </div>
+                <div>
+                  <p className="text-slate-500 text-xs">Status</p>
+                  <Badge className="bg-blue-100 text-blue-700">
+                    {posicaoAtual.status_movimento}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
