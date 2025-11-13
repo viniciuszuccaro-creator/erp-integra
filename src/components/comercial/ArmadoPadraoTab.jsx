@@ -10,12 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Download, ChevronRight, Box } from 'lucide-react';
+import { Plus, Trash2, Download, ChevronRight, Box, Layers, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
- * Aba 3: Armado Padrão (Peças)
- * Calculadora de Vigas, Colunas, Blocos, Estacas
+ * V21.1 - Aba 3: Armado Padrão
+ * AGORA COM: etapa_obra_id + Consolidação por Etapa
  */
 export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNext }) {
   const [tipoPeca, setTipoPeca] = useState(null);
@@ -65,6 +65,8 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
       tipo_peca: tipoPeca,
       identificador: dadosPeca.identificador || `${tipoPeca.toUpperCase()}-${Date.now()}`,
       quantidade: dadosPeca.quantidade || 1,
+      etapa_obra_id: dadosPeca.etapa_obra_id || '', // V21.1
+      etapa_obra_nome: dadosPeca.etapa_obra_nome || '', // V21.1
       ...dadosPeca
     };
 
@@ -122,20 +124,22 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
   };
 
   const gerarDescricaoTecnica = (peca) => {
+    const etapaTexto = peca.etapa_obra_nome ? ` [${peca.etapa_obra_nome}]` : '';
+    
     if (peca.tipo_peca === 'coluna' || peca.tipo_peca === 'viga') {
-      return `${peca.quantidade} ${peca.tipo_peca.toUpperCase()} de ${peca.comprimento}m — ` +
+      return `${peca.quantidade} ${peca.tipo_peca.toUpperCase()}${etapaTexto} de ${peca.comprimento}m — ` +
         `${peca.quantidade_ferros_principais || 0} ferros ${peca.bitola_principal}mm — ` +
         `Estribo ${peca.estribo_largura}x${peca.estribo_altura}cm (${peca.estribo_bitola}mm) a cada ${peca.distancia_estribo}cm`;
     }
 
     if (peca.tipo_peca === 'estaca') {
-      return `${peca.quantidade} ESTACA de ${peca.comprimento}m — ` +
+      return `${peca.quantidade} ESTACA${etapaTexto} de ${peca.comprimento}m — ` +
         `${peca.quantidade_ferros_principais || 0} ferros ${peca.bitola_principal}mm — ` +
         `Estribo Ø${peca.estribo_diametro}cm (${peca.estribo_bitola}mm) a cada ${peca.distancia_estribo}cm`;
     }
 
     if (peca.tipo_peca === 'bloco') {
-      return `${peca.quantidade} BLOCO ${peca.comprimento}x${peca.largura}x${peca.altura}cm — ` +
+      return `${peca.quantidade} BLOCO${etapaTexto} ${peca.comprimento}x${peca.largura}x${peca.altura}cm — ` +
         `${peca.ferros_lado1} ferros lado 1 + ${peca.ferros_lado2} ferros lado 2 — ` +
         `Bitola ${peca.bitola_principal}mm`;
     }
@@ -202,14 +206,51 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
     toast.success('✅ Peça removida');
   };
 
+  // V21.1: Consolidar por Etapa de Obra
+  const consolidarPorEtapa = () => {
+    const itensComEtapa = formData.itens_armado_padrao.filter(p => p.etapa_obra_id);
+    
+    if (itensComEtapa.length === 0) {
+      toast.error('Nenhum item possui etapa de obra definida');
+      return;
+    }
+
+    const etapas = {};
+    
+    itensComEtapa.forEach(peca => {
+      const etapaId = peca.etapa_obra_id;
+      if (!etapas[etapaId]) {
+        etapas[etapaId] = {
+          etapa_obra_id: etapaId,
+          etapa_obra_nome: peca.etapa_obra_nome,
+          pecas: [],
+          peso_total_kg: 0,
+          valor_total: 0
+        };
+      }
+      etapas[etapaId].pecas.push(peca);
+      etapas[etapaId].peso_total_kg += peca.peso_total_kg || 0;
+      etapas[etapaId].valor_total += peca.preco_venda_total || 0;
+    });
+
+    const resumo = Object.values(etapas);
+    toast.success(`📊 Consolidado em ${resumo.length} etapa(s) de obra`);
+    
+    // You might want to update formData or display this consolidated view
+    // For now, it just toasts and returns the data.
+    console.log("Resumo por etapa:", resumo); 
+    return resumo;
+  };
+
   const gerarItensComerciais = () => {
     // Injetar itens de armado padrão na aba de revenda (como itens comerciais)
     const itensComerciais = formData.itens_armado_padrao.map(peca => ({
       produto_id: null,
       codigo_sku: peca.identificador,
       descricao: peca.descricao_automatica,
-      unidade: 'UN',
+      unidade_medida: 'UN', // V21.1
       quantidade: peca.quantidade,
+      quantidade_kg: peca.peso_total_kg, // V21.1
       preco_unitario: peca.preco_venda_total / peca.quantidade,
       valor_item: peca.preco_venda_total,
       peso_unitario: peca.peso_total_kg / peca.quantidade,
@@ -222,9 +263,17 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
       itens_revenda: [...(prev.itens_revenda || []), ...itensComerciais]
     }));
 
-    toast.success(`✅ ${itensComerciais.length} peça(s) adicionada(s) ao orçamento`);
+    toast.success(`✅ ${itensComerciais.length} peça(s) enviada(s) para Aba Revenda`); // V21.1
     onNext();
   };
+
+  // V21.1: Etapas de Obra Disponíveis (simulado - pode vir de formData.obra_destino_id)
+  const etapasObra = [
+    { id: 'fundacao', nome: 'Fundação' },
+    { id: 'estrutura', nome: 'Estrutura' },
+    { id: 'cobertura', nome: 'Cobertura' },
+    { id: 'acabamento', nome: 'Acabamento' }
+  ];
 
   return (
     <div className="space-y-6">
@@ -274,7 +323,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             {/* Campos Comuns */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div>
                 <Label>Identificador</Label>
                 <Input
@@ -300,6 +349,36 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                   value={dadosPeca.comprimento || ''}
                   onChange={(e) => setDadosPeca({ ...dadosPeca, comprimento: parseFloat(e.target.value) })}
                 />
+              </div>
+
+              {/* V21.1: Etapa da Obra */}
+              <div>
+                <Label className="flex items-center gap-1 text-purple-600">
+                  <Layers className="w-3 h-3" />
+                  Etapa da Obra
+                </Label>
+                <Select
+                  value={dadosPeca.etapa_obra_id}
+                  onValueChange={(value) => {
+                    const etapa = etapasObra.find(e => e.id === value);
+                    setDadosPeca({ 
+                      ...dadosPeca, 
+                      etapa_obra_id: value,
+                      etapa_obra_nome: etapa?.nome 
+                    });
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {etapasObra.map(etapa => (
+                      <SelectItem key={etapa.id} value={etapa.id}>
+                        {etapa.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -533,16 +612,30 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle className="text-base flex items-center justify-between">
             <span>Peças Adicionadas ({formData.itens_armado_padrao?.length || 0})</span>
-            {formData.itens_armado_padrao && formData.itens_armado_padrao.length > 0 && (
-              <Button
-                onClick={gerarItensComerciais}
-                variant="outline"
-                size="sm"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Gerar Itens para Orçamento
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {/* V21.1: Botão Consolidar */}
+              {formData.itens_armado_padrao && formData.itens_armado_padrao.length > 0 && (
+                <Button
+                  onClick={consolidarPorEtapa}
+                  variant="outline"
+                  size="sm"
+                  className="border-purple-300 text-purple-600"
+                >
+                  <Layers className="w-4 h-4 mr-2" />
+                  Agrupar por Etapa
+                </Button>
+              )}
+              {formData.itens_armado_padrao && formData.itens_armado_padrao.length > 0 && (
+                <Button
+                  onClick={gerarItensComerciais}
+                  variant="outline"
+                  size="sm"
+                >
+                  <ArrowRight className="w-4 h-4 mr-2" />
+                  Enviar para Aba Revenda
+                </Button>
+              )}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -551,6 +644,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
               <TableHeader>
                 <TableRow className="bg-slate-50">
                   <TableHead>ID</TableHead>
+                  <TableHead>Etapa Obra</TableHead>
                   <TableHead>Descrição Técnica</TableHead>
                   <TableHead>Qtd</TableHead>
                   <TableHead>Peso (kg)</TableHead>
@@ -562,6 +656,15 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                 {formData.itens_armado_padrao.map((peca, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-mono text-xs">{peca.identificador}</TableCell>
+                    <TableCell>
+                      {peca.etapa_obra_nome ? (
+                        <Badge className="bg-purple-100 text-purple-700">
+                          {peca.etapa_obra_nome}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-slate-400">-</span>
+                      )}
+                    </TableCell>
                     <TableCell className="max-w-md">
                       <p className="text-sm">{peca.descricao_automatica}</p>
                     </TableCell>

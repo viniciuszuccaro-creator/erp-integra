@@ -1,24 +1,85 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, Percent, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DollarSign, Percent, FileText, Receipt, CheckCircle, AlertTriangle } from 'lucide-react';
+import GerarNFeModal from './GerarNFeModal';
 
 /**
- * Aba 6: Fechamento Financeiro e Fiscal
- * V11.0 - Com campo Observações da NF-e
+ * V21.1 - Aba 7: Fechamento Financeiro
+ * AGORA COM: Emissão de NF-e por Etapa + Barra de Progresso
  */
 export default function FechamentoFinanceiroTab({ formData, setFormData, onNext }) {
+  const [modalNFeOpen, setModalNFeOpen] = useState(false);
+
   const valorProdutos = formData?.valor_produtos || 0;
   const descontoPercentual = formData?.desconto_geral_pedido_percentual || 0;
   const descontoValor = (valorProdutos * descontoPercentual) / 100;
   const valorFrete = formData?.valor_frete || 0;
   const valorTotal = valorProdutos - descontoValor + valorFrete;
 
+  // V21.1: Calcular Progresso de Faturamento
+  const etapas = formData?.etapas_entrega || [];
+  const valorFaturado = etapas
+    .filter(e => e.faturada)
+    .reduce((sum, e) => sum + (e.valor_total_etapa || 0), 0);
+  const percentualFaturado = valorTotal > 0 ? (valorFaturado / valorTotal) * 100 : 0;
+
   return (
     <div className="space-y-6">
+      {/* V21.1: Barra de Progresso do Faturamento */}
+      {etapas.length > 0 && (
+        <Card className="border-2 border-purple-300 bg-purple-50">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-purple-600" />
+              Progresso de Faturamento por Etapas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-700">Valor Faturado</span>
+              <span className="font-bold text-purple-900">
+                R$ {valorFaturado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} / R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+            <Progress value={percentualFaturado} className="h-3" />
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-600">
+                {etapas.filter(e => e.faturada).length} de {etapas.length} etapa(s) faturada(s)
+              </span>
+              <span className="font-bold text-purple-600">
+                {percentualFaturado.toFixed(1)}%
+              </span>
+            </div>
+
+            {percentualFaturado === 100 && (
+              <Alert className="border-green-300 bg-green-50 p-3">
+                <CheckCircle className="w-4 h-4 text-green-600" />
+                <AlertDescription className="text-sm text-green-700 ml-6">
+                  ✅ Pedido 100% faturado
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* V21.1: Botão Emitir NF-e com Escopo */}
+            <Button
+              onClick={() => setModalNFeOpen(true)}
+              className="w-full bg-purple-600 hover:bg-purple-700"
+              size="lg"
+            >
+              <Receipt className="w-5 h-5 mr-2" />
+              Emitir NF-e (Pedido Completo ou por Etapa)
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Desconto Global */}
       <Card>
         <CardHeader>
@@ -59,9 +120,9 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               <Label>Justificativa do Desconto</Label>
               <textarea
                 value={formData?.justificativa_desconto || ''}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  justificativa_desconto: e.target.value 
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  justificativa_desconto: e.target.value
                 }))}
                 className="w-full p-3 border rounded-lg"
                 rows="2"
@@ -106,9 +167,9 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                   min="2"
                   max="12"
                   value={formData?.numero_parcelas || 2}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    numero_parcelas: parseInt(e.target.value) 
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    numero_parcelas: parseInt(e.target.value)
                   }))}
                 />
               </div>
@@ -117,9 +178,9 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                 <Input
                   type="number"
                   value={formData?.intervalo_parcelas || 30}
-                  onChange={(e) => setFormData(prev => ({ 
-                    ...prev, 
-                    intervalo_parcelas: parseInt(e.target.value) 
+                  onChange={(e) => setFormData(prev => ({
+                    ...prev,
+                    intervalo_parcelas: parseInt(e.target.value)
                   }))}
                 />
               </div>
@@ -128,7 +189,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
         </CardContent>
       </Card>
 
-      {/* NOVO: Informações Fiscais */}
+      {/* Informações Fiscais */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
@@ -144,9 +205,9 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             </p>
             <textarea
               value={formData?.observacoes_nfe || ''}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                observacoes_nfe: e.target.value 
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                observacoes_nfe: e.target.value
               }))}
               className="w-full p-3 border rounded-lg"
               rows="3"
@@ -159,9 +220,9 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               <Label>CFOP Padrão</Label>
               <Input
                 value={formData?.cfop_pedido || '5102'}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  cfop_pedido: e.target.value 
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  cfop_pedido: e.target.value
                 }))}
                 placeholder="5102"
               />
@@ -174,9 +235,9 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
               <Label>Natureza da Operação</Label>
               <Input
                 value={formData?.natureza_operacao || 'Venda de mercadoria'}
-                onChange={(e) => setFormData(prev => ({ 
-                  ...prev, 
-                  natureza_operacao: e.target.value 
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  natureza_operacao: e.target.value
                 }))}
               />
             </div>
@@ -236,9 +297,9 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             <Label>Observações Públicas (visíveis ao cliente)</Label>
             <textarea
               value={formData?.observacoes_publicas || ''}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                observacoes_publicas: e.target.value 
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                observacoes_publicas: e.target.value
               }))}
               className="w-full p-3 border rounded-lg"
               rows="3"
@@ -250,9 +311,9 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
             <Label>Observações Internas (uso interno)</Label>
             <textarea
               value={formData?.observacoes_internas || ''}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                observacoes_internas: e.target.value 
+              onChange={(e) => setFormData(prev => ({
+                ...prev,
+                observacoes_internas: e.target.value
               }))}
               className="w-full p-3 border rounded-lg"
               rows="3"
@@ -261,6 +322,17 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
           </div>
         </CardContent>
       </Card>
+
+      {/* V21.1: Modal de Emissão de NF-e */}
+      <GerarNFeModal
+        open={modalNFeOpen}
+        onClose={() => setModalNFeOpen(false)}
+        pedidoData={formData}
+        onEmitir={(dadosNFe) => {
+          console.log('Emitir NF-e:', dadosNFe);
+          setModalNFeOpen(false);
+        }}
+      />
     </div>
   );
 }

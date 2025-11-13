@@ -9,14 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Upload, Plus, Trash2, Eye, Download, Bot } from 'lucide-react';
+import { Upload, Plus, Trash2, Eye, Download, Bot, Layers, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import VisualizadorPeca from './VisualizadorPeca';
 
 /**
- * Aba 4: Corte e Dobra (IA)
- * Upload com IA OU planilhamento manual
- * Tela dividida: Planilha + Visualizador
+ * V21.1 - Aba 4: Corte e Dobra (IA)
+ * AGORA COM: etapa_obra_id + Consolidação + Visualizador Restaurado
  */
 export default function CorteDobraIATab({ formData, setFormData, empresaId, onNext }) {
   const [posicaoSelecionada, setPosicaoSelecionada] = useState(null);
@@ -27,7 +26,7 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
     queryKey: ['bitolas', empresaId || formData?.empresa_id],
     queryFn: async () => {
       const empId = empresaId || formData?.empresa_id;
-      const filter = empId 
+      const filter = empId
         ? { empresa_id: empId, eh_bitola: true, status: 'Ativo' }
         : { eh_bitola: true, status: 'Ativo' };
       return await base44.entities.Produto.filter(filter);
@@ -44,6 +43,14 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
     { id: 'estribo', label: 'Estribo', medidas: ['A', 'B'] }
   ];
 
+  // V21.1: Etapas de Obra (mesmas da Aba 3)
+  const etapasObra = [
+    { id: 'fundacao', nome: 'Fundação' },
+    { id: 'estrutura', nome: 'Estrutura' },
+    { id: 'cobertura', nome: 'Cobertura' },
+    { id: 'acabamento', nome: 'Acabamento' }
+  ];
+
   const handleUploadIA = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -52,21 +59,20 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
     toast.success('🤖 Processando arquivo com IA...');
 
     try {
-      // Upload arquivo
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
-      // Processar com IA
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt: `Analise este projeto de estrutura metálica e extraia TODAS as posições de corte e dobra.
         
-        Para cada posição, retorne:
-        - codigo: Código da posição (N1, N2, etc.)
-        - bitola: Diâmetro da bitola em mm (ex: 6.3, 8.0, 10.0, 12.5, 16.0, 20.0, 25.0)
-        - formato: Tipo de dobra (reto, L, U, Z, gancho, estribo)
-        - quantidade: Quantidade de barras
-        - medidas: Objeto com medidas A, B, C, D em centímetros
-        
-        Retorne APENAS posições que estejam claramente identificadas no projeto.`,
+Para cada posição, retorne:
+- codigo: Código da posição (N1, N2, etc.)
+- bitola: Diâmetro da bitola em mm (ex: 6.3, 8.0, 10.0, 12.5, 16.0, 20.0, 25.0)
+- formato: Tipo de dobra (reto, L, U, Z, gancho, estribo)
+- quantidade: Quantidade de barras
+- medidas: Objeto com medidas A, B, C, D em centímetros
+- etapa: Fase da obra (fundacao, estrutura, cobertura) se identificável
+
+Retorne APENAS posições claramente identificadas.`,
         file_urls: [file_url],
         response_json_schema: {
           type: 'object',
@@ -80,7 +86,8 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
                   bitola: { type: 'string' },
                   formato: { type: 'string' },
                   quantidade: { type: 'number' },
-                  medidas: { 
+                  etapa: { type: 'string' },
+                  medidas: {
                     type: 'object',
                     properties: {
                       A: { type: 'number' },
@@ -99,14 +106,15 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
       });
 
       if (resultado.posicoes && resultado.posicoes.length > 0) {
-        // Calcular peso para cada posição
         const posicoesComPeso = resultado.posicoes.map(pos => {
           const pesoEstimado = calcularPesoPosicao(pos, bitolas);
           return {
             ...pos,
             peso_kg: pesoEstimado,
             origem_ia: true,
-            confianca_ia: resultado.confianca || 85
+            confianca_ia: resultado.confianca || 85,
+            etapa_obra_id: pos.etapa || '',
+            etapa_obra_nome: etapasObra.find(e => e.id === pos.etapa)?.nome || ''
           };
         });
 
@@ -142,11 +150,11 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
   const calcularPesoPosicao = (posicao, bitolas) => {
     const bitola = bitolas.find(b => b.bitola_diametro_mm === parseFloat(posicao.bitola));
     const pesoMetro = bitola?.peso_teorico_kg_m || 1.0;
-    
+
     const medidas = posicao.medidas || {};
     const comprimentoTotal = Object.values(medidas).reduce((sum, val) => sum + (val || 0), 0);
     const comprimentoMetros = comprimentoTotal / 100;
-    
+
     return comprimentoMetros * pesoMetro * (posicao.quantidade || 1);
   };
 
@@ -157,9 +165,10 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
       formato: 'reto',
       quantidade: 1,
       medidas: { A: 0 },
+      etapa_obra_id: '', // V21.1
+      etapa_obra_nome: '', // V21.1
       origem_ia: false
     };
-
     setEditando(novaPosicao);
   };
 
@@ -173,12 +182,10 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
     const posicaoFinal = { ...editando, peso_kg: pesoCalculado };
 
     if (editando.index !== undefined) {
-      // Editando existente
       const novasPos = [...(formData?.itens_corte_dobra || [])];
       novasPos[editando.index] = posicaoFinal;
       setFormData(prev => ({ ...prev, itens_corte_dobra: novasPos }));
     } else {
-      // Nova
       setFormData(prev => ({
         ...prev,
         itens_corte_dobra: [...(prev?.itens_corte_dobra || []), posicaoFinal]
@@ -197,13 +204,44 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
     toast.success('✅ Posição removida');
   };
 
+  // V21.1: Consolidar por Etapa
+  const consolidarPorEtapa = () => {
+    const itensComEtapa = formData.itens_corte_dobra.filter(p => p.etapa_obra_id);
+
+    if (itensComEtapa.length === 0) {
+      toast.error('Nenhuma posição possui etapa de obra definida');
+      return;
+    }
+
+    const etapas = {};
+    itensComEtapa.forEach(pos => {
+      const etapaId = pos.etapa_obra_id;
+      if (!etapas[etapaId]) {
+        etapas[etapaId] = {
+          etapa_obra_id: etapaId,
+          etapa_obra_nome: pos.etapa_obra_nome,
+          posicoes: [],
+          peso_total_kg: 0
+        };
+      }
+      etapas[etapaId].posicoes.push(pos);
+      etapas[etapaId].peso_total_kg += pos.peso_kg || 0;
+    });
+
+    const resumo = Object.values(etapas);
+    toast.success(`📊 Consolidado em ${resumo.length} etapa(s) de obra`);
+    // Here you would typically set this summary to state to display it,
+    // or pass it to the next step. For now, it just triggers a toast.
+    console.log("Resumo por Etapa:", resumo);
+    return resumo;
+  };
+
   const formatoSelecionado = formatosDisponiveis.find(f => f.id === editando?.formato);
 
   return (
     <div className="grid grid-cols-2 gap-6" style={{ height: 'calc(100vh - 400px)' }}>
       {/* LADO ESQUERDO: Planilha */}
       <div className="space-y-4 overflow-auto">
-        {/* Upload com IA */}
         <Card className="border-2 border-purple-300 bg-purple-50">
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -238,12 +276,11 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
               </Button>
             </label>
             <p className="text-xs text-purple-700 mt-2 text-center">
-              A IA extrairá automaticamente todas as posições
+              A IA extrairá automaticamente posições + etapas da obra
             </p>
           </CardContent>
         </Card>
 
-        {/* Adicionar Manual */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
@@ -253,11 +290,7 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
           </CardHeader>
           <CardContent>
             {!editando ? (
-              <Button
-                onClick={adicionarManual}
-                variant="outline"
-                className="w-full"
-              >
+              <Button onClick={adicionarManual} variant="outline" className="w-full">
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Posição
               </Button>
@@ -324,6 +357,36 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
                   </div>
                 </div>
 
+                {/* V21.1: Etapa da Obra */}
+                <div>
+                  <Label className="text-xs flex items-center gap-1 text-purple-600">
+                    <Layers className="w-3 h-3" />
+                    Etapa da Obra (opcional)
+                  </Label>
+                  <Select
+                    value={editando.etapa_obra_id}
+                    onValueChange={(value) => {
+                      const etapa = etapasObra.find(e => e.id === value);
+                      setEditando({
+                        ...editando,
+                        etapa_obra_id: value,
+                        etapa_obra_nome: etapa?.nome || ''
+                      });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {etapasObra.map(etapa => (
+                        <SelectItem key={etapa.id} value={etapa.id}>
+                          {etapa.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Medidas Dinâmicas */}
                 {formatoSelecionado && (
                   <div className="grid grid-cols-4 gap-2 p-3 bg-slate-50 rounded">
@@ -336,9 +399,9 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
                           value={editando.medidas?.[medida] || ''}
                           onChange={(e) => setEditando({
                             ...editando,
-                            medidas: { 
-                              ...(editando.medidas || {}), 
-                              [medida]: parseFloat(e.target.value) || 0 
+                            medidas: {
+                              ...(editando.medidas || {}),
+                              [medida]: parseFloat(e.target.value) || 0
                             }
                           })}
                         />
@@ -367,11 +430,22 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
           </CardContent>
         </Card>
 
-        {/* Planilha */}
         <Card>
           <CardHeader className="bg-slate-50 border-b">
-            <CardTitle className="text-base">
-              Planilha de Posições ({formData.itens_corte_dobra?.length || 0})
+            <CardTitle className="text-base flex items-center justify-between">
+              <span>Planilha de Posições ({formData.itens_corte_dobra?.length || 0})</span>
+              {/* V21.1: Botão Consolidar */}
+              {formData.itens_corte_dobra && formData.itens_corte_dobra.length > 0 && (
+                <Button
+                  onClick={consolidarPorEtapa}
+                  size="sm"
+                  variant="outline"
+                  className="border-purple-300 text-purple-600"
+                >
+                  <Layers className="w-3 h-3 mr-2" />
+                  Consolidar
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -381,6 +455,7 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
                   <TableHeader>
                     <TableRow className="bg-slate-50">
                       <TableHead>Pos</TableHead>
+                      <TableHead>Etapa</TableHead>
                       <TableHead>Bitola</TableHead>
                       <TableHead>Formato</TableHead>
                       <TableHead>Medidas</TableHead>
@@ -397,6 +472,15 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
                         onClick={() => setPosicaoSelecionada(index)}
                       >
                         <TableCell className="font-mono font-bold">{pos.codigo}</TableCell>
+                        <TableCell>
+                          {pos.etapa_obra_nome ? (
+                            <Badge className="bg-purple-100 text-purple-700 text-xs">
+                              {pos.etapa_obra_nome}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-slate-400">-</span>
+                          )}
+                        </TableCell>
                         <TableCell>
                           {pos.bitola}mm
                           {pos.origem_ia && (
@@ -445,24 +529,30 @@ export default function CorteDobraIATab({ formData, setFormData, empresaId, onNe
           </CardContent>
         </Card>
 
-        {/* Gerar para Orçamento */}
+        {/* V21.1: Gerar para Orçamento */}
         {formData.itens_corte_dobra && formData.itens_corte_dobra.length > 0 && (
           <Button
             onClick={() => {
-              toast.success('✅ Itens disponíveis para orçamento');
+              toast.success('✅ Posições disponíveis para próxima etapa');
               onNext();
             }}
             className="w-full bg-green-600 hover:bg-green-700"
             size="lg"
           >
-            <Download className="w-5 h-5 mr-2" />
-            Gerar Itens para Orçamento
+            <ArrowRight className="w-5 h-5 mr-2" />
+            Próximo: Histórico do Cliente
           </Button>
         )}
       </div>
 
-      {/* LADO DIREITO: Visualizador */}
-      <div className="border-2 border-slate-200 rounded-lg bg-white overflow-hidden">
+      {/* LADO DIREITO: V21.1 - Visualizador RESTAURADO */}
+      <div className="border-2 border-slate-200 rounded-lg bg-white overflow-hidden sticky top-0">
+        <div className="p-3 bg-slate-50 border-b">
+          <h3 className="font-semibold text-sm flex items-center gap-2">
+            <Eye className="w-4 h-4 text-blue-600" />
+            Visualizador de Peça
+          </h3>
+        </div>
         <VisualizadorPeca
           posicao={posicaoSelecionada !== null ? formData.itens_corte_dobra[posicaoSelecionada] : null}
         />

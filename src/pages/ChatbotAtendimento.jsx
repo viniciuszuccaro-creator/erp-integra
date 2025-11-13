@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,24 +17,50 @@ import {
   CreditCard,
   Package,
   Phone,
-  Loader2
+  Loader2,
+  User,
+  Zap
 } from "lucide-react";
 import { toast } from "sonner";
 
 /**
- * Chatbot ERP-Cêntrico V16.1
- * Intent Engine + IA de Sentimento + Autenticação
+ * V21.1 - Chatbot ERP-Cêntrico
+ * Intent Engine + Sentimento + Transbordo Humano Automático
  */
 export default function ChatbotAtendimento() {
   const [mensagem, setMensagem] = useState('');
   const [sessaoAtual, setSessaoAtual] = useState(null);
   const [clienteAutenticado, setClienteAutenticado] = useState(null);
+  const [vendedorAtendendo, setVendedorAtendendo] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: interacoes = [] } = useQuery({
-    queryKey: ['chatbot-interacoes'],
-    queryFn: () => base44.entities.ChatbotInteracao.list('-data_hora', 50),
+  // V21.1: Buscar intents configurados
+  const { data: intentsConfig = [] } = useQuery({
+    queryKey: ['chatbot-intents'],
+    queryFn: () => base44.entities.ChatbotIntents.filter({ ativo: true }),
   });
+
+  const { data: interacoes = [] } = useQuery({
+    queryKey: ['chatbot-interacoes', sessaoAtual],
+    queryFn: () => {
+      if (!sessaoAtual) return [];
+      return base44.entities.ChatbotInteracao.filter(
+        { sessao_id: sessaoAtual },
+        '-data_hora',
+        50
+      );
+    },
+    enabled: !!sessaoAtual
+  });
+
+  // Inicializar sessão
+  useEffect(() => {
+    if (!sessaoAtual) {
+      setSessaoAtual(`sessao-${Date.now()}`);
+      // Simulação de autenticação do cliente para testes
+      // setClienteAutenticado({ id: 'cli123', nome: 'Cliente Teste', vendedor_responsavel_id: 'user456' });
+    }
+  }, [sessaoAtual]);
 
   const enviarMensagemMutation = useMutation({
     mutationFn: async (msg) => {
@@ -41,7 +68,7 @@ export default function ChatbotAtendimento() {
       
       if (intent.requer_autenticacao && !clienteAutenticado) {
         return await base44.entities.ChatbotInteracao.create({
-          sessao_id: sessaoAtual || Date.now().toString(),
+          sessao_id: sessaoAtual,
           canal: 'Portal',
           mensagem_usuario: msg,
           intent_detectado: intent.nome,
@@ -54,14 +81,15 @@ export default function ChatbotAtendimento() {
 
       const sentimento = await analisarSentimento(msg);
       
-      if (sentimento.frustrado) {
+      // V21.1: Transbordo Automático
+      if (sentimento.frustrado || sentimento.urgente || intent.escalar) {
         await escalarParaAtendente(msg, sentimento);
       }
 
       const resposta = await processarIntent(intent, msg);
 
       return await base44.entities.ChatbotInteracao.create({
-        sessao_id: sessaoAtual || Date.now().toString(),
+        sessao_id: sessaoAtual,
         canal: 'Portal',
         cliente_id: clienteAutenticado?.id,
         cliente_nome: clienteAutenticado?.nome,
@@ -72,7 +100,8 @@ export default function ChatbotAtendimento() {
         resposta_bot: resposta,
         sentimento_detectado: sentimento.tipo,
         palavras_chave_sentimento: sentimento.palavras,
-        transferido_atendente: sentimento.frustrado,
+        transferido_atendente: sentimento.frustrado || sentimento.urgente || intent.escalar,
+        vendedor_notificado_id: sentimento.vendedor_id,
         data_hora: new Date().toISOString()
       });
     },
@@ -85,6 +114,23 @@ export default function ChatbotAtendimento() {
   const detectarIntent = async (msg) => {
     const msgLower = msg.toLowerCase();
     
+    // V21.1: Usar ChatbotIntents.json configurado
+    for (const intentConfig of intentsConfig) {
+      const palavras = intentConfig.palavras_chave || [];
+      const match = palavras.some(p => msgLower.includes(p.toLowerCase()));
+      
+      if (match) {
+        return {
+          nome: intentConfig.nome_intent,
+          confianca: 90,
+          requer_autenticacao: intentConfig.requer_autenticacao,
+          acao: intentConfig.acao_automatica,
+          escalar: intentConfig.escalar_vendedor
+        };
+      }
+    }
+
+    // Fallback (se nenhum intent configurado)
     if (msgLower.includes('boleto') || msgLower.includes('2 via') || msgLower.includes('segunda via')) {
       return { nome: '2_via_boleto', confianca: 95, requer_autenticacao: true };
     }
@@ -98,34 +144,67 @@ export default function ChatbotAtendimento() {
     }
     
     if (msgLower.includes('vendedor') || msgLower.includes('atendente') || msgLower.includes('pessoa')) {
-      return { nome: 'falar_atendente', confianca: 100, requer_autenticacao: false };
+      return { nome: 'falar_atendente', confianca: 100, requer_autenticacao: false, escalar: true };
     }
     
     return { nome: 'desconhecido', confianca: 0, requer_autenticacao: false };
   };
 
   const analisarSentimento = async (msg) => {
-    const palavrasFrustracao = ['absurdo', 'ridículo', 'atrasado', 'errado', 'horrível', 'cancelar', 'péssimo'];
+    const palavrasFrustracao = ['absurdo', 'ridículo', 'atrasado', 'errado', 'horrível', 'cancelar', 'péssimo', 'nunca mais'];
+    const palavrasUrgencia = ['urgente', 'emergência', 'imediato', 'agora', 'rápido'];
+    
     const msgLower = msg.toLowerCase();
-    const palavrasDetectadas = palavrasFrustracao.filter(p => msgLower.includes(p));
+    const frustracaoDetectada = palavrasFrustracao.filter(p => msgLower.includes(p));
+    const urgenciaDetectada = palavrasUrgencia.filter(p => msgLower.includes(p));
     
-    if (palavrasDetectadas.length > 0) {
-      return { tipo: 'Frustrado', frustrado: true, palavras: palavrasDetectadas };
+    // V21.1: Buscar vendedor responsável
+    let vendedorId = null;
+    if (clienteAutenticado?.vendedor_responsavel_id) {
+      vendedorId = clienteAutenticado.vendedor_responsavel_id;
     }
-    
-    return { tipo: 'Neutro', frustrado: false, palavras: [] };
+
+    return { 
+      tipo: frustracaoDetectada.length > 0 ? 'Frustrado' : 
+            urgenciaDetectada.length > 0 ? 'Urgente' : 'Neutro',
+      frustrado: frustracaoDetectada.length > 0,
+      urgente: urgenciaDetectada.length > 0,
+      palavras: [...frustracaoDetectada, ...urgenciaDetectada],
+      vendedor_id: vendedorId
+    };
   };
 
+  // V21.1: Transbordo com Verificação de Permissão
   const escalarParaAtendente = async (msg, sentimento) => {
+    // Buscar vendedor responsável
+    let vendedorDestino = 'Equipe Comercial';
+    
+    if (sentimento.vendedor_id) {
+      try {
+        const vendedor = await base44.entities.User.get(sentimento.vendedor_id);
+        vendedorDestino = vendedor.full_name;
+      } catch (error) {
+        console.error('Vendedor não encontrado:', error);
+      }
+    }
+
     await base44.entities.Notificacao.create({
       titulo: '🚨 Cliente Frustrado - Transbordo Urgente',
-      mensagem: `Cliente demonstrou frustração: "${msg}".\n\nPalavras: ${sentimento.palavras.join(', ')}`,
+      mensagem: `Cliente demonstrou ${sentimento.tipo.toLowerCase()}: "${msg}".\n\nPalavras detectadas: ${sentimento.palavras.join(', ')}\n\n👉 Sessão ID: ${sessaoAtual}`,
       tipo: 'urgente',
       categoria: 'Comercial',
       prioridade: 'Urgente',
-      dados_adicionais: { tag: '#FALHA_ATENDIMENTO' }
+      destinatario_id: sentimento.vendedor_id,
+      link_acao: `/chatbot-atendimento?sessao=${sessaoAtual}`,
+      dados_adicionais: { 
+        tag: '#TRANSBORDO_CHATBOT',
+        sessao_id: sessaoAtual,
+        cliente_id: clienteAutenticado?.id
+      }
     });
-    toast.error('Cliente frustrado - Transferindo para atendente');
+
+    setVendedorAtendendo(vendedorDestino);
+    toast.error(`🚨 Cliente ${sentimento.tipo} - Transferindo para ${vendedorDestino}`);
   };
 
   const processarIntent = async (intent, msg) => {
@@ -144,10 +223,29 @@ export default function ChatbotAtendimento() {
           }
           return '✅ Sem títulos em aberto!';
         }
-        break;
+        return '🔐 Para consultar boletos, preciso que você se autentique.';
+      
+      case 'rastrear_entrega':
+        if (clienteAutenticado) {
+          const entregas = await base44.entities.Entrega.filter({
+            cliente_id: clienteAutenticado.id,
+            status: { $in: ['Em Trânsito', 'Saiu para Entrega'] }
+          });
+          
+          if (entregas.length > 0) {
+            return `🚚 ${entregas.length} entrega(s) em andamento:\n\n${entregas.map(e => 
+              `Pedido ${e.numero_pedido} - Status: ${e.status}`
+            ).join('\n')}`;
+          }
+          return '📦 Nenhuma entrega em andamento.';
+        }
+        return '🔐 Para rastrear entregas, preciso que você se autentique.';
       
       case 'fazer_orcamento_ia':
-        return '📋 Para orçamento:\n1. Envie projeto (PDF/DWG)\n2. Ou descreva o que precisa';
+        return '📋 Para orçamento:\n1. Envie projeto (PDF/DWG)\n2. Ou descreva o que precisa\n\n🤖 Nossa IA processará automaticamente!';
+      
+      case 'falar_atendente':
+        return '📞 Transferindo para vendedor responsável...\n\nAguarde um momento.';
       
       default:
         return '🤔 Posso ajudar com:\n• 2ª via boleto\n• Rastrear entrega\n• Fazer orçamento\n• Falar com vendedor';
@@ -159,7 +257,7 @@ export default function ChatbotAtendimento() {
     enviarMensagemMutation.mutate(mensagem);
   };
 
-  const ultimasInteracoes = interacoes.slice(0, 10);
+  const ultimasInteracoes = interacoes.slice().reverse(); // Reverse for chronological display
 
   return (
     <div className="p-6 lg:p-8">
@@ -167,37 +265,61 @@ export default function ChatbotAtendimento() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">🤖 Chatbot ERP-Cêntrico</h1>
-            <p className="text-slate-600">Intent Engine + IA de Sentimento</p>
+            <p className="text-slate-600">V21.1 - Intent Engine + IA + Transbordo Automático</p>
           </div>
           <Badge className="bg-indigo-600 text-white px-4 py-2">
             <Bot className="w-4 h-4 mr-2" />
-            V16.1
+            V21.1
           </Badge>
         </div>
 
+        {/* V21.1: Alerta de Transbordo */}
+        {vendedorAtendendo && (
+          <Alert className="border-red-300 bg-red-50">
+            <AlertTriangle className="w-5 h-5 text-red-600" />
+            <AlertDescription>
+              <p className="font-semibold text-red-900">🚨 Conversação Transferida</p>
+              <p className="text-sm text-red-700 mt-1">
+                Vendedor {vendedorAtendendo} foi notificado e assumirá o atendimento
+              </p>
+            </AlertDescription>
+          </Alert>
+        )}
+
         <Alert className="border-blue-200 bg-blue-50">
           <AlertDescription className="text-sm text-blue-900">
-            🧠 <strong>IA de Sentimento:</strong> Detecta frustração e escala para atendente
+            🧠 <strong>IA de Sentimento:</strong> Detecta frustração/urgência e escala automaticamente para vendedor responsável
           </AlertDescription>
         </Alert>
 
+        {/* Chat */}
         <Card>
           <CardHeader className="bg-slate-50 border-b">
-            <CardTitle>Teste o Chatbot</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Teste o Chatbot</CardTitle>
+              {clienteAutenticado && (
+                <Badge className="bg-green-600">
+                  <User className="w-3 h-3 mr-1" />
+                  {clienteAutenticado.nome}
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="space-y-4 mb-4 h-96 overflow-y-auto">
-              {ultimasInteracoes.reverse().map((inter) => (
+            <div className="space-y-4 mb-4 h-96 overflow-y-auto border rounded-lg p-4 bg-slate-50">
+              {ultimasInteracoes.map((inter) => (
                 <div key={inter.id} className="space-y-2">
+                  {/* Mensagem do Usuário */}
                   <div className="flex justify-end">
                     <div className="bg-blue-600 text-white p-3 rounded-lg max-w-md">
                       <p className="text-sm">{inter.mensagem_usuario}</p>
                     </div>
                   </div>
 
+                  {/* Resposta do Bot */}
                   <div className="flex justify-start">
                     <div className="bg-slate-100 p-3 rounded-lg max-w-md">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
                         <Bot className="w-4 h-4 text-indigo-600" />
                         <Badge variant="outline" className="text-xs">
                           {inter.intent_detectado}
@@ -208,12 +330,31 @@ export default function ChatbotAtendimento() {
                             Frustrado
                           </Badge>
                         )}
+                        {inter.sentimento_detectado === 'Urgente' && (
+                          <Badge className="bg-orange-100 text-orange-700 text-xs">
+                            <Zap className="w-3 h-3 mr-1" />
+                            Urgente
+                          </Badge>
+                        )}
+                        {inter.transferido_atendente && (
+                          <Badge className="bg-purple-100 text-purple-700 text-xs">
+                            <Phone className="w-3 h-3 mr-1" />
+                            Transferido
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm whitespace-pre-line">{inter.resposta_bot}</p>
                     </div>
                   </div>
                 </div>
               ))}
+
+              {ultimasInteracoes.length === 0 && (
+                <div className="text-center py-12 text-slate-400">
+                  <Bot className="w-16 h-16 mx-auto mb-3 opacity-30" />
+                  <p>Inicie a conversa enviando uma mensagem</p>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2">
@@ -222,44 +363,100 @@ export default function ChatbotAtendimento() {
                 onChange={(e) => setMensagem(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleEnviar()}
                 placeholder="Digite sua mensagem..."
+                disabled={enviarMensagemMutation.isPending}
               />
-              <Button onClick={handleEnviar} disabled={!mensagem.trim()}>
-                <Send className="w-4 h-4" />
+              <Button 
+                onClick={handleEnviar} 
+                disabled={!mensagem.trim() || enviarMensagemMutation.isPending}
+              >
+                {enviarMensagemMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+
+            {/* Sugestões Rápidas */}
+            <div className="flex gap-2 mt-3 flex-wrap">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setMensagem('Preciso da 2ª via do boleto')}
+              >
+                💳 2ª via boleto
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setMensagem('Onde está minha entrega?')}
+              >
+                📦 Rastrear
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setMensagem('Quero fazer um orçamento')}
+              >
+                📋 Orçamento
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setMensagem('Preciso falar com um vendedor URGENTE')}
+              >
+                🚨 Urgente
               </Button>
             </div>
           </CardContent>
         </Card>
 
+        {/* Intents Configurados */}
         <div className="grid lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader className="bg-green-50 border-b">
-              <CardTitle className="text-sm">Intents Autenticadas</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                Intents Autenticadas
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4" />
-                <span className="text-sm">2_via_boleto</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                <span className="text-sm">rastrear_entrega</span>
-              </div>
+              {intentsConfig.filter(i => i.requer_autenticacao).map(intent => (
+                <div key={intent.id} className="flex items-center gap-2 text-sm">
+                  <CreditCard className="w-4 h-4 text-blue-600" />
+                  <span className="font-mono text-xs">{intent.nome_intent}</span>
+                  <Badge variant="outline" className="text-xs">{intent.tipo_intent}</Badge>
+                </div>
+              ))}
+              {intentsConfig.filter(i => i.requer_autenticacao).length === 0 && (
+                <p className="text-xs text-slate-500">Nenhum intent configurado</p>
+              )}
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="bg-blue-50 border-b">
-              <CardTitle className="text-sm">Intents Públicas</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Package className="w-4 h-4 text-blue-600" />
+                Intents Públicas
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                <span className="text-sm">fazer_orcamento_ia</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4" />
-                <span className="text-sm">falar_vendedor</span>
-              </div>
+              {intentsConfig.filter(i => !i.requer_autenticacao).map(intent => (
+                <div key={intent.id} className="flex items-center gap-2 text-sm">
+                  <FileText className="w-4 h-4 text-purple-600" />
+                  <span className="font-mono text-xs">{intent.nome_intent}</span>
+                  {intent.escalar_vendedor && (
+                    <Badge className="bg-orange-100 text-orange-700 text-xs">
+                      <Phone className="w-3 h-3 mr-1" />
+                      Escala
+                    </Badge>
+                  )}
+                </div>
+              ))}
+              {intentsConfig.filter(i => !i.requer_autenticacao).length === 0 && (
+                <p className="text-xs text-slate-500">Nenhum intent configurado</p>
+              )}
             </CardContent>
           </Card>
         </div>

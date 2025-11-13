@@ -5,19 +5,23 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Search, Copy, Package, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Search, Copy, Package, ChevronRight, Calculator, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
+import { converterUnidade, ExibirEquivalenteKG, PreviewConversao } from '@/components/lib/CalculadoraUnidades';
 
 /**
- * Aba 2: Itens de Revenda
- * Produtos de estoque
+ * V21.1 - Aba 2: Itens de Revenda
+ * AGORA COM: Conversão PC/MT/KG + IA de Sugestão
  */
 export default function ItensRevendaTab({ formData, setFormData, onNext }) {
   const [search, setSearch] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [quantidade, setQuantidade] = useState(1);
+  const [unidadeVenda, setUnidadeVenda] = useState('UN'); // V21.1: Dropdown dinâmico
   const [descontoItem, setDescontoItem] = useState(0);
 
   const { data: produtos = [] } = useQuery({
@@ -42,6 +46,14 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
       return;
     }
 
+    // V21.1: Converter para KG (base do estoque)
+    const quantidadeKG = converterUnidade(
+      quantidade, 
+      unidadeVenda, 
+      'KG', 
+      produtoSelecionado
+    );
+
     const precoBase = produtoSelecionado.preco_venda || 0;
     const descontoValor = (precoBase * descontoItem) / 100;
     const precoUnitario = precoBase - descontoValor;
@@ -51,8 +63,9 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
       produto_id: produtoSelecionado.id,
       codigo_sku: produtoSelecionado.codigo,
       descricao: produtoSelecionado.descricao,
-      unidade: produtoSelecionado.unidade_medida,
+      unidade_medida: unidadeVenda, // V21.1: Unidade escolhida
       quantidade,
+      quantidade_kg: quantidadeKG, // V21.1: SEMPRE em KG
       custo_unitario: produtoSelecionado.custo_medio || 0,
       preco_base_produto: precoBase,
       preco_unitario_bruto: precoBase,
@@ -64,7 +77,7 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
         ? (((precoUnitario - (produtoSelecionado.custo_medio || 0)) / precoUnitario) * 100)
         : 0,
       estoque_disponivel: produtoSelecionado.estoque_disponivel || 0,
-      peso_unitario: produtoSelecionado.peso_kg || 0
+      peso_unitario: quantidade > 0 ? (quantidadeKG / quantidade) : 0 // Peso unitário em KG baseado na quantidade e unidade de venda
     };
 
     setFormData(prev => ({
@@ -75,6 +88,7 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
     // Reset
     setProdutoSelecionado(null);
     setQuantidade(1);
+    setUnidadeVenda('UN');
     setDescontoItem(0);
     setSearch('');
     toast.success('✅ Item adicionado');
@@ -116,6 +130,53 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
     }
   };
 
+  // V21.1: IA de Sugestão de Quantidade
+  const sugerirQuantidadeIA = async () => {
+    if (!produtoSelecionado || !formData?.cliente_id) {
+      toast.info('Selecione um cliente e um produto antes de pedir sugestões.');
+      return;
+    }
+
+    try {
+      const historicoPedidos = await base44.entities.Pedido.filter({
+        cliente_id: formData.cliente_id
+      }, '-data_pedido', 5); // Busca os últimos 5 pedidos
+
+      let quantidadeTotal = 0;
+      let numeroDeCompras = 0;
+
+      historicoPedidos.forEach(ped => {
+        (ped.itens_revenda || []).forEach(item => {
+          if (item.produto_id === produtoSelecionado.id) {
+            // Convertendo a quantidade do item para a unidade de venda atual do componente
+            const qtdConvertida = converterUnidade(
+              item.quantidade,
+              item.unidade_medida || 'UN', // Unidade em que foi vendido
+              unidadeVenda, // Unidade atual do componente
+              produtoSelecionado // Produto para obter fatores de conversão
+            );
+            quantidadeTotal += qtdConvertida;
+            numeroDeCompras++;
+          }
+        });
+      });
+
+      if (numeroDeCompras > 0) {
+        const sugestao = parseFloat((quantidadeTotal / numeroDeCompras).toFixed(2));
+        setQuantidade(sugestao);
+        toast.success(`🧠 IA sugere: ${sugestao} ${unidadeVenda} (baseado em ${numeroDeCompras} compra(s) anteriores)`);
+      } else {
+        toast.info('Cliente nunca comprou este produto. Nenhuma sugestão disponível.');
+      }
+    } catch (error) {
+      console.error('Erro ao obter sugestão da IA:', error);
+      toast.error('Falha ao obter sugestão da IA.');
+    }
+  };
+
+  // V21.1: Opções de Unidade Dinâmicas
+  const opcoesUnidade = produtoSelecionado?.unidades_secundarias || ['UN'];
+
   return (
     <div className="space-y-6">
       {/* Busca e Adição */}
@@ -155,6 +216,7 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
                   key={produto.id}
                   onClick={() => {
                     setProdutoSelecionado(produto);
+                    setUnidadeVenda((produto.unidades_secundarias && produto.unidades_secundarias.length > 0 ? produto.unidades_secundarias[0] : 'UN'));
                     setSearch('');
                   }}
                   className="p-3 hover:bg-blue-50 cursor-pointer border-b last:border-0"
@@ -163,8 +225,13 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
                     <div>
                       <p className="font-semibold text-sm">{produto.descricao}</p>
                       <p className="text-xs text-slate-600">
-                        SKU: {produto.codigo} • Estoque: {produto.estoque_disponivel || 0}
+                        SKU: {produto.codigo} • Estoque: {produto.estoque_disponivel || 0} KG
                       </p>
+                      {produto.eh_bitola && (
+                        <Badge className="mt-1 text-xs bg-purple-100 text-purple-700">
+                          Bitola {produto.bitola_diametro_mm}mm
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm font-bold text-green-600">
                       R$ {produto.preco_venda?.toFixed(2) || '0.00'}
@@ -175,22 +242,60 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
             </div>
           )}
 
-          {/* Produto Selecionado */}
+          {/* V21.1: Produto Selecionado com Conversão */}
           {produtoSelecionado && (
             <div className="bg-white border-2 border-blue-600 rounded-lg p-4">
-              <p className="font-semibold mb-3">{produtoSelecionado.descricao}</p>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="flex items-center justify-between mb-3">
+                <p className="font-semibold">{produtoSelecionado.descricao}</p>
+                <Button
+                  onClick={sugerirQuantidadeIA}
+                  size="sm"
+                  variant="outline"
+                  className="border-purple-300 text-purple-600"
+                  disabled={!formData?.cliente_id}
+                >
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  IA Sugestão
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-4 gap-3">
                 <div>
-                  <label className="text-xs text-slate-600">Quantidade</label>
+                  <Label className="text-xs">Quantidade</Label>
                   <Input
                     type="number"
-                    min="1"
+                    min="0.01"
+                    step="0.01"
                     value={quantidade}
-                    onChange={(e) => setQuantidade(parseFloat(e.target.value) || 1)}
+                    onChange={(e) => setQuantidade(parseFloat(e.target.value) || 0.01)}
                   />
                 </div>
+
+                {/* V21.1: Dropdown Dinâmico de Unidade */}
                 <div>
-                  <label className="text-xs text-slate-600">Desconto (%)</label>
+                  <Label className="text-xs flex items-center gap-1">
+                    <Calculator className="w-3 h-3" />
+                    Vender Por
+                  </Label>
+                  <Select value={unidadeVenda} onValueChange={setUnidadeVenda}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a unidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {opcoesUnidade.map(un => (
+                        <SelectItem key={un} value={un}>
+                          {un === 'PÇ' ? 'Peça' : 
+                           un === 'MT' ? 'Metro' : 
+                           un === 'KG' ? 'Quilograma' :
+                           un === 'TON' ? 'Tonelada' : un}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-xs">Desconto (%)</Label>
                   <Input
                     type="number"
                     min="0"
@@ -200,8 +305,9 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
                     onChange={(e) => setDescontoItem(parseFloat(e.target.value) || 0)}
                   />
                 </div>
+
                 <div>
-                  <label className="text-xs text-slate-600">Valor Total</label>
+                  <Label className="text-xs">Valor Total</Label>
                   <Input
                     value={`R$ ${((produtoSelecionado.preco_venda * quantidade) * (1 - descontoItem / 100)).toFixed(2)}`}
                     disabled
@@ -209,6 +315,14 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
                   />
                 </div>
               </div>
+
+              {/* V21.1: Preview de Conversão */}
+              <PreviewConversao
+                quantidade={quantidade}
+                unidadeOrigem={unidadeVenda}
+                produto={produtoSelecionado}
+              />
+
               <Button
                 onClick={adicionarItem}
                 className="w-full mt-3 bg-blue-600 hover:bg-blue-700"
@@ -221,7 +335,7 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
         </CardContent>
       </Card>
 
-      {/* Lista de Itens */}
+      {/* V21.1: Lista com Coluna "Equivalente (KG)" */}
       <Card>
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle className="text-base">
@@ -235,7 +349,9 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
                 <TableRow className="bg-slate-50">
                   <TableHead>SKU</TableHead>
                   <TableHead>Descrição</TableHead>
-                  <TableHead>Qtd</TableHead>
+                  <TableHead>Qtd Vendida</TableHead>
+                  <TableHead>Unidade</TableHead>
+                  <TableHead>Equiv. (KG)</TableHead>
                   <TableHead>Preço Unit</TableHead>
                   <TableHead>Desc %</TableHead>
                   <TableHead>Total</TableHead>
@@ -249,6 +365,12 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
                     <TableCell className="font-mono text-xs">{item.codigo_sku}</TableCell>
                     <TableCell>{item.descricao}</TableCell>
                     <TableCell>{item.quantidade}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{item.unidade_medida}</Badge>
+                    </TableCell>
+                    <TableCell className="font-semibold text-purple-600">
+                      {item.quantidade_kg?.toFixed(2) || '0.00'} KG
+                    </TableCell>
                     <TableCell>R$ {item.preco_unitario?.toFixed(2)}</TableCell>
                     <TableCell>
                       {item.desconto_item_percentual > 0 && (
