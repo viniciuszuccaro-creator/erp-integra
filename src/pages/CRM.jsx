@@ -25,7 +25,8 @@ import {
   Target,
   ShoppingCart,
   FileText,
-  Brain // Added Brain icon import
+  Brain,
+  AlertTriangle // Added AlertTriangle icon import
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -36,11 +37,12 @@ import { useToast } from "@/components/ui/use-toast";
 import FunilVisual from "../components/crm/FunilVisual";
 import AgendarFollowUp from "../components/crm/AgendarFollowUp";
 import ConverterOportunidade from "../components/crm/ConverterOportunidade";
-import IALeadsPriorizacao from "../components/crm/IALeadsPriorizacao"; // Added new component import
+import IALeadsPriorizacao from "../components/crm/IALeadsPriorizacao";
+import IAChurnDetection from "../components/crm/IAChurnDetection"; // Added new component import
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-export default function CRMPage() { // Changed from CRM to CRMPage to match existing function name
+export default function CRMPage() {
   const [activeTab, setActiveTab] = useState("funil");
   const [searchTerm, setSearchTerm] = useState("");
   const [isOppDialogOpen, setIsOppDialogOpen] = useState(false);
@@ -141,7 +143,8 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
       "Qualificação": 5,
       "Proposta": 10,
       "Negociação": 15,
-      "Fechamento": 20
+      "Fechamento": 20,
+      "Reativação": 5 // NOVO V21.1
     };
     score += etapasScore[opp.etapa] || 0;
 
@@ -243,7 +246,8 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
         "Negociação": 75,
         "Fechamento": 90,
         "Ganho": 100,
-        "Perdido": 0
+        "Perdido": 0,
+        "Reativação": 30 // NOVO V21.1
       };
 
       return base44.entities.Oportunidade.update(oppId, {
@@ -497,7 +501,8 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
     'Negociação': 'bg-orange-100 text-orange-700',
     'Fechamento': 'bg-yellow-100 text-yellow-700',
     'Ganho': 'bg-green-100 text-green-700',
-    'Perdido': 'bg-red-100 text-red-700'
+    'Perdido': 'bg-red-100 text-red-700',
+    'Reativação': 'bg-pink-100 text-pink-700' // NOVO V21.1
   };
 
   const statusColors = {
@@ -519,7 +524,7 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
     <div className="p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">CRM - Gestão de Relacionamento com Clientes</h1>
-        <p className="text-slate-600">Gerencie oportunidades, interações e campanhas de marketing</p>
+        <p className="text-slate-600">V21.1 - Gerencie oportunidades, interações, campanhas + IA de Churn</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -598,6 +603,11 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
             <Brain className="w-4 h-4 mr-2" />
             IA Leads
           </TabsTrigger>
+          {/* NOVO V21.1: IA Churn */}
+          <TabsTrigger value="ia-churn" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
+            <AlertTriangle className="w-4 h-4 mr-2" />
+            IA Churn
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="funil">
@@ -611,7 +621,7 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
                     Nova Oportunidade
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>{editingOpp ? 'Editar Oportunidade' : 'Nova Oportunidade'}</DialogTitle>
                   </DialogHeader>
@@ -1427,11 +1437,16 @@ export default function CRMPage() { // Changed from CRM to CRMPage to match exis
         <TabsContent value="ia-leads">
           <IALeadsPriorizacao oportunidades={oportunidades} />
         </TabsContent>
+
+        {/* NOVO V21.1: IA CHURN DETECTION */}
+        <TabsContent value="ia-churn">
+          <IAChurnDetection clientes={clientes} />
+        </TabsContent>
       </Tabs>
 
       {/* Modal Visualização Detalhada */}
       <Dialog open={!!viewingOpp} onOpenChange={() => setViewingOpp(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalhes da Oportunidade</DialogTitle>
           </DialogHeader>

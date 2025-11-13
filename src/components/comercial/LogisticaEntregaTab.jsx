@@ -6,98 +6,73 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Truck, MapPin, Clock, Plus, Package, Calculator } from 'lucide-react'; // Added Calculator icon
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Truck, MapPin, Clock, Plus, Package, Calculator, Calendar, CheckCircle, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import SeletorEnderecoEntregaPedido from './SeletorEnderecoEntregaPedido';
 import BuscaCEP from './BuscaCEP';
 import usePermissions from '@/components/lib/usePermissions';
+import CriarEtapaEntregaModal from './CriarEtapaEntregaModal';
 
 /**
  * Aba 5: Logística e Entrega
  * V12.0 - Com campo Link Google Maps para roteirização
+ * V21.1 - Novo gerenciamento de Etapas de Entrega
  */
-export default function LogisticaEntregaTab({ formData, setFormData, clientes, onNext }) {
-  const { isAdmin, canApprove } = usePermissions();
-  const [modalEtapa, setModalEtapa] = useState(false);
-  const [novaEtapa, setNovaEtapa] = useState({
-    nome: '',
-    itens_selecionados: []
-  });
+export default function LogisticaEntregaTab({ formData, setFormData, clientes = [], onNext }) {
+  const { isAdmin, canApprove } = usePermissions(); // Keep usePermissions if other parts might need it, even if podeGerenciarEtapas is removed.
+  const [modalEtapaOpen, setModalEtapaOpen] = useState(false);
 
   const clienteSelecionado = clientes?.find(c => c.id === formData?.cliente_id) || null;
 
   // Regra 30kg: Frete grátis
   const freteGratis = (formData?.peso_total_kg || 0) >= 30;
 
-  // Combine all items with a unique ID for each.
-  // This uniqueId is stable and used to track items across stages.
-  const allRawItems = [
-    ...(formData?.itens_revenda || []).map(item => ({ ...item, original_type: 'revenda', display_name: `${item.descricao} (Revenda)` })),
-    ...(formData?.itens_armado_padrao || []).map(item => ({ ...item, original_type: 'armado', display_name: item.descricao_automatica || `${item.tipo_peca} ${item.largura}x${item.altura} (Armado)` })),
-    ...(formData?.itens_corte_dobra || []).map(item => ({ ...item, original_type: 'corte_dobra', display_name: `${item.codigo} - ${item.bitola} ${item.formato} (Corte/Dobra)` }))
-  ];
-
-  const todosItens = allRawItems.map((item, globalIdx) => ({
-    ...item,
-    uniqueId: `${item.original_type}_${globalIdx}`, // This is what will be stored in `itens_ids`
-    descricao_completa: item.display_name,
-    tipo: item.original_type,
-  }));
-
-  // Itens já incluídos em etapas
-  const itensJaEntregues = (formData?.etapas_entrega || []).flatMap(etapa =>
-    etapa.itens_ids || []
-  );
-
-  // Itens que ainda não foram atribuídos a nenhuma etapa
-  const itensDisponiveis = todosItens.filter(item => {
-    return !itensJaEntregues.includes(item.uniqueId);
-  });
-
-  const toggleItemEtapa = (itemId) => {
-    setNovaEtapa(prev => ({
-      ...prev,
-      itens_selecionados: prev.itens_selecionados.includes(itemId)
-        ? prev.itens_selecionados.filter(id => id !== itemId)
-        : [...prev.itens_selecionados, itemId]
-    }));
-  };
-
-  const salvarEtapa = () => {
-    if (!novaEtapa.nome) {
-      toast.error('Informe o nome da etapa');
-      return;
-    }
-
-    if (novaEtapa.itens_selecionados.length === 0) {
-      toast.error('Selecione pelo menos um item');
-      return;
-    }
-
-    const etapa = {
-      id: `etapa_${Date.now()}`,
-      nome: novaEtapa.nome,
-      itens_ids: novaEtapa.itens_selecionados,
-      quantidade_itens: novaEtapa.itens_selecionados.length,
-      status: 'Pendente',
-      data_criacao: new Date().toISOString(),
-      faturada: false
+  const handleCriarEtapa = (novaEtapa) => {
+    const etapasAtuais = formData.etapas_entrega || [];
+    
+    const etapaCompleta = {
+      ...novaEtapa,
+      // Ensure unique ID for the new etapa
+      id: `etapa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`, 
+      sequencia: etapasAtuais.length + 1,
+      data_criacao: new Date().toISOString()
     };
 
     setFormData(prev => ({
       ...prev,
-      etapas_entrega: [...(prev?.etapas_entrega || []), etapa]
+      etapas_entrega: [...etapasAtuais, etapaCompleta]
     }));
 
-    setModalEtapa(false);
-    setNovaEtapa({ nome: '', itens_selecionados: [] });
-    toast.success(`✅ Etapa "${etapa.nome}" criada`);
+    toast.success(`✅ Etapa "${novaEtapa.nome_etapa}" criada com ${novaEtapa.quantidade_total_itens} itens`);
   };
 
-  const podeGerenciarEtapas = isAdmin() || canApprove('comercial');
+  const removerEtapa = (etapaId) => {
+    setFormData(prev => {
+      const updatedEtapas = (prev.etapas_entrega || []).filter(e => e.id !== etapaId);
+      // Re-sequence the remaining stages after removal
+      const reSequencedEtapas = updatedEtapas.map((etapa, index) => ({
+        ...etapa,
+        sequencia: index + 1
+      }));
 
-  // NOVO: Calcular frete automaticamente
+      return {
+        ...prev,
+        etapas_entrega: reSequencedEtapas
+      };
+    });
+    toast.success('Etapa removida');
+  };
+
+  const etapas = formData.etapas_entrega || [];
+  const totalItensAlocados = etapas.reduce((sum, e) => sum + (e.quantidade_total_itens || 0), 0);
+  
+  // Combine all raw items to get total count for comparison with alocated items
+  const totalItens = 
+    (formData.itens_revenda?.length || 0) +
+    (formData.itens_armado_padrao?.length || 0) +
+    (formData.itens_corte_dobra?.length || 0);
+
+  // Calcular frete automaticamente
   const calcularFreteAutomatico = async () => {
     if (!formData?.endereco_entrega_principal?.cep) {
       toast.error('Configure o endereço de entrega primeiro');
@@ -126,7 +101,7 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes, o
     toast.success(`✅ Frete calculado: R$ ${valorFrete.toFixed(2)}`);
   };
 
-  // NOVO: Sugerir data de entrega baseada em produção
+  // Sugerir data de entrega baseada em produção
   const sugerirDataEntrega = () => {
     const diasProducao = (formData?.itens_armado_padrao?.length || 0) > 0 || 
                          (formData?.itens_corte_dobra?.length || 0) > 0 ? 7 : 2;
@@ -227,71 +202,111 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes, o
         </CardContent>
       </Card>
 
-      {/* NOVO: Etapas de Entrega/Faturamento Parcial */}
-      <Card className="border-2 border-purple-300 bg-purple-50">
-        <CardHeader className="bg-purple-100 border-b">
+      {/* Bloco: Etapas de Entrega/Faturamento - V21.1 */}
+      <Card className="border-2 border-blue-200">
+        <CardHeader className="bg-blue-50">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Package className="w-5 h-5 text-purple-600" />
+            <CardTitle className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-blue-600" />
               Etapas de Entrega / Faturamento Parcial
             </CardTitle>
-            {podeGerenciarEtapas && itensDisponiveis.length > 0 && (
-              <Button
-                size="sm"
-                onClick={() => setModalEtapa(true)}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Criar Nova Etapa
-              </Button>
-            )}
+            <Button
+              onClick={() => setModalEtapaOpen(true)}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Criar Nova Etapa
+            </Button>
           </div>
+          <p className="text-xs text-blue-700 mt-1">
+            💡 Divida o pedido em etapas para: produção, faturamento e entrega separados
+          </p>
         </CardHeader>
         <CardContent className="p-4">
-          {formData?.etapas_entrega && formData.etapas_entrega.length > 0 ? (
-            <div className="space-y-2">
-              {formData.etapas_entrega.map((etapa, idx) => (
-                <div
-                  key={etapa.id}
-                  className="p-3 bg-white rounded-lg border flex items-center justify-between"
-                >
-                  <div>
-                    <p className="font-semibold text-sm">{etapa.nome}</p>
-                    <p className="text-xs text-slate-600">
-                      {etapa.quantidade_itens} item(ns) •
-                      <Badge className={
-                        etapa.faturada ? 'bg-green-100 text-green-700 ml-2' :
-                        'bg-orange-100 text-orange-700 ml-2'
-                      }>
-                        {etapa.faturada ? 'Faturada' : 'Pendente'}
-                      </Badge>
-                    </p>
+          {etapas.length === 0 ? (
+            <Alert className="border-slate-200 bg-slate-50">
+              <AlertDescription className="text-sm text-slate-600">
+                Nenhuma etapa criada. Clique em "Criar Nova Etapa" para dividir o pedido.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <div className="space-y-3">
+              {etapas.map((etapa) => ( // Removed idx as etapa.id is stable
+                <div key={etapa.id} className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className="bg-blue-600">Etapa {etapa.sequencia}</Badge>
+                        <h3 className="font-bold text-slate-900">{etapa.nome_etapa}</h3>
+                      </div>
+                      {etapa.descricao_etapa && (
+                        <p className="text-xs text-slate-600">{etapa.descricao_etapa}</p>
+                      )}
+                    </div>
+                    <Badge className={
+                      etapa.status_etapa === 'Faturada' ? 'bg-green-600' :
+                      etapa.status_etapa === 'Em Produção' ? 'bg-orange-600' :
+                      'bg-slate-600'
+                    }>
+                      {etapa.status_etapa}
+                    </Badge>
                   </div>
-                  <Badge variant="outline">
-                    Etapa {idx + 1}
-                  </Badge>
+
+                  <div className="grid grid-cols-4 gap-3 mb-3">
+                    <div className="bg-white p-2 rounded border text-center">
+                      <p className="text-xs text-slate-600">Itens</p>
+                      <p className="text-lg font-bold text-blue-600">{etapa.quantidade_total_itens}</p>
+                    </div>
+                    <div className="bg-white p-2 rounded border text-center">
+                      <p className="text-xs text-slate-600">Peso (KG)</p>
+                      <p className="text-lg font-bold text-purple-600">
+                        {etapa.peso_total_etapa_kg?.toFixed(2) || '0.00'}
+                      </p>
+                    </div>
+                    <div className="bg-white p-2 rounded border text-center">
+                      <p className="text-xs text-slate-600">Valor</p>
+                      <p className="text-lg font-bold text-green-600">
+                        R$ {(etapa.valor_total_etapa || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="bg-white p-2 rounded border text-center">
+                      <p className="text-xs text-slate-600">Previsão</p>
+                      <p className="text-sm font-semibold text-slate-700">
+                        {etapa.data_prevista_entrega ? 
+                          new Date(etapa.data_prevista_entrega).toLocaleDateString('pt-BR') : 
+                          '-'
+                        }
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      onClick={() => removerEtapa(etapa.id)}
+                      size="sm"
+                      variant="outline"
+                      className="text-red-600 border-red-300"
+                    >
+                      Remover
+                    </Button>
+                  </div>
                 </div>
               ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-slate-500">
-              <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Nenhuma etapa de entrega criada</p>
-              {!podeGerenciarEtapas && (
-                <p className="text-xs text-orange-600 mt-2">
-                  Apenas Gerentes e Admins podem criar etapas
-                </p>
-              )}
-              {podeGerenciarEtapas && itensDisponiveis.length === 0 && todosItens.length > 0 && (
-                 <p className="text-xs text-blue-600 mt-2">
-                 Todos os itens já foram atribuídos a alguma etapa.
-               </p>
-              )}
-              {podeGerenciarEtapas && todosItens.length === 0 && (
-                 <p className="text-xs text-orange-600 mt-2">
-                 Adicione itens ao pedido na aba "Itens do Pedido" para criar etapas.
-               </p>
-              )}
+
+              <div className="p-3 bg-green-50 rounded border border-green-200 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-green-800">
+                    ✅ {totalItensAlocados} de {totalItens} itens alocados em etapas
+                  </span>
+                  {totalItensAlocados === totalItens && (
+                    <Badge className="bg-green-600">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      100% Alocado
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
@@ -423,89 +438,22 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes, o
         </CardContent>
       </Card>
 
-      {/* Modal: Criar Etapa */}
-      <Dialog open={modalEtapa} onOpenChange={setModalEtapa}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Criar Nova Etapa de Entrega</DialogTitle>
-          </DialogHeader>
+      <div className="flex justify-end pt-4 border-t">
+        <Button 
+          onClick={onNext}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          Próximo: Financeiro
+          <ChevronRight className="w-4 h-4 ml-2" />
+        </Button>
+      </div>
 
-          <div className="space-y-4">
-            <div>
-              <Label>Nome da Etapa *</Label>
-              <Input
-                value={novaEtapa.nome}
-                onChange={(e) => setNovaEtapa(prev => ({ ...prev, nome: e.target.value }))}
-                placeholder="Ex: Etapa 1: Fundações Bloco A"
-              />
-            </div>
-
-            <div>
-              <Label>Selecionar Itens para esta Etapa</Label>
-              <div className="mt-2 max-h-96 overflow-y-auto border rounded-lg">
-                {itensDisponiveis.length > 0 ? (
-                  <div className="divide-y">
-                    {itensDisponiveis.map((item) => { // Removed idx as uniqueId is stable
-                      const selecionado = novaEtapa.itens_selecionados.includes(item.uniqueId);
-
-                      return (
-                        <div
-                          key={item.uniqueId}
-                          onClick={() => toggleItemEtapa(item.uniqueId)}
-                          className={`p-3 cursor-pointer hover:bg-slate-50 flex items-center gap-3 ${
-                            selecionado ? 'bg-blue-50' : 'bg-white'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selecionado}
-                            onChange={() => toggleItemEtapa(item.uniqueId)}
-                            className="w-4 h-4"
-                          />
-                          <div className="flex-1">
-                            <p className="font-medium text-sm">{item.descricao_completa}</p>
-                            <p className="text-xs text-slate-600">
-                              Qtd: {item.quantidade || 1} •
-                              Tipo: {item.tipo}
-                            </p>
-                          </div>
-                          <Badge variant="outline">{item.tipo}</Badge>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-slate-500">
-                    <p>Todos os itens já estão em etapas ou não há itens no pedido.</p>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                {novaEtapa.itens_selecionados.length} item(ns) selecionado(s)
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setModalEtapa(false);
-                  setNovaEtapa({ nome: '', itens_selecionados: [] });
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                onClick={salvarEtapa}
-                className="bg-purple-600 hover:bg-purple-700"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Criar Etapa
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <CriarEtapaEntregaModal
+        open={modalEtapaOpen}
+        onClose={() => setModalEtapaOpen(false)}
+        pedidoData={formData}
+        onCriarEtapa={handleCriarEtapa}
+      />
     </div>
   );
 }

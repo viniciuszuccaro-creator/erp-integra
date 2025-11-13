@@ -17,7 +17,8 @@ import {
   Shield,
   Check,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,14 +27,19 @@ import WizardEtapa1Cliente from './wizard/WizardEtapa1Cliente';
 import ItensRevendaTab from './ItensRevendaTab';
 import ArmadoPadraoTab from './ArmadoPadraoTab';
 import CorteDobraIATab from './CorteDobraIATab';
+import HistoricoClienteTab from './HistoricoClienteTab'; // NOVO V21.1
 import LogisticaEntregaTab from './LogisticaEntregaTab';
 import FechamentoFinanceiroTab from './FechamentoFinanceiroTab';
 import ArquivosProjetosTab from './ArquivosProjetosTab';
 import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
 
 /**
- * Formulário Completo de Pedido - V12.0
- * 🔥 CORREÇÃO CRÍTICA: SCROLL FUNCIONANDO
+ * V21.1 - Pedido Form Completo - AGORA COM 9 ABAS
+ * + Aba 5: Histórico do Cliente (Top 20 + Timeline)
+ * + Obras de destino vinculadas
+ * + Etapas de faturamento
+ * 
+ * REGRA-MÃE: NUNCA APAGAR - APENAS ACRESCENTAR
  */
 export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel }) {
   const [activeTab, setActiveTab] = useState('identificacao');
@@ -63,7 +69,9 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     desconto_geral_pedido_percentual: 0,
     desconto_geral_pedido_valor: 0,
     valor_frete: 0,
-    etapas_entrega: [],
+    etapas_entrega: [], // V21.1
+    obra_destino_id: '', // V21.1
+    obra_destino_nome: '', // V21.1
     observacoes_nfe: '',
     ...(pedido || {})
   }));
@@ -200,10 +208,17 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
       count: formData?.itens_corte_dobra?.length || 0 
     },
     { 
+      id: 'historico', // NOVO V21.1
+      label: 'Histórico', 
+      icon: Clock,
+      novo: true
+    },
+    { 
       id: 'logistica', 
       label: 'Logística', 
       icon: Truck, 
-      valido: validacoes.logistica 
+      valido: validacoes.logistica,
+      count: formData?.etapas_entrega?.length || 0
     },
     { 
       id: 'financeiro', 
@@ -243,7 +258,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               {pedido ? `Editar Pedido ${pedido.numero_pedido}` : 'Novo Pedido'}
             </h2>
             <p className="text-sm text-slate-600">
-              Preencha todos os dados do pedido
+              V21.1 - Agora com 9 abas: Histórico + Etapas de Faturamento
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -314,6 +329,9 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               >
                 <Icon className="w-4 h-4 mr-2" />
                 {aba.label}
+                {aba.novo && (
+                  <Badge className="ml-2 bg-purple-600 text-xs">NOVO</Badge>
+                )}
                 {aba.valido && (
                   <Check className="w-4 h-4 ml-2 text-green-600" />
                 )}
@@ -364,7 +382,15 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               formData={formData}
               setFormData={setFormData}
               empresaId={formData?.empresa_id}
-              onNext={() => setActiveTab('logistica')}
+              onNext={() => setActiveTab('historico')}
+            />
+          </TabsContent>
+
+          {/* NOVO V21.1: ABA 5 - HISTÓRICO DO CLIENTE */}
+          <TabsContent value="historico" className="m-0">
+            <HistoricoClienteTab
+              formData={formData}
+              setFormData={setFormData}
             />
           </TabsContent>
 
@@ -421,6 +447,15 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
                 {(formData?.peso_total_kg || 0).toFixed(2)} kg
               </p>
             </div>
+            {/* NOVO V21.1: Etapas */}
+            {formData?.etapas_entrega?.length > 0 && (
+              <div className="text-sm">
+                <p className="text-slate-600">Etapas de Faturamento</p>
+                <p className="text-xl font-bold text-purple-600">
+                  {formData.etapas_entrega.length}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3">
