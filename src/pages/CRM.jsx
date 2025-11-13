@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -25,8 +24,8 @@ import {
   Target,
   ShoppingCart,
   FileText,
-  Brain,
-  AlertTriangle // Added AlertTriangle icon import
+  Sparkles,
+  AlertTriangle
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -38,7 +37,7 @@ import FunilVisual from "../components/crm/FunilVisual";
 import AgendarFollowUp from "../components/crm/AgendarFollowUp";
 import ConverterOportunidade from "../components/crm/ConverterOportunidade";
 import IALeadsPriorizacao from "../components/crm/IALeadsPriorizacao";
-import IAChurnDetection from "../components/crm/IAChurnDetection"; // Added new component import
+import IAChurnDetection from "../components/crm/IAChurnDetection";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -128,15 +127,13 @@ export default function CRMPage() {
   });
 
   const calcularScore = (opp) => {
-    let score = 50; // Base
+    let score = 50;
 
-    // Score por valor
     if (opp.valor_estimado > 50000) score += 20;
     else if (opp.valor_estimado > 20000) score += 15;
     else if (opp.valor_estimado > 10000) score += 10;
     else if (opp.valor_estimado > 5000) score += 5;
 
-    // Score por etapa
     const etapasScore = {
       "Prospecção": -10,
       "Contato Inicial": 0,
@@ -144,20 +141,17 @@ export default function CRMPage() {
       "Proposta": 10,
       "Negociação": 15,
       "Fechamento": 20,
-      "Reativação": 5 // NOVO V21.1
+      "Reativação": 5
     };
     score += etapasScore[opp.etapa] || 0;
 
-    // Score por interações
     score += Math.min((opp.quantidade_interacoes || 0) * 3, 15);
 
-    // Penalização por dias sem contato
     const diasSemContato = opp.dias_sem_contato || 0;
     if (diasSemContato > 30) score -= 20;
     else if (diasSemContato > 14) score -= 15;
     else if (diasSemContato > 7) score -= 10;
 
-    // Score por temperatura
     if (opp.temperatura === "Quente") score += 10;
     else if (opp.temperatura === "Frio") score -= 10;
 
@@ -237,7 +231,6 @@ export default function CRMPage() {
 
       const novoHistorico = [...(opp.historico_mudancas_etapa || []), historico];
 
-      // Auto-ajustar probabilidade baseado na etapa
       const probabilidadePorEtapa = {
         "Prospecção": 10,
         "Contato Inicial": 20,
@@ -247,7 +240,7 @@ export default function CRMPage() {
         "Fechamento": 90,
         "Ganho": 100,
         "Perdido": 0,
-        "Reativação": 30 // NOVO V21.1
+        "Reativação": 30
       };
 
       return base44.entities.Oportunidade.update(oppId, {
@@ -271,7 +264,6 @@ export default function CRMPage() {
 
   const converterOportunidadeMutation = useMutation({
     mutationFn: async ({ opp, tipo }) => {
-      // Criar pedido/orçamento
       const pedidoData = {
         numero_pedido: `PED-${Date.now()}`,
         tipo: tipo === "orcamento" ? "Orçamento" : "Pedido",
@@ -289,7 +281,6 @@ export default function CRMPage() {
 
       const pedidoCriado = await base44.entities.Pedido.create(pedidoData);
 
-      // Atualizar oportunidade
       await base44.entities.Oportunidade.update(opp.id, {
         ...opp,
         status: "Ganho",
@@ -316,7 +307,6 @@ export default function CRMPage() {
         description: `${tipo === "orcamento" ? "Orçamento" : "Pedido"} criado. Redirecionando...`
       });
 
-      // Redirecionar para a página de comercial
       setTimeout(() => {
         navigate(createPageUrl("Comercial"));
       }, 1500);
@@ -327,7 +317,6 @@ export default function CRMPage() {
     mutationFn: (data) => base44.entities.Interacao.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interacoes'] });
-      // Optionally, also update the related opportunity
       const relatedOpp = oportunidades.find(o => o.cliente_nome === interactionForm.cliente_nome);
       if (relatedOpp) {
         base44.entities.Oportunidade.update(relatedOpp.id, {
@@ -502,7 +491,7 @@ export default function CRMPage() {
     'Fechamento': 'bg-yellow-100 text-yellow-700',
     'Ganho': 'bg-green-100 text-green-700',
     'Perdido': 'bg-red-100 text-red-700',
-    'Reativação': 'bg-pink-100 text-pink-700' // NOVO V21.1
+    'Reativação': 'bg-pink-100 text-pink-700'
   };
 
   const statusColors = {
@@ -578,7 +567,7 @@ export default function CRMPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-white border shadow-sm flex-wrap h-auto"> {/* Added flex-wrap h-auto */}
+        <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="funil" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
             Funil Visual
@@ -595,15 +584,10 @@ export default function CRMPage() {
             <Mail className="w-4 h-4 mr-2" />
             Campanhas
           </TabsTrigger>
-          {/* NOVA: Tab IA Leads */}
-          <TabsTrigger
-            value="ia-leads"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
-            <Brain className="w-4 h-4 mr-2" />
+          <TabsTrigger value="ia-leads" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <Sparkles className="w-4 h-4 mr-2" />
             IA Leads
           </TabsTrigger>
-          {/* NOVO V21.1: IA Churn */}
           <TabsTrigger value="ia-churn" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
             <AlertTriangle className="w-4 h-4 mr-2" />
             IA Churn
@@ -949,117 +933,218 @@ export default function CRMPage() {
                     </DialogContent>
                   </Dialog>
                 </div>
+
+                <FunilVisual
+                  oportunidades={oportunidades}
+                  onMoverEtapa={handleMoverEtapa}
+                  onVisualizarOportunidade={setViewingOpp}
+                  onEditarOportunidade={(opp) => { setEditingOpp(opp); setOppForm(opp); setIsOppDialogOpen(true); }}
+                />
               </div>
-            </CardHeader>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    <TableHead>Título</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Temp.</TableHead>
-                    <TableHead>Etapa</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredOportunidades.map((opp) => (
-                    <TableRow key={opp.id} className="hover:bg-slate-50">
-                      <TableCell className="font-medium">{opp.titulo}</TableCell>
-                      <TableCell>{opp.cliente_nome}</TableCell>
-                      <TableCell className="font-semibold">
-                        R$ {opp.valor_estimado?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full ${
-                                opp.score >= 70 ? 'bg-green-500' :
-                                opp.score >= 40 ? 'bg-yellow-500' :
-                                'bg-red-500'
-                              }`}
-                              style={{ width: `${opp.score}%` }}
+            </TabsContent>
+
+        <TabsContent value="oportunidades">
+          <Card className="border-0 shadow-md">
+            <CardHeader className="border-b bg-slate-50">
+              <div className="flex justify-between items-center">
+                <CardTitle>Oportunidades de Vendas</CardTitle>
+                <div className="flex gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <Input
+                      placeholder="Buscar oportunidade..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 w-64"
+                    />
+                  </div>
+                  <Dialog open={isOppDialogOpen} onOpenChange={setIsOppDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Nova Oportunidade
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>{editingOpp ? 'Editar Oportunidade' : 'Nova Oportunidade'}</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleOppSubmit} className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="col-span-2">
+                            <Label htmlFor="titulo2">Título *</Label>
+                            <Input
+                              id="titulo2"
+                              value={oppForm.titulo}
+                              onChange={(e) => setOppForm({ ...oppForm, titulo: e.target.value })}
+                              required
                             />
                           </div>
-                          <span className="text-sm font-semibold">{opp.score}</span>
+                          <div className="col-span-2">
+                            <Label htmlFor="descricao2">Descrição</Label>
+                            <Textarea
+                              id="descricao2"
+                              value={oppForm.descricao}
+                              onChange={(e) => setOppForm({ ...oppForm, descricao: e.target.value })}
+                              rows={2}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="cliente_nome2">Cliente *</Label>
+                            <Input
+                              id="cliente_nome2"
+                              value={oppForm.cliente_nome}
+                              onChange={(e) => setOppForm({ ...oppForm, cliente_nome: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="responsavel2">Responsável</Label>
+                            <Input
+                              id="responsavel2"
+                              value={oppForm.responsavel}
+                              onChange={(e) => setOppForm({ ...oppForm, responsavel: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="valor_estimado2">Valor Estimado</Label>
+                            <Input
+                              id="valor_estimado2"
+                              type="number"
+                              step="0.01"
+                              value={oppForm.valor_estimado}
+                              onChange={(e) => setOppForm({ ...oppForm, valor_estimado: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="data_previsao2">Previsão</Label>
+                            <Input
+                              id="data_previsao2"
+                              type="date"
+                              value={oppForm.data_previsao}
+                              onChange={(e) => setOppForm({ ...oppForm, data_previsao: e.target.value })}
+                            />
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={
-                          opp.temperatura === "Quente" ? "bg-red-100 text-red-700" :
-                          opp.temperatura === "Morno" ? "bg-yellow-100 text-yellow-700" :
-                          "bg-blue-100 text-blue-700"
-                        }>
-                          {opp.temperatura}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={etapaColors[opp.etapa]}>{opp.etapa}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={statusColors[opp.status]}>{opp.status}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 flex-wrap">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setViewingOpp(opp)}
-                            title="Ver detalhes"
-                          >
-                            <Eye className="w-4 h-4" />
+                        <div className="flex justify-end gap-3 pt-4">
+                          <Button type="submit" disabled={createOppMutation.isPending || updateOppMutation.isPending} className="bg-blue-600 hover:bg-blue-700">
+                            {createOppMutation.isPending || updateOppMutation.isPending ? 'Salvando...' : 'Salvar'}
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setEditingOpp(opp);
-                              setOppForm(opp);
-                              setIsOppDialogOpen(true);
-                            }}
-                            title="Editar"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setFollowUpOpp(opp)}
-                            title="Agendar Follow-up"
-                            className="text-purple-600"
-                          >
-                            <Calendar className="w-4 h-4" />
-                          </Button>
-                          {(opp.etapa === "Negociação" || opp.etapa === "Fechamento") && (
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50">
+                      <TableHead>Título</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Score</TableHead>
+                      <TableHead>Temp.</TableHead>
+                      <TableHead>Etapa</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredOportunidades.map((opp) => (
+                      <TableRow key={opp.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium">{opp.titulo}</TableCell>
+                        <TableCell>{opp.cliente_nome}</TableCell>
+                        <TableCell className="font-semibold">
+                          R$ {opp.valor_estimado?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full ${
+                                  opp.score >= 70 ? 'bg-green-500' :
+                                  opp.score >= 40 ? 'bg-yellow-500' :
+                                  'bg-red-500'
+                                }`}
+                                style={{ width: `${opp.score}%` }}
+                              />
+                            </div>
+                            <span className="text-sm font-semibold">{opp.score}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={
+                            opp.temperatura === "Quente" ? "bg-red-100 text-red-700" :
+                            opp.temperatura === "Morno" ? "bg-yellow-100 text-yellow-700" :
+                            "bg-blue-100 text-blue-700"
+                          }>
+                            {opp.temperatura}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={etapaColors[opp.etapa]}>{opp.etapa}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={statusColors[opp.status]}>{opp.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => setConverterOpp(opp)}
-                              title="Converter em Venda"
-                              className="text-green-600"
+                              onClick={() => setViewingOpp(opp)}
+                              title="Ver detalhes"
                             >
-                              <ShoppingCart className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            {filteredOportunidades.length === 0 && (
-              <div className="text-center py-12">
-                <TrendingUp className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">Nenhuma oportunidade encontrada</p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setEditingOpp(opp);
+                                setOppForm(opp);
+                                setIsOppDialogOpen(true);
+                              }}
+                              title="Editar"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setFollowUpOpp(opp)}
+                              title="Agendar Follow-up"
+                              className="text-purple-600"
+                            >
+                              <Calendar className="w-4 h-4" />
+                            </Button>
+                            {(opp.etapa === "Negociação" || opp.etapa === "Fechamento") && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setConverterOpp(opp)}
+                                title="Converter em Venda"
+                                className="text-green-600"
+                              >
+                                <ShoppingCart className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-            )}
-          </Card>
-        </TabsContent>
+              {filteredOportunidades.length === 0 && (
+                <div className="text-center py-12">
+                  <TrendingUp className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500">Nenhuma oportunidade encontrada</p>
+                </div>
+              )}
+            </Card>
+          </TabsContent>
 
         <TabsContent value="interacoes">
           <Card className="border-0 shadow-md">
@@ -1382,6 +1467,182 @@ export default function CRMPage() {
                 </Dialog>
               </div>
             </CardHeader>
+            <div className="divide-y">
+              {filteredInteracoes.map((interacao) => (
+                <div key={interacao.id} className="p-4 hover:bg-slate-50">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${
+                        interacao.tipo === 'Ligação' ? 'bg-blue-100' :
+                        interacao.tipo === 'E-mail' ? 'bg-purple-100' :
+                        interacao.tipo === 'Reunião' ? 'bg-green-100' :
+                        interacao.tipo === 'Visita' ? 'bg-orange-100' :
+                        'bg-gray-100'
+                      }`}>
+                        {interacao.tipo === 'Ligação' && <Phone className="w-4 h-4 text-blue-600" />}
+                        {interacao.tipo === 'E-mail' && <Mail className="w-4 h-4 text-purple-600" />}
+                        {interacao.tipo === 'WhatsApp' && <MessageSquare className="w-4 h-4 text-green-600" />}
+                        {!['Ligação', 'E-mail', 'WhatsApp'].includes(interacao.tipo) && <Users className="w-4 h-4" />}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">{interacao.titulo}</h4>
+                        <p className="text-sm text-slate-600">{interacao.cliente_nome}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge className={resultadoColors[interacao.resultado]}>{interacao.resultado}</Badge>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  </div>
+                  {interacao.descricao && (
+                    <p className="text-sm text-slate-700 ml-12">{interacao.descricao}</p>
+                  )}
+                  {interacao.proxima_acao && (
+                    <div className="mt-2 ml-12 p-2 bg-blue-50 rounded text-sm">
+                      <span className="font-semibold">Próxima ação:</span> {interacao.proxima_acao}
+                      {interacao.data_proxima_acao && (
+                        <span className="text-xs text-blue-600 ml-2">
+                          Prevista para: {new Date(interacao.data_proxima_acao).toLocaleDateString('pt-BR')}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            {filteredInteracoes.length === 0 && (
+              <div className="text-center py-12">
+                <MessageSquare className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500">Nenhuma interação registrada</p>
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="campanhas">
+          <Card className="border-0 shadow-md">
+            <CardHeader className="border-b bg-slate-50">
+              <div className="flex justify-between items-center">
+                <CardTitle>Campanhas de Marketing</CardTitle>
+                <Dialog open={isCampanhaDialogOpen} onOpenChange={setIsCampanhaDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nova Campanha
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Nova Campanha</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCampanhaSubmit} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="col-span-2">
+                          <Label htmlFor="nome_camp">Nome *</Label>
+                          <Input
+                            id="nome_camp"
+                            value={campanhaForm.nome}
+                            onChange={(e) => setCampanhaForm({ ...campanhaForm, nome: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <Label htmlFor="descricao_camp">Descrição</Label>
+                          <Textarea
+                            id="descricao_camp"
+                            value={campanhaForm.descricao}
+                            onChange={(e) => setCampanhaForm({ ...campanhaForm, descricao: e.target.value })}
+                            rows={2}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="tipo_camp">Tipo</Label>
+                          <Select
+                            value={campanhaForm.tipo}
+                            onValueChange={(value) => setCampanhaForm({ ...campanhaForm, tipo: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="E-mail Marketing">E-mail Marketing</SelectItem>
+                              <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                              <SelectItem value="SMS">SMS</SelectItem>
+                              <SelectItem value="Ligação">Ligação</SelectItem>
+                              <SelectItem value="Evento">Evento</SelectItem>
+                              <SelectItem value="Promoção">Promoção</SelectItem>
+                              <SelectItem value="Pesquisa">Pesquisa</SelectItem>
+                              <SelectItem value="Outros">Outros</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="publico_alvo_camp">Público Alvo</Label>
+                          <Select
+                            value={campanhaForm.publico_alvo}
+                            onValueChange={(value) => setCampanhaForm({ ...campanhaForm, publico_alvo: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Todos os Clientes">Todos os Clientes</SelectItem>
+                              <SelectItem value="Clientes Ativos">Clientes Ativos</SelectItem>
+                              <SelectItem value="Prospects">Prospects</SelectItem>
+                              <SelectItem value="Inativos">Inativos</SelectItem>
+                              <SelectItem value="Segmento Específico">Segmento Específico</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="data_inicio_camp">Data Início</Label>
+                          <Input
+                            id="data_inicio_camp"
+                            type="date"
+                            value={campanhaForm.data_inicio}
+                            onChange={(e) => setCampanhaForm({ ...campanhaForm, data_inicio: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="data_fim_camp">Data Fim</Label>
+                          <Input
+                            id="data_fim_camp"
+                            type="date"
+                            value={campanhaForm.data_fim}
+                            onChange={(e) => setCampanhaForm({ ...campanhaForm, data_fim: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="responsavel_camp">Responsável</Label>
+                          <Input
+                            id="responsavel_camp"
+                            value={campanhaForm.responsavel}
+                            onChange={(e) => setCampanhaForm({ ...campanhaForm, responsavel: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="orcamento_camp">Orçamento</Label>
+                          <Input
+                            id="orcamento_camp"
+                            type="number"
+                            step="0.01"
+                            value={campanhaForm.orcamento}
+                            onChange={(e) => setCampanhaForm({ ...campanhaForm, orcamento: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-3 pt-4">
+                        <Button type="submit" disabled={createCampanhaMutation.isPending} className="bg-blue-600 hover:bg-blue-700">
+                          {createCampanhaMutation.isPending ? 'Salvando...' : 'Salvar'}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </CardHeader>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -1433,18 +1694,15 @@ export default function CRMPage() {
           </Card>
         </TabsContent>
 
-        {/* NOVA: Conteúdo Tab IA Leads */}
         <TabsContent value="ia-leads">
           <IALeadsPriorizacao oportunidades={oportunidades} />
         </TabsContent>
 
-        {/* NOVO V21.1: IA CHURN DETECTION */}
         <TabsContent value="ia-churn">
           <IAChurnDetection clientes={clientes} />
         </TabsContent>
       </Tabs>
 
-      {/* Modal Visualização Detalhada */}
       <Dialog open={!!viewingOpp} onOpenChange={() => setViewingOpp(null)}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1570,7 +1828,6 @@ export default function CRMPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Agendar Follow-up */}
       <AgendarFollowUp
         oportunidade={followUpOpp}
         open={!!followUpOpp}
@@ -1578,7 +1835,6 @@ export default function CRMPage() {
         onSalvar={handleSalvarFollowUp}
       />
 
-      {/* Modal Converter Oportunidade */}
       <ConverterOportunidade
         oportunidade={converterOpp}
         open={!!converterOpp}
