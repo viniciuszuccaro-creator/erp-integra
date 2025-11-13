@@ -23,7 +23,8 @@ import {
   Building2,
   BookOpen,
   Search,
-  Rocket
+  Rocket,
+  CheckCircle // Added CheckCircle icon
 } from "lucide-react";
 import {
   Sidebar,
@@ -70,6 +71,7 @@ const navigationItems = [
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🧪 Teste Golden Thread", url: createPageUrl("TesteGoldenThread"), icon: Rocket, group: "sistema", adminOnly: true },
+  { title: "✅ Validador Fase 1", url: createPageUrl("ValidadorFase1"), icon: CheckCircle, group: "sistema", adminOnly: true }, // Added new item
   { title: "🌐 Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico", public: true },
 ];
 
@@ -79,7 +81,6 @@ function LayoutContent({ children, currentPageName }) {
   const [pesquisaOpen, setPesquisaOpen] = useState(false);
   const [modoEscuro, setModoEscuro] = useState(false);
 
-  // NOVO: Atalhos de teclado globais
   useEffect(() => {
     const handleKeyDown = (e) => {
       const ctrl = e.ctrlKey || e.metaKey;
@@ -113,7 +114,6 @@ function LayoutContent({ children, currentPageName }) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // NOVO: Aplicar modo escuro
   useEffect(() => {
     if (modoEscuro) {
       document.documentElement.classList.add('dark');
@@ -122,7 +122,6 @@ function LayoutContent({ children, currentPageName }) {
     }
   }, [modoEscuro]);
 
-  // NOVO: CSS para modo escuro
   const darkModeStyles = modoEscuro ? `
     <style>
       :root.dark {
@@ -284,7 +283,6 @@ function LayoutContent({ children, currentPageName }) {
               </button>
             </div>
             
-            {/* NOVO: Toggle Modo Escuro */}
             <div className="mt-2 pt-2 border-t border-slate-200">
               <button
                 onClick={() => setModoEscuro(!modoEscuro)}
