@@ -1,180 +1,219 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Loader2, 
-  Package, 
-  Brain, 
-  Calculator,
-  Zap,
-  AlertTriangle,
-  CheckCircle
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, Sparkles, Package, Upload, Calculator, CheckCircle2, AlertTriangle } from "lucide-react";
+import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
 /**
- * V22.0 - Formulário de Produto com Multi-Select de Unidades
- * Implementa Regra Mestra de Conversão
+ * V22.0: REGRA MESTRE DE CONVERSÃO DE UNIDADES
+ * Este formulário é o HUB central que define como o produto pode ser vendido/comprado
  */
 export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(produto || {
     descricao: '',
     codigo: '',
-    codigo_barras: '',
-    grupo: 'Mat<barra>éria Prima',
     tipo_item: 'Revenda',
+    grupo: 'Outros',
     eh_bitola: false,
     peso_teorico_kg_m: 0,
     bitola_diametro_mm: 0,
     tipo_aco: 'CA-50',
-    unidade_principal: 'UN',
-    unidades_secundarias: ['UN'], // V22.0: Multi-select
-    fatores_conversao: {},
-    unidade_medida: 'UN',
-    unidade_compra: 'UN',
-    unidade_estoque: 'KG',
-    unidade_venda: 'UN',
+    comprimento_barra_padrao_m: 12,
+    
+    // V22.0: CAMPOS CRÍTICOS
+    unidade_principal: 'KG',
+    unidades_secundarias: ['KG'],
+    fatores_conversao: {
+      kg_por_peca: 0,
+      kg_por_metro: 0,
+      metros_por_peca: 0,
+      peca_por_ton: 0,
+      kg_por_ton: 1000
+    },
+    
+    foto_produto_url: '',
     custo_aquisicao: 0,
     preco_venda: 0,
-    estoque_atual: 0,
     estoque_minimo: 0,
     ncm: '',
-    status: 'Ativo',
-    foto_produto_url: '',
-    observacoes: ''
+    status: 'Ativo'
   });
 
-  const [analisandoIA, setAnalisandoIA] = useState(false);
-  const [sugestoesIA, setSugestoesIA] = useState(null);
+  const [iaSugestao, setIaSugestao] = useState(null);
+  const [processandoIA, setProcessandoIA] = useState(false);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [calculoConversao, setCalculoConversao] = useState(null);
 
-  // V22.0: NOVO - Opções de unidades disponíveis
-  const todasUnidades = ['UN', 'PÇ', 'KG', 'MT', 'TON', 'BARRA', 'CX', 'LT', 'M2', 'M3'];
-  
-  // V22.0: NOVO - Toggle de unidade secundária
-  const handleToggleUnidade = (unidade) => {
-    const unidades = formData.unidades_secundarias || [];
-    const novasUnidades = unidades.includes(unidade)
-      ? unidades.filter(u => u !== unidade)
-      : [...unidades, unidade];
+  // V22.0: Recalcular fatores quando mudam campos-chave
+  useEffect(() => {
+    if (formData.eh_bitola) {
+      recalcularFatoresConversao();
+    }
+  }, [formData.peso_teorico_kg_m, formData.comprimento_barra_padrao_m, formData.eh_bitola]);
+
+  // V22.0: MOTOR DE CONVERSÃO AUTOMÁTICA
+  const recalcularFatoresConversao = () => {
+    const pesoKgM = formData.peso_teorico_kg_m || 0;
+    const comprimentoM = formData.comprimento_barra_padrao_m || 12;
     
-    setFormData(prev => ({ ...prev, unidades_secundarias: novasUnidades }));
+    const kgPorPeca = pesoKgM * comprimentoM; // 1 peça (12m) = peso_kg_m * 12
+    const pecaPorTon = kgPorPeca > 0 ? (1000 / kgPorPeca) : 0; // quantas peças em 1 TON
+    
+    const novosFatores = {
+      kg_por_metro: pesoKgM,
+      kg_por_peca: kgPorPeca,
+      metros_por_peca: comprimentoM,
+      peca_por_ton: pecaPorTon,
+      kg_por_ton: 1000
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      fatores_conversao: novosFatores
+    }));
+
+    setCalculoConversao(novosFatores);
   };
 
-  // V22.0: Calcular fatores de conversão automaticamente
-  useEffect(() => {
-    if (formData.eh_bitola && formData.peso_teorico_kg_m > 0) {
-      const pesoKgM = formData.peso_teorico_kg_m;
-      const comprimentoBarra = formData.comprimento_barra_padrao_m || 12;
-
-      const fatores = {
-        kg_por_peca: pesoKgM * comprimentoBarra, // 1 BARRA = X kg
-        kg_por_metro: pesoKgM, // 1 MT = X kg
-        metros_por_peca: comprimentoBarra, // 1 BARRA = 12 MT
-        peca_por_ton: 1000 / (pesoKgM * comprimentoBarra), // 1 TON = X barras
-        kg_por_ton: 1000 // 1 TON = 1000 KG (fixo)
-      };
-
-      setFormData(prev => ({ 
-        ...prev, 
-        fatores_conversao: fatores,
-        unidade_estoque: 'KG' // V22.0: SEMPRE KG para bitolas
-      }));
-    }
-  }, [formData.eh_bitola, formData.peso_teorico_kg_m, formData.comprimento_barra_padrao_m]);
-
-  // IA: Analisar descrição
-  const analisarComIA = async () => {
-    if (!formData.descricao) {
-      alert('Digite uma descrição primeiro');
-      return;
-    }
-
-    setAnalisandoIA(true);
-
+  // IA de Classificação Mestra (V18.0 + V22.0 Melhorado)
+  const analisarDescricaoIA = async (descricao) => {
+    if (!descricao || descricao.length < 5) return;
+    
+    setProcessandoIA(true);
+    
     try {
       const resultado = await base44.integrations.Core.InvokeLLM({
-        prompt: `Analise o produto: "${formData.descricao}". 
-        
-Se for uma bitola de aço/ferro, retorne:
+        prompt: `Analise esta descrição de produto: "${descricao}".
+
+Se for uma bitola de aço (ex: "Barra 8mm 12m CA-50", "Vergalhão 10mm"), retorne:
 - eh_bitola: true
-- peso_teorico_kg_m: (peso teórico em kg/m conforme norma)
-- bitola_diametro_mm: (diâmetro em mm)
-- tipo_aco: CA-25/CA-50/CA-60
-- ncm: código NCM
-- grupo_sugerido: (Mat Prima/Produto Acabado/etc)
+- peso_teorico_kg_m: peso teórico em kg/m (tabela oficial):
+  * 6.3mm = 0.245 kg/m
+  * 8mm = 0.395 kg/m
+  * 10mm = 0.617 kg/m
+  * 12.5mm = 0.963 kg/m
+  * 16mm = 1.578 kg/m
+  * 20mm = 2.466 kg/m
+  * 25mm = 3.853 kg/m
+  * 32mm = 6.313 kg/m
+- bitola_diametro_mm: diâmetro em mm
+- tipo_aco: CA-25, CA-50 ou CA-60
+- ncm: "7214.20.00" (vergalhões)
+- grupo_produto: "Bitola"
+- comprimento_barra_m: 12 (padrão)
+- unidade_principal: "KG"
+- unidades_secundarias: ["PÇ", "KG", "MT"] (sempre essas 3 para bitolas)
 
-Caso contrário:
-- eh_bitola: false
-- ncm: código NCM
-- grupo_sugerido: classificação
-
-Retorne JSON.`,
+Caso contrário, sugira:
+- grupo_produto adequado
+- ncm provável
+- unidade_principal e unidades_secundarias apropriadas`,
         response_json_schema: {
-          type: 'object',
+          type: "object",
           properties: {
-            eh_bitola: { type: 'boolean' },
-            peso_teorico_kg_m: { type: 'number' },
-            bitola_diametro_mm: { type: 'number' },
-            tipo_aco: { type: 'string' },
-            ncm: { type: 'string' },
-            grupo_sugerido: { type: 'string' },
-            unidades_recomendadas: { 
-              type: 'array',
-              items: { type: 'string' }
+            eh_bitola: { type: "boolean" },
+            peso_teorico_kg_m: { type: "number" },
+            bitola_diametro_mm: { type: "number" },
+            tipo_aco: { type: "string" },
+            ncm: { type: "string" },
+            grupo_produto: { type: "string" },
+            comprimento_barra_m: { type: "number" },
+            unidade_principal: { type: "string" },
+            unidades_secundarias: {
+              type: "array",
+              items: { type: "string" }
             },
-            confianca: { type: 'number' }
+            explicacao: { type: "string" }
           }
         }
       });
 
-      setSugestoesIA(resultado);
+      setIaSugestao(resultado);
+      toast.success('✨ IA analisou o produto!');
     } catch (error) {
-      alert(`Erro na IA: ${error.message}`);
+      toast.error('Erro ao processar IA');
     } finally {
-      setAnalisandoIA(false);
+      setProcessandoIA(false);
     }
   };
 
-  const aplicarSugestoesIA = () => {
-    if (!sugestoesIA) return;
+  const aplicarSugestaoIA = () => {
+    if (!iaSugestao) return;
+    
+    setFormData({
+      ...formData,
+      eh_bitola: iaSugestao.eh_bitola || false,
+      peso_teorico_kg_m: iaSugestao.peso_teorico_kg_m || 0,
+      bitola_diametro_mm: iaSugestao.bitola_diametro_mm || 0,
+      tipo_aco: iaSugestao.tipo_aco || 'CA-50',
+      ncm: iaSugestao.ncm || '',
+      grupo: iaSugestao.grupo_produto || formData.grupo,
+      comprimento_barra_padrao_m: iaSugestao.comprimento_barra_m || 12,
+      unidade_principal: iaSugestao.unidade_principal || 'KG',
+      unidades_secundarias: iaSugestao.unidades_secundarias || ['KG']
+    });
+    
+    toast.success('✅ Sugestões aplicadas!');
+    setIaSugestao(null);
+  };
 
-    setFormData(prev => ({
-      ...prev,
-      eh_bitola: sugestoesIA.eh_bitola,
-      peso_teorico_kg_m: sugestoesIA.peso_teorico_kg_m || prev.peso_teorico_kg_m,
-      bitola_diametro_mm: sugestoesIA.bitola_diametro_mm || prev.bitola_diametro_mm,
-      tipo_aco: sugestoesIA.tipo_aco || prev.tipo_aco,
-      ncm: sugestoesIA.ncm || prev.ncm,
-      grupo: sugestoesIA.grupo_sugerido || prev.grupo,
-      unidades_secundarias: sugestoesIA.unidades_recomendadas || prev.unidades_secundarias
-    }));
+  // Upload de Foto do Produto
+  const handleUploadFoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    setSugestoesIA(null);
+    setUploadingFoto(true);
+    
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setFormData({ ...formData, foto_produto_url: file_url });
+      toast.success('✅ Foto carregada!');
+    } catch (error) {
+      toast.error('Erro ao fazer upload');
+    } finally {
+      setUploadingFoto(false);
+    }
+  };
+
+  // Toggle de unidades secundárias
+  const toggleUnidadeSecundaria = (unidade) => {
+    const unidades = formData.unidades_secundarias || [];
+    if (unidades.includes(unidade)) {
+      setFormData({
+        ...formData,
+        unidades_secundarias: unidades.filter(u => u !== unidade)
+      });
+    } else {
+      setFormData({
+        ...formData,
+        unidades_secundarias: [...unidades, unidade]
+      });
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    if (!formData.descricao || !formData.unidade_principal) {
-      alert('Preencha os campos obrigatórios');
+    if (!formData.descricao) {
+      toast.error('Preencha a descrição do produto');
       return;
     }
 
-    // V22.0: Validar que unidade_principal está em unidades_secundarias
-    if (!formData.unidades_secundarias.includes(formData.unidade_principal)) {
-      setFormData(prev => ({
-        ...prev,
-        unidades_secundarias: [...prev.unidades_secundarias, prev.unidade_principal]
-      }));
+    if (!formData.unidades_secundarias || formData.unidades_secundarias.length === 0) {
+      toast.error('Selecione pelo menos 1 unidade de venda/compra');
+      return;
+    }
+
+    if (formData.eh_bitola && formData.peso_teorico_kg_m === 0) {
+      toast.error('Bitolas precisam ter peso teórico preenchido');
+      return;
     }
 
     onSubmit(formData);
@@ -182,197 +221,162 @@ Retorne JSON.`,
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Identificação */}
-      <Card className="border-2 border-blue-300">
-        <CardHeader className="bg-blue-50">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Package className="w-5 h-5 text-blue-600" />
+      {/* SEÇÃO 1: Identificação */}
+      <Card className="border-purple-200 bg-purple-50">
+        <CardContent className="p-4 space-y-4">
+          <h3 className="font-bold flex items-center gap-2 text-purple-900">
+            <Package className="w-5 h-5" />
             Identificação do Produto
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 space-y-4">
+          </h3>
+
           <div>
-            <Label htmlFor="descricao">Descrição *</Label>
+            <Label>Descrição do Produto *</Label>
             <div className="flex gap-2">
               <Input
-                id="descricao"
                 value={formData.descricao}
                 onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                placeholder="Ex: Vergalhão 12.5mm CA-50 - Barra 12m"
+                placeholder="Ex: Vergalhão 8mm 12m CA-50"
                 className="flex-1"
               />
               <Button
                 type="button"
                 size="sm"
-                onClick={analisarComIA}
-                disabled={analisandoIA || !formData.descricao}
-                className="bg-purple-600 hover:bg-purple-700"
+                variant="outline"
+                onClick={() => analisarDescricaoIA(formData.descricao)}
+                disabled={processandoIA}
               >
-                {analisandoIA ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Brain className="w-4 h-4 mr-1" />
-                    IA
-                  </>
-                )}
+                {processandoIA ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               </Button>
             </div>
+            <p className="text-xs text-slate-500 mt-1">✨ IA preenche automaticamente NCM, peso e unidades</p>
           </div>
 
-          {/* Sugestões IA */}
-          {sugestoesIA && (
-            <Alert className="border-purple-300 bg-purple-50">
-              <Brain className="w-4 h-4 text-purple-600" />
+          {iaSugestao && (
+            <Alert className="border-purple-300 bg-purple-100">
               <AlertDescription>
-                <p className="font-bold text-purple-900 mb-2">
-                  🧠 IA Detectou ({sugestoesIA.confianca}% confiança):
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs text-purple-800 mb-3">
-                  <p>• Bitola: {sugestoesIA.eh_bitola ? 'Sim' : 'Não'}</p>
-                  {sugestoesIA.peso_teorico_kg_m > 0 && (
-                    <p>• Peso: {sugestoesIA.peso_teorico_kg_m.toFixed(3)} kg/m</p>
-                  )}
-                  <p>• NCM: {sugestoesIA.ncm}</p>
-                  <p>• Grupo: {sugestoesIA.grupo_sugerido}</p>
-                  {sugestoesIA.unidades_recomendadas && (
-                    <p className="col-span-2">• Unidades: {sugestoesIA.unidades_recomendadas.join(', ')}</p>
-                  )}
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-semibold text-sm text-purple-900 mb-1">🤖 IA Classificou:</p>
+                    <p className="text-xs text-purple-800">{iaSugestao.explicacao}</p>
+                  </div>
+                  <Button size="sm" onClick={aplicarSugestaoIA} className="bg-purple-600">
+                    Aplicar Tudo
+                  </Button>
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={aplicarSugestoesIA}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  <Zap className="w-4 h-4 mr-1" />
-                  Aplicar Sugestões
-                </Button>
               </AlertDescription>
             </Alert>
           )}
 
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="codigo">Código Interno</Label>
-              <Input
-                id="codigo"
-                value={formData.codigo}
-                onChange={(e) => setFormData({...formData, codigo: e.target.value})}
-                placeholder="PROD-001"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="codigo-barras">Código de Barras</Label>
-              <Input
-                id="codigo-barras"
-                value={formData.codigo_barras}
-                onChange={(e) => setFormData({...formData, codigo_barras: e.target.value})}
-                placeholder="7891234567890"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="ncm">NCM</Label>
-              <Input
-                id="ncm"
-                value={formData.ncm}
-                onChange={(e) => setFormData({...formData, ncm: e.target.value})}
-                placeholder="73089090"
-                maxLength={8}
-              />
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="grupo">Grupo</Label>
-              <Select value={formData.grupo} onValueChange={(v) => setFormData({...formData, grupo: v})}>
-                <SelectTrigger id="grupo">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Matéria Prima">Matéria Prima</SelectItem>
-                  <SelectItem value="Produto Acabado">Produto Acabado</SelectItem>
-                  <SelectItem value="Insumo">Insumo</SelectItem>
-                  <SelectItem value="Bitola">Bitola</SelectItem>
-                  <SelectItem value="Ferramentas">Ferramentas</SelectItem>
-                  <SelectItem value="EPIs">EPIs</SelectItem>
-                  <SelectItem value="Outros">Outros</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Código/SKU</Label>
+              <Input
+                value={formData.codigo}
+                onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+                placeholder="SKU-001"
+              />
             </div>
 
             <div>
-              <Label htmlFor="tipo-item">Tipo de Item</Label>
+              <Label>Tipo de Item</Label>
               <Select value={formData.tipo_item} onValueChange={(v) => setFormData({...formData, tipo_item: v})}>
-                <SelectTrigger id="tipo-item">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Revenda">Revenda</SelectItem>
                   <SelectItem value="Matéria-Prima Produção">Matéria-Prima Produção</SelectItem>
                   <SelectItem value="Produto Acabado">Produto Acabado</SelectItem>
-                  <SelectItem value="Consumo Interno">Consumo Interno</SelectItem>
-                  <SelectItem value="Serviço">Serviço</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+
+          {/* UPLOAD DE FOTO - V22.0 */}
+          <div>
+            <Label>Foto do Produto</Label>
+            <div className="flex items-center gap-4">
+              {formData.foto_produto_url && (
+                <img src={formData.foto_produto_url} alt="Produto" className="w-20 h-20 object-cover rounded border" />
+              )}
+              <div className="flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUploadFoto}
+                  className="hidden"
+                  id="foto-upload"
+                />
+                <label htmlFor="foto-upload">
+                  <Button type="button" variant="outline" size="sm" disabled={uploadingFoto} asChild>
+                    <span>
+                      {uploadingFoto ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                      {formData.foto_produto_url ? 'Alterar Foto' : 'Upload Foto'}
+                    </span>
+                  </Button>
+                </label>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">📸 Usada em Pedidos, E-commerce e Portal</p>
+          </div>
         </CardContent>
       </Card>
 
-      {/* V22.0: NOVO - Seção de Bitola */}
-      <Card className="border-2 border-orange-300">
-        <CardHeader className="bg-orange-50">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Calculator className="w-5 h-5 text-orange-600" />
-              Configuração de Bitola (Aço/Ferro)
-            </CardTitle>
-            <Switch
-              checked={formData.eh_bitola}
-              onCheckedChange={(v) => setFormData({...formData, eh_bitola: v})}
-            />
-          </div>
-        </CardHeader>
-        {formData.eh_bitola && (
-          <CardContent className="p-6 space-y-4">
-            <Alert className="border-blue-300 bg-blue-50">
-              <Zap className="w-4 h-4 text-blue-600" />
-              <AlertDescription className="text-sm text-blue-800">
-                <strong>V22.0 Ativo:</strong> Configure o peso teórico e as conversões serão calculadas automaticamente.
-              </AlertDescription>
-            </Alert>
+      {/* SEÇÃO 2: É BITOLA? */}
+      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border-2 border-dashed">
+        <div>
+          <Label className="text-base font-semibold">É uma Bitola de Aço?</Label>
+          <p className="text-xs text-slate-500">Habilita campos específicos e conversão PÇ ↔ KG ↔ MT</p>
+        </div>
+        <Switch
+          checked={formData.eh_bitola}
+          onCheckedChange={(v) => {
+            setFormData({...formData, eh_bitola: v});
+            if (v) {
+              setFormData(prev => ({
+                ...prev,
+                unidade_principal: 'KG',
+                unidades_secundarias: ['PÇ', 'KG', 'MT']
+              }));
+            }
+          }}
+        />
+      </div>
 
+      {/* SEÇÃO 3: CAMPOS DE BITOLA */}
+      {formData.eh_bitola && (
+        <Card className="border-blue-300 bg-blue-50">
+          <CardContent className="p-4 space-y-4">
+            <h3 className="font-bold text-blue-900">📏 Especificações da Bitola</h3>
+            
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="diametro">Diâmetro (mm)</Label>
-                <Select 
-                  value={formData.bitola_diametro_mm?.toString() || ''} 
-                  onValueChange={(v) => setFormData({...formData, bitola_diametro_mm: parseFloat(v)})}
-                >
-                  <SelectTrigger id="diametro">
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="6.3">6.3 mm</SelectItem>
-                    <SelectItem value="8">8.0 mm</SelectItem>
-                    <SelectItem value="10">10.0 mm</SelectItem>
-                    <SelectItem value="12.5">12.5 mm</SelectItem>
-                    <SelectItem value="16">16.0 mm</SelectItem>
-                    <SelectItem value="20">20.0 mm</SelectItem>
-                    <SelectItem value="25">25.0 mm</SelectItem>
-                    <SelectItem value="32">32.0 mm</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Diâmetro (mm) *</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={formData.bitola_diametro_mm}
+                  onChange={(e) => setFormData({...formData, bitola_diametro_mm: parseFloat(e.target.value) || 0})}
+                  placeholder="8.0"
+                />
               </div>
 
               <div>
-                <Label htmlFor="tipo-aco">Tipo de Aço</Label>
+                <Label>Peso Teórico (kg/m) *</Label>
+                <Input
+                  type="number"
+                  step="0.001"
+                  value={formData.peso_teorico_kg_m}
+                  onChange={(e) => setFormData({...formData, peso_teorico_kg_m: parseFloat(e.target.value) || 0})}
+                  placeholder="0.395"
+                />
+                <p className="text-xs text-slate-500 mt-1">Tabela oficial ABNT</p>
+              </div>
+
+              <div>
+                <Label>Tipo de Aço</Label>
                 <Select value={formData.tipo_aco} onValueChange={(v) => setFormData({...formData, tipo_aco: v})}>
-                  <SelectTrigger id="tipo-aco">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -383,172 +387,122 @@ Retorne JSON.`,
                 </Select>
               </div>
 
-              <div>
-                <Label htmlFor="peso-teorico">Peso Teórico (kg/m) *</Label>
+              <div className="col-span-3">
+                <Label>Comprimento Padrão da Barra (metros)</Label>
                 <Input
-                  id="peso-teorico"
                   type="number"
-                  step="0.001"
-                  value={formData.peso_teorico_kg_m}
-                  onChange={(e) => setFormData({...formData, peso_teorico_kg_m: parseFloat(e.target.value) || 0})}
-                  placeholder="0.888"
+                  step="0.1"
+                  value={formData.comprimento_barra_padrao_m}
+                  onChange={(e) => setFormData({...formData, comprimento_barra_padrao_m: parseFloat(e.target.value) || 12})}
+                  placeholder="12"
                 />
+                <p className="text-xs text-slate-500 mt-1">🔧 Usado para calcular kg_por_peca automaticamente</p>
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="comprimento-barra">Comprimento Barra Padrão (m)</Label>
-              <Input
-                id="comprimento-barra"
-                type="number"
-                step="0.1"
-                value={formData.comprimento_barra_padrao_m || 12}
-                onChange={(e) => setFormData({...formData, comprimento_barra_padrao_m: parseFloat(e.target.value) || 12})}
-                placeholder="12"
-              />
-              <p className="text-xs text-slate-500 mt-1">Padrão: 12 metros</p>
-            </div>
-
-            {/* V22.0: Preview de Fatores */}
-            {formData.peso_teorico_kg_m > 0 && (
-              <Card className="border-green-300 bg-green-50">
-                <CardContent className="p-4">
-                  <p className="text-xs font-bold text-green-900 mb-2 flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" />
-                    Fatores de Conversão (Calculados):
-                  </p>
+            {/* V22.0: PREVIEW DE CONVERSÃO */}
+            {calculoConversao && (
+              <Alert className="border-green-300 bg-green-50">
+                <Calculator className="w-4 h-4 text-green-700" />
+                <AlertDescription>
+                  <p className="font-semibold text-sm text-green-900 mb-2">✅ Conversões Calculadas:</p>
                   <div className="grid grid-cols-2 gap-2 text-xs text-green-800">
-                    <p>• 1 BARRA = {formData.fatores_conversao?.kg_por_peca?.toFixed(2)} KG</p>
-                    <p>• 1 MT = {formData.fatores_conversao?.kg_por_metro?.toFixed(3)} KG</p>
-                    <p>• 1 BARRA = {formData.fatores_conversao?.metros_por_peca} MT</p>
-                    <p>• 1 TON = {formData.fatores_conversao?.peca_por_ton?.toFixed(0)} BARRAS</p>
+                    <p>• 1 PÇ (barra) = <strong>{calculoConversao.kg_por_peca.toFixed(2)} KG</strong></p>
+                    <p>• 1 MT = <strong>{calculoConversao.kg_por_metro.toFixed(3)} KG</strong></p>
+                    <p>• 1 TON = <strong>{calculoConversao.peca_por_ton.toFixed(1)} PÇ</strong></p>
+                    <p>• 1 PÇ = <strong>{calculoConversao.metros_por_peca} MT</strong></p>
                   </div>
-                </CardContent>
-              </Card>
+                  <p className="text-xs text-green-700 mt-2">
+                    💡 Essas conversões serão usadas em Vendas, Compras e Estoque automaticamente
+                  </p>
+                </AlertDescription>
+              </Alert>
             )}
           </CardContent>
-        )}
-      </Card>
+        </Card>
+      )}
 
-      {/* V22.0: NOVO - Gestão de Unidades de Medida */}
-      <Card className="border-2 border-green-300">
-        <CardHeader className="bg-green-50">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Calculator className="w-5 h-5 text-green-600" />
-            Unidades de Medida (V22.0 - Regra Mestra)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 space-y-4">
-          {/* Unidade Principal */}
+      {/* SEÇÃO 4: UNIDADES - V22.0 CRÍTICO */}
+      <Card className="border-indigo-300 bg-indigo-50">
+        <CardContent className="p-4 space-y-4">
+          <h3 className="font-bold text-indigo-900 flex items-center gap-2">
+            <Calculator className="w-5 h-5" />
+            V22.0: Unidades e Conversões
+          </h3>
+
+          <Alert className="border-indigo-400 bg-indigo-100">
+            <AlertDescription className="text-sm text-indigo-900">
+              🎯 <strong>REGRA MESTRE:</strong> As unidades selecionadas aqui estarão disponíveis em Vendas, Compras e Movimentações
+            </AlertDescription>
+          </Alert>
+
           <div>
-            <Label htmlFor="unidade-principal">Unidade Principal *</Label>
-            <Select 
-              value={formData.unidade_principal} 
-              onValueChange={(v) => setFormData({...formData, unidade_principal: v})}
-            >
-              <SelectTrigger id="unidade-principal">
+            <Label>Unidade Principal (Relatórios e Dashboard)</Label>
+            <Select value={formData.unidade_principal} onValueChange={(v) => setFormData({...formData, unidade_principal: v})}>
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {todasUnidades.map(u => (
-                  <SelectItem key={u} value={u}>{u}</SelectItem>
-                ))}
+                <SelectItem value="UN">Unidade (UN)</SelectItem>
+                <SelectItem value="PÇ">Peça (PÇ)</SelectItem>
+                <SelectItem value="KG">Quilograma (KG)</SelectItem>
+                <SelectItem value="MT">Metro (MT)</SelectItem>
+                <SelectItem value="TON">Tonelada (TON)</SelectItem>
+                <SelectItem value="CX">Caixa (CX)</SelectItem>
+                <SelectItem value="LT">Litro (LT)</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label>Unidades Habilitadas (Multi-Select) *</Label>
+            <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-white">
+              {['UN', 'PÇ', 'KG', 'MT', 'TON', 'CX', 'BARRA'].map(unidade => (
+                <Badge
+                  key={unidade}
+                  className={`cursor-pointer transition-all ${
+                    (formData.unidades_secundarias || []).includes(unidade)
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                  }`}
+                  onClick={() => toggleUnidadeSecundaria(unidade)}
+                >
+                  {(formData.unidades_secundarias || []).includes(unidade) && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                  {unidade}
+                </Badge>
+              ))}
+            </div>
             <p className="text-xs text-slate-500 mt-1">
-              Unidade usada em relatórios e referências
+              ✅ Selecionadas: {(formData.unidades_secundarias || []).join(', ')}
             </p>
           </div>
 
-          {/* V22.0: NOVO - Multi-Select de Unidades Secundárias */}
-          <div>
-            <Label className="mb-3 block">Unidades Habilitadas (Multi-Select) *</Label>
-            <Alert className="border-purple-300 bg-purple-50 mb-3">
-              <Zap className="w-4 h-4 text-purple-600" />
-              <AlertDescription className="text-xs text-purple-800">
-                <strong>V22.0:</strong> Selecione TODAS as unidades em que este produto pode ser vendido/comprado.
-                A conversão será automática usando os fatores calculados.
+          {/* V22.0: Visualização de Como Será Usado */}
+          {formData.unidades_secundarias && formData.unidades_secundarias.length > 0 && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertDescription className="text-sm text-blue-900">
+                <p className="font-semibold mb-2">📦 Como será usado nos módulos:</p>
+                <div className="space-y-1 text-xs">
+                  <p>• <strong>Vendas:</strong> Dropdown terá opções: {formData.unidades_secundarias.join(', ')}</p>
+                  <p>• <strong>Compras:</strong> Dropdown terá opções: {formData.unidades_secundarias.join(', ')}</p>
+                  <p>• <strong>Estoque:</strong> Saldo sempre em KG (conversão automática)</p>
+                  <p>• <strong>NF-e:</strong> Unidade do pedido + equivalente KG</p>
+                </div>
               </AlertDescription>
             </Alert>
-
-            <div className="grid grid-cols-4 gap-3">
-              {todasUnidades.map(unidade => {
-                const selecionada = (formData.unidades_secundarias || []).includes(unidade);
-                const ehPrincipal = formData.unidade_principal === unidade;
-
-                return (
-                  <div
-                    key={unidade}
-                    onClick={() => !ehPrincipal && handleToggleUnidade(unidade)}
-                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                      ehPrincipal 
-                        ? 'border-blue-500 bg-blue-100 cursor-not-allowed'
-                        : selecionada 
-                          ? 'border-green-500 bg-green-50 hover:bg-green-100'
-                          : 'border-slate-200 hover:border-green-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={selecionada || ehPrincipal}
-                        disabled={ehPrincipal}
-                        onCheckedChange={() => !ehPrincipal && handleToggleUnidade(unidade)}
-                      />
-                      <span className="font-semibold text-sm">{unidade}</span>
-                    </div>
-                    {ehPrincipal && (
-                      <p className="text-xs text-blue-700 mt-1">Principal</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <p className="text-xs text-slate-600 mt-2">
-              💡 Selecionadas: {formData.unidades_secundarias?.join(', ') || 'Nenhuma'}
-            </p>
-          </div>
-
-          {/* Unidade de Estoque */}
-          <div>
-            <Label htmlFor="unidade-estoque">Unidade de Estoque (Rastreamento Financeiro)</Label>
-            <Select 
-              value={formData.unidade_estoque} 
-              onValueChange={(v) => setFormData({...formData, unidade_estoque: v})}
-              disabled={formData.eh_bitola} // V22.0: Bitolas sempre em KG
-            >
-              <SelectTrigger id="unidade-estoque">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="KG">KG - Quilograma</SelectItem>
-                <SelectItem value="UN">UN - Unidade</SelectItem>
-                <SelectItem value="MT">MT - Metro</SelectItem>
-              </SelectContent>
-            </Select>
-            {formData.eh_bitola && (
-              <p className="text-xs text-orange-600 mt-1">
-                ⚠️ Bitolas sempre usam KG no estoque (rastreamento financeiro)
-              </p>
-            )}
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Preços */}
-      <Card className="border-2 border-purple-300">
-        <CardHeader className="bg-purple-50">
-          <CardTitle className="text-base flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-purple-600" />
-            Preços e Estoque
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 space-y-4">
+      {/* SEÇÃO 5: Precificação */}
+      <Card className="border-green-200 bg-green-50">
+        <CardContent className="p-4 space-y-4">
+          <h3 className="font-bold text-green-900">💰 Precificação</h3>
+
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="custo">Custo Aquisição</Label>
+              <Label>Custo Aquisição</Label>
               <Input
-                id="custo"
                 type="number"
                 step="0.01"
                 value={formData.custo_aquisicao}
@@ -558,9 +512,8 @@ Retorne JSON.`,
             </div>
 
             <div>
-              <Label htmlFor="preco">Preço Venda</Label>
+              <Label>Preço Venda</Label>
               <Input
-                id="preco"
                 type="number"
                 step="0.01"
                 value={formData.preco_venda}
@@ -570,73 +523,69 @@ Retorne JSON.`,
             </div>
 
             <div>
-              <Label>Margem</Label>
-              <div className="p-2 bg-slate-100 rounded text-center">
-                <span className="font-bold text-lg">
-                  {formData.custo_aquisicao > 0 
-                    ? (((formData.preco_venda - formData.custo_aquisicao) / formData.custo_aquisicao) * 100).toFixed(1)
-                    : 0
-                  }%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="estoque-min">Estoque Mínimo</Label>
+              <Label>Margem (%)</Label>
               <Input
-                id="estoque-min"
                 type="number"
-                step="0.01"
-                value={formData.estoque_minimo}
-                onChange={(e) => setFormData({...formData, estoque_minimo: parseFloat(e.target.value) || 0})}
-                placeholder="0"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="estoque-max">Estoque Máximo</Label>
-              <Input
-                id="estoque-max"
-                type="number"
-                step="0.01"
-                value={formData.estoque_maximo}
-                onChange={(e) => setFormData({...formData, estoque_maximo: parseFloat(e.target.value) || 0})}
-                placeholder="0"
+                value={formData.custo_aquisicao > 0 ? (((formData.preco_venda - formData.custo_aquisicao) / formData.custo_aquisicao) * 100).toFixed(2) : 0}
+                disabled
+                className="bg-slate-100"
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Observações */}
-      <div>
-        <Label htmlFor="obs">Observações</Label>
-        <Textarea
-          id="obs"
-          value={formData.observacoes}
-          onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-          rows={3}
-        />
+      {/* SEÇÃO 6: Fiscal */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>NCM</Label>
+          <Input
+            value={formData.ncm}
+            onChange={(e) => setFormData({...formData, ncm: e.target.value})}
+            placeholder="0000.00.00"
+            maxLength={10}
+          />
+        </div>
+
+        <div>
+          <Label>Status</Label>
+          <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Ativo">Ativo</SelectItem>
+              <SelectItem value="Inativo">Inativo</SelectItem>
+              <SelectItem value="Descontinuado">Descontinuado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {/* Status */}
-      <div className="flex items-center justify-between p-4 bg-slate-50 rounded">
-        <Label>Produto Ativo</Label>
-        <Switch
-          checked={formData.status === 'Ativo'}
-          onCheckedChange={(v) => setFormData({...formData, status: v ? 'Ativo' : 'Inativo'})}
-        />
-      </div>
-
-      {/* Botões */}
+      {/* SUBMIT */}
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
+        <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {produto ? 'Atualizar Produto' : 'Criar Produto'}
         </Button>
       </div>
+
+      {/* V22.0: RESUMO FINAL */}
+      {formData.eh_bitola && calculoConversao && (
+        <Alert className="border-purple-300 bg-purple-100">
+          <AlertDescription>
+            <p className="font-semibold text-sm text-purple-900 mb-2">🎯 Resumo da Configuração:</p>
+            <div className="grid grid-cols-2 gap-2 text-xs text-purple-800">
+              <p>✅ Produto: <strong>{formData.descricao || 'Não informado'}</strong></p>
+              <p>✅ Unidade Principal: <strong>{formData.unidade_principal}</strong></p>
+              <p>✅ Venda/Compra em: <strong>{(formData.unidades_secundarias || []).join(', ')}</strong></p>
+              <p>✅ Estoque sempre em: <strong>KG</strong></p>
+              <p>✅ 1 Peça = <strong>{calculoConversao.kg_por_peca.toFixed(2)} KG</strong></p>
+              <p>✅ 1 Metro = <strong>{calculoConversao.kg_por_metro.toFixed(3)} KG</strong></p>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
     </form>
   );
 }

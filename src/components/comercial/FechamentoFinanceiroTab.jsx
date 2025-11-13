@@ -1,33 +1,21 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button'; // Added Button import
 import { DollarSign, Percent, FileText } from 'lucide-react';
 
-import GerarPDFOrcamento from "./GerarPDFOrcamento";
-import GerarNFeModal from "./GerarNFeModal"; // Added GerarNFeModal import
-
 /**
- * V21.1 - Aba 6: Financeiro
- * COM: Barra de Progresso + Geração de PDF V22.0
+ * Aba 6: Fechamento Financeiro e Fiscal
+ * V11.0 - Com campo Observações da NF-e
  */
 export default function FechamentoFinanceiroTab({ formData, setFormData, onNext }) {
-  const [showGerarNFe, setShowGerarNFe] = useState(false);
-
   const valorProdutos = formData?.valor_produtos || 0;
   const descontoPercentual = formData?.desconto_geral_pedido_percentual || 0;
   const descontoValor = (valorProdutos * descontoPercentual) / 100;
   const valorFrete = formData?.valor_frete || 0;
-  // Recalculate valorTotal based on current state for local display consistency if formData.valor_total isn't already updated by parent
-  const valorTotalCalculated = valorProdutos - descontoValor + valorFrete;
-
-  // Ensure formData.valor_total is updated if discount changes in this tab
-  // This useEffect could be used if there are multiple sources updating values
-  // For now, it's integrated directly into the onChange handler for discount percent
-  // If valor_produtos or valor_frete could be changed here, similar logic would be needed.
+  const valorTotal = valorProdutos - descontoValor + valorFrete;
 
   return (
     <div className="space-y-6">
@@ -49,20 +37,11 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
                 max="100"
                 step="0.1"
                 value={descontoPercentual}
-                onChange={(e) => {
-                  const newDescontoPercentual = parseFloat(e.target.value) || 0;
-                  const currentValorProdutos = formData?.valor_produtos || 0;
-                  const currentValorFrete = formData?.valor_frete || 0;
-                  const newDescontoValorCalculated = (currentValorProdutos * newDescontoPercentual) / 100;
-                  const newValorTotalCalculated = currentValorProdutos - newDescontoValorCalculated + currentValorFrete;
-
-                  setFormData(prev => ({
-                    ...prev,
-                    desconto_geral_pedido_percentual: newDescontoPercentual,
-                    desconto_geral_pedido_valor: newDescontoValorCalculated,
-                    valor_total: newValorTotalCalculated, // Ensure valor_total is updated in formData
-                  }));
-                }}
+                onChange={(e) => setFormData(prev => ({
+                  ...prev,
+                  desconto_geral_pedido_percentual: parseFloat(e.target.value) || 0,
+                  desconto_geral_pedido_valor: (valorProdutos * (parseFloat(e.target.value) || 0)) / 100
+                }))}
               />
             </div>
             <div>
@@ -205,60 +184,44 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
         </CardContent>
       </Card>
 
-      {/* NOVO Resumo Financeiro */}
-      <Card className="border-2 border-green-300">
-        <CardHeader className="bg-green-50">
-          <CardTitle className="text-base flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-green-600" />
-            Resumo Financeiro
-          </CardTitle>
+      {/* Resumo Financeiro */}
+      <Card className="border-2 border-green-300 bg-green-50">
+        <CardHeader className="bg-green-100 border-b">
+          <CardTitle className="text-base">💰 Resumo Financeiro</CardTitle>
         </CardHeader>
-        <CardContent className="p-6 space-y-4">
+        <CardContent className="p-6">
           <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-slate-700">Valor dos Produtos:</span>
-              <span className="font-bold text-lg">
-                R$ {(formData.valor_produtos || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-
-            <div className="flex justify-between">
-              <span className="text-slate-700">Frete:</span>
+            <div className="flex justify-between items-center pb-2">
+              <span className="text-slate-700">Valor dos Produtos</span>
               <span className="font-semibold">
-                R$ {(formData.valor_frete || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                R$ {valorProdutos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
 
-            {(formData.desconto_geral_pedido_valor || 0) > 0 && (
-              <div className="flex justify-between text-orange-600">
-                <span>Desconto:</span>
+            {descontoValor > 0 && (
+              <div className="flex justify-between items-center pb-2 text-orange-600">
+                <span>Desconto ({descontoPercentual}%)</span>
                 <span className="font-semibold">
-                  - R$ {(formData.desconto_geral_pedido_valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  - R$ {descontoValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </div>
             )}
 
-            <div className="flex justify-between pt-3 border-t-2 border-green-600">
-              <span className="text-lg font-bold text-green-900">VALOR TOTAL:</span>
+            {valorFrete > 0 && (
+              <div className="flex justify-between items-center pb-2 text-blue-600">
+                <span>Frete</span>
+                <span className="font-semibold">
+                  + R$ {valorFrete.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center pt-3 border-t-2 border-green-600">
+              <span className="text-lg font-bold text-green-900">VALOR TOTAL</span>
               <span className="text-2xl font-bold text-green-600">
-                {/* Use formData.valor_total which should be kept updated by setFormData calls */}
-                R$ {(formData.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                R$ {valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
-          </div>
-
-          {/* Ações */}
-          <div className="grid grid-cols-2 gap-3 pt-4 border-t">
-            {/* V22.0: NOVO - Botão Gerar PDF */}
-            <GerarPDFOrcamento pedido={formData} cliente={{ nome: formData.cliente_nome }} />
-
-            <Button
-              onClick={() => setShowGerarNFe(true)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Emitir NF-e
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -298,14 +261,6 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
           </div>
         </CardContent>
       </Card>
-
-      {showGerarNFe && (
-        <GerarNFeModal
-          isOpen={showGerarNFe}
-          onClose={() => setShowGerarNFe(false)}
-          pedido={formData}
-        />
-      )}
     </div>
   );
 }
