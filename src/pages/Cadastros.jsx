@@ -110,8 +110,52 @@ import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 
 /**
- * CADASTROS GERAIS V20.1 - HUB CENTRAL COM AUDITORIA COMPLETA
- * Blocos 1/6, 2/6, 3/6, 4/6 e 5/6 totalmente sincronizados
+ * 🔍 V20.2: MOTOR DE BUSCA UNIVERSAL MELHORADO
+ * Normaliza acentos e busca em TODOS os campos
+ */
+const normalizarTexto = (texto) => {
+  if (!texto) return '';
+  return texto
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Remove acentos
+};
+
+const buscarEmObjeto = (obj, termo) => {
+  if (!obj || typeof obj !== 'object') return false;
+  
+  // Iterate over properties of the object
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const valor = obj[key];
+      if (valor === null || valor === undefined) continue;
+      
+      if (typeof valor === 'string' || typeof valor === 'number') {
+        if (normalizarTexto(valor.toString()).includes(termo)) {
+          return true;
+        }
+      } else if (Array.isArray(valor)) {
+        // Search in arrays
+        for (const item of valor) {
+          if (typeof item === 'object') {
+            if (buscarEmObjeto(item, termo)) return true;
+          } else if (normalizarTexto(item.toString()).includes(termo)) {
+            return true;
+          }
+        }
+      } else if (typeof valor === 'object') {
+        // Search recursively in nested objects
+        if (buscarEmObjeto(valor, termo)) return true;
+      }
+    }
+  }
+  
+  return false;
+};
+
+/**
+ * CADASTROS GERAIS V20.2 - HUB CENTRAL COM BUSCA UNIVERSAL MELHORADA
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -360,48 +404,49 @@ export default function Cadastros() {
     queryFn: () => base44.entities.ModeloDocumento.list(),
   });
 
-  // 🔍 SISTEMA DE BUSCA UNIVERSAL - CORRIGIDO V20.2
-  const filtrarPorBusca = (lista, camposPrincipais) => {
+  // 🔍 V20.2: BUSCA UNIVERSAL MELHORADA - IGNORA ACENTOS E BUSCA EM TUDO
+  const filtrarPorBuscaUniversal = (lista) => {
     if (!searchTerm || searchTerm.trim() === '') return lista;
     
-    const termo = searchTerm.toLowerCase().trim();
+    const termoNormalizado = normalizarTexto(searchTerm.trim());
     
     return lista.filter(item => {
-      return camposPrincipais.some(campo => {
-        const valor = item[campo];
-        if (!valor) return false;
-        
-        if (typeof valor === 'string') {
-          return valor.toLowerCase().includes(termo);
-        }
-        if (typeof valor === 'number') {
-          return valor.toString().includes(termo);
-        }
-        // Special handling for nested objects like 'endereco_principal.cidade'
-        if (campo === 'endereco_principal' && typeof valor === 'object' && valor.cidade) {
-          return valor.cidade.toLowerCase().includes(termo);
-        }
-        return false;
-      });
+      // Buscar no objeto inteiro (recursivo)
+      return buscarEmObjeto(item, termoNormalizado);
     });
   };
 
-  // Aplicar filtros
-  const clientesFiltrados = filtrarPorBusca(clientes, ['nome', 'razao_social', 'cpf', 'cnpj', 'endereco_principal']);
-  const fornecedoresFiltrados = filtrarPorBusca(fornecedores, ['nome', 'razao_social', 'cnpj', 'categoria']);
-  const colaboradoresFiltrados = filtrarPorBusca(colaboradores, ['nome_completo', 'cpf', 'cargo', 'departamento']);
-  const transportadorasFiltradas = filtrarPorBusca(transportadoras, ['razao_social', 'cnpj', 'rntrc']);
-  const produtosFiltrados = filtrarPorBusca(produtos, ['descricao', 'codigo', 'ncm', 'grupo']);
-  const empresasFiltradas = filtrarPorBusca(empresas, ['razao_social', 'nome_fantasia', 'cnpj']);
-  const gruposFiltrados = filtrarPorBusca(grupos, ['nome_do_grupo', 'cnpj_opcional']);
-  const bancosFiltrados = filtrarPorBusca(bancos, ['nome_banco', 'agencia', 'conta']);
-  const formasPagamentoFiltradas = filtrarPorBusca(formasPagamento, ['descricao', 'tipo']);
-  const veiculosFiltrados = filtrarPorBusca(veiculos, ['placa', 'modelo', 'tipo_veiculo']);
-  const servicosFiltrados = filtrarPorBusca(servicos, ['descricao', 'tipo_servico']);
-  const usuariosFiltrados = filtrarPorBusca(usuarios, ['full_name', 'email']);
-  const departamentosFiltrados = filtrarPorBusca(departamentos, ['nome', 'codigo']);
-  const cargosFiltrados = filtrarPorBusca(cargos, ['nome_cargo', 'nivel_hierarquico']);
-  const turnosFiltrados = filtrarPorBusca(turnos, ['nome_turno']);
+  // Aplicar filtros em todas as listas
+  const clientesFiltrados = filtrarPorBuscaUniversal(clientes);
+  const fornecedoresFiltrados = filtrarPorBuscaUniversal(fornecedores);
+  const colaboradoresFiltrados = filtrarPorBuscaUniversal(colaboradores);
+  const transportadorasFiltradas = filtrarPorBuscaUniversal(transportadoras);
+  const produtosFiltrados = filtrarPorBuscaUniversal(produtos);
+  const empresasFiltradas = filtrarPorBuscaUniversal(empresas);
+  const gruposFiltrados = filtrarPorBuscaUniversal(grupos);
+  const bancosFiltrados = filtrarPorBuscaUniversal(bancos);
+  const formasPagamentoFiltradas = filtrarPorBuscaUniversal(formasPagamento);
+  const veiculosFiltrados = filtrarPorBuscaUniversal(veiculos);
+  const servicosFiltrados = filtrarPorBuscaUniversal(servicos);
+  const usuariosFiltrados = filtrarPorBuscaUniversal(usuarios);
+  const departamentosFiltrados = filtrarPorBuscaUniversal(departamentos);
+  const cargosFiltrados = filtrarPorBuscaUniversal(cargos);
+  const turnosFiltrados = filtrarPorBuscaUniversal(turnos);
+  const tabelasPrecoFiltradas = filtrarPorBuscaUniversal(tabelasPreco);
+  const catalogoWebFiltrado = filtrarPorBuscaUniversal(catalogoWeb);
+  const gruposProdutoFiltrados = filtrarPorBuscaUniversal(gruposProduto);
+  const marcasFiltradas = filtrarPorBuscaUniversal(marcas);
+  const kitsFiltrados = filtrarPorBuscaUniversal(kits);
+  const contatosB2BFiltrados = filtrarPorBuscaUniversal(contatosB2B);
+  const representantesFiltrados = filtrarPorBuscaUniversal(representantes);
+  const segmentosClienteFiltrados = filtrarPorBuscaUniversal(segmentosCliente);
+  const planoContasFiltrado = filtrarPorBuscaUniversal(planoContas);
+  const centrosResultadoFiltrados = filtrarPorBuscaUniversal(centrosResultado);
+  const tiposDespesaFiltrados = filtrarPorBuscaUniversal(tiposDespesa);
+  const moedasIndicesFiltrados = filtrarPorBuscaUniversal(moedasIndices);
+  const motoristasFiltrados = filtrarPorBuscaUniversal(motoristas);
+  const tiposFreteFiltrados = filtrarPorBuscaUniversal(tiposFrete);
+  const modelosDocumentoFiltrados = filtrarPorBuscaUniversal(modelosDocumento);
 
   // MUTATIONS UNIVERSAIS - TODAS AS ENTIDADES
   const createMutation = useMutation({
@@ -578,11 +623,24 @@ export default function Cadastros() {
     }
   };
 
+  const totalResultados = clientesFiltrados.length + fornecedoresFiltrados.length + produtosFiltrados.length + 
+    colaboradoresFiltrados.length + transportadorasFiltradas.length + empresasFiltradas.length + 
+    gruposFiltrados.length + bancosFiltrados.length + formasPagamentoFiltradas.length + 
+    veiculosFiltrados.length + servicosFiltrados.length + usuariosFiltrados.length + 
+    perfisAcesso.length + departamentosFiltrados.length + cargosFiltrados.length + 
+    turnosFiltrados.length + condicoesComerciais.length + contatosB2BFiltrados.length + 
+    representantesFiltrados.length + segmentosClienteFiltrados.length + gruposProdutoFiltrados.length + 
+    marcasFiltradas.length + kitsFiltrados.length + tabelasPrecoFiltradas.length + 
+    catalogoWebFiltrado.length + planoContasFiltrado.length + centrosResultadoFiltrados.length + 
+    tiposDespesaFiltrados.length + moedasIndicesFiltrados.length + motoristasFiltrados.length + 
+    tiposFreteFiltrados.length + modelosDocumentoFiltrados.length;
+
+
   const totalItensGrupo1 = empresasFiltradas.length + gruposFiltrados.length + usuariosFiltrados.length + perfisAcesso.length + departamentosFiltrados.length + cargosFiltrados.length + turnosFiltrados.length + centrosCusto.length;
-  const totalItensGrupo2 = clientesFiltrados.length + fornecedoresFiltrados.length + colaboradoresFiltrados.length + transportadorasFiltradas.length + contatosB2B.length + representantes.length + condicoesComerciais.length + segmentosCliente.length;
-  const totalItensGrupo3 = produtosFiltrados.length + servicosFiltrados.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length;
-  const totalItensGrupo4 = bancosFiltrados.length + formasPagamentoFiltradas.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
-  const totalItensGrupo5 = veiculosFiltrados.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
+  const totalItensGrupo2 = clientesFiltrados.length + fornecedoresFiltrados.length + colaboradoresFiltrados.length + transportadorasFiltradas.length + contatosB2BFiltrados.length + representantesFiltrados.length + condicoesComerciais.length + segmentosClienteFiltrados.length;
+  const totalItensGrupo3 = produtosFiltrados.length + servicosFiltrados.length + tabelasPrecoFiltradas.length + catalogoWebFiltrado.length + gruposProdutoFiltrados.length + marcasFiltradas.length + kitsFiltrados.length;
+  const totalItensGrupo4 = bancosFiltrados.length + formasPagamentoFiltradas.length + planoContasFiltrado.length + centrosResultadoFiltrados.length + tiposDespesaFiltrados.length + moedasIndicesFiltrados.length;
+  const totalItensGrupo5 = veiculosFiltrados.length + motoristasFiltrados.length + tiposFreteFiltrados.length + modelosDocumentoFiltrados.length;
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -590,7 +648,7 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V20.1
+            🚀 Cadastros Gerais V20.2
           </h1>
           <p className="text-slate-600">Hub Central - Visualização e Edição Completa</p>
         </div>
@@ -669,21 +727,41 @@ export default function Cadastros() {
         </Card>
       </div>
 
-      {/* BUSCA GLOBAL */}
+      {/* BUSCA GLOBAL - V20.2 MELHORADA */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
         <Input
-          placeholder="🔍 Buscar em todos os cadastros... (clientes, produtos, fornecedores, etc)"
+          placeholder="🔍 Buscar em TUDO: nome, CPF, CNPJ, endereço, telefone, cidade, cargo... (ignora acentos)"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-12 h-12 text-base shadow-md border-slate-300"
         />
         {searchTerm && (
-          <Badge className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white">
-            {clientesFiltrados.length + fornecedoresFiltrados.length + produtosFiltrados.length + colaboradoresFiltrados.length} encontrados
-          </Badge>
+          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+            <Badge className="bg-blue-600 text-white">
+              {totalResultados} encontrado{totalResultados !== 1 ? 's' : ''}
+            </Badge>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={() => setSearchTerm('')}
+              className="h-6 px-2"
+            >
+              Limpar
+            </Button>
+          </div>
         )}
       </div>
+
+      {/* Alerta de busca ativa */}
+      {searchTerm && (
+        <Alert className="border-blue-300 bg-blue-50">
+          <Search className="w-4 h-4 text-blue-600" />
+          <AlertDescription className="text-sm text-blue-900">
+            🔍 Buscando por <strong>"{searchTerm}"</strong> em todos os campos (nome, CPF, CNPJ, endereço, telefone, email, cargo, departamento, cidade, etc)
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* ACCORDION COM 6 GRUPOS */}
       <Accordion type="multiple" defaultValue={["grupo-1"]} className="space-y-4">
@@ -1266,7 +1344,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Mail className="w-4 h-4 text-purple-600" />
-                    Contatos B2B ({contatosB2B.length})
+                    Contatos B2B ({contatosB2BFiltrados.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('contatos', 'ContatoB2B')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1283,7 +1361,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {contatosB2B.map((c) => (
+                      {contatosB2BFiltrados.map((c) => (
                         <TableRow key={c.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{c.nome_contato}</TableCell>
                           <TableCell className="text-xs">{c.email}</TableCell>
@@ -1304,7 +1382,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <UserCheck className="w-4 h-4 text-indigo-600" />
-                    Representantes ({representantes.length})
+                    Representantes ({representantesFiltrados.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('representantes', 'Representante')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1321,7 +1399,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {representantes.map((r) => (
+                      {representantesFiltrados.map((r) => (
                         <TableRow key={r.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{r.nome}</TableCell>
                           <TableCell className="text-xs">{r.comissao_percentual}%</TableCell>
@@ -1382,7 +1460,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Users className="w-4 h-4 text-cyan-600" />
-                    Segmentos de Cliente ({segmentosCliente.length})
+                    Segmentos de Cliente ({segmentosClienteFiltrados.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('segmentos', 'SegmentoCliente')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1399,7 +1477,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {segmentosCliente.map((s) => (
+                      {segmentosClienteFiltrados.map((s) => (
                         <TableRow key={s.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{s.nome_segmento}</TableCell>
                           <TableCell className="text-xs">{s.quantidade_clientes || 0}</TableCell>
@@ -1591,7 +1669,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Boxes className="w-4 h-4 text-cyan-600" />
-                    Grupos ({gruposProduto.length})
+                    Grupos ({gruposProdutoFiltrados.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('grupos-produto', 'GrupoProduto')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1608,7 +1686,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {gruposProduto.map((g) => (
+                      {gruposProdutoFiltrados.map((g) => (
                         <TableRow key={g.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{g.nome_grupo}</TableCell>
                           <TableCell className="text-xs">{g.natureza}</TableCell>
@@ -1629,7 +1707,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Award className="w-4 h-4 text-orange-600" />
-                    Marcas ({marcas.length})
+                    Marcas ({marcasFiltradas.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('marcas', 'Marca')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1646,7 +1724,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {marcas.map((m) => (
+                      {marcasFiltradas.map((m) => (
                         <TableRow key={m.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{m.nome_marca}</TableCell>
                           <TableCell className="text-xs">{m.categoria}</TableCell>
@@ -1667,7 +1745,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Package className="w-4 h-4 text-pink-600" />
-                    Kits ({kits.length})
+                    Kits ({kitsFiltrados.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('kits', 'KitProduto')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1685,7 +1763,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {kits.map((k) => (
+                      {kitsFiltrados.map((k) => (
                         <TableRow key={k.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{k.nome_kit}</TableCell>
                           <TableCell className="text-xs">{(k.itens_kit || []).length} itens</TableCell>
@@ -1709,7 +1787,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600" />
-                    Tabelas de Preço ({tabelasPreco.length})
+                    Tabelas de Preço ({tabelasPrecoFiltradas.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('tabelas', 'TabelaPreco')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1727,7 +1805,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {tabelasPreco.map((t) => (
+                      {tabelasPrecoFiltradas.map((t) => (
                         <TableRow key={t.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{t.nome}</TableCell>
                           <TableCell className="text-xs">{t.tipo}</TableCell>
@@ -1749,7 +1827,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Globe className="w-4 h-4 text-cyan-600" />
-                    Catálogo Web ({catalogoWeb.length})
+                    Catálogo Web ({catalogoWebFiltrado.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1766,7 +1844,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {catalogoWeb.map((c) => (
+                      {catalogoWebFiltrado.map((c) => (
                         <TableRow key={c.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
                           <TableCell>
@@ -1968,7 +2046,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <FileText className="w-4 h-4 text-indigo-600" />
-                    Plano de Contas ({planoContas.length})
+                    Plano de Contas ({planoContasFiltrado.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -1990,7 +2068,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {planoContas.map((pc) => (
+                      {planoContasFiltrado.map((pc) => (
                         <TableRow key={pc.id} className="hover:bg-slate-50">
                           <TableCell className="font-mono text-xs">{pc.codigo_conta}</TableCell>
                           <TableCell className="text-sm">{pc.descricao_conta}</TableCell>
@@ -2012,7 +2090,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Target className="w-4 h-4 text-purple-600" />
-                    Centros Resultado ({centrosResultado.length})
+                    Centros Resultado ({centrosResultadoFiltrados.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -2034,7 +2112,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {centrosResultado.map((cr) => (
+                      {centrosResultadoFiltrados.map((cr) => (
                         <TableRow key={cr.id} className="hover:bg-slate-50">
                           <TableCell className="font-mono text-xs">{cr.codigo}</TableCell>
                           <TableCell className="text-sm">{cr.descricao}</TableCell>
@@ -2056,7 +2134,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Receipt className="w-4 h-4 text-red-600" />
-                    Tipos Despesa ({tiposDespesa.length})
+                    Tipos Despesa ({tiposDespesaFiltrados.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -2077,7 +2155,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {tiposDespesa.map((td) => (
+                      {tiposDespesaFiltrados.map((td) => (
                         <TableRow key={td.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{td.nome}</TableCell>
                           <TableCell className="text-xs">{td.categoria}</TableCell>
@@ -2098,7 +2176,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-cyan-600" />
-                    Moedas/Índices ({moedasIndices.length})
+                    Moedas/Índices ({moedasIndicesFiltrados.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -2120,7 +2198,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {moedasIndices.map((mi) => (
+                      {moedasIndicesFiltrados.map((mi) => (
                         <TableRow key={mi.id} className="hover:bg-slate-50">
                           <TableCell className="font-mono text-xs">{mi.codigo}</TableCell>
                           <TableCell className="text-sm">{mi.nome}</TableCell>
@@ -2269,7 +2347,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600" />
-                  Motoristas ({motoristas.length})
+                  Motoristas ({motoristasFiltrados.length})
                 </h4>
                 <Button size="sm" variant="outline" onClick={() => handleOpenNew('motoristas', 'Motorista')}>
                   <Plus className="w-3 h-3 mr-2" />
@@ -2286,7 +2364,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {motoristas.map((m) => (
+                    {motoristasFiltrados.map((m) => (
                       <TableRow key={m.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{m.nome_completo}</TableCell>
                         <TableCell className="text-xs">{m.cnh_categoria} - {m.cnh_numero}</TableCell>
@@ -2307,7 +2385,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Truck className="w-4 h-4 text-green-600" />
-                  Tipos Frete ({tiposFrete.length})
+                  Tipos Frete ({tiposFreteFiltrados.length})
                 </h4>
                 <Button size="sm" variant="outline" onClick={() => handleOpenNew('tipos-frete', 'TipoFrete')}>
                   <Plus className="w-3 h-3 mr-2" />
@@ -2324,7 +2402,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tiposFrete.map((tf) => (
+                    {tiposFreteFiltrados.map((tf) => (
                       <TableRow key={tf.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{tf.descricao}</TableCell>
                         <TableCell className="text-xs">{tf.modalidade}</TableCell>
@@ -2345,7 +2423,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <FileText className="w-4 h-4 text-cyan-600" />
-                  Modelos PDF ({modelosDocumento.length})
+                  Modelos PDF ({modelosDocumentoFiltrados.length})
                 </h4>
                 <Button size="sm" variant="outline" onClick={() => handleOpenNew('modelos', 'ModeloDocumento')}>
                   <Plus className="w-3 h-3 mr-2" />
@@ -2362,7 +2440,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {modelosDocumento.map((md) => (
+                    {modelosDocumentoFiltrados.map((md) => (
                       <TableRow key={md.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{md.nome_modelo}</TableCell>
                         <TableCell className="text-xs">{md.tipo_documento}</TableCell>
