@@ -232,6 +232,8 @@ export default function Cadastros() {
   const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
+  console.log('🏢 CADASTROS - empresaAtual:', empresaAtual);
+
   // QUERIES
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
@@ -596,14 +598,16 @@ export default function Cadastros() {
   const handleSubmit = (data) => {
     const entityName = editingItem?._entityName;
 
-    console.log('📝 CADASTROS handleSubmit chamado');
+    console.log('📝 ========== CADASTROS handleSubmit ==========');
     console.log('🔍 entityName:', entityName);
     console.log('🔍 tipoDialog:', tipoDialog);
-    console.log('📦 data recebida:', data);
+    console.log('📦 data recebida:', JSON.stringify(data, null, 2));
     console.log('🔍 editingItem:', editingItem);
+    console.log('🏢 empresaAtual disponível:', empresaAtual);
+    console.log('🏢 empresaAtual.id:', empresaAtual?.id);
 
     if (!entityName) {
-      console.error("❌ EntityName não encontrado! tipoDialog:", tipoDialog, "editingItem:", editingItem);
+      console.error("❌ EntityName não encontrado!");
       toast({ 
         title: "❌ Erro ao salvar", 
         description: "Tipo de entidade desconhecido.", 
@@ -611,8 +615,11 @@ export default function Cadastros() {
       });
       return;
     }
-    
-    // ✅ V20.3: INJETAR empresa_id automaticamente em entidades que precisam
+
+    // ✅ V20.3: GARANTIR empresa_id para TabelaPreco
+    let dataFinal = { ...data };
+
+    // Lista de entidades que SEMPRE precisam de empresa_id
     const entidadesQueNecessitamEmpresa = [
       'Produto', 'TabelaPreco', 'CatalogoWeb', 'Servico',
       'Fornecedor', 'Colaborador', 'Transportadora', 'Veiculo', 'Banco', 'FormaPagamento',
@@ -622,19 +629,32 @@ export default function Cadastros() {
       'TipoFrete', 'ModeloDocumento', 'EventoNotificacao'
     ];
 
-    let dataFinal = { ...data };
-
-    if (entidadesQueNecessitamEmpresa.includes(entityName) && !data.empresa_id && empresaAtual?.id) {
-      console.log('💉 Injetando empresa_id:', empresaAtual.id);
-      dataFinal.empresa_id = empresaAtual.id;
+    // ✅ INJETAR empresa_id se não existir nos dados
+    if (entidadesQueNecessitamEmpresa.includes(entityName)) {
+      if (!dataFinal.empresa_id) {
+        if (empresaAtual?.id) {
+          console.log('💉 Injetando empresa_id:', empresaAtual.id);
+          dataFinal.empresa_id = empresaAtual.id;
+        } else {
+          console.error('❌ ERRO CRÍTICO: empresaAtual não disponível! Não é possível criar/atualizar sem empresa_id.');
+          toast({ 
+            title: "❌ Erro", 
+            description: "Empresa atual não identificada. Por favor, selecione uma empresa no seletor de empresas.", 
+            variant: "destructive" 
+          });
+          return;
+        }
+      } else {
+        console.log('✅ empresa_id já existe nos dados:', dataFinal.empresa_id);
+      }
     }
 
     // Para grupos empresariais (se estiver criando um GrupoEmpresarial e a empresa atual já pertencer a um grupo)
-    if (entityName === 'GrupoEmpresarial' && !data.group_id && empresaAtual?.group_id) {
+    if (entityName === 'GrupoEmpresarial' && !dataFinal.group_id && empresaAtual?.group_id) {
       dataFinal.group_id = empresaAtual.group_id;
     }
     
-    console.log('📤 Dados finais para envio:', dataFinal);
+    console.log('📤 Dados finais COMPLETOS para envio:', JSON.stringify(dataFinal, null, 2));
     
     if (editingItem?.id) {
       console.log('🔄 Chamando UPDATE mutation...');
@@ -1829,7 +1849,7 @@ export default function Cadastros() {
                           <TableCell className="font-medium text-sm">{k.nome_kit}</TableCell>
                           <TableCell className="text-xs">{(k.itens_kit || []).length} itens</TableCell>
                           <TableCell className="text-sm font-semibold text-green-700">
-                            R$ {(k.preco_kit || 0).toFixed(2)}
+                            R$ ${(k.preco_kit || 0).toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right">
                             <Button size="sm" variant="ghost" onClick={() => handleEdit(k, 'kits', 'KitProduto')}>
@@ -3232,4 +3252,3 @@ export default function Cadastros() {
     </div>
   );
 }
-
