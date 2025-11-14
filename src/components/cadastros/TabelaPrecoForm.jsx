@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, CheckCircle } from "lucide-react";
 
 export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(tabela || {
@@ -20,22 +21,47 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
     clientes_vinculados: []
   });
 
+  const [debugInfo, setDebugInfo] = useState(null);
+
+  useEffect(() => {
+    console.log('🔍 DEBUG TabelaPrecoForm - formData:', formData);
+  }, [formData]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    console.log('📝 TabelaPrecoForm SUBMIT - Dados:', formData);
+    
     if (!formData.nome || !formData.tipo || !formData.data_inicio) {
-      alert('Preencha os campos obrigatórios: Nome, Tipo e Data Início');
+      alert('❌ Preencha os campos obrigatórios: Nome, Tipo e Data Início');
+      setDebugInfo({ erro: 'Campos obrigatórios faltando', formData });
       return;
     }
+
+    setDebugInfo({ sucesso: 'Enviando para onSubmit', formData });
     onSubmit(formData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {debugInfo && (
+        <Alert className={debugInfo.erro ? "border-red-300 bg-red-50" : "border-green-300 bg-green-50"}>
+          <CheckCircle className="w-4 h-4" />
+          <AlertDescription className="text-xs">
+            <strong>DEBUG:</strong> {JSON.stringify(debugInfo, null, 2)}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div>
         <Label>Nome da Tabela *</Label>
         <Input
           value={formData.nome}
-          onChange={(e) => setFormData({...formData, nome: e.target.value})}
+          onChange={(e) => {
+            const novoValor = e.target.value;
+            console.log('✏️ Nome alterado:', novoValor);
+            setFormData({...formData, nome: novoValor});
+          }}
           placeholder="Ex: Atacado SP, Varejo Nacional"
           required
         />
@@ -52,7 +78,10 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
 
       <div>
         <Label>Tipo de Tabela *</Label>
-        <Select value={formData.tipo} onValueChange={(v) => setFormData({...formData, tipo: v})}>
+        <Select value={formData.tipo} onValueChange={(v) => {
+          console.log('📋 Tipo alterado:', v);
+          setFormData({...formData, tipo: v});
+        }}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -106,7 +135,12 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
+        <Button 
+          type="submit" 
+          disabled={isSubmitting} 
+          className="bg-green-600 hover:bg-green-700"
+          onClick={() => console.log('🚀 Botão CRIAR clicado! formData:', formData)}
+        >
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {tabela?.id ? 'Atualizar Tabela' : 'Criar Tabela'}
         </Button>
