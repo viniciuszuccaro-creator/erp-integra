@@ -2741,7 +2741,7 @@ export default function Cadastros() {
               <Alert className="border-purple-200 bg-purple-50 mb-4">
                 <AlertDescription className="text-sm text-purple-900">
                   ⚡ <strong>Motor de Eventos Automáticos:</strong> Configure quando e como notificar clientes, vendedores e sistemas externos
-                </Alertcription>
+                </AlertDescription>
               </Alert>
 
               <div className="grid gap-3">
@@ -3232,3 +3232,4 @@ export default function Cadastros() {
     </div>
   );
 }
+
