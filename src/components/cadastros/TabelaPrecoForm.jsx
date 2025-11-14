@@ -6,51 +6,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card } from "@/components/ui/card";
-import { Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 
 export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
-  const [formData, setFormData] = useState({
-    nome: '',
-    descricao: '',
-    tipo: 'Padrão',
-    data_inicio: new Date().toISOString().split('T')[0],
-    data_fim: '',
-    ativo: true,
-    observacoes: '',
-    quantidade_produtos: 0,
-    clientes_vinculados: []
-  });
+  // ✅ CORREÇÃO: Verificar se tabela tem dados reais (não apenas _entityName)
+  const tabelaReal = (tabela && tabela.id) ? tabela : null;
 
-  useEffect(() => {
-    if (tabela && tabela.id) {
-      console.log('✏️ TabelaPrecoForm - MODO EDIÇÃO:', tabela);
-      setFormData(tabela);
-    } else {
-      console.log('➕ TabelaPrecoForm - MODO CRIAÇÃO');
-    }
-  }, [tabela]);
+  const [formData, setFormData] = useState({
+    nome: tabelaReal?.nome || '',
+    descricao: tabelaReal?.descricao || '',
+    tipo: tabelaReal?.tipo || 'Padrão',
+    data_inicio: tabelaReal?.data_inicio || new Date().toISOString().split('T')[0],
+    data_fim: tabelaReal?.data_fim || '',
+    ativo: tabelaReal?.ativo !== undefined ? tabelaReal.ativo : true,
+    observacoes: tabelaReal?.observacoes || '',
+    quantidade_produtos: tabelaReal?.quantidade_produtos || 0,
+    clientes_vinculados: tabelaReal?.clientes_vinculados || []
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    console.log('🚀 TabelaPrecoForm SUBMIT INICIADO');
-    console.log('📦 FormData completo:', JSON.stringify(formData, null, 2));
+    console.log('🚀 TABELA PREÇO SUBMIT - Dados:', formData);
     
     if (!formData.nome?.trim()) {
-      alert('❌ Nome da tabela é obrigatório!');
-      console.error('❌ Validação falhou: nome vazio');
+      alert('❌ Nome é obrigatório!');
       return;
     }
 
     if (!formData.tipo) {
-      alert('❌ Tipo da tabela é obrigatório!');
-      console.error('❌ Validação falhou: tipo vazio');
+      alert('❌ Tipo é obrigatório!');
       return;
     }
 
-    // Preparar dados para envio
-    const dadosParaEnviar = {
+    // Preparar dados limpos
+    const dados = {
       nome: formData.nome.trim(),
       tipo: formData.tipo,
       data_inicio: formData.data_inicio,
@@ -59,143 +49,114 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
       clientes_vinculados: formData.clientes_vinculados || []
     };
 
-    // Adicionar campos opcionais apenas se preenchidos
-    if (formData.descricao?.trim()) {
-      dadosParaEnviar.descricao = formData.descricao.trim();
-    }
+    if (formData.descricao?.trim()) dados.descricao = formData.descricao.trim();
+    if (formData.data_fim) dados.data_fim = formData.data_fim;
+    if (formData.observacoes?.trim()) dados.observacoes = formData.observacoes.trim();
 
-    if (formData.data_fim) {
-      dadosParaEnviar.data_fim = formData.data_fim;
-    }
-
-    if (formData.observacoes?.trim()) {
-      dadosParaEnviar.observacoes = formData.observacoes.trim();
-    }
-
-    console.log('✅ Dados validados e preparados:', dadosParaEnviar);
-    console.log('📤 Chamando onSubmit...');
-    
-    onSubmit(dadosParaEnviar);
+    console.log('✅ Enviando:', dados);
+    onSubmit(dados);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Alert className="border-blue-200 bg-blue-50">
-        <Sparkles className="w-4 h-4 text-blue-600" />
-        <AlertDescription className="text-sm text-blue-900">
-          💡 A <strong>empresa_id</strong> será adicionada automaticamente ao salvar
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <Alert className="border-green-200 bg-green-50">
+        <Sparkles className="w-4 h-4 text-green-600" />
+        <AlertDescription className="text-sm text-green-900">
+          ✅ <strong>empresa_id</strong> será injetada automaticamente
         </AlertDescription>
       </Alert>
 
-      <Card className="p-4 bg-slate-50">
-        <div className="space-y-4">
+      <div className="space-y-4">
+        <div>
+          <Label className="font-semibold">Nome da Tabela <span className="text-red-500">*</span></Label>
+          <Input
+            value={formData.nome}
+            onChange={(e) => setFormData({...formData, nome: e.target.value})}
+            placeholder="Ex: Tabela Atacado Nacional"
+            required
+            className="mt-2"
+          />
+        </div>
+
+        <div>
+          <Label className="font-semibold">Descrição</Label>
+          <Input
+            value={formData.descricao || ''}
+            onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+            placeholder="Descrição opcional"
+            className="mt-2"
+          />
+        </div>
+
+        <div>
+          <Label className="font-semibold">Tipo <span className="text-red-500">*</span></Label>
+          <Select 
+            value={formData.tipo} 
+            onValueChange={(v) => setFormData({...formData, tipo: v})}
+          >
+            <SelectTrigger className="mt-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Padrão">Padrão</SelectItem>
+              <SelectItem value="Atacado">Atacado</SelectItem>
+              <SelectItem value="Varejo">Varejo</SelectItem>
+              <SelectItem value="Especial">Especial</SelectItem>
+              <SelectItem value="Promocional">Promocional</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label className="text-sm font-semibold text-slate-900">
-              Nome da Tabela <span className="text-red-500">*</span>
-            </Label>
+            <Label className="font-semibold">Início Vigência</Label>
             <Input
-              value={formData.nome}
-              onChange={(e) => {
-                const valor = e.target.value;
-                console.log('✏️ Nome alterado para:', valor);
-                setFormData({...formData, nome: valor});
-              }}
-              placeholder="Ex: Tabela Atacado São Paulo"
-              required
-              className="mt-1.5"
+              type="date"
+              value={formData.data_inicio}
+              onChange={(e) => setFormData({...formData, data_inicio: e.target.value})}
+              className="mt-2"
             />
           </div>
 
           <div>
-            <Label className="text-sm font-semibold text-slate-900">Descrição</Label>
+            <Label className="font-semibold">Fim Vigência</Label>
             <Input
-              value={formData.descricao || ''}
-              onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-              placeholder="Descrição interna (opcional)"
-              className="mt-1.5"
-            />
-          </div>
-
-          <div>
-            <Label className="text-sm font-semibold text-slate-900">
-              Tipo de Tabela <span className="text-red-500">*</span>
-            </Label>
-            <Select 
-              value={formData.tipo} 
-              onValueChange={(v) => {
-                console.log('📋 Tipo alterado para:', v);
-                setFormData({...formData, tipo: v});
-              }}
-            >
-              <SelectTrigger className="mt-1.5">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Padrão">Padrão</SelectItem>
-                <SelectItem value="Atacado">Atacado</SelectItem>
-                <SelectItem value="Varejo">Varejo</SelectItem>
-                <SelectItem value="Especial">Especial</SelectItem>
-                <SelectItem value="Promocional">Promocional</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-semibold text-slate-900">Data Início</Label>
-              <Input
-                type="date"
-                value={formData.data_inicio}
-                onChange={(e) => setFormData({...formData, data_inicio: e.target.value})}
-                className="mt-1.5"
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm font-semibold text-slate-900">Data Fim (opcional)</Label>
-              <Input
-                type="date"
-                value={formData.data_fim || ''}
-                onChange={(e) => setFormData({...formData, data_fim: e.target.value})}
-                className="mt-1.5"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-semibold text-slate-900">Observações</Label>
-            <Textarea
-              value={formData.observacoes || ''}
-              onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-              rows={3}
-              placeholder="Observações internas sobre esta tabela"
-              className="mt-1.5"
-            />
-          </div>
-
-          <div className="flex items-center justify-between p-4 bg-white rounded-lg border-2 border-slate-200">
-            <div>
-              <Label className="text-sm font-semibold text-slate-900">Tabela Ativa</Label>
-              <p className="text-xs text-slate-500 mt-1">
-                Apenas tabelas ativas aparecem para seleção
-              </p>
-            </div>
-            <Switch
-              checked={formData.ativo}
-              onCheckedChange={(v) => {
-                console.log('🔄 Ativo alterado para:', v);
-                setFormData({...formData, ativo: v});
-              }}
+              type="date"
+              value={formData.data_fim || ''}
+              onChange={(e) => setFormData({...formData, data_fim: e.target.value})}
+              className="mt-2"
             />
           </div>
         </div>
-      </Card>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
+        <div>
+          <Label className="font-semibold">Observações</Label>
+          <Textarea
+            value={formData.observacoes || ''}
+            onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+            rows={3}
+            placeholder="Observações internas"
+            className="mt-2"
+          />
+        </div>
+
+        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+          <div>
+            <Label className="font-semibold">Tabela Ativa</Label>
+            <p className="text-xs text-slate-500 mt-1">Controla visibilidade no sistema</p>
+          </div>
+          <Switch
+            checked={formData.ativo}
+            onCheckedChange={(v) => setFormData({...formData, ativo: v})}
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-6 border-t">
         <Button 
           type="submit" 
           disabled={isSubmitting} 
-          className="bg-green-600 hover:bg-green-700 min-w-40"
+          className="bg-green-600 hover:bg-green-700 min-w-40 h-11 text-base font-semibold"
         >
           {isSubmitting ? (
             <>
@@ -203,22 +164,10 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
               Salvando...
             </>
           ) : (
-            <>{tabela?.id ? '✅ Atualizar Tabela' : '➕ Criar Tabela de Preço'}</>
+            <>{tabelaReal ? '💾 Atualizar' : '➕ Criar Tabela'}</>
           )}
         </Button>
       </div>
-
-      {/* DEBUG PANEL - REMOVER DEPOIS */}
-      <Card className="p-3 bg-yellow-50 border-yellow-200">
-        <p className="text-xs font-mono text-yellow-900">
-          <strong>🔍 DEBUG:</strong> {JSON.stringify({ 
-            nome: formData.nome, 
-            tipo: formData.tipo, 
-            data_inicio: formData.data_inicio,
-            ativo: formData.ativo 
-          })}
-        </p>
-      </Card>
     </form>
   );
 }
