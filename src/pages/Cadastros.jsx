@@ -108,8 +108,8 @@ import MoedaIndiceForm from "../components/cadastros/MoedaIndiceForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
-import { useContextoVisual } from "../hooks/useContextoVisual";
-import { usePermissions } from "../hooks/usePermissions";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * 🔍 V20.2: MOTOR DE BUSCA UNIVERSAL MELHORADO
