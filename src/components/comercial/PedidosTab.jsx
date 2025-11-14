@@ -119,11 +119,23 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas }) {
           </DialogHeader>
           <PedidoFormCompleto
             pedido={pedidoSelecionado}
-            onClose={() => setDialogAberto(false)}
-            onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-              setDialogAberto(false);
+            clientes={clientes}
+            onSubmit={async (dadosPedido) => {
+              try {
+                if (pedidoSelecionado) {
+                  await base44.entities.Pedido.update(pedidoSelecionado.id, dadosPedido);
+                  toast({ title: "✅ Pedido atualizado" });
+                } else {
+                  await base44.entities.Pedido.create(dadosPedido);
+                  toast({ title: "✅ Pedido criado" });
+                }
+                queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                setDialogAberto(false);
+              } catch (error) {
+                toast({ title: "❌ Erro ao salvar pedido", variant: "destructive" });
+              }
             }}
+            onCancel={() => setDialogAberto(false)}
           />
         </DialogContent>
       </Dialog>
