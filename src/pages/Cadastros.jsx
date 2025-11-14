@@ -108,6 +108,8 @@ import MoedaIndiceForm from "../components/cadastros/MoedaIndiceForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
+import { useContextoVisual } from "../hooks/useContextoVisual";
+import { usePermissions } from "../hooks/usePermissions";
 
 /**
  * 🔍 V20.2: MOTOR DE BUSCA UNIVERSAL MELHORADO
@@ -155,7 +157,8 @@ const buscarEmObjeto = (obj, termo) => {
 };
 
 /**
- * CADASTROS GERAIS V20.2 - HUB CENTRAL COM BUSCA UNIVERSAL MELHORADA
+ * CADASTROS GERAIS V20.2 - HUB CENTRAL COM BUSCA UNIVERSAL
+ * NOVO: Tabelas de Preço migradas do módulo Comercial
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -226,6 +229,8 @@ export default function Cadastros() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast(); // Initialize toast
+  const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
 
   // QUERIES
   const { data: clientes = [] } = useQuery({
@@ -577,10 +582,31 @@ export default function Cadastros() {
       return;
     }
     
+    // ✅ V20.2: INJETAR empresa_id automaticamente em entidades que precisam
+    const entidadesQueNecessitamEmpresa = [
+      'Produto', 'TabelaPreco', 'CatalogoWeb', 'Servico',
+      'Fornecedor', 'Colaborador', 'Transportadora', 'Veiculo', 'Banco', 'FormaPagamento',
+      'CentroCusto', 'Departamento', 'Cargo', 'Turno', 'CondicaoComercial', 'ContatoB2B',
+      'Representante', 'SegmentoCliente', 'GrupoProduto', 'Marca', 'KitProduto',
+      'PlanoDeContas', 'CentroResultado', 'TipoDespesa', 'MoedaIndice', 'Motorista',
+      'TipoFrete', 'ModeloDocumento', 'EventoNotificacao'
+    ];
+
+    let dataFinal = { ...data };
+
+    if (entidadesQueNecessitamEmpresa.includes(entityName) && !data.empresa_id && empresaAtual?.id) {
+      dataFinal.empresa_id = empresaAtual.id;
+    }
+
+    // Para grupos empresariais (se estiver criando um GrupoEmpresarial e a empresa atual já pertencer a um grupo)
+    if (entityName === 'GrupoEmpresarial' && !data.group_id && empresaAtual?.group_id) {
+      dataFinal.group_id = empresaAtual.group_id;
+    }
+    
     if (editingItem?.id) {
-      updateMutation.mutate({ entity: entityName, id: editingItem.id, data });
+      updateMutation.mutate({ entity: entityName, id: editingItem.id, data: dataFinal });
     } else {
-      createMutation.mutate({ entity: entityName, data });
+      createMutation.mutate({ entity: entityName, data: dataFinal });
     }
   };
 
@@ -1648,7 +1674,7 @@ export default function Cadastros() {
                         <TableCell className="text-xs">{s.tipo_servico}</TableCell>
                         <TableCell className="text-xs">{s.unidade}</TableCell>
                         <TableCell className="text-sm font-semibold text-green-700">
-                          R$ {(s.preco_servico || 0).toFixed(2)}
+                          R$ ${(s.preco_servico || 0).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button size="sm" variant="ghost" onClick={() => handleEdit(s, 'servicos', 'Servico')}>
