@@ -1,22 +1,18 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Building2, 
   Phone, 
-  MapPin, 
   Save,
-  FileText,
   Star
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -85,19 +81,20 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
 
   // Handler busca CNPJ
   const handleDadosCNPJ = (dados) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      nome: dados.razao_social || prevData.nome,
+    setFormData(prev => ({
+      ...prev,
+      nome: dados.razao_social || prev.nome,
       razao_social: dados.razao_social || "",
       nome_fantasia: dados.nome_fantasia || "",
+      inscricao_estadual: dados.inscricao_estadual || prev.inscricao_estadual,
       endereco: dados.endereco_completo?.logradouro 
-        ? `${dados.endereco_completo.logradouro}, ${dados.endereco_completo.numero || 'S/N'}`
-        : prevData.endereco,
-      cidade: dados.endereco_completo?.cidade || prevData.cidade,
-      estado: dados.endereco_completo?.uf || prevData.estado,
-      cep: dados.endereco_completo?.cep || prevData.cep,
-      email: dados.email || prevData.email,
-      telefone: dados.telefone || prevData.telefone
+        ? `${dados.endereco_completo.logradouro}, ${dados.endereco_completo.numero || 'S/N'}, ${dados.endereco_completo.bairro}`
+        : prev.endereco,
+      cidade: dados.endereco_completo?.cidade || prev.cidade,
+      estado: dados.endereco_completo?.uf || prev.estado,
+      cep: dados.endereco_completo?.cep || prev.cep,
+      email: dados.email || prev.email,
+      telefone: dados.telefone || prev.telefone
     }));
 
     toast({
@@ -108,11 +105,11 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
 
   // Handler busca CEP
   const handleDadosCEP = (dados) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      endereco: dados.logradouro ? `${dados.logradouro}` : prevData.endereco,
-      cidade: dados.localidade || prevData.cidade, // Corrected to use 'localidade' for city
-      estado: dados.uf || prevData.estado
+    setFormData(prev => ({
+      ...prev,
+      endereco: dados.logradouro ? `${dados.logradouro}, ${dados.bairro}` : prev.endereco,
+      cidade: dados.cidade || prev.cidade,
+      estado: dados.uf || prev.estado
     }));
 
     toast({ title: "✅ Endereço preenchido automaticamente!" });
@@ -236,12 +233,12 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                 </div>
 
                 <div>
-                  <Label>&nbsp;</Label>
+                  <Label>🌐 Busca Automática</Label>
                   <BotaoBuscaAutomatica
                     tipo="cnpj"
                     valor={formData.cnpj}
                     onDadosEncontrados={handleDadosCNPJ}
-                    disabled={!formData.cnpj || formData.cnpj.length < 14}
+                    disabled={!formData.cnpj || formData.cnpj.replace(/\D/g, '').length < 14}
                   />
                 </div>
 
@@ -287,7 +284,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                     </div>
 
                     <div>
-                      <Label>&nbsp;</Label>
+                      <Label>🌐 Validar RNTRC</Label>
                       <BotaoBuscaAutomatica
                         tipo="rntrc"
                         valor={formData.rntrc}
@@ -306,24 +303,6 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                     value={formData.prazo_entrega_padrao}
                     onChange={(e) => setFormData({ ...formData, prazo_entrega_padrao: parseFloat(e.target.value) || 0 })}
                   />
-                </div>
-
-                <div>
-                  <Label htmlFor="status_fornecedor">Status do Fornecedor</Label>
-                  <Select
-                    value={formData.status_fornecedor}
-                    onValueChange={(value) => setFormData({ ...formData, status_fornecedor: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Em Análise">Em Análise</SelectItem>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Bloqueado">Bloqueado</SelectItem>
-                      <SelectItem value="Inativo">Inativo</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 <div>
@@ -407,16 +386,6 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                 </div>
 
                 <div className="col-span-2">
-                  <Label htmlFor="whatsapp">WhatsApp</Label>
-                  <Input
-                    id="whatsapp"
-                    value={formData.whatsapp}
-                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                    placeholder="(XX) XXXX-XXXX"
-                  />
-                </div>
-
-                <div className="col-span-2">
                   <Label htmlFor="contato_responsavel">Contato Responsável</Label>
                   <Input
                     id="contato_responsavel"
@@ -437,7 +406,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                 </div>
 
                 <div>
-                  <Label>&nbsp;</Label>
+                  <Label>🌐 Busca CEP</Label>
                   <BotaoBuscaAutomatica
                     tipo="cep"
                     valor={formData.cep}

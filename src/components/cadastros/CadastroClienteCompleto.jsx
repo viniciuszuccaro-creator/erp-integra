@@ -152,47 +152,38 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
 
   // Handler de busca automática CNPJ
   const handleDadosCNPJ = (dados) => {
-    setFormData(prev => {
-      const newFormData = {
-        ...prev,
-        nome: dados.razao_social || prev.nome,
-        razao_social: dados.razao_social || "",
-        nome_fantasia: dados.nome_fantasia || "",
-        endereco_principal: {
-          ...prev.endereco_principal,
-          cep: dados.endereco_completo?.cep || prev.endereco_principal.cep,
-          logradouro: dados.endereco_completo?.logradouro || prev.endereco_principal.logradouro,
-          numero: dados.endereco_completo?.numero || prev.endereco_principal.numero,
-          bairro: dados.endereco_completo?.bairro || prev.endereco_principal.bairro,
-          cidade: dados.endereco_completo?.cidade || prev.endereco_principal.cidade,
-          estado: dados.endereco_completo?.uf || prev.endereco_principal.estado,
-          complemento: dados.endereco_completo?.complemento || prev.endereco_principal.complemento
-        },
-        configuracao_fiscal: {
-          ...prev.configuracao_fiscal,
-          regime_tributario: dados.porte === 'MEI' ? 'MEI' :
-                            ['ME', 'EPP'].includes(dados.porte) ? 'Simples Nacional' :
-                            prev.configuracao_fiscal.regime_tributario
-        }
-      };
-
-      // Handle contacts: email
-      if (dados.email && !(newFormData.contatos || []).some(c => c.valor === dados.email)) {
-        newFormData.contatos = [
-          ...(newFormData.contatos || []),
-          { tipo: 'E-mail', valor: dados.email, principal: false }
-        ];
-      }
-
-      // Handle contacts: phone
-      if (dados.telefone && !(newFormData.contatos || []).some(c => c.valor === dados.telefone)) {
-        newFormData.contatos = [
-          ...(newFormData.contatos || []),
-          { tipo: 'Telefone', valor: dados.telefone, principal: false }
-        ];
-      }
-      return newFormData;
-    });
+    setFormData(prev => ({
+      ...prev,
+      nome: dados.razao_social || prev.nome,
+      razao_social: dados.razao_social || "",
+      nome_fantasia: dados.nome_fantasia || "",
+      inscricao_estadual: dados.inscricao_estadual || prev.inscricao_estadual,
+      endereco_principal: {
+        ...prev.endereco_principal,
+        cep: dados.endereco_completo?.cep || prev.endereco_principal?.cep || "",
+        logradouro: dados.endereco_completo?.logradouro || prev.endereco_principal?.logradouro || "",
+        numero: dados.endereco_completo?.numero || prev.endereco_principal?.numero || "",
+        bairro: dados.endereco_completo?.bairro || prev.endereco_principal?.bairro || "",
+        cidade: dados.endereco_completo?.cidade || prev.endereco_principal?.cidade || "",
+        estado: dados.endereco_completo?.uf || prev.endereco_principal?.estado || "",
+        complemento: dados.endereco_completo?.complemento || prev.endereco_principal?.complemento || ""
+      },
+      configuracao_fiscal: {
+        ...prev.configuracao_fiscal,
+        regime_tributario: dados.porte === 'MEI' ? 'MEI' : 
+                          ['ME', 'EPP'].includes(dados.porte) ? 'Simples Nacional' :
+                          prev.configuracao_fiscal?.regime_tributario || 'Simples Nacional'
+      },
+      contatos: [
+        ...(prev.contatos || []),
+        ...(dados.email && !(prev.contatos || []).some(c => c.valor === dados.email) 
+          ? [{ tipo: 'E-mail', valor: dados.email, principal: false }] 
+          : []),
+        ...(dados.telefone && !(prev.contatos || []).some(c => c.valor === dados.telefone)
+          ? [{ tipo: 'Telefone', valor: dados.telefone, principal: false }]
+          : [])
+      ]
+    }));
 
     toast({
       title: "✅ Dados da Receita Federal preenchidos!",
@@ -414,7 +405,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     </div>
 
                     <div>
-                      <Label>&nbsp;</Label> {/* Placeholder for alignment */}
+                      <Label>🌐 Busca Automática</Label>
                       <BotaoBuscaAutomatica
                         tipo="cnpj"
                         valor={formData.cnpj}
@@ -468,7 +459,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
 
                 {/* ENDEREÇO PRINCIPAL COM BUSCA CEP */}
                 <div className="col-span-2 pt-4 border-t">
-                  <h3 className="font-semibold mb-3">Endereço Principal</h3>
+                  <h3 className="font-semibold mb-3">📍 Endereço Principal</h3>
                   <div className="grid grid-cols-4 gap-4">
                     <div>
                       <Label htmlFor="cep">CEP</Label>
@@ -487,7 +478,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     </div>
 
                     <div>
-                      <Label>&nbsp;</Label> {/* Placeholder for alignment */}
+                      <Label>🌐 Busca</Label>
                       <BotaoBuscaAutomatica
                         tipo="cep"
                         valor={formData.endereco_principal?.cep}
