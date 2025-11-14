@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
 export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose, onSuccess }) {
   const [activeTab, setActiveTab] = useState("dados-gerais");
@@ -30,15 +32,23 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
 
   const [formData, setFormData] = useState(fornecedor || {
     nome: "",
+    razao_social: "",
+    nome_fantasia: "",
     cnpj: "",
+    inscricao_estadual: "",
+    rntrc: "",
     email: "",
     telefone: "",
+    whatsapp: "",
     contato_responsavel: "",
     endereco: "",
     cidade: "",
     estado: "",
+    cep: "",
+    tipo_fornecedor: "Matéria-Prima",
     categoria: "Matéria Prima",
     prazo_entrega_padrao: 0,
+    status_fornecedor: "Em Análise",
     status: "Ativo",
     avaliacoes: [],
     nota_media: 0,
@@ -71,6 +81,57 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
 
   const handleSave = () => {
     saveMutation.mutate(formData);
+  };
+
+  // Handler busca CNPJ
+  const handleDadosCNPJ = (dados) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      nome: dados.razao_social || prevData.nome,
+      razao_social: dados.razao_social || "",
+      nome_fantasia: dados.nome_fantasia || "",
+      endereco: dados.endereco_completo?.logradouro 
+        ? `${dados.endereco_completo.logradouro}, ${dados.endereco_completo.numero || 'S/N'}`
+        : prevData.endereco,
+      cidade: dados.endereco_completo?.cidade || prevData.cidade,
+      estado: dados.endereco_completo?.uf || prevData.estado,
+      cep: dados.endereco_completo?.cep || prevData.cep,
+      email: dados.email || prevData.email,
+      telefone: dados.telefone || prevData.telefone
+    }));
+
+    toast({
+      title: "✅ Dados da Receita Federal preenchidos!",
+      description: `${dados.razao_social} - ${dados.situacao_cadastral}`
+    });
+  };
+
+  // Handler busca CEP
+  const handleDadosCEP = (dados) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      endereco: dados.logradouro ? `${dados.logradouro}` : prevData.endereco,
+      cidade: dados.localidade || prevData.cidade, // Corrected to use 'localidade' for city
+      estado: dados.uf || prevData.estado
+    }));
+
+    toast({ title: "✅ Endereço preenchido automaticamente!" });
+  };
+
+  // Handler validação RNTRC (transportadoras)
+  const handleDadosRNTRC = (dados) => {
+    if (dados.valido) {
+      toast({
+        title: "✅ RNTRC Válido",
+        description: `Situação: ${dados.situacao} - ${dados.tipo_registro}`
+      });
+    } else {
+      toast({
+        title: "⚠️ RNTRC com restrições",
+        description: dados.situacao,
+        variant: "destructive"
+      });
+    }
   };
 
   React.useEffect(() => {
@@ -147,11 +208,49 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                 </div>
 
                 <div>
+                  <Label htmlFor="razao_social">Razão Social</Label>
+                  <Input
+                    id="razao_social"
+                    value={formData.razao_social}
+                    onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                  <Input
+                    id="nome_fantasia"
+                    value={formData.nome_fantasia}
+                    onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
+                  />
+                </div>
+
+                <div>
                   <Label htmlFor="cnpj">CNPJ</Label>
                   <Input
                     id="cnpj"
                     value={formData.cnpj}
                     onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                    placeholder="00.000.000/0000-00"
+                  />
+                </div>
+
+                <div>
+                  <Label>&nbsp;</Label>
+                  <BotaoBuscaAutomatica
+                    tipo="cnpj"
+                    valor={formData.cnpj}
+                    onDadosEncontrados={handleDadosCNPJ}
+                    disabled={!formData.cnpj || formData.cnpj.length < 14}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                  <Input
+                    id="inscricao_estadual"
+                    value={formData.inscricao_estadual}
+                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
                   />
                 </div>
 
@@ -175,6 +274,30 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                   </Select>
                 </div>
 
+                {formData.categoria === "Transporte" && (
+                  <>
+                    <div>
+                      <Label htmlFor="rntrc">RNTRC (ANTT)</Label>
+                      <Input
+                        id="rntrc"
+                        value={formData.rntrc}
+                        onChange={(e) => setFormData({ ...formData, rntrc: e.target.value })}
+                        placeholder="00000000"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>&nbsp;</Label>
+                      <BotaoBuscaAutomatica
+                        tipo="rntrc"
+                        valor={formData.rntrc}
+                        onDadosEncontrados={handleDadosRNTRC}
+                        disabled={!formData.rntrc}
+                      />
+                    </div>
+                  </>
+                )}
+
                 <div>
                   <Label htmlFor="prazo_entrega_padrao">Prazo Entrega Padrão (dias)</Label>
                   <Input
@@ -183,6 +306,24 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                     value={formData.prazo_entrega_padrao}
                     onChange={(e) => setFormData({ ...formData, prazo_entrega_padrao: parseFloat(e.target.value) || 0 })}
                   />
+                </div>
+
+                <div>
+                  <Label htmlFor="status_fornecedor">Status do Fornecedor</Label>
+                  <Select
+                    value={formData.status_fornecedor}
+                    onValueChange={(value) => setFormData({ ...formData, status_fornecedor: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Em Análise">Em Análise</SelectItem>
+                      <SelectItem value="Ativo">Ativo</SelectItem>
+                      <SelectItem value="Bloqueado">Bloqueado</SelectItem>
+                      <SelectItem value="Inativo">Inativo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -266,12 +407,42 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                 </div>
 
                 <div className="col-span-2">
+                  <Label htmlFor="whatsapp">WhatsApp</Label>
+                  <Input
+                    id="whatsapp"
+                    value={formData.whatsapp}
+                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                    placeholder="(XX) XXXX-XXXX"
+                  />
+                </div>
+
+                <div className="col-span-2">
                   <Label htmlFor="contato_responsavel">Contato Responsável</Label>
                   <Input
                     id="contato_responsavel"
                     value={formData.contato_responsavel}
                     onChange={(e) => setFormData({ ...formData, contato_responsavel: e.target.value })}
                     placeholder="Nome do responsável"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input
+                    id="cep"
+                    value={formData.cep}
+                    onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                    placeholder="00000-000"
+                  />
+                </div>
+
+                <div>
+                  <Label>&nbsp;</Label>
+                  <BotaoBuscaAutomatica
+                    tipo="cep"
+                    valor={formData.cep}
+                    onDadosEncontrados={handleDadosCEP}
+                    disabled={!formData.cep || formData.cep.replace(/\D/g, '').length < 8}
                   />
                 </div>
 

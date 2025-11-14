@@ -29,6 +29,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineCliente";
+import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos"; // Removed buscarEnderecoCEP as it's likely internal to BotaoBuscaAutomatica
 
 export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSuccess }) {
   const [activeTab, setActiveTab] = useState("dados-gerais");
@@ -48,7 +49,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
     cnpj: "",
     rg: "",
     inscricao_estadual: "",
-    inscricao_municipal: "",
+    inscricao_municipal: "", // Added this field for PJ
     regiao_atendimento: "Sudeste",
     endereco_principal: {
       cep: "",
@@ -147,6 +148,77 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
     if (percentualUtilizado >= 90) return 'Bloqueado';
     if (percentualUtilizado >= 70) return 'Alerta';
     return 'OK';
+  };
+
+  // Handler de busca automática CNPJ
+  const handleDadosCNPJ = (dados) => {
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        nome: dados.razao_social || prev.nome,
+        razao_social: dados.razao_social || "",
+        nome_fantasia: dados.nome_fantasia || "",
+        endereco_principal: {
+          ...prev.endereco_principal,
+          cep: dados.endereco_completo?.cep || prev.endereco_principal.cep,
+          logradouro: dados.endereco_completo?.logradouro || prev.endereco_principal.logradouro,
+          numero: dados.endereco_completo?.numero || prev.endereco_principal.numero,
+          bairro: dados.endereco_completo?.bairro || prev.endereco_principal.bairro,
+          cidade: dados.endereco_completo?.cidade || prev.endereco_principal.cidade,
+          estado: dados.endereco_completo?.uf || prev.endereco_principal.estado,
+          complemento: dados.endereco_completo?.complemento || prev.endereco_principal.complemento
+        },
+        configuracao_fiscal: {
+          ...prev.configuracao_fiscal,
+          regime_tributario: dados.porte === 'MEI' ? 'MEI' :
+                            ['ME', 'EPP'].includes(dados.porte) ? 'Simples Nacional' :
+                            prev.configuracao_fiscal.regime_tributario
+        }
+      };
+
+      // Handle contacts: email
+      if (dados.email && !(newFormData.contatos || []).some(c => c.valor === dados.email)) {
+        newFormData.contatos = [
+          ...(newFormData.contatos || []),
+          { tipo: 'E-mail', valor: dados.email, principal: false }
+        ];
+      }
+
+      // Handle contacts: phone
+      if (dados.telefone && !(newFormData.contatos || []).some(c => c.valor === dados.telefone)) {
+        newFormData.contatos = [
+          ...(newFormData.contatos || []),
+          { tipo: 'Telefone', valor: dados.telefone, principal: false }
+        ];
+      }
+      return newFormData;
+    });
+
+    toast({
+      title: "✅ Dados da Receita Federal preenchidos!",
+      description: `${dados.razao_social} - ${dados.situacao_cadastral}`
+    });
+  };
+
+  // Handler busca CEP
+  const handleDadosCEP = (dados) => {
+    setFormData(prev => ({
+      ...prev,
+      endereco_principal: {
+        ...prev.endereco_principal,
+        logradouro: dados.logradouro || "",
+        bairro: dados.bairro || "",
+        cidade: dados.cidade || "",
+        estado: dados.uf || "",
+        latitude: dados.latitude || null,
+        longitude: dados.longitude || null,
+        mapa_url: dados.latitude && dados.longitude
+          ? `https://www.google.com/maps?q=${dados.latitude},${dados.longitude}`
+          : ""
+      }
+    }));
+
+    toast({ title: "✅ Endereço preenchido automaticamente!" });
   };
 
   useEffect(() => {
@@ -337,6 +409,17 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                         id="cnpj"
                         value={formData.cnpj}
                         onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                        placeholder="00.000.000/0000-00"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>&nbsp;</Label> {/* Placeholder for alignment */}
+                      <BotaoBuscaAutomatica
+                        tipo="cnpj"
+                        valor={formData.cnpj}
+                        onDadosEncontrados={handleDadosCNPJ}
+                        disabled={!formData.cnpj || formData.cnpj.replace(/\D/g, '').length < 14}
                       />
                     </div>
 
@@ -346,6 +429,15 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                         id="inscricao_estadual"
                         value={formData.inscricao_estadual}
                         onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="inscricao_municipal">Inscrição Municipal</Label>
+                      <Input
+                        id="inscricao_municipal"
+                        value={formData.inscricao_municipal}
+                        onChange={(e) => setFormData({ ...formData, inscricao_municipal: e.target.value })}
                       />
                     </div>
                   </>
@@ -359,6 +451,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                         id="cpf"
                         value={formData.cpf}
                         onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                        placeholder="000.000.000-00"
                       />
                     </div>
 
@@ -372,6 +465,114 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     </div>
                   </>
                 )}
+
+                {/* ENDEREÇO PRINCIPAL COM BUSCA CEP */}
+                <div className="col-span-2 pt-4 border-t">
+                  <h3 className="font-semibold mb-3">Endereço Principal</h3>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div>
+                      <Label htmlFor="cep">CEP</Label>
+                      <Input
+                        id="cep"
+                        value={formData.endereco_principal?.cep || ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          endereco_principal: {
+                            ...formData.endereco_principal,
+                            cep: e.target.value
+                          }
+                        })}
+                        placeholder="00000-000"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>&nbsp;</Label> {/* Placeholder for alignment */}
+                      <BotaoBuscaAutomatica
+                        tipo="cep"
+                        valor={formData.endereco_principal?.cep}
+                        onDadosEncontrados={handleDadosCEP}
+                        disabled={!formData.endereco_principal?.cep || formData.endereco_principal.cep.replace(/\D/g, '').length < 8}
+                      />
+                    </div>
+
+                    <div className="col-span-2">
+                      <Label htmlFor="logradouro">Logradouro</Label>
+                      <Input
+                        id="logradouro"
+                        value={formData.endereco_principal?.logradouro || ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          endereco_principal: {
+                            ...formData.endereco_principal,
+                            logradouro: e.target.value
+                          }
+                        })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="numero">Número</Label>
+                      <Input
+                        id="numero"
+                        value={formData.endereco_principal?.numero || ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          endereco_principal: {
+                            ...formData.endereco_principal,
+                            numero: e.target.value
+                          }
+                        })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="bairro">Bairro</Label>
+                      <Input
+                        id="bairro"
+                        value={formData.endereco_principal?.bairro || ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          endereco_principal: {
+                            ...formData.endereco_principal,
+                            bairro: e.target.value
+                          }
+                        })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="cidade">Cidade</Label>
+                      <Input
+                        id="cidade"
+                        value={formData.endereco_principal?.cidade || ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          endereco_principal: {
+                            ...formData.endereco_principal,
+                            cidade: e.target.value
+                          }
+                        })}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="estado">UF</Label>
+                      <Input
+                        id="estado"
+                        value={formData.endereco_principal?.estado || ""}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          endereco_principal: {
+                            ...formData.endereco_principal,
+                            estado: e.target.value
+                          }
+                        })}
+                        maxLength={2}
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 <div>
                   <Label htmlFor="regiao_atendimento">Região de Atendimento</Label>
