@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -5,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Added CardHeader, CardTitle
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Package, Upload, Calculator, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Loader2, Sparkles, Package, Upload, Calculator, CheckCircle2, AlertTriangle, FileText } from "lucide-react"; // Added FileText
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos"; // Added BotaoBuscaAutomatica
 
 /**
  * V22.0: REGRA MESTRE DE CONVERSÃO DE UNIDADES
@@ -43,6 +45,8 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
     preco_venda: 0,
     estoque_minimo: 0,
     ncm: '',
+    cest: '', // Adicionado
+    unidade_medida: '', // Adicionado
     status: 'Ativo'
   });
 
@@ -50,6 +54,7 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
   const [processandoIA, setProcessandoIA] = useState(false);
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [calculoConversao, setCalculoConversao] = useState(null);
+  const [sugestoesIA, setSugestoesIA] = useState({}); // Added
 
   // V22.0: Recalcular fatores quando mudam campos-chave
   useEffect(() => {
@@ -196,6 +201,26 @@ Caso contrário, sugira:
         unidades_secundarias: [...unidades, unidade]
       });
     }
+  };
+
+  // NOVO: Handler para busca automática de NCM
+  const handleDadosNCM = (dados) => {
+    setFormData((prev) => ({
+      ...prev,
+      // mantém o NCM digitado, já que a busca automática é um complemento
+      // Preenche campos automaticamente
+      unidade_medida: dados.unidade || prev.unidade_medida,
+      cest: dados.cest || prev.cest
+    }));
+
+    // Atualiza sugestões IA (ou um estado similar para exibir as infos do NCM)
+    setSugestoesIA((prev) => ({
+      ...prev,
+      ncm_info: `${dados.descricao}${dados.obs ? ' - ' + dados.obs : ''}`,
+      aliquotas: dados
+    }));
+
+    toast.success("NCM encontrado!", { description: dados.descricao });
   };
 
   const handleSubmit = (e) => {
@@ -535,32 +560,81 @@ Caso contrário, sugira:
         </CardContent>
       </Card>
 
-      {/* SEÇÃO 6: Fiscal */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>NCM</Label>
-          <Input
-            value={formData.ncm}
-            onChange={(e) => setFormData({...formData, ncm: e.target.value})}
-            placeholder="0000.00.00"
-            maxLength={10}
-          />
-        </div>
+      {/* SEÇÃO: FISCAL */}
+      <Card>
+        <CardHeader className="bg-slate-50 border-b">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="w-5 h-5 text-purple-600" />
+            Configuração Fiscal
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+          <div className="grid grid-cols-2 gap-4 items-end">
+            <div>
+              <Label htmlFor="ncm">NCM (Código Fiscal)</Label>
+              <Input
+                id="ncm"
+                value={formData.ncm || ""}
+                onChange={(e) => setFormData({ ...formData, ncm: e.target.value })}
+                placeholder="00000000"
+                maxLength={8}
+              />
+              {sugestoesIA.ncm_info && (
+                <p className="text-xs text-blue-600 mt-1">
+                  ℹ️ {sugestoesIA.ncm_info}
+                </p>
+              )}
+            </div>
 
-        <div>
-          <Label>Status</Label>
-          <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Ativo">Ativo</SelectItem>
-              <SelectItem value="Inativo">Inativo</SelectItem>
-              <SelectItem value="Descontinuado">Descontinuado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+            <div>
+              <BotaoBuscaAutomatica
+                tipo="ncm"
+                valor={formData.ncm}
+                onDadosEncontrados={handleDadosNCM}
+                disabled={!formData.ncm || formData.ncm.length !== 8}
+              >
+                Buscar NCM
+              </BotaoBuscaAutomatica>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="cest">CEST</Label>
+              <Input
+                id="cest"
+                value={formData.cest || ""}
+                onChange={(e) => setFormData({ ...formData, cest: e.target.value })}
+                placeholder="00.000.00"
+                maxLength={10}
+              />
+            </div>
+            <div>
+              <Label htmlFor="unidade_medida">Unidade de Medida Fiscal</Label>
+              <Input
+                id="unidade_medida"
+                value={formData.unidade_medida || ""}
+                onChange={(e) => setFormData({ ...formData, unidade_medida: e.target.value })}
+                placeholder="UN, KG, M"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Status do Produto</Label>
+            <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Ativo">Ativo</SelectItem>
+                <SelectItem value="Inativo">Inativo</SelectItem>
+                <SelectItem value="Descontinuado">Descontinuado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* SUBMIT */}
       <div className="flex justify-end gap-3 pt-4 border-t">

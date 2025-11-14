@@ -1,11 +1,16 @@
+
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos"; // NEW IMPORT
+import { useToast } from "@/components/ui/use-toast"; // NEW IMPORT for toast functionality
 
 export default function TransportadoraForm({ transportadora, onSubmit, isSubmitting }) {
+  const { toast } = useToast(); // Initialize useToast hook
+
   const [formData, setFormData] = useState(transportadora || {
     razao_social: "",
     nome_fantasia: "",
@@ -24,7 +29,8 @@ export default function TransportadoraForm({ transportadora, onSubmit, isSubmitt
     prazo_entrega_padrao: "",
     valor_frete_minimo: "",
     status: "Ativo",
-    observacoes: ""
+    observacoes: "",
+    rntrc: "" // NEW FIELD ADDED TO INITIAL STATE
   });
 
   const [novoVeiculo, setNovoVeiculo] = useState("");
@@ -56,6 +62,14 @@ export default function TransportadoraForm({ transportadora, onSubmit, isSubmitt
     });
   };
 
+  // NOVO: Handler busca RNTRC
+  const handleDadosRNTRC = (dados) => {
+    toast({
+      title: dados.valido ? "✅ RNTRC Válido" : "⚠️ RNTRC com Restrições",
+      description: `Situação: ${dados.situacao} - ${dados.tipo_registro || 'N/A'}`
+    });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -78,12 +92,36 @@ export default function TransportadoraForm({ transportadora, onSubmit, isSubmitt
           />
         </div>
 
+        {/* MODIFIED CNPJ INPUT */}
         <div>
-          <Label htmlFor="cnpj">CNPJ</Label>
+          <Label htmlFor="cnpj">CNPJ *</Label>
           <Input
             id="cnpj"
-            value={formData.cnpj}
+            value={formData.cnpj || ""}
             onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+            required
+            placeholder="00.000.000/0000-00"
+          />
+        </div>
+
+        {/* NEW RNTRC INPUT */}
+        <div>
+          <Label htmlFor="rntrc">RNTRC (Registro ANTT)</Label>
+          <Input
+            id="rntrc"
+            value={formData.rntrc || ""}
+            onChange={(e) => setFormData({ ...formData, rntrc: e.target.value })}
+            placeholder="00000000"
+          />
+        </div>
+
+        {/* NEW BotaoBuscaAutomatica COMPONENT */}
+        <div className="col-span-2">
+          <BotaoBuscaAutomatica
+            tipo="rntrc"
+            valor={formData.rntrc}
+            onDadosEncontrados={handleDadosRNTRC}
+            disabled={!formData.rntrc}
           />
         </div>
 
