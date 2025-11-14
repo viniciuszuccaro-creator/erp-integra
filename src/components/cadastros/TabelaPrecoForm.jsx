@@ -4,7 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, DollarSign } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 
 export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(tabela || {
@@ -13,13 +14,16 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
     tipo: 'Padrão',
     data_inicio: new Date().toISOString().split('T')[0],
     data_fim: '',
-    ativo: true
+    ativo: true,
+    observacoes: '',
+    quantidade_produtos: 0,
+    clientes_vinculados: []
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.nome || !formData.tipo || !formData.data_inicio) {
-      alert('Preencha os campos obrigatórios');
+      alert('Preencha os campos obrigatórios: Nome, Tipo e Data Início');
       return;
     }
     onSubmit(formData);
@@ -33,6 +37,7 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
           value={formData.nome}
           onChange={(e) => setFormData({...formData, nome: e.target.value})}
           placeholder="Ex: Atacado SP, Varejo Nacional"
+          required
         />
       </div>
 
@@ -63,22 +68,33 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Data Início *</Label>
+          <Label>Data Início Vigência *</Label>
           <Input
             type="date"
             value={formData.data_inicio}
             onChange={(e) => setFormData({...formData, data_inicio: e.target.value})}
+            required
           />
         </div>
 
         <div>
-          <Label>Data Fim</Label>
+          <Label>Data Fim Vigência</Label>
           <Input
             type="date"
-            value={formData.data_fim}
+            value={formData.data_fim || ''}
             onChange={(e) => setFormData({...formData, data_fim: e.target.value})}
           />
         </div>
+      </div>
+
+      <div>
+        <Label>Observações</Label>
+        <Textarea
+          value={formData.observacoes || ''}
+          onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+          rows={3}
+          placeholder="Observações internas sobre esta tabela"
+        />
       </div>
 
       <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
@@ -90,9 +106,9 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} className="bg-green-600 hover:bg-green-700">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {tabela ? 'Atualizar' : 'Criar Tabela'}
+          {tabela?.id ? 'Atualizar Tabela' : 'Criar Tabela'}
         </Button>
       </div>
     </form>
