@@ -157,7 +157,7 @@ const buscarEmObjeto = (obj, termo) => {
 };
 
 /**
- * CADASTROS GERAIS V20.2 - HUB CENTRAL COM BUSCA UNIVERSAL
+ * CADASTROS GERAIS V20.3 - FIX CRÍTICO TABELA DE PREÇO
  * NOVO: Tabelas de Preço migradas do módulo Comercial
  */
 export default function Cadastros() {
@@ -453,12 +453,14 @@ export default function Cadastros() {
   const tiposFreteFiltrados = filtrarPorBuscaUniversal(tiposFrete);
   const modelosDocumentoFiltrados = filtrarPorBuscaUniversal(modelosDocumento);
 
-  // MUTATIONS UNIVERSAIS - TODAS AS ENTIDADES
+  // ✅ V20.3: MUTATIONS COM TRATAMENTO DE ERRO
   const createMutation = useMutation({
     mutationFn: async ({ entity, data }) => {
+      console.log('🚀 CREATE MUTATION - Entity:', entity, 'Data:', data);
       return await base44.entities[entity].create(data);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
+      console.log('✅ CREATE SUCCESS - Entity:', variables.entity, 'Result:', result);
       const queryMap = {
         'Colaborador': 'colaboradores',
         'Transportadora': 'transportadoras',
@@ -503,14 +505,24 @@ export default function Cadastros() {
       // Specific toasts can be handled in individual dialog onSubmits if needed,
       // but this provides a generic success for all.
       toast({ title: `✅ ${variables.entity} criado com sucesso!` });
+    },
+    onError: (error, variables) => {
+      console.error('❌ CREATE ERROR - Entity:', variables.entity, 'Error:', error);
+      toast({ 
+        title: `❌ Erro ao criar ${variables.entity}`, 
+        description: error.message || 'Erro desconhecido',
+        variant: "destructive" 
+      });
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ entity, id, data }) => {
+      console.log('🔄 UPDATE MUTATION - Entity:', entity, 'ID:', id, 'Data:', data);
       return await base44.entities[entity].update(id, data);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
+      console.log('✅ UPDATE SUCCESS - Entity:', variables.entity, 'Result:', result);
       const queryMap = {
         'Colaborador': 'colaboradores',
         'Transportadora': 'transportadoras',
@@ -552,6 +564,14 @@ export default function Cadastros() {
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
       handleCloseDialog();
       toast({ title: `✅ ${variables.entity} atualizado com sucesso!` });
+    },
+    onError: (error, variables) => {
+      console.error('❌ UPDATE ERROR - Entity:', variables.entity, 'Error:', error);
+      toast({ 
+        title: `❌ Erro ao atualizar ${variables.entity}`, 
+        description: error.message || 'Erro desconhecido',
+        variant: "destructive" 
+      });
     }
   });
 
@@ -576,13 +596,23 @@ export default function Cadastros() {
   const handleSubmit = (data) => {
     const entityName = editingItem?._entityName;
 
+    console.log('📝 CADASTROS handleSubmit chamado');
+    console.log('🔍 entityName:', entityName);
+    console.log('🔍 tipoDialog:', tipoDialog);
+    console.log('📦 data recebida:', data);
+    console.log('🔍 editingItem:', editingItem);
+
     if (!entityName) {
-      console.error("Unknown entity for submission with tipoDialog:", tipoDialog, "and editingItem:", editingItem);
-      toast({ title: "❌ Erro ao salvar", description: "Tipo de entidade desconhecido.", variant: "destructive" });
+      console.error("❌ EntityName não encontrado! tipoDialog:", tipoDialog, "editingItem:", editingItem);
+      toast({ 
+        title: "❌ Erro ao salvar", 
+        description: "Tipo de entidade desconhecido.", 
+        variant: "destructive" 
+      });
       return;
     }
     
-    // ✅ V20.2: INJETAR empresa_id automaticamente em entidades que precisam
+    // ✅ V20.3: INJETAR empresa_id automaticamente em entidades que precisam
     const entidadesQueNecessitamEmpresa = [
       'Produto', 'TabelaPreco', 'CatalogoWeb', 'Servico',
       'Fornecedor', 'Colaborador', 'Transportadora', 'Veiculo', 'Banco', 'FormaPagamento',
@@ -595,6 +625,7 @@ export default function Cadastros() {
     let dataFinal = { ...data };
 
     if (entidadesQueNecessitamEmpresa.includes(entityName) && !data.empresa_id && empresaAtual?.id) {
+      console.log('💉 Injetando empresa_id:', empresaAtual.id);
       dataFinal.empresa_id = empresaAtual.id;
     }
 
@@ -603,9 +634,13 @@ export default function Cadastros() {
       dataFinal.group_id = empresaAtual.group_id;
     }
     
+    console.log('📤 Dados finais para envio:', dataFinal);
+    
     if (editingItem?.id) {
+      console.log('🔄 Chamando UPDATE mutation...');
       updateMutation.mutate({ entity: entityName, id: editingItem.id, data: dataFinal });
     } else {
+      console.log('➕ Chamando CREATE mutation...');
       createMutation.mutate({ entity: entityName, data: dataFinal });
     }
   };
@@ -2706,7 +2741,7 @@ export default function Cadastros() {
               <Alert className="border-purple-200 bg-purple-50 mb-4">
                 <AlertDescription className="text-sm text-purple-900">
                   ⚡ <strong>Motor de Eventos Automáticos:</strong> Configure quando e como notificar clientes, vendedores e sistemas externos
-                </AlertDescription>
+                </Alertcription>
               </Alert>
 
               <div className="grid gap-3">
