@@ -27,7 +27,9 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    console.log('🚀 TABELA PREÇO SUBMIT - Dados:', formData);
+    console.log('🚀 TABELA PREÇO SUBMIT - Dados do form:', formData);
+    console.log('🔍 tabela prop:', tabela);
+    console.log('🔍 tabelaReal:', tabelaReal);
     
     if (!formData.nome?.trim()) {
       alert('❌ Nome é obrigatório!');
@@ -39,7 +41,7 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
       return;
     }
 
-    // Preparar dados limpos
+    // ✅ V20.3: Preparar dados limpos (SEM empresa_id - será injetado em Cadastros.jsx)
     const dados = {
       nome: formData.nome.trim(),
       tipo: formData.tipo,
@@ -53,7 +55,9 @@ export default function TabelaPrecoForm({ tabela, onSubmit, isSubmitting }) {
     if (formData.data_fim) dados.data_fim = formData.data_fim;
     if (formData.observacoes?.trim()) dados.observacoes = formData.observacoes.trim();
 
-    console.log('✅ Enviando:', dados);
+    console.log('✅ TabelaPrecoForm - Enviando para parent handleSubmit:', dados);
+    
+    // ✅ Chamar onSubmit DIRETAMENTE (sem try/catch)
     onSubmit(dados);
   };
 
