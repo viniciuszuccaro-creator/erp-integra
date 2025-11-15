@@ -17,14 +17,14 @@ import SolicitarCompraRapidoModal from "../compras/SolicitarCompraRapidoModal";
 
 export default function ProdutosTab({ produtos, isLoading }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategoria, setSelectedCategoria] = useState("todos"); // Changed from selectedGrupo to selectedCategoria
+  const [selectedCategoria, setSelectedCategoria] = useState("todos");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduto, setEditingProduto] = useState(null);
-  const [solicitacaoModal, setSolicitacaoModal] = useState(null); // New state for solicitation modal
+  const [solicitacaoModal, setSolicitacaoModal] = useState(null);
   const [formData, setFormData] = useState({
     codigo: "",
     descricao: "",
-    grupo: "Produto Acabado", // Keep 'grupo' for the form field as per original structure
+    grupo: "Produto Acabado",
     unidade_medida: "UN",
     custo_aquisicao: 0,
     preco_venda: 0,
@@ -72,7 +72,14 @@ export default function ProdutosTab({ produtos, isLoading }) {
     setIsDialogOpen(true);
   };
 
+  const handleNovoProduto = () => {
+    setEditingProduto(null);
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
   const resetForm = () => {
+    setEditingProduto(null);
     setFormData({
       codigo: "",
       descricao: "",
@@ -89,11 +96,10 @@ export default function ProdutosTab({ produtos, isLoading }) {
   const filteredProdutos = produtos.filter(p => {
     const matchSearch = p.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                        p.codigo?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchGrupo = selectedCategoria === "todos" || p.grupo === selectedCategoria; // Uses selectedCategoria
+    const matchGrupo = selectedCategoria === "todos" || p.grupo === selectedCategoria;
     return matchSearch && matchGrupo;
   });
 
-  // Logic for low stock products alert
   const produtosBaixoEstoque = produtos.filter(p => 
     p.status === 'Ativo' && 
     (p.estoque_disponivel || p.estoque_atual || 0) <= (p.estoque_minimo || 0)
@@ -119,8 +125,7 @@ export default function ProdutosTab({ produtos, isLoading }) {
                 variant="outline"
                 className="border-red-300 text-red-700 hover:bg-red-100"
                 onClick={() => {
-                  // Filtrar para mostrar apenas produtos baixos
-                  setSelectedCategoria("todos"); // Using selectedCategoria
+                  setSelectedCategoria("todos");
                   setSearchTerm("");
                 }}
               >
@@ -137,12 +142,11 @@ export default function ProdutosTab({ produtos, isLoading }) {
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
           if (!open) {
-            setEditingProduto(null);
             resetForm();
           }
         }}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleNovoProduto}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Produto
             </Button>
@@ -243,11 +247,14 @@ export default function ProdutosTab({ produtos, isLoading }) {
               </div>
 
               <div className="flex justify-end gap-3 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button type="button" variant="outline" onClick={() => {
+                  setIsDialogOpen(false);
+                  resetForm();
+                }}>
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                  {editingProduto ? 'Salvar' : 'Criar'}
+                  {editingProduto ? 'Atualizar Produto' : 'Criar Produto'}
                 </Button>
               </div>
             </form>
@@ -264,9 +271,9 @@ export default function ProdutosTab({ produtos, isLoading }) {
               placeholder="Buscar por descrição ou código..."
               className="flex-1"
             />
-            <Select value={selectedCategoria} onValueChange={setSelectedCategoria}> {/* Uses selectedCategoria */}
+            <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filtrar por categoria" /> {/* Updated placeholder */}
+                <SelectValue placeholder="Filtrar por categoria" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
@@ -283,18 +290,18 @@ export default function ProdutosTab({ produtos, isLoading }) {
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle>Lista de Produtos ({filteredProdutos.length})</CardTitle>
         </CardHeader>
-        <CardContent className="p-0"> {/* Changed to p-0 for table to fill space better */}
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
                   <TableHead>Código</TableHead>
                   <TableHead>Descrição</TableHead>
-                  <TableHead>Categoria</TableHead> {/* Changed from Grupo to Categoria */}
-                  <TableHead>Estoque Atual</TableHead> {/* New column */}
-                  <TableHead>Estoque Mín.</TableHead> {/* New column */}
-                  <TableHead>Disponível</TableHead> {/* New column */}
-                  <TableHead>Custo</TableHead> {/* New column */}
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Estoque Atual</TableHead>
+                  <TableHead>Estoque Mín.</TableHead>
+                  <TableHead>Disponível</TableHead>
+                  <TableHead>Custo</TableHead>
                   <TableHead>Preço Venda</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Ações</TableHead>
