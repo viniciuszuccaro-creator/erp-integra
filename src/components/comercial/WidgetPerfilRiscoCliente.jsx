@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Shield, DollarSign, CheckCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, Shield, DollarSign, CheckCircle, XCircle, Brain } from 'lucide-react';
 
 /**
  * V21.1 - Widget de Perfil de Risco do Cliente
