@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -104,7 +103,6 @@ export default function IAUpsellPrecificacao({ clienteId, pedidoAtual }) {
     <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-blue-50">
       <CardHeader className="border-b bg-white/80">
         <CardTitle className="flex items-center gap-2 text-base">
-          {/* Changed Brain icon to Sparkles as Brain was removed from imports */}
           <Sparkles className="w-5 h-5 text-purple-600" />
           Assistente Inteligente
         </CardTitle>
