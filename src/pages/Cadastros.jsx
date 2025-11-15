@@ -1530,7 +1530,7 @@ export default function Cadastros() {
                         <TableCell className="text-xs">{s.tipo_servico}</TableCell>
                         <TableCell className="text-xs">{s.unidade}</TableCell>
                         <TableCell className="text-sm font-semibold text-green-700">
-                          R$ ${(s.preco_servico || 0).toFixed(2)}
+                          R$ {(s.preco_servico || 0).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button size="sm" variant="ghost" onClick={() => handleEdit(s, 'servicos', 'Servico')}>
