@@ -23,7 +23,8 @@ import {
   Search,
   Rocket,
   CheckCircle,
-  Trash2
+  Trash2,
+  Layers
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,6 +47,8 @@ import { UserProvider, useUser } from "@/components/lib/UserContext";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
+import { WindowManagerProvider } from "@/components/lib/WindowManager";
+import WindowRenderer from "@/components/lib/WindowRenderer";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -70,6 +73,7 @@ const navigationItems = [
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🧪 Teste Golden Thread", url: createPageUrl("TesteGoldenThread"), icon: Rocket, group: "sistema", adminOnly: true },
   { title: "✅ Validador Fase 1", url: createPageUrl("ValidadorFase1"), icon: CheckCircle, group: "sistema", adminOnly: true },
+  { title: "🪟 Demo Multitarefas", url: createPageUrl("DemoMultitarefas"), icon: Layers, group: "sistema", adminOnly: true },
   { title: "🗑️ Limpar Dados Teste", url: createPageUrl("LimparDados"), icon: Trash2, group: "sistema", adminOnly: true },
   { title: "🌐 Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico", public: true },
 ];
@@ -200,7 +204,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div>
                 <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">Sistema de Gestão</p>
+                <p className="text-xs text-slate-500">V21.1.2 Multitarefas</p>
               </div>
             </div>
           </SidebarHeader>
@@ -341,6 +345,9 @@ function LayoutContent({ children, currentPageName }) {
           open={pesquisaOpen} 
           onOpenChange={setPesquisaOpen} 
         />
+
+        {/* V21.1.2: Sistema de Multitarefas - Renderizador de Janelas */}
+        <WindowRenderer />
       </div>
     </SidebarProvider>
   );
@@ -349,7 +356,9 @@ function LayoutContent({ children, currentPageName }) {
 export default function Layout({ children, currentPageName }) {
   return (
     <UserProvider>
-      <LayoutContent children={children} currentPageName={currentPageName} />
+      <WindowManagerProvider>
+        <LayoutContent children={children} currentPageName={currentPageName} />
+      </WindowManagerProvider>
     </UserProvider>
   );
 }
