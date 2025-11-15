@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -781,160 +780,6 @@ export default function CRMPage() {
                       className="pl-9 w-64"
                     />
                   </div>
-                  <Dialog open={isOppDialogOpen} onOpenChange={setIsOppDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button className="bg-blue-600 hover:bg-blue-700">
-                        <Plus className="w-4 h-4 mr-2" />
-                        Nova Oportunidade
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                      <DialogHeader>
-                        <DialogTitle>{editingOpp ? 'Editar Oportunidade' : 'Nova Oportunidade'}</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleOppSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="col-span-2">
-                            <Label htmlFor="titulo">Título *</Label>
-                            <Input
-                              id="titulo"
-                              value={oppForm.titulo}
-                              onChange={(e) => setOppForm({ ...oppForm, titulo: e.target.value })}
-                              required
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <Label htmlFor="descricao">Descrição</Label>
-                            <Textarea
-                              id="descricao"
-                              value={oppForm.descricao}
-                              onChange={(e) => setOppForm({ ...oppForm, descricao: e.target.value })}
-                              rows={2}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="cliente_nome">Cliente *</Label>
-                            <Input
-                              id="cliente_nome"
-                              value={oppForm.cliente_nome}
-                              onChange={(e) => setOppForm({ ...oppForm, cliente_nome: e.target.value })}
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="cliente_email">Email do Cliente</Label>
-                            <Input
-                              id="cliente_email"
-                              type="email"
-                              value={oppForm.cliente_email}
-                              onChange={(e) => setOppForm({ ...oppForm, cliente_email: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="cliente_telefone">Telefone do Cliente</Label>
-                            <Input
-                              id="cliente_telefone"
-                              type="tel"
-                              value={oppForm.cliente_telefone}
-                              onChange={(e) => setOppForm({ ...oppForm, cliente_telefone: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="origem">Origem</Label>
-                            <Select
-                              value={oppForm.origem}
-                              onValueChange={(value) => setOppForm({ ...oppForm, origem: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Indicação">Indicação</SelectItem>
-                                <SelectItem value="Site">Site</SelectItem>
-                                <SelectItem value="Telefone">Telefone</SelectItem>
-                                <SelectItem value="E-mail">E-mail</SelectItem>
-                                <SelectItem value="Visita">Visita</SelectItem>
-                                <SelectItem value="Evento">Evento</SelectItem>
-                                <SelectItem value="Rede Social">Rede Social</SelectItem>
-                                <SelectItem value="Outros">Outros</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="responsavel">Responsável</Label>
-                            <Input
-                              id="responsavel"
-                              value={oppForm.responsavel}
-                              onChange={(e) => setOppForm({ ...oppForm, responsavel: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="etapa">Etapa</Label>
-                            <Select
-                              value={oppForm.etapa}
-                              onValueChange={(value) => setOppForm({ ...oppForm, etapa: value })}
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Prospecção">Prospecção</SelectItem>
-                                <SelectItem value="Contato Inicial">Contato Inicial</SelectItem>
-                                <SelectItem value="Qualificação">Qualificação</SelectItem>
-                                <SelectItem value="Proposta">Proposta</SelectItem>
-                                <SelectItem value="Negociação">Negociação</SelectItem>
-                                <SelectItem value="Fechamento">Fechamento</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label htmlFor="valor_estimado">Valor Estimado</Label>
-                            <Input
-                              id="valor_estimado"
-                              type="number"
-                              step="0.01"
-                              value={oppForm.valor_estimado}
-                              onChange={(e) => setOppForm({ ...oppForm, valor_estimado: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="probabilidade">Probabilidade (%)</Label>
-                            <Input
-                              id="probabilidade"
-                              type="number"
-                              min="0"
-                              max="100"
-                              value={oppForm.probabilidade}
-                              onChange={(e) => setOppForm({ ...oppForm, probabilidade: e.target.value })}
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="data_previsao">Previsão Fechamento</Label>
-                            <Input
-                              id="data_previsao"
-                              type="date"
-                              value={oppForm.data_previsao}
-                              onChange={(e) => setOppForm({ ...oppForm, data_previsao: e.target.value })}
-                            />
-                          </div>
-                          <div className="col-span-2">
-                            <Label htmlFor="necessidades">Necessidades do Cliente</Label>
-                            <Textarea
-                              id="necessidades"
-                              value={oppForm.necessidades}
-                              onChange={(e) => setOppForm({ ...oppForm, necessidades: e.target.value })}
-                              rows={2}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex justify-end gap-3 pt-4">
-                          <Button type="submit" disabled={createOppMutation.isPending || updateOppMutation.isPending} className="bg-blue-600 hover:bg-blue-700">
-                            {createOppMutation.isPending || updateOppMutation.isPending ? 'Salvando...' : 'Salvar'}
-                          </Button>
-                        </div>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
                 </div>
               </div>
             </CardHeader>
@@ -1193,51 +1038,53 @@ export default function CRMPage() {
                 </Dialog>
               </div>
             </CardHeader>
-            <div className="divide-y">
-              {filteredInteracoes.map((interacao) => (
-                <div key={interacao.id} className="p-4 hover:bg-slate-50">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        interacao.tipo === 'Ligação' ? 'bg-blue-100' :
-                        interacao.tipo === 'E-mail' ? 'bg-purple-100' :
-                        interacao.tipo === 'Reunião' ? 'bg-green-100' :
-                        interacao.tipo === 'Visita' ? 'bg-orange-100' :
-                        'bg-gray-100'
-                      }`}>
-                        {interacao.tipo === 'Ligação' && <Phone className="w-4 h-4 text-blue-600" />}
-                        {interacao.tipo === 'E-mail' && <Mail className="w-4 h-4 text-purple-600" />}
-                        {interacao.tipo === 'WhatsApp' && <MessageSquare className="w-4 h-4 text-green-600" />}
-                        {!['Ligação', 'E-mail', 'WhatsApp'].includes(interacao.tipo) && <Users className="w-4 h-4" />}
+            <CardContent className="p-0">
+              <div className="divide-y">
+                {filteredInteracoes.map((interacao) => (
+                  <div key={interacao.id} className="p-4 hover:bg-slate-50">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${
+                          interacao.tipo === 'Ligação' ? 'bg-blue-100' :
+                          interacao.tipo === 'E-mail' ? 'bg-purple-100' :
+                          interacao.tipo === 'Reunião' ? 'bg-green-100' :
+                          interacao.tipo === 'Visita' ? 'bg-orange-100' :
+                          'bg-gray-100'
+                        }`}>
+                          {interacao.tipo === 'Ligação' && <Phone className="w-4 h-4 text-blue-600" />}
+                          {interacao.tipo === 'E-mail' && <Mail className="w-4 h-4 text-purple-600" />}
+                          {interacao.tipo === 'WhatsApp' && <MessageSquare className="w-4 h-4 text-green-600" />}
+                          {!['Ligação', 'E-mail', 'WhatsApp'].includes(interacao.tipo) && <Users className="w-4 h-4" />}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">{interacao.titulo}</h4>
+                          <p className="text-sm text-slate-600">{interacao.cliente_nome}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold">{interacao.titulo}</h4>
-                        <p className="text-sm text-slate-600">{interacao.cliente_nome}</p>
+                      <div className="text-right">
+                        <Badge className={resultadoColors[interacao.resultado]}>{interacao.resultado}</Badge>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
+                        </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge className={resultadoColors[interacao.resultado]}>{interacao.resultado}</Badge>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {new Date(interacao.data_interacao).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
+                    {interacao.descricao && (
+                      <p className="text-sm text-slate-700 ml-12">{interacao.descricao}</p>
+                    )}
+                    {interacao.proxima_acao && (
+                      <div className="mt-2 ml-12 p-2 bg-blue-50 rounded text-sm">
+                        <span className="font-semibold">Próxima ação:</span> {interacao.proxima_acao}
+                        {interacao.data_proxima_acao && (
+                          <span className="text-xs text-blue-600 ml-2">
+                            Prevista para: {new Date(interacao.data_proxima_acao).toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {interacao.descricao && (
-                    <p className="text-sm text-slate-700 ml-12">{interacao.descricao}</p>
-                  )}
-                  {interacao.proxima_acao && (
-                    <div className="mt-2 ml-12 p-2 bg-blue-50 rounded text-sm">
-                      <span className="font-semibold">Próxima ação:</span> {interacao.proxima_acao}
-                      {interacao.data_proxima_acao && (
-                        <span className="text-xs text-blue-600 ml-2">
-                          Prevista para: {new Date(interacao.data_proxima_acao).toLocaleDateString('pt-BR')}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </CardContent>
             {filteredInteracoes.length === 0 && (
               <div className="text-center py-12">
                 <MessageSquare className="w-16 h-16 text-slate-300 mx-auto mb-4" />
@@ -1369,48 +1216,50 @@ export default function CRMPage() {
                 </Dialog>
               </div>
             </CardHeader>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Público</TableHead>
-                    <TableHead>Período</TableHead>
-                    <TableHead>Orçamento</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCampanhas.map((campanha) => (
-                    <TableRow key={campanha.id} className="hover:bg-slate-50">
-                      <TableCell className="font-medium">{campanha.nome}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{campanha.tipo}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{campanha.publico_alvo}</TableCell>
-                      <TableCell className="text-sm">
-                        {new Date(campanha.data_inicio).toLocaleDateString('pt-BR')}
-                        {campanha.data_fim && ` - ${new Date(campanha.data_fim).toLocaleDateString('pt-BR')}`}
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        {campanha.orcamento ? `R$ ${campanha.orcamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={
-                          campanha.status === 'Ativa' ? 'bg-green-100 text-green-700' :
-                          campanha.status === 'Planejamento' ? 'bg-blue-100 text-blue-700' :
-                          campanha.status === 'Concluída' ? 'bg-gray-100 text-gray-700' :
-                          'bg-yellow-100 text-yellow-700'
-                        }>
-                          {campanha.status}
-                        </Badge>
-                      </TableCell>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50">
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Público</TableHead>
+                      <TableHead>Período</TableHead>
+                      <TableHead>Orçamento</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCampanhas.map((campanha) => (
+                      <TableRow key={campanha.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium">{campanha.nome}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{campanha.tipo}</Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{campanha.publico_alvo}</TableCell>
+                        <TableCell className="text-sm">
+                          {new Date(campanha.data_inicio).toLocaleDateString('pt-BR')}
+                          {campanha.data_fim && ` - ${new Date(campanha.data_fim).toLocaleDateString('pt-BR')}`}
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          {campanha.orcamento ? `R$ ${campanha.orcamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={
+                            campanha.status === 'Ativa' ? 'bg-green-100 text-green-700' :
+                            campanha.status === 'Planejamento' ? 'bg-blue-100 text-blue-700' :
+                            campanha.status === 'Concluída' ? 'bg-gray-100 text-gray-700' :
+                            'bg-yellow-100 text-yellow-700'
+                          }>
+                            {campanha.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
             {filteredCampanhas.length === 0 && (
               <div className="text-center py-12">
                 <Mail className="w-16 h-16 text-slate-300 mx-auto mb-4" />
@@ -1429,7 +1278,6 @@ export default function CRMPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal Visualização Detalhada */}
       <Dialog open={!!viewingOpp} onOpenChange={() => setViewingOpp(null)}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1555,7 +1403,6 @@ export default function CRMPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Agendar Follow-up */}
       <AgendarFollowUp
         oportunidade={followUpOpp}
         open={!!followUpOpp}
@@ -1563,7 +1410,6 @@ export default function CRMPage() {
         onSalvar={handleSalvarFollowUp}
       />
 
-      {/* Modal Converter Oportunidade */}
       <ConverterOportunidade
         oportunidade={converterOpp}
         open={!!converterOpp}
