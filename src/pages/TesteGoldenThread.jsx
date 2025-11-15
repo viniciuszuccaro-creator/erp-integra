@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,7 +10,7 @@ import {
   Loader2, 
   AlertCircle,
   Globe,
-  Brain,
+  Sparkles,
   ShoppingCart,
   Factory,
   Truck,
@@ -520,7 +519,7 @@ Retorne um JSON estruturado com as peças.`,
   };
 
   const icones = [
-    Globe, Brain, ShoppingCart, ShoppingCart, Factory, 
+    Globe, Sparkles, ShoppingCart, ShoppingCart, Factory, 
     Truck, Truck, Smartphone, Package, Package, DollarSign, Shield
   ];
 
@@ -656,7 +655,7 @@ Retorne um JSON estruturado com as peças.`,
             </div>
 
             <Alert className="border-purple-300 bg-purple-50">
-              <Brain className="w-5 h-5 text-purple-600" />
+              <Sparkles className="w-5 h-5 text-purple-600" />
               <AlertDescription>
                 <p className="font-semibold text-purple-900 mb-2">🎯 Fluxo Executado:</p>
                 <div className="text-sm text-purple-800 space-y-1">
