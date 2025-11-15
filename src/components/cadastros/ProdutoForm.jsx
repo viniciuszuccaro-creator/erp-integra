@@ -18,77 +18,50 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
  * Este formulário é o HUB central que define como o produto pode ser vendido/comprado
  */
 export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
-  const [formData, setFormData] = useState({
-    descricao: '',
-    codigo: '',
-    tipo_item: 'Revenda',
-    grupo: 'Outros',
-    eh_bitola: false,
-    peso_teorico_kg_m: 0,
-    bitola_diametro_mm: 0,
-    tipo_aco: 'CA-50',
-    comprimento_barra_padrao_m: 12,
-    
-    // V22.0: CAMPOS CRÍTICOS
-    unidade_principal: 'KG',
-    unidades_secundarias: ['KG'],
-    fatores_conversao: {
-      kg_por_peca: 0,
-      kg_por_metro: 0,
-      metros_por_peca: 0,
-      peca_por_ton: 0,
-      kg_por_ton: 1000
-    },
-    
-    foto_produto_url: '',
-    custo_aquisicao: 0,
-    preco_venda: 0,
-    estoque_minimo: 0,
-    ncm: '',
-    cest: '', // Adicionado
-    unidade_medida: '', // Adicionado
-    status: 'Ativo'
-  });
-
-  // Carregar dados do produto quando existe
-  useEffect(() => {
+  const [formData, setFormData] = useState(() => {
     if (produto) {
-      setFormData((prevFormData) => ({
-        ...prevFormData, // Keep any previous state changes if component re-renders
-        ...produto // Apply the product data, overriding defaults
-      }));
-    } else {
-      // If no product is provided (e.g., creating new), ensure form is reset to default
-      setFormData({
-        descricao: '',
-        codigo: '',
-        tipo_item: 'Revenda',
-        grupo: 'Outros',
-        eh_bitola: false,
-        peso_teorico_kg_m: 0,
-        bitola_diametro_mm: 0,
-        tipo_aco: 'CA-50',
-        comprimento_barra_padrao_m: 12,
-        unidade_principal: 'KG',
-        unidades_secundarias: ['KG'],
-        fatores_conversao: {
+      return {
+        ...produto,
+        unidades_secundarias: produto.unidades_secundarias || ['KG'],
+        fatores_conversao: produto.fatores_conversao || {
           kg_por_peca: 0,
           kg_por_metro: 0,
           metros_por_peca: 0,
           peca_por_ton: 0,
           kg_por_ton: 1000
-        },
-        foto_produto_url: '',
-        custo_aquisicao: 0,
-        preco_venda: 0,
-        estoque_minimo: 0,
-        ncm: '',
-        cest: '',
-        unidade_medida: '',
-        status: 'Ativo'
-      });
+        }
+      };
     }
-  }, [produto]);
+    
+    return {
+      descricao: '',
+      codigo: '',
+      tipo_item: 'Revenda',
+      grupo: 'Outros',
+      eh_bitola: false,
+      peso_teorico_kg_m: 0,
+      bitola_diametro_mm: 0,
+      tipo_aco: 'CA-50',
+      comprimento_barra_padrao_m: 12,
+      unidade_principal: 'KG',
+      unidades_secundarias: ['KG'],
+      fatores_conversao: {
+        kg_por_peca: 0,
+        kg_por_metro: 0,
+        metros_por_peca: 0,
+        peca_por_ton: 0,
+        kg_por_ton: 1000
+      },
+      foto_produto_url: '',
+      custo_aquisicao: 0,
+      preco_venda: 0,
+      estoque_minimo: 0,
+      ncm: '',
+      cest: '',
+      unidade_medida: '',
+      status: 'Ativo'
+    };
+  });
 
   const [iaSugestao, setIaSugestao] = useState(null);
   const [processandoIA, setProcessandoIA] = useState(false);
