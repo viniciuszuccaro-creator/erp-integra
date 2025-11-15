@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -5,20 +6,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, ShoppingCart, FileText, TrendingUp, AlertCircle, ExternalLink } from "lucide-react";
+import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus } from "lucide-react";
 import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
 import ComissoesTab from "../components/comercial/ComissoesTab";
 import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
+import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab";
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
+
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
+import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
+import ExportButton from '@/components/ExportButton';
+import { ImprimirPedido } from '@/components/lib/impressao';
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { createPageUrl } from "@/utils";
 
 /**
- * Módulo Comercial - V20.2 REORGANIZADO
- * Tabelas de Preço movidas para Cadastros Gerais
+ * Módulo Comercial - V12.0 COMPLETO
+ * Com atalhos, exportação e impressão
  */
 export default function Comercial() {
   const [activeTab, setActiveTab] = useState("clientes");
@@ -59,6 +66,7 @@ export default function Comercial() {
     queryFn: () => base44.entities.Empresa.list(),
   });
 
+  // NOVO: Query para pedidos externos
   const { data: pedidosExternos = [] } = useQuery({
     queryKey: ['pedidos-externos'],
     queryFn: () => base44.entities.PedidoExterno.list('-created_date'),
@@ -74,11 +82,15 @@ export default function Comercial() {
 
   const ticketMedio = pedidos.length > 0 ? totalVendas / pedidos.length : 0;
 
+  // NOVO: Atalhos de teclado (adjusted for component extraction)
   useKeyboardShortcuts({
     'ctrl+s': (e) => {
       e.preventDefault();
+      // Salvar será tratado no formulário, não diretamente no componente pai
       toast.info('Use Ctrl+S dentro do formulário');
     },
+    // ctrl+n (new order) and ctrl+p (print order) logic is now handled within PedidosTab
+    // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
 
   if (loadingPermissions) {
@@ -94,9 +106,10 @@ export default function Comercial() {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Comercial e Vendas</h1>
-          <p className="text-slate-600">Gestão de clientes, pedidos e vendas</p>
+          <p className="text-slate-600">Gestão de clientes, pedidos, preços e vendas</p>
         </div>
         
+        {/* NOVO: Alerta de Pedidos Externos */}
         {pedidosExternosPendentes > 0 && (
           <Badge 
             className="bg-orange-100 text-orange-700 px-4 py-2 cursor-pointer hover:bg-orange-200"
@@ -108,7 +121,7 @@ export default function Comercial() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Clientes</CardTitle>
@@ -155,31 +168,20 @@ export default function Comercial() {
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* NOVO V20.2: Link para Tabelas de Preço no Cadastros Gerais */}
-      <Card className="border-emerald-200 bg-emerald-50">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-emerald-900 flex items-center gap-2">
-                💰 Tabelas de Preço
-              </p>
-              <p className="text-sm text-emerald-700 mt-1">
-                {tabelasPreco.length} tabela(s) cadastrada(s) • {tabelasPreco.filter(t => t.ativo).length} ativa(s)
-              </p>
-            </div>
-            <Button 
-              variant="outline" 
-              className="bg-white hover:bg-emerald-100 border-emerald-300"
-              onClick={() => window.location.href = createPageUrl('Cadastros') + '#tabelas-preco'}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Gerenciar em Cadastros
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <Card className="border-0 shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-600">Tabelas Preço</CardTitle>
+            <DollarSign className="w-5 h-5 text-emerald-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-emerald-600">{tabelasPreco.length}</div>
+            <p className="text-xs text-slate-500 mt-1">
+              {tabelasPreco.filter(t => t.ativo).length} ativas
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap">
@@ -198,6 +200,13 @@ export default function Comercial() {
             Pedidos
           </TabsTrigger>
           <TabsTrigger 
+            value="tabelas-preco" 
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
+            <DollarSign className="w-4 h-4 mr-2" />
+            Tabelas de Preço
+          </TabsTrigger>
+          <TabsTrigger 
             value="comissoes" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
@@ -211,6 +220,7 @@ export default function Comercial() {
             <FileText className="w-4 h-4 mr-2" />
             Notas Fiscais
           </TabsTrigger>
+          {/* NOVO: Tab Vendas Externas */}
           <TabsTrigger 
             value="externos" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative"
@@ -241,8 +251,12 @@ export default function Comercial() {
             pedidos={pedidos} 
             clientes={clientes} 
             isLoading={loadingPedidos} 
-            empresas={empresas}
+            empresas={empresas} // Added empresas prop for printing or other order details
           />
+        </TabsContent>
+
+        <TabsContent value="tabelas-preco">
+          <TabelasPrecoTab />
         </TabsContent>
 
         <TabsContent value="comissoes">
@@ -253,6 +267,7 @@ export default function Comercial() {
           <NotasFiscaisTab notasFiscais={notasFiscais} pedidos={pedidos} clientes={clientes} />
         </TabsContent>
 
+        {/* NOVO: Conteúdo Tab Vendas Externas */}
         <TabsContent value="externos">
           <Card>
             <CardHeader className="bg-orange-50 border-b">
