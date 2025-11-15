@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +18,7 @@ import {
   TrendingDown,
   ShoppingCart,
   FileText,
-  Brain
+  Sparkles
 } from "lucide-react";
 import ProdutosTab from "../components/estoque/ProdutosTab";
 import MovimentacoesTab from "../components/estoque/MovimentacoesTab";
@@ -410,7 +409,7 @@ export default function Estoque() {
             value="ia-reposicao" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
-            <Brain className="w-4 h-4 mr-2" />
+            <Sparkles className="w-4 h-4 mr-2" />
             IA Reposição
           </TabsTrigger>
         </TabsList>
