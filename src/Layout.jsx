@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -46,6 +47,8 @@ import { UserProvider, useUser } from "@/components/lib/UserContext";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
+import JanelasMultitarefa from "@/components/JanelasMultitarefa";
+import BarraJanelasAbertas from "@/components/BarraJanelasAbertas";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -332,7 +335,7 @@ function LayoutContent({ children, currentPageName }) {
             </div>
           </header>
 
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto pb-16">
             {children}
           </div>
         </main>
@@ -341,6 +344,10 @@ function LayoutContent({ children, currentPageName }) {
           open={pesquisaOpen} 
           onOpenChange={setPesquisaOpen} 
         />
+
+        {/* V21.1.2: SISTEMA MULTITAREFA */}
+        <JanelasMultitarefa />
+        <BarraJanelasAbertas />
       </div>
     </SidebarProvider>
   );
