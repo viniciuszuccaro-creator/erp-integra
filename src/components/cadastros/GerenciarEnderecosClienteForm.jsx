@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -336,6 +335,18 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
                   placeholder="-46.633308"
                 />
               </div>
+            </div>
+
+            <div>
+              <Label>Link do Google Maps 🗺️</Label>
+              <Input
+                value={novoEndereco.mapa_url}
+                onChange={(e) => setNovoEndereco({ ...novoEndereco, mapa_url: e.target.value })}
+                placeholder="https://www.google.com/maps/..."
+              />
+              <p className="text-xs text-slate-500 mt-1">
+                Cole o link direto do Google Maps ou deixe em branco para gerar automaticamente
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
