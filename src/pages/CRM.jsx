@@ -25,8 +25,8 @@ import {
   Target,
   ShoppingCart,
   FileText,
-  Brain,
-  AlertTriangle // Added AlertTriangle icon import
+  Sparkles, // Changed from Brain to Sparkles
+  AlertTriangle
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -38,7 +38,7 @@ import FunilVisual from "../components/crm/FunilVisual";
 import AgendarFollowUp from "../components/crm/AgendarFollowUp";
 import ConverterOportunidade from "../components/crm/ConverterOportunidade";
 import IALeadsPriorizacao from "../components/crm/IALeadsPriorizacao";
-import IAChurnDetection from "../components/crm/IAChurnDetection"; // Added new component import
+import IAChurnDetection from "../components/crm/IAChurnDetection";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
@@ -502,7 +502,7 @@ export default function CRMPage() {
     'Fechamento': 'bg-yellow-100 text-yellow-700',
     'Ganho': 'bg-green-100 text-green-700',
     'Perdido': 'bg-red-100 text-red-700',
-    'Reativação': 'bg-pink-100 text-pink-700' // NOVO V21.1
+    'Reativação': 'bg-pink-100 text-pink-700'
   };
 
   const statusColors = {
@@ -600,7 +600,7 @@ export default function CRMPage() {
             value="ia-leads"
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
-            <Brain className="w-4 h-4 mr-2" />
+            <Sparkles className="w-4 h-4 mr-2" /> {/* Changed Brain to Sparkles */}
             IA Leads
           </TabsTrigger>
           {/* NOVO V21.1: IA Churn */}
