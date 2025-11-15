@@ -110,52 +110,8 @@ import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 
 /**
- * 🔍 V20.2: MOTOR DE BUSCA UNIVERSAL MELHORADO
- * Normaliza acentos e busca em TODOS os campos
- */
-const normalizarTexto = (texto) => {
-  if (!texto) return '';
-  return texto
-    .toString()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, ''); // Remove acentos
-};
-
-const buscarEmObjeto = (obj, termo) => {
-  if (!obj || typeof obj !== 'object') return false;
-  
-  // Iterate over properties of the object
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      const valor = obj[key];
-      if (valor === null || valor === undefined) continue;
-      
-      if (typeof valor === 'string' || typeof valor === 'number') {
-        if (normalizarTexto(valor.toString()).includes(termo)) {
-          return true;
-        }
-      } else if (Array.isArray(valor)) {
-        // Search in arrays
-        for (const item of valor) {
-          if (typeof item === 'object') {
-            if (buscarEmObjeto(item, termo)) return true;
-          } else if (normalizarTexto(item.toString()).includes(termo)) {
-            return true;
-          }
-        }
-      } else if (typeof valor === 'object') {
-        // Search recursively in nested objects
-        if (buscarEmObjeto(valor, termo)) return true;
-      }
-    }
-  }
-  
-  return false;
-};
-
-/**
- * CADASTROS GERAIS V20.2 - HUB CENTRAL COM BUSCA UNIVERSAL MELHORADA
+ * CADASTROS GERAIS V20.1 - HUB CENTRAL COM AUDITORIA COMPLETA
+ * Blocos 1/6, 2/6, 3/6, 4/6 e 5/6 totalmente sincronizados
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -404,50 +360,6 @@ export default function Cadastros() {
     queryFn: () => base44.entities.ModeloDocumento.list(),
   });
 
-  // 🔍 V20.2: BUSCA UNIVERSAL MELHORADA - IGNORA ACENTOS E BUSCA EM TUDO
-  const filtrarPorBuscaUniversal = (lista) => {
-    if (!searchTerm || searchTerm.trim() === '') return lista;
-    
-    const termoNormalizado = normalizarTexto(searchTerm.trim());
-    
-    return lista.filter(item => {
-      // Buscar no objeto inteiro (recursivo)
-      return buscarEmObjeto(item, termoNormalizado);
-    });
-  };
-
-  // Aplicar filtros em todas as listas
-  const clientesFiltrados = filtrarPorBuscaUniversal(clientes);
-  const fornecedoresFiltrados = filtrarPorBuscaUniversal(fornecedores);
-  const colaboradoresFiltrados = filtrarPorBuscaUniversal(colaboradores);
-  const transportadorasFiltradas = filtrarPorBuscaUniversal(transportadoras);
-  const produtosFiltrados = filtrarPorBuscaUniversal(produtos);
-  const empresasFiltradas = filtrarPorBuscaUniversal(empresas);
-  const gruposFiltrados = filtrarPorBuscaUniversal(grupos);
-  const bancosFiltrados = filtrarPorBuscaUniversal(bancos);
-  const formasPagamentoFiltradas = filtrarPorBuscaUniversal(formasPagamento);
-  const veiculosFiltrados = filtrarPorBuscaUniversal(veiculos);
-  const servicosFiltrados = filtrarPorBuscaUniversal(servicos);
-  const usuariosFiltrados = filtrarPorBuscaUniversal(usuarios);
-  const departamentosFiltrados = filtrarPorBuscaUniversal(departamentos);
-  const cargosFiltrados = filtrarPorBuscaUniversal(cargos);
-  const turnosFiltrados = filtrarPorBuscaUniversal(turnos);
-  const tabelasPrecoFiltradas = filtrarPorBuscaUniversal(tabelasPreco);
-  const catalogoWebFiltrado = filtrarPorBuscaUniversal(catalogoWeb);
-  const gruposProdutoFiltrados = filtrarPorBuscaUniversal(gruposProduto);
-  const marcasFiltradas = filtrarPorBuscaUniversal(marcas);
-  const kitsFiltrados = filtrarPorBuscaUniversal(kits);
-  const contatosB2BFiltrados = filtrarPorBuscaUniversal(contatosB2B);
-  const representantesFiltrados = filtrarPorBuscaUniversal(representantes);
-  const segmentosClienteFiltrados = filtrarPorBuscaUniversal(segmentosCliente);
-  const planoContasFiltrado = filtrarPorBuscaUniversal(planoContas);
-  const centrosResultadoFiltrados = filtrarPorBuscaUniversal(centrosResultado);
-  const tiposDespesaFiltrados = filtrarPorBuscaUniversal(tiposDespesa);
-  const moedasIndicesFiltrados = filtrarPorBuscaUniversal(moedasIndices);
-  const motoristasFiltrados = filtrarPorBuscaUniversal(motoristas);
-  const tiposFreteFiltrados = filtrarPorBuscaUniversal(tiposFrete);
-  const modelosDocumentoFiltrados = filtrarPorBuscaUniversal(modelosDocumento);
-
   // MUTATIONS UNIVERSAIS - TODAS AS ENTIDADES
   const createMutation = useMutation({
     mutationFn: async ({ entity, data }) => {
@@ -623,24 +535,11 @@ export default function Cadastros() {
     }
   };
 
-  const totalResultados = clientesFiltrados.length + fornecedoresFiltrados.length + produtosFiltrados.length + 
-    colaboradoresFiltrados.length + transportadorasFiltradas.length + empresasFiltradas.length + 
-    gruposFiltrados.length + bancosFiltrados.length + formasPagamentoFiltradas.length + 
-    veiculosFiltrados.length + servicosFiltrados.length + usuariosFiltrados.length + 
-    perfisAcesso.length + departamentosFiltrados.length + cargosFiltrados.length + 
-    turnosFiltrados.length + condicoesComerciais.length + contatosB2BFiltrados.length + 
-    representantesFiltrados.length + segmentosClienteFiltrados.length + gruposProdutoFiltrados.length + 
-    marcasFiltradas.length + kitsFiltrados.length + tabelasPrecoFiltradas.length + 
-    catalogoWebFiltrado.length + planoContasFiltrado.length + centrosResultadoFiltrados.length + 
-    tiposDespesaFiltrados.length + moedasIndicesFiltrados.length + motoristasFiltrados.length + 
-    tiposFreteFiltrados.length + modelosDocumentoFiltrados.length;
-
-
-  const totalItensGrupo1 = empresasFiltradas.length + gruposFiltrados.length + usuariosFiltrados.length + perfisAcesso.length + departamentosFiltrados.length + cargosFiltrados.length + turnosFiltrados.length + centrosCusto.length;
-  const totalItensGrupo2 = clientesFiltrados.length + fornecedoresFiltrados.length + colaboradoresFiltrados.length + transportadorasFiltradas.length + contatosB2BFiltrados.length + representantesFiltrados.length + condicoesComerciais.length + segmentosClienteFiltrados.length;
-  const totalItensGrupo3 = produtosFiltrados.length + servicosFiltrados.length + tabelasPrecoFiltradas.length + catalogoWebFiltrado.length + gruposProdutoFiltrados.length + marcasFiltradas.length + kitsFiltrados.length;
-  const totalItensGrupo4 = bancosFiltrados.length + formasPagamentoFiltradas.length + planoContasFiltrado.length + centrosResultadoFiltrados.length + tiposDespesaFiltrados.length + moedasIndicesFiltrados.length;
-  const totalItensGrupo5 = veiculosFiltrados.length + motoristasFiltrados.length + tiposFreteFiltrados.length + modelosDocumentoFiltrados.length;
+  const totalItensGrupo1 = empresas.length + grupos.length + usuarios.length + perfisAcesso.length + departamentos.length + cargos.length + turnos.length + centrosCusto.length;
+  const totalItensGrupo2 = clientes.length + fornecedores.length + colaboradores.length + transportadoras.length + contatosB2B.length + representantes.length + condicoesComerciais.length + segmentosCliente.length;
+  const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length;
+  const totalItensGrupo4 = bancos.length + formasPagamento.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
+  const totalItensGrupo5 = veiculos.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -648,7 +547,7 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V20.2
+            🚀 Cadastros Gerais V20.1
           </h1>
           <p className="text-slate-600">Hub Central - Visualização e Edição Completa</p>
         </div>
@@ -666,7 +565,7 @@ export default function Cadastros() {
               <Users className="w-5 h-5 text-blue-600" />
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="text-2xl font-bold text-blue-600">{clientesFiltrados.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{clientes.length}</div>
             <p className="text-xs text-slate-600">Clientes</p>
           </CardContent>
         </Card>
@@ -677,7 +576,7 @@ export default function Cadastros() {
               <Building2 className="w-5 h-5 text-cyan-600" />
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="text-2xl font-bold text-cyan-600">{fornecedoresFiltrados.length}</div>
+            <div className="text-2xl font-bold text-cyan-600">{fornecedores.length}</div>
             <p className="text-xs text-slate-600">Fornecedores</p>
           </CardContent>
         </Card>
@@ -688,7 +587,7 @@ export default function Cadastros() {
               <Package className="w-5 h-5 text-purple-600" />
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="text-2xl font-bold text-purple-600">{produtosFiltrados.length}</div>
+            <div className="text-2xl font-bold text-purple-600">{produtos.length}</div>
             <p className="text-xs text-slate-600">Produtos</p>
           </CardContent>
         </Card>
@@ -699,7 +598,7 @@ export default function Cadastros() {
               <CreditCard className="w-5 h-5 text-green-600" />
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="text-2xl font-bold text-green-600">{formasPagamentoFiltradas.length}</div>
+            <div className="text-2xl font-bold text-green-600">{formasPagamento.length}</div>
             <p className="text-xs text-slate-600">Formas Pagto</p>
           </CardContent>
         </Card>
@@ -710,7 +609,7 @@ export default function Cadastros() {
               <Landmark className="w-5 h-5 text-indigo-600" />
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="text-2xl font-bold text-indigo-600">{bancosFiltrados.length}</div>
+            <div className="text-2xl font-bold text-indigo-600">{bancos.length}</div>
             <p className="text-xs text-slate-600">Bancos</p>
           </CardContent>
         </Card>
@@ -721,47 +620,22 @@ export default function Cadastros() {
               <User className="w-5 h-5 text-pink-600" />
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </div>
-            <div className="text-2xl font-bold text-pink-600">{colaboradoresFiltrados.length}</div>
+            <div className="text-2xl font-bold text-pink-600">{colaboradores.length}</div>
             <p className="text-xs text-slate-600">Colaboradores</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* BUSCA GLOBAL - V20.2 MELHORADA */}
+      {/* BUSCA GLOBAL */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
         <Input
-          placeholder="🔍 Buscar em TUDO: nome, CPF, CNPJ, endereço, telefone, cidade, cargo... (ignora acentos)"
+          placeholder="🔍 Buscar em todos os cadastros... (clientes, produtos, fornecedores, etc)"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-12 h-12 text-base shadow-md border-slate-300"
         />
-        {searchTerm && (
-          <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-            <Badge className="bg-blue-600 text-white">
-              {totalResultados} encontrado{totalResultados !== 1 ? 's' : ''}
-            </Badge>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={() => setSearchTerm('')}
-              className="h-6 px-2"
-            >
-              Limpar
-            </Button>
-          </div>
-        )}
       </div>
-
-      {/* Alerta de busca ativa */}
-      {searchTerm && (
-        <Alert className="border-blue-300 bg-blue-50">
-          <Search className="w-4 h-4 text-blue-600" />
-          <AlertDescription className="text-sm text-blue-900">
-            🔍 Buscando por <strong>"{searchTerm}"</strong> em todos os campos (nome, CPF, CNPJ, endereço, telefone, email, cargo, departamento, cidade, etc)
-          </AlertDescription>
-        </Alert>
-      )}
 
       {/* ACCORDION COM 6 GRUPOS */}
       <Accordion type="multiple" defaultValue={["grupo-1"]} className="space-y-4">
@@ -788,7 +662,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-blue-600" />
-                  Empresas ({empresasFiltradas.length})
+                  Empresas ({empresas.length})
                 </h4>
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleOpenNew('empresas', 'Empresa')}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -808,7 +682,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {empresasFiltradas.map((empresa) => (
+                    {empresas.map((empresa) => (
                       <TableRow key={empresa.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium">{empresa.razao_social}</TableCell>
                         <TableCell className="text-sm">{empresa.cnpj}</TableCell>
@@ -833,7 +707,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Network className="w-5 h-5 text-purple-600" />
-                  Grupos Empresariais ({gruposFiltrados.length})
+                  Grupos Empresariais ({grupos.length})
                 </h4>
                 <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => handleOpenNew('grupos', 'GrupoEmpresarial')}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -853,7 +727,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {gruposFiltrados.map((grupo) => (
+                    {grupos.map((grupo) => (
                       <TableRow key={grupo.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium">{grupo.nome_do_grupo}</TableCell>
                         <TableCell className="text-sm">{grupo.cnpj_opcional || '-'}</TableCell>
@@ -874,11 +748,11 @@ export default function Cadastros() {
                 </Table>
               </div>
 
-              {gruposFiltrados.length === 0 && (
+              {grupos.length === 0 && (
                 <Card className="border-dashed border-2 mt-4">
                   <CardContent className="p-6 text-center text-slate-500">
                     <Network className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Nenhum grupo empresarial {searchTerm ? 'encontrado' : 'cadastrado'}</p>
+                    <p className="text-sm">Nenhum grupo empresarial cadastrado</p>
                   </CardContent>
                 </Card>
               )}
@@ -891,7 +765,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <User className="w-4 h-4 text-blue-600" />
-                    Usuários ({usuariosFiltrados.length})
+                    Usuários ({usuarios.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('usuarios', 'User')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -909,7 +783,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {usuariosFiltrados.map((u) => (
+                      {usuarios.map((u) => (
                         <TableRow key={u.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{u.full_name}</TableCell>
                           <TableCell className="text-xs">{u.email}</TableCell>
@@ -971,7 +845,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Briefcase className="w-4 h-4 text-indigo-600" />
-                    Departamentos ({departamentosFiltrados.length})
+                    Departamentos ({departamentos.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('departamentos', 'Departamento')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -988,7 +862,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {departamentosFiltrados.map((d) => (
+                      {departamentos.map((d) => (
                         <TableRow key={d.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{d.nome}</TableCell>
                           <TableCell className="text-xs">{d.codigo}</TableCell>
@@ -1009,7 +883,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <UserCircle className="w-4 h-4 text-pink-600" />
-                    Cargos ({cargosFiltrados.length})
+                    Cargos ({cargos.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('cargos', 'Cargo')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1026,7 +900,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {cargosFiltrados.map((c) => (
+                      {cargos.map((c) => (
                         <TableRow key={c.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{c.nome_cargo}</TableCell>
                           <TableCell className="text-xs">{c.nivel_hierarquico}</TableCell>
@@ -1047,7 +921,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Clock className="w-4 h-4 text-orange-600" />
-                    Turnos ({turnosFiltrados.length})
+                    Turnos ({turnos.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('turnos', 'Turno')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1064,7 +938,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {turnosFiltrados.map((t) => (
+                      {turnos.map((t) => (
                         <TableRow key={t.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{t.nome_turno}</TableCell>
                           <TableCell className="text-xs">{t.horario_inicio} - {t.horario_fim}</TableCell>
@@ -1143,7 +1017,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Users className="w-5 h-5 text-blue-600" />
-                  Clientes ({clientesFiltrados.length})
+                  Clientes ({clientes.length})
                 </h4>
                 <Button onClick={handleNovoCliente} size="sm" className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="w-4 h-4 mr-2" />
@@ -1162,7 +1036,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {clientesFiltrados.map((cliente) => (
+                    {clientes.map((cliente) => (
                       <TableRow key={cliente.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{cliente.nome}</TableCell>
                         <TableCell className="text-xs">{cliente.cpf || cliente.cnpj || '-'}</TableCell>
@@ -1185,15 +1059,6 @@ export default function Cadastros() {
                   </TableBody>
                 </Table>
               </div>
-              
-              {clientesFiltrados.length === 0 && (
-                <Card className="border-dashed border-2 mt-4">
-                  <CardContent className="p-6 text-center text-slate-500">
-                    <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Nenhum cliente {searchTerm ? 'encontrado' : 'cadastrado'}</p>
-                  </CardContent>
-                </Card>
-              )}
             </div>
 
             {/* Fornecedores - TABELA COMPLETA */}
@@ -1201,7 +1066,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Building2 className="w-5 h-5 text-cyan-600" />
-                  Fornecedores ({fornecedoresFiltrados.length})
+                  Fornecedores ({fornecedores.length})
                 </h4>
                 <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700" onClick={handleNovoFornecedor}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -1219,7 +1084,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {fornecedoresFiltrados.map((f) => (
+                    {fornecedores.map((f) => (
                       <TableRow key={f.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{f.nome}</TableCell>
                         <TableCell className="text-xs">{f.cnpj || '-'}</TableCell>
@@ -1246,7 +1111,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <User className="w-5 h-5 text-pink-600" />
-                  Colaboradores ({colaboradoresFiltrados.length})
+                  Colaboradores ({colaboradores.length})
                 </h4>
                 <Button 
                   size="sm" 
@@ -1268,7 +1133,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {colaboradoresFiltrados.map((c) => (
+                    {colaboradores.map((c) => (
                       <TableRow key={c.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{c.nome_completo}</TableCell>
                         <TableCell className="text-xs">{c.cargo}</TableCell>
@@ -1295,7 +1160,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Truck className="w-5 h-5 text-orange-600" />
-                  Transportadoras ({transportadorasFiltradas.length})
+                  Transportadoras ({transportadoras.length})
                 </h4>
                 <Button 
                   size="sm" 
@@ -1316,7 +1181,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transportadorasFiltradas.map((t) => (
+                    {transportadoras.map((t) => (
                       <TableRow key={t.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{t.razao_social}</TableCell>
                         <TableCell className="text-xs">{t.cnpj}</TableCell>
@@ -1344,7 +1209,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Mail className="w-4 h-4 text-purple-600" />
-                    Contatos B2B ({contatosB2BFiltrados.length})
+                    Contatos B2B ({contatosB2B.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('contatos', 'ContatoB2B')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1361,7 +1226,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {contatosB2BFiltrados.map((c) => (
+                      {contatosB2B.map((c) => (
                         <TableRow key={c.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{c.nome_contato}</TableCell>
                           <TableCell className="text-xs">{c.email}</TableCell>
@@ -1382,7 +1247,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <UserCheck className="w-4 h-4 text-indigo-600" />
-                    Representantes ({representantesFiltrados.length})
+                    Representantes ({representantes.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('representantes', 'Representante')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1399,7 +1264,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {representantesFiltrados.map((r) => (
+                      {representantes.map((r) => (
                         <TableRow key={r.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{r.nome}</TableCell>
                           <TableCell className="text-xs">{r.comissao_percentual}%</TableCell>
@@ -1460,7 +1325,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Users className="w-4 h-4 text-cyan-600" />
-                    Segmentos de Cliente ({segmentosClienteFiltrados.length})
+                    Segmentos de Cliente ({segmentosCliente.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('segmentos', 'SegmentoCliente')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1477,7 +1342,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {segmentosClienteFiltrados.map((s) => (
+                      {segmentosCliente.map((s) => (
                         <TableRow key={s.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{s.nome_segmento}</TableCell>
                           <TableCell className="text-xs">{s.quantidade_clientes || 0}</TableCell>
@@ -1542,7 +1407,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Package className="w-5 h-5 text-purple-600" />
-                  Produtos ({produtosFiltrados.length})
+                  Produtos ({produtos.length})
                 </h4>
                 <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => handleOpenNew('produtos', 'Produto')}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -1564,7 +1429,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {produtosFiltrados.map((p) => (
+                    {produtos.map((p) => (
                       <TableRow key={p.id} className="hover:bg-slate-50">
                         <TableCell className="font-mono text-xs">{p.codigo}</TableCell>
                         <TableCell>
@@ -1609,10 +1474,10 @@ export default function Cadastros() {
                 </Table>
               </div>
               
-              {produtosFiltrados.length === 0 && (
+              {produtos.length === 0 && (
                 <div className="text-center py-12 text-slate-500 border rounded-lg">
                   <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>Nenhum produto {searchTerm ? 'encontrado' : 'cadastrado'}</p>
+                  <p>Nenhum produto cadastrado</p>
                 </div>
               )}
             </div>
@@ -1622,7 +1487,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Factory className="w-5 h-5 text-indigo-600" />
-                  Serviços ({servicosFiltrados.length})
+                  Serviços ({servicos.length})
                 </h4>
                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => handleOpenNew('servicos', 'Servico')}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -1642,7 +1507,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {servicosFiltrados.map((s) => (
+                    {servicos.map((s) => (
                       <TableRow key={s.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{s.descricao}</TableCell>
                         <TableCell className="text-xs">{s.tipo_servico}</TableCell>
@@ -1669,7 +1534,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Boxes className="w-4 h-4 text-cyan-600" />
-                    Grupos ({gruposProdutoFiltrados.length})
+                    Grupos ({gruposProduto.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('grupos-produto', 'GrupoProduto')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1686,7 +1551,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {gruposProdutoFiltrados.map((g) => (
+                      {gruposProduto.map((g) => (
                         <TableRow key={g.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{g.nome_grupo}</TableCell>
                           <TableCell className="text-xs">{g.natureza}</TableCell>
@@ -1707,7 +1572,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Award className="w-4 h-4 text-orange-600" />
-                    Marcas ({marcasFiltradas.length})
+                    Marcas ({marcas.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('marcas', 'Marca')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1724,7 +1589,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {marcasFiltradas.map((m) => (
+                      {marcas.map((m) => (
                         <TableRow key={m.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{m.nome_marca}</TableCell>
                           <TableCell className="text-xs">{m.categoria}</TableCell>
@@ -1745,7 +1610,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Package className="w-4 h-4 text-pink-600" />
-                    Kits ({kitsFiltrados.length})
+                    Kits ({kits.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('kits', 'KitProduto')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1763,7 +1628,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {kitsFiltrados.map((k) => (
+                      {kits.map((k) => (
                         <TableRow key={k.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{k.nome_kit}</TableCell>
                           <TableCell className="text-xs">{(k.itens_kit || []).length} itens</TableCell>
@@ -1787,7 +1652,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600" />
-                    Tabelas de Preço ({tabelasPrecoFiltradas.length})
+                    Tabelas de Preço ({tabelasPreco.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('tabelas', 'TabelaPreco')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1805,7 +1670,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {tabelasPrecoFiltradas.map((t) => (
+                      {tabelasPreco.map((t) => (
                         <TableRow key={t.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{t.nome}</TableCell>
                           <TableCell className="text-xs">{t.tipo}</TableCell>
@@ -1827,7 +1692,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Globe className="w-4 h-4 text-cyan-600" />
-                    Catálogo Web ({catalogoWebFiltrado.length})
+                    Catálogo Web ({catalogoWeb.length})
                   </h4>
                   <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
                     <Plus className="w-3 h-3 mr-2" />
@@ -1844,7 +1709,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {catalogoWebFiltrado.map((c) => (
+                      {catalogoWeb.map((c) => (
                         <TableRow key={c.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
                           <TableCell>
@@ -1872,7 +1737,7 @@ export default function Cadastros() {
                   <div className="flex items-center gap-3 mb-3">
                     <Package className="w-5 h-5 text-purple-600" />
                     <h4 className="font-semibold">Bitolas</h4>
-                    <Badge className="ml-auto">
+                    <Badge className="ml-auto bg-purple-600 text-white">
                       {produtos.filter(p => p.eh_bitola).length}
                     </Badge>
                   </div>
@@ -1949,7 +1814,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Landmark className="w-4 h-4 text-blue-600" />
-                    Contas Bancárias ({bancosFiltrados.length})
+                    Contas Bancárias ({bancos.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -1968,14 +1833,14 @@ export default function Cadastros() {
                         <TableHead>Agência/Conta</TableHead>
                         <TableHead>Saldo</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {bancosFiltrados.map((b) => (
-                      <TableRow key={b.id} className="hover:bg-slate-50">
-                        <TableCell className="font-medium text-sm">{b.nome_banco}</TableCell>
-                        <TableCell className="text-xs">{b.agencia} / {b.conta}-{b.conta_digito}</TableCell>
-                        <TableCell className="text-sm font-bold text-green-600">
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bancos.map((b) => (
+                        <TableRow key={b.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{b.nome_banco}</TableCell>
+                          <TableCell className="text-xs">{b.agencia} / {b.conta}-{b.conta_digito}</TableCell>
+                          <TableCell className="text-sm font-bold text-green-600">
                             R$ {(b.saldo_atual || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </TableCell>
                           <TableCell className="text-right">
@@ -1995,7 +1860,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <CreditCard className="w-4 h-4 text-green-600" />
-                    Formas Pagamento ({formasPagamentoFiltradas.length})
+                    Formas Pagamento ({formasPagamento.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -2017,7 +1882,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {formasPagamentoFiltradas.map((f) => (
+                      {formasPagamento.map((f) => (
                         <TableRow key={f.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{f.descricao}</TableCell>
                           <TableCell className="text-xs">{f.tipo}</TableCell>
@@ -2046,7 +1911,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <FileText className="w-4 h-4 text-indigo-600" />
-                    Plano de Contas ({planoContasFiltrado.length})
+                    Plano de Contas ({planoContas.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -2068,7 +1933,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {planoContasFiltrado.map((pc) => (
+                      {planoContas.map((pc) => (
                         <TableRow key={pc.id} className="hover:bg-slate-50">
                           <TableCell className="font-mono text-xs">{pc.codigo_conta}</TableCell>
                           <TableCell className="text-sm">{pc.descricao_conta}</TableCell>
@@ -2090,7 +1955,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Target className="w-4 h-4 text-purple-600" />
-                    Centros Resultado ({centrosResultadoFiltrados.length})
+                    Centros Resultado ({centrosResultado.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -2112,7 +1977,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {centrosResultadoFiltrados.map((cr) => (
+                      {centrosResultado.map((cr) => (
                         <TableRow key={cr.id} className="hover:bg-slate-50">
                           <TableCell className="font-mono text-xs">{cr.codigo}</TableCell>
                           <TableCell className="text-sm">{cr.descricao}</TableCell>
@@ -2134,7 +1999,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Receipt className="w-4 h-4 text-red-600" />
-                    Tipos Despesa ({tiposDespesaFiltrados.length})
+                    Tipos Despesa ({tiposDespesa.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -2155,7 +2020,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {tiposDespesaFiltrados.map((td) => (
+                      {tiposDespesa.map((td) => (
                         <TableRow key={td.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium text-sm">{td.nome}</TableCell>
                           <TableCell className="text-xs">{td.categoria}</TableCell>
@@ -2176,7 +2041,7 @@ export default function Cadastros() {
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-cyan-600" />
-                    Moedas/Índices ({moedasIndicesFiltrados.length})
+                    Moedas/Índices ({moedasIndices.length})
                   </h4>
                   <Button 
                     size="sm" 
@@ -2198,7 +2063,7 @@ export default function Cadastros() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {moedasIndicesFiltrados.map((mi) => (
+                      {moedasIndices.map((mi) => (
                         <TableRow key={mi.id} className="hover:bg-slate-50">
                           <TableCell className="font-mono text-xs">{mi.codigo}</TableCell>
                           <TableCell className="text-sm">{mi.nome}</TableCell>
@@ -2307,7 +2172,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Truck className="w-4 h-4 text-slate-600" />
-                  Veículos / Frota ({veiculosFiltrados.length})
+                  Veículos / Frota ({veiculos.length})
                 </h4>
                 <Button size="sm" variant="outline" onClick={() => handleOpenNew('veiculos', 'Veiculo')}>
                   <Plus className="w-3 h-3 mr-2" />
@@ -2325,7 +2190,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {veiculosFiltrados.map((v) => (
+                    {veiculos.map((v) => (
                       <TableRow key={v.id} className="hover:bg-slate-50">
                         <TableCell className="font-mono text-sm">{v.placa}</TableCell>
                         <TableCell className="text-xs">{v.modelo}</TableCell>
@@ -2347,7 +2212,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <User className="w-4 h-4 text-blue-600" />
-                  Motoristas ({motoristasFiltrados.length})
+                  Motoristas ({motoristas.length})
                 </h4>
                 <Button size="sm" variant="outline" onClick={() => handleOpenNew('motoristas', 'Motorista')}>
                   <Plus className="w-3 h-3 mr-2" />
@@ -2364,7 +2229,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {motoristasFiltrados.map((m) => (
+                    {motoristas.map((m) => (
                       <TableRow key={m.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{m.nome_completo}</TableCell>
                         <TableCell className="text-xs">{m.cnh_categoria} - {m.cnh_numero}</TableCell>
@@ -2385,7 +2250,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Truck className="w-4 h-4 text-green-600" />
-                  Tipos Frete ({tiposFreteFiltrados.length})
+                  Tipos Frete ({tiposFrete.length})
                 </h4>
                 <Button size="sm" variant="outline" onClick={() => handleOpenNew('tipos-frete', 'TipoFrete')}>
                   <Plus className="w-3 h-3 mr-2" />
@@ -2402,7 +2267,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {tiposFreteFiltrados.map((tf) => (
+                    {tiposFrete.map((tf) => (
                       <TableRow key={tf.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{tf.descricao}</TableCell>
                         <TableCell className="text-xs">{tf.modalidade}</TableCell>
@@ -2423,7 +2288,7 @@ export default function Cadastros() {
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <FileText className="w-4 h-4 text-cyan-600" />
-                  Modelos PDF ({modelosDocumentoFiltrados.length})
+                  Modelos PDF ({modelosDocumento.length})
                 </h4>
                 <Button size="sm" variant="outline" onClick={() => handleOpenNew('modelos', 'ModeloDocumento')}>
                   <Plus className="w-3 h-3 mr-2" />
@@ -2440,7 +2305,7 @@ export default function Cadastros() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {modelosDocumentoFiltrados.map((md) => (
+                    {modelosDocumento.map((md) => (
                       <TableRow key={md.id} className="hover:bg-slate-50">
                         <TableCell className="font-medium text-sm">{md.nome_modelo}</TableCell>
                         <TableCell className="text-xs">{md.tipo_documento}</TableCell>
