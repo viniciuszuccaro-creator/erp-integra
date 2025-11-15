@@ -3,13 +3,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Rocket, 
-  Brain, 
+  Sparkles, 
   Smartphone,
   Globe,
   Leaf,
   Box,
-  TrendingUp,
-  Sparkles
+  TrendingUp
 } from 'lucide-react';
 
 /**
@@ -25,7 +24,7 @@ export default function RoadmapFuturo() {
         {
           titulo: 'IA Conversacional Interna (ZIA)',
           descricao: 'Comandos diretos no ERP via chat',
-          icone: Brain,
+          icone: Sparkles,
           status: 'Em Desenvolvimento'
         },
         {
@@ -55,7 +54,7 @@ export default function RoadmapFuturo() {
         {
           titulo: 'IA Vision Aprimorada',
           descricao: 'Leitura 3D + extração vetorial',
-          icone: Brain,
+          icone: Sparkles,
           status: 'Pesquisa'
         },
         {
