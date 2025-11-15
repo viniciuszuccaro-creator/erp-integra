@@ -25,6 +25,7 @@ import Seguranca from './pages/Seguranca';
 import TesteGoldenThread from './pages/TesteGoldenThread';
 import ChatbotAtendimento from './pages/ChatbotAtendimento';
 import ValidadorFase1 from './pages/ValidadorFase1';
+import LimparDados from './pages/LimparDados';
 import Layout from './Layout.jsx';
 
 
@@ -56,6 +57,7 @@ export const PAGES = {
     "TesteGoldenThread": TesteGoldenThread,
     "ChatbotAtendimento": ChatbotAtendimento,
     "ValidadorFase1": ValidadorFase1,
+    "LimparDados": LimparDados,
 }
 
 export const pagesConfig = {

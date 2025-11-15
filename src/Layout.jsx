@@ -24,7 +24,8 @@ import {
   BookOpen,
   Search,
   Rocket,
-  CheckCircle // Added CheckCircle icon
+  CheckCircle,
+  Trash2 // NOVO
 } from "lucide-react";
 import {
   Sidebar,
@@ -72,6 +73,7 @@ const navigationItems = [
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🧪 Teste Golden Thread", url: createPageUrl("TesteGoldenThread"), icon: Rocket, group: "sistema", adminOnly: true },
   { title: "✅ Validador Fase 1", url: createPageUrl("ValidadorFase1"), icon: CheckCircle, group: "sistema", adminOnly: true }, // Added new item
+  { title: "🗑️ Limpar Dados Teste", url: createPageUrl("LimparDados"), icon: Trash2, group: "sistema", adminOnly: true },
   { title: "🌐 Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico", public: true },
 ];
 
