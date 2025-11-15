@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -47,9 +46,6 @@ import { UserProvider, useUser } from "@/components/lib/UserContext";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
-import JanelasMultitarefa from "@/components/JanelasMultitarefa";
-import BarraJanelasAbertas from "@/components/BarraJanelasAbertas";
-import { MultitarefaProvider } from "@/components/lib/useMultitarefa";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -58,7 +54,6 @@ const navigationItems = [
   { title: "Agenda e Calendário", url: createPageUrl("Agenda"), icon: Calendar, group: "principal" },
   { title: "CRM - Relacionamento", url: createPageUrl("CRM"), icon: Users, group: "principal" },
   { title: "Cadastros Gerais", url: createPageUrl("Cadastros"), icon: Users, group: "cadastros" },
-  { title: "Produtos e Catálogo", url: createPageUrl("Produtos"), icon: Package, group: "cadastros" },
   { title: "Comercial e Vendas", url: createPageUrl("Comercial"), icon: ShoppingCart, group: "operacional" },
   { title: "Estoque e Almoxarifado", url: createPageUrl("Estoque"), icon: Box, group: "operacional" },
   { title: "Compras e Suprimentos", url: createPageUrl("Compras"), icon: Package, group: "operacional" },
@@ -337,7 +332,7 @@ function LayoutContent({ children, currentPageName }) {
             </div>
           </header>
 
-          <div className="flex-1 overflow-auto pb-16">
+          <div className="flex-1 overflow-auto">
             {children}
           </div>
         </main>
@@ -346,10 +341,6 @@ function LayoutContent({ children, currentPageName }) {
           open={pesquisaOpen} 
           onOpenChange={setPesquisaOpen} 
         />
-
-        {/* V21.1.2: SISTEMA MULTITAREFA */}
-        <JanelasMultitarefa />
-        <BarraJanelasAbertas />
       </div>
     </SidebarProvider>
   );
@@ -358,9 +349,7 @@ function LayoutContent({ children, currentPageName }) {
 export default function Layout({ children, currentPageName }) {
   return (
     <UserProvider>
-      <MultitarefaProvider>
-        <LayoutContent children={children} currentPageName={currentPageName} />
-      </MultitarefaProvider>
+      <LayoutContent children={children} currentPageName={currentPageName} />
     </UserProvider>
   );
 }
