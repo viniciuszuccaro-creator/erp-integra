@@ -26,6 +26,7 @@ import TesteGoldenThread from './pages/TesteGoldenThread';
 import ChatbotAtendimento from './pages/ChatbotAtendimento';
 import ValidadorFase1 from './pages/ValidadorFase1';
 import LimparDados from './pages/LimparDados';
+import DemoMultitarefas from './pages/DemoMultitarefas';
 import Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "ChatbotAtendimento": ChatbotAtendimento,
     "ValidadorFase1": ValidadorFase1,
     "LimparDados": LimparDados,
+    "DemoMultitarefas": DemoMultitarefas,
 }
 
 export const pagesConfig = {
