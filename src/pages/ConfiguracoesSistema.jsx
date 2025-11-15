@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, FileText, Settings, Zap, Brain } from "lucide-react";
+import { Shield, FileText, Settings, Zap, Sparkles } from "lucide-react";
 import GerenciamentoAcessos from "@/components/sistema/GerenciamentoAcessos";
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
@@ -33,7 +33,7 @@ export default function ConfiguracoesSistema() {
             value="ia"
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
-            <Brain className="w-4 h-4 mr-2" />
+            <Sparkles className="w-4 h-4 mr-2" />
             Configuração IA
           </TabsTrigger>
 
@@ -82,7 +82,7 @@ export default function ConfiguracoesSistema() {
                 </div>
               ) : (
                 <div className="text-center py-12 text-slate-500">
-                  <Brain className="w-16 h-16 mx-auto mb-3 opacity-30" />
+                  <Sparkles className="w-16 h-16 mx-auto mb-3 opacity-30" />
                   <p>Nenhuma configuração de IA cadastrada</p>
                   <p className="text-sm mt-2">As configurações são criadas automaticamente ao usar funcionalidades IA</p>
                 </div>
