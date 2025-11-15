@@ -1,245 +1,213 @@
-import React, { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Brain, 
-  Lightbulb, 
-  AlertTriangle, 
-  TrendingUp, 
-  Package, 
+import React, { useState, useEffect } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  Sparkles,
+  AlertTriangle,
+  TrendingUp,
+  CreditCard,
+  Package,
+  Star,
   DollarSign,
-  Clock,
-  X,
-  ThumbsUp
-} from "lucide-react";
+  Target,
+  Brain
+} from 'lucide-react';
 
-export default function AssistenteInteligente({ 
-  cliente, 
-  pedido, 
-  produtos = [],
-  onAcao 
-}) {
+/**
+ * Assistente Inteligente - Comercial
+ * Analisa contexto e sugere ações proativas
+ */
+export default function AssistenteInteligente({ pedido, cliente }) {
   const [sugestoes, setSugestoes] = useState([]);
   const [sugestoesDispensadas, setSugestoesDispensadas] = useState([]);
 
   useEffect(() => {
-    analisarContexto();
-  }, [cliente, pedido, produtos]);
+    if (cliente && pedido) {
+      analisarContexto();
+    }
+  }, [cliente, pedido]);
 
   const analisarContexto = () => {
     const novasSugestoes = [];
 
-    // 1. LIMITE DE CRÉDITO BAIXO
+    // SUGESTÃO 1: Limite de Crédito
     if (cliente?.condicao_comercial) {
-      const limiteDisponivel = 
-        (cliente.condicao_comercial.limite_credito || 0) - 
-        (cliente.condicao_comercial.limite_credito_utilizado || 0);
-      
-      if (limiteDisponivel < (pedido?.valor_total || 0)) {
+      const { limite_credito, limite_credito_utilizado } = cliente.condicao_comercial;
+      const limiteDisponivel = (limite_credito || 0) - (limite_credito_utilizado || 0);
+      const percentualUso = limite_credito > 0 
+        ? (limite_credito_utilizado / limite_credito) * 100 
+        : 0;
+
+      if (percentualUso >= 90 && pedido.valor_total > limiteDisponivel) {
         novasSugestoes.push({
-          id: 'limite_baixo',
           tipo: 'urgente',
           icone: AlertTriangle,
-          titulo: 'Limite de Crédito Insuficiente',
-          descricao: `Cliente tem apenas R$ ${limiteDisponivel.toFixed(2)} disponível`,
-          acoes: [
-            { label: 'Solicitar Aumento', acao: 'solicitar_aumento_limite' },
-            { label: 'Reduzir Pedido', acao: 'reduzir_pedido' }
-          ]
+          titulo: 'Limite de Crédito Excedido',
+          descricao: `Cliente usando ${percentualUso.toFixed(0)}% do limite. Pedido excede crédito disponível (R$ ${limiteDisponivel.toLocaleString('pt-BR')}).`,
+          acao: 'Solicitar aprovação especial',
+          prioridade: 'alta'
         });
-      }
-    }
-
-    // 2. PRODUTOS EM FALTA NO ESTOQUE
-    const produtosSemEstoque = pedido?.itens_revenda?.filter(item => {
-      const produto = produtos.find(p => p.id === item.produto_id);
-      return produto && produto.estoque_atual < item.quantidade;
-    }) || [];
-
-    if (produtosSemEstoque.length > 0) {
-      novasSugestoes.push({
-        id: 'estoque_insuficiente',
-        tipo: 'alerta',
-        icone: Package,
-        titulo: 'Produtos sem Estoque Suficiente',
-        descricao: `${produtosSemEstoque.length} itens precisam de atenção`,
-        acoes: [
-          { label: 'Ver Produtos', acao: 'ver_produtos_sem_estoque' },
-          { label: 'Sugerir Substitutos', acao: 'sugerir_substitutos' }
-        ]
-      });
-    }
-
-    // 3. CLIENTE INATIVO HÁ MUITO TEMPO
-    if (cliente?.data_ultima_compra) {
-      const diasInativo = Math.floor(
-        (new Date() - new Date(cliente.data_ultima_compra)) / (1000 * 60 * 60 * 24)
-      );
-      
-      if (diasInativo > 90) {
+      } else if (percentualUso >= 70) {
         novasSugestoes.push({
-          id: 'cliente_inativo',
-          tipo: 'info',
-          icone: Clock,
-          titulo: 'Cliente Inativo Retornando!',
-          descricao: `Última compra há ${diasInativo} dias. Considere oferecer condições especiais.`,
-          acoes: [
-            { label: 'Aplicar Desconto Welcome Back', acao: 'desconto_retorno' }
-          ]
+          tipo: 'alerta',
+          icone: CreditCard,
+          titulo: 'Limite de Crédito em Uso',
+          descricao: `${percentualUso.toFixed(0)}% do limite em uso. Considerar antecipação de parcelas ou desconto à vista.`,
+          acao: 'Verificar situação financeira',
+          prioridade: 'media'
         });
       }
     }
 
-    // 4. OPORTUNIDADE DE CROSS-SELL
-    const produtosComplementares = pedido?.itens_revenda?.some(item => {
-      const produto = produtos.find(p => p.id === item.produto_id);
-      return produto?.produtos_complementares?.length > 0;
+    // SUGESTÃO 2: Produto em Estoque Baixo
+    const itensRevenda = pedido?.itens_revenda || [];
+    itensRevenda.forEach(item => {
+      if (item.estoque_disponivel !== undefined && item.estoque_disponivel < item.quantidade) {
+        novasSugestoes.push({
+          tipo: 'alerta',
+          icone: Package,
+          titulo: 'Estoque Insuficiente',
+          descricao: `${item.descricao}: apenas ${item.estoque_disponivel} disponível (pedido: ${item.quantidade}).`,
+          acao: 'Reservar ou solicitar compra',
+          prioridade: 'media'
+        });
+      }
     });
 
-    if (produtosComplementares && !sugestoesDispensadas.includes('cross_sell')) {
+    // SUGESTÃO 3: Cliente Inativo
+    const diasSemComprar = cliente?.dias_sem_comprar || 0;
+    if (diasSemComprar > 60) {
       novasSugestoes.push({
-        id: 'cross_sell',
-        tipo: 'sucesso',
+        tipo: 'info',
         icone: TrendingUp,
-        titulo: 'Oportunidade de Venda Adicional',
-        descricao: 'Existem produtos complementares que o cliente pode se interessar',
-        acoes: [
-          { label: 'Ver Sugestões', acao: 'ver_complementares' }
-        ]
+        titulo: 'Cliente Voltando a Comprar',
+        descricao: `Cliente sem comprar há ${diasSemComprar} dias. Oportunidade de fidelização.`,
+        acao: 'Oferecer desconto reativação',
+        prioridade: 'baixa'
       });
     }
 
-    // 5. MARGEM DE LUCRO BAIXA
-    const margemBaixa = pedido?.itens_revenda?.some(item => {
-      const margem = item.preco_unitario && item.custo_unitario ?
-        ((item.preco_unitario - item.custo_unitario) / item.preco_unitario) * 100 : 100;
-      return margem < 10;
-    });
-
-    if (margemBaixa) {
+    // SUGESTÃO 4: Produto Complementar (Cross-sell)
+    const contemBitola = itensRevenda.some(i => i.descricao?.toLowerCase().includes('bitola'));
+    if (contemBitola && !itensRevenda.some(i => i.descricao?.toLowerCase().includes('arame'))) {
       novasSugestoes.push({
-        id: 'margem_baixa',
+        tipo: 'info',
+        icone: Sparkles,
+        titulo: 'Produto Complementar',
+        descricao: 'Cliente está comprando bitola. Sugerir arame recozido para amarração?',
+        acao: 'Adicionar arame recozido',
+        prioridade: 'baixa'
+      });
+    }
+
+    // SUGESTÃO 5: Margem Baixa
+    if (pedido?.margem_total_percentual && pedido.margem_total_percentual < 15) {
+      novasSugestoes.push({
         tipo: 'alerta',
         icone: DollarSign,
-        titulo: 'Margem de Lucro Abaixo do Ideal',
-        descricao: 'Alguns itens estão com margem muito baixa',
-        acoes: [
-          { label: 'Revisar Preços', acao: 'revisar_precos' },
-          { label: 'Solicitar Aprovação', acao: 'solicitar_aprovacao_margem' }
-        ]
+        titulo: 'Margem Abaixo do Ideal',
+        descricao: `Margem atual: ${pedido.margem_total_percentual.toFixed(1)}%. Ideal: 20-25%.`,
+        acao: 'Revisar preços',
+        prioridade: 'media'
       });
     }
 
-    // 6. CLIENTE VIP - OFERECER BENEFÍCIOS
-    if (cliente?.classificacao_abc === 'A' && !sugestoesDispensadas.includes('vip_beneficios')) {
+    // SUGESTÃO 6: Cliente VIP
+    if (cliente?.classificacao_abc === 'A' && cliente?.score_pagamento >= 95) {
       novasSugestoes.push({
-        id: 'vip_beneficios',
-        tipo: 'info',
-        icone: Lightbulb,
-        titulo: 'Cliente VIP Identificado',
-        descricao: 'Este é um cliente classe A. Considere oferecer condições especiais.',
-        acoes: [
-          { label: 'Aplicar Desconto VIP', acao: 'desconto_vip' }
-        ]
+        tipo: 'success',
+        icone: Star,
+        titulo: 'Cliente VIP - Classe A',
+        descricao: `Score de pagamento: ${cliente.score_pagamento}. Priorizar atendimento e aprovação.`,
+        acao: 'Aprovação express',
+        prioridade: 'baixa'
       });
     }
 
-    setSugestoes(novasSugestoes);
+    setSugestoes(novasSugestoes.filter(s => !sugestoesDispensadas.includes(s.titulo)));
   };
 
-  const dispensarSugestao = (sugestaoId) => {
-    setSugestoesDispensadas([...sugestoesDispensadas, sugestaoId]);
-    setSugestoes(sugestoes.filter(s => s.id !== sugestaoId));
+  const dispensarSugestao = (titulo) => {
+    setSugestoesDispensadas([...sugestoesDispensadas, titulo]);
+    setSugestoes(sugestoes.filter(s => s.titulo !== titulo));
   };
 
-  const executarAcao = (acao) => {
-    if (onAcao) {
-      onAcao(acao);
-    }
+  const executarAcao = (sugestao) => {
+    console.log('Executar ação:', sugestao.acao);
   };
 
-  const corTipo = {
-    'urgente': 'border-red-300 bg-red-50',
-    'alerta': 'border-amber-300 bg-amber-50',
-    'info': 'border-blue-300 bg-blue-50',
-    'sucesso': 'border-green-300 bg-green-50'
-  };
+  if (sugestoes.length === 0) {
+    return (
+      <div className="fixed bottom-6 right-6 z-40">
+        <Badge className="bg-green-600 text-white flex items-center gap-2 px-4 py-2 shadow-lg">
+          <Brain className="w-4 h-4 animate-pulse" />
+          Assistente IA: {sugestoesDispensadas.length} sugestão(ões) dispensada(s)
+        </Badge>
+      </div>
+    );
+  }
 
-  const corBadge = {
-    'urgente': 'bg-red-500',
-    'alerta': 'bg-amber-500',
-    'info': 'bg-blue-500',
-    'sucesso': 'bg-green-500'
+  const corPorTipo = {
+    urgente: { bg: 'bg-red-50', border: 'border-red-300', text: 'text-red-900' },
+    alerta: { bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-900' },
+    info: { bg: 'bg-blue-50', border: 'border-blue-300', text: 'text-blue-900' },
+    success: { bg: 'bg-green-50', border: 'border-green-300', text: 'text-green-900' }
   };
-
-  if (sugestoes.length === 0) return null;
 
   return (
-    <div className="space-y-3">
-      {sugestoes.map((sugestao) => {
-        const Icone = sugestao.icone;
-        
+    <div className="fixed bottom-6 right-6 w-96 max-h-[600px] overflow-y-auto z-40 space-y-3">
+      {sugestoes.map((sugestao, idx) => {
+        const cores = corPorTipo[sugestao.tipo];
+        const Icon = sugestao.icone;
+
         return (
-          <Card 
-            key={sugestao.id} 
-            className={`border-2 ${corTipo[sugestao.tipo]}`}
-          >
+          <Card key={idx} className={`${cores.border} ${cores.bg} shadow-lg`}>
             <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-start gap-3 flex-1">
-                  <div className={`p-2 rounded-lg ${corBadge[sugestao.tipo]} text-white`}>
-                    <Icone className="w-5 h-5" />
+              <div className="flex items-start gap-3">
+                <Icon className={`w-5 h-5 mt-0.5 ${cores.text.replace('text-', 'text-')}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className={`font-semibold text-sm ${cores.text}`}>
+                      {sugestao.titulo}
+                    </p>
+                    <Badge variant="outline" className="text-xs">
+                      {sugestao.prioridade}
+                    </Badge>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Brain className="w-4 h-4 text-purple-600" />
-                      <h4 className="font-semibold text-sm">{sugestao.titulo}</h4>
-                      <Badge className={`${corBadge[sugestao.tipo]} text-white text-xs`}>
-                        {sugestao.tipo === 'urgente' ? 'Urgente' :
-                         sugestao.tipo === 'alerta' ? 'Atenção' :
-                         sugestao.tipo === 'sucesso' ? 'Oportunidade' : 'Info'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-slate-700">{sugestao.descricao}</p>
+                  <p className="text-sm text-slate-700 mb-3">
+                    {sugestao.descricao}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => executarAcao(sugestao)}
+                      variant="outline"
+                    >
+                      {sugestao.acao}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => dispensarSugestao(sugestao.titulo)}
+                      className="text-xs"
+                    >
+                      Dispensar
+                    </Button>
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => dispensarSugestao(sugestao.id)}
-                  className="text-slate-400 hover:text-slate-600"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-
-              <div className="flex gap-2 flex-wrap">
-                {sugestao.acoes.map((acao, index) => (
-                  <Button
-                    key={index}
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => executarAcao(acao.acao)}
-                    className="border-slate-300 hover:bg-white"
-                  >
-                    <ThumbsUp className="w-3 h-3 mr-2" />
-                    {acao.label}
-                  </Button>
-                ))}
               </div>
             </CardContent>
           </Card>
         );
       })}
 
-      {/* Badge de IA Ativa */}
-      <div className="flex items-center gap-2 text-xs text-slate-500 justify-center">
-        <Brain className="w-4 h-4 text-purple-500" />
-        <span>Assistente Inteligente ativo • {sugestoes.length} sugestões</span>
-      </div>
+      <Badge className="bg-purple-600 text-white w-full flex items-center justify-center gap-2 px-4 py-3 shadow-lg">
+        <Brain className="w-4 h-4 animate-pulse" />
+        Assistente IA Ativo • {sugestoes.length} sugestão(ões)
+      </Badge>
     </div>
   );
 }
