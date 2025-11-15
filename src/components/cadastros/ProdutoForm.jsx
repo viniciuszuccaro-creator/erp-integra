@@ -6,19 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Added CardHeader, CardTitle
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Package, Upload, Calculator, CheckCircle2, AlertTriangle, FileText } from "lucide-react"; // Added FileText
+import { Loader2, Sparkles, Package, Upload, Calculator, CheckCircle2, AlertTriangle, FileText } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos"; // Added BotaoBuscaAutomatica
+import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
 /**
  * V22.0: REGRA MESTRE DE CONVERSÃO DE UNIDADES
  * Este formulário é o HUB central que define como o produto pode ser vendido/comprado
  */
 export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
-  const [formData, setFormData] = useState(produto || {
+  const [formData, setFormData] = useState({
     descricao: '',
     codigo: '',
     tipo_item: 'Revenda',
@@ -49,6 +49,46 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
     unidade_medida: '', // Adicionado
     status: 'Ativo'
   });
+
+  // Carregar dados do produto quando existe
+  useEffect(() => {
+    if (produto) {
+      setFormData((prevFormData) => ({
+        ...prevFormData, // Keep any previous state changes if component re-renders
+        ...produto // Apply the product data, overriding defaults
+      }));
+    } else {
+      // If no product is provided (e.g., creating new), ensure form is reset to default
+      setFormData({
+        descricao: '',
+        codigo: '',
+        tipo_item: 'Revenda',
+        grupo: 'Outros',
+        eh_bitola: false,
+        peso_teorico_kg_m: 0,
+        bitola_diametro_mm: 0,
+        tipo_aco: 'CA-50',
+        comprimento_barra_padrao_m: 12,
+        unidade_principal: 'KG',
+        unidades_secundarias: ['KG'],
+        fatores_conversao: {
+          kg_por_peca: 0,
+          kg_por_metro: 0,
+          metros_por_peca: 0,
+          peca_por_ton: 0,
+          kg_por_ton: 1000
+        },
+        foto_produto_url: '',
+        custo_aquisicao: 0,
+        preco_venda: 0,
+        estoque_minimo: 0,
+        ncm: '',
+        cest: '',
+        unidade_medida: '',
+        status: 'Ativo'
+      });
+    }
+  }, [produto]);
 
   const [iaSugestao, setIaSugestao] = useState(null);
   const [processandoIA, setProcessandoIA] = useState(false);
@@ -152,18 +192,18 @@ Caso contrário, sugira:
   const aplicarSugestaoIA = () => {
     if (!iaSugestao) return;
     
-    setFormData({
-      ...formData,
+    setFormData(prev => ({
+      ...prev,
       eh_bitola: iaSugestao.eh_bitola || false,
       peso_teorico_kg_m: iaSugestao.peso_teorico_kg_m || 0,
       bitola_diametro_mm: iaSugestao.bitola_diametro_mm || 0,
       tipo_aco: iaSugestao.tipo_aco || 'CA-50',
       ncm: iaSugestao.ncm || '',
-      grupo: iaSugestao.grupo_produto || formData.grupo,
+      grupo: iaSugestao.grupo_produto || prev.grupo,
       comprimento_barra_padrao_m: iaSugestao.comprimento_barra_m || 12,
       unidade_principal: iaSugestao.unidade_principal || 'KG',
       unidades_secundarias: iaSugestao.unidades_secundarias || ['KG']
-    });
+    }));
     
     toast.success('✅ Sugestões aplicadas!');
     setIaSugestao(null);
@@ -191,15 +231,15 @@ Caso contrário, sugira:
   const toggleUnidadeSecundaria = (unidade) => {
     const unidades = formData.unidades_secundarias || [];
     if (unidades.includes(unidade)) {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         unidades_secundarias: unidades.filter(u => u !== unidade)
-      });
+      }));
     } else {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         unidades_secundarias: [...unidades, unidade]
-      });
+      }));
     }
   };
 
@@ -259,7 +299,7 @@ Caso contrário, sugira:
             <div className="flex gap-2">
               <Input
                 value={formData.descricao}
-                onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                onChange={(e) => setFormData(prev => ({...prev, descricao: e.target.value}))}
                 placeholder="Ex: Vergalhão 8mm 12m CA-50"
                 className="flex-1"
               />
@@ -297,14 +337,14 @@ Caso contrário, sugira:
               <Label>Código/SKU</Label>
               <Input
                 value={formData.codigo}
-                onChange={(e) => setFormData({...formData, codigo: e.target.value})}
+                onChange={(e) => setFormData(prev => ({...prev, codigo: e.target.value}))}
                 placeholder="SKU-001"
               />
             </div>
 
             <div>
               <Label>Tipo de Item</Label>
-              <Select value={formData.tipo_item} onValueChange={(v) => setFormData({...formData, tipo_item: v})}>
+              <Select value={formData.tipo_item} onValueChange={(v) => setFormData(prev => ({...prev, tipo_item: v}))}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -356,7 +396,7 @@ Caso contrário, sugira:
         <Switch
           checked={formData.eh_bitola}
           onCheckedChange={(v) => {
-            setFormData({...formData, eh_bitola: v});
+            setFormData(prev => ({...prev, eh_bitola: v}));
             if (v) {
               setFormData(prev => ({
                 ...prev,
@@ -381,7 +421,7 @@ Caso contrário, sugira:
                   type="number"
                   step="0.1"
                   value={formData.bitola_diametro_mm}
-                  onChange={(e) => setFormData({...formData, bitola_diametro_mm: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => setFormData(prev => ({...prev, bitola_diametro_mm: parseFloat(e.target.value) || 0}))}
                   placeholder="8.0"
                 />
               </div>
@@ -392,7 +432,7 @@ Caso contrário, sugira:
                   type="number"
                   step="0.001"
                   value={formData.peso_teorico_kg_m}
-                  onChange={(e) => setFormData({...formData, peso_teorico_kg_m: parseFloat(e.target.value) || 0})}
+                  onChange={(e) => setFormData(prev => ({...prev, peso_teorico_kg_m: parseFloat(e.target.value) || 0}))}
                   placeholder="0.395"
                 />
                 <p className="text-xs text-slate-500 mt-1">Tabela oficial ABNT</p>
@@ -400,7 +440,7 @@ Caso contrário, sugira:
 
               <div>
                 <Label>Tipo de Aço</Label>
-                <Select value={formData.tipo_aco} onValueChange={(v) => setFormData({...formData, tipo_aco: v})}>
+                <Select value={formData.tipo_aco} onValueChange={(v) => setFormData(prev => ({...prev, tipo_aco: v}))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -418,7 +458,7 @@ Caso contrário, sugira:
                   type="number"
                   step="0.1"
                   value={formData.comprimento_barra_padrao_m}
-                  onChange={(e) => setFormData({...formData, comprimento_barra_padrao_m: parseFloat(e.target.value) || 12})}
+                  onChange={(e) => setFormData(prev => ({...prev, comprimento_barra_padrao_m: parseFloat(e.target.value) || 12}))}
                   placeholder="12"
                 />
                 <p className="text-xs text-slate-500 mt-1">🔧 Usado para calcular kg_por_peca automaticamente</p>
@@ -463,7 +503,7 @@ Caso contrário, sugira:
 
           <div>
             <Label>Unidade Principal (Relatórios e Dashboard)</Label>
-            <Select value={formData.unidade_principal} onValueChange={(v) => setFormData({...formData, unidade_principal: v})}>
+            <Select value={formData.unidade_principal} onValueChange={(v) => setFormData(prev => ({...prev, unidade_principal: v}))}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -531,7 +571,7 @@ Caso contrário, sugira:
                 type="number"
                 step="0.01"
                 value={formData.custo_aquisicao}
-                onChange={(e) => setFormData({...formData, custo_aquisicao: parseFloat(e.target.value) || 0})}
+                onChange={(e) => setFormData(prev => ({...prev, custo_aquisicao: parseFloat(e.target.value) || 0}))}
                 placeholder="0.00"
               />
             </div>
@@ -542,7 +582,7 @@ Caso contrário, sugira:
                 type="number"
                 step="0.01"
                 value={formData.preco_venda}
-                onChange={(e) => setFormData({...formData, preco_venda: parseFloat(e.target.value) || 0})}
+                onChange={(e) => setFormData(prev => ({...prev, preco_venda: parseFloat(e.target.value) || 0}))}
                 placeholder="0.00"
               />
             </div>
@@ -575,7 +615,7 @@ Caso contrário, sugira:
               <Input
                 id="ncm"
                 value={formData.ncm || ""}
-                onChange={(e) => setFormData({ ...formData, ncm: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, ncm: e.target.value }))}
                 placeholder="00000000"
                 maxLength={8}
               />
@@ -604,7 +644,7 @@ Caso contrário, sugira:
               <Input
                 id="cest"
                 value={formData.cest || ""}
-                onChange={(e) => setFormData({ ...formData, cest: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, cest: e.target.value }))}
                 placeholder="00.000.00"
                 maxLength={10}
               />
@@ -614,7 +654,7 @@ Caso contrário, sugira:
               <Input
                 id="unidade_medida"
                 value={formData.unidade_medida || ""}
-                onChange={(e) => setFormData({ ...formData, unidade_medida: e.target.value })}
+                onChange={(e) => setFormData(prev => ({ ...prev, unidade_medida: e.target.value }))}
                 placeholder="UN, KG, M"
               />
             </div>
@@ -622,7 +662,7 @@ Caso contrário, sugira:
 
           <div>
             <Label>Status do Produto</Label>
-            <Select value={formData.status} onValueChange={(v) => setFormData({...formData, status: v})}>
+            <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({...prev, status: v}))}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
