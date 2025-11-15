@@ -19,7 +19,6 @@ import {
   Calendar,
   BarChart3,
   Factory,
-  Building2,
   BookOpen,
   Search,
   Rocket,
@@ -75,7 +74,6 @@ const navigationItems = [
   { title: "🌐 Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico", public: true },
 ];
 
-// v22.1 - Fixed all Brain icon references
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
   const { user } = useUser();
@@ -202,7 +200,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div>
                 <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">Gestão Empresarial</p>
+                <p className="text-xs text-slate-500">Sistema de Gestão</p>
               </div>
             </div>
           </SidebarHeader>
