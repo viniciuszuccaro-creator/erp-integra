@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -29,81 +28,6 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
     },
     enabled: !!formData.cliente_id
   });
-
-  // Preencher dados iniciais do pedido e cliente ao selecionar
-  useEffect(() => {
-    if (formData.cliente_id && clientes.length > 0) {
-      const cliente = clientes.find(c => c.id === formData.cliente_id);
-      if (cliente) {
-        setClienteSelecionado(cliente);
-
-        // Preencher dados do pedido e cliente se não estiverem preenchidos ou forem os iniciais
-        setFormData(prev => {
-          const newFormData = { ...prev };
-
-          if (!newFormData.numero_pedido) {
-            const ano = new Date().getFullYear();
-            const mes = String(new Date().getMonth() + 1).padStart(2, '0');
-            const dia = String(new Date().getDate()).padStart(2, '0');
-            const hora = String(new Date().getHours()).padStart(2, '0');
-            const minuto = String(new Date().getMinutes()).padStart(2, '0');
-            const segundo = String(new Date().getSeconds()).padStart(2, '0');
-            newFormData.numero_pedido = `PED-${ano}${mes}${dia}${hora}${minuto}${segundo}`; // Simples para exemplo
-          }
-          if (!newFormData.data_pedido) {
-            newFormData.data_pedido = new Date().toISOString().split('T')[0];
-          }
-          if (!newFormData.cliente_nome || newFormData.cliente_nome === '') {
-            newFormData.cliente_nome = cliente.nome_fantasia || cliente.nome || cliente.razao_social;
-          }
-          if (!newFormData.cliente_cpf_cnpj || newFormData.cliente_cpf_cnpj === '') {
-            newFormData.cliente_cpf_cnpj = cliente.cnpj || cliente.cpf;
-          }
-          if (!newFormData.vendedor || newFormData.vendedor === '') {
-            newFormData.vendedor = user?.full_name || cliente.vendedor_responsavel;
-            newFormData.vendedor_id = user?.id || cliente.vendedor_responsavel_id;
-          }
-          if (!newFormData.endereco_entrega_principal || Object.keys(newFormData.endereco_entrega_principal).length === 0) {
-            newFormData.endereco_entrega_principal = cliente.endereco_principal || {};
-          }
-          if (!newFormData.empresa_id) {
-            newFormData.empresa_id = cliente.empresa_id; // Assume empresa id do cliente
-          }
-          if (!newFormData.tabela_preco_id) {
-            newFormData.tabela_preco_id = cliente.condicao_comercial?.tabela_preco_id;
-            newFormData.tabela_preco_nome = cliente.condicao_comercial?.tabela_preco_nome;
-          }
-          if (!newFormData.forma_pagamento) {
-            newFormData.forma_pagamento = cliente.condicao_comercial?.forma_pagamento_padrao_nome || 'À Vista';
-          }
-          if (!newFormData.tipo_pedido) {
-            newFormData.tipo_pedido = 'Misto';
-          }
-          if (!newFormData.prioridade) {
-            newFormData.prioridade = 'Normal';
-          }
-          if (!newFormData.origem_pedido) {
-            newFormData.origem_pedido = 'Manual';
-          }
-
-          return newFormData;
-        });
-        toast.success(`✅ Cliente selecionado: ${cliente.nome_fantasia || cliente.nome || cliente.razao_social}`);
-      }
-    }
-  }, [formData.cliente_id, clientes, setFormData, user]);
-
-
-  const handleClienteChange = (clienteId) => {
-    setFormData(prev => ({
-      ...prev,
-      cliente_id: clienteId,
-      obra_destino_id: undefined, // Clear obra_destino when client changes
-      obra_destino_nome: undefined,
-      // Clear address related to previous client/obra
-      endereco_entrega_principal: {} 
-    }));
-  };
 
   const handleObraDestinoChange = (obraId) => {
     const obra = enderecosCliente.find(e => (e.id || `obra-${enderecosCliente.indexOf(e)}`) === obraId);
@@ -138,6 +62,80 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
        }));
        toast.info('Endereço de entrega redefinido para o principal do cliente.');
     }
+  };
+
+  // Preencher dados iniciais do pedido e cliente ao selecionar
+  useEffect(() => {
+    if (formData.cliente_id && clientes.length > 0) {
+      const cliente = clientes.find(c => c.id === formData.cliente_id);
+      if (cliente) {
+        setClienteSelecionado(cliente);
+
+        // Preencher dados do pedido e cliente se não estiverem preenchidos ou forem os iniciais
+        setFormData(prev => {
+          const newFormData = { ...prev };
+
+          if (!newFormData.numero_pedido) {
+            const ano = new Date().getFullYear();
+            const mes = String(new Date().getMonth() + 1).padStart(2, '0');
+            const dia = String(new Date().getDate()).padStart(2, '0');
+            const hora = String(new Date().getHours()).padStart(2, '0');
+            const minuto = String(new Date().getMinutes()).padStart(2, '0');
+            const segundo = String(new Date().getSeconds()).padStart(2, '0');
+            newFormData.numero_pedido = `PED-${ano}${mes}${dia}${hora}${minuto}${segundo}`;
+          }
+          if (!newFormData.data_pedido) {
+            newFormData.data_pedido = new Date().toISOString().split('T')[0];
+          }
+          if (!newFormData.cliente_nome || newFormData.cliente_nome === '') {
+            newFormData.cliente_nome = cliente.nome_fantasia || cliente.nome || cliente.razao_social;
+          }
+          if (!newFormData.cliente_cpf_cnpj || newFormData.cliente_cpf_cnpj === '') {
+            newFormData.cliente_cpf_cnpj = cliente.cnpj || cliente.cpf;
+          }
+          if (!newFormData.vendedor || newFormData.vendedor === '') {
+            newFormData.vendedor = user?.full_name || cliente.vendedor_responsavel;
+            newFormData.vendedor_id = user?.id || cliente.vendedor_responsavel_id;
+          }
+          if (!newFormData.endereco_entrega_principal || Object.keys(newFormData.endereco_entrega_principal).length === 0) {
+            newFormData.endereco_entrega_principal = cliente.endereco_principal || {};
+          }
+          if (!newFormData.empresa_id) {
+            newFormData.empresa_id = cliente.empresa_id;
+          }
+          if (!newFormData.tabela_preco_id) {
+            newFormData.tabela_preco_id = cliente.condicao_comercial?.tabela_preco_id;
+            newFormData.tabela_preco_nome = cliente.condicao_comercial?.tabela_preco_nome;
+          }
+          if (!newFormData.forma_pagamento) {
+            newFormData.forma_pagamento = cliente.condicao_comercial?.forma_pagamento_padrao_nome || 'À Vista';
+          }
+          if (!newFormData.tipo_pedido) {
+            newFormData.tipo_pedido = 'Misto';
+          }
+          if (!newFormData.prioridade) {
+            newFormData.prioridade = 'Normal';
+          }
+          if (!newFormData.origem_pedido) {
+            newFormData.origem_pedido = 'Manual';
+          }
+
+          return newFormData;
+        });
+        toast.success(`✅ Cliente selecionado: ${cliente.nome_fantasia || cliente.nome || cliente.razao_social}`);
+      }
+    }
+  }, [formData.cliente_id, clientes, setFormData, user]);
+
+
+  const handleClienteChange = (clienteId) => {
+    setFormData(prev => ({
+      ...prev,
+      cliente_id: clienteId,
+      obra_destino_id: undefined,
+      obra_destino_nome: undefined,
+      endereco_entrega_principal: {} 
+    }));
   };
 
   return (
