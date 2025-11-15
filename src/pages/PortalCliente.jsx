@@ -9,19 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Home, ShoppingCart, FileText, Upload, DollarSign, LogOut, Package, Calendar, Download, LayoutDashboard, CheckCircle2, AlertTriangle, User, LogIn, ShoppingBag, Truck, MapPin, Navigation, MessageCircle, MessageSquare } from "lucide-react";
-import DashboardCliente from "@/components/portal/DashboardCliente"; // This might be removed if not used by DashboardClienteInterativo
+import DashboardClienteInterativo from "@/components/portal/DashboardClienteInterativo";
+import ChatVendedor from "@/components/portal/ChatVendedor";
 import ChamadosCliente from "@/components/portal/ChamadosCliente";
 import UploadProjetos from "@/components/portal/UploadProjetos";
+import AprovacaoComAssinatura from "@/components/portal/AprovacaoComAssinatura";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
-// DownloadsDocumentos was replaced by direct content in "documentos" tab, so its import is no longer needed.
 import { useUser } from "@/components/lib/UserContext";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import DashboardClienteInterativo from "@/components/portal/DashboardClienteInterativo";
-import ChatVendedor from "@/components/portal/ChatVendedor";
-import AprovacaoComAssinatura from "@/components/portal/AprovacaoComAssinatura";
-
 
 /**
  * Portal do Cliente - V21.1.2-R2 APRIMORADO
@@ -69,13 +66,10 @@ export default function PortalCliente() {
     enabled: !!cliente?.id
   });
 
-  // NOVA: Atualizar tracking de visualização
   const atualizarVisualizacaoPedido = async (pedidoId) => {
-    // Only fetch if client is available
     if (!cliente?.id) return; 
 
-    // Re-fetch pedido to get the latest `visualizacoes_portal`
-    const pedido = await base44.entities.Pedido.findById(pedidoId);
+    const pedido = await base44.entities.Pedido.filter({ id: pedidoId }).then(r => r[0]);
     if (!pedido) return;
 
     await base44.entities.Pedido.update(pedidoId, {
@@ -83,18 +77,16 @@ export default function PortalCliente() {
       visualizacoes_portal: (pedido.visualizacoes_portal || 0) + 1
     });
     
-    // Invalidate queries to reflect changes if necessary
     queryClient.invalidateQueries(['pedidosCliente', cliente.id]);
 
-    // Update metrics of portal usage for the client
-    const currentCliente = await base44.entities.Cliente.findById(cliente.id);
+    const currentCliente = await base44.entities.Cliente.filter({ id: cliente.id }).then(r => r[0]);
     await base44.entities.Cliente.update(cliente.id, {
       'uso_portal.ultimo_acesso': new Date().toISOString(),
       'uso_portal.total_acessos': (currentCliente?.uso_portal?.total_acessos || 0) + 1,
       'uso_canais.total_portal': (currentCliente?.uso_canais?.total_portal || 0) + 1
     });
 
-    queryClient.invalidateQueries(['cliente-portal', user.id]); // Invalidate client query to reflect updated usage stats
+    queryClient.invalidateQueries(['cliente-portal', user.id]);
   };
 
   const { data: contasReceber = [] } = useQuery({
@@ -104,11 +96,12 @@ export default function PortalCliente() {
   });
 
   const { data: orcamentos = [] } = useQuery({
-    queryKey: ['orcamentos-site', cliente?.email],
-    queryFn: () => base44.entities.OrcamentoSite.filter({
-      cliente_email: cliente?.email
+    queryKey: ['orcamentos-site', cliente?.id],
+    queryFn: () => base44.entities.OrcamentoCliente.filter({
+      cliente_id: cliente?.id,
+      status: 'Pendente'
     }, '-created_date', 10),
-    enabled: !!cliente?.email
+    enabled: !!cliente?.id
   });
 
   const { data: entregasEmAndamento = [] } = useQuery({
@@ -130,7 +123,7 @@ export default function PortalCliente() {
   const { data: notasFiscais = [] } = useQuery({
     queryKey: ['notasFiscais', cliente?.id],
     queryFn: () => base44.entities.NotaFiscal.filter({
-      cliente_id: cliente.id
+      cliente_fornecedor_id: cliente.id
     }, '-data_emissao'),
     enabled: !!cliente?.id
   });
@@ -182,16 +175,6 @@ export default function PortalCliente() {
             <p className="text-sm text-slate-500 mb-4">
               Usuário: {user.full_name} ({user.email})
             </p>
-            <Alert className="border-blue-200 bg-blue-50 text-left mb-6">
-              <AlertDescription>
-                <p className="text-sm text-blue-900 font-semibold mb-2">Como resolver:</p>
-                <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                  <li>Entre em contato com nosso time comercial</li>
-                  <li>Solicite a vinculação do seu cadastro</li>
-                  <li>Aguarde a confirmação por e-mail</li>
-                </ol>
-              </AlertDescription>
-            </Alert>
             <div className="flex flex-col sm:flex-row gap-3">
               <Button onClick={() => base44.auth.logout()} variant="outline" className="flex-1">
                 <LogOut className="w-4 h-4 mr-2" />
@@ -226,7 +209,6 @@ export default function PortalCliente() {
   };
 
   const renderPedidoProducao = (pedido) => {
-    // NOVA: Aba Produção espelhando o layout do orçamento impresso
     const temRevenda = (pedido.itens_revenda?.length || 0) > 0;
     const temArmado = (pedido.itens_armado_padrao?.length || 0) > 0;
     const temCorte = (pedido.itens_corte_dobra?.length || 0) > 0;
@@ -444,12 +426,8 @@ export default function PortalCliente() {
                               size="sm"
                               className="mb-4"
                               onClick={() => atualizarVisualizacaoPedido(pedido.id)}
-                              asChild
                             >
-                              {/* Using asChild with Link to navigate without re-rendering the whole page if needed,
-                                  but for now, it just triggers the tracking and shows content below.
-                                  Could be a collapsible section or a new page. */}
-                              <div>Ver Detalhes da Produção →</div>
+                              Ver Detalhes da Produção →
                             </Button>
                           ) : (
                             <p className="text-sm text-slate-500 mb-4">Detalhes de produção não disponíveis.</p>
