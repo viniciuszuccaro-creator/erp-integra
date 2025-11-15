@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { useWindowManager } from './WindowManager';
-import { Package, ShoppingCart, Users, DollarSign, FileText, Truck } from 'lucide-react';
-import ProdutoForm from '@/components/cadastros/ProdutoForm';
+import { Package, ShoppingCart, Users, DollarSign, FileText, Truck, Loader2 } from 'lucide-react';
+
+// V21.1.2-R2: Lazy loading para evitar circular dependencies
+const ProdutoForm = lazy(() => import('@/components/cadastros/ProdutoForm'));
 
 /**
- * V21.1.2 - Hook para abrir janelas facilmente
- * Conecta formulários reais ao sistema de multitarefas
+ * V21.1.2-R2 - Hook para abrir janelas facilmente
+ * ✅ Lazy loading dos formulários
+ * ✅ Suspense com loading state
  */
 export function useWindow() {
   const { openWindow } = useWindowManager();
@@ -18,13 +21,19 @@ export function useWindow() {
       badge: produto ? 'Edição' : 'Novo',
       content: (
         <div className="h-full overflow-auto p-6">
-          <ProdutoForm
-            produto={produto}
-            onSubmit={(data) => {
-              if (onSave) onSave(data);
-            }}
-            isSubmitting={false}
-          />
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-96">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+          }>
+            <ProdutoForm
+              produto={produto}
+              onSubmit={(data) => {
+                if (onSave) onSave(data);
+              }}
+              isSubmitting={false}
+            />
+          </Suspense>
         </div>
       ),
       data: { produto, onSave }
@@ -39,7 +48,6 @@ export function useWindow() {
       badge: pedido ? `#${pedido.numero_pedido}` : 'Novo',
       content: (
         <div className="h-full overflow-hidden">
-          {/* PedidoFormCompleto será integrado */}
           <div className="p-6">
             <p className="text-slate-600">🚧 PedidoFormCompleto será conectado aqui</p>
             <p className="text-xs text-slate-500 mt-2">
