@@ -184,9 +184,10 @@ export default function WizardPedidoLateral({
         <div className="p-6">
           {etapaAtual === 1 && (
             <WizardEtapa1Cliente
-              dados={dadosPedido}
+              formData={dadosPedido}
+              setFormData={atualizarDados}
               clientes={clientes}
-              onChange={atualizarDados}
+              onNext={handleProximo}
             />
           )}
 
