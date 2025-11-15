@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Package, TrendingUp, ShoppingCart } from 'lucide-react';
+import { Sparkles, Package, TrendingUp, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 /**
@@ -123,7 +124,7 @@ export default function IAReposicao({ empresaId }) {
       <Card className="border-purple-200 bg-purple-50">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-600" />
+            <Sparkles className="w-5 h-5 text-purple-600" />
             IA de Reposição Inteligente
           </CardTitle>
         </CardHeader>

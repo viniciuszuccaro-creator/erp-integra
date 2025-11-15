@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Brain, AlertTriangle, TrendingUp, User, Package } from 'lucide-react';
+import { Sparkles, AlertTriangle, TrendingUp, User, Package } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 /**
@@ -103,7 +104,7 @@ export default function DashboardRefugoIA({ empresaId }) {
       {alertasIA.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-600" />
+            <Sparkles className="w-5 h-5 text-purple-600" />
             Análise Inteligente de Refugo
           </h3>
           {alertasIA.map((alerta, idx) => (

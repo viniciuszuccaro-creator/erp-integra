@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Brain, Send, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Sparkles, Send, Clock, AlertTriangle, TrendingUp } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import NotificacoesAutomaticas from '../sistema/NotificacoesAutomaticas';
 
@@ -237,7 +237,7 @@ export default function ReguaCobrancaIA({ empresaId }) {
       <CardHeader className="bg-white/80 border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-600" />
+            <Sparkles className="w-5 h-5 text-purple-600" />
             Régua de Cobrança IA
             {ativa && (
               <Badge className="bg-green-600 text-white animate-pulse">
@@ -293,7 +293,7 @@ export default function ReguaCobrancaIA({ empresaId }) {
 
             {/* Ações Automáticas */}
             <Alert className="border-purple-300 bg-purple-50">
-              <Brain className="w-4 h-4 text-purple-600" />
+              <Sparkles className="w-4 h-4 text-purple-600" />
               <AlertDescription>
                 <p className="font-semibold text-purple-900 mb-2">Ações que serão executadas:</p>
                 <ul className="text-sm text-purple-800 space-y-1">
