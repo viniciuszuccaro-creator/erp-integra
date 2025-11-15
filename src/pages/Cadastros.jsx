@@ -108,6 +108,7 @@ import MoedaIndiceForm from "../components/cadastros/MoedaIndiceForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
+import MultiTabelasEditor from "../components/cadastros/MultiTabelasEditor"; // NEW IMPORT
 
 /**
  * CADASTROS GERAIS V20.1 - HUB CENTRAL COM AUDITORIA COMPLETA
@@ -145,6 +146,9 @@ export default function Cadastros() {
   const [produtoFormOpen, setProdutoFormOpen] = useState(false);
   const [servicoFormOpen, setServicoFormOpen] = useState(false);
   const [tabelaPrecoFormOpen, setTabelaPrecoFormOpen] = useState(false);
+  const [tabelaSelecionadaEditar, setTabelaSelecionadaEditar] = useState(null); // NEW
+  const [multiTabelasOpen, setMultiTabelasOpen] = useState(false); // NEW
+  const [tabelasSelecionadasMulti, setTabelasSelecionadasMulti] = useState([]); // NEW
   const [catalogoWebFormOpen, setCatalogoWebFormOpen] = useState(false);
   const [empresaFormOpen, setEmpresaFormOpen] = useState(false);
 
@@ -1667,10 +1671,21 @@ export default function Cadastros() {
                     <DollarSign className="w-4 h-4 text-green-600" />
                     Tabelas de Preço ({tabelasPreco.length})
                   </h4>
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleOpenNew('tabelas', 'TabelaPreco')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Nova Tabela
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setMultiTabelasOpen(true)}
+                      disabled={tabelasPreco.length === 0}
+                    >
+                      <Package className="w-3 h-3 mr-2" />
+                      Editar Múltiplas
+                    </Button>
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleOpenNew('tabelas', 'TabelaPreco')}>
+                      <Plus className="w-3 h-3 mr-2" />
+                      Nova Tabela
+                    </Button>
+                  </div>
                 </div>
                 
                 <Alert className="border-green-200 bg-green-50 mb-3">
@@ -1704,7 +1719,7 @@ export default function Cadastros() {
                             <TableCell className="text-xs">{itensTabela.length} itens</TableCell>
                             <TableCell className="text-xs">
                               {new Date(t.data_inicio).toLocaleDateString('pt-BR')}
-                              {t.data_fim ? ` - ${new Date(t.data_fim).toLocaleDateString('pt-BR')}` : ''}
+                              {t.data_fim && ` - ${new Date(t.data_fim).toLocaleDateString('pt-BR')}`}
                             </TableCell>
                             <TableCell>
                               <Badge className={t.ativo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}>
@@ -1814,7 +1829,7 @@ export default function Cadastros() {
                 <DollarSign className="w-4 h-4 text-green-600" />
                 <AlertDescription className="text-sm text-green-900">
                   💰 <strong>IA PriceBrain:</strong> Monitora custo médio e sugere reajustes diários
-                </AlertDescription>
+                </Alertcription>
               </Alert>
 
               <Alert className="border-cyan-200 bg-cyan-50">
@@ -3090,6 +3105,13 @@ export default function Cadastros() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* V21.1.2: Dialog Multi-Tabelas */}
+      <MultiTabelasEditor
+        isOpen={multiTabelasOpen}
+        onClose={() => setMultiTabelasOpen(false)}
+        tabelas={tabelasPreco}
+      />
     </div>
   );
 }
