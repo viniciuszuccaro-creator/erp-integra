@@ -25,7 +25,7 @@ import {
   Target,
   ShoppingCart,
   FileText,
-  Sparkles, // Changed from Brain to Sparkles
+  Sparkles,
   AlertTriangle
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -144,7 +144,7 @@ export default function CRMPage() {
       "Proposta": 10,
       "Negociação": 15,
       "Fechamento": 20,
-      "Reativação": 5 // NOVO V21.1
+      "Reativação": 5
     };
     score += etapasScore[opp.etapa] || 0;
 
@@ -247,7 +247,7 @@ export default function CRMPage() {
         "Fechamento": 90,
         "Ganho": 100,
         "Perdido": 0,
-        "Reativação": 30 // NOVO V21.1
+        "Reativação": 30
       };
 
       return base44.entities.Oportunidade.update(oppId, {
@@ -578,7 +578,7 @@ export default function CRMPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-white border shadow-sm flex-wrap h-auto"> {/* Added flex-wrap h-auto */}
+        <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="funil" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
             Funil Visual
@@ -595,15 +595,13 @@ export default function CRMPage() {
             <Mail className="w-4 h-4 mr-2" />
             Campanhas
           </TabsTrigger>
-          {/* NOVA: Tab IA Leads */}
           <TabsTrigger
             value="ia-leads"
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
-            <Sparkles className="w-4 h-4 mr-2" /> {/* Changed Brain to Sparkles */}
+            <Sparkles className="w-4 h-4 mr-2" />
             IA Leads
           </TabsTrigger>
-          {/* NOVO V21.1: IA Churn */}
           <TabsTrigger value="ia-churn" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
             <AlertTriangle className="w-4 h-4 mr-2" />
             IA Churn
@@ -1433,12 +1431,10 @@ export default function CRMPage() {
           </Card>
         </TabsContent>
 
-        {/* NOVA: Conteúdo Tab IA Leads */}
         <TabsContent value="ia-leads">
           <IALeadsPriorizacao oportunidades={oportunidades} />
         </TabsContent>
 
-        {/* NOVO V21.1: IA CHURN DETECTION */}
         <TabsContent value="ia-churn">
           <IAChurnDetection clientes={clientes} />
         </TabsContent>
