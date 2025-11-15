@@ -1,7 +1,8 @@
+
 import React, { useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Box, Maximize2, Brain } from 'lucide-react';
+import { Box, Maximize2, Sparkles } from 'lucide-react';
 import * as THREE from 'three';
 
 /**
@@ -147,7 +148,7 @@ export default function DigitalTwin3D({ itemProducao }) {
 
         <div className="mt-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
           <p className="text-xs text-purple-800">
-            <Brain className="w-3 h-3 inline mr-1" />
+            <Sparkles className="w-3 h-3 inline mr-1" />
             Modelo 3D gerado automaticamente a partir das dimensões do projeto
           </p>
         </div>

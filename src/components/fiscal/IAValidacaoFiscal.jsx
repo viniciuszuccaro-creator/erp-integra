@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Brain, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { Sparkles, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 /**
@@ -93,7 +94,7 @@ export default function IAValidacaoFiscal({ pedido, cliente }) {
     <Card className="border-purple-200 bg-purple-50">
       <CardHeader className="border-b bg-white/80">
         <CardTitle className="text-base flex items-center gap-2">
-          <Brain className="w-5 h-5 text-purple-600" />
+          <Sparkles className="w-5 h-5 text-purple-600" />
           IA de Validação Fiscal
         </CardTitle>
       </CardHeader>
