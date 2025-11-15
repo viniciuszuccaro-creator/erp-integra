@@ -9,21 +9,25 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Home, ShoppingCart, FileText, Upload, DollarSign, LogOut, Package, Calendar, Download, LayoutDashboard, CheckCircle2, AlertTriangle, User, LogIn, ShoppingBag, Truck, MapPin, Navigation, MessageCircle, MessageSquare } from "lucide-react";
-import DashboardCliente from "@/components/portal/DashboardCliente";
-import ChatCliente from "@/components/portal/ChatCliente";
+import DashboardCliente from "@/components/portal/DashboardCliente"; // This might be removed if not used by DashboardClienteInterativo
 import ChamadosCliente from "@/components/portal/ChamadosCliente";
 import UploadProjetos from "@/components/portal/UploadProjetos";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
-import DownloadsDocumentos from "@/components/portal/DownloadsDocumentos"; // Keep if still used, but changes indicate it might be replaced
-import AprovacaoOrcamentos from "@/components/portal/AprovacaoOrcamentos";
+// DownloadsDocumentos was replaced by direct content in "documentos" tab, so its import is no longer needed.
 import { useUser } from "@/components/lib/UserContext";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import DashboardClienteInterativo from "@/components/portal/DashboardClienteInterativo";
+import ChatVendedor from "@/components/portal/ChatVendedor";
+import AprovacaoComAssinatura from "@/components/portal/AprovacaoComAssinatura";
+
 
 /**
- * Portal do Cliente - V12.0 COMPLETO
- * Com aprovação de orçamentos, rastreamento, chat e chamados
+ * Portal do Cliente - V21.1.2-R2 APRIMORADO
+ * ✅ Dashboard interativo com tempo real
+ * ✅ Chat direto com vendedor
+ * ✅ Aprovação com assinatura eletrônica
  */
 export default function PortalCliente() {
   const { user } = useUser();
@@ -355,7 +359,7 @@ export default function PortalCliente() {
               <FileText className="w-4 h-4 mr-2" />
               Orçamentos
               {orcamentos.length > 0 && (
-                <Badge className="ml-2 bg-orange-600 text-white text-xs">{orcamentos.length}</Badge>
+                <Badge className="ml-2 bg-orange-600 text-white text-xs animate-pulse">{orcamentos.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="pedidos">
@@ -387,16 +391,19 @@ export default function PortalCliente() {
             </TabsTrigger>
             <TabsTrigger value="chat">
               <MessageCircle className="w-4 h-4 mr-2" />
-              Chat
+              Chat Vendedor
+              <div className="ml-2 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             </TabsTrigger>
           </TabsList>
 
+          {/* V21.1.2-R2: Dashboard Interativo */}
           <TabsContent value="dashboard">
-            <DashboardCliente />
+            <DashboardClienteInterativo />
           </TabsContent>
 
+          {/* V21.1.2-R2: Aprovação com Assinatura */}
           <TabsContent value="orcamentos">
-            <AprovacaoOrcamentos clienteId={cliente?.id} />
+            <AprovacaoComAssinatura clienteId={cliente?.id} />
           </TabsContent>
 
           {/* PEDIDOS TAB - REFATORADO COM SEÇÕES */}
@@ -700,8 +707,9 @@ export default function PortalCliente() {
             <ChamadosCliente clienteId={cliente?.id} />
           </TabsContent>
 
+          {/* V21.1.2-R2: Chat com Vendedor */}
           <TabsContent value="chat">
-            <ChatCliente clienteId={cliente?.id} />
+            <ChatVendedor clienteId={cliente?.id} />
           </TabsContent>
         </Tabs>
       </main>
