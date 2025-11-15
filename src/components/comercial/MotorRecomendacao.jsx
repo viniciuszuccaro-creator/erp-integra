@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Plus, TrendingUp } from 'lucide-react';
+import { Sparkles, Plus, TrendingUp, Brain } from 'lucide-react';
 
 /**
  * Motor de Recomendação de Produtos
@@ -129,7 +129,7 @@ Retorne JSON:
     <Card className="border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
       <CardHeader className="bg-white/80 border-b">
         <CardTitle className="text-base flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-600" />
+          <Brain className="w-5 h-5 text-purple-600" />
           Recomendações Inteligentes
           <Badge className="ml-auto bg-purple-600 text-white">
             {recomendacoes.length} sugestões

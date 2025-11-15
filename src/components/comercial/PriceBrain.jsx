@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TrendingDown, TrendingUp, Zap, Sparkles, Lightbulb } from 'lucide-react';
+import { TrendingDown, TrendingUp, Zap, Sparkles, Lightbulb, Brain } from 'lucide-react';
 
 export default function PriceBrain({ pedido, onSugestaoAplicada }) {
   const [analisando, setAnalisando] = useState(false);
@@ -130,7 +130,7 @@ RETORNE em JSON:
           <div className="flex items-center gap-3">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
             <p className="text-sm text-purple-900">
-              <Lightbulb className="w-4 h-4 inline mr-1" />
+              <Brain className="w-4 h-4 inline mr-1" />
               PriceBrain analisando histórico e sugerindo melhor preço...
             </p>
           </div>
@@ -171,7 +171,7 @@ RETORNE em JSON:
     <Card className="border-2 border-purple-300 bg-purple-50">
       <CardHeader className="bg-white/80 border-b">
         <CardTitle className="text-base flex items-center gap-2">
-          <Lightbulb className="w-5 h-5 text-purple-600" />
+          <Brain className="w-5 h-5 text-purple-600" />
           PriceBrain - Sugestão Inteligente
           <Badge className="ml-auto">
             {sugestao.confianca}% confiança

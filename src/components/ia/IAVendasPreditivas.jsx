@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Sparkles, TrendingUp, Target, Zap } from 'lucide-react';
+import { Sparkles, TrendingUp, Target, Zap, Brain } from 'lucide-react';
 
 /**
  * IA de Vendas Preditivas
@@ -86,7 +86,7 @@ export default function IAVendasPreditivas({ empresaId }) {
     <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
       <CardHeader className="border-b bg-white/80">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="w-5 h-5 text-purple-600" />
+          <Brain className="w-5 h-5 text-purple-600" />
           IA de Vendas Preditivas
         </CardTitle>
         <p className="text-xs text-slate-600 mt-1">
