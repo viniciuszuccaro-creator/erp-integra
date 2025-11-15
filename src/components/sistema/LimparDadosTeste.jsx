@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,7 +40,7 @@ export default function LimparDadosTeste() {
 
     try {
       // 1. Pedidos e Orçamentos
-      setProgresso(10);
+      setProgresso(5);
       const pedidosDel = await base44.entities.Pedido.list();
       for (const p of pedidosDel) {
         await base44.entities.Pedido.delete(p.id);
@@ -47,7 +48,7 @@ export default function LimparDadosTeste() {
       log.push({ entidade: 'Pedido', quantidade: pedidosDel.length, status: 'ok' });
 
       // 2. PedidoEtapa
-      setProgresso(20);
+      setProgresso(10);
       const etapasDel = await base44.entities.PedidoEtapa.list();
       for (const e of etapasDel) {
         await base44.entities.PedidoEtapa.delete(e.id);
@@ -55,7 +56,7 @@ export default function LimparDadosTeste() {
       log.push({ entidade: 'PedidoEtapa', quantidade: etapasDel.length, status: 'ok' });
 
       // 3. Produtos
-      setProgresso(30);
+      setProgresso(15);
       const produtosDel = await base44.entities.Produto.list();
       for (const p of produtosDel) {
         await base44.entities.Produto.delete(p.id);
@@ -63,7 +64,7 @@ export default function LimparDadosTeste() {
       log.push({ entidade: 'Produto', quantidade: produtosDel.length, status: 'ok' });
 
       // 4. Clientes
-      setProgresso(40);
+      setProgresso(20);
       const clientesDel = await base44.entities.Cliente.list();
       for (const c of clientesDel) {
         await base44.entities.Cliente.delete(c.id);
@@ -71,68 +72,132 @@ export default function LimparDadosTeste() {
       log.push({ entidade: 'Cliente', quantidade: clientesDel.length, status: 'ok' });
 
       // 5. Fornecedores
-      setProgresso(50);
+      setProgresso(25);
       const fornecedoresDel = await base44.entities.Fornecedor.list();
       for (const f of fornecedoresDel) {
         await base44.entities.Fornecedor.delete(f.id);
       }
       log.push({ entidade: 'Fornecedor', quantidade: fornecedoresDel.length, status: 'ok' });
 
-      // 6. Entregas
-      setProgresso(60);
+      // 6. Colaboradores
+      setProgresso(30);
+      const colaboradoresDel = await base44.entities.Colaborador.list();
+      for (const c of colaboradoresDel) {
+        await base44.entities.Colaborador.delete(c.id);
+      }
+      log.push({ entidade: 'Colaborador', quantidade: colaboradoresDel.length, status: 'ok' });
+
+      // 7. Transportadoras
+      setProgresso(35);
+      const transportadorasDel = await base44.entities.Transportadora.list();
+      for (const t of transportadorasDel) {
+        await base44.entities.Transportadora.delete(t.id);
+      }
+      log.push({ entidade: 'Transportadora', quantidade: transportadorasDel.length, status: 'ok' });
+
+      // 8. Entregas
+      setProgresso(40);
       const entregasDel = await base44.entities.Entrega.list();
       for (const e of entregasDel) {
         await base44.entities.Entrega.delete(e.id);
       }
       log.push({ entidade: 'Entrega', quantidade: entregasDel.length, status: 'ok' });
 
-      // 7. Movimentações Estoque
-      setProgresso(70);
+      // 9. Romaneios
+      setProgresso(45);
+      const romaneiosDel = await base44.entities.Romaneio.list();
+      for (const r of romaneiosDel) {
+        await base44.entities.Romaneio.delete(r.id);
+      }
+      log.push({ entidade: 'Romaneio', quantidade: romaneiosDel.length, status: 'ok' });
+
+      // 10. Movimentações Estoque
+      setProgresso(50);
       const movDel = await base44.entities.MovimentacaoEstoque.list();
       for (const m of movDel) {
         await base44.entities.MovimentacaoEstoque.delete(m.id);
       }
       log.push({ entidade: 'MovimentacaoEstoque', quantidade: movDel.length, status: 'ok' });
 
-      // 8. Contas a Receber
-      setProgresso(80);
+      // 11. Contas a Receber
+      setProgresso(55);
       const crDel = await base44.entities.ContaReceber.list();
       for (const cr of crDel) {
         await base44.entities.ContaReceber.delete(cr.id);
       }
       log.push({ entidade: 'ContaReceber', quantidade: crDel.length, status: 'ok' });
 
-      // 9. Contas a Pagar
-      setProgresso(85);
+      // 12. Contas a Pagar
+      setProgresso(60);
       const cpDel = await base44.entities.ContaPagar.list();
       for (const cp of cpDel) {
         await base44.entities.ContaPagar.delete(cp.id);
       }
       log.push({ entidade: 'ContaPagar', quantidade: cpDel.length, status: 'ok' });
 
-      // 10. Oportunidades CRM
-      setProgresso(90);
+      // 13. Oportunidades CRM
+      setProgresso(65);
       const opDel = await base44.entities.Oportunidade.list();
       for (const o of opDel) {
         await base44.entities.Oportunidade.delete(o.id);
       }
       log.push({ entidade: 'Oportunidade', quantidade: opDel.length, status: 'ok' });
 
-      // 11. Interações
-      setProgresso(95);
+      // 14. Interações
+      setProgresso(70);
       const intDel = await base44.entities.Interacao.list();
       for (const i of intDel) {
         await base44.entities.Interacao.delete(i.id);
       }
       log.push({ entidade: 'Interacao', quantidade: intDel.length, status: 'ok' });
 
-      // 12. Ordens de Compra
-      setProgresso(98);
+      // 15. Ordens de Compra
+      setProgresso(75);
       const ocDel = await base44.entities.OrdemCompra.list();
       for (const oc of ocDel) {
         await base44.entities.OrdemCompra.delete(oc.id);
       }
       log.push({ entidade: 'OrdemCompra', quantidade: ocDel.length, status: 'ok' });
+
+      // 16. Solicitações de Compra
+      setProgresso(80);
+      const scDel = await base44.entities.SolicitacaoCompra.list();
+      for (const sc of scDel) {
+        await base44.entities.SolicitacaoCompra.delete(sc.id);
+      }
+      log.push({ entidade: 'SolicitacaoCompra', quantidade: scDel.length, status: 'ok' });
+
+      // 17. Ordens de Produção
+      setProgresso(85);
+      const oprodDel = await base44.entities.OrdemProducao.list();
+      for (const op of oprodDel) {
+        await base44.entities.OrdemProducao.delete(op.id);
+      }
+      log.push({ entidade: 'OrdemProducao', quantidade: oprodDel.length, status: 'ok' });
+
+      // 18. Notas Fiscais
+      setProgresso(90);
+      const nfDel = await base44.entities.NotaFiscal.list();
+      for (const nf of nfDel) {
+        await base44.entities.NotaFiscal.delete(nf.id);
+      }
+      log.push({ entidade: 'NotaFiscal', quantidade: nfDel.length, status: 'ok' });
+
+      // 19. Veículos
+      setProgresso(93);
+      const veicDel = await base44.entities.Veiculo.list();
+      for (const v of veicDel) {
+        await base44.entities.Veiculo.delete(v.id);
+      }
+      log.push({ entidade: 'Veiculo', quantidade: veicDel.length, status: 'ok' });
+
+      // 20. Comissões
+      setProgresso(96);
+      const comDel = await base44.entities.Comissao.list();
+      for (const c of comDel) {
+        await base44.entities.Comissao.delete(c.id);
+      }
+      log.push({ entidade: 'Comissao', quantidade: comDel.length, status: 'ok' });
 
       setProgresso(100);
       setResultado({ sucesso: true, log });
@@ -199,13 +264,21 @@ export default function LimparDadosTeste() {
                 'Produtos',
                 'Clientes',
                 'Fornecedores',
+                'Colaboradores',
+                'Transportadoras',
                 'Entregas',
+                'Romaneios',
                 'Movimentações Estoque',
                 'Contas a Receber',
                 'Contas a Pagar',
                 'Oportunidades CRM',
                 'Interações',
-                'Ordens de Compra'
+                'Ordens de Compra',
+                'Solicitações Compra',
+                'Ordens Produção',
+                'Notas Fiscais',
+                'Veículos',
+                'Comissões'
               ].map(item => (
                 <Badge key={item} variant="outline" className="justify-center py-2">
                   {item}
