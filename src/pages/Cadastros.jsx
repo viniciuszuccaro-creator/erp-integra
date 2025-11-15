@@ -475,7 +475,7 @@ export default function Cadastros() {
   };
 
   const handleOpenNew = (tipo, entityName) => {
-    setEditingItem({ _entityName: entityName }); // Use _entityName to identify the form's entity
+    setEditingItem({ _entityName: entityName, _isNew: true }); // Adicionar flag _isNew
     setTipoDialog(tipo);
     setIsDialogOpen(true);
   };
@@ -1372,7 +1372,7 @@ export default function Cadastros() {
                 <AlertTriangle className="w-4 h-4 text-orange-600" />
                 <AlertDescription className="text-sm text-orange-900">
                   📊 <strong>IA Churn Risk:</strong> Detecta clientes inativos (+60 dias) e cria oportunidade no CRM automaticamente
-                </AlertDescription>
+                </Alertcription>
               </Alert>
             </div>
           </AccordionContent>
@@ -2747,7 +2747,7 @@ export default function Cadastros() {
           {tipoDialog === 'contatos' && <ContatoB2BForm contato={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'representantes' && <RepresentanteForm representante={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'segmentos' && <SegmentoClienteForm segmento={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
-          {tipoDialog === 'produtos' && <ProdutoForm produto={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'produtos' && <ProdutoForm produto={editingItem?.id ? editingItem : null} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'servicos' && <ServicoForm servico={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'grupos-produto' && <GrupoProdutoForm grupo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'marcas' && <MarcaForm marca={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
