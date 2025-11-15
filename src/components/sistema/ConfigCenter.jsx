@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -11,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { 
   Settings, 
-  Sparkles, 
+  Brain, 
   Cloud, 
   Key,
   CheckCircle,
@@ -111,7 +110,7 @@ export default function ConfigCenter({ empresaId }) {
             Segurança
           </TabsTrigger>
           <TabsTrigger value="ia">
-            <Sparkles className="w-4 h-4 mr-2" />
+            <Brain className="w-4 h-4 mr-2" />
             Inteligência Artificial
           </TabsTrigger>
           <TabsTrigger value="backup">
@@ -182,7 +181,7 @@ export default function ConfigCenter({ empresaId }) {
           <Card>
             <CardHeader className="bg-purple-50 border-b">
               <CardTitle className="text-base flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-purple-600" />
+                <Brain className="w-5 h-5 text-purple-600" />
                 Módulos de IA Ativos
               </CardTitle>
             </CardHeader>
@@ -212,7 +211,7 @@ export default function ConfigCenter({ empresaId }) {
                 </div>
               ) : (
                 <div className="text-center py-12 text-slate-500">
-                  <Sparkles className="w-16 h-16 mx-auto mb-3 opacity-30" />
+                  <Brain className="w-16 h-16 mx-auto mb-3 opacity-30" />
                   <p>Nenhum módulo de IA configurado</p>
                 </div>
               )}
