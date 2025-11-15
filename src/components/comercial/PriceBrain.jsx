@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Brain, TrendingDown, TrendingUp, Zap, Sparkles } from 'lucide-react';
+import { Sparkles, TrendingDown, TrendingUp, Zap, Loader2 } from 'lucide-react';
 
 /**
  * PriceBrain - IA de Precificação Dinâmica
@@ -135,9 +135,9 @@ RETORNE em JSON:
       <Card className="border-purple-200 bg-purple-50">
         <CardContent className="p-6">
           <div className="flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+            <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
             <p className="text-sm text-purple-900">
-              <Brain className="w-4 h-4 inline mr-1" />
+              <Sparkles className="w-4 h-4 inline mr-1" />
               PriceBrain analisando histórico e sugerindo melhor preço...
             </p>
           </div>
@@ -178,7 +178,7 @@ RETORNE em JSON:
     <Card className={`border-2 border-${config.cor}-300 bg-${config.cor}-50`}>
       <CardHeader className="bg-white/80 border-b">
         <CardTitle className="text-base flex items-center gap-2">
-          <Brain className={`w-5 h-5 text-${config.cor}-600`} />
+          <Sparkles className={`w-5 h-5 text-${config.cor}-600`} />
           PriceBrain - Sugestão Inteligente
           <Badge className="ml-auto">
             {sugestao.confianca}% confiança
