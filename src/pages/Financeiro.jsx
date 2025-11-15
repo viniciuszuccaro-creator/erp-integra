@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,7 +18,7 @@ import {
   GitBranch,
   CheckCircle2,
   Link2,
-  Brain,
+  Sparkles,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -284,7 +283,6 @@ export default function Financeiro() {
             <BarChart3 className="w-4 h-4 mr-2" />
             Relatórios
           </TabsTrigger>
-          {/* A tab para Régua IA foi removida daqui, pois o componente foi movido para fora das tabs */}
         </TabsList>
 
         <TabsContent value="caixa">
@@ -488,11 +486,6 @@ export default function Financeiro() {
 
         <TabsContent value="relatorios">
           <RelatorioFinanceiro empresaId={empresaAtual?.id} />
-        </TabsContent>
-
-        {/* O conteúdo da Tab Régua IA foi movido para fora das Tabs */}
-        <TabsContent value="regua-ia">
-          {/* Este TabsContent agora está vazio, pois o componente ReguaCobrancaIA está acima */}
         </TabsContent>
       </Tabs>
     </div>
