@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -13,8 +12,8 @@ import {
   DollarSign, 
   Package,
   ShoppingCart,
-  Sparkles, // Changed from Brain to Sparkles
-  Loader2 // Added Loader2 for loading state
+  Brain,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -228,7 +227,7 @@ Retorne apenas nomes/descrições curtas.`,
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2" />
+                  <Brain className="w-4 h-4 mr-2" />
                   Sugestões IA
                 </>
               )}

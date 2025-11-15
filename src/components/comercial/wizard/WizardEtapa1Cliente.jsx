@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -5,67 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ChevronRight, MapPin, Search, User } from 'lucide-react';
+import { ChevronRight, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/components/lib/UserContext';
 import WidgetPerfilRiscoCliente from '../WidgetPerfilRiscoCliente';
 
 /**
- * V21.2 - Aba 1: Identificação do Pedido e Seleção de Cliente
- * NOVO: Busca Universal de Cliente (código, nome, sobrenome, telefone, CPF/CNPJ)
+ * Aba 1: Identificação do Pedido e Seleção de Cliente
+ * V21.1 - Com seleção de obra e widget de perfil de risco
  */
 export default function WizardEtapa1Cliente({ formData, setFormData, clientes = [], onNext }) {
   const { user } = useUser();
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  const [buscaCliente, setBuscaCliente] = useState('');
-  const [mostrarResultados, setMostrarResultados] = useState(false);
-
-  // ✨ V21.2: Busca Universal de Clientes
-  const normalizarTexto = (texto) => {
-    if (!texto) return '';
-    return texto
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-  };
-
-  const buscarClienteUniversal = (termo) => {
-    if (!termo || termo.length < 2) return [];
-
-    const termoNormalizado = normalizarTexto(termo);
-
-    return clientes.filter(cliente => {
-      // Nome, Razão Social, Nome Fantasia
-      const nome = normalizarTexto(cliente.nome || '');
-      const razaoSocial = normalizarTexto(cliente.razao_social || '');
-      const nomeFantasia = normalizarTexto(cliente.nome_fantasia || '');
-
-      // CPF/CNPJ (remover pontuação)
-      const cpfCnpj = (cliente.cpf || cliente.cnpj || '').replace(/[^\d]/g, '');
-      const termoCpfCnpj = termo.replace(/[^\d]/g, '');
-
-      // Telefones dos contatos
-      const telefones = (cliente.contatos || [])
-        .map(c => (c.valor || '').replace(/[^\d]/g, ''))
-        .join(' ');
-
-      // Email
-      const email = normalizarTexto(cliente.contatos?.find(c => c.tipo === 'E-mail')?.valor || '');
-
-      // Buscar em todos os campos
-      return (
-        nome.includes(termoNormalizado) ||
-        razaoSocial.includes(termoNormalizado) ||
-        nomeFantasia.includes(termoNormalizado) ||
-        cpfCnpj.includes(termoCpfCnpj) ||
-        telefones.includes(termoCpfCnpj) ||
-        email.includes(termoNormalizado)
-      );
-    });
-  };
-
-  const clientesFiltrados = buscarClienteUniversal(buscaCliente);
 
   // Buscar endereços do cliente quando cliente mudar
   const { data: enderecosCliente = [] } = useQuery({
@@ -85,6 +37,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
       if (cliente) {
         setClienteSelecionado(cliente);
 
+        // Preencher dados do pedido e cliente se não estiverem preenchidos ou forem os iniciais
         setFormData(prev => {
           const newFormData = { ...prev };
 
@@ -95,7 +48,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             const hora = String(new Date().getHours()).padStart(2, '0');
             const minuto = String(new Date().getMinutes()).padStart(2, '0');
             const segundo = String(new Date().getSeconds()).padStart(2, '0');
-            newFormData.numero_pedido = `PED-${ano}${mes}${dia}${hora}${minuto}${segundo}`;
+            newFormData.numero_pedido = `PED-${ano}${mes}${dia}${hora}${minuto}${segundo}`; // Simples para exemplo
           }
           if (!newFormData.data_pedido) {
             newFormData.data_pedido = new Date().toISOString().split('T')[0];
@@ -114,7 +67,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             newFormData.endereco_entrega_principal = cliente.endereco_principal || {};
           }
           if (!newFormData.empresa_id) {
-            newFormData.empresa_id = cliente.empresa_id;
+            newFormData.empresa_id = cliente.empresa_id; // Assume empresa id do cliente
           }
           if (!newFormData.tabela_preco_id) {
             newFormData.tabela_preco_id = cliente.condicao_comercial?.tabela_preco_id;
@@ -140,20 +93,16 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
     }
   }, [formData.cliente_id, clientes, setFormData, user]);
 
+
   const handleClienteChange = (clienteId) => {
     setFormData(prev => ({
       ...prev,
       cliente_id: clienteId,
-      obra_destino_id: undefined,
+      obra_destino_id: undefined, // Clear obra_destino when client changes
       obra_destino_nome: undefined,
+      // Clear address related to previous client/obra
       endereco_entrega_principal: {} 
     }));
-    setBuscaCliente('');
-    setMostrarResultados(false);
-  };
-
-  const selecionarCliente = (cliente) => {
-    handleClienteChange(cliente.id);
   };
 
   const handleObraDestinoChange = (obraId) => {
@@ -179,6 +128,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
       }));
       toast.success(`✅ Obra "${obra.apelido}" selecionada`);
     } else if (obraId === "none") {
+       // Option to clear obra selection and revert to client's main address
        const clienteMainAddress = clientes.find(c => c.id === formData.cliente_id)?.endereco_principal || {};
        setFormData(prev => ({
          ...prev,
@@ -193,110 +143,20 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* ✨ V21.2: BUSCA UNIVERSAL DE CLIENTE */}
         <div className="md:col-span-2">
-          <Label htmlFor="busca-cliente" className="flex items-center gap-2">
-            <User className="w-4 h-4 text-blue-600" />
-            Cliente * (Busque por nome, telefone, CPF/CNPJ, email...)
-          </Label>
-          
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <Input
-              id="busca-cliente"
-              placeholder="Digite nome, telefone, CPF/CNPJ ou email do cliente..."
-              value={buscaCliente}
-              onChange={(e) => {
-                setBuscaCliente(e.target.value);
-                setMostrarResultados(true);
-              }}
-              onFocus={() => setMostrarResultados(true)}
-              className="pl-10 h-12 text-base"
-            />
-          </div>
-
-          {/* Cliente Selecionado */}
-          {formData.cliente_id && clienteSelecionado && !mostrarResultados && (
-            <div className="mt-2 p-3 bg-green-50 border border-green-300 rounded-lg flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-green-900">
-                  ✅ {clienteSelecionado.nome_fantasia || clienteSelecionado.nome || clienteSelecionado.razao_social}
-                </p>
-                <p className="text-xs text-green-700">
-                  {clienteSelecionado.cnpj || clienteSelecionado.cpf || ''} 
-                  {clienteSelecionado.contatos?.[0]?.valor && ` • ${clienteSelecionado.contatos[0].valor}`}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setBuscaCliente('');
-                  setMostrarResultados(true);
-                }}
-              >
-                Trocar Cliente
-              </Button>
-            </div>
-          )}
-
-          {/* Resultados da Busca Universal */}
-          {mostrarResultados && buscaCliente.length >= 2 && (
-            <div className="mt-2 border rounded-lg bg-white shadow-lg max-h-80 overflow-y-auto">
-              {clientesFiltrados.length > 0 ? (
-                clientesFiltrados.slice(0, 20).map(cliente => (
-                  <div
-                    key={cliente.id}
-                    onClick={() => selecionarCliente(cliente)}
-                    className="p-4 hover:bg-blue-50 cursor-pointer border-b last:border-0 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="font-semibold text-slate-900">
-                          {cliente.nome_fantasia || cliente.nome || cliente.razao_social}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {cliente.cnpj && (
-                            <Badge variant="outline" className="text-xs">
-                              CNPJ: {cliente.cnpj}
-                            </Badge>
-                          )}
-                          {cliente.cpf && (
-                            <Badge variant="outline" className="text-xs">
-                              CPF: {cliente.cpf}
-                            </Badge>
-                          )}
-                          {cliente.contatos?.[0]?.valor && (
-                            <Badge variant="outline" className="text-xs">
-                              📞 {cliente.contatos[0].valor}
-                            </Badge>
-                          )}
-                          {cliente.endereco_principal?.cidade && (
-                            <Badge variant="outline" className="text-xs">
-                              📍 {cliente.endereco_principal.cidade}/{cliente.endereco_principal.estado}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <Badge className={
-                        cliente.status === 'Ativo' ? 'bg-green-100 text-green-700' : 
-                        'bg-gray-100 text-gray-700'
-                      }>
-                        {cliente.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-8 text-center text-slate-500">
-                  <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>Nenhum cliente encontrado</p>
-                  <p className="text-xs mt-1">Tente outro termo de busca</p>
-                </div>
-              )}
-            </div>
-          )}
+          <Label htmlFor="cliente-select">Cliente *</Label>
+          <Select value={formData.cliente_id} onValueChange={handleClienteChange}>
+            <SelectTrigger id="cliente-select">
+              <SelectValue placeholder="Selecione o cliente..." />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {clientes.map(c => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.nome_fantasia || c.nome || c.razao_social} {c.cnpj ? `(${c.cnpj})` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>

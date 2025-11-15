@@ -27,16 +27,19 @@ import WizardEtapa1Cliente from './wizard/WizardEtapa1Cliente';
 import ItensRevendaTab from './ItensRevendaTab';
 import ArmadoPadraoTab from './ArmadoPadraoTab';
 import CorteDobraIATab from './CorteDobraIATab';
-import HistoricoClienteTab from './HistoricoClienteTab';
+import HistoricoClienteTab from './HistoricoClienteTab'; // NOVO V21.1
 import LogisticaEntregaTab from './LogisticaEntregaTab';
 import FechamentoFinanceiroTab from './FechamentoFinanceiroTab';
 import ArquivosProjetosTab from './ArquivosProjetosTab';
 import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
 
 /**
- * V21.2 - CORREÇÃO CRÍTICA: clientes agora é passado corretamente para WizardEtapa1Cliente
- * Problema: ao editar pedido ou criar novo, a busca de clientes não funcionava
- * Solução: garantir que clientes={clientes} seja passado em todas as chamadas
+ * V21.1 - Pedido Form Completo - AGORA COM 9 ABAS
+ * + Aba 5: Histórico do Cliente (Top 20 + Timeline)
+ * + Obras de destino vinculadas
+ * + Etapas de faturamento
+ * 
+ * REGRA-MÃE: NUNCA APAGAR - APENAS ACRESCENTAR
  */
 export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel }) {
   const [activeTab, setActiveTab] = useState('identificacao');
@@ -66,9 +69,9 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     desconto_geral_pedido_percentual: 0,
     desconto_geral_pedido_valor: 0,
     valor_frete: 0,
-    etapas_entrega: [],
-    obra_destino_id: '',
-    obra_destino_nome: '',
+    etapas_entrega: [], // V21.1
+    obra_destino_id: '', // V21.1
+    obra_destino_nome: '', // V21.1
     observacoes_nfe: '',
     ...(pedido || {})
   }));
@@ -205,7 +208,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
       count: formData?.itens_corte_dobra?.length || 0 
     },
     { 
-      id: 'historico',
+      id: 'historico', // NOVO V21.1
       label: 'Histórico', 
       icon: Clock,
       novo: true
@@ -236,6 +239,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     }
   ];
 
+  // Proteção adicional: não renderizar até formData estar pronto
   if (!formData) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -254,7 +258,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               {pedido ? `Editar Pedido ${pedido.numero_pedido}` : 'Novo Pedido'}
             </h2>
             <p className="text-sm text-slate-600">
-              V21.2 - Busca universal de clientes corrigida
+              V21.1 - Agora com 9 abas: Histórico + Etapas de Faturamento
             </p>
           </div>
           <div className="flex items-center gap-3">
