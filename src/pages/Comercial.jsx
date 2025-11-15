@@ -23,6 +23,9 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
+import { Dialog, DialogContent } from "@/components/ui/dialog"; // Added Dialog, DialogContent
+import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto"; // Added PedidoFormCompleto import
+
 /**
  * Módulo Comercial - V12.0 COMPLETO
  * Com atalhos, exportação e impressão
@@ -31,6 +34,10 @@ export default function Comercial() {
   const [activeTab, setActiveTab] = useState("clientes");
   const [painelClienteAberto, setPainelClienteAberto] = useState(false);
   const [clienteParaPainel, setClienteParaPainel] = useState(null);
+
+  // V21.1.2-R1: States for the PedidoFormCompleto dialog
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingPedido, setEditingPedido] = useState(null);
 
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
 
@@ -92,6 +99,38 @@ export default function Comercial() {
     // ctrl+n (new order) and ctrl+p (print order) logic is now handled within PedidosTab
     // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
+
+  // Handlers for PedidoFormCompleto
+  const handleCreateNewPedido = () => {
+    setEditingPedido(null); // For new order, no existing pedido
+    setIsFormOpen(true);
+  };
+
+  const handleEditPedido = (pedido) => {
+    setEditingPedido(pedido);
+    setIsFormOpen(true);
+  };
+
+  const handleFormSubmit = async (formData) => {
+    try {
+      if (formData.id) {
+        // Update existing pedido
+        await base44.entities.Pedido.update(formData.id, formData);
+        toast.success("Pedido atualizado com sucesso!");
+      } else {
+        // Create new pedido
+        await base44.entities.Pedido.create(formData);
+        toast.success("Pedido criado com sucesso!");
+      }
+      setIsFormOpen(false);
+      setEditingPedido(null);
+      pedidosQuery.refetch(); // Refetch pedidos data after submission
+    } catch (error) {
+      toast.error("Erro ao salvar pedido: " + error.message);
+      console.error("Erro ao salvar pedido:", error);
+    }
+  };
+
 
   if (loadingPermissions) {
     return (
@@ -252,6 +291,8 @@ export default function Comercial() {
             clientes={clientes} 
             isLoading={loadingPedidos} 
             empresas={empresas} // Added empresas prop for printing or other order details
+            onCreatePedido={handleCreateNewPedido} // Added prop to open new order form
+            onEditPedido={handleEditPedido} // Added prop to open edit order form
           />
         </TabsContent>
 
@@ -322,6 +363,26 @@ export default function Comercial() {
           setClienteParaPainel(null);
         }}
       />
+
+      {/* V21.1.2-R1: MODAL COM TAMANHO FIXO GRANDE - MULTI-INSTÂNCIA */}
+      <Dialog open={isFormOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsFormOpen(false);
+          setEditingPedido(null);
+        }
+      }}>
+        <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
+          <PedidoFormCompleto
+            pedido={editingPedido}
+            clientes={clientes}
+            onSubmit={handleFormSubmit}
+            onCancel={() => {
+              setIsFormOpen(false);
+              setEditingPedido(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

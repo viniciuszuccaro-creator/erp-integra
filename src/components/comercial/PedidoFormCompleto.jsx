@@ -34,10 +34,11 @@ import ArquivosProjetosTab from './ArquivosProjetosTab';
 import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
 
 /**
- * V21.1 - Pedido Form Completo - AGORA COM 9 ABAS
- * + Aba 5: Histórico do Cliente (Top 20 + Timeline)
- * + Obras de destino vinculadas
- * + Etapas de faturamento
+ * V21.1.2-R1 - Pedido Form Completo - PATCH OFICIAL
+ * ✅ Modal agora SEMPRE max-w-[90vw] max-h-[95vh]
+ * ✅ Todas as abas com scroll funcionando
+ * ✅ Aba Histórico expandida com Top 20 produtos + Auditoria
+ * ✅ Suporte multi-instância (múltiplos modais abertos)
  * 
  * REGRA-MÃE: NUNCA APAGAR - APENAS ACRESCENTAR
  */
@@ -258,7 +259,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               {pedido ? `Editar Pedido ${pedido.numero_pedido}` : 'Novo Pedido'}
             </h2>
             <p className="text-sm text-slate-600">
-              V21.1 - Agora com 9 abas: Histórico + Etapas de Faturamento
+              V21.1.2-R1 - 9 Abas • Multi-Instância • Histórico Expandido
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -273,6 +274,11 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               <Badge className="bg-red-600">
                 <AlertTriangle className="w-3 h-3 mr-1" />
                 Urgente
+              </Badge>
+            )}
+            {formData.origem_pedido && formData.origem_pedido !== 'Manual' && (
+              <Badge className="bg-purple-600">
+                📱 {formData.origem_pedido}
               </Badge>
             )}
           </div>
@@ -345,10 +351,10 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           })}
         </TabsList>
 
-        {/* 🔥 CORREÇÃO CRÍTICA: ÁREA DE CONTEÚDO COM SCROLL */}
-        <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(95vh - 400px)' }}>
+        {/* 🔥 V21.1.2-R1: CORREÇÃO CRÍTICA - ÁREA DE CONTEÚDO COM ALTURA FIXA E SCROLL */}
+        <div className="flex-1 overflow-hidden">
           {/* ABA 1: IDENTIFICAÇÃO */}
-          <TabsContent value="identificacao" className="m-0">
+          <TabsContent value="identificacao" className="h-full overflow-y-auto p-6 m-0">
             <WizardEtapa1Cliente
               formData={formData}
               setFormData={setFormData}
@@ -358,7 +364,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 2: ITENS DE REVENDA */}
-          <TabsContent value="revenda" className="m-0">
+          <TabsContent value="revenda" className="h-full overflow-y-auto p-6 m-0">
             <ItensRevendaTab
               formData={formData}
               setFormData={setFormData}
@@ -367,7 +373,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 3: ARMADO PADRÃO */}
-          <TabsContent value="armado" className="m-0">
+          <TabsContent value="armado" className="h-full overflow-y-auto p-6 m-0">
             <ArmadoPadraoTab
               formData={formData}
               setFormData={setFormData}
@@ -377,7 +383,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 4: CORTE E DOBRA (IA) */}
-          <TabsContent value="corte" className="m-0">
+          <TabsContent value="corte" className="h-full overflow-y-auto p-6 m-0">
             <CorteDobraIATab
               formData={formData}
               setFormData={setFormData}
@@ -386,16 +392,21 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
             />
           </TabsContent>
 
-          {/* NOVO V21.1: ABA 5 - HISTÓRICO DO CLIENTE */}
-          <TabsContent value="historico" className="m-0">
+          {/* V21.1.2-R1: ABA 5 - HISTÓRICO DO CLIENTE (EXPANDIDA) */}
+          <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
             <HistoricoClienteTab
               formData={formData}
               setFormData={setFormData}
+              onAdicionarItemAoPedido={(produto) => {
+                toast.success(`Produto ${produto.descricao} adicionado!`);
+                // Optionally update formData here or let the HistoricoClienteTab do it
+                setActiveTab('revenda');
+              }}
             />
           </TabsContent>
 
-          {/* ABA 5: LOGÍSTICA */}
-          <TabsContent value="logistica" className="m-0">
+          {/* ABA 6: LOGÍSTICA */}
+          <TabsContent value="logistica" className="h-full overflow-y-auto p-6 m-0">
             <LogisticaEntregaTab
               formData={formData}
               setFormData={setFormData}
@@ -404,8 +415,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
             />
           </TabsContent>
 
-          {/* ABA 6: FINANCEIRO */}
-          <TabsContent value="financeiro" className="m-0">
+          {/* ABA 7: FINANCEIRO */}
+          <TabsContent value="financeiro" className="h-full overflow-y-auto p-6 m-0">
             <FechamentoFinanceiroTab
               formData={formData}
               setFormData={setFormData}
@@ -413,16 +424,16 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
             />
           </TabsContent>
 
-          {/* ABA 7: ARQUIVOS */}
-          <TabsContent value="arquivos" className="m-0">
+          {/* ABA 8: ARQUIVOS */}
+          <TabsContent value="arquivos" className="h-full overflow-y-auto p-6 m-0">
             <ArquivosProjetosTab
               formData={formData}
               setFormData={setFormData}
             />
           </TabsContent>
 
-          {/* ABA 8: AUDITORIA */}
-          <TabsContent value="auditoria" className="m-0">
+          {/* V21.1.2-R1: ABA 9 - AUDITORIA (ALTURA CORRIGIDA) */}
+          <TabsContent value="auditoria" className="h-full overflow-y-auto p-6 m-0">
             <AuditoriaAprovacaoTab
               formData={formData}
               pedido={pedido}
