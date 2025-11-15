@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,11 +31,11 @@ import {
  */
 export default function IALeituraProjeto({ configuracao }) {
   const { toast } = useToast();
-  const queryClient = useQueryClient(); // Added useQueryClient
+  const queryClient = useQueryClient();
   const [arquivo, setArquivo] = useState(null);
   const [processando, setProcessando] = useState(false);
-  const [resultado, setResultado] = useState(null); // Replaced pecasDetectadas, mostrarConferencia, pecasSelecionadas
-  const [modoLeitura, setModoLeitura] = useState('leitura_mista'); // Replaced tipoLeitura
+  const [resultado, setResultado] = useState(null);
+  const [modoLeitura, setModoLeitura] = useState('leitura_mista');
 
   const processarArquivo = async () => {
     if (!arquivo) {
@@ -49,7 +48,7 @@ export default function IALeituraProjeto({ configuracao }) {
     }
 
     setProcessando(true);
-    setResultado(null); // Clear previous results
+    setResultado(null);
 
     try {
       const modoSimulacao = configuracao?.integracao_ia_producao?.modo_simulacao !== false;
@@ -74,10 +73,8 @@ export default function IALeituraProjeto({ configuracao }) {
   };
 
   const processarComIAReal = async () => {
-    // 1. Upload do arquivo
     const { file_url } = await base44.integrations.Core.UploadFile({ file: arquivo });
 
-    // 2. Chamar IA real com schema estruturado
     const schema = {
       type: "object",
       properties: {
@@ -90,7 +87,7 @@ export default function IALeituraProjeto({ configuracao }) {
               elemento: { type: "string", description: "Identificador do elemento (Ex: V1, C2)" },
               tipo_peca: {
                 type: "string",
-                enum: ["Coluna", "Viga", "Bloco", "Sapata", "Laje", "Estaca", "Estribo", "Pilar"], // Added Pilar as common
+                enum: ["Coluna", "Viga", "Bloco", "Sapata", "Laje", "Estaca", "Estribo", "Pilar"],
                 description: "Tipo de peça estrutural"
               },
               posicao: { type: "string", description: "Posição ou nível do elemento" },
@@ -100,7 +97,7 @@ export default function IALeituraProjeto({ configuracao }) {
               largura_mm: { type: "number", description: "Largura da seção transversal em milímetros" },
               altura_mm: { type: "number", description: "Altura da seção transversal em milímetros" },
               estribo_bitola: { type: "string", description: "Bitola do estribo (Ex: 5.0mm, 6.3mm)" },
-              estribo_espacamento: { type: "number", description: "Espaçamento dos estribos em centímetros" }, // Changed to cm as per common practice
+              estribo_espacamento: { type: "number", description: "Espaçamento dos estribos em centímetros" },
               confianca: { type: "number", description: "Nível de confiança da IA (0-100)" }
             },
             required: ["elemento", "tipo_peca", "bitola_principal", "quantidade_barras", "comprimento_mm", "confianca"]
@@ -144,25 +141,25 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
   };
 
   const processarSimulado = async () => {
-    await new Promise(resolve => setTimeout(resolve, 3000)); // Simulate AI processing time
+    await new Promise(resolve => setTimeout(resolve, 3000));
 
     const pecasSimuladas = [
       {
         elemento: "V1",
         posicao: "N1",
         tipo_peca: "Viga",
-        quantidade: 4, // This was count of elements V1, not bars. We adapt to new schema for a single element definition.
-        comprimento: 4500, // mm
-        largura: 150, // mm
-        altura: 400, // mm
+        quantidade: 4,
+        comprimento: 4500,
+        largura: 150,
+        altura: 400,
         ferro_principal_bitola: "12.5mm",
         ferro_principal_quantidade: 4,
         estribo_bitola: "6.3mm",
-        estribo_largura: 150, // mm - not in new schema item
-        estribo_altura: 400, // mm - not in new schema item
-        estribo_distancia: 15, // cm
+        estribo_largura: 150,
+        estribo_altura: 400,
+        estribo_distancia: 15,
         confianca: 95,
-        status_leitura: "completo", // not in new schema
+        status_leitura: "completo",
         observacoes_ia: "Viga identificada com alta confiança"
       },
       {
@@ -211,7 +208,7 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
       largura_mm: p.largura,
       altura_mm: p.altura,
       estribo_bitola: p.estribo_bitola,
-      estribo_espacamento: p.estribo_distancia, // cm
+      estribo_espacamento: p.estribo_distancia,
       confianca: p.confianca
     }));
 
@@ -220,7 +217,7 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
     const observacoesSimuladas = elementosIdentificados.map(el => `[Simulado] ${el.elemento}: ${el.confianca}% de confiança.`).join(' ');
 
     setResultado({
-      tipo_projeto: "residencial", // Example for simulated data
+      tipo_projeto: "residencial",
       elementos_identificados: elementosIdentificados,
       observacoes: `Simulação concluída. Total de ${elementosIdentificados.length} elementos identificados. ${observacoesSimuladas}`,
       modo: 'simulado',
@@ -257,17 +254,15 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
     }
 
     setArquivo(file);
-    setResultado(null); // Clear results when a new file is selected
+    setResultado(null);
   };
 
   return (
     <div className="space-y-6">
-      {/* Card de Upload */}
       <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            {/* Using a generic brain icon here, if specific is not required from lucide-react */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-brain w-6 h-6 text-purple-600"><path d="M12 5c-3.31 0-6 2.69-6 6a6 6 0 0 0 2.33 4.77C8.16 16.48 9 17.5 9 19h.5a.5.5 0 0 0 .5-.5V19c0-1.5 1.5-3 3-3V7c0-2.21 1.79-4 4-4a4 4 0 0 1 0 8H12"/><path d="M9 13.5v-1a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1"/><path d="M11 19c-1.5 0-3-1.5-3-3"/><path d="M15 13c-1.5 0-3-1.5-3-3"/><path d="M12 11h2"/><path d="M12 15h2"/><path d="M12 7h2"/><path d="M17 17a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>
+            <Sparkles className="w-6 h-6 text-purple-600" />
             IA de Leitura de Projeto <Badge className="ml-2 bg-purple-200 text-purple-800">V12.0</Badge>
           </CardTitle>
           <p className="text-sm text-slate-600">
@@ -352,7 +347,6 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
         </CardContent>
       </Card>
 
-      {/* Tabela de Resultados da IA */}
       {resultado && resultado.elementos_identificados && resultado.elementos_identificados.length > 0 && (
         <Card className="border-2 border-green-200">
           <CardHeader className="bg-green-50 border-b">
@@ -435,7 +429,6 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
         </Card>
       )}
 
-      {/* Card Informativo */}
       <Card className="bg-purple-50 border-purple-200">
         <CardContent className="p-6">
           <div className="flex items-start gap-3">
