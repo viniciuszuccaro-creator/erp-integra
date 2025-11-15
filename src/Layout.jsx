@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -25,7 +24,7 @@ import {
   Search,
   Rocket,
   CheckCircle,
-  Trash2 // NOVO
+  Trash2
 } from "lucide-react";
 import {
   Sidebar,
@@ -66,13 +65,12 @@ const navigationItems = [
   { title: "Recursos Humanos", url: createPageUrl("RH"), icon: UserCircle, group: "administrativo" },
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
-  // Removed item: { title: "Gestão de Empresas", url: createPageUrl("Empresas"), icon: Building2, group: "sistema" },
   { title: "Integrações", url: createPageUrl("Integracoes"), icon: Link2, group: "sistema" },
   { title: "Configurações do Sistema", url: createPageUrl("ConfiguracoesSistema"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🧪 Teste Golden Thread", url: createPageUrl("TesteGoldenThread"), icon: Rocket, group: "sistema", adminOnly: true },
-  { title: "✅ Validador Fase 1", url: createPageUrl("ValidadorFase1"), icon: CheckCircle, group: "sistema", adminOnly: true }, // Added new item
+  { title: "✅ Validador Fase 1", url: createPageUrl("ValidadorFase1"), icon: CheckCircle, group: "sistema", adminOnly: true },
   { title: "🗑️ Limpar Dados Teste", url: createPageUrl("LimparDados"), icon: Trash2, group: "sistema", adminOnly: true },
   { title: "🌐 Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico", public: true },
 ];
@@ -87,25 +85,21 @@ function LayoutContent({ children, currentPageName }) {
     const handleKeyDown = (e) => {
       const ctrl = e.ctrlKey || e.metaKey;
       
-      // Ctrl+K - Pesquisa Universal
       if (ctrl && e.key === 'k') {
         e.preventDefault();
         setPesquisaOpen(true);
       }
 
-      // Ctrl+Shift+D - Dashboard
       if (ctrl && e.shiftKey && e.key === 'D') {
         e.preventDefault();
         window.location.href = createPageUrl('Dashboard');
       }
 
-      // Ctrl+Shift+C - Comercial
       if (ctrl && e.shiftKey && e.key === 'C') {
         e.preventDefault();
         window.location.href = createPageUrl('Comercial');
       }
 
-      // Ctrl+M - Modo Escuro
       if (ctrl && e.key === 'm') {
         e.preventDefault();
         setModoEscuro(prev => !prev);
@@ -207,7 +201,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div>
                 <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">Gestão Empresarial Integrada</p>
+                <p className="text-xs text-slate-500">Gestão Empresarial</p>
               </div>
             </div>
           </SidebarHeader>
