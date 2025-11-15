@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Flame, ThermometerSun, Snowflake, Target } from 'lucide-react';
+import { Sparkles, Flame, ThermometerSun, Snowflake, Target } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 /**
@@ -72,7 +72,7 @@ export default function IALeadsPriorizacao({ oportunidades = [] }) {
     <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
       <CardHeader className="border-b bg-white/80">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Brain className="w-5 h-5 text-purple-600" />
+          <Sparkles className="w-5 h-5 text-purple-600" />
           Priorização Inteligente de Leads
         </CardTitle>
       </CardHeader>
@@ -153,7 +153,7 @@ export default function IALeadsPriorizacao({ oportunidades = [] }) {
 
         {leadsClassificados.length === 0 && (
           <div className="text-center py-8 text-purple-600">
-            <Brain className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <Sparkles className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p className="text-sm">Nenhuma oportunidade para analisar</p>
           </div>
         )}

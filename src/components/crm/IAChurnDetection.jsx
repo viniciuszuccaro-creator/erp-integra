@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, Brain, TrendingDown, Loader2, Zap } from 'lucide-react';
+import { AlertTriangle, Sparkles, TrendingDown, Loader2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
@@ -132,7 +132,7 @@ export default function IAChurnDetection({ clientes = [] }) {
               </>
             ) : (
               <>
-                <Brain className="w-4 h-4 mr-2" />
+                <Sparkles className="w-4 h-4 mr-2" />
                 Executar IA
               </>
             )}
