@@ -23,7 +23,6 @@ import {
   Edit,
   Trash2,
   Copy,
-  Brain, // Retained as it is used in the JSX
   Loader2
 } from "lucide-react";
 
@@ -267,7 +266,8 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
       <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="w-6 h-6 text-purple-600" />
+            {/* Using a generic brain icon here, if specific is not required from lucide-react */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-brain w-6 h-6 text-purple-600"><path d="M12 5c-3.31 0-6 2.69-6 6a6 6 0 0 0 2.33 4.77C8.16 16.48 9 17.5 9 19h.5a.5.5 0 0 0 .5-.5V19c0-1.5 1.5-3 3-3V7c0-2.21 1.79-4 4-4a4 4 0 0 1 0 8H12"/><path d="M9 13.5v-1a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1"/><path d="M11 19c-1.5 0-3-1.5-3-3"/><path d="M15 13c-1.5 0-3-1.5-3-3"/><path d="M12 11h2"/><path d="M12 15h2"/><path d="M12 7h2"/><path d="M17 17a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>
             IA de Leitura de Projeto <Badge className="ml-2 bg-purple-200 text-purple-800">V12.0</Badge>
           </CardTitle>
           <p className="text-sm text-slate-600">
