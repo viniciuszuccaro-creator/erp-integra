@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Brain, AlertTriangle, CheckCircle, Settings, Activity } from 'lucide-react';
+import { Sparkles, AlertTriangle, CheckCircle, Settings, Activity } from 'lucide-react';
 
 /**
  * IA de Diagnóstico de Equipamentos
@@ -69,7 +69,7 @@ export default function IADiagnosticoEquipamentos({ equipamentos = [] }) {
       <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="w-6 h-6 text-purple-600" />
+            <Sparkles className="w-6 h-6 text-purple-600" />
             IA de Diagnóstico de Equipamentos
           </CardTitle>
           <p className="text-sm text-slate-600 mt-1">
