@@ -1,16 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Brain, TrendingDown, TrendingUp, Zap, Sparkles } from 'lucide-react';
+import { TrendingDown, TrendingUp, Zap, Sparkles, Lightbulb } from 'lucide-react';
 
-/**
- * PriceBrain - IA de Precificação Dinâmica
- * Analisa histórico, margem, concorrência e sugere preços inteligentes
- */
 export default function PriceBrain({ pedido, onSugestaoAplicada }) {
   const [analisando, setAnalisando] = useState(false);
   const [sugestao, setSugestao] = useState(null);
@@ -25,7 +20,6 @@ export default function PriceBrain({ pedido, onSugestaoAplicada }) {
     setAnalisando(true);
 
     try {
-      // Buscar histórico do cliente
       const pedidosCliente = await base44.entities.Pedido.filter({
         cliente_id: pedido.cliente_id,
         status: ['Aprovado', 'Faturado', 'Entregue']
@@ -37,7 +31,6 @@ export default function PriceBrain({ pedido, onSugestaoAplicada }) {
 
       const ultimaCompra = pedidosCliente[0];
 
-      // Analisar com IA
       const analise = await base44.integrations.Core.InvokeLLM({
         prompt: `
 Você é o PriceBrain - IA especialista em precificação dinâmica para ERPs industriais.
@@ -89,7 +82,6 @@ RETORNE em JSON:
 
       setSugestao(analise);
 
-      // Registrar análise
       await base44.entities.AuditoriaIA.create({
         empresa_id: pedido.empresa_id,
         modulo: 'Comercial',
@@ -138,7 +130,7 @@ RETORNE em JSON:
           <div className="flex items-center gap-3">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
             <p className="text-sm text-purple-900">
-              <Brain className="w-4 h-4 inline mr-1" />
+              <Lightbulb className="w-4 h-4 inline mr-1" />
               PriceBrain analisando histórico e sugerindo melhor preço...
             </p>
           </div>
@@ -176,10 +168,10 @@ RETORNE em JSON:
   const Icon = config.icone;
 
   return (
-    <Card className={`border-2 border-${config.cor}-300 bg-${config.cor}-50`}>
+    <Card className="border-2 border-purple-300 bg-purple-50">
       <CardHeader className="bg-white/80 border-b">
         <CardTitle className="text-base flex items-center gap-2">
-          <Brain className={`w-5 h-5 text-${config.cor}-600`} />
+          <Lightbulb className="w-5 h-5 text-purple-600" />
           PriceBrain - Sugestão Inteligente
           <Badge className="ml-auto">
             {sugestao.confianca}% confiança
@@ -187,8 +179,8 @@ RETORNE em JSON:
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 space-y-4">
-        <Alert className={`border-${config.cor}-300 bg-white`}>
-          <Icon className={`w-5 h-5 text-${config.cor}-600`} />
+        <Alert className="border-purple-300 bg-white">
+          <Icon className="w-5 h-5 text-purple-600" />
           <AlertDescription>
             <p className="font-semibold mb-1">{config.titulo}</p>
             <p className="text-sm">{sugestao.razao}</p>
@@ -203,7 +195,7 @@ RETORNE em JSON:
                 R$ {pedido.valor_total?.toLocaleString('pt-BR')}
               </p>
             </div>
-            <div className={`p-3 bg-${config.cor}-100 rounded-lg border border-${config.cor}-300`}>
+            <div className="p-3 bg-green-100 rounded-lg border border-green-300">
               <p className="text-xs text-slate-600">Com Desconto ({sugestao.desconto_sugerido_percentual}%)</p>
               <p className="text-xl font-bold text-green-600">
                 R$ {sugestao.valor_com_desconto?.toLocaleString('pt-BR')}
@@ -233,7 +225,7 @@ RETORNE em JSON:
         {sugestao.estrategia !== 'manter_preco' && (
           <Button
             onClick={aplicarSugestao}
-            className={`w-full bg-${config.cor}-600 hover:bg-${config.cor}-700`}
+            className="w-full bg-purple-600 hover:bg-purple-700"
           >
             <Zap className="w-4 h-4 mr-2" />
             Aplicar Sugestão
