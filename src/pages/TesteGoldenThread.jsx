@@ -38,9 +38,8 @@ export default function TesteGoldenThread() {
     const ids = {};
 
     try {
-      // Buscar empresa e usuário logado uma vez no início
       const user = await base44.auth.me();
-      const empresaId = user?.empresa_id || 'empresa-default'; // Usar uma empresa padrão se não houver ou para testes
+      const empresaId = user?.empresa_id || 'empresa-default';
 
       // ETAPA 1: Cliente no Site/Chatbot
       setEtapaAtual(1);
@@ -165,7 +164,8 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // ETAPA 4: Comercial - Converter em Pedido
+      // ETAPA 4-12 ... keep existing code (rest of the function)
+      
       setEtapaAtual(4);
       const pedido = await base44.entities.Pedido.create({
         numero_pedido: `PED-GT-${Date.now()}`,
@@ -207,7 +207,6 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // ETAPA 5: Produção - Gerar OP Automaticamente
       setEtapaAtual(5);
       const op = await base44.entities.OrdemProducao.create({
         numero_op: `OP-GT-${Date.now()}`,
@@ -242,14 +241,12 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // Simular conclusão da OP
       await base44.entities.OrdemProducao.update(op.id, {
         status: 'Pronta para Expedição',
         data_conclusao_real: new Date().toISOString(),
         percentual_conclusao: 100
       });
 
-      // ETAPA 6: Expedição - Criar Entrega
       setEtapaAtual(6);
       const entrega = await base44.entities.Entrega.create({
         empresa_id: empresaId,
@@ -286,7 +283,6 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // ETAPA 7: Roteirização IA
       setEtapaAtual(7);
       const rota = await base44.entities.Rota.create({
         empresa_id: empresaId,
@@ -323,7 +319,6 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // ETAPA 8: GPS em Tempo Real (3 posições simuladas)
       setEtapaAtual(8);
       await base44.entities.Entrega.update(entrega.id, { status: 'Em Trânsito' });
       
@@ -358,7 +353,6 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // ETAPA 9: Entrega + Devolução Parcial
       setEtapaAtual(9);
       await base44.entities.Entrega.update(entrega.id, {
         status: 'Entregue',
@@ -388,7 +382,6 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // ETAPA 10: Estoque - Entrada de Devolução
       setEtapaAtual(10);
       const movEstoque = await base44.entities.MovimentacaoEstoque.create({
         empresa_id: empresaId,
@@ -414,9 +407,8 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // ETAPA 11: Financeiro - Conta a Receber com Ajuste
       setEtapaAtual(11);
-      const valorAjustado = (resultadoIA.valor_estimado || 15000) - 150; // Desconto pela devolução
+      const valorAjustado = (resultadoIA.valor_estimado || 15000) - 150;
       
       const contaReceber = await base44.entities.ContaReceber.create({
         descricao: `Pedido ${pedido.numero_pedido} - Ajustado por devolução`,
@@ -442,7 +434,6 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // ETAPA 12: Governança - Auditoria Global
       setEtapaAtual(12);
       const auditLogs = [];
       
@@ -471,8 +462,8 @@ Retorne um JSON estruturado com as peças.`,
           entidade_afetada: audit.entidade,
           registro_id: audit.registro_id,
           sucesso: true,
-          ip_address: '127.0.0.1', // Exemplo de IP
-          user_agent: 'Golden Thread Test v3.0' // Exemplo de User Agent
+          ip_address: '127.0.0.1',
+          user_agent: 'Golden Thread Test v3.0'
         });
         auditLogs.push(log.id);
       }
@@ -486,7 +477,6 @@ Retorne um JSON estruturado com as peças.`,
       });
       setEtapas([...novasEtapas]);
 
-      // RESULTADO FINAL
       setResultado({
         sucesso: true,
         tempo_total: '~8 segundos',
