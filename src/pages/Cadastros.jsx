@@ -108,8 +108,6 @@ import MoedaIndiceForm from "../components/cadastros/MoedaIndiceForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
-import useContextoVisual from "@/components/lib/useContextoVisual";
-import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * 🔍 V20.2: MOTOR DE BUSCA UNIVERSAL MELHORADO
@@ -157,8 +155,7 @@ const buscarEmObjeto = (obj, termo) => {
 };
 
 /**
- * CADASTROS GERAIS V20.3 - FIX CRÍTICO TABELA DE PREÇO
- * NOVO: Tabelas de Preço migradas do módulo Comercial
+ * CADASTROS GERAIS V20.2 - HUB CENTRAL COM BUSCA UNIVERSAL MELHORADA
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -229,10 +226,6 @@ export default function Cadastros() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast(); // Initialize toast
-  const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
-  const { hasPermission } = usePermissions();
-
-  console.log('🏢 CADASTROS - empresaAtual:', empresaAtual);
 
   // QUERIES
   const { data: clientes = [] } = useQuery({
@@ -455,14 +448,12 @@ export default function Cadastros() {
   const tiposFreteFiltrados = filtrarPorBuscaUniversal(tiposFrete);
   const modelosDocumentoFiltrados = filtrarPorBuscaUniversal(modelosDocumento);
 
-  // ✅ V20.3: MUTATIONS COM TRATAMENTO DE ERRO
+  // MUTATIONS UNIVERSAIS - TODAS AS ENTIDADES
   const createMutation = useMutation({
     mutationFn: async ({ entity, data }) => {
-      console.log('🚀 CREATE MUTATION - Entity:', entity, 'Data:', data);
       return await base44.entities[entity].create(data);
     },
-    onSuccess: (result, variables) => {
-      console.log('✅ CREATE SUCCESS - Entity:', variables.entity, 'Result:', result);
+    onSuccess: (_, variables) => {
       const queryMap = {
         'Colaborador': 'colaboradores',
         'Transportadora': 'transportadoras',
@@ -507,24 +498,14 @@ export default function Cadastros() {
       // Specific toasts can be handled in individual dialog onSubmits if needed,
       // but this provides a generic success for all.
       toast({ title: `✅ ${variables.entity} criado com sucesso!` });
-    },
-    onError: (error, variables) => {
-      console.error('❌ CREATE ERROR - Entity:', variables.entity, 'Error:', error);
-      toast({ 
-        title: `❌ Erro ao criar ${variables.entity}`, 
-        description: error.message || 'Erro desconhecido',
-        variant: "destructive" 
-      });
     }
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ entity, id, data }) => {
-      console.log('🔄 UPDATE MUTATION - Entity:', entity, 'ID:', id, 'Data:', data);
       return await base44.entities[entity].update(id, data);
     },
-    onSuccess: (result, variables) => {
-      console.log('✅ UPDATE SUCCESS - Entity:', variables.entity, 'Result:', result);
+    onSuccess: (_, variables) => {
       const queryMap = {
         'Colaborador': 'colaboradores',
         'Transportadora': 'transportadoras',
@@ -566,14 +547,6 @@ export default function Cadastros() {
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
       handleCloseDialog();
       toast({ title: `✅ ${variables.entity} atualizado com sucesso!` });
-    },
-    onError: (error, variables) => {
-      console.error('❌ UPDATE ERROR - Entity:', variables.entity, 'Error:', error);
-      toast({ 
-        title: `❌ Erro ao atualizar ${variables.entity}`, 
-        description: error.message || 'Erro desconhecido',
-        variant: "destructive" 
-      });
     }
   });
 
@@ -598,70 +571,16 @@ export default function Cadastros() {
   const handleSubmit = (data) => {
     const entityName = editingItem?._entityName;
 
-    console.log('📝 ========== CADASTROS handleSubmit ==========');
-    console.log('🔍 entityName:', entityName);
-    console.log('🔍 tipoDialog:', tipoDialog);
-    console.log('📦 data recebida:', JSON.stringify(data, null, 2));
-    console.log('🔍 editingItem:', editingItem);
-    console.log('🏢 empresaAtual disponível:', empresaAtual);
-    console.log('🏢 empresaAtual.id:', empresaAtual?.id);
-
     if (!entityName) {
-      console.error("❌ EntityName não encontrado!");
-      toast({ 
-        title: "❌ Erro ao salvar", 
-        description: "Tipo de entidade desconhecido.", 
-        variant: "destructive" 
-      });
+      console.error("Unknown entity for submission with tipoDialog:", tipoDialog, "and editingItem:", editingItem);
+      toast({ title: "❌ Erro ao salvar", description: "Tipo de entidade desconhecido.", variant: "destructive" });
       return;
     }
-
-    // ✅ V20.3: GARANTIR empresa_id para TabelaPreco
-    let dataFinal = { ...data };
-
-    // Lista de entidades que SEMPRE precisam de empresa_id
-    const entidadesQueNecessitamEmpresa = [
-      'Produto', 'TabelaPreco', 'CatalogoWeb', 'Servico',
-      'Fornecedor', 'Colaborador', 'Transportadora', 'Veiculo', 'Banco', 'FormaPagamento',
-      'CentroCusto', 'Departamento', 'Cargo', 'Turno', 'CondicaoComercial', 'ContatoB2B',
-      'Representante', 'SegmentoCliente', 'GrupoProduto', 'Marca', 'KitProduto',
-      'PlanoDeContas', 'CentroResultado', 'TipoDespesa', 'MoedaIndice', 'Motorista',
-      'TipoFrete', 'ModeloDocumento', 'EventoNotificacao'
-    ];
-
-    // ✅ INJETAR empresa_id se não existir nos dados
-    if (entidadesQueNecessitamEmpresa.includes(entityName)) {
-      if (!dataFinal.empresa_id) {
-        if (empresaAtual?.id) {
-          console.log('💉 Injetando empresa_id:', empresaAtual.id);
-          dataFinal.empresa_id = empresaAtual.id;
-        } else {
-          console.error('❌ ERRO CRÍTICO: empresaAtual não disponível! Não é possível criar/atualizar sem empresa_id.');
-          toast({ 
-            title: "❌ Erro", 
-            description: "Empresa atual não identificada. Por favor, selecione uma empresa no seletor de empresas.", 
-            variant: "destructive" 
-          });
-          return;
-        }
-      } else {
-        console.log('✅ empresa_id já existe nos dados:', dataFinal.empresa_id);
-      }
-    }
-
-    // Para grupos empresariais (se estiver criando um GrupoEmpresarial e a empresa atual já pertencer a um grupo)
-    if (entityName === 'GrupoEmpresarial' && !dataFinal.group_id && empresaAtual?.group_id) {
-      dataFinal.group_id = empresaAtual.group_id;
-    }
-    
-    console.log('📤 Dados finais COMPLETOS para envio:', JSON.stringify(dataFinal, null, 2));
     
     if (editingItem?.id) {
-      console.log('🔄 Chamando UPDATE mutation...');
-      updateMutation.mutate({ entity: entityName, id: editingItem.id, data: dataFinal });
+      updateMutation.mutate({ entity: entityName, id: editingItem.id, data });
     } else {
-      console.log('➕ Chamando CREATE mutation...');
-      createMutation.mutate({ entity: entityName, data: dataFinal });
+      createMutation.mutate({ entity: entityName, data });
     }
   };
 
@@ -1729,7 +1648,7 @@ export default function Cadastros() {
                         <TableCell className="text-xs">{s.tipo_servico}</TableCell>
                         <TableCell className="text-xs">{s.unidade}</TableCell>
                         <TableCell className="text-sm font-semibold text-green-700">
-                          R$ ${(s.preco_servico || 0).toFixed(2)}
+                          R$ {(s.preco_servico || 0).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button size="sm" variant="ghost" onClick={() => handleEdit(s, 'servicos', 'Servico')}>
@@ -1849,7 +1768,7 @@ export default function Cadastros() {
                           <TableCell className="font-medium text-sm">{k.nome_kit}</TableCell>
                           <TableCell className="text-xs">{(k.itens_kit || []).length} itens</TableCell>
                           <TableCell className="text-sm font-semibold text-green-700">
-                            R$ ${(k.preco_kit || 0).toFixed(2)}
+                            R$ {(k.preco_kit || 0).toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right">
                             <Button size="sm" variant="ghost" onClick={() => handleEdit(k, 'kits', 'KitProduto')}>
