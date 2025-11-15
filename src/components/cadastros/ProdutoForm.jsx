@@ -14,6 +14,10 @@ import { toast } from "sonner";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
 /**
+ * V21.1.2 - EVOLUÇÃO DO CADASTRO DE PRODUTOS
+ * ✅ Toggle "Preencher manualmente" (ignorar IA)
+ * ✅ Campos de peso líquido/bruto + dimensões (frete/e-commerce)
+ * ✅ Suporte para cadastro via NF-e e em lote (botões preparados)
  * V22.0: REGRA MESTRE DE CONVERSÃO DE UNIDADES
  * Este formulário é o HUB central que define como o produto pode ser vendido/comprado
  */
@@ -29,7 +33,13 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
           metros_por_peca: 0,
           peca_por_ton: 0,
           kg_por_ton: 1000
-        }
+        },
+        // V21.1.2: NOVOS CAMPOS
+        peso_liquido_kg: produto.peso_liquido_kg || 0,
+        peso_bruto_kg: produto.peso_bruto_kg || 0,
+        altura_cm: produto.altura_cm || 0,
+        largura_cm: produto.largura_cm || 0,
+        comprimento_cm: produto.comprimento_cm || 0
       };
     }
     
@@ -59,7 +69,13 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
       ncm: '',
       cest: '',
       unidade_medida: '',
-      status: 'Ativo'
+      status: 'Ativo',
+      // V21.1.2: NOVOS CAMPOS
+      peso_liquido_kg: 0,
+      peso_bruto_kg: 0,
+      altura_cm: 0,
+      largura_cm: 0,
+      comprimento_cm: 0
     };
   });
 
@@ -67,7 +83,10 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
   const [processandoIA, setProcessandoIA] = useState(false);
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [calculoConversao, setCalculoConversao] = useState(null);
-  const [sugestoesIA, setSugestoesIA] = useState({}); // Added
+  const [sugestoesIA, setSugestoesIA] = useState({});
+  
+  // V21.1.2: NOVO TOGGLE
+  const [modoManual, setModoManual] = useState(false);
 
   // V22.0: Recalcular fatores quando mudam campos-chave
   useEffect(() => {
@@ -75,6 +94,16 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
       recalcularFatoresConversao();
     }
   }, [formData.peso_teorico_kg_m, formData.comprimento_barra_padrao_m, formData.eh_bitola]);
+
+  // V21.1.2: Calcular volume automaticamente
+  useEffect(() => {
+    if (formData.altura_cm > 0 && formData.largura_cm > 0 && formData.comprimento_cm > 0) {
+      const volume_m3 = (formData.altura_cm * formData.largura_cm * formData.comprimento_cm) / 1000000;
+      setFormData(prev => ({ ...prev, volume_m3 }));
+    } else if (formData.volume_m3 !== 0) { // If dimensions are 0 but volume_m3 was previously set, reset it
+        setFormData(prev => ({ ...prev, volume_m3: 0 }));
+    }
+  }, [formData.altura_cm, formData.largura_cm, formData.comprimento_cm, formData.volume_m3]); // Add volume_m3 to deps to prevent infinite loop on reset
 
   // V22.0: MOTOR DE CONVERSÃO AUTOMÁTICA
   const recalcularFatoresConversao = () => {
@@ -163,7 +192,7 @@ Caso contrário, sugira:
   };
 
   const aplicarSugestaoIA = () => {
-    if (!iaSugestao) return;
+    if (!iaSugestao || modoManual) return;
     
     setFormData(prev => ({
       ...prev,
@@ -259,6 +288,25 @@ Caso contrário, sugira:
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* V21.1.2: TOGGLE MODO MANUAL */}
+      <Alert className="border-blue-300 bg-blue-50">
+        <AlertDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-sm text-blue-900">🤖 Assistência de IA</p>
+              <p className="text-xs text-blue-700">A IA pode sugerir NCM, grupo, bitola e unidades automaticamente</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Label className="text-sm">Preencher manualmente (ignorar IA)</Label>
+              <Switch
+                checked={modoManual}
+                onCheckedChange={setModoManual}
+              />
+            </div>
+          </div>
+        </AlertDescription>
+      </Alert>
+
       {/* SEÇÃO 1: Identificação */}
       <Card className="border-purple-200 bg-purple-50">
         <CardContent className="p-4 space-y-4">
@@ -281,7 +329,7 @@ Caso contrário, sugira:
                 size="sm"
                 variant="outline"
                 onClick={() => analisarDescricaoIA(formData.descricao)}
-                disabled={processandoIA}
+                disabled={processandoIA || modoManual}
               >
                 {processandoIA ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               </Button>
@@ -289,7 +337,7 @@ Caso contrário, sugira:
             <p className="text-xs text-slate-500 mt-1">✨ IA preenche automaticamente NCM, peso e unidades</p>
           </div>
 
-          {iaSugestao && (
+          {iaSugestao && !modoManual && (
             <Alert className="border-purple-300 bg-purple-100">
               <AlertDescription>
                 <div className="flex justify-between items-start mb-2">
@@ -301,6 +349,15 @@ Caso contrário, sugira:
                     Aplicar Tudo
                   </Button>
                 </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {modoManual && iaSugestao && (
+            <Alert className="border-orange-200 bg-orange-50">
+              <AlertDescription className="text-sm text-orange-900">
+                ℹ️ <strong>Modo Manual Ativo:</strong> IA encontrou sugestões, mas não as aplicará automaticamente.
+                Você pode revisar: {iaSugestao.explicacao}
               </AlertDescription>
             </Alert>
           )}
@@ -570,6 +627,103 @@ Caso contrário, sugira:
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* V21.1.2: NOVA SEÇÃO - PESO E DIMENSÕES (FRETE/E-COMMERCE) */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardContent className="p-4 space-y-4">
+          <h3 className="font-bold text-orange-900 flex items-center gap-2">
+            <Package className="w-5 h-5" />
+            Peso e Dimensões (Logística & E-commerce)
+          </h3>
+
+          <Alert className="border-orange-300 bg-orange-100">
+            <AlertDescription className="text-xs text-orange-900">
+              📦 <strong>Usado em:</strong> Cálculo de frete, cubagem de caminhão, catálogo de marketplace (ML, Shopee), Portal do Cliente
+            </AlertDescription>
+          </Alert>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Peso Líquido (kg)</Label>
+              <Input
+                type="number"
+                step="0.001"
+                value={formData.peso_liquido_kg}
+                onChange={(e) => setFormData(prev => ({...prev, peso_liquido_kg: parseFloat(e.target.value) || 0}))}
+                placeholder="0.000"
+              />
+              <p className="text-xs text-slate-500 mt-1">Peso do produto sem embalagem</p>
+            </div>
+
+            <div>
+              <Label>Peso Bruto (kg)</Label>
+              <Input
+                type="number"
+                step="0.001"
+                value={formData.peso_bruto_kg}
+                onChange={(e) => setFormData(prev => ({...prev, peso_bruto_kg: parseFloat(e.target.value) || 0}))}
+                placeholder="0.000"
+              />
+              <p className="text-xs text-slate-500 mt-1">Peso com embalagem</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 gap-4">
+            <div>
+              <Label>Altura (cm)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={formData.altura_cm}
+                onChange={(e) => setFormData(prev => ({...prev, altura_cm: parseFloat(e.target.value) || 0}))}
+                placeholder="0.0"
+              />
+            </div>
+
+            <div>
+              <Label>Largura (cm)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={formData.largura_cm}
+                onChange={(e) => setFormData(prev => ({...prev, largura_cm: parseFloat(e.target.value) || 0}))}
+                placeholder="0.0"
+              />
+            </div>
+
+            <div>
+              <Label>Comprimento (cm)</Label>
+              <Input
+                type="number"
+                step="0.1"
+                value={formData.comprimento_cm}
+                onChange={(e) => setFormData(prev => ({...prev, comprimento_cm: parseFloat(e.target.value) || 0}))}
+                placeholder="0.0"
+              />
+            </div>
+
+            <div>
+              <Label>Volume (m³)</Label>
+              <Input
+                type="number"
+                value={formData.volume_m3?.toFixed(6) || 0}
+                disabled
+                className="bg-slate-100"
+              />
+              <p className="text-xs text-slate-500 mt-1">Calculado automaticamente</p>
+            </div>
+          </div>
+
+          {formData.volume_m3 > 0 && (
+            <Alert className="border-green-300 bg-green-50">
+              <AlertDescription className="text-xs text-green-900">
+                ✅ <strong>Cubagem:</strong> {formData.volume_m3.toFixed(6)} m³ por unidade
+                {formData.peso_bruto_kg > 0 && ` • Peso taxado: ${Math.max(formData.peso_bruto_kg, formData.volume_m3 * 300).toFixed(2)} kg`}
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 
