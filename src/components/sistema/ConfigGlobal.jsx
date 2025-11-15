@@ -14,7 +14,7 @@ import {
   Link2,
   FileText,
   MessageSquare,
-  Brain,
+  Sparkles,
   Bell,
   Shield,
   Database,
@@ -86,7 +86,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
             Fiscal
           </TabsTrigger>
           <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Brain className="w-4 h-4 mr-2" />
+            <Sparkles className="w-4 h-4 mr-2" />
             IA
           </TabsTrigger>
           <TabsTrigger value="notificacoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
@@ -217,7 +217,7 @@ export default function ConfigGlobal({ empresaId, grupoId }) {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Brain className="w-5 h-5 text-purple-600" />
+                <Sparkles className="w-5 h-5 text-purple-600" />
                 Módulos de Inteligência Artificial
               </CardTitle>
             </CardHeader>
