@@ -42,17 +42,17 @@ import {
   CheckCircle2,
   AlertTriangle,
   Bell,
-  Lock, // NEW: Lock icon for Chatbot intents
-  Shield, // NEW: Shield icon for PerfilAcesso
-  Briefcase, // NEW ICON
-  UserCircle, // NEW ICON
-  Clock, // NEW ICON
-  UserCheck, // NEW ICON: UserCheck for Representantes
-  Award, // NEW ICON: Award for Brands
-  Target, // NEW ICON for Centros de Resultado
-  Receipt, // NEW ICON for Tipos de Despesa
-  TrendingUp, // NEW ICON for Moedas e Índices
-  Eye, // NEW: Eye icon for view actions
+  Lock,
+  Shield,
+  Briefcase,
+  UserCircle,
+  Clock,
+  UserCheck,
+  Award,
+  Target,
+  Receipt,
+  TrendingUp,
+  Eye,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -77,18 +77,18 @@ import EventoNotificacaoForm from "../components/cadastros/EventoNotificacaoForm
 import BancoForm from "../components/cadastros/BancoForm";
 import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
 import VeiculoForm from "../components/cadastros/VeiculoForm";
-import EmpresaForm from "../components/cadastros/EmpresaForm"; // NEW IMPORT
-import ProdutoForm from "../components/cadastros/ProdutoForm"; // NEW IMPORT
-import ServicoForm from "../components/cadastros/ServicoForm"; // NEW IMPORT
-import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto"; // NEW IMPORT for V21.1.2
-import CatalogoWebForm from "../components/cadastros/CatalogoWebForm"; // NEW IMPORT
-import WebhookForm from "../components/cadastros/WebhookForm"; // NEW IMPORT
-import ChatbotIntentsForm from "../components/cadastros/ChatbotIntentsForm"; // NEW IMPORT
-import UsuarioForm from "../components/cadastros/UsuarioForm"; // NEW IMPORT
-import PerfilAcessoForm from "../components/cadastros/PerfilAcessoForm"; // NEW IMPORT
-import RotaPadraoForm from "../components/cadastros/RotaPadraoForm"; // NEW IMPORT
-import LocalEstoqueForm from "../components/cadastros/LocalEstoqueForm"; // NEW IMPORT
-import CadastroFiscalForm from "../components/cadastros/CadastroFiscalForm"; // NEW IMPORT
+import EmpresaForm from "../components/cadastros/EmpresaForm";
+import ProdutoForm from "../components/cadastros/ProdutoForm";
+import ServicoForm from "../components/cadastros/ServicoForm";
+import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
+import CatalogoWebForm from "../components/cadastros/CatalogoWebForm";
+import WebhookForm from "../components/cadastros/WebhookForm";
+import ChatbotIntentsForm from "../components/cadastros/ChatbotIntentsForm";
+import UsuarioForm from "../components/cadastros/UsuarioForm";
+import PerfilAcessoForm from "../components/cadastros/PerfilAcessoForm";
+import RotaPadraoForm from "../components/cadastros/RotaPadraoForm";
+import LocalEstoqueForm from "../components/cadastros/LocalEstoqueForm";
+import CadastroFiscalForm from "../components/cadastros/CadastroFiscalForm";
 import GrupoEmpresarialForm from "../components/cadastros/GrupoEmpresarialForm";
 import FilialForm from "../components/cadastros/FilialForm";
 import DepartamentoForm from "../components/cadastros/DepartamentoForm";
@@ -108,7 +108,7 @@ import MoedaIndiceForm from "../components/cadastros/MoedaIndiceForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
-import MultiTabelasEditor from "../components/cadastros/MultiTabelasEditor"; // NEW IMPORT
+import MultiTabelasEditor from "../components/cadastros/MultiTabelasEditor";
 
 /**
  * CADASTROS GERAIS V20.1 - HUB CENTRAL COM AUDITORIA COMPLETA
@@ -146,18 +146,18 @@ export default function Cadastros() {
   const [produtoFormOpen, setProdutoFormOpen] = useState(false);
   const [servicoFormOpen, setServicoFormOpen] = useState(false);
   const [tabelaPrecoFormOpen, setTabelaPrecoFormOpen] = useState(false);
-  const [tabelaSelecionadaEditar, setTabelaSelecionadaEditar] = useState(null); // NEW
-  const [multiTabelasOpen, setMultiTabelasOpen] = useState(false); // NEW
-  const [tabelasSelecionadasMulti, setTabelasSelecionadasMulti] = useState([]); // NEW
+  const [tabelaSelecionadaEditar, setTabelaSelecionadaEditar] = useState(null);
+  const [multiTabelasOpen, setMultiTabelasOpen] = useState(false);
+  const [tabelasSelecionadasMulti, setTabelasSelecionadasMulti] = useState([]);
   const [catalogoWebFormOpen, setCatalogoWebFormOpen] = useState(false);
   const [empresaFormOpen, setEmpresaFormOpen] = useState(false);
 
-  const [usuarioFormOpen, setUsuarioFormOpen] = useState(false); // NEW
-  const [perfilAcessoFormOpen, setPerfilAcessoFormOpen] = useState(false); // NEW
-  const [rotaPadraoFormOpen, setRotaPadraoFormOpen] = useState(false); // NEW
-  const [localEstoqueFormOpen, setLocalEstoqueFormOpen] = useState(false); // NEW
-  const [cadastroFiscalFormOpen, setCadastroFiscalFormOpen] = useState(false); // NEW
-  const [bitolasPanelOpen, setBitolasPanelOpen] = useState(false); // NEW
+  const [usuarioFormOpen, setUsuarioFormOpen] = useState(false);
+  const [perfilAcessoFormOpen, setPerfilAcessoFormOpen] = useState(false);
+  const [rotaPadraoFormOpen, setRotaPadraoFormOpen] = useState(false);
+  const [localEstoqueFormOpen, setLocalEstoqueFormOpen] = useState(false);
+  const [cadastroFiscalFormOpen, setCadastroFiscalFormOpen] = useState(false);
+  const [bitolasPanelOpen, setBitolasPanelOpen] = useState(false);
 
   const [grupoEmpresarialFormOpen, setGrupoEmpresarialFormOpen] = useState(false);
   const [filialFormOpen, setFilialFormOpen] = useState(false);
@@ -185,7 +185,7 @@ export default function Cadastros() {
   const [modeloDocumentoFormOpen, setModeloDocumentoFormOpen] = useState(false);
 
   const queryClient = useQueryClient();
-  const { toast } = useToast(); // Initialize toast
+  const { toast } = useToast();
 
   // QUERIES
   const { data: clientes = [] } = useQuery({
@@ -274,12 +274,12 @@ export default function Cadastros() {
     queryFn: () => base44.entities.CatalogoWeb.list(),
   });
 
-  const { data: usuarios = [] } = useQuery({ // NEW QUERY
+  const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios'],
     queryFn: () => base44.entities.User.list(),
   });
 
-  const { data: perfisAcesso = [] } = useQuery({ // NEW QUERY
+  const { data: perfisAcesso = [] } = useQuery({
     queryKey: ['perfis-acesso'],
     queryFn: () => base44.entities.PerfilAcesso.list(),
   });
@@ -392,11 +392,11 @@ export default function Cadastros() {
         'Departamento': 'departamentos',
         'Cargo': 'cargos',
         'Turno': 'turnos',
-        'User': 'usuarios', // For UsuarioForm
-        'PerfilAcesso': 'perfis-acesso', // For PerfilAcessoForm
-        'RotaPadrao': 'rotas-padrao', // Placeholder query key for RotaPadraoForm
-        'LocalEstoque': 'locais-estoque', // Placeholder query key for LocalEstoqueForm
-        'CadastroFiscal': 'cadastros-fiscais', // Placeholder query key for CadastroFiscalForm
+        'User': 'usuarios',
+        'PerfilAcesso': 'perfis-acesso',
+        'RotaPadrao': 'rotas-padrao',
+        'LocalEstoque': 'locais-estoque',
+        'CadastroFiscal': 'cadastros-fiscais',
         'CondicaoComercial': 'condicoes-comerciais',
         'ContatoB2B': 'contatos-b2b',
         'Representante': 'representantes',
@@ -413,7 +413,7 @@ export default function Cadastros() {
         'ModeloDocumento': 'modelos-documento'
       };
       // Use variables.entity directly if it's the exact key, otherwise map
-      const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's'; // Fallback for entities without direct map
+      const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
       // Invalidate table price items too if TabelaPreco is created/updated
       if (variables.entity === 'TabelaPreco') {
@@ -448,11 +448,11 @@ export default function Cadastros() {
         'Departamento': 'departamentos',
         'Cargo': 'cargos',
         'Turno': 'turnos',
-        'User': 'usuarios', // For UsuarioForm
-        'PerfilAcesso': 'perfis-acesso', // For PerfilAcessoForm
-        'RotaPadrao': 'rotas-padrao', // Placeholder query key for RotaPadraoForm
-        'LocalEstoque': 'locais-estoque', // Placeholder query key for LocalEstoqueForm
-        'CadastroFiscal': 'cadastros-fiscais', // Placeholder query key for CadastroFiscalForm
+        'User': 'usuarios',
+        'PerfilAcesso': 'perfis-acesso',
+        'RotaPadrao': 'rotas-padrao',
+        'LocalEstoque': 'locais-estoque',
+        'CadastroFiscal': 'cadastros-fiscais',
         'CondicaoComercial': 'condicoes-comerciais',
         'ContatoB2B': 'contatos-b2b',
         'Representante': 'representantes',
@@ -492,7 +492,7 @@ export default function Cadastros() {
   };
 
   const handleOpenNew = (tipo, entityName) => {
-    setEditingItem({ _entityName: entityName, _isNew: true }); // Adicionar flag _isNew
+    setEditingItem({ _entityName: entityName, _isNew: true });
     setTipoDialog(tipo);
     setIsDialogOpen(true);
   };
@@ -1829,7 +1829,7 @@ export default function Cadastros() {
                 <DollarSign className="w-4 h-4 text-green-600" />
                 <AlertDescription className="text-sm text-green-900">
                   💰 <strong>IA PriceBrain:</strong> Monitora custo médio e sugere reajustes diários
-                </Alertcription>
+                </AlertDescription>
               </Alert>
 
               <Alert className="border-cyan-200 bg-cyan-50">
@@ -2928,7 +2928,7 @@ export default function Cadastros() {
             </DialogTitle>
           </DialogHeader>
           <ConfiguracaoIntegracaoForm
-            config={null} // Assuming new config or default values
+            config={null}
             onSubmit={(data) => {
               console.log('Config salva:', data);
               toast({
@@ -2938,7 +2938,7 @@ export default function Cadastros() {
               });
               setConfigIntegracaoOpen(false);
             }}
-            isSubmitting={false} // Adjust based on actual mutation status
+            isSubmitting={false}
           />
         </DialogContent>
       </Dialog>
@@ -2953,7 +2953,7 @@ export default function Cadastros() {
             </DialogTitle>
           </DialogHeader>
           <EventoNotificacaoForm
-            evento={null} // Assuming new event or default values
+            evento={null}
             onSubmit={(data) => createMutation.mutate({ entity: 'EventoNotificacao', data })}
             isSubmitting={createMutation.isPending}
           />
@@ -3005,7 +3005,7 @@ export default function Cadastros() {
           </DialogHeader>
           <FilialForm
             filial={null}
-            onSubmit={(data) => createMutation.mutate({ entity: 'Empresa', data: { ...data, tipo: 'Filial' }})} // Assuming FilialForm maps to Empresa entity
+            onSubmit={(data) => createMutation.mutate({ entity: 'Empresa', data: { ...data, tipo: 'Filial' }})}
             isSubmitting={createMutation.isPending}
           />
         </DialogContent>
@@ -3069,7 +3069,7 @@ export default function Cadastros() {
           </DialogHeader>
           <div className="space-y-4">
             <Alert className="border-purple-200 bg-purple-50">
-              <AlertDescription className="text-sm">
+              <AlertDescription className="sm">
                 📊 Exibindo apenas produtos com <strong>eh_bitola = true</strong>
               </AlertDescription>
             </Alert>
