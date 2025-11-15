@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Bot, 
+  Brain, 
   Lightbulb, 
   AlertTriangle, 
   TrendingUp, 
@@ -193,7 +193,7 @@ export default function AssistenteInteligente({
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Bot className="w-4 h-4 text-purple-600" />
+                      <Brain className="w-4 h-4 text-purple-600" />
                       <h4 className="font-semibold text-sm">{sugestao.titulo}</h4>
                       <Badge className={`${corBadge[sugestao.tipo]} text-white text-xs`}>
                         {sugestao.tipo === 'urgente' ? 'Urgente' :
@@ -237,7 +237,7 @@ export default function AssistenteInteligente({
 
       {/* Badge de IA Ativa */}
       <div className="flex items-center gap-2 text-xs text-slate-500 justify-center">
-        <Bot className="w-4 h-4 text-purple-500" />
+        <Brain className="w-4 h-4 text-purple-500" />
         <span>Assistente Inteligente ativo • {sugestoes.length} sugestões</span>
       </div>
     </div>
