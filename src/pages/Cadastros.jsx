@@ -80,7 +80,7 @@ import VeiculoForm from "../components/cadastros/VeiculoForm";
 import EmpresaForm from "../components/cadastros/EmpresaForm"; // NEW IMPORT
 import ProdutoForm from "../components/cadastros/ProdutoForm"; // NEW IMPORT
 import ServicoForm from "../components/cadastros/ServicoForm"; // NEW IMPORT
-import TabelaPrecoForm from "../components/cadastros/TabelaPrecoForm"; // NEW IMPORT
+import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto"; // NEW IMPORT for V21.1.2
 import CatalogoWebForm from "../components/cadastros/CatalogoWebForm"; // NEW IMPORT
 import WebhookForm from "../components/cadastros/WebhookForm"; // NEW IMPORT
 import ChatbotIntentsForm from "../components/cadastros/ChatbotIntentsForm"; // NEW IMPORT
@@ -260,6 +260,11 @@ export default function Cadastros() {
     queryFn: () => base44.entities.TabelaPreco.list(),
   });
 
+  const { data: tabelasPrecoItens = [] } = useQuery({
+    queryKey: ['tabelas-preco-itens'],
+    queryFn: () => base44.entities.TabelaPrecoItem.list(),
+  });
+
   const { data: catalogoWeb = [] } = useQuery({
     queryKey: ['catalogo-web'],
     queryFn: () => base44.entities.CatalogoWeb.list(),
@@ -406,6 +411,10 @@ export default function Cadastros() {
       // Use variables.entity directly if it's the exact key, otherwise map
       const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's'; // Fallback for entities without direct map
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
+      // Invalidate table price items too if TabelaPreco is created/updated
+      if (variables.entity === 'TabelaPreco') {
+        queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
+      }
       handleCloseDialog();
       // Specific toasts can be handled in individual dialog onSubmits if needed,
       // but this provides a generic success for all.
@@ -457,6 +466,10 @@ export default function Cadastros() {
       };
       const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
+      // Invalidate table price items too if TabelaPreco is created/updated
+      if (variables.entity === 'TabelaPreco') {
+        queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
+      }
       handleCloseDialog();
       toast({ title: `✅ ${variables.entity} atualizado com sucesso!` });
     }
@@ -1513,7 +1526,7 @@ export default function Cadastros() {
                         <TableCell className="text-xs">{s.tipo_servico}</TableCell>
                         <TableCell className="text-xs">{s.unidade}</TableCell>
                         <TableCell className="text-sm font-semibold text-green-700">
-                          R$ {(s.preco_servico || 0).toFixed(2)}
+                          R$ ${(s.preco_servico || 0).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button size="sm" variant="ghost" onClick={() => handleEdit(s, 'servicos', 'Servico')}>
@@ -1633,7 +1646,7 @@ export default function Cadastros() {
                           <TableCell className="font-medium text-sm">{k.nome_kit}</TableCell>
                           <TableCell className="text-xs">{(k.itens_kit || []).length} itens</TableCell>
                           <TableCell className="text-sm font-semibold text-green-700">
-                            R$ {(k.preco_kit || 0).toFixed(2)}
+                            R$ ${(k.preco_kit || 0).toFixed(2)}
                           </TableCell>
                           <TableCell className="text-right">
                             <Button size="sm" variant="ghost" onClick={() => handleEdit(k, 'kits', 'KitProduto')}>
@@ -1647,18 +1660,26 @@ export default function Cadastros() {
                 </div>
               </div>
 
-              {/* Tabelas Preço */}
+              {/* Tabelas Preço - EXPANDIDO V21.1.2 */}
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600" />
                     Tabelas de Preço ({tabelasPreco.length})
                   </h4>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('tabelas', 'TabelaPreco')}>
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleOpenNew('tabelas', 'TabelaPreco')}>
                     <Plus className="w-3 h-3 mr-2" />
                     Nova Tabela
                   </Button>
                 </div>
+                
+                <Alert className="border-green-200 bg-green-50 mb-3">
+                  <DollarSign className="w-4 h-4 text-green-600" />
+                  <AlertDescription className="text-sm text-green-900">
+                    💰 <strong>Hub Central V21.1.2:</strong> Todas as tabelas de preço são gerenciadas aqui. Comercial apenas consome os preços definidos.
+                  </AlertDescription>
+                </Alert>
+
                 <div className="border rounded-lg max-h-64 overflow-y-auto">
                   <Table>
                     <TableHeader className="sticky top-0 bg-slate-50">
@@ -1666,25 +1687,49 @@ export default function Cadastros() {
                         <TableHead>Nome</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Produtos</TableHead>
+                        <TableHead>Vigência</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {tabelasPreco.map((t) => (
-                        <TableRow key={t.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{t.nome}</TableCell>
-                          <TableCell className="text-xs">{t.tipo}</TableCell>
-                          <TableCell className="text-xs">{t.quantidade_produtos || 0}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(t, 'tabelas', 'TabelaPreco')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {tabelasPreco.map((t) => {
+                        const itensTabela = tabelasPrecoItens.filter(i => i.tabela_preco_id === t.id);
+                        return (
+                          <TableRow key={t.id} className="hover:bg-slate-50">
+                            <TableCell className="font-medium text-sm">{t.nome}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">{t.tipo}</Badge>
+                            </TableCell>
+                            <TableCell className="text-xs">{itensTabela.length} itens</TableCell>
+                            <TableCell className="text-xs">
+                              {new Date(t.data_inicio).toLocaleDateString('pt-BR')}
+                              {t.data_fim ? ` - ${new Date(t.data_fim).toLocaleDateString('pt-BR')}` : ''}
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={t.ativo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}>
+                                {t.ativo ? 'Ativa' : 'Inativa'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button size="sm" variant="ghost" onClick={() => handleEdit(t, 'tabelas', 'TabelaPreco')}>
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>
+                
+                {tabelasPreco.length === 0 && (
+                  <div className="text-center py-8 text-slate-500 border rounded-lg mt-2">
+                    <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
+                    <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
+                  </div>
+                )}
               </div>
 
               {/* Catálogo Web */}
@@ -2758,7 +2803,13 @@ export default function Cadastros() {
           {tipoDialog === 'grupos-produto' && <GrupoProdutoForm grupo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'marcas' && <MarcaForm marca={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'kits' && <KitProdutoForm kit={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
-          {tipoDialog === 'tabelas' && <TabelaPrecoForm tabela={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'tabelas' && (
+            <TabelaPrecoFormCompleto 
+              tabela={editingItem?.id ? editingItem : null} 
+              onSubmit={handleSubmit} 
+              isSubmitting={createMutation.isPending || updateMutation.isPending} 
+            />
+          )}
           {tipoDialog === 'catalogo' && <CatalogoWebForm catalogoItem={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'plano-contas' && <PlanoContasForm conta={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'centros-resultado' && <CentroResultadoForm centro={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
