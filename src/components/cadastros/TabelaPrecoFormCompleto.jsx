@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -91,15 +92,18 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, isSubmitting
     }
 
     const custoBase = produto.custo_medio || produto.custo_aquisicao || 0;
+    const precoVenda = produto.preco_venda || custoBase * 1.3;
+    const margem = custoBase > 0 ? ((precoVenda - custoBase) / custoBase * 100) : 0;
+    
     const novoItem = {
       tabela_preco_id: tabela?.id || '',
       produto_id: produto.id,
       produto_descricao: produto.descricao,
       produto_codigo: produto.codigo,
       custo_base: custoBase,
-      preco: produto.preco_venda || custoBase * 1.3,
+      preco: precoVenda,
       desconto_maximo_percentual: 10,
-      margem_percentual: custoBase > 0 ? ((produto.preco_venda - custoBase) / custoBase * 100) : 0
+      margem_percentual: margem
     };
 
     setItensTabela(prev => [...prev, novoItem]);
@@ -119,15 +123,18 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, isSubmitting
       .filter(p => !itensTabela.some(i => i.produto_id === p.id))
       .map(p => {
         const custoBase = p.custo_medio || p.custo_aquisicao || 0;
+        const precoVenda = p.preco_venda || custoBase * 1.3;
+        const margem = custoBase > 0 ? ((precoVenda - custoBase) / custoBase * 100) : 0;
+        
         return {
           tabela_preco_id: tabela?.id || '',
           produto_id: p.id,
           produto_descricao: p.descricao,
           produto_codigo: p.codigo,
           custo_base: custoBase,
-          preco: p.preco_venda || custoBase * 1.3,
+          preco: precoVenda,
           desconto_maximo_percentual: 10,
-          margem_percentual: custoBase > 0 ? ((p.preco_venda - custoBase) / custoBase * 100) : 0
+          margem_percentual: margem
         };
       });
 
@@ -560,10 +567,10 @@ Retorne:
                         <div className="flex-1">
                           <p className="font-semibold text-sm">{item.produto_descricao}</p>
                           <div className="flex gap-4 mt-1 text-xs text-slate-600">
-                            <span>Custo: <strong>R$ {item.custo_base.toFixed(2)}</strong></span>
-                            <span>Preço: <strong className="text-green-700">R$ {item.preco.toFixed(2)}</strong></span>
-                            <span>Margem: <strong>{item.margem_percentual?.toFixed(1)}%</strong></span>
-                            <span>Desc. Máx: <strong>{item.desconto_maximo_percentual}%</strong></span>
+                            <span>Custo: <strong>R$ {(item.custo_base || 0).toFixed(2)}</strong></span>
+                            <span>Preço: <strong className="text-green-700">R$ {(item.preco || 0).toFixed(2)}</strong></span>
+                            <span>Margem: <strong>{(item.margem_percentual || 0).toFixed(1)}%</strong></span>
+                            <span>Desc. Máx: <strong>{item.desconto_maximo_percentual || 0}%</strong></span>
                           </div>
                           {item.sugestao_ia && (
                             <Badge className="mt-1 bg-orange-100 text-orange-700 text-xs">
@@ -694,9 +701,9 @@ Retorne:
                       <div key={idx} className="p-2 bg-white rounded border text-sm">
                         <p className="font-semibold">{item.produto_descricao}</p>
                         <div className="flex gap-4 mt-1 text-xs">
-                          <span>Custo: R$ {item.custo_base.toFixed(2)}</span>
-                          <span className="text-green-700 font-semibold">Preço: R$ {item.preco.toFixed(2)}</span>
-                          <span>Margem: {item.margem_percentual?.toFixed(1)}%</span>
+                          <span>Custo: R$ {(item.custo_base || 0).toFixed(2)}</span>
+                          <span className="text-green-700 font-semibold">Preço: R$ {(item.preco || 0).toFixed(2)}</span>
+                          <span>Margem: {(item.margem_percentual || 0).toFixed(1)}%</span>
                         </div>
                       </div>
                     ))}
