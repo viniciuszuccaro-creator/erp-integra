@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -48,6 +49,7 @@ import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
 import JanelasMultitarefa from "@/components/JanelasMultitarefa";
 import BarraJanelasAbertas from "@/components/BarraJanelasAbertas";
+import { MultitarefaProvider } from "@/components/lib/useMultitarefa";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -356,7 +358,9 @@ function LayoutContent({ children, currentPageName }) {
 export default function Layout({ children, currentPageName }) {
   return (
     <UserProvider>
-      <LayoutContent children={children} currentPageName={currentPageName} />
+      <MultitarefaProvider>
+        <LayoutContent children={children} currentPageName={currentPageName} />
+      </MultitarefaProvider>
     </UserProvider>
   );
 }

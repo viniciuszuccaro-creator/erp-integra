@@ -1,48 +1,52 @@
-import { create } from 'zustand';
+import React, { createContext, useContext, useState } from 'react';
 
 /**
  * V21.1.2 - SISTEMA MULTITAREFA
- * Gerencia janelas abertas simultaneamente (estilo Windows/Mac)
+ * Usando React Context (sem zustand)
  */
-export const useMultitarefaStore = create((set) => ({
-  janelas: [],
-  
-  abrirJanela: (janela) => set((state) => {
-    const jaAberta = state.janelas.find(j => j.id === janela.id);
-    if (jaAberta) {
-      return {
-        janelas: state.janelas.map(j => 
-          j.id === janela.id ? { ...j, ativa: true } : { ...j, ativa: false }
-        )
-      };
-    }
-    return {
-      janelas: [
-        ...state.janelas.map(j => ({ ...j, ativa: false })),
-        { ...janela, ativa: true }
-      ]
-    };
-  }),
-  
-  fecharJanela: (id) => set((state) => ({
-    janelas: state.janelas.filter(j => j.id !== id)
-  })),
-  
-  ativarJanela: (id) => set((state) => ({
-    janelas: state.janelas.map(j => ({
-      ...j,
-      ativa: j.id === id
-    }))
-  })),
-  
-  minimizarJanela: (id) => set((state) => ({
-    janelas: state.janelas.map(j => 
+const MultitarefaContext = createContext(null);
+
+export function MultitarefaProvider({ children }) {
+  const [janelas, setJanelas] = useState([]);
+
+  const abrirJanela = (janela) => {
+    setJanelas((prev) => {
+      const jaAberta = prev.find(j => j.id === janela.id);
+      if (jaAberta) {
+        return prev.map(j => ({ ...j, ativa: j.id === janela.id }));
+      }
+      return [
+        ...prev.map(j => ({ ...j, ativa: false })),
+        { ...janela, ativa: true, minimizada: false }
+      ];
+    });
+  };
+
+  const fecharJanela = (id) => {
+    setJanelas(prev => prev.filter(j => j.id !== id));
+  };
+
+  const ativarJanela = (id) => {
+    setJanelas(prev => prev.map(j => ({ ...j, ativa: j.id === id })));
+  };
+
+  const minimizarJanela = (id) => {
+    setJanelas(prev => prev.map(j => 
       j.id === id ? { ...j, minimizada: !j.minimizada } : j
-    )
-  }))
-}));
+    ));
+  };
+
+  return (
+    <MultitarefaContext.Provider value={{ janelas, abrirJanela, fecharJanela, ativarJanela, minimizarJanela }}>
+      {children}
+    </MultitarefaContext.Provider>
+  );
+}
 
 export const useMultitarefa = () => {
-  const { janelas, abrirJanela, fecharJanela, ativarJanela, minimizarJanela } = useMultitarefaStore();
-  return { janelas, abrirJanela, fecharJanela, ativarJanela, minimizarJanela };
+  const context = useContext(MultitarefaContext);
+  if (!context) {
+    throw new Error('useMultitarefa deve ser usado dentro de MultitarefaProvider');
+  }
+  return context;
 };
