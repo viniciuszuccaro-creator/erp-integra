@@ -4,12 +4,14 @@ import WindowModal from './WindowModal';
 import MinimizedWindowsBar from './MinimizedWindowsBar';
 
 /**
- * V21.1.2 - Renderizador Global de Janelas
- * Deve ser incluído no Layout principal
+ * V21.1.2-R2 - Renderizador Global de Janelas APRIMORADO
+ * ✅ Passa isActive para cada janela
+ * ✅ Z-index dinâmico gerenciado
  */
 export default function WindowRenderer() {
   const {
     windows,
+    activeWindowId,
     closeWindow,
     minimizeWindow,
     maximizeWindow,
@@ -25,6 +27,7 @@ export default function WindowRenderer() {
         <WindowModal
           key={window.id}
           window={window}
+          isActive={window.id === activeWindowId}
           onClose={() => closeWindow(window.id)}
           onMinimize={() => minimizeWindow(window.id)}
           onMaximize={() => maximizeWindow(window.id)}

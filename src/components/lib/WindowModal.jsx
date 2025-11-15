@@ -5,11 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 /**
- * V21.1.2 - Componente de Janela/Modal Independente
- * Suporta: fixar, minimizar, maximizar, arrastar
+ * V21.1.2-R2 - Componente de Janela/Modal Aprimorado
+ * ✅ Highlighting visual de janela ativa
+ * ✅ Drag melhorado com cursor feedback
+ * ✅ Foco automático ao clicar
  */
 export default function WindowModal({ 
   window, 
+  isActive,
   onClose, 
   onMinimize, 
   onMaximize, 
@@ -36,6 +39,7 @@ export default function WindowModal({
     const handleMouseUp = () => {
       isDragging.current = false;
       document.body.style.cursor = 'default';
+      document.body.style.userSelect = '';
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -52,6 +56,7 @@ export default function WindowModal({
     
     isDragging.current = true;
     document.body.style.cursor = 'move';
+    document.body.style.userSelect = 'none';
     
     const rect = dragRef.current.getBoundingClientRect();
     dragOffset.current = {
@@ -60,6 +65,13 @@ export default function WindowModal({
     };
 
     onBringToFront();
+  };
+
+  // Trazer para frente ao clicar em qualquer parte da janela
+  const handleWindowClick = (e) => {
+    if (!isActive) {
+      onBringToFront();
+    }
   };
 
   if (window.state === 'minimized') {
@@ -72,9 +84,18 @@ export default function WindowModal({
     <div
       ref={dragRef}
       className={cn(
-        "fixed bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden",
+        "fixed bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden transition-all duration-200",
         isMaximized ? "inset-4" : "max-w-[90vw] max-h-[95vh]",
-        window.pinned ? "border-blue-500" : "border-slate-300"
+        // V21.1.2-R2: Border visual para janela ativa
+        isActive 
+          ? window.pinned 
+            ? "border-4 border-blue-500 ring-2 ring-blue-300" 
+            : "border-4 border-purple-500 ring-2 ring-purple-300"
+          : window.pinned
+            ? "border-2 border-blue-300"
+            : "border-2 border-slate-300",
+        // Sombra mais intensa na janela ativa
+        isActive ? "shadow-2xl" : "shadow-lg"
       )}
       style={{
         zIndex: window.zIndex,
@@ -83,29 +104,65 @@ export default function WindowModal({
         width: isMaximized ? undefined : '90vw',
         height: isMaximized ? undefined : '90vh'
       }}
-      onClick={onBringToFront}
+      onClick={handleWindowClick}
     >
       {/* Header */}
       <div 
         className={cn(
-          "flex items-center justify-between px-4 py-3 border-b cursor-move",
-          window.pinned ? "bg-blue-50" : "bg-slate-50"
+          "flex items-center justify-between px-4 py-3 border-b cursor-move transition-colors",
+          isActive
+            ? window.pinned 
+              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+              : "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
+            : window.pinned
+              ? "bg-blue-50"
+              : "bg-slate-50"
         )}
         onMouseDown={handleMouseDown}
       >
         <div className="flex items-center gap-3">
-          {window.icon && <window.icon className="w-5 h-5 text-slate-700" />}
+          {window.icon && (
+            <window.icon className={cn(
+              "w-5 h-5",
+              isActive ? "text-white" : "text-slate-700"
+            )} />
+          )}
           <div>
-            <h3 className="font-semibold text-slate-900">{window.title}</h3>
+            <h3 className={cn(
+              "font-semibold",
+              isActive ? "text-white" : "text-slate-900"
+            )}>
+              {window.title}
+            </h3>
             {window.subtitle && (
-              <p className="text-xs text-slate-500">{window.subtitle}</p>
+              <p className={cn(
+                "text-xs",
+                isActive ? "text-white/80" : "text-slate-500"
+              )}>
+                {window.subtitle}
+              </p>
             )}
           </div>
           {window.badge && (
-            <Badge className="ml-2">{window.badge}</Badge>
+            <Badge className={cn(
+              "ml-2",
+              isActive ? "bg-white/20 text-white" : ""
+            )}>
+              {window.badge}
+            </Badge>
           )}
           {window.pinned && (
-            <Badge className="ml-2 bg-blue-600">Fixado</Badge>
+            <Badge className={cn(
+              "ml-2",
+              isActive ? "bg-white/20 text-white" : "bg-blue-600 text-white"
+            )}>
+              Fixado
+            </Badge>
+          )}
+          {isActive && !window.pinned && (
+            <Badge className="ml-2 bg-white/20 text-white animate-pulse">
+              Ativa
+            </Badge>
           )}
         </div>
 
@@ -113,46 +170,72 @@ export default function WindowModal({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onTogglePin}
-            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTogglePin();
+            }}
+            className={cn(
+              "h-8 w-8",
+              isActive ? "hover:bg-white/20 text-white" : ""
+            )}
             title={window.pinned ? "Desfixar" : "Fixar"}
           >
             {window.pinned ? (
-              <PinOff className="w-4 h-4 text-blue-600" />
+              <PinOff className="w-4 h-4" />
             ) : (
-              <Pin className="w-4 h-4 text-slate-500" />
+              <Pin className="w-4 h-4" />
             )}
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
-            onClick={onMinimize}
-            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              onMinimize();
+            }}
+            className={cn(
+              "h-8 w-8",
+              isActive ? "hover:bg-white/20 text-white" : ""
+            )}
             title="Minimizar"
           >
-            <Minus className="w-4 h-4 text-slate-500" />
+            <Minus className="w-4 h-4" />
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
-            onClick={isMaximized ? onRestore : onMaximize}
-            className="h-8 w-8"
+            onClick={(e) => {
+              e.stopPropagation();
+              isMaximized ? onRestore() : onMaximize();
+            }}
+            className={cn(
+              "h-8 w-8",
+              isActive ? "hover:bg-white/20 text-white" : ""
+            )}
             title={isMaximized ? "Restaurar" : "Maximizar"}
           >
             {isMaximized ? (
-              <Minimize2 className="w-4 h-4 text-slate-500" />
+              <Minimize2 className="w-4 h-4" />
             ) : (
-              <Maximize2 className="w-4 h-4 text-slate-500" />
+              <Maximize2 className="w-4 h-4" />
             )}
           </Button>
 
           <Button
             variant="ghost"
             size="icon"
-            onClick={onClose}
-            className="h-8 w-8 hover:bg-red-100 hover:text-red-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className={cn(
+              "h-8 w-8",
+              isActive 
+                ? "hover:bg-red-500 text-white" 
+                : "hover:bg-red-100 hover:text-red-600"
+            )}
             title="Fechar"
           >
             <X className="w-4 h-4" />
