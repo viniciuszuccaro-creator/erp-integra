@@ -19,7 +19,7 @@ import {
   Box,
   Calendar,
   BarChart3,
-  PieChart, // This is the Lucide icon
+  PieChart, // This is the Lucide icon, kept for functionality
   Clock,
   CheckCircle,
   Percent,
