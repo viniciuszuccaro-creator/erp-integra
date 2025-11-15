@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, Package, Calendar, DollarSign } from "lucide-react";
+import { Plus, Edit, Trash2, Package, TrendingUp, Calendar } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import SearchInput from "@/components/ui/SearchInput";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function TabelaPrecoItensModal({ tabela, isOpen, onClose }) {
@@ -128,13 +129,11 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose }) {
     !itens.some(i => i.produto_id === p.id)
   );
 
-  const podeEditar = hasPermission('comercial', 'editar') || hasPermission('cadastros', 'editar');
-
-  if (!tabela) return null;
+  const podeEditar = hasPermission('comercial', 'editar_tabela_preco');
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[1180px] max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-[1180px] max-h-[620px] overflow-hidden flex flex-col">
         <DialogHeader className="border-b pb-4 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div>
@@ -313,11 +312,10 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose }) {
           ) : (
             <>
               <div className="mb-4">
-                <Input
+                <SearchInput
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="🔍 Buscar produtos na tabela..."
-                  className="h-10"
+                  onChange={setSearchTerm}
+                  placeholder="Buscar produtos na tabela..."
                 />
               </div>
 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -36,24 +35,10 @@ export function useContextoVisual() {
     const storedEmpresaId = localStorage.getItem('empresa_atual_id');
     if (storedEmpresaId) {
       setEmpresaAtualId(storedEmpresaId);
-    } else if (empresas.length > 0 && !storedEmpresaId) {
-      // ✅ V20.3: AUTO-SELECIONAR primeira empresa se não houver nenhuma selecionada
-      const primeiraEmpresa = empresas[0];
-      console.log('🏢 Auto-selecionando primeira empresa:', primeiraEmpresa);
-      setEmpresaAtualId(primeiraEmpresa.id);
-      try {
-        localStorage.setItem('empresa_atual_id', primeiraEmpresa.id);
-      } catch (e) {
-        console.warn('Erro ao salvar empresa:', e);
-      }
     }
-  }, [empresas]);
+  }, []);
 
-  // ✅ V20.3: FALLBACK GARANTIDO - sempre retorna uma empresa válida
-  const empresaAtual = empresas.find(empresa => empresa.id === empresaAtualId) || 
-                       empresaContexto || 
-                       empresas[0] || 
-                       null;
+  const empresaAtual = empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || null;
   const empresasDoGrupo = empresas.filter(empresa => empresa.group_id === grupoAtual?.id);
   const estaNoGrupo = contexto === 'grupo';
 
@@ -187,22 +172,6 @@ export function useContextoVisual() {
       console.warn('Erro ao salvar empresa:', e);
     }
   };
-
-  // ✅ V20.3: LOG DEBUG para troubleshooting
-  useEffect(() => {
-    if (empresaAtual) {
-      console.log('✅ useContextoVisual - empresaAtual disponível:', {
-        id: empresaAtual.id,
-        nome: empresaAtual.nome_fantasia || empresaAtual.razao_social
-      });
-    } else {
-      console.warn('⚠️ useContextoVisual - empresaAtual é NULL!', {
-        empresas_total: empresas.length,
-        empresaAtualId,
-        empresaContexto
-      });
-    }
-  }, [empresaAtual, empresas, empresaAtualId, empresaContexto]);
 
   return {
     contexto,

@@ -110,7 +110,6 @@ import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import TabelaPrecoItensModal from "../components/comercial/TabelaPrecoItensModal"; // NEW IMPORT
 
 /**
  * 🔍 V20.2: MOTOR DE BUSCA UNIVERSAL MELHORADO
@@ -227,9 +226,6 @@ export default function Cadastros() {
   const [motoristaFormOpen, setMotoristaFormOpen] = useState(false);
   const [tipoFreteFormOpen, setTipoFreteFormOpen] = useState(false);
   const [modeloDocumentoFormOpen, setModeloDocumentoFormOpen] = useState(false);
-
-  const [tabelaPrecoItensModalOpen, setTabelaPrecoItensModalOpen] = useState(false);
-  const [tabelaSelecionadaParaItens, setTabelaSelecionadaParaItens] = useState(null);
 
   const queryClient = useQueryClient();
   const { toast } = useToast(); // Initialize toast
@@ -1896,26 +1892,9 @@ export default function Cadastros() {
                           <TableCell className="text-xs">{t.tipo}</TableCell>
                           <TableCell className="text-xs">{t.quantidade_produtos || 0}</TableCell>
                           <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => {
-                                  setTabelaSelecionadaParaItens(t);
-                                  setTabelaPrecoItensModalOpen(true);
-                                }}
-                                title="Gerenciar produtos"
-                              >
-                                <Package className="w-3 h-3" />
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                onClick={() => handleEdit(t, 'tabelas', 'TabelaPreco')}
-                              >
-                                <Edit className="w-3 h-3" />
-                              </Button>
-                            </div>
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(t, 'tabelas', 'TabelaPreco')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -3270,17 +3249,6 @@ export default function Cadastros() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* NOVO: Modal Gerenciar Produtos da Tabela de Preço */}
-      <TabelaPrecoItensModal
-        tabela={tabelaSelecionadaParaItens}
-        isOpen={tabelaPrecoItensModalOpen}
-        onClose={() => {
-          setTabelaPrecoItensModalOpen(false);
-          setTabelaSelecionadaParaItens(null);
-          queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
-        }}
-      />
     </div>
   );
 }
