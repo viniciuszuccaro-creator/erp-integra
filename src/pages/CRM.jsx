@@ -128,15 +128,12 @@ export default function CRMPage() {
   });
 
   const calcularScore = (opp) => {
-    let score = 50; // Base
-
-    // Score por valor
+    let score = 50;
     if (opp.valor_estimado > 50000) score += 20;
     else if (opp.valor_estimado > 20000) score += 15;
     else if (opp.valor_estimado > 10000) score += 10;
     else if (opp.valor_estimado > 5000) score += 5;
 
-    // Score por etapa
     const etapasScore = {
       "Prospecção": -10,
       "Contato Inicial": 0,
@@ -148,16 +145,13 @@ export default function CRMPage() {
     };
     score += etapasScore[opp.etapa] || 0;
 
-    // Score por interações
     score += Math.min((opp.quantidade_interacoes || 0) * 3, 15);
 
-    // Penalização por dias sem contato
     const diasSemContato = opp.dias_sem_contato || 0;
     if (diasSemContato > 30) score -= 20;
     else if (diasSemContato > 14) score -= 15;
     else if (diasSemContato > 7) score -= 10;
 
-    // Score por temperatura
     if (opp.temperatura === "Quente") score += 10;
     else if (opp.temperatura === "Frio") score -= 10;
 
@@ -237,7 +231,6 @@ export default function CRMPage() {
 
       const novoHistorico = [...(opp.historico_mudancas_etapa || []), historico];
 
-      // Auto-ajustar probabilidade baseado na etapa
       const probabilidadePorEtapa = {
         "Prospecção": 10,
         "Contato Inicial": 20,
@@ -271,7 +264,6 @@ export default function CRMPage() {
 
   const converterOportunidadeMutation = useMutation({
     mutationFn: async ({ opp, tipo }) => {
-      // Criar pedido/orçamento
       const pedidoData = {
         numero_pedido: `PED-${Date.now()}`,
         tipo: tipo === "orcamento" ? "Orçamento" : "Pedido",
@@ -289,7 +281,6 @@ export default function CRMPage() {
 
       const pedidoCriado = await base44.entities.Pedido.create(pedidoData);
 
-      // Atualizar oportunidade
       await base44.entities.Oportunidade.update(opp.id, {
         ...opp,
         status: "Ganho",
@@ -316,7 +307,6 @@ export default function CRMPage() {
         description: `${tipo === "orcamento" ? "Orçamento" : "Pedido"} criado. Redirecionando...`
       });
 
-      // Redirecionar para a página de comercial
       setTimeout(() => {
         navigate(createPageUrl("Comercial"));
       }, 1500);
@@ -327,7 +317,6 @@ export default function CRMPage() {
     mutationFn: (data) => base44.entities.Interacao.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['interacoes'] });
-      // Optionally, also update the related opportunity
       const relatedOpp = oportunidades.find(o => o.cliente_nome === interactionForm.cliente_nome);
       if (relatedOpp) {
         base44.entities.Oportunidade.update(relatedOpp.id, {
