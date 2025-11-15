@@ -1,17 +1,17 @@
 
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query"; // Removed useMutation, useQuery
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea"; // Not explicitly used anymore but kept if part of schema or future edit
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox"; // Not used in new UI, but kept as a component
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // Not used in new UI, but kept as a component
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Upload,
@@ -19,11 +19,11 @@ import {
   Sparkles,
   CheckCircle,
   AlertCircle,
-  Eye, // Not used
-  Edit, // Not used
-  Trash2, // Not used
-  Copy, // Not used
-  Brain,
+  Eye,
+  Edit,
+  Trash2,
+  Copy,
+  Brain, // Retained as it is used in the JSX
   Loader2
 } from "lucide-react";
 

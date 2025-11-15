@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Brain, TrendingUp, MapPin, Clock, AlertTriangle, CheckCircle, Zap } from "lucide-react";
+import { Sparkles, TrendingUp, MapPin, Clock, AlertTriangle, CheckCircle, Zap } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function IAPrevisaoLogistica() {
@@ -127,7 +127,7 @@ export default function IAPrevisaoLogistica() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-indigo-600" />
+            <Sparkles className="w-5 h-5 text-indigo-600" />
             IA - Previsão e Otimização Logística
           </CardTitle>
         </CardHeader>
@@ -161,7 +161,7 @@ export default function IAPrevisaoLogistica() {
               </>
             ) : (
               <>
-                <Brain className="w-4 h-4 mr-2" />
+                <Sparkles className="w-4 h-4 mr-2" />
                 Gerar Previsão com IA
               </>
             )}
@@ -290,7 +290,7 @@ export default function IAPrevisaoLogistica() {
               <Card className="bg-purple-50 border-purple-200">
                 <CardContent className="p-4">
                   <h4 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
-                    <Brain className="w-4 h-4" />
+                    <Sparkles className="w-4 h-4" />
                     Sugestões de Otimização da IA
                   </h4>
                   <ul className="text-sm text-purple-800 space-y-2">
