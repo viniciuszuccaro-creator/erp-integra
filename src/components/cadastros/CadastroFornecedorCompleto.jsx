@@ -1,22 +1,18 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Building2, 
   Phone, 
-  MapPin, 
   Save,
-  FileText,
   Star
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -83,22 +79,21 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
     saveMutation.mutate(formData);
   };
 
-  // Handler busca CNPJ
   const handleDadosCNPJ = (dados) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      nome: dados.razao_social || prevData.nome,
+    setFormData({
+      ...formData,
+      nome: dados.razao_social || formData.nome,
       razao_social: dados.razao_social || "",
       nome_fantasia: dados.nome_fantasia || "",
       endereco: dados.endereco_completo?.logradouro 
         ? `${dados.endereco_completo.logradouro}, ${dados.endereco_completo.numero || 'S/N'}`
-        : prevData.endereco,
-      cidade: dados.endereco_completo?.cidade || prevData.cidade,
-      estado: dados.endereco_completo?.uf || prevData.estado,
-      cep: dados.endereco_completo?.cep || prevData.cep,
-      email: dados.email || prevData.email,
-      telefone: dados.telefone || prevData.telefone
-    }));
+        : formData.endereco,
+      cidade: dados.endereco_completo?.cidade || formData.cidade,
+      estado: dados.endereco_completo?.uf || formData.estado,
+      cep: dados.endereco_completo?.cep || formData.cep,
+      email: dados.email || formData.email,
+      telefone: dados.telefone || formData.telefone
+    });
 
     toast({
       title: "✅ Dados da Receita Federal preenchidos!",
@@ -106,19 +101,17 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
     });
   };
 
-  // Handler busca CEP
   const handleDadosCEP = (dados) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      endereco: dados.logradouro ? `${dados.logradouro}` : prevData.endereco,
-      cidade: dados.localidade || prevData.cidade, // Corrected to use 'localidade' for city
-      estado: dados.uf || prevData.estado
-    }));
+    setFormData({
+      ...formData,
+      endereco: dados.logradouro ? `${dados.logradouro}` : formData.endereco,
+      cidade: dados.cidade || formData.cidade,
+      estado: dados.uf || formData.estado
+    });
 
     toast({ title: "✅ Endereço preenchido automaticamente!" });
   };
 
-  // Handler validação RNTRC (transportadoras)
   const handleDadosRNTRC = (dados) => {
     if (dados.valido) {
       toast({
@@ -194,7 +187,6 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
           </TabsList>
 
           <div className="flex-1 overflow-y-auto px-6 pb-6">
-            {/* ABA: DADOS GERAIS */}
             <TabsContent value="dados-gerais" className="space-y-4 m-0 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
@@ -241,7 +233,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                     tipo="cnpj"
                     valor={formData.cnpj}
                     onDadosEncontrados={handleDadosCNPJ}
-                    disabled={!formData.cnpj || formData.cnpj.length < 14}
+                    disabled={!formData.cnpj || formData.cnpj.replace(/\D/g, '').length < 14}
                   />
                 </div>
 
@@ -384,7 +376,6 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
               </div>
             </TabsContent>
 
-            {/* ABA: CONTATO E ENDEREÇO */}
             <TabsContent value="contato" className="space-y-4 m-0 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -403,16 +394,6 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                     id="telefone"
                     value={formData.telefone}
                     onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label htmlFor="whatsapp">WhatsApp</Label>
-                  <Input
-                    id="whatsapp"
-                    value={formData.whatsapp}
-                    onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                    placeholder="(XX) XXXX-XXXX"
                   />
                 </div>
 
@@ -478,7 +459,6 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
               </div>
             </TabsContent>
 
-            {/* ABA: AVALIAÇÕES */}
             <TabsContent value="avaliacoes" className="m-0 mt-4">
               {fornecedor?.id ? (
                 <div className="space-y-4">

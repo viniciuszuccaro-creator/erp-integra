@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +28,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineCliente";
-import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos"; // Removed buscarEnderecoCEP as it's likely internal to BotaoBuscaAutomatica
+import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
 export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSuccess }) {
   const [activeTab, setActiveTab] = useState("dados-gerais");
@@ -49,7 +48,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
     cnpj: "",
     rg: "",
     inscricao_estadual: "",
-    inscricao_municipal: "", // Added this field for PJ
+    inscricao_municipal: "",
     regiao_atendimento: "Sudeste",
     endereco_principal: {
       cep: "",
@@ -150,7 +149,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
     return 'OK';
   };
 
-  // Handler de busca automática CNPJ
   const handleDadosCNPJ = (dados) => {
     setFormData(prev => {
       const newFormData = {
@@ -176,7 +174,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
         }
       };
 
-      // Handle contacts: email
       if (dados.email && !(newFormData.contatos || []).some(c => c.valor === dados.email)) {
         newFormData.contatos = [
           ...(newFormData.contatos || []),
@@ -184,7 +181,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
         ];
       }
 
-      // Handle contacts: phone
       if (dados.telefone && !(newFormData.contatos || []).some(c => c.valor === dados.telefone)) {
         newFormData.contatos = [
           ...(newFormData.contatos || []),
@@ -200,7 +196,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
     });
   };
 
-  // Handler busca CEP
   const handleDadosCEP = (dados) => {
     setFormData(prev => ({
       ...prev,
@@ -298,7 +293,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isPending ? 'Salvando...' : 'Salvar Cliente'}
+              {saveMutation.isPending ? 'Salvando..' : 'Salvar Cliente'}
             </Button>
           </div>
         </DialogHeader>
@@ -336,7 +331,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
           </TabsList>
 
           <div className="flex-1 overflow-y-auto px-6 pb-6">
-            {/* ABA: DADOS GERAIS */}
             <TabsContent value="dados-gerais" className="space-y-4 m-0 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -414,7 +408,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     </div>
 
                     <div>
-                      <Label>&nbsp;</Label> {/* Placeholder for alignment */}
+                      <Label>&nbsp;</Label>
                       <BotaoBuscaAutomatica
                         tipo="cnpj"
                         valor={formData.cnpj}
@@ -466,7 +460,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                   </>
                 )}
 
-                {/* ENDEREÇO PRINCIPAL COM BUSCA CEP */}
                 <div className="col-span-2 pt-4 border-t">
                   <h3 className="font-semibold mb-3">Endereço Principal</h3>
                   <div className="grid grid-cols-4 gap-4">
@@ -487,7 +480,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     </div>
 
                     <div>
-                      <Label>&nbsp;</Label> {/* Placeholder for alignment */}
+                      <Label>&nbsp;</Label>
                       <BotaoBuscaAutomatica
                         tipo="cep"
                         valor={formData.endereco_principal?.cep}
@@ -646,7 +639,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               </div>
             </TabsContent>
 
-            {/* ABA: CONTATOS */}
             <TabsContent value="contatos" className="m-0 mt-4">
               <GerenciarContatosClienteForm
                 contatos={formData.contatos || []}
@@ -654,7 +646,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               />
             </TabsContent>
 
-            {/* ABA: ENDEREÇOS */}
             <TabsContent value="enderecos" className="m-0 mt-4">
               <GerenciarEnderecosClienteForm
                 enderecos={formData.locais_entrega || []}
@@ -662,7 +653,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               />
             </TabsContent>
 
-            {/* ABA: FINANCEIRO */}
             <TabsContent value="financeiro" className="space-y-4 m-0 mt-4">
               <Card className={`border-2 ${
                 calcularSituacaoCredito() === 'OK' ? 'border-green-300 bg-green-50' :
@@ -860,7 +850,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               </div>
             </TabsContent>
 
-            {/* ABA: FISCAL */}
             <TabsContent value="fiscal" className="space-y-4 m-0 mt-4">
               {ultimaNF && ultimaNF.length > 0 && (
                 <Card className="bg-blue-50 border-blue-200">
@@ -1001,7 +990,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               </div>
             </TabsContent>
 
-            {/* ABA: HISTÓRICO */}
             <TabsContent value="historico" className="m-0 mt-4">
               {cliente?.id ? (
                 <div className="space-y-4">
@@ -1016,7 +1004,6 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               )}
             </TabsContent>
 
-            {/* ABA: ANEXOS */}
             <TabsContent value="anexos" className="space-y-4 m-0 mt-4">
               <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
                 <Paperclip className="w-12 h-12 mx-auto mb-4 text-slate-400" />
