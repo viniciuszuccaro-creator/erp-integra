@@ -1,47 +1,42 @@
-
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-// Removed useMutation as the functionality is now implemented with a direct async function
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Brain, Upload, CheckCircle, Loader2, Sparkles } from 'lucide-react';
+import { Sparkles, Upload, CheckCircle, Loader2 } from 'lucide-react';
 
 /**
  * Orçamento Automático com IA
  * Cliente envia descrição ou projeto → IA gera orçamento
  */
-export default function OrcamentoAutomaticoIA({ onOrcamentoCriado }) { // Added onOrcamentoCriado prop
+export default function OrcamentoAutomaticoIA({ onOrcamentoCriado }) {
   const { toast } = useToast();
-  const [etapa, setEtapa] = useState(1); // 1: Dados, 2: Processando, 3: Resultado
+  const [etapa, setEtapa] = useState(1);
 
   const [dados, setDados] = useState({
     nome: '',
     email: '',
     telefone: '',
-    cpf_cnpj: '', // Added cpf_cnpj field
+    cpf_cnpj: '',
     descricao: '',
     arquivo: null
   });
 
   const [orcamentoGerado, setOrcamentoGerado] = useState(null);
-  const [processando, setProcessando] = useState(false); // New state to manage loading
-  const [erro, setErro] = useState(null); // New state to store error messages
-  const [resultadoIA, setResultadoIA] = useState(null); // New state for the raw AI vision result
-  const [orcamentoCriado, setOrcamentoCriado] = useState(null); // New state for the created OrcamentoSite entity
+  const [processando, setProcessando] = useState(false);
+  const [erro, setErro] = useState(null);
 
-  const origem = 'Site Base44'; // Source for the created budget
+  const origem = 'Site Base44';
 
   const processarComIA = async () => {
     setProcessando(true);
     setErro(null);
-    setEtapa(2); // Transition to processing step
+    setEtapa(2);
 
     try {
-      // 1. Upload do arquivo (se houver)
       let arquivoUrl = null;
       if (dados.arquivo) {
         const uploadResult = await base44.integrations.Core.UploadFile({
@@ -50,7 +45,6 @@ export default function OrcamentoAutomaticoIA({ onOrcamentoCriado }) { // Added 
         arquivoUrl = uploadResult.file_url;
       }
 
-      // 2. Processar com IA Vision (se houver arquivo)
       let visionAIResult = null;
       if (arquivoUrl) {
         visionAIResult = await base44.integrations.Core.InvokeLLM({
@@ -66,8 +60,6 @@ Analise o projeto anexado e identifique:
 6. Preço estimado de cada peça em R$.
 
 Retorne em JSON estruturado com todas as peças e um resumo.
-Certifique-se de que cada peça tenha um identificador único, tipo, quantidade, medidas (comprimento, largura, altura em metros), bitola principal (ex: 10mm, 1/2"), peso_kg e preco_total.
-O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_dias.
           `,
           file_urls: [arquivoUrl],
           response_json_schema: {
@@ -108,28 +100,26 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
         });
       }
 
-      // 3. Criar orçamento no sistema
       const novoOrcamento = await base44.entities.OrcamentoSite.create({
         origem: origem,
         cliente_nome: dados.nome,
         cliente_email: dados.email,
         cliente_telefone: dados.telefone,
-        cliente_cpf_cnpj: dados.cpf_cnpj, // Using the new CPF/CNPJ field
+        cliente_cpf_cnpj: dados.cpf_cnpj,
         descricao_pedido: dados.descricao || (arquivoUrl ? 'Projeto enviado via Site' : 'Descrição vazia'),
         arquivo_projeto_url: arquivoUrl,
         arquivo_projeto_nome: dados.arquivo?.name,
         processado_ia: !!visionAIResult,
         data_processamento_ia: visionAIResult ? new Date().toISOString() : null,
-        resultado_ia: visionAIResult, // Store the raw vision AI result in the entity
+        resultado_ia: visionAIResult,
         confianca_ia: visionAIResult?.confianca || 0,
         produtos_identificados: visionAIResult?.pecas || [],
         valor_estimado_total: visionAIResult?.resumo?.valor_estimado || 0,
         prazo_estimado_dias: visionAIResult?.resumo?.prazo_dias || 15,
-        status: visionAIResult ? 'Orçamento Gerado' : 'Processando IA', // Updated status logic
+        status: visionAIResult ? 'Orçamento Gerado' : 'Processando IA',
         data_validade: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       });
 
-      // 4. NOVO: Criar histórico IA
       if (visionAIResult) {
         await base44.entities.AuditoriaIA.create({
           modulo: 'Site',
@@ -143,13 +133,10 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
           confianca_percentual: visionAIResult.confianca,
           status: 'Sucesso',
           data_hora: new Date().toISOString(),
-          // tokens_usados: 0, // Placeholder, would come from LLM response metadata
-          // tempo_resposta_ms: 0, // Placeholder, would come from LLM response metadata
           modelo_usado: 'GPT-4o Vision'
         });
       }
 
-      // 5. NOVO: Notificar equipe comercial
       await base44.entities.Notificacao.create({
         titulo: '🎯 Novo Orçamento Site com IA',
         mensagem: `Novo orçamento gerado via ${origem}!\n\nCliente: ${dados.nome}\nEmail: ${dados.email}\nPeças detectadas: ${visionAIResult?.resumo?.total_pecas || 0}\nValor estimado: R$ ${(visionAIResult?.resumo?.valor_estimado || 0).toLocaleString('pt-BR')}\n\nConfiança IA: ${visionAIResult?.confianca || 0}%`,
@@ -160,18 +147,13 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
         registro_id: novoOrcamento.id
       });
 
-      // Update states to display result
-      setResultadoIA(visionAIResult);
-      setOrcamentoCriado(novoOrcamento);
-
-      // Adapt the visionAIResult or entity data to the structure expected by `orcamentoGerado` for UI
       if (visionAIResult) {
         setOrcamentoGerado({
           produtos: visionAIResult.pecas.map(p => ({
             descricao: `${p.tipo}${p.identificador ? ` - ${p.identificador}` : ''}${p.bitola_principal ? ` (${p.bitola_principal})` : ''}`,
             quantidade: p.quantidade,
-            unidade: 'un', // Default unit as specific units might not be derived from vision
-            preco_unitario: p.preco_total / p.quantidade, // Calculate unit price if total is provided
+            unidade: 'un',
+            preco_unitario: p.preco_total / p.quantidade,
             preco_total: p.preco_total
           })),
           valor_total: visionAIResult.resumo.valor_estimado,
@@ -180,7 +162,6 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
           confianca: visionAIResult.confianca
         });
       } else {
-        // Fallback for when no file or Vision AI result
         setOrcamentoGerado({
           produtos: [],
           valor_total: novoOrcamento.valor_estimado_total || 0,
@@ -190,7 +171,7 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
         });
       }
       
-      setEtapa(3); // Transition to result step
+      setEtapa(3);
       toast({ title: '✅ Orçamento gerado com sucesso!' });
 
       if (onOrcamentoCriado) {
@@ -199,8 +180,8 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
 
     } catch (error) {
       console.error('Erro ao processar:', error);
-      setErro(error.message); // Store error message
-      setEtapa(1); // Go back to data entry step on error
+      setErro(error.message);
+      setEtapa(1);
       toast({ 
         title: '❌ Erro ao gerar orçamento',
         description: 'Não foi possível gerar o orçamento. ' + (error.message || 'Tente novamente ou entre em contato.'),
@@ -255,7 +236,7 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
                 />
               </div>
               <div>
-                <Label>CPF/CNPJ (opcional)</Label> {/* Added new input field */}
+                <Label>CPF/CNPJ (opcional)</Label>
                 <Input
                   value={dados.cpf_cnpj}
                   onChange={(e) => setDados({...dados, cpf_cnpj: e.target.value})}
@@ -265,7 +246,7 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
             </div>
 
             <div>
-              <Label>Descreva o que você precisa (opcional)</Label> {/* Changed to optional */}
+              <Label>Descreva o que você precisa (opcional)</Label>
               <Textarea
                 value={dados.descricao}
                 onChange={(e) => setDados({...dados, descricao: e.target.value})}
@@ -297,23 +278,23 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
             </div>
 
             <Button
-              onClick={processarComIA} // Call the new processing function
-              disabled={processando || !dados.nome || !dados.email || (!dados.descricao && !dados.arquivo)} // Updated disabled logic: either description OR file is required
+              onClick={processarComIA}
+              disabled={processando || !dados.nome || !dados.email || (!dados.descricao && !dados.arquivo)}
               className="w-full h-14 text-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
             >
-              {processando ? ( // Use the new 'processando' state for loading UI
+              {processando ? (
                 <>
                   <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Gerando Orçamento...
                 </>
               ) : (
                 <>
-                  <Brain className="w-5 h-5 mr-2" />
+                  <Sparkles className="w-5 h-5 mr-2" />
                   Gerar Orçamento com IA
                 </>
               )}
             </Button>
-            {erro && ( // Display error if present
+            {erro && (
                 <p className="text-red-500 text-sm mt-2 text-center">
                     {erro}
                 </p>
@@ -332,11 +313,6 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
             <p className="text-slate-600">
               Analisando sua solicitação e gerando orçamento personalizado
             </p>
-            {dados.arquivo && (
-              <p className="text-slate-500 text-sm mt-4">
-                Utilizando IA Vision para analisar seu arquivo de projeto.
-              </p>
-            )}
           </CardContent>
         </Card>
       )}
@@ -352,7 +328,7 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
           <CardContent className="p-6 space-y-6">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-sm text-blue-700 mb-2">
-                <Brain className="w-4 h-4 inline mr-1" />
+                <Sparkles className="w-4 h-4 inline mr-1" />
                 Confiança da IA: {orcamentoGerado.confianca}%
               </p>
               <p className="text-sm text-slate-600">{orcamentoGerado.observacoes}</p>
@@ -399,15 +375,6 @@ O resumo deve conter total_pecas, peso_total_kg, valor_estimado total e prazo_di
                 ⚠️ Este é um orçamento preliminar gerado por IA. 
                 Um de nossos especialistas entrará em contato para confirmar os detalhes.
               </p>
-            </div>
-
-            <div className="flex gap-3">
-              <Button className="flex-1 bg-green-600 hover:bg-green-700">
-                Aprovar e Fazer Pedido
-              </Button>
-              <Button variant="outline" className="flex-1">
-                Solicitar Ajuste
-              </Button>
             </div>
           </CardContent>
         </Card>

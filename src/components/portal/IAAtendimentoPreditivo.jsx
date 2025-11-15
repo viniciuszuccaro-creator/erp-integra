@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Brain, Sparkles, TrendingUp, CreditCard } from 'lucide-react';
+import { Sparkles, TrendingUp, CreditCard } from 'lucide-react';
 
 /**
  * IA de Atendimento Preditivo no Portal
@@ -85,7 +85,7 @@ export default function IAAtendimentoPreditivo({ clienteId, comportamento }) {
     <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
       <CardHeader className="border-b bg-white/80">
         <CardTitle className="text-base flex items-center gap-2">
-          <Brain className="w-5 h-5 text-purple-600" />
+          <Sparkles className="w-5 h-5 text-purple-600" />
           Sugestões Personalizadas
         </CardTitle>
       </CardHeader>
