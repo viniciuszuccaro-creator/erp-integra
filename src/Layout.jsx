@@ -23,7 +23,8 @@ import {
   Search,
   Rocket,
   CheckCircle,
-  Trash2
+  Trash2,
+  Layers
 } from "lucide-react";
 import {
   Sidebar,
@@ -72,6 +73,7 @@ const navigationItems = [
   { title: "Integrações", url: createPageUrl("Integracoes"), icon: Link2, group: "sistema" },
   { title: "Configurações do Sistema", url: createPageUrl("ConfiguracoesSistema"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
+  { title: "🪟 Teste Módulo 0 (Janelas)", url: createPageUrl("TesteModulo0"), icon: Layers, group: "sistema", adminOnly: true },
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🧪 Teste Golden Thread", url: createPageUrl("TesteGoldenThread"), icon: Rocket, group: "sistema", adminOnly: true },
   { title: "✅ Validador Fase 1", url: createPageUrl("ValidadorFase1"), icon: CheckCircle, group: "sistema", adminOnly: true },
@@ -206,7 +208,7 @@ function LayoutContent({ children, currentPageName }) {
                 </div>
                 <div>
                   <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                  <p className="text-xs text-slate-500">V21.0 - Módulo 0 Completo</p>
+                  <p className="text-xs text-slate-500">V21.0 - Módulo 0 ✅</p>
                 </div>
               </div>
             </SidebarHeader>
