@@ -78,7 +78,7 @@ import BancoForm from "../components/cadastros/BancoForm";
 import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
 import VeiculoForm from "../components/cadastros/VeiculoForm";
 import EmpresaForm from "../components/cadastros/EmpresaForm";
-import ProdutoForm from "../components/cadastros/ProdutoForm";
+import ProdutoForm from "../components/cadastros/ProdutoForm"; // Keeping this import, but ProdutoFormV22_Completo will be used for main product editing
 import ServicoForm from "../components/cadastros/ServicoForm";
 import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
 import CatalogoWebForm from "../components/cadastros/CatalogoWebForm";
@@ -109,6 +109,8 @@ import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 import MultiTabelasEditor from "../components/cadastros/MultiTabelasEditor";
+import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
+import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoProduto";
 
 /**
  * CADASTROS GERAIS V20.1 - HUB CENTRAL COM AUDITORIA COMPLETA
@@ -143,7 +145,7 @@ export default function Cadastros() {
   // NOVO: Estados adicionais V18.0
   const [webhookFormOpen, setWebhookFormOpen] = useState(false);
   const [chatbotIntentOpen, setChatbotIntentOpen] = useState(false);
-  const [produtoFormOpen, setProdutoFormOpen] = useState(false);
+  const [produtoFormOpen, setProdutoFormOpen] = useState(false); // This state will be replaced by the universal dialog or a specific V22 dialog if needed
   const [servicoFormOpen, setServicoFormOpen] = useState(false);
   const [tabelaPrecoFormOpen, setTabelaPrecoFormOpen] = useState(false);
   const [tabelaSelecionadaEditar, setTabelaSelecionadaEditar] = useState(null);
@@ -1395,7 +1397,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - REESTRUTURADO V20.1 */}
+        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - V21.1.2-R2 APRIMORADO */}
         <AccordionItem value="grupo-3" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 hover:bg-purple-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -1403,8 +1405,8 @@ export default function Cadastros() {
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg">🧱 Produtos e Serviços</h3>
-                <p className="text-xs text-slate-600">Catálogo Mestre, Tabelas de Preço, Bitolas e E-commerce</p>
+                <h3 className="font-bold text-lg">🧱 Produtos e Serviços V21.1.2-R2</h3>
+                <p className="text-xs text-slate-600">Cadastro Master com IA, NF-e, Lote, Conversões e E-commerce</p>
               </div>
               <Badge className="ml-auto">
                 {totalItensGrupo3} itens
@@ -1412,24 +1414,41 @@ export default function Cadastros() {
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
-            {/* ALERTA ARQUITETURAL */}
-            <Alert className="border-blue-200 bg-blue-50">
-              <AlertDescription className="text-sm text-blue-900">
-                ✅ <strong>Hub Centralizado V20.0:</strong> Todos os cadastros mestres de produtos agora estão nesta página. O módulo Estoque apenas consulta e movimenta.
-              </AlertDescription>
-            </Alert>
+            {/* ALERTAS V21.1.2-R2 */}
+            <div className="grid lg:grid-cols-2 gap-4">
+              <Alert className="border-blue-200 bg-blue-50">
+                <AlertDescription className="text-sm text-blue-900">
+                  ✅ <strong>V21.1.2-R2:</strong> Cadastro com 5 abas (Dados, Conversões, Dimensões, E-commerce, Histórico)
+                </AlertDescription>
+              </Alert>
 
-            {/* PRODUTOS - TABELA COMPLETA COM TODOS OS DETALHES */}
+              <Alert className="border-purple-200 bg-purple-50">
+                <Sparkles className="w-4 h-4 text-purple-600" />
+                <AlertDescription className="text-sm text-purple-900">
+                  🤖 <strong>IA Ativa:</strong> NCM, Bitola, Peso, Tributação, SEO e Imagem automáticos
+                </AlertDescription>
+              </Alert>
+            </div>
+
+            {/* PRODUTOS - HEADER COM IMPORTAÇÃO */}
             <div>
               <div className="flex justify-between items-center mb-3">
                 <h4 className="font-bold flex items-center gap-2">
                   <Package className="w-5 h-5 text-purple-600" />
                   Produtos ({produtos.length})
                 </h4>
-                <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => handleOpenNew('produtos', 'Produto')}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Produto
-                </Button>
+                <div className="flex gap-2">
+                  <BotoesImportacaoProduto 
+                    onProdutosCriados={() => {
+                      queryClient.invalidateQueries({ queryKey: ['produtos'] });
+                      toast({ title: "✅ Produtos importados com sucesso!" });
+                    }}
+                  />
+                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => handleOpenNew('produtos', 'Produto')}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Novo Produto
+                  </Button>
+                </div>
               </div>
               
               <div className="border rounded-lg max-h-[500px] overflow-y-auto">
@@ -1743,77 +1762,78 @@ export default function Cadastros() {
                     <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
                     <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
-                  </div>
-                )}
-              </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-              {/* Catálogo Web */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-cyan-600" />
-                    Catálogo Web ({catalogoWeb.length})
-                  </h4>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Item
-                  </Button>
-                </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Produto</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
+            {/* Catálogo Web */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-cyan-600" />
+                  Catálogo Web ({catalogoWeb.length})
+                </h4>
+                <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
+                  <Plus className="w-3 h-3 mr-2" />
+                  Novo Item
+                </Button>
+              </div>
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Produto</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {catalogoWeb.map((c) => (
+                      <TableRow key={c.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
+                        <TableCell>
+                          {c.exibir_no_site ? (
+                            <Badge className="bg-green-100 text-green-700 text-xs">Ativo</Badge>
+                          ) : (
+                            <Badge className="bg-slate-100 text-slate-700 text-xs">Inativo</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'catalogo', 'CatalogoWeb')}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {catalogoWeb.map((c) => (
-                        <TableRow key={c.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
-                          <TableCell>
-                            {c.exibir_no_site ? (
-                              <Badge className="bg-green-100 text-green-700 text-xs">Ativo</Badge>
-                            ) : (
-                              <Badge className="bg-slate-100 text-slate-700 text-xs">Inativo</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'catalogo', 'CatalogoWeb')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
+            </div>
 
-              {/* Bitolas */}
-              <Card className="border hover:shadow-md transition-shadow border-purple-200 bg-purple-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Package className="w-5 h-5 text-purple-600" />
-                    <h4 className="font-semibold">Bitolas</h4>
-                    <Badge className="ml-auto bg-purple-600 text-white">
-                      {produtos.filter(p => p.eh_bitola).length}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Barras de aço CA-25/50/60
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setBitolasPanelOpen(true)}
-                  >
-                    Gerenciar Bitolas →
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Bitolas */}
+            <Card className="border hover:shadow-md transition-shadow border-purple-200 bg-purple-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Package className="w-5 h-5 text-purple-600" />
+                  <h4 className="font-semibold">Bitolas</h4>
+                  <Badge className="ml-auto bg-purple-600 text-white">
+                    {produtos.filter(p => p.eh_bitola).length}
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-600 mb-3">
+                  Barras de aço CA-25/50/60
+                </p>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => setBitolasPanelOpen(true)}
+                >
+                  Gerenciar Bitolas →
+                </Button>
+              </CardContent>
+            </Card>
             </div>
 
             {/* IAs ATIVAS */}
@@ -1829,7 +1849,7 @@ export default function Cadastros() {
                 <DollarSign className="w-4 h-4 text-green-600" />
                 <AlertDescription className="text-sm text-green-900">
                   💰 <strong>IA PriceBrain:</strong> Monitora custo médio e sugere reajustes diários
-                </AlertDescription>
+                </Alertcription>
               </Alert>
 
               <Alert className="border-cyan-200 bg-cyan-50">
@@ -2808,7 +2828,7 @@ export default function Cadastros() {
           {tipoDialog === 'representantes' && <RepresentanteForm representante={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'segmentos' && <SegmentoClienteForm segmento={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'produtos' && (
-            <ProdutoForm 
+            <ProdutoFormV22_Completo 
               produto={editingItem?.id ? editingItem : null} 
               onSubmit={handleSubmit} 
               isSubmitting={createMutation.isPending || updateMutation.isPending} 
