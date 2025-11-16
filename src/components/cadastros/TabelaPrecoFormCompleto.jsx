@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,19 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, TrendingUp, Search, X } from "lucide-react";
+import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X } from "lucide-react";
 import { toast } from "sonner";
 
-/**
- * V21.1.2 - TABELA DE PREÇO COMPLETA
- * ✅ Inclusão individual e em lote por grupo/classe/NCM
- * ✅ Engine de cálculo (custo médio, % markup, margem)
- * ✅ Integração com PriceBrain 2.0
- * ✅ Gestão multi-tabela
- */
-export default function TabelaPrecoFormCompleto({ tabela, onSubmit, isSubmitting }) {
+export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
   const queryClient = useQueryClient();
+  const [salvando, setSalvando] = useState(false);
   
   const [formData, setFormData] = useState(() => {
     if (tabela) return tabela;
@@ -42,17 +34,13 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, isSubmitting
   const [modoInclusao, setModoInclusao] = useState('individual');
   const [calculando, setCalculando] = useState(false);
   const [searchProduto, setSearchProduto] = useState('');
-  
-  // Estado para itens da tabela
   const [itensTabela, setItensTabela] = useState([]);
 
-  // Buscar produtos
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list()
   });
 
-  // Buscar itens desta tabela (se editando)
   const { data: itensExistentes = [] } = useQuery({
     queryKey: ['tabela-preco-itens', tabela?.id],
     queryFn: () => tabela?.id 
@@ -67,15 +55,12 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, isSubmitting
     }
   }, [itensExistentes]);
 
-  // Filtros para inclusão em lote
   const [filtroLote, setFiltroLote] = useState({
     grupo: '',
     ncm: '',
-    classe: '',
     curva_abc: ''
   });
 
-  // Regras de cálculo
   const [regraCalculo, setRegraCalculo] = useState({
     base: 'custo_medio',
     tipo: 'markup',
@@ -83,7 +68,6 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, isSubmitting
   });
 
   const grupos = [...new Set(produtos.map(p => p.grupo).filter(Boolean))];
-  const ncms = [...new Set(produtos.map(p => p.ncm).filter(Boolean))];
 
   const handleAdicionarProdutoIndividual = (produto) => {
     if (itensTabela.some(i => i.produto_id === produto.id)) {
@@ -96,10 +80,9 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, isSubmitting
     const margem = custoBase > 0 ? ((precoVenda - custoBase) / custoBase * 100) : 0;
     
     const novoItem = {
-      tabela_preco_id: tabela?.id || '',
       produto_id: produto.id,
       produto_descricao: produto.descricao,
-      produto_codigo: produto.codigo,
+      produto_codigo: produto.codigo || '',
       custo_base: custoBase,
       preco: precoVenda,
       desconto_maximo_percentual: 10,
@@ -127,10 +110,9 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, isSubmitting
         const margem = custoBase > 0 ? ((precoVenda - custoBase) / custoBase * 100) : 0;
         
         return {
-          tabela_preco_id: tabela?.id || '',
           produto_id: p.id,
           produto_descricao: p.descricao,
-          produto_codigo: p.codigo,
+          produto_codigo: p.codigo || '',
           custo_base: custoBase,
           preco: precoVenda,
           desconto_maximo_percentual: 10,
@@ -148,7 +130,6 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit, isSubmitting
     const itensAtualizados = itensTabela.map(item => {
       let custoBase = item.custo_base;
 
-      // Atualizar custo base se necessário
       if (regraCalculo.base === 'custo_medio') {
         const produtoAtual = produtos.find(p => p.id === item.produto_id);
         custoBase = produtoAtual?.custo_medio || item.custo_base;
@@ -210,7 +191,6 @@ Considerações importantes:
 - Margem mínima de segurança: 15%
 - Competitividade de mercado
 - Tipo de tabela: ${formData.tipo}
-- Histórico de vendas e sazonalidade
 
 Retorne:
 1. markup_sugerido_geral (%) a ser aplicado em todos os produtos
@@ -231,7 +211,6 @@ Retorne:
         }
       });
 
-      // Aplicar markup sugerido
       const itensAtualizados = itensTabela.map(item => {
         const custoBase = item.custo_base;
         const novoPreco = custoBase * (1 + resultado.markup_sugerido_geral / 100);
@@ -281,64 +260,55 @@ Retorne:
       return;
     }
 
+    setSalvando(true);
+
     try {
-      // 1. Salvar tabela principal
       let tabelaId = tabela?.id;
       
       if (!tabelaId) {
         const tabelaCriada = await base44.entities.TabelaPreco.create(formData);
         tabelaId = tabelaCriada.id;
-        console.log('✅ Tabela criada com ID:', tabelaId);
+        toast.success(`✅ Tabela "${formData.nome}" criada`);
       } else {
         await base44.entities.TabelaPreco.update(tabelaId, formData);
-        console.log('✅ Tabela atualizada:', tabelaId);
+        toast.success(`✅ Tabela "${formData.nome}" atualizada`);
       }
 
-      // 2. Deletar itens antigos (se editando)
       if (tabela?.id && itensExistentes.length > 0) {
-        console.log('🗑️ Deletando', itensExistentes.length, 'itens antigos...');
         for (const itemAntigo of itensExistentes) {
           await base44.entities.TabelaPrecoItem.delete(itemAntigo.id);
         }
       }
 
-      // 3. Criar novos itens
-      console.log('💾 Salvando', itensTabela.length, 'produtos...');
-      let sucessos = 0;
-      
       for (const item of itensTabela) {
         const itemData = {
           tabela_preco_id: tabelaId,
           produto_id: item.produto_id,
           produto_descricao: item.produto_descricao,
-          produto_codigo: item.produto_codigo || '-',
+          produto_codigo: item.produto_codigo || '',
           custo_base: Number(item.custo_base) || 0,
           preco: Number(item.preco) || 0,
           desconto_maximo_percentual: Number(item.desconto_maximo_percentual) || 0,
           margem_percentual: Number(item.margem_percentual) || 0
         };
         
-        console.log('Salvando item:', itemData);
         await base44.entities.TabelaPrecoItem.create(itemData);
-        sucessos++;
       }
 
-      console.log('✅ Salvos', sucessos, 'produtos com sucesso');
-
-      // 4. Invalidar queries
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
       queryClient.invalidateQueries({ queryKey: ['tabela-preco-itens', tabelaId] });
       
-      toast.success(`✅ Tabela salva com ${sucessos} produtos!`);
+      toast.success(`✅ Tabela salva com ${itensTabela.length} produtos!`);
       
-      // 5. Fechar dialog
       if (onSubmit) {
         onSubmit({ _salvamentoCompleto: true });
       }
     } catch (error) {
-      console.error('❌ Erro ao salvar tabela:', error);
+      console.error('❌ Erro ao salvar:', error);
       toast.error('❌ Erro: ' + error.message);
+    } finally {
+      setSalvando(false);
     }
   };
 
@@ -359,7 +329,6 @@ Retorne:
         </TabsList>
 
         <div className="flex-1 overflow-y-auto">
-          {/* ABA 1: CONFIGURAÇÃO */}
           <TabsContent value="config" className="space-y-4 mt-4">
             <Card>
               <CardContent className="p-4 space-y-4">
@@ -434,7 +403,6 @@ Retorne:
             </Card>
           </TabsContent>
 
-          {/* ABA 2: PRODUTOS */}
           <TabsContent value="itens" className="space-y-4 mt-4">
             <Alert className="border-purple-200 bg-purple-50">
               <Package className="w-4 h-4 mr-2 text-purple-600" />
@@ -443,7 +411,6 @@ Retorne:
               </AlertDescription>
             </Alert>
 
-            {/* BOTÕES DE MODO */}
             <div className="flex gap-2">
               <Button 
                 type="button" 
@@ -465,7 +432,6 @@ Retorne:
               </Button>
             </div>
 
-            {/* MODO INDIVIDUAL */}
             {modoInclusao === 'individual' && (
               <Card>
                 <CardHeader className="bg-slate-50 border-b pb-3">
@@ -513,7 +479,6 @@ Retorne:
               </Card>
             )}
 
-            {/* MODO LOTE */}
             {modoInclusao === 'lote' && (
               <Card>
                 <CardHeader className="bg-purple-50 border-b pb-3">
@@ -583,7 +548,6 @@ Retorne:
               </Card>
             )}
 
-            {/* LISTA DE ITENS ADICIONADOS */}
             {itensTabela.length > 0 && (
               <Card>
                 <CardHeader className="bg-green-50 border-b pb-3">
@@ -623,7 +587,6 @@ Retorne:
             )}
           </TabsContent>
 
-          {/* ABA 3: MOTOR DE CÁLCULO */}
           <TabsContent value="calculo" className="space-y-4 mt-4">
             <Alert className="border-blue-200 bg-blue-50">
               <Calculator className="w-4 h-4 mr-2 text-blue-600" />
@@ -632,7 +595,6 @@ Retorne:
               </AlertDescription>
             </Alert>
 
-            {/* CONFIGURAÇÃO DE REGRA */}
             <Card>
               <CardHeader className="bg-slate-50 border-b pb-3">
                 <CardTitle className="text-base">Configurar Regra de Cálculo</CardTitle>
@@ -718,7 +680,6 @@ Retorne:
               </CardContent>
             </Card>
 
-            {/* PREVIEW DE CÁLCULO */}
             {itensTabela.length > 0 && (
               <Card className="border-green-200 bg-green-50">
                 <CardHeader className="pb-3">
@@ -744,7 +705,6 @@ Retorne:
         </div>
       </Tabs>
 
-      {/* FOOTER FIXO */}
       <div className="flex items-center justify-between pt-4 border-t bg-slate-50 p-4 -mx-6 -mb-6">
         <div className="text-sm">
           <p className="font-semibold text-slate-900">
@@ -756,8 +716,8 @@ Retorne:
             </p>
           )}
         </div>
-        <Button type="submit" disabled={isSubmitting || !formData.nome} className="bg-green-600 hover:bg-green-700">
-          {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+        <Button type="submit" disabled={salvando || !formData.nome} className="bg-green-600 hover:bg-green-700">
+          {salvando && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {tabela ? 'Salvar Alterações' : 'Criar Tabela'}
         </Button>
       </div>
