@@ -6,12 +6,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus } from "lucide-react";
+import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, Rocket } from "lucide-react";
 import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
 import ComissoesTab from "../components/comercial/ComissoesTab";
 import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
-import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab"; // Keeping import as outline didn't specify removal
+import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab";
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
 
@@ -24,7 +24,11 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
+// PedidoFormCompleto is no longer imported directly into this file as it will be opened in a new window
+
+import { Alert, AlertDescription } from "@/components/ui/alert"; // Added import for Alert
+import { useWindow } from "@/components/lib/useWindow"; // Added import
+import BotaoNovaJanela from "@/components/cadastros/BotaoNovaJanela"; // Added import
 
 /**
  * Módulo Comercial - V12.0 COMPLETO
@@ -35,9 +39,12 @@ export default function Comercial() {
   const [painelClienteAberto, setPainelClienteAberto] = useState(false);
   const [clienteParaPainel, setClienteParaPainel] = useState(null);
 
-  // V21.1.2-R1: States for the PedidoFormCompleto dialog
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPedido, setEditingPedido] = useState(null);
+  // V21.1.2-R1: States for the PedidoFormCompleto dialog (these are now removed as per the outline)
+  // const [isFormOpen, setIsFormOpen] = useState(false);
+  // const [editingPedido, setEditingPedido] = useState(null);
+
+  // V21.0: Hook de janelas
+  const { openPedidoWindow, openClienteWindow } = useWindow();
 
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
 
@@ -101,36 +108,36 @@ export default function Comercial() {
     // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
 
-  // Handlers for PedidoFormCompleto
-  const handleCreateNewPedido = () => {
-    setEditingPedido(null); // For new order, no existing pedido
-    setIsFormOpen(true);
-  };
+  // Handlers for PedidoFormCompleto (these are now removed as per the outline)
+  // const handleCreateNewPedido = () => {
+  //   setEditingPedido(null); // For new order, no existing pedido
+  //   setIsFormOpen(true);
+  // };
 
-  const handleEditPedido = (pedido) => {
-    setEditingPedido(pedido);
-    setIsFormOpen(true);
-  };
+  // const handleEditPedido = (pedido) => {
+  //   setEditingPedido(pedido);
+  //   setIsFormOpen(true);
+  // };
 
-  const handleFormSubmit = async (formData) => {
-    try {
-      if (formData.id) {
-        // Update existing pedido
-        await base44.entities.Pedido.update(formData.id, formData);
-        toast.success("Pedido atualizado com sucesso!");
-      } else {
-        // Create new pedido
-        await base44.entities.Pedido.create(formData);
-        toast.success("Pedido criado com sucesso!");
-      }
-      setIsFormOpen(false);
-      setEditingPedido(null);
-      pedidosQuery.refetch(); // Refetch pedidos data after submission
-    } catch (error) {
-      toast.error("Erro ao salvar pedido: " + error.message);
-      console.error("Erro ao salvar pedido:", error);
-    }
-  };
+  // const handleFormSubmit = async (formData) => {
+  //   try {
+  //     if (formData.id) {
+  //       // Update existing pedido
+  //       await base44.entities.Pedido.update(formData.id, formData);
+  //       toast.success("Pedido atualizado com sucesso!");
+  //     } else {
+  //       // Create new pedido
+  //       await base44.entities.Pedido.create(formData);
+  //       toast.success("Pedido criado com sucesso!");
+  //     }
+  //     setIsFormOpen(false);
+  //     setEditingPedido(null);
+  //     pedidosQuery.refetch(); // Refetch pedidos data after submission
+  //   } catch (error) {
+  //     toast.error("Erro ao salvar pedido: " + error.message);
+  //     console.error("Erro ao salvar pedido:", error);
+  //   }
+  // };
 
 
   if (loadingPermissions) {
@@ -143,6 +150,22 @@ export default function Comercial() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
+      {/* V21.0: Banner Multitarefa */}
+      <Alert className="border-purple-300 bg-gradient-to-r from-purple-50 to-pink-50">
+        <Rocket className="w-5 h-5 text-purple-600" />
+        <AlertDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-bold text-purple-900">🪟 Multitarefa V21.0 Ativo</p>
+              <p className="text-sm text-purple-700">
+                Abra múltiplos pedidos, clientes e tabelas simultaneamente. Pressione <kbd className="px-2 py-1 bg-white rounded">Ctrl+K</kbd>
+              </p>
+            </div>
+            <BotaoNovaJanela tipo="pedido" label="Novo Pedido" />
+          </div>
+        </AlertDescription>
+      </Alert>
+
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Comercial e Vendas</h1>
@@ -264,6 +287,7 @@ export default function Comercial() {
               setClienteParaPainel(cliente);
               setPainelClienteAberto(true);
             }}
+            onEditCliente={(cliente) => openClienteWindow(cliente)}
           />
         </TabsContent>
 
@@ -273,8 +297,8 @@ export default function Comercial() {
             clientes={clientes} 
             isLoading={loadingPedidos} 
             empresas={empresas} // Added empresas prop for printing or other order details
-            onCreatePedido={handleCreateNewPedido} // Added prop to open new order form
-            onEditPedido={handleEditPedido} // Added prop to open edit order form
+            onCreatePedido={() => openPedidoWindow(null, clientes)} // Modified to use openPedidoWindow
+            onEditPedido={(pedido) => openPedidoWindow(pedido, clientes)} // Modified to use openPedidoWindow
           />
         </TabsContent>
 
@@ -344,8 +368,8 @@ export default function Comercial() {
         }}
       />
 
-      {/* V21.1.2-R1: MODAL COM TAMANHO FIXO GRANDE - MULTI-INSTÂNCIA */}
-      <Dialog open={isFormOpen} onOpenChange={(open) => {
+      {/* V21.1.2-R1: MODAL COM TAMANHO FIXO GRANDE - MULTI-INSTÂNCIA - REMOVIDO PARA USAR JANELAS INDEPENDENTES */}
+      {/* <Dialog open={isFormOpen} onOpenChange={(open) => {
         if (!open) {
           setIsFormOpen(false);
           setEditingPedido(null);
@@ -362,7 +386,7 @@ export default function Comercial() {
             }}
           />
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   );
 }

@@ -53,6 +53,7 @@ import {
   Receipt,
   TrendingUp,
   Eye,
+  Maximize2, // Added for new banner and product section
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -111,13 +112,15 @@ import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 import MultiTabelasEditor from "../components/cadastros/MultiTabelasEditor";
 import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
 import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoProduto";
+import BotaoNovaJanela from "@/components/cadastros/BotaoNovaJanela";
+import { useWindow } from "@/components/lib/useWindow";
 
 /**
  * CADASTROS GERAIS V20.1 - HUB CENTRAL COM AUDITORIA COMPLETA
  * Blocos 1/6, 2/6, 3/6, 4/6 e 5/6 totalmente sincronizados
  */
 export default function Cadastros() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [buscaGlobal, setBuscaGlobal] = useState(""); // Renamed from searchTerm
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [tipoDialog, setTipoDialog] = useState(null);
@@ -188,6 +191,7 @@ export default function Cadastros() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { openProductWindow, openClienteWindow, openFornecedorWindow, openTabelaPrecoWindow } = useWindow(); // Added useWindow hook
 
   // QUERIES
   const { data: clientes = [] } = useQuery({
@@ -568,104 +572,59 @@ export default function Cadastros() {
   const totalItensGrupo4 = bancos.length + formasPagamento.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
   const totalItensGrupo5 = veiculos.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
 
+  // Global search filtering (only implemented for products as explicitly shown in outline)
+  const produtosFiltrados = produtos.filter(p =>
+    p.codigo?.toLowerCase().includes(buscaGlobal.toLowerCase()) ||
+    p.descricao?.toLowerCase().includes(buscaGlobal.toLowerCase()) ||
+    p.grupo?.toLowerCase().includes(buscaGlobal.toLowerCase())
+  );
+
+
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      {/* HEADER */}
-      <div className="flex justify-between items-start">
+      {/* V21.0: Banner Multitarefa */}
+      <Alert className="border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+        <Maximize2 className="w-5 h-5 text-purple-600" />
+        <AlertDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-bold text-purple-900">🚀 V21.0 - Sistema Multitarefa Ativado!</p>
+              <p className="text-sm text-purple-700 mt-1">
+                Agora você pode abrir múltiplos cadastros simultaneamente em janelas independentes. 
+                Use <kbd className="px-2 py-1 bg-white rounded border">Ctrl+K</kbd> para abrir a paleta de comandos.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <BotaoNovaJanela tipo="produto" label="Produto" variant="outline" size="sm" />
+              <BotaoNovaJanela tipo="cliente" label="Cliente" variant="outline" size="sm" onClick={() => openClienteWindow(null)} />
+              <BotaoNovaJanela tipo="fornecedor" label="Fornecedor" variant="outline" size="sm" onClick={() => openFornecedorWindow(null)} />
+              <BotaoNovaJanela tipo="tabela-preco" label="Tabela" variant="outline" size="sm" />
+            </div>
+          </div>
+        </AlertDescription>
+      </Alert>
+
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V20.1
-          </h1>
-          <p className="text-slate-600">Hub Central - Visualização e Edição Completa</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Hub de Cadastros Gerais</h1>
+          <p className="text-slate-600">Central de dados mestres do sistema - V21.0</p>
         </div>
-        <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
-          <Sparkles className="w-4 h-4 mr-2" />
-          28 IAs Ativas
-        </Badge>
-      </div>
-
-      {/* DASHBOARD DE CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Users className="w-5 h-5 text-blue-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </div>
-            <div className="text-2xl font-bold text-blue-600">{clientes.length}</div>
-            <p className="text-xs text-slate-600">Clientes</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Building2 className="w-5 h-5 text-cyan-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </div>
-            <div className="text-2xl font-bold text-cyan-600">{fornecedores.length}</div>
-            <p className="text-xs text-slate-600">Fornecedores</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Package className="w-5 h-5 text-purple-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </div>
-            <div className="text-2xl font-bold text-purple-600">{produtos.length}</div>
-            <p className="text-xs text-slate-600">Produtos</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <CreditCard className="w-5 h-5 text-green-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </div>
-            <div className="text-2xl font-bold text-green-600">{formasPagamento.length}</div>
-            <p className="text-xs text-slate-600">Formas Pagto</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Landmark className="w-5 h-5 text-indigo-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </div>
-            <div className="text-2xl font-bold text-indigo-600">{bancos.length}</div>
-            <p className="text-xs text-slate-600">Bancos</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <User className="w-5 h-5 text-pink-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </div>
-            <div className="text-2xl font-bold text-pink-600">{colaboradores.length}</div>
-            <p className="text-xs text-slate-600">Colaboradores</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* BUSCA GLOBAL */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-        <Input
-          placeholder="🔍 Buscar em todos os cadastros... (clientes, produtos, fornecedores, etc)"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-12 h-12 text-base shadow-md border-slate-300"
-        />
+        
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Buscar em todos os cadastros..."
+            value={buscaGlobal}
+            onChange={(e) => setBuscaGlobal(e.target.value)}
+            className="w-64"
+          />
+          <Button variant="outline" onClick={() => setBuscaGlobal('')}>
+            Limpar
+          </Button>
+        </div>
       </div>
 
       {/* ACCORDION COM 6 GRUPOS */}
-      <Accordion type="multiple" defaultValue={["grupo-1"]} className="space-y-4">
+      <Accordion type="multiple" defaultValue={["grupo-1", "produtos"]} className="space-y-4">
         
         {/* 🏢 GRUPO 1: EMPRESA E ESTRUTURA - SINCRONIZADO V20.1 */}
         <AccordionItem value="grupo-1" className="border-0 shadow-md rounded-lg overflow-hidden">
@@ -1405,15 +1364,15 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - V21.1.2-R2 APRIMORADO */}
-        <AccordionItem value="grupo-3" className="border-0 shadow-md rounded-lg overflow-hidden">
+        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - V21.1.2-R2 APRIMORADO (REPLACED WITH OUTLINE CONTENT) */}
+        <AccordionItem value="produtos" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 hover:bg-purple-100 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg">🧱 Produtos e Serviços V21.1.2-R2</h3>
+                <h3 className="font-bold text-lg">🧱 Produtos e Serviços V21.0</h3>
                 <p className="text-xs text-slate-600">Cadastro Master com IA, NF-e, Lote, Conversões e E-commerce</p>
               </div>
               <Badge className="ml-auto">
@@ -1422,426 +1381,85 @@ export default function Cadastros() {
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
-            {/* ALERTAS V21.1.2-R2 */}
-            <div className="grid lg:grid-cols-2 gap-4">
-              <Alert className="border-blue-200 bg-blue-50">
-                <AlertDescription className="text-sm text-blue-900">
-                  ✅ <strong>V21.1.2-R2:</strong> Cadastro com 5 abas (Dados, Conversões, Dimensões, E-commerce, Histórico)
-                </AlertDescription>
-              </Alert>
-
-              <Alert className="border-purple-200 bg-purple-50">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                <AlertDescription className="text-sm text-purple-900">
-                  🤖 <strong>IA Ativa:</strong> NCM, Bitola, Peso, Tributação, SEO e Imagem automáticos
-                </AlertDescription>
-              </Alert>
+            {/* Botões V21.0 */}
+            <div className="flex gap-2 flex-wrap">
+              <BotaoNovaJanela tipo="produto" label="➕ Novo Produto (Janela)" />
+              <BotaoNovaJanela tipo="tabela-preco" label="💰 Nova Tabela (Janela)" />
+              <Button variant="outline" size="sm">
+                📥 Importar Produtos
+              </Button>
             </div>
 
-            {/* PRODUTOS - HEADER COM IMPORTAÇÃO */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-bold flex items-center gap-2">
-                  <Package className="w-5 h-5 text-purple-600" />
-                  Produtos ({produtos.length})
-                </h4>
-                <div className="flex gap-2">
-                  <BotoesImportacaoProduto 
-                    onProdutosCriados={() => {
-                      queryClient.invalidateQueries({ queryKey: ['produtos'] });
-                      toast({ title: "✅ Produtos importados com sucesso!" });
-                    }}
-                  />
-                  <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={() => handleOpenNew('produtos', 'Produto')}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Novo Produto
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="border rounded-lg max-h-[500px] overflow-y-auto">
+            {/* Tabela de produtos */}
+            <Card>
+              <CardHeader className="bg-blue-50 border-b">
+                <CardTitle className="text-base">📦 Produtos Cadastrados</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <Table>
-                  <TableHeader className="sticky top-0 bg-slate-50 z-10">
+                  <TableHeader>
                     <TableRow>
                       <TableHead>Código</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead>Grupo</TableHead>
                       <TableHead>Estoque</TableHead>
                       <TableHead>Preço</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
+                      <TableHead>Ações V21.0</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {produtos.map((p) => (
-                      <TableRow key={p.id} className="hover:bg-slate-50">
-                        <TableCell className="font-mono text-xs">{p.codigo}</TableCell>
+                    {produtosFiltrados.slice(0, 10).map(produto => (
+                      <TableRow key={produto.id}>
+                        <TableCell className="font-mono text-xs">{produto.codigo}</TableCell>
+                        <TableCell className="font-semibold">{produto.descricao}</TableCell>
                         <TableCell>
-                          <div>
-                            <p className="font-medium text-sm">{p.descricao}</p>
-                            {p.eh_bitola && (
-                              <Badge className="text-xs bg-purple-100 text-purple-700 mt-1">
-                                Bitola {p.bitola_diametro_mm}mm • {p.peso_teorico_kg_m} kg/m
-                              </Badge>
-                            )}
-                          </div>
+                          <Badge variant="outline">{produto.grupo}</Badge>
                         </TableCell>
-                        <TableCell className="text-xs">{p.grupo}</TableCell>
+                        <TableCell>{produto.estoque_atual || 0}</TableCell>
+                        <TableCell>R$ {(produto.preco_venda || 0).toFixed(2)}</TableCell>
                         <TableCell>
-                          <div className="text-sm">
-                            <span className="font-bold">{p.estoque_atual || 0}</span>
-                            <span className="text-xs text-slate-500 ml-1">{p.unidade_medida}</span>
-                          </div>
-                          {p.estoque_reservado > 0 && (
-                            <p className="text-xs text-orange-600">Reservado: {p.estoque_reservado}</p>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm font-semibold text-green-700">
-                            R$ {(p.preco_venda || 0).toFixed(2)}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            Custo: R$ {(p.custo_medio || 0).toFixed(2)}
-                          </p>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={statusColors[p.status]}>{p.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onClick={() => handleEdit(p, 'produtos', 'Produto')}>
-                            <Edit className="w-4 h-4" />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => openProductWindow(produto)}
+                          >
+                            <Maximize2 className="w-3 h-3 mr-1" />
+                            Abrir
                           </Button>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-              
-              {produtos.length === 0 && (
-                <div className="text-center py-12 text-slate-500 border rounded-lg">
-                  <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>Nenhum produto cadastrado</p>
-                </div>
-              )}
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* SERVIÇOS - TABELA COMPLETA */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-bold flex items-center gap-2">
-                  <Factory className="w-5 h-5 text-indigo-600" />
-                  Serviços ({servicos.length})
-                </h4>
-                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => handleOpenNew('servicos', 'Servico')}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Serviço
-                </Button>
-              </div>
-              
-              <div className="border rounded-lg max-h-96 overflow-y-auto">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-slate-50">
-                    <TableRow>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Unidade</TableHead>
-                      <TableHead>Preço</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {servicos.map((s) => (
-                      <TableRow key={s.id} className="hover:bg-slate-50">
-                        <TableCell className="font-medium text-sm">{s.descricao}</TableCell>
-                        <TableCell className="text-xs">{s.tipo_servico}</TableCell>
-                        <TableCell className="text-xs">{s.unidade}</TableCell>
-                        <TableCell className="text-sm font-semibold text-green-700">
-                          R$ ${(s.preco_servico || 0).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onClick={() => handleEdit(s, 'servicos', 'Servico')}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            {/* Grid 2x2 - Outros Cadastros do Grupo 3 - TABELAS COMPLETAS */}
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Grupos Produto */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Boxes className="w-4 h-4 text-cyan-600" />
-                    Grupos ({gruposProduto.length})
-                  </h4>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('grupos-produto', 'GrupoProduto')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Grupo
-                  </Button>
+            {/* Tabelas de Preço */}
+            <Card>
+              <CardHeader className="bg-yellow-50 border-b">
+                <CardTitle className="text-base">💰 Tabelas de Preço</CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  {tabelasPreco.slice(0, 5).map(tabela => (
+                    <div key={tabela.id} className="flex items-center justify-between p-3 border rounded hover:bg-slate-50">
+                      <div>
+                        <p className="font-semibold">{tabela.nome}</p>
+                        <p className="text-xs text-slate-600">{tabela.tipo} • {tabela.ativo ? '✅ Ativa' : '⏸️ Inativa'}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openTabelaPrecoWindow(tabela)}
+                      >
+                        <Maximize2 className="w-3 h-3 mr-1" />
+                        Editar
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Natureza</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {gruposProduto.map((g) => (
-                        <TableRow key={g.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{g.nome_grupo}</TableCell>
-                          <TableCell className="text-xs">{g.natureza}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(g, 'grupos-produto', 'GrupoProduto')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Marcas */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Award className="w-4 h-4 text-orange-600" />
-                    Marcas ({marcas.length})
-                  </h4>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('marcas', 'Marca')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Nova Marca
-                  </Button>
-                </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Marca</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {marcas.map((m) => (
-                        <TableRow key={m.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{m.nome_marca}</TableCell>
-                          <TableCell className="text-xs">{m.categoria}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(m, 'marcas', 'Marca')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Kits */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Package className="w-4 h-4 text-pink-600" />
-                    Kits ({kits.length})
-                  </h4>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('kits', 'KitProduto')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Kit
-                  </Button>
-                </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Itens</TableHead>
-                        <TableHead>Preço</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {kits.map((k) => (
-                        <TableRow key={k.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{k.nome_kit}</TableCell>
-                          <TableCell className="text-xs">{(k.itens_kit || []).length} itens</TableCell>
-                          <TableCell className="text-sm font-semibold text-green-700">
-                            R$ ${(k.preco_kit || 0).toFixed(2)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(k, 'kits', 'KitProduto')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Tabelas Preço - EXPANDIDO V21.1.2 */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-green-600" />
-                    Tabelas de Preço ({tabelasPreco.length})
-                  </h4>
-                  <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      onClick={() => setMultiTabelasOpen(true)}
-                      disabled={tabelasPreco.length === 0}
-                    >
-                      <Package className="w-3 h-3 mr-2" />
-                      Editar Múltiplas
-                    </Button>
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleOpenNew('tabelas', 'TabelaPreco')}>
-                      <Plus className="w-3 h-3 mr-2" />
-                      Nova Tabela
-                    </Button>
-                  </div>
-                </div>
-                
-                <Alert className="border-green-200 bg-green-50 mb-3">
-                  <DollarSign className="w-4 h-4 text-green-600" />
-                  <AlertDescription className="text-sm text-green-900">
-                    💰 <strong>Hub Central V21.1.2:</strong> Todas as tabelas de preço são gerenciadas aqui. Comercial apenas consome os preços definidos.
-                  </AlertDescription>
-                </Alert>
-
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Produtos</TableHead>
-                        <TableHead>Vigência</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {tabelasPreco.map((t) => {
-                        const itensTabela = tabelasPrecoItens.filter(i => i.tabela_preco_id === t.id);
-                        return (
-                          <TableRow key={t.id} className="hover:bg-slate-50">
-                            <TableCell className="font-medium text-sm">{t.nome}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline" className="text-xs">{t.tipo}</Badge>
-                            </TableCell>
-                            <TableCell className="text-xs">{itensTabela.length} itens</TableCell>
-                            <TableCell className="text-xs">
-                              {new Date(t.data_inicio).toLocaleDateString('pt-BR')}
-                              {t.data_fim && ` - ${new Date(t.data_fim).toLocaleDateString('pt-BR')}`}
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={t.ativo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}>
-                                {t.ativo ? 'Ativa' : 'Inativa'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button size="sm" variant="ghost" onClick={() => handleEdit(t, 'tabelas', 'TabelaPreco')}>
-                                <Edit className="w-3 h-3" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-                
-                {tabelasPreco.length === 0 && (
-                  <div className="text-center py-8 text-slate-500 border rounded-lg mt-2">
-                    <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
-                    <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
-                  </div>
-                )}
-              </div>
-
-            {/* Catálogo Web */}
-            <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-cyan-600" />
-                    Catálogo Web ({catalogoWeb.length})
-                  </h4>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Item
-                  </Button>
-                </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Produto</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {catalogoWeb.map((c) => (
-                        <TableRow key={c.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
-                          <TableCell>
-                            {c.exibir_no_site ? (
-                              <Badge className="bg-green-100 text-green-700 text-xs">Ativo</Badge>
-                            ) : (
-                              <Badge className="bg-slate-100 text-slate-700 text-xs">Inativo</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'catalogo', 'CatalogoWeb')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Bitolas */}
-              <Card className="border hover:shadow-md transition-shadow border-purple-200 bg-purple-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Package className="w-5 h-5 text-purple-600" />
-                    <h4 className="font-semibold">Bitolas</h4>
-                    <Badge className="ml-auto bg-purple-600 text-white">
-                      {produtos.filter(p => p.eh_bitola).length}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Barras de aço CA-25/50/60
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setBitolasPanelOpen(true)}
-                  >
-                    Gerenciar Bitolas →
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+              </CardContent>
+            </Card>
 
             {/* IAs ATIVAS */}
             <div className="grid lg:grid-cols-3 gap-4 mt-6">
