@@ -502,7 +502,9 @@ export default function Cadastros() {
   const handleSubmit = (data) => {
     // Se o salvamento já foi feito internamente pelo formulário (ex: TabelaPreco com itens)
     if (data?._salvamentoCompleto) {
-      handleCloseDialog();
+      setIsDialogOpen(false);
+      setEditingItem(null);
+      setTipoDialog(null);
       return;
     }
 
@@ -1555,7 +1557,7 @@ export default function Cadastros() {
                         <TableCell className="text-xs">{s.tipo_servico}</TableCell>
                         <TableCell className="text-xs">{s.unidade}</TableCell>
                         <TableCell className="text-sm font-semibold text-green-700">
-                          R$ {(s.preco_servico || 0).toFixed(2)}
+                          R$ ${(s.preco_servico || 0).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button size="sm" variant="ghost" onClick={() => handleEdit(s, 'servicos', 'Servico')}>
@@ -1768,12 +1770,13 @@ export default function Cadastros() {
                     <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
                     <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
-                  </div>
-                )}
-              </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-              {/* Catálogo Web */}
-              <div>
+            {/* Catálogo Web */}
+            <div>
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="font-bold flex items-center gap-2">
                     <Globe className="w-4 h-4 text-cyan-600" />
