@@ -276,6 +276,11 @@ Retorne:
       return;
     }
 
+    if (itensTabela.length === 0) {
+      toast.error('❌ Adicione pelo menos 1 produto à tabela');
+      return;
+    }
+
     try {
       // 1. Salvar tabela principal
       let tabelaId = tabela?.id;
@@ -283,50 +288,57 @@ Retorne:
       if (!tabelaId) {
         const tabelaCriada = await base44.entities.TabelaPreco.create(formData);
         tabelaId = tabelaCriada.id;
-        toast.success(`✅ Tabela "${formData.nome}" criada`);
+        console.log('✅ Tabela criada com ID:', tabelaId);
       } else {
         await base44.entities.TabelaPreco.update(tabelaId, formData);
-        toast.success(`✅ Tabela "${formData.nome}" atualizada`);
+        console.log('✅ Tabela atualizada:', tabelaId);
       }
 
       // 2. Deletar itens antigos (se editando)
       if (tabela?.id && itensExistentes.length > 0) {
+        console.log('🗑️ Deletando', itensExistentes.length, 'itens antigos...');
         for (const itemAntigo of itensExistentes) {
           await base44.entities.TabelaPrecoItem.delete(itemAntigo.id);
         }
       }
 
       // 3. Criar novos itens
-      if (itensTabela.length > 0) {
-        for (const item of itensTabela) {
-          const itemData = {
-            tabela_preco_id: tabelaId,
-            produto_id: item.produto_id,
-            produto_descricao: item.produto_descricao,
-            produto_codigo: item.produto_codigo || '',
-            custo_base: item.custo_base || 0,
-            preco: item.preco || 0,
-            desconto_maximo_percentual: item.desconto_maximo_percentual || 0,
-            margem_percentual: item.margem_percentual || 0
-          };
-          
-          await base44.entities.TabelaPrecoItem.create(itemData);
-        }
-        toast.success(`✅ ${itensTabela.length} produtos salvos na tabela`);
+      console.log('💾 Salvando', itensTabela.length, 'produtos...');
+      let sucessos = 0;
+      
+      for (const item of itensTabela) {
+        const itemData = {
+          tabela_preco_id: tabelaId,
+          produto_id: item.produto_id,
+          produto_descricao: item.produto_descricao,
+          produto_codigo: item.produto_codigo || '-',
+          custo_base: Number(item.custo_base) || 0,
+          preco: Number(item.preco) || 0,
+          desconto_maximo_percentual: Number(item.desconto_maximo_percentual) || 0,
+          margem_percentual: Number(item.margem_percentual) || 0
+        };
+        
+        console.log('Salvando item:', itemData);
+        await base44.entities.TabelaPrecoItem.create(itemData);
+        sucessos++;
       }
+
+      console.log('✅ Salvos', sucessos, 'produtos com sucesso');
 
       // 4. Invalidar queries
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
       queryClient.invalidateQueries({ queryKey: ['tabela-preco-itens', tabelaId] });
       
-      // 5. Fechar dialog (onSubmit sem dados para não duplicar salvamento)
+      toast.success(`✅ Tabela salva com ${sucessos} produtos!`);
+      
+      // 5. Fechar dialog
       if (onSubmit) {
         onSubmit({ _salvamentoCompleto: true });
       }
     } catch (error) {
-      toast.error('❌ Erro ao salvar: ' + error.message);
-      console.error('Erro detalhado:', error);
+      console.error('❌ Erro ao salvar tabela:', error);
+      toast.error('❌ Erro: ' + error.message);
     }
   };
 
