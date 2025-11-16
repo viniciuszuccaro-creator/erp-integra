@@ -31,6 +31,21 @@ import HistoricoProduto from "./HistoricoProduto";
  */
 export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmitting }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const currentUser = await base44.auth.me();
+        setUser(currentUser);
+      } catch (error) {
+        console.error("Failed to load current user:", error);
+        // Optionally handle error, e.g., redirect to login or show a message
+      }
+    };
+    loadUser();
+  }, []);
+
   const [formData, setFormData] = useState(() => {
     if (produto) {
       return {
@@ -356,7 +371,8 @@ Caso contrário, sugira:
 
     const dadosSubmit = {
       ...formData,
-      unidade_medida: formData.unidade_principal || 'KG'
+      unidade_medida: formData.unidade_principal || 'KG',
+      empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1'
     };
 
     onSubmit(dadosSubmit);
