@@ -11,7 +11,7 @@ import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
 import ComissoesTab from "../components/comercial/ComissoesTab";
 import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
-import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab";
+import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab"; // Keeping import as outline didn't specify removal
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
 
@@ -23,8 +23,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog"; // Added Dialog, DialogContent
-import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto"; // Added PedidoFormCompleto import
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
 
 /**
  * Módulo Comercial - V12.0 COMPLETO
@@ -63,6 +63,7 @@ export default function Comercial() {
     queryFn: () => base44.entities.NotaFiscal.list('-created_date'),
   });
 
+  // Keeping this query as per outline, even if not displayed
   const { data: tabelasPreco = [] } = useQuery({
     queryKey: ['tabelas-preco'],
     queryFn: () => base44.entities.TabelaPreco.list('-updated_date'),
@@ -160,7 +161,7 @@ export default function Comercial() {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Clientes</CardTitle>
@@ -207,19 +208,6 @@ export default function Comercial() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="border-0 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Tabelas Preço</CardTitle>
-            <DollarSign className="w-5 h-5 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-emerald-600">{tabelasPreco.length}</div>
-            <p className="text-xs text-slate-500 mt-1">
-              {tabelasPreco.filter(t => t.ativo).length} ativas
-            </p>
-          </CardContent>
-        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -238,13 +226,7 @@ export default function Comercial() {
             <ShoppingCart className="w-4 h-4 mr-2" />
             Pedidos
           </TabsTrigger>
-          <TabsTrigger 
-            value="tabelas-preco" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
-            <DollarSign className="w-4 h-4 mr-2" />
-            Tabelas de Preço
-          </TabsTrigger>
+          {/* Removed Tabelas de Preço TabTrigger */}
           <TabsTrigger 
             value="comissoes" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
@@ -296,9 +278,7 @@ export default function Comercial() {
           />
         </TabsContent>
 
-        <TabsContent value="tabelas-preco">
-          <TabelasPrecoTab />
-        </TabsContent>
+        {/* Removed TabelasPrecoTab TabsContent */}
 
         <TabsContent value="comissoes">
           <ComissoesTab comissoes={comissoes} pedidos={pedidos} />
