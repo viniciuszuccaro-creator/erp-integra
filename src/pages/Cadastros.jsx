@@ -59,12 +59,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
-import ClienteForm from "../components/comercial/ClienteForm";
 import ColaboradorForm from "../components/rh/ColaboradorForm";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
 import CentroCustoForm from "../components/cadastros/CentroCustoForm";
-import CadastroClienteCompleto from "../components/cadastros/CadastroClienteCompleto";
-import CadastroFornecedorCompleto from "../components/cadastros/CadastroFornecedorCompleto";
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import IconeAcessoCliente from "../components/cadastros/IconeAcessoCliente";
 import PainelDinamicoFornecedor from "../components/cadastros/PainelDinamicoFornecedor";
@@ -79,10 +76,7 @@ import BancoForm from "../components/cadastros/BancoForm";
 import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
 import VeiculoForm from "../components/cadastros/VeiculoForm";
 import EmpresaForm from "../components/cadastros/EmpresaForm";
-import ProdutoForm from "../components/cadastros/ProdutoForm"; // Keeping this import, but ProdutoFormV22_Completo will be used for main product editing
 import ServicoForm from "../components/cadastros/ServicoForm";
-import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
-import CatalogoWebForm from "../components/cadastros/CatalogoWebForm";
 import WebhookForm from "../components/cadastros/WebhookForm";
 import ChatbotIntentsForm from "../components/cadastros/ChatbotIntentsForm";
 import UsuarioForm from "../components/cadastros/UsuarioForm";
@@ -109,9 +103,6 @@ import MoedaIndiceForm from "../components/cadastros/MoedaIndiceForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
 import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
-import MultiTabelasEditor from "../components/cadastros/MultiTabelasEditor";
-import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
-import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoProduto";
 import BotaoNovaJanela from "@/components/cadastros/BotaoNovaJanela";
 import { useWindow } from "@/components/lib/useWindow";
 
@@ -124,12 +115,6 @@ export default function Cadastros() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [tipoDialog, setTipoDialog] = useState(null);
-  
-  // Estados para cadastros completos
-  const [cadastroCompletoAberto, setCadastroCompletoAberto] = useState(false);
-  const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null);
-  const [cadastroFornecedorAberto, setCadastroFornecedorAberto] = useState(false);
   
   // Estados para painéis dinâmicos
   const [painelClienteAberto, setPainelClienteAberto] = useState(false);
@@ -148,46 +133,41 @@ export default function Cadastros() {
   // NOVO: Estados adicionais V18.0
   const [webhookFormOpen, setWebhookFormOpen] = useState(false);
   const [chatbotIntentOpen, setChatbotIntentOpen] = useState(false);
-  const [produtoFormOpen, setProdutoFormOpen] = useState(false); // This state will be replaced by the universal dialog or a specific V22 dialog if needed
-  const [servicoFormOpen, setServicoFormOpen] = useState(false);
-  const [tabelaPrecoFormOpen, setTabelaPrecoFormOpen] = useState(false);
-  const [tabelaSelecionadaEditar, setTabelaSelecionadaEditar] = useState(null);
-  const [multiTabelasOpen, setMultiTabelasOpen] = useState(false);
-  const [tabelasSelecionadasMulti, setTabelasSelecionadasMulti] = useState([]);
-  const [catalogoWebFormOpen, setCatalogoWebFormOpen] = useState(false);
-  const [empresaFormOpen, setEmpresaFormOpen] = useState(false);
+  // States removed: produtoFormOpen, servicoFormOpen, tabelaPrecoFormOpen, tabelaSelecionadaEditar, multiTabelasOpen, tabelasSelecionadasMulti, catalogoWebFormOpen, empresaFormOpen
+  // as they are handled by universal dialog or new window system.
 
-  const [usuarioFormOpen, setUsuarioFormOpen] = useState(false);
-  const [perfilAcessoFormOpen, setPerfilAcessoFormOpen] = useState(false);
+  const [usuarioFormOpen, setUsuarioFormOpen] = useState(false); // Unused in final, removed from outline
+  const [perfilAcessoFormOpen, setPerfilAcessoFormOpen] = useState(false); // Unused in final, removed from outline
   const [rotaPadraoFormOpen, setRotaPadraoFormOpen] = useState(false);
   const [localEstoqueFormOpen, setLocalEstoqueFormOpen] = useState(false);
   const [cadastroFiscalFormOpen, setCadastroFiscalFormOpen] = useState(false);
   const [bitolasPanelOpen, setBitolasPanelOpen] = useState(false);
 
-  const [grupoEmpresarialFormOpen, setGrupoEmpresarialFormOpen] = useState(false);
+  const [grupoEmpresarialFormOpen, setGrupoEmpresarialFormOpen] = useState(false); // Unused in final, removed from outline
   const [filialFormOpen, setFilialFormOpen] = useState(false);
-  const [departamentoFormOpen, setDepartamentoFormOpen] = useState(false);
-  const [cargoFormOpen, setCargoFormOpen] = useState(false);
-  const [turnoFormOpen, setTurnoFormOpen] = useState(false);
+  const [departamentoFormOpen, setDepartamentoFormOpen] = useState(false); // Unused in final, removed from outline
+  const [cargoFormOpen, setCargoFormOpen] = useState(false); // Unused in final, removed from outline
+  const [turnoFormOpen, setTurnoFormOpen] = useState(false); // Unused in final, removed from outline
 
   // NEW: Estados para Bloco 2
-  const [condicaoComercialFormOpen, setCondicaoComercialFormOpen] = useState(false);
-  const [contatoB2BFormOpen, setContatoB2BFormOpen] = useState(false);
-  const [representanteFormOpen, setRepresentanteFormOpen] = useState(false);
-  const [segmentoClienteFormOpen, setSegmentoClienteFormOpen] = useState(false);
+  const [condicaoComercialFormOpen, setCondicaoComercialFormOpen] = useState(false); // Unused in final, removed from outline
+  const [contatoB2BFormOpen, setContatoB2BFormOpen] = useState(false); // Unused in final, removed from outline
+  const [representanteFormOpen, setRepresentanteFormOpen] = useState(false); // Unused in final, removed from outline
+  const [segmentoClienteFormOpen, setSegmentoClienteFormOpen] = useState(false); // Unused in final, removed from outline
 
-  const [grupoProdutoFormOpen, setGrupoProdutoFormOpen] = useState(false);
-  const [marcaFormOpen, setMarcaFormOpen] = useState(false);
-  const [kitProdutoFormOpen, setKitProdutoFormOpen] = useState(false);
+  const [grupoProdutoFormOpen, setGrupoProdutoFormOpen] = useState(false); // Unused in final, removed from outline
+  const [marcaFormOpen, setMarcaFormOpen] = useState(false); // Unused in final, removed from outline
+  const [kitProdutoFormOpen, setKitProdutoFormOpen] = useState(false); // Unused in final, removed from outline
 
-  const [planoContasFormOpen, setPlanoContasFormOpen] = useState(false);
-  const [centroResultadoFormOpen, setCentroResultadoFormOpen] = useState(false);
-  const [tipoDespesaFormOpen, setTipoDespesaFormOpen] = useState(false);
-  const [moedaIndiceFormOpen, setMoedaIndiceFormOpen] = useState(false);
+  const [planoContasFormOpen, setPlanoContasFormOpen] = useState(false); // Unused in final, removed from outline
+  const [centroResultadoFormOpen, setCentroResultadoFormOpen] = useState(false); // Unused in final, removed from outline
+  const [tipoDespesaFormOpen, setTipoDespesaFormOpen] = useState(false); // Unused in final, removed from outline
+  const [moedaIndiceFormOpen, setMoedaIndiceFormOpen] = useState(false); // Unused in final, removed from outline
 
-  const [motoristaFormOpen, setMotoristaFormOpen] = useState(false);
-  const [tipoFreteFormOpen, setTipoFreteFormOpen] = useState(false);
-  const [modeloDocumentoFormOpen, setModeloDocumentoFormOpen] = useState(false);
+  const [motoristaFormOpen, setMotoristaFormOpen] = useState(false); // Unused in final, removed from outline
+  const [tipoFreteFormOpen, setTipoFreteFormOpen] = useState(false); // Unused in final, removed from outline
+  const [modeloDocumentoFormOpen, setModeloDocumentoFormOpen] = useState(false); // Unused in final, removed from outline
+
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -270,15 +250,9 @@ export default function Cadastros() {
     queryFn: () => base44.entities.TabelaPreco.list(),
   });
 
-  const { data: tabelasPrecoItens = [] } = useQuery({
-    queryKey: ['tabelas-preco-itens'],
-    queryFn: () => base44.entities.TabelaPrecoItem.list(),
-  });
+  // Removed tabelasPrecoItens query
 
-  const { data: catalogoWeb = [] } = useQuery({
-    queryKey: ['catalogo-web'],
-    queryFn: () => base44.entities.CatalogoWeb.list(),
-  });
+  // Removed catalogoWeb query
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios'],
@@ -389,10 +363,8 @@ export default function Cadastros() {
         'FormaPagamento': 'formas-pagamento',
         'Veiculo': 'veiculos',
         'EventoNotificacao': 'eventos-notificacao',
-        'Produto': 'produtos',
+        // Removed Produto, TabelaPreco, CatalogoWeb
         'Servico': 'servicos',
-        'TabelaPreco': 'tabelas-preco',
-        'CatalogoWeb': 'catalogo-web',
         'Empresa': 'empresas',
         'GrupoEmpresarial': 'grupos',
         'Departamento': 'departamentos',
@@ -421,10 +393,7 @@ export default function Cadastros() {
       // Use variables.entity directly if it's the exact key, otherwise map
       const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
-      // Invalidate table price items too if TabelaPreco is created/updated
-      if (variables.entity === 'TabelaPreco') {
-        queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
-      }
+      // Removed specific invalidate for TabelaPreco
       handleCloseDialog();
       // Specific toasts can be handled in individual dialog onSubmits if needed,
       // but this provides a generic success for all.
@@ -445,10 +414,8 @@ export default function Cadastros() {
         'FormaPagamento': 'formas-pagamento',
         'Veiculo': 'veiculos',
         'EventoNotificacao': 'eventos-notificacao',
-        'Produto': 'produtos',
+        // Removed Produto, TabelaPreco, CatalogoWeb
         'Servico': 'servicos',
-        'TabelaPreco': 'tabelas-preco',
-        'CatalogoWeb': 'catalogo-web',
         'Empresa': 'empresas',
         'GrupoEmpresarial': 'grupos',
         'Departamento': 'departamentos',
@@ -476,10 +443,7 @@ export default function Cadastros() {
       };
       const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
-      // Invalidate table price items too if TabelaPreco is created/updated
-      if (variables.entity === 'TabelaPreco') {
-        queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
-      }
+      // Removed specific invalidate for TabelaPreco
       handleCloseDialog();
       toast({ title: `✅ ${variables.entity} atualizado com sucesso!` });
     }
@@ -527,25 +491,7 @@ export default function Cadastros() {
     }
   };
 
-  const handleEditarCliente = (cliente) => {
-    setClienteSelecionado(cliente);
-    setCadastroCompletoAberto(true);
-  };
-
-  const handleNovoCliente = () => {
-    setClienteSelecionado(null);
-    setCadastroCompletoAberto(true);
-  };
-
-  const handleEditarFornecedor = (fornecedor) => {
-    setFornecedorSelecionado(fornecedor);
-    setCadastroFornecedorAberto(true);
-  };
-
-  const handleNovoFornecedor = () => {
-    setFornecedorSelecionado(null);
-    setCadastroFornecedorAberto(true);
-  };
+  // Removed handleEditarCliente, handleNovoCliente, handleEditarFornecedor, handleNovoFornecedor
 
   const statusColors = {
     'Ativo': 'bg-green-100 text-green-700 border-green-300',
@@ -568,7 +514,7 @@ export default function Cadastros() {
 
   const totalItensGrupo1 = empresas.length + grupos.length + usuarios.length + perfisAcesso.length + departamentos.length + cargos.length + turnos.length + centrosCusto.length;
   const totalItensGrupo2 = clientes.length + fornecedores.length + colaboradores.length + transportadoras.length + contatosB2B.length + representantes.length + condicoesComerciais.length + segmentosCliente.length;
-  const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length;
+  const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + gruposProduto.length + marcas.length + kits.length; // Removed catalogoWeb.length
   const totalItensGrupo4 = bancos.length + formasPagamento.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
   const totalItensGrupo5 = veiculos.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
 
@@ -590,14 +536,12 @@ export default function Cadastros() {
             <div>
               <p className="font-bold text-purple-900">🚀 V21.0 - Sistema Multitarefa Ativado!</p>
               <p className="text-sm text-purple-700 mt-1">
-                Agora você pode abrir múltiplos cadastros simultaneamente em janelas independentes. 
-                Use <kbd className="px-2 py-1 bg-white rounded border">Ctrl+K</kbd> para abrir a paleta de comandos.
+                Clique em qualquer cadastro para abrir em janela independente. Use <kbd className="px-2 py-1 bg-white rounded border">Ctrl+K</kbd> para comandos rápidos.
               </p>
             </div>
             <div className="flex gap-2">
               <BotaoNovaJanela tipo="produto" label="Produto" variant="outline" size="sm" />
-              <BotaoNovaJanela tipo="cliente" label="Cliente" variant="outline" size="sm" onClick={() => openClienteWindow(null)} />
-              <BotaoNovaJanela tipo="fornecedor" label="Fornecedor" variant="outline" size="sm" onClick={() => openFornecedorWindow(null)} />
+              <BotaoNovaJanela tipo="cliente" label="Cliente" variant="outline" size="sm" />
               <BotaoNovaJanela tipo="tabela-preco" label="Tabela" variant="outline" size="sm" />
             </div>
           </div>
@@ -1005,7 +949,7 @@ export default function Cadastros() {
                   <Users className="w-5 h-5 text-blue-600" />
                   Clientes ({clientes.length})
                 </h4>
-                <Button onClick={handleNovoCliente} size="sm" className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={() => openClienteWindow(null)} size="sm" className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="w-4 h-4 mr-2" />
                   Novo Cliente
                 </Button>
@@ -1035,7 +979,7 @@ export default function Cadastros() {
                             <Button size="sm" variant="ghost" onClick={() => { setClienteParaPainel(cliente); setPainelClienteAberto(true); }}>
                               <Eye className="w-3 h-3" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleEditarCliente(cliente)}>
+                            <Button size="sm" variant="ghost" onClick={() => openClienteWindow(cliente)}>
                               <Edit className="w-3 h-3" />
                             </Button>
                           </div>
@@ -1054,7 +998,7 @@ export default function Cadastros() {
                   <Building2 className="w-5 h-5 text-cyan-600" />
                   Fornecedores ({fornecedores.length})
                 </h4>
-                <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700" onClick={handleNovoFornecedor}>
+                <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700" onClick={() => openFornecedorWindow(null)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Novo Fornecedor
                 </Button>
@@ -1080,7 +1024,7 @@ export default function Cadastros() {
                             <Button size="sm" variant="ghost" onClick={() => { setFornecedorParaPainel(f); setPainelFornecedorAberto(true); }}>
                               <Eye className="w-3 h-3" />
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleEditarFornecedor(f)}>
+                            <Button size="sm" variant="ghost" onClick={() => openFornecedorWindow(f)}>
                               <Edit className="w-3 h-3" />
                             </Button>
                           </div>
@@ -1373,7 +1317,7 @@ export default function Cadastros() {
               </div>
               <div className="text-left">
                 <h3 className="font-bold text-lg">🧱 Produtos e Serviços V21.0</h3>
-                <p className="text-xs text-slate-600">Cadastro Master com IA, NF-e, Lote, Conversões e E-commerce</p>
+                <p className="text-xs text-slate-600">Cadastro Master com Multitarefa</p>
               </div>
               <Badge className="ml-auto">
                 {totalItensGrupo3} itens
@@ -1383,8 +1327,8 @@ export default function Cadastros() {
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
             {/* Botões V21.0 */}
             <div className="flex gap-2 flex-wrap">
-              <BotaoNovaJanela tipo="produto" label="➕ Novo Produto (Janela)" />
-              <BotaoNovaJanela tipo="tabela-preco" label="💰 Nova Tabela (Janela)" />
+              <BotaoNovaJanela tipo="produto" label="➕ Novo Produto" />
+              <BotaoNovaJanela tipo="tabela-preco" label="💰 Nova Tabela" />
               <Button variant="outline" size="sm">
                 📥 Importar Produtos
               </Button>
@@ -1393,7 +1337,7 @@ export default function Cadastros() {
             {/* Tabela de produtos */}
             <Card>
               <CardHeader className="bg-blue-50 border-b">
-                <CardTitle className="text-base">📦 Produtos Cadastrados</CardTitle>
+                <CardTitle className="text-base">📦 Produtos Cadastrados ({produtosFiltrados.length})</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -1437,7 +1381,7 @@ export default function Cadastros() {
             {/* Tabelas de Preço */}
             <Card>
               <CardHeader className="bg-yellow-50 border-b">
-                <CardTitle className="text-base">💰 Tabelas de Preço</CardTitle>
+                <CardTitle className="text-base">💰 Tabelas de Preço ({tabelasPreco.length})</CardTitle>
               </CardHeader>
               <CardContent className="p-4">
                 <div className="space-y-2">
@@ -1925,30 +1869,30 @@ export default function Cadastros() {
                 </Button>
               </div>
               <div className="border rounded-lg max-h-64 overflow-y-auto">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-slate-50">
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>CNH</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {motoristas.map((m) => (
-                      <TableRow key={m.id} className="hover:bg-slate-50">
-                        <TableCell className="font-medium text-sm">{m.nome_completo}</TableCell>
-                        <TableCell className="text-xs">{m.cnh_categoria} - {m.cnh_numero}</TableCell>
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onClick={() => handleEdit(m, 'motoristas', 'Motorista')}>
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                        </TableCell>
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>CNH</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {motoristas.map((m) => (
+                        <TableRow key={m.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{m.nome_completo}</TableCell>
+                          <TableCell className="text-xs">{m.cnh_categoria} - {m.cnh_numero}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(m, 'motoristas', 'Motorista')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </div>
 
             {/* Tipos Frete - TABELA COMPLETA */}
             <div>
@@ -2418,13 +2362,10 @@ export default function Cadastros() {
               {tipoDialog === 'contatos' && 'Contato B2B'}
               {tipoDialog === 'representantes' && 'Representante'}
               {tipoDialog === 'segmentos' && 'Segmento de Cliente'}
-              {tipoDialog === 'produtos' && 'Produto'}
               {tipoDialog === 'servicos' && 'Serviço'}
               {tipoDialog === 'grupos-produto' && 'Grupo de Produtos'}
               {tipoDialog === 'marcas' && 'Marca'}
               {tipoDialog === 'kits' && 'Kit de Produtos'}
-              {tipoDialog === 'tabelas' && 'Tabela de Preço'}
-              {tipoDialog === 'catalogo' && 'Item de Catálogo Web'}
               {tipoDialog === 'plano-contas' && 'Conta Contábil'}
               {tipoDialog === 'centros-resultado' && 'Centro de Resultado'}
               {tipoDialog === 'tipos-despesa' && 'Tipo de Despesa'}
@@ -2452,25 +2393,11 @@ export default function Cadastros() {
           {tipoDialog === 'contatos' && <ContatoB2BForm contato={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'representantes' && <RepresentanteForm representante={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'segmentos' && <SegmentoClienteForm segmento={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
-          {tipoDialog === 'produtos' && (
-            <ProdutoFormV22_Completo 
-              produto={editingItem?.id ? editingItem : null} 
-              onSubmit={handleSubmit} 
-              isSubmitting={createMutation.isPending || updateMutation.isPending} 
-            />
-          )}
+          {/* Removed ProdutoFormV22_Completo, TabelaPrecoFormCompleto, CatalogoWebForm from universal dialog rendering */}
           {tipoDialog === 'servicos' && <ServicoForm servico={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'grupos-produto' && <GrupoProdutoForm grupo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'marcas' && <MarcaForm marca={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'kits' && <KitProdutoForm kit={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
-          {tipoDialog === 'tabelas' && (
-            <TabelaPrecoFormCompleto 
-              tabela={editingItem?.id ? editingItem : null} 
-              onSubmit={handleSubmit} 
-              isSubmitting={createMutation.isPending || updateMutation.isPending} 
-            />
-          )}
-          {tipoDialog === 'catalogo' && <CatalogoWebForm catalogoItem={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'plano-contas' && <PlanoContasForm conta={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'centros-resultado' && <CentroResultadoForm centro={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'tipos-despesa' && <TipoDespesaForm tipo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
@@ -2481,39 +2408,8 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Cadastro Completo Cliente */}
-      <CadastroClienteCompleto
-        cliente={clienteSelecionado}
-        isOpen={cadastroCompletoAberto}
-        onClose={() => {
-          setCadastroCompletoAberto(false);
-          setClienteSelecionado(null);
-        }}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['clientes'] });
-          if (painelClienteAberto && clienteParaPainel?.id === clienteSelecionado?.id) {
-            setPainelClienteAberto(false);
-            setClienteParaPainel(null);
-          }
-        }}
-      />
-
-      {/* Modal Cadastro Completo Fornecedor */}
-      <CadastroFornecedorCompleto
-        fornecedor={fornecedorSelecionado}
-        isOpen={cadastroFornecedorAberto}
-        onClose={() => {
-          setCadastroFornecedorAberto(false);
-          setFornecedorSelecionado(null);
-        }}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
-          if (painelFornecedorAberto && fornecedorParaPainel?.id === fornecedorSelecionado?.id) {
-            setPainelFornecedorAberto(false);
-            setFornecedorParaPainel(null);
-          }
-        }}
-      />
+      {/* Removed Modal Cadastro Completo Cliente */}
+      {/* Removed Modal Cadastro Completo Fornecedor */}
 
       {/* Painel Dinâmico Cliente */}
       <PainelDinamicoCliente
@@ -2522,7 +2418,7 @@ export default function Cadastros() {
         onClose={() => { setPainelClienteAberto(false); setClienteParaPainel(null); }}
         onEdit={(c) => {
           setPainelClienteAberto(false);
-          handleEditarCliente(c);
+          openClienteWindow(c);
         }}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['clientes'] })}
       />
@@ -2534,7 +2430,7 @@ export default function Cadastros() {
         onClose={() => { setPainelFornecedorAberto(false); setFornecedorParaPainel(null); }}
         onEdit={(f) => {
           setPainelFornecedorAberto(false);
-          handleEditarFornecedor(f);
+          openFornecedorWindow(f);
         }}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ['fornecedores'] })}
       />
@@ -2751,12 +2647,7 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* V21.1.2: Dialog Multi-Tabelas */}
-      <MultiTabelasEditor
-        isOpen={multiTabelasOpen}
-        onClose={() => setMultiTabelasOpen(false)}
-        tabelas={tabelasPreco}
-      />
+      {/* Removed V21.1.2: Dialog Multi-Tabelas */}
     </div>
   );
 }
