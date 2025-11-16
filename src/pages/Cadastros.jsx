@@ -1762,78 +1762,77 @@ export default function Cadastros() {
                     <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
                     <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {/* Catálogo Web */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-bold flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-cyan-600" />
-                  Catálogo Web ({catalogoWeb.length})
-                </h4>
-                <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
-                  <Plus className="w-3 h-3 mr-2" />
-                  Novo Item
-                </Button>
+                  </div>
+                )}
               </div>
-              <div className="border rounded-lg max-h-64 overflow-y-auto">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-slate-50">
-                    <TableRow>
-                      <TableHead>Produto</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {catalogoWeb.map((c) => (
-                      <TableRow key={c.id} className="hover:bg-slate-50">
-                        <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
-                        <TableCell>
-                          {c.exibir_no_site ? (
-                            <Badge className="bg-green-100 text-green-700 text-xs">Ativo</Badge>
-                          ) : (
-                            <Badge className="bg-slate-100 text-slate-700 text-xs">Inativo</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'catalogo', 'CatalogoWeb')}>
-                            <Edit className="w-3 h-3" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
 
-            {/* Bitolas */}
-            <Card className="border hover:shadow-md transition-shadow border-purple-200 bg-purple-50">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <Package className="w-5 h-5 text-purple-600" />
-                  <h4 className="font-semibold">Bitolas</h4>
-                  <Badge className="ml-auto bg-purple-600 text-white">
-                    {produtos.filter(p => p.eh_bitola).length}
-                  </Badge>
+              {/* Catálogo Web */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-cyan-600" />
+                    Catálogo Web ({catalogoWeb.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
+                    <Plus className="w-3 h-3 mr-2" />
+                    Novo Item
+                  </Button>
                 </div>
-                <p className="text-xs text-slate-600 mb-3">
-                  Barras de aço CA-25/50/60
-                </p>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setBitolasPanelOpen(true)}
-                >
-                  Gerenciar Bitolas →
-                </Button>
-              </CardContent>
-            </Card>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Produto</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {catalogoWeb.map((c) => (
+                        <TableRow key={c.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
+                          <TableCell>
+                            {c.exibir_no_site ? (
+                              <Badge className="bg-green-100 text-green-700 text-xs">Ativo</Badge>
+                            ) : (
+                              <Badge className="bg-slate-100 text-slate-700 text-xs">Inativo</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'catalogo', 'CatalogoWeb')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              {/* Bitolas */}
+              <Card className="border hover:shadow-md transition-shadow border-purple-200 bg-purple-50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Package className="w-5 h-5 text-purple-600" />
+                    <h4 className="font-semibold">Bitolas</h4>
+                    <Badge className="ml-auto bg-purple-600 text-white">
+                      {produtos.filter(p => p.eh_bitola).length}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-slate-600 mb-3">
+                    Barras de aço CA-25/50/60
+                  </p>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setBitolasPanelOpen(true)}
+                  >
+                    Gerenciar Bitolas →
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
 
             {/* IAs ATIVAS */}
@@ -1849,7 +1848,7 @@ export default function Cadastros() {
                 <DollarSign className="w-4 h-4 text-green-600" />
                 <AlertDescription className="text-sm text-green-900">
                   💰 <strong>IA PriceBrain:</strong> Monitora custo médio e sugere reajustes diários
-                </Alertcription>
+                </AlertDescription>
               </Alert>
 
               <Alert className="border-cyan-200 bg-cyan-50">
@@ -2344,8 +2343,8 @@ export default function Cadastros() {
                       <TableHead>Descrição</TableHead>
                       <TableHead>Modalidade</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
+                      </TableRow>
+                    </TableHeader>
                   <TableBody>
                     {tiposFrete.map((tf) => (
                       <TableRow key={tf.id} className="hover:bg-slate-50">
