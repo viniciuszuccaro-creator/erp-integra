@@ -500,6 +500,12 @@ export default function Cadastros() {
   };
 
   const handleSubmit = (data) => {
+    // Se o salvamento já foi feito internamente pelo formulário (ex: TabelaPreco com itens)
+    if (data?._salvamentoCompleto) {
+      handleCloseDialog();
+      return;
+    }
+
     const entityName = editingItem?._entityName;
 
     if (!entityName) {
