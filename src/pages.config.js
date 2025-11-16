@@ -27,7 +27,8 @@ import ChatbotAtendimento from './pages/ChatbotAtendimento';
 import ValidadorFase1 from './pages/ValidadorFase1';
 import LimparDados from './pages/LimparDados';
 import DemoMultitarefas from './pages/DemoMultitarefas';
-import Layout from './Layout.jsx';
+import TesteModulo0 from './pages/TesteModulo0';
+import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
@@ -60,10 +61,11 @@ export const PAGES = {
     "ValidadorFase1": ValidadorFase1,
     "LimparDados": LimparDados,
     "DemoMultitarefas": DemoMultitarefas,
+    "TesteModulo0": TesteModulo0,
 }
 
 export const pagesConfig = {
     mainPage: "Dashboard",
     Pages: PAGES,
-    Layout: Layout,
+    Layout: __Layout,
 };
