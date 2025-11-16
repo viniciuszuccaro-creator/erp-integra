@@ -111,7 +111,6 @@ import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 import MultiTabelasEditor from "../components/cadastros/MultiTabelasEditor";
 import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
 import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoProduto";
-import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 
 /**
  * CADASTROS GERAIS V20.1 - HUB CENTRAL COM AUDITORIA COMPLETA
@@ -186,8 +185,6 @@ export default function Cadastros() {
   const [motoristaFormOpen, setMotoristaFormOpen] = useState(false);
   const [tipoFreteFormOpen, setTipoFreteFormOpen] = useState(false);
   const [modeloDocumentoFormOpen, setModeloDocumentoFormOpen] = useState(false);
-
-  const [setorAtividadeFormOpen, setSetorAtividadeFormOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -374,11 +371,6 @@ export default function Cadastros() {
     queryFn: () => base44.entities.ModeloDocumento.list(),
   });
 
-  const { data: setoresAtividade = [] } = useQuery({
-    queryKey: ['setores-atividade'],
-    queryFn: () => base44.entities.SetorAtividade.list(),
-  });
-
   // MUTATIONS UNIVERSAIS - TODAS AS ENTIDADES
   const createMutation = useMutation({
     mutationFn: async ({ entity, data }) => {
@@ -420,8 +412,7 @@ export default function Cadastros() {
         'MoedaIndice': 'moedas-indices',
         'Motorista': 'motoristas',
         'TipoFrete': 'tipos-frete',
-        'ModeloDocumento': 'modelos-documento',
-        'SetorAtividade': 'setores-atividade'
+        'ModeloDocumento': 'modelos-documento'
       };
       // Use variables.entity directly if it's the exact key, otherwise map
       const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
@@ -477,8 +468,7 @@ export default function Cadastros() {
         'MoedaIndice': 'moedas-indices',
         'Motorista': 'motoristas',
         'TipoFrete': 'tipos-frete',
-        'ModeloDocumento': 'modelos-documento',
-        'SetorAtividade': 'setores-atividade'
+        'ModeloDocumento': 'modelos-documento'
       };
       const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
@@ -574,7 +564,7 @@ export default function Cadastros() {
 
   const totalItensGrupo1 = empresas.length + grupos.length + usuarios.length + perfisAcesso.length + departamentos.length + cargos.length + turnos.length + centrosCusto.length;
   const totalItensGrupo2 = clientes.length + fornecedores.length + colaboradores.length + transportadoras.length + contatosB2B.length + representantes.length + condicoesComerciais.length + segmentosCliente.length;
-  const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length + setoresAtividade.length;
+  const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length;
   const totalItensGrupo4 = bancos.length + formasPagamento.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
   const totalItensGrupo5 = veiculos.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
 
@@ -1448,108 +1438,6 @@ export default function Cadastros() {
               </Alert>
             </div>
 
-            {/* NOVO: SETOR DE ATIVIDADE + GRUPOS DE PRODUTO */}
-            <div className="grid lg:grid-cols-2 gap-6 mb-6">
-              {/* Setores de Atividade */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Factory className="w-5 h-5 text-blue-600" />
-                    Setores de Atividade ({setoresAtividade.length})
-                  </h4>
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => handleOpenNew('setores', 'SetorAtividade')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Setor
-                  </Button>
-                </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Código</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {setoresAtividade.map((s) => (
-                        <TableRow key={s.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{s.nome}</TableCell>
-                          <TableCell className="text-xs">{s.codigo || '-'}</TableCell>
-                          <TableCell>
-                            <Badge className={s.ativo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}>
-                              {s.ativo ? 'Ativo' : 'Inativo'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(s, 'setores', 'SetorAtividade')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                {setoresAtividade.length === 0 && (
-                  <div className="text-center py-8 text-slate-500 border rounded-lg mt-2">
-                    <Factory className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-xs">Cadastre: Revenda, Almoxarifado, Produção</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Grupos de Produto */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Boxes className="w-5 h-5 text-cyan-600" />
-                    Grupos de Produto ({gruposProduto.length})
-                  </h4>
-                  <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700" onClick={() => handleOpenNew('grupos-produto', 'GrupoProduto')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Grupo
-                  </Button>
-                </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Setor</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {gruposProduto.map((g) => (
-                        <TableRow key={g.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">
-                            {g.icone && <span className="mr-2">{g.icone}</span>}
-                            {g.nome_grupo}
-                          </TableCell>
-                          <TableCell className="text-xs">
-                            <Badge variant="outline">{g.setor_atividade_nome}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(g, 'grupos-produto', 'GrupoProduto')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                {gruposProduto.length === 0 && (
-                  <div className="text-center py-8 text-slate-500 border rounded-lg mt-2">
-                    <Boxes className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                    <p className="text-xs">Ex: Vergalhão em Barra, Tela Soldada</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* PRODUTOS - HEADER COM IMPORTAÇÃO */}
             <div>
               <div className="flex justify-between items-center mb-3">
@@ -1685,6 +1573,44 @@ export default function Cadastros() {
 
             {/* Grid 2x2 - Outros Cadastros do Grupo 3 - TABELAS COMPLETAS */}
             <div className="grid lg:grid-cols-2 gap-6">
+              {/* Grupos Produto */}
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="font-bold flex items-center gap-2">
+                    <Boxes className="w-4 h-4 text-cyan-600" />
+                    Grupos ({gruposProduto.length})
+                  </h4>
+                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('grupos-produto', 'GrupoProduto')}>
+                    <Plus className="w-3 h-3 mr-2" />
+                    Novo Grupo
+                  </Button>
+                </div>
+                <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Natureza</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {gruposProduto.map((g) => (
+                        <TableRow key={g.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{g.nome_grupo}</TableCell>
+                          <TableCell className="text-xs">{g.natureza}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(g, 'grupos-produto', 'GrupoProduto')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
               {/* Marcas */}
               <div>
                 <div className="flex justify-between items-center mb-3">
@@ -2888,7 +2814,6 @@ export default function Cadastros() {
               {tipoDialog === 'motoristas' && 'Motorista'}
               {tipoDialog === 'tipos-frete' && 'Tipo de Frete'}
               {tipoDialog === 'modelos' && 'Modelo de Documento'}
-              {tipoDialog === 'setores' && 'Setor de Atividade'}
             </DialogTitle>
           </DialogHeader>
           
@@ -2935,7 +2860,6 @@ export default function Cadastros() {
           {tipoDialog === 'motoristas' && <MotoristaForm motorista={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'tipos-frete' && <TipoFreteForm tipo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'modelos' && <ModeloDocumentoForm modelo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
-          {tipoDialog === 'setores' && <SetorAtividadeForm setor={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
         </DialogContent>
       </Dialog>
 

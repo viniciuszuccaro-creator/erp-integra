@@ -13,18 +13,21 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Loader2, Sparkles, Package, Upload, Calculator, 
   CheckCircle2, AlertTriangle, FileText, Globe, 
-  TrendingUp, ArrowRightLeft, ShoppingCart, Image, Factory, Boxes
+  TrendingUp, ArrowRightLeft, ShoppingCart, Image
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import HistoricoProduto from "./HistoricoProduto";
-import { useQuery } from "@tanstack/react-query";
 
 /**
- * V22.0 - CADASTRO DE PRODUTOS COM SETOR DE ATIVIDADE + GRUPO CASCATA
- * ✅ Setor de Atividade → Grupo de Produto (cascata)
- * ✅ 5 Abas: Dados Gerais, Conversões, Dimensões, E-Commerce, Histórico
+ * V21.1.2-R2 - CADASTRO COMPLETO DE PRODUTOS COM ABAS
+ * ✅ Aba 1: Dados Gerais (identificação, bitola, precificação)
+ * ✅ Aba 2: Conversões (unidades, fatores)
+ * ✅ Aba 3: Dimensões & Peso (frete/e-commerce)
+ * ✅ Aba 4: E-Commerce & IA
+ * ✅ Aba 5: Histórico (se edição)
+ * ✅ Modo Manual vs IA
  */
 export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmitting }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
@@ -47,8 +50,6 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmittin
     if (produto) {
       return {
         ...produto,
-        setor_atividade_id: produto.setor_atividade_id || '',
-        grupo_produto_id: produto.grupo_produto_id || '',
         unidades_secundarias: produto.unidades_secundarias || ['KG'],
         fatores_conversao: produto.fatores_conversao || {
           kg_por_peca: 0,
@@ -69,9 +70,7 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmittin
       descricao: '',
       codigo: '',
       tipo_item: 'Revenda',
-      setor_atividade_id: '',
-      grupo_produto_id: '',
-      grupo: 'Outros', // This old 'grupo' field is now superseded by grupo_produto_id/setor_atividade_id. Can be removed if not used elsewhere for data modeling.
+      grupo: 'Outros',
       eh_bitola: false,
       peso_teorico_kg_m: 0,
       bitola_diametro_mm: 0,
@@ -103,20 +102,6 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmittin
       exibir_no_marketplace: false
     };
   });
-
-  const { data: setoresAtividade = [] } = useQuery({
-    queryKey: ['setores-atividade'],
-    queryFn: () => base44.entities.SetorAtividade.list()
-  });
-
-  const { data: gruposProduto = [] } = useQuery({
-    queryKey: ['grupos-produto'],
-    queryFn: () => base44.entities.GrupoProduto.list()
-  });
-
-  const gruposFiltrados = gruposProduto.filter(g => 
-    !formData.setor_atividade_id || g.setor_atividade_id === formData.setor_atividade_id
-  );
 
   const [iaSugestao, setIaSugestao] = useState(null);
   const [processandoIA, setProcessandoIA] = useState(false);
@@ -205,7 +190,7 @@ Caso contrário, sugira:
             bitola_diametro_mm: { type: "number" },
             tipo_aco: { type: "string" },
             ncm: { type: "string" },
-            grupo_produto: { type: "string" }, // This needs to be mapped to grupo_produto_id for submission
+            grupo_produto: { type: "string" },
             comprimento_barra_m: { type: "number" },
             unidade_principal: { type: "string" },
             unidades_secundarias: {
@@ -234,18 +219,6 @@ Caso contrário, sugira:
   const aplicarSugestaoIA = () => {
     if (!iaSugestao || modoManual) return;
     
-    // Attempt to find matching grupo_produto_id and setor_atividade_id based on IA's text suggestion
-    let suggestedGrupoId = formData.grupo_produto_id;
-    let suggestedSetorId = formData.setor_atividade_id;
-    
-    if (iaSugestao.grupo_produto) {
-        const matchingGrupo = gruposProduto.find(g => g.nome.toLowerCase() === iaSugestao.grupo_produto.toLowerCase());
-        if (matchingGrupo) {
-            suggestedGrupoId = matchingGrupo.id;
-            suggestedSetorId = matchingGrupo.setor_atividade_id; // Set sector based on matched group
-        }
-    }
-
     setFormData(prev => ({
       ...prev,
       eh_bitola: iaSugestao.eh_bitola || false,
@@ -253,8 +226,7 @@ Caso contrário, sugira:
       bitola_diametro_mm: iaSugestao.bitola_diametro_mm || 0,
       tipo_aco: iaSugestao.tipo_aco || 'CA-50',
       ncm: iaSugestao.ncm || '',
-      grupo_produto_id: suggestedGrupoId,
-      setor_atividade_id: suggestedSetorId,
+      grupo: iaSugestao.grupo_produto || prev.grupo,
       comprimento_barra_padrao_m: iaSugestao.comprimento_barra_m || 12,
       unidade_principal: iaSugestao.unidade_principal || 'KG',
       unidades_secundarias: iaSugestao.unidades_secundarias || ['KG']
@@ -321,15 +293,13 @@ Caso contrário, sugira:
     setGerandoDescricaoSEO(true);
 
     try {
-      const grupoNome = gruposProduto.find(g => g.id === formData.grupo_produto_id)?.nome || 'Não informado';
-
       const descricaoSEO = await base44.integrations.Core.InvokeLLM({
         prompt: `Você é um especialista em SEO para e-commerce. 
         
         Crie uma descrição detalhada e otimizada para SEO para este produto: "${formData.descricao}"
         
         NCM: ${formData.ncm || 'Não informado'}
-        Grupo: ${grupoNome}
+        Grupo: ${formData.grupo || 'Não informado'}
         É bitola: ${formData.eh_bitola ? 'Sim' : 'Não'}
         
         A descrição deve:
@@ -389,16 +359,6 @@ Caso contrário, sugira:
       return;
     }
 
-    if (!formData.setor_atividade_id) {
-      toast.error('Selecione o Setor de Atividade');
-      return;
-    }
-
-    if (!formData.grupo_produto_id) {
-      toast.error('Selecione o Grupo de Produto');
-      return;
-    }
-
     if (!formData.unidades_secundarias || formData.unidades_secundarias.length === 0) {
       toast.error('Selecione pelo menos 1 unidade de venda/compra');
       return;
@@ -409,15 +369,10 @@ Caso contrário, sugira:
       return;
     }
 
-    const grupoSelecionado = gruposProduto.find(g => g.id === formData.grupo_produto_id);
-    const setorSelecionado = setoresAtividade.find(s => s.id === formData.setor_atividade_id);
-
     const dadosSubmit = {
       ...formData,
       unidade_medida: formData.unidade_principal || 'KG',
-      empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1',
-      grupo_produto_nome: grupoSelecionado?.nome || '',
-      setor_atividade_nome: setorSelecionado?.nome || ''
+      empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1'
     };
 
     onSubmit(dadosSubmit);
@@ -456,7 +411,7 @@ Caso contrário, sugira:
             Conversões
           </TabsTrigger>
           <TabsTrigger value="dimensoes">
-            <Boxes className="w-4 h-4 mr-2" /> {/* Changed icon from Package to Boxes for dims */}
+            <Package className="w-4 h-4 mr-2" />
             Peso/Dim
           </TabsTrigger>
           <TabsTrigger value="ecommerce">
@@ -547,88 +502,6 @@ Caso contrário, sugira:
                   </Select>
                 </div>
               </div>
-
-              {/* NOVO: SETOR DE ATIVIDADE + GRUPO (CASCATA) */}
-              <Card className="border-blue-300 bg-blue-50">
-                <CardContent className="p-4 space-y-4">
-                  <h4 className="font-semibold text-blue-900 flex items-center gap-2">
-                    <Factory className="w-4 h-4" />
-                    Classificação Hierárquica *
-                  </h4>
-
-                  <div>
-                    <Label>1️⃣ Setor de Atividade *</Label>
-                    <Select 
-                      value={formData.setor_atividade_id} 
-                      onValueChange={(v) => {
-                        setFormData(prev => ({
-                          ...prev, 
-                          setor_atividade_id: v,
-                          grupo_produto_id: '' // Reset grupo when sector changes
-                        }));
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o setor (ex: Revenda)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {setoresAtividade.map(setor => (
-                          <SelectItem key={setor.id} value={setor.id}>
-                            {setor.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {setoresAtividade.length === 0 && (
-                      <p className="text-xs text-orange-600 mt-1">
-                        ⚠️ Cadastre setores em Cadastros → Produtos e Serviços
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label>2️⃣ Grupo de Produto/Material *</Label>
-                    <Select 
-                      value={formData.grupo_produto_id} 
-                      onValueChange={(v) => {
-                        const grupoSelecionado = gruposProduto.find(g => g.id === v);
-                        setFormData(prev => ({
-                          ...prev, 
-                          grupo_produto_id: v,
-                          ncm: grupoSelecionado?.ncm_padrao || prev.ncm // Auto-fill NCM if available
-                        }));
-                      }}
-                      disabled={!formData.setor_atividade_id}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o grupo (ex: Vergalhão em Barra)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {gruposFiltrados.map(grupo => (
-                          <SelectItem key={grupo.id} value={grupo.id}>
-                            {grupo.icone && <span className="mr-2">{grupo.icone}</span>}
-                            {grupo.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {formData.setor_atividade_id && gruposFiltrados.length === 0 && (
-                      <p className="text-xs text-orange-600 mt-1">
-                        ⚠️ Cadastre grupos para este setor
-                      </p>
-                    )}
-                  </div>
-
-                  {formData.setor_atividade_id && formData.grupo_produto_id && (
-                    <Alert className="border-green-300 bg-green-50">
-                      <CheckCircle2 className="w-4 h-4 text-green-700" />
-                      <AlertDescription className="text-xs text-green-900">
-                        ✅ Classificação: {setoresAtividade.find(s => s.id === formData.setor_atividade_id)?.nome} → {gruposProduto.find(g => g.id === formData.grupo_produto_id)?.nome}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
 
               <div>
                 <Label>Foto do Produto</Label>
