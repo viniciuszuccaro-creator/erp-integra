@@ -8,79 +8,80 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Zap, ShoppingCart, Users, Package, DollarSign, FileText, Truck, Calendar } from 'lucide-react';
-import { useWindow } from '@/components/lib/useWindow';
+import { Plus, ShoppingCart, Users, Package, DollarSign, FileText, Truck } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 
 /**
- * V21.0 - AÇÕES RÁPIDAS COM MULTITAREFA
- * ✅ Abre janelas em vez de navegar
- * ✅ Multi-instância habilitada
+ * Ações Rápidas Globais - Botão + Novo
+ * Acesso rápido às ações mais comuns do sistema
  */
 export default function AcoesRapidasGlobal() {
-  const { openProductWindow, openPedidoWindow, openClienteWindow, openTabelaPrecoWindow, openFornecedorWindow, openNFeWindow } = useWindow();
+  const navigate = useNavigate();
+
+  const acoes = [
+    {
+      label: 'Novo Pedido',
+      icon: ShoppingCart,
+      action: () => navigate(createPageUrl('Comercial') + '?action=novo-pedido'),
+      cor: 'text-blue-600'
+    },
+    {
+      label: 'Novo Cliente',
+      icon: Users,
+      action: () => navigate(createPageUrl('Cadastros') + '?tab=clientes&action=novo'),
+      cor: 'text-green-600'
+    },
+    {
+      label: 'Nova OP',
+      icon: Package,
+      action: () => navigate(createPageUrl('Producao') + '?action=nova-op'),
+      cor: 'text-orange-600'
+    },
+    {
+      label: 'Novo Título a Pagar',
+      icon: DollarSign,
+      action: () => navigate(createPageUrl('Financeiro') + '?tab=contas-pagar&action=novo'),
+      cor: 'text-red-600'
+    },
+    {
+      label: 'Nova Entrega',
+      icon: Truck,
+      action: () => navigate(createPageUrl('Expedicao') + '?action=nova-entrega'),
+      cor: 'text-purple-600'
+    },
+    {
+      label: 'Nova NF-e',
+      icon: FileText,
+      action: () => navigate(createPageUrl('Fiscal') + '?action=nova-nfe'),
+      cor: 'text-indigo-600'
+    }
+  ];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2">
-          <Zap className="w-5 h-5 text-yellow-600" />
-          <span className="text-sm text-slate-600 hidden lg:inline">Ações Rápidas</span>
-        </button>
+        <Button className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="w-4 h-4 mr-2" />
+          Novo
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>🚀 V21.0 - Multitarefa Ativa</DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel>Ações Rápidas</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        
-        <DropdownMenuItem onClick={() => openPedidoWindow()}>
-          <ShoppingCart className="w-4 h-4 mr-2 text-purple-600" />
-          <div>
-            <p className="font-semibold">Novo Pedido</p>
-            <p className="text-xs text-slate-500">Abre em janela multitarefa</p>
-          </div>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => openClienteWindow()}>
-          <Users className="w-4 h-4 mr-2 text-green-600" />
-          <div>
-            <p className="font-semibold">Novo Cliente</p>
-            <p className="text-xs text-slate-500">Cadastro completo</p>
-          </div>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => openProductWindow()}>
-          <Package className="w-4 h-4 mr-2 text-blue-600" />
-          <div>
-            <p className="font-semibold">Novo Produto</p>
-            <p className="text-xs text-slate-500">Com IA e conversões</p>
-          </div>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => openTabelaPrecoWindow()}>
-          <DollarSign className="w-4 h-4 mr-2 text-yellow-600" />
-          <div>
-            <p className="font-semibold">Nova Tabela de Preço</p>
-            <p className="text-xs text-slate-500">Motor de cálculo V21.0</p>
-          </div>
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem onClick={() => openFornecedorWindow()}>
-          <Truck className="w-4 h-4 mr-2 text-orange-600" />
-          Novo Fornecedor
-        </DropdownMenuItem>
-
-        <DropdownMenuItem onClick={() => openNFeWindow()}>
-          <FileText className="w-4 h-4 mr-2 text-indigo-600" />
-          Emitir NF-e
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem>
-          <Calendar className="w-4 h-4 mr-2 text-slate-600" />
-          Novo Evento
-        </DropdownMenuItem>
+        {acoes.map((acao, idx) => {
+          const Icon = acao.icon;
+          return (
+            <DropdownMenuItem
+              key={idx}
+              onClick={acao.action}
+              className="cursor-pointer"
+            >
+              <Icon className={`w-4 h-4 mr-2 ${acao.cor}`} />
+              <span>{acao.label}</span>
+            </DropdownMenuItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   );

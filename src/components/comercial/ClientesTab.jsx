@@ -2,22 +2,18 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UserCircle, Building2, Plus } from "lucide-react";
+import { UserCircle, Building2, ExternalLink } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import SearchInput from "@/components/ui/SearchInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import { Button } from "@/components/ui/button";
-import { useWindow } from "@/components/lib/useWindow";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
-/**
- * V21.0 - ClientesTab com Multitarefa
- */
-export default function ClientesTab({ clientes, onViewCliente, onEditCliente }) {
+export default function ClientesTab({ clientes }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
-  const { openClienteWindow } = useWindow();
 
   const { estaNoGrupo, empresasDoGrupo } = useContextoVisual();
 
@@ -40,20 +36,27 @@ export default function ClientesTab({ clientes, onViewCliente, onEditCliente }) 
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Clientes</h2>
-        <Button onClick={() => openClienteWindow()} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Cliente
-        </Button>
+        <Link to={createPageUrl('Cadastros') + '?tab=clientes'}>
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Gerenciar em Cadastros Gerais
+          </Button>
+        </Link>
       </div>
 
-      <Alert className="border-purple-200 bg-purple-50">
-        <UserCircle className="w-5 h-5 text-purple-600" />
-        <AlertDescription>
-          <p className="text-sm text-purple-900 font-semibold">
-            🪟 V21.0 Multitarefa: Clique em "Editar" para abrir em janela independente
-          </p>
-        </AlertDescription>
-      </Alert>
+      <Card className="border-0 shadow-md bg-blue-50 border-blue-200">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <UserCircle className="w-10 h-10 text-blue-600" />
+            <div>
+              <p className="text-sm text-blue-700 font-medium">Cadastros Centralizados</p>
+              <p className="text-xs text-blue-600">
+                Para criar ou editar clientes, acesse o módulo <strong>Cadastros Gerais</strong>
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card className="border-0 shadow-md">
         <CardContent className="p-6">
@@ -96,17 +99,14 @@ export default function ClientesTab({ clientes, onViewCliente, onEditCliente }) 
                   {estaNoGrupo && <TableHead>Empresa</TableHead>}
                   <TableHead>Limite Crédito</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead>Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredClientes.map((cliente) => (
                   <TableRow key={cliente.id} className="hover:bg-slate-50">
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <UserCircle className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium">{cliente.nome}</span>
-                      </div>
+                      <IconeAcessoCliente cliente={cliente} variant="inline" />
                     </TableCell>
                     <TableCell className="text-sm">{cliente.cnpj || cliente.cpf || '-'}</TableCell>
                     <TableCell className="text-sm">
@@ -126,6 +126,11 @@ export default function ClientesTab({ clientes, onViewCliente, onEditCliente }) 
                         <div className="font-semibold">
                           R$ {(cliente.condicao_comercial?.limite_credito || 0).toLocaleString('pt-BR')}
                         </div>
+                        {cliente.condicao_comercial?.limite_credito_utilizado > 0 && (
+                          <div className="text-xs text-slate-500">
+                            Usado: R$ {cliente.condicao_comercial.limite_credito_utilizado.toLocaleString('pt-BR')}
+                          </div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -139,22 +144,7 @@ export default function ClientesTab({ clientes, onViewCliente, onEditCliente }) 
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="ghost"
-                          onClick={() => onViewCliente(cliente)}
-                        >
-                          Ver
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => openClienteWindow(cliente)}
-                        >
-                          Editar
-                        </Button>
-                      </div>
+                      <IconeAcessoCliente cliente={cliente} variant="default" />
                     </TableCell>
                   </TableRow>
                 ))}

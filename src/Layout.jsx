@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
@@ -46,10 +46,6 @@ import { UserProvider, useUser } from "@/components/lib/UserContext";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
-
-// V21.0: Importar sistema de multitarefas
-import { WindowManagerProvider } from "@/components/lib/WindowManager";
-import WindowRenderer from "@/components/lib/WindowRenderer";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -204,7 +200,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div>
                 <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">V21.0 - Multitarefa</p>
+                <p className="text-xs text-slate-500">V21.1.2</p>
               </div>
             </div>
           </SidebarHeader>
@@ -336,11 +332,8 @@ function LayoutContent({ children, currentPageName }) {
             </div>
           </header>
 
-          <div className="flex-1 overflow-auto relative">
+          <div className="flex-1 overflow-auto">
             {children}
-            
-            {/* V21.0: Renderizador de janelas multitarefa */}
-            <WindowRenderer />
           </div>
         </main>
 
@@ -356,9 +349,7 @@ function LayoutContent({ children, currentPageName }) {
 export default function Layout({ children, currentPageName }) {
   return (
     <UserProvider>
-      <WindowManagerProvider>
-        <LayoutContent children={children} currentPageName={currentPageName} />
-      </WindowManagerProvider>
+      <LayoutContent children={children} currentPageName={currentPageName} />
     </UserProvider>
   );
 }

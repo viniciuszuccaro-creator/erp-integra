@@ -1,18 +1,9 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 /**
- * V21.0 - SISTEMA DE MULTITAREFAS GLOBAL - MÓDULO 0
- * 
- * ✅ Gerenciamento universal de janelas
+ * V21.1.2-R2 - SISTEMA DE MULTITAREFAS GLOBAL APRIMORADO
  * ✅ Z-index inteligente com foco automático
- * ✅ Suporte a multi-instância ilimitada
- * ✅ Snap automático e agrupamento
- * ✅ Persistência de estado
- * ✅ Memória de posição
- * ✅ Modo comando
- * ✅ Integração com IA
- * ✅ Logs e auditoria
- * ✅ Permissões por janela
+ * ✅ Detecta janela ativa para highlighting
  */
 
 const WindowManagerContext = createContext(null);
@@ -21,103 +12,33 @@ export function WindowManagerProvider({ children }) {
   const [windows, setWindows] = useState([]);
   const [zIndexCounter, setZIndexCounter] = useState(1000);
   const [activeWindowId, setActiveWindowId] = useState(null);
-  const [snapMode, setSnapMode] = useState(false);
-  const [commandMode, setCommandMode] = useState(false);
-  const [windowHistory, setWindowHistory] = useState([]);
-
-  // Persistência: salvar estado das janelas no localStorage
-  useEffect(() => {
-    const savedState = localStorage.getItem('windowManager_state');
-    if (savedState) {
-      try {
-        const parsed = JSON.parse(savedState);
-        // Não restaurar conteúdo, apenas posições e configurações
-        const restoredWindows = parsed.windows.map(w => ({
-          ...w,
-          content: null, // Conteúdo será recarregado sob demanda
-          state: 'minimized' // Iniciar minimizado
-        }));
-        setWindows(restoredWindows);
-      } catch (error) {
-        console.error('Erro ao restaurar estado das janelas:', error);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    // Salvar estado periodicamente
-    const timer = setTimeout(() => {
-      const stateToSave = {
-        windows: windows.map(w => ({
-          id: w.id,
-          title: w.title,
-          subtitle: w.subtitle,
-          position: w.position,
-          size: w.size,
-          state: w.state,
-          pinned: w.pinned,
-          module: w.module
-        }))
-      };
-      localStorage.setItem('windowManager_state', JSON.stringify(stateToSave));
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [windows]);
 
   const openWindow = useCallback((windowConfig) => {
     const newWindow = {
       id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       ...windowConfig,
-      state: windowConfig.state || 'normal',
-      pinned: windowConfig.pinned || false,
+      state: 'normal', // normal | minimized | maximized
+      pinned: false,
       zIndex: zIndexCounter,
-      createdAt: Date.now(),
-      position: windowConfig.position || { x: 100 + windows.length * 30, y: 100 + windows.length * 30 },
-      size: windowConfig.size || { width: '90vw', height: '90vh' },
-      module: windowConfig.module || 'generic',
-      permissions: windowConfig.permissions || {},
-      metadata: windowConfig.metadata || {}
+      createdAt: Date.now()
     };
 
     setWindows(prev => [...prev, newWindow]);
     setZIndexCounter(prev => prev + 1);
-    setActiveWindowId(newWindow.id);
-    
-    // Adicionar ao histórico
-    setWindowHistory(prev => [...prev, {
-      action: 'open',
-      windowId: newWindow.id,
-      timestamp: Date.now(),
-      title: newWindow.title
-    }]);
-
+    setActiveWindowId(newWindow.id); // Nova janela sempre fica ativa
     return newWindow.id;
-  }, [zIndexCounter, windows.length]);
+  }, [zIndexCounter]);
 
   const closeWindow = useCallback((windowId) => {
     setWindows(prev => {
-      const windowToClose = prev.find(w => w.id === windowId);
       const newWindows = prev.filter(w => w.id !== windowId);
-      
-      // Log de fechamento
-      setWindowHistory(prevHistory => [...prevHistory, {
-        action: 'close',
-        windowId,
-        timestamp: Date.now(),
-        title: windowToClose?.title
-      }]);
-      
       // Se fechou a janela ativa, ativa a última
       if (windowId === activeWindowId && newWindows.length > 0) {
         const lastWindow = newWindows.reduce((max, w) => 
           w.zIndex > max.zIndex ? w : max
         );
         setActiveWindowId(lastWindow.id);
-      } else if (newWindows.length === 0) {
-        setActiveWindowId(null);
       }
-      
       return newWindows;
     });
   }, [activeWindowId]);
@@ -126,7 +47,7 @@ export function WindowManagerProvider({ children }) {
     setWindows(prev => prev.map(w => 
       w.id === windowId ? { ...w, state: 'minimized' } : w
     ));
-    
+    // Ao minimizar, ativa a próxima janela visível
     setWindows(current => {
       const visibleWindows = current.filter(w => w.id !== windowId && w.state !== 'minimized');
       if (visibleWindows.length > 0) {
@@ -176,108 +97,9 @@ export function WindowManagerProvider({ children }) {
     ));
   }, []);
 
-  const updateWindowPosition = useCallback((windowId, position) => {
-    setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, position } : w
-    ));
-  }, []);
-
-  const updateWindowSize = useCallback((windowId, size) => {
-    setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, size } : w
-    ));
-  }, []);
-
-  // NOVO: Duplicar janela (multi-instância)
-  const duplicateWindow = useCallback((windowId) => {
-    const original = windows.find(w => w.id === windowId);
-    if (!original) return;
-
-    const duplicate = {
-      ...original,
-      id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      title: `${original.title} (Cópia)`,
-      zIndex: zIndexCounter,
-      position: {
-        x: original.position.x + 30,
-        y: original.position.y + 30
-      },
-      createdAt: Date.now()
-    };
-
-    setWindows(prev => [...prev, duplicate]);
-    setZIndexCounter(prev => prev + 1);
-    setActiveWindowId(duplicate.id);
-    
-    return duplicate.id;
-  }, [windows, zIndexCounter]);
-
-  // NOVO: Snap de janelas (organização automática)
-  const snapWindows = useCallback((layout = 'grid') => {
-    const visibleWindows = windows.filter(w => w.state !== 'minimized');
-    
-    if (layout === 'grid') {
-      const cols = Math.ceil(Math.sqrt(visibleWindows.length));
-      const rows = Math.ceil(visibleWindows.length / cols);
-      const windowWidth = `${100 / cols}vw`;
-      const windowHeight = `${100 / rows}vh`;
-      
-      setWindows(prev => prev.map((w, idx) => {
-        if (w.state === 'minimized') return w;
-        
-        const col = idx % cols;
-        const row = Math.floor(idx / cols);
-        
-        return {
-          ...w,
-          position: {
-            x: col * (100 / cols),
-            y: row * (100 / rows)
-          },
-          size: { width: windowWidth, height: windowHeight },
-          state: 'normal'
-        };
-      }));
-    } else if (layout === 'cascade') {
-      setWindows(prev => prev.map((w, idx) => {
-        if (w.state === 'minimized') return w;
-        
-        return {
-          ...w,
-          position: {
-            x: 50 + idx * 30,
-            y: 50 + idx * 30
-          },
-          size: { width: '70vw', height: '70vh' },
-          state: 'normal'
-        };
-      }));
-    }
-  }, [windows]);
-
-  // NOVO: Fechar todas as janelas de um módulo
-  const closeModuleWindows = useCallback((moduleName) => {
-    setWindows(prev => prev.filter(w => w.module !== moduleName));
-  }, []);
-
-  // NOVO: Minimizar todas exceto a ativa
-  const minimizeAllExceptActive = useCallback(() => {
-    setWindows(prev => prev.map(w => 
-      w.id !== activeWindowId ? { ...w, state: 'minimized' } : w
-    ));
-  }, [activeWindowId]);
-
-  // NOVO: Modo comando (abrir janelas por atalho)
-  const toggleCommandMode = useCallback(() => {
-    setCommandMode(prev => !prev);
-  }, []);
-
   const value = {
     windows,
     activeWindowId,
-    snapMode,
-    commandMode,
-    windowHistory,
     openWindow,
     closeWindow,
     minimizeWindow,
@@ -285,15 +107,7 @@ export function WindowManagerProvider({ children }) {
     restoreWindow,
     togglePin,
     bringToFront,
-    updateWindowData,
-    updateWindowPosition,
-    updateWindowSize,
-    duplicateWindow,
-    snapWindows,
-    closeModuleWindows,
-    minimizeAllExceptActive,
-    toggleCommandMode,
-    setSnapMode
+    updateWindowData
   };
 
   return (

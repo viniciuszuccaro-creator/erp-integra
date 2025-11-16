@@ -2,15 +2,11 @@ import React from 'react';
 import { useWindowManager } from './WindowManager';
 import WindowModal from './WindowModal';
 import MinimizedWindowsBar from './MinimizedWindowsBar';
-import WindowCommandPalette from './WindowCommandPalette';
 
 /**
- * V21.0 - RENDERIZADOR GLOBAL DE JANELAS
- * 
- * ✅ Renderiza todas as janelas abertas
- * ✅ Gerencia z-index e foco automático
- * ✅ Inclui barra de minimizados
- * ✅ Inclui paleta de comandos
+ * V21.1.2-R2 - Renderizador Global de Janelas APRIMORADO
+ * ✅ Passa isActive para cada janela
+ * ✅ Z-index dinâmico gerenciado
  */
 export default function WindowRenderer() {
   const {
@@ -21,10 +17,7 @@ export default function WindowRenderer() {
     maximizeWindow,
     restoreWindow,
     togglePin,
-    bringToFront,
-    updateWindowPosition,
-    updateWindowSize,
-    duplicateWindow
+    bringToFront
   } = useWindowManager();
 
   return (
@@ -41,9 +34,6 @@ export default function WindowRenderer() {
           onRestore={() => restoreWindow(window.id)}
           onTogglePin={() => togglePin(window.id)}
           onBringToFront={() => bringToFront(window.id)}
-          onDuplicate={() => duplicateWindow(window.id)}
-          onUpdatePosition={(pos) => updateWindowPosition(window.id, pos)}
-          onUpdateSize={(size) => updateWindowSize(window.id, size)}
         >
           {window.content}
         </WindowModal>
@@ -51,9 +41,6 @@ export default function WindowRenderer() {
 
       {/* Barra de minimizados */}
       <MinimizedWindowsBar />
-
-      {/* Paleta de comandos (Ctrl+K) */}
-      <WindowCommandPalette />
     </>
   );
 }
