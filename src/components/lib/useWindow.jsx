@@ -2,13 +2,13 @@ import React, { lazy, Suspense } from 'react';
 import { useWindowManager } from './WindowManager';
 import { Package, ShoppingCart, Users, DollarSign, FileText, Truck, Loader2 } from 'lucide-react';
 
-// V21.1.2-R2: Lazy loading para evitar circular dependencies
-const ProdutoForm = lazy(() => import('@/components/cadastros/ProdutoForm'));
+const ProdutoFormV22_Completo = lazy(() => import('@/components/cadastros/ProdutoFormV22_Completo'));
 
 /**
  * V21.1.2-R2 - Hook para abrir janelas facilmente
  * ✅ Lazy loading dos formulários
  * ✅ Suspense com loading state
+ * ✅ ProdutoFormV22_Completo integrado
  */
 export function useWindow() {
   const { openWindow } = useWindowManager();
@@ -16,17 +16,17 @@ export function useWindow() {
   const openProductWindow = (produto = null, onSave) => {
     return openWindow({
       title: produto ? `Editar: ${produto.descricao}` : 'Novo Produto',
-      subtitle: 'Cadastro V21.1.2 - IA + Peso/Dimensões',
+      subtitle: 'V21.1.2-R2 - IA + Peso/Dimensões + E-commerce',
       icon: Package,
       badge: produto ? 'Edição' : 'Novo',
       content: (
-        <div className="h-full overflow-auto p-6">
+        <div className="h-full overflow-hidden">
           <Suspense fallback={
             <div className="flex items-center justify-center h-96">
               <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
             </div>
           }>
-            <ProdutoForm
+            <ProdutoFormV22_Completo
               produto={produto}
               onSubmit={(data) => {
                 if (onSave) onSave(data);
@@ -124,6 +124,6 @@ export function useWindow() {
     openTabelaPrecoWindow,
     openNFeWindow,
     openFornecedorWindow,
-    openWindow // Genérico
+    openWindow
   };
 }
