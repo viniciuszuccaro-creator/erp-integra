@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -353,7 +354,12 @@ Caso contrário, sugira:
       return;
     }
 
-    onSubmit(formData);
+    const dadosSubmit = {
+      ...formData,
+      unidade_medida: formData.unidade_principal || 'KG'
+    };
+
+    onSubmit(dadosSubmit);
   };
 
   return (
