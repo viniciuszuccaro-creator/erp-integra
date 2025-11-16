@@ -279,15 +279,15 @@ Retorne:
     try {
       // Salvar tabela principal
       let tabelaId = tabela?.id;
+      let tabelaSalva;
       
       if (!tabelaId) {
-        const tabelaCriada = await base44.entities.TabelaPreco.create(formData);
-        tabelaId = tabelaCriada.id;
+        tabelaSalva = await base44.entities.TabelaPreco.create(formData);
+        tabelaId = tabelaSalva.id;
       } else {
-        await base44.entities.TabelaPreco.update(tabelaId, formData);
+        tabelaSalva = await base44.entities.TabelaPreco.update(tabelaId, formData);
       }
 
-      // Salvar itens
       // Deletar itens antigos se editando
       if (tabela?.id) {
         for (const itemAntigo of itensExistentes) {
@@ -296,6 +296,7 @@ Retorne:
       }
 
       // Criar novos itens
+      const itensCriados = [];
       for (const item of itensTabela) {
         const itemData = {
           tabela_preco_id: tabelaId,
@@ -308,14 +309,20 @@ Retorne:
           margem_percentual: item.margem_percentual || 0
         };
         
-        await base44.entities.TabelaPrecoItem.create(itemData);
+        const itemCriado = await base44.entities.TabelaPrecoItem.create(itemData);
+        itensCriados.push(itemCriado);
       }
 
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
+      queryClient.invalidateQueries({ queryKey: ['tabela-preco-itens', tabelaId] });
       
-      toast.success(`✅ Tabela ${tabela ? 'atualizada' : 'criada'} com ${itensTabela.length} produtos`);
-      onSubmit(formData);
+      toast.success(`✅ Tabela ${tabela ? 'atualizada' : 'criada'} com ${itensCriados.length} produtos salvos`);
+      
+      // Chamar onSubmit passando a tabela salva
+      if (onSubmit) {
+        onSubmit(tabelaSalva || formData);
+      }
     } catch (error) {
       toast.error('❌ Erro ao salvar: ' + error.message);
       console.error('Erro detalhado:', error);
@@ -417,7 +424,7 @@ Retorne:
           {/* ABA 2: PRODUTOS */}
           <TabsContent value="itens" className="space-y-4 mt-4">
             <Alert className="border-purple-200 bg-purple-50">
-              <Package className="w-4 h-4 text-purple-600" />
+              <Package className="w-4 h-4 mr-2 text-purple-600" />
               <AlertDescription className="text-sm text-purple-900">
                 💡 <strong>V21.1.2:</strong> Adicione produtos individualmente ou em lote por grupo/classe/NCM
               </AlertDescription>
@@ -606,7 +613,7 @@ Retorne:
           {/* ABA 3: MOTOR DE CÁLCULO */}
           <TabsContent value="calculo" className="space-y-4 mt-4">
             <Alert className="border-blue-200 bg-blue-50">
-              <Calculator className="w-4 h-4 text-blue-600" />
+              <Calculator className="w-4 h-4 mr-2 text-blue-600" />
               <AlertDescription className="text-sm text-blue-900">
                 🧮 <strong>Engine de Cálculo V21.1.2:</strong> Recalcule preços automaticamente por custo médio, markup ou margem desejada
               </AlertDescription>
