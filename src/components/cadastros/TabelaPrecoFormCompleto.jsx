@@ -10,24 +10,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X } from "lucide-react";
+import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Save } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
   const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
   
-  const [formData, setFormData] = useState(() => {
-    if (tabela) return tabela;
-    
-    return {
-      nome: '',
-      descricao: '',
-      tipo: 'Padrão',
-      data_inicio: new Date().toISOString().split('T')[0],
-      data_fim: '',
-      ativo: true
-    };
+  const [formData, setFormData] = useState({
+    nome: tabela?.nome || '',
+    descricao: tabela?.descricao || '',
+    tipo: tabela?.tipo || 'Padrão',
+    data_inicio: tabela?.data_inicio || new Date().toISOString().split('T')[0],
+    data_fim: tabela?.data_fim || '',
+    ativo: tabela?.ativo !== undefined ? tabela.ativo : true
   });
 
   const [activeTab, setActiveTab] = useState('config');
@@ -247,16 +243,9 @@ Retorne:
     toast.success('Item removido');
   };
 
-  const handleSubmitForm = async (e) => {
-    e.preventDefault();
-    
+  const handleSalvar = async () => {
     if (!formData.nome || !formData.tipo || !formData.data_inicio) {
-      toast.error('Preencha os campos obrigatórios');
-      return;
-    }
-
-    if (itensTabela.length === 0) {
-      toast.error('❌ Adicione pelo menos 1 produto à tabela');
+      toast.error('❌ Preencha: Nome, Tipo e Data Início');
       return;
     }
 
@@ -268,45 +257,49 @@ Retorne:
       if (!tabelaId) {
         const tabelaCriada = await base44.entities.TabelaPreco.create(formData);
         tabelaId = tabelaCriada.id;
-        toast.success(`✅ Tabela "${formData.nome}" criada`);
+        console.log('✅ Tabela criada:', tabelaId);
       } else {
         await base44.entities.TabelaPreco.update(tabelaId, formData);
-        toast.success(`✅ Tabela "${formData.nome}" atualizada`);
+        console.log('✅ Tabela atualizada:', tabelaId);
       }
 
       if (tabela?.id && itensExistentes.length > 0) {
+        console.log('🗑️ Deletando itens antigos...');
         for (const itemAntigo of itensExistentes) {
           await base44.entities.TabelaPrecoItem.delete(itemAntigo.id);
         }
       }
 
-      for (const item of itensTabela) {
-        const itemData = {
-          tabela_preco_id: tabelaId,
-          produto_id: item.produto_id,
-          produto_descricao: item.produto_descricao,
-          produto_codigo: item.produto_codigo || '',
-          custo_base: Number(item.custo_base) || 0,
-          preco: Number(item.preco) || 0,
-          desconto_maximo_percentual: Number(item.desconto_maximo_percentual) || 0,
-          margem_percentual: Number(item.margem_percentual) || 0
-        };
-        
-        await base44.entities.TabelaPrecoItem.create(itemData);
+      if (itensTabela.length > 0) {
+        console.log('💾 Salvando', itensTabela.length, 'produtos...');
+        for (const item of itensTabela) {
+          const itemData = {
+            tabela_preco_id: tabelaId,
+            produto_id: item.produto_id,
+            produto_descricao: item.produto_descricao,
+            produto_codigo: item.produto_codigo || '',
+            custo_base: Number(item.custo_base) || 0,
+            preco: Number(item.preco) || 0,
+            desconto_maximo_percentual: Number(item.desconto_maximo_percentual) || 0,
+            margem_percentual: Number(item.margem_percentual) || 0
+          };
+          
+          await base44.entities.TabelaPrecoItem.create(itemData);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
-      queryClient.invalidateQueries({ queryKey: ['tabela-preco-itens', tabelaId] });
+      queryClient.invalidateQueries({ queryKey: ['tabela-preco-itens'] });
       
-      toast.success(`✅ Tabela salva com ${itensTabela.length} produtos!`);
+      toast.success(`✅ Tabela "${formData.nome}" salva com ${itensTabela.length} produtos!`);
       
       if (onSubmit) {
         onSubmit({ _salvamentoCompleto: true });
       }
     } catch (error) {
       console.error('❌ Erro ao salvar:', error);
-      toast.error('❌ Erro: ' + error.message);
+      toast.error('❌ Erro ao salvar: ' + error.message);
     } finally {
       setSalvando(false);
     }
@@ -317,15 +310,19 @@ Retorne:
     (searchProduto === '' || p.descricao.toLowerCase().includes(searchProduto.toLowerCase()))
   );
 
+  const podeAvancar = formData.nome && formData.tipo && formData.data_inicio;
+
   return (
-    <form onSubmit={handleSubmitForm} className="space-y-4 h-full flex flex-col">
+    <div className="space-y-4 h-full flex flex-col">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="config">Configuração</TabsTrigger>
-          <TabsTrigger value="itens">
+          <TabsTrigger value="itens" disabled={!podeAvancar}>
             Produtos ({itensTabela.length})
           </TabsTrigger>
-          <TabsTrigger value="calculo">Motor de Cálculo</TabsTrigger>
+          <TabsTrigger value="calculo" disabled={itensTabela.length === 0}>
+            Motor de Cálculo
+          </TabsTrigger>
         </TabsList>
 
         <div className="flex-1 overflow-y-auto">
@@ -338,6 +335,7 @@ Retorne:
                     value={formData.nome}
                     onChange={(e) => setFormData({...formData, nome: e.target.value})}
                     placeholder="Ex: Atacado SP, Varejo Nacional, Tabela Obra"
+                    required
                   />
                 </div>
 
@@ -375,6 +373,7 @@ Retorne:
                       type="date"
                       value={formData.data_inicio}
                       onChange={(e) => setFormData({...formData, data_inicio: e.target.value})}
+                      required
                     />
                   </div>
 
@@ -399,6 +398,14 @@ Retorne:
                     onCheckedChange={(v) => setFormData({...formData, ativo: v})}
                   />
                 </div>
+
+                {podeAvancar && (
+                  <Alert className="border-green-200 bg-green-50">
+                    <AlertDescription className="text-sm text-green-900">
+                      ✅ Configuração OK! Vá para aba "Produtos" para adicionar itens ou salve apenas a tabela.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -705,7 +712,7 @@ Retorne:
         </div>
       </Tabs>
 
-      <div className="flex items-center justify-between pt-4 border-t bg-slate-50 p-4 -mx-6 -mb-6">
+      <div className="flex items-center justify-between pt-4 border-t bg-white p-4 -mx-6 -mb-6 sticky bottom-0">
         <div className="text-sm">
           <p className="font-semibold text-slate-900">
             {itensTabela.length} produtos na tabela
@@ -716,11 +723,17 @@ Retorne:
             </p>
           )}
         </div>
-        <Button type="submit" disabled={salvando || !formData.nome} className="bg-green-600 hover:bg-green-700">
+        <Button 
+          type="button" 
+          onClick={handleSalvar}
+          disabled={salvando || !podeAvancar} 
+          className="bg-green-600 hover:bg-green-700 min-w-[180px]"
+        >
           {salvando && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          {!salvando && <Save className="w-4 h-4 mr-2" />}
           {tabela ? 'Salvar Alterações' : 'Criar Tabela'}
         </Button>
       </div>
-    </form>
+    </div>
   );
 }
