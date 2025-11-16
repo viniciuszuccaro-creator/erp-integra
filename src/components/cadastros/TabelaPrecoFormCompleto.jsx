@@ -297,10 +297,18 @@ Retorne:
 
       // Criar novos itens
       for (const item of itensTabela) {
-        await base44.entities.TabelaPrecoItem.create({
-          ...item,
-          tabela_preco_id: tabelaId
-        });
+        const itemData = {
+          tabela_preco_id: tabelaId,
+          produto_id: item.produto_id,
+          produto_descricao: item.produto_descricao,
+          produto_codigo: item.produto_codigo || '',
+          custo_base: item.custo_base || 0,
+          preco: item.preco || 0,
+          desconto_maximo_percentual: item.desconto_maximo_percentual || 0,
+          margem_percentual: item.margem_percentual || 0
+        };
+        
+        await base44.entities.TabelaPrecoItem.create(itemData);
       }
 
       queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
@@ -310,6 +318,7 @@ Retorne:
       onSubmit(formData);
     } catch (error) {
       toast.error('❌ Erro ao salvar: ' + error.message);
+      console.error('Erro detalhado:', error);
     }
   };
 
