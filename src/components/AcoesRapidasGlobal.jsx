@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,80 +9,61 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, ShoppingCart, Users, Package, DollarSign, FileText, Truck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { createPageUrl } from '@/utils';
+import { Plus, ShoppingCart, Users, Package, DollarSign, FileText, Truck, Zap, Calendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // This import is no longer used but was in the original file, removing it now
+import { createPageUrl } from '@/utils'; // This import is no longer used but was in the original file, removing it now
+import { useWindow } from "@/components/lib/useWindow";
 
 /**
  * Ações Rápidas Globais - Botão + Novo
  * Acesso rápido às ações mais comuns do sistema
  */
 export default function AcoesRapidasGlobal() {
-  const navigate = useNavigate();
-
-  const acoes = [
-    {
-      label: 'Novo Pedido',
-      icon: ShoppingCart,
-      action: () => navigate(createPageUrl('Comercial') + '?action=novo-pedido'),
-      cor: 'text-blue-600'
-    },
-    {
-      label: 'Novo Cliente',
-      icon: Users,
-      action: () => navigate(createPageUrl('Cadastros') + '?tab=clientes&action=novo'),
-      cor: 'text-green-600'
-    },
-    {
-      label: 'Nova OP',
-      icon: Package,
-      action: () => navigate(createPageUrl('Producao') + '?action=nova-op'),
-      cor: 'text-orange-600'
-    },
-    {
-      label: 'Novo Título a Pagar',
-      icon: DollarSign,
-      action: () => navigate(createPageUrl('Financeiro') + '?tab=contas-pagar&action=novo'),
-      cor: 'text-red-600'
-    },
-    {
-      label: 'Nova Entrega',
-      icon: Truck,
-      action: () => navigate(createPageUrl('Expedicao') + '?action=nova-entrega'),
-      cor: 'text-purple-600'
-    },
-    {
-      label: 'Nova NF-e',
-      icon: FileText,
-      action: () => navigate(createPageUrl('Fiscal') + '?action=nova-nfe'),
-      cor: 'text-indigo-600'
-    }
-  ];
+  const { openProductWindow, openPedidoWindow, openClienteWindow, openTabelaPrecoWindow } = useWindow();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo
-        </Button>
+        <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-2">
+          <Zap className="w-5 h-5 text-slate-600" />
+          <span className="text-sm text-slate-600 hidden lg:inline">Ações Rápidas</span>
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Ações Rápidas</DropdownMenuLabel>
+        <DropdownMenuLabel>🚀 V21.0 - Multitarefa</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {acoes.map((acao, idx) => {
-          const Icon = acao.icon;
-          return (
-            <DropdownMenuItem
-              key={idx}
-              onClick={acao.action}
-              className="cursor-pointer"
-            >
-              <Icon className={`w-4 h-4 mr-2 ${acao.cor}`} />
-              <span>{acao.label}</span>
-            </DropdownMenuItem>
-          );
-        })}
+        
+        <DropdownMenuItem onClick={() => openPedidoWindow()}>
+          <ShoppingCart className="w-4 h-4 mr-2" />
+          Novo Pedido (Janela)
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={() => openClienteWindow()}>
+          <Users className="w-4 h-4 mr-2" />
+          Novo Cliente (Janela)
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={() => openProductWindow()}>
+          <Package className="w-4 h-4 mr-2" />
+          Novo Produto (Janela)
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={() => openTabelaPrecoWindow()}>
+          <DollarSign className="w-4 h-4 mr-2" />
+          Nova Tabela de Preço (Janela)
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem>
+          <Calendar className="w-4 h-4 mr-2" />
+          Novo Evento
+        </DropdownMenuItem>
+
+        <DropdownMenuItem>
+          <FileText className="w-4 h-4 mr-2" />
+          Novo Relatório
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
