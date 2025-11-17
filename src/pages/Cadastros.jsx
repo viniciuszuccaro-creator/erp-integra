@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -82,9 +83,9 @@ import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
 /**
  * ⭐⭐⭐ CADASTROS GERAIS V21.0 - FASE 0: 100% COMPLETA ⭐⭐⭐
  * Hub Central com 6 Blocos Reorganizados + Fonte Única de Verdade
- * 
+ *
  * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR
- * 
+ *
  * ✅ ESTRUTURA DOS 6 BLOCOS COMPLETA:
  * 1️⃣ PESSOAS & PARCEIROS - Clientes, Fornecedores, Transportadoras, Colaboradores, Representantes, Contatos B2B
  * 2️⃣ PRODUTOS & SERVIÇOS - Produtos, Serviços, Setores, Grupos, Marcas, Tabelas de Preço, Kits
@@ -92,7 +93,7 @@ import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
  * 4️⃣ LOGÍSTICA - Veículos, Motoristas, Tipos de Frete, Transportadoras
  * 5️⃣ ORGANIZACIONAL - Empresas, Grupos, Departamentos, Cargos, Turnos, Usuários, Perfis
  * 6️⃣ INTEGRAÇÕES & IA - Marketplaces, Webhooks, Notificações, Chatbot, 28 IAs
- * 
+ *
  * ✅ FONTE ÚNICA DE VERDADE - Zero duplicação, referências normalizadas
  * ✅ CONTROLE DE ACESSO GRANULAR - Permissões por módulo e perfil
  * ✅ DASHBOARD INTERATIVO - Cards clicáveis, navegação fluida
@@ -102,7 +103,7 @@ export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
   const [acordeonAberto, setAcordeonAberto] = useState([]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
-  
+
   // Estados para todos os formulários
   const [cadastroCompletoAberto, setCadastroCompletoAberto] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
@@ -350,8 +351,8 @@ export default function Cadastros() {
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
     if (!searchTerm) return lista;
-    return lista.filter(item => 
-      campos.some(campo => 
+    return lista.filter(item =>
+      campos.some(campo =>
         item[campo]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
       )
     );
@@ -426,7 +427,7 @@ export default function Cadastros() {
       <Alert className="border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
         <Database className="w-4 h-4 text-purple-600" />
         <AlertDescription className="text-sm text-purple-900">
-          <strong>REGRA-MÃE V21.0:</strong> Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR | 
+          <strong>REGRA-MÃE V21.0:</strong> Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR |
           Multiempresa • IA Integrada • Controle de Acesso Granular • Auditoria Global • Inovação Futurística
         </AlertDescription>
       </Alert>
@@ -456,7 +457,7 @@ export default function Cadastros() {
         <TabsContent value="cadastros" className="space-y-6 mt-6">
           {/* DASHBOARD DE TOTAIS - INTERATIVO */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <Card 
+            <Card
               className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-blue-50 to-blue-100 hover:scale-105"
               onClick={() => handleCardClick('bloco1')}
             >
@@ -470,7 +471,7 @@ export default function Cadastros() {
               </CardContent>
             </Card>
 
-            <Card 
+            <Card
               className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-purple-50 to-purple-100 hover:scale-105"
               onClick={() => handleCardClick('bloco2')}
             >
@@ -484,7 +485,7 @@ export default function Cadastros() {
               </CardContent>
             </Card>
 
-            <Card 
+            <Card
               className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-green-50 to-green-100 hover:scale-105"
               onClick={() => handleCardClick('bloco3')}
             >
@@ -498,7 +499,7 @@ export default function Cadastros() {
               </CardContent>
             </Card>
 
-            <Card 
+            <Card
               className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-orange-50 to-orange-100 hover:scale-105"
               onClick={() => handleCardClick('bloco4')}
             >
@@ -512,7 +513,7 @@ export default function Cadastros() {
               </CardContent>
             </Card>
 
-            <Card 
+            <Card
               className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-indigo-50 to-indigo-100 hover:scale-105"
               onClick={() => handleCardClick('bloco5')}
             >
@@ -526,7 +527,7 @@ export default function Cadastros() {
               </CardContent>
             </Card>
 
-            <Card 
+            <Card
               className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-cyan-50 to-cyan-100 hover:scale-105"
               onClick={() => handleCardClick('bloco6')}
             >
@@ -576,12 +577,12 @@ export default function Cadastros() {
                           <Users className="w-5 h-5 text-blue-600" />
                           Clientes ({clientesFiltrados.length})
                         </CardTitle>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => {
                             setClienteSelecionado(null);
                             setCadastroCompletoAberto(true);
-                          }} 
+                          }}
                           className="bg-blue-600 hover:bg-blue-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -603,9 +604,9 @@ export default function Cadastros() {
                               {cliente.cpf && <span className="text-xs text-slate-500">{cliente.cpf}</span>}
                             </div>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => {
                               setClienteSelecionado(cliente);
                               setCadastroCompletoAberto(true);
@@ -630,12 +631,12 @@ export default function Cadastros() {
                           <Building2 className="w-5 h-5 text-cyan-600" />
                           Fornecedores ({fornecedoresFiltrados.length})
                         </CardTitle>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => {
                             setFornecedorSelecionado(null);
                             setCadastroFornecedorAberto(true);
-                          }} 
+                          }}
                           className="bg-cyan-600 hover:bg-cyan-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -656,9 +657,9 @@ export default function Cadastros() {
                               {fornecedor.cnpj && <span className="text-xs text-slate-500">{fornecedor.cnpj}</span>}
                             </div>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => {
                               setFornecedorSelecionado(fornecedor);
                               setCadastroFornecedorAberto(true);
@@ -683,8 +684,8 @@ export default function Cadastros() {
                           <Truck className="w-5 h-5 text-orange-600" />
                           Transportadoras ({transportadorasFiltradas.length})
                         </CardTitle>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => {
                             setTransportadoraSelecionada(null);
                             setTransportadoraFormOpen(true);
@@ -708,8 +709,8 @@ export default function Cadastros() {
                             <Badge className={statusColors[transp.status]}>
                               {transp.status}
                             </Badge>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={() => {
                                 setTransportadoraSelecionada(transp);
@@ -736,8 +737,8 @@ export default function Cadastros() {
                           <User className="w-5 h-5 text-pink-600" />
                           Colaboradores ({colaboradoresFiltrados.length})
                         </CardTitle>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => {
                             setColaboradorSelecionado(null);
                             setColaboradorFormOpen(true);
@@ -761,8 +762,8 @@ export default function Cadastros() {
                             <Badge className={statusColors[colab.status]}>
                               {colab.status}
                             </Badge>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               size="sm"
                               onClick={() => {
                                 setColaboradorSelecionado(colab);
@@ -789,7 +790,7 @@ export default function Cadastros() {
                           <Briefcase className="w-5 h-5 text-teal-600" />
                           Representantes ({representantes.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setRepresentanteSelecionado(null);
@@ -824,7 +825,7 @@ export default function Cadastros() {
                           <MessageCircle className="w-5 h-5 text-violet-600" />
                           Contatos B2B ({contatosB2B.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setContatoB2BSelecionado(null);
@@ -876,12 +877,12 @@ export default function Cadastros() {
                           <Package className="w-5 h-5 text-purple-600" />
                           Produtos ({produtosFiltrados.length})
                         </CardTitle>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => {
                             setProdutoSelecionado(null);
                             setProdutoFormOpen(true);
-                          }} 
+                          }}
                           className="bg-purple-600 hover:bg-purple-700"
                           disabled={!hasPermission('estoque', 'criar')}
                         >
@@ -917,9 +918,9 @@ export default function Cadastros() {
                               )}
                             </div>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => {
                               setProdutoSelecionado(produto);
                               setProdutoFormOpen(true);
@@ -944,12 +945,12 @@ export default function Cadastros() {
                           <Factory className="w-5 h-5 text-indigo-600" />
                           Setores de Atividade ({setoresAtividade.length})
                         </CardTitle>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => {
                             setSetorSelecionado(null);
                             setSetorAtividadeFormOpen(true);
-                          }} 
+                          }}
                           className="bg-indigo-600 hover:bg-indigo-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -967,9 +968,9 @@ export default function Cadastros() {
                             </p>
                             <span className="text-xs text-slate-500">{setor.tipo_operacao}</span>
                           </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => {
                               setSetorSelecionado(setor);
                               setSetorAtividadeFormOpen(true);
@@ -994,7 +995,7 @@ export default function Cadastros() {
                           <Boxes className="w-5 h-5 text-cyan-600" />
                           Grupos/Linhas ({gruposProduto.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setGrupoProdutoSelecionado(null);
@@ -1015,8 +1016,8 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{grupo.nome_grupo}</p>
                             {grupo.descricao && <p className="text-xs text-slate-500">{grupo.descricao}</p>}
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setGrupoProdutoSelecionado(grupo);
@@ -1042,7 +1043,7 @@ export default function Cadastros() {
                           <Award className="w-5 h-5 text-orange-600" />
                           Marcas ({marcas.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setMarcaSelecionada(null);
@@ -1063,8 +1064,8 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{marca.nome_marca}</p>
                             {marca.pais_origem && <span className="text-xs text-slate-500">{marca.pais_origem}</span>}
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setMarcaSelecionada(marca);
@@ -1090,12 +1091,12 @@ export default function Cadastros() {
                           <TrendingUp className="w-5 h-5 text-green-600" />
                           Tabelas de Preço ({tabelasPreco.length})
                         </CardTitle>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => {
                             setTabelaSelecionadaEditar(null);
                             setTabelaPrecoFormOpen(true);
-                          }} 
+                          }}
                           className="bg-green-600 hover:bg-green-700"
                           disabled={!hasPermission('comercial', 'criar')}
                         >
@@ -1110,9 +1111,9 @@ export default function Cadastros() {
                           <div key={tabela.id} className="p-3 border rounded hover:bg-slate-50 transition-colors">
                             <div className="flex items-center justify-between mb-2">
                               <p className="font-semibold text-sm">{tabela.nome}</p>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => {
                                   setTabelaSelecionadaEditar(tabela);
                                   setTabelaPrecoFormOpen(true);
@@ -1150,7 +1151,7 @@ export default function Cadastros() {
                           <Sparkles className="w-5 h-5 text-blue-600" />
                           Serviços ({servicos.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setServicoSelecionado(null);
@@ -1202,7 +1203,7 @@ export default function Cadastros() {
                           <Landmark className="w-5 h-5 text-green-600" />
                           Bancos ({bancos.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setBancoSelecionado(null);
@@ -1223,8 +1224,8 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{banco.nome_banco}</p>
                             <span className="text-xs text-slate-500">Ag: {banco.agencia} • Conta: {banco.numero_conta}</span>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setBancoSelecionado(banco);
@@ -1247,7 +1248,7 @@ export default function Cadastros() {
                           <CreditCard className="w-5 h-5 text-blue-600" />
                           Formas de Pagamento ({formasPagamento.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setFormaPagamentoSelecionada(null);
@@ -1264,9 +1265,9 @@ export default function Cadastros() {
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {formasPagamento.map(forma => (
                         <div key={forma.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm flex-1">{forma.nome}</p>
-                          <Button 
-                            variant="ghost" 
+                          <p className="font-semibold text-sm flex-1">{forma.descricao || forma.tipo}</p>
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setFormaPagamentoSelecionada(forma);
@@ -1289,7 +1290,7 @@ export default function Cadastros() {
                           <Receipt className="w-5 h-5 text-purple-600" />
                           Centros de Custo ({centrosCusto.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setCentroCustoSelecionado(null);
@@ -1310,8 +1311,8 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{centro.codigo} - {centro.descricao}</p>
                             <Badge variant="outline" className="text-xs">{centro.tipo}</Badge>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setCentroCustoSelecionado(centro);
@@ -1348,7 +1349,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">🚚 Veículos ({veiculos.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setVeiculoSelecionado(null);
@@ -1369,8 +1370,8 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{veiculo.placa}</p>
                             <span className="text-xs text-slate-500">{veiculo.modelo} • {veiculo.tipo}</span>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setVeiculoSelecionado(veiculo);
@@ -1390,7 +1391,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">👤 Motoristas ({motoristas.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setMotoristaSelecionado(null);
@@ -1411,8 +1412,8 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{motorista.nome}</p>
                             <span className="text-xs text-slate-500">CNH: {motorista.cnh_numero}</span>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setMotoristaSelecionado(motorista);
@@ -1432,7 +1433,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">📦 Tipos de Frete ({tiposFrete.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setTipoFreteSelecionado(null);
@@ -1450,8 +1451,8 @@ export default function Cadastros() {
                       {tiposFrete.map(tipo => (
                         <div key={tipo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm flex-1">{tipo.nome}</p>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setTipoFreteSelecionado(tipo);
@@ -1488,7 +1489,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">🏢 Empresas ({empresas.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setEmpresaSelecionada(null);
@@ -1509,8 +1510,8 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{empresa.nome_fantasia || empresa.razao_social}</p>
                             <span className="text-xs text-slate-500">{empresa.cnpj}</span>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setEmpresaSelecionada(empresa);
@@ -1530,7 +1531,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">🏗️ Grupos Empresariais ({grupos.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setGrupoSelecionado(null);
@@ -1547,9 +1548,9 @@ export default function Cadastros() {
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {grupos.map(grupo => (
                         <div key={grupo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm flex-1">{grupo.nome_grupo}</p>
-                          <Button 
-                            variant="ghost" 
+                          <p className="font-semibold text-sm flex-1">{grupo.nome_do_grupo || 'Sem nome'}</p>
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setGrupoSelecionado(grupo);
@@ -1569,7 +1570,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">👥 Usuários ({usuarios.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setUsuarioSelecionado(null);
@@ -1590,8 +1591,8 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{usuario.full_name}</p>
                             <span className="text-xs text-slate-500">{usuario.email}</span>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setUsuarioSelecionado(usuario);
@@ -1611,7 +1612,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">🏛️ Departamentos ({departamentos.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setDepartamentoSelecionado(null);
@@ -1629,8 +1630,8 @@ export default function Cadastros() {
                       {departamentos.map(dept => (
                         <div key={dept.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm flex-1">{dept.nome}</p>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setDepartamentoSelecionado(dept);
@@ -1650,7 +1651,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">💼 Cargos ({cargos.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setCargoSelecionado(null);
@@ -1668,8 +1669,8 @@ export default function Cadastros() {
                       {cargos.map(cargo => (
                         <div key={cargo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm flex-1">{cargo.nome}</p>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setCargoSelecionado(cargo);
@@ -1692,7 +1693,7 @@ export default function Cadastros() {
                           <Clock className="w-4 h-4 inline mr-2 text-amber-600" />
                           Turnos ({turnos.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setTurnoSelecionado(null);
@@ -1710,8 +1711,8 @@ export default function Cadastros() {
                       {turnos.map(turno => (
                         <div key={turno.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm flex-1">{turno.nome}</p>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setTurnoSelecionado(turno);
@@ -1734,7 +1735,7 @@ export default function Cadastros() {
                           <Shield className="w-4 h-4 inline mr-2 text-red-600" />
                           Perfis de Acesso ({perfisAcesso.length})
                         </CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setPerfilSelecionado(null);
@@ -1757,8 +1758,8 @@ export default function Cadastros() {
                               {perfil.ativo ? 'Ativo' : 'Inativo'}
                             </Badge>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setPerfilSelecionado(perfil);
@@ -1795,7 +1796,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setEventoSelecionado(null);
@@ -1816,8 +1817,8 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{evento.nome_evento}</p>
                             <Badge variant="outline" className="text-xs">{evento.tipo_evento}</Badge>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setEventoSelecionado(evento);
@@ -1837,7 +1838,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => {
                             setConfigSelecionada(null);
@@ -1860,8 +1861,8 @@ export default function Cadastros() {
                               {config.ativo ? 'Ativa' : 'Inativa'}
                             </Badge>
                           </div>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => {
                               setConfigSelecionada(config);
@@ -1880,7 +1881,7 @@ export default function Cadastros() {
                 <Alert className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-cyan-50">
                   <Sparkles className="w-4 h-4 text-purple-600" />
                   <AlertDescription className="text-sm text-purple-900">
-                    <strong>28 IAs Ativas:</strong> PriceBrain 3.0 • ChurnDetection • ProductClassifier • FiscalValidator • 
+                    <strong>28 IAs Ativas:</strong> PriceBrain 3.0 • ChurnDetection • ProductClassifier • FiscalValidator •
                     LeadScoring • RouteOptimizer • QualityPredictor • StockRecommender • e mais 20 IAs rodando 24/7
                   </AlertDescription>
                 </Alert>
@@ -1943,7 +1944,7 @@ export default function Cadastros() {
       </Tabs>
 
       {/* ==================== DIALOGS - TODOS OS FORMULÁRIOS ==================== */}
-      
+
       {/* CLIENTES */}
       <CadastroClienteCompleto
         cliente={clienteSelecionado}
