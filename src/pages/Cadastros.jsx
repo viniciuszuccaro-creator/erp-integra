@@ -20,47 +20,29 @@ import {
   Plus,
   Search,
   Edit,
-  Mail,
-  Phone,
-  MapPin,
-  FileText,
-  MessageSquare,
   Package,
   CreditCard,
   Landmark,
   Factory,
-  Globe,
   Boxes,
-  Network,
   Sparkles,
   ChevronRight,
   Link2,
   Cpu,
-  ShoppingBag,
-  MessageCircle,
-  CheckCircle2,
-  AlertTriangle,
-  Bell,
-  Lock,
   Shield,
   Briefcase,
-  UserCircle,
-  Clock,
-  UserCheck,
   Award,
-  Target,
   Receipt,
   TrendingUp,
   Eye,
+  Settings,
+  Database,
+  Zap,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
-import ClienteForm from "../components/comercial/ClienteForm";
-import ColaboradorForm from "../components/rh/ColaboradorForm";
-import TransportadoraForm from "../components/cadastros/TransportadoraForm";
-import CentroCustoForm from "../components/cadastros/CentroCustoForm";
 import CadastroClienteCompleto from "../components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "../components/cadastros/CadastroFornecedorCompleto";
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
@@ -71,50 +53,23 @@ import PainelDinamicoTransportadora from "../components/cadastros/PainelDinamico
 import IconeAcessoTransportadora from "../components/cadastros/IconeAcessoTransportadora";
 import IconeAcessoColaborador from "../components/cadastros/IconeAcessoColaborador";
 import PainelDinamicoColaborador from "../components/cadastros/PainelDinamicoColaborador";
-import ConfiguracaoIntegracaoForm from "../components/cadastros/ConfiguracaoIntegracaoForm";
-import EventoNotificacaoForm from "../components/cadastros/EventoNotificacaoForm";
-import BancoForm from "../components/cadastros/BancoForm";
-import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
-import VeiculoForm from "../components/cadastros/VeiculoForm";
-import EmpresaForm from "../components/cadastros/EmpresaForm";
-import ProdutoForm from "../components/cadastros/ProdutoForm";
-import ServicoForm from "../components/cadastros/ServicoForm";
 import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
-import CatalogoWebForm from "../components/cadastros/CatalogoWebForm";
-import WebhookForm from "../components/cadastros/WebhookForm";
-import ChatbotIntentsForm from "../components/cadastros/ChatbotIntentsForm";
-import UsuarioForm from "../components/cadastros/UsuarioForm";
-import PerfilAcessoForm from "../components/cadastros/PerfilAcessoForm";
-import RotaPadraoForm from "../components/cadastros/RotaPadraoForm";
-import LocalEstoqueForm from "../components/cadastros/LocalEstoqueForm";
-import CadastroFiscalForm from "../components/cadastros/CadastroFiscalForm";
-import GrupoEmpresarialForm from "../components/cadastros/GrupoEmpresarialForm";
-import FilialForm from "../components/cadastros/FilialForm";
-import DepartamentoForm from "../components/cadastros/DepartamentoForm";
-import CargoForm from "../components/cadastros/CargoForm";
-import TurnoForm from "../components/cadastros/TurnoForm";
-import CondicaoComercialForm from "../components/cadastros/CondicaoComercialForm";
-import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
-import RepresentanteForm from "../components/cadastros/RepresentanteForm";
-import SegmentoClienteForm from "../components/cadastros/SegmentoClienteForm";
-import GrupoProdutoForm from "../components/cadastros/GrupoProdutoForm";
-import MarcaForm from "../components/cadastros/MarcaForm";
-import KitProdutoForm from "../components/cadastros/KitProdutoForm";
-import PlanoContasForm from "../components/cadastros/PlanoContasForm";
-import CentroResultadoForm from "../components/cadastros/CentroResultadoForm";
-import TipoDespesaForm from "../components/cadastros/TipoDespesaForm";
-import MoedaIndiceForm from "../components/cadastros/MoedaIndiceForm";
-import MotoristaForm from "../components/cadastros/MotoristaForm";
-import TipoFreteForm from "../components/cadastros/TipoFreteForm";
-import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
-import MultiTabelasEditor from "../components/cadastros/MultiTabelasEditor";
 import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
-import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoProduto";
 import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 
 /**
- * CADASTROS GERAIS V21.0 - HUB CENTRAL COM DUPLA CLASSIFICAÇÃO
- * Regra-Mãe: Acrescentar • Reorganizar • Conectar • Melhorar – nunca apagar
+ * ⭐ CADASTROS GERAIS V21.0 - FASE 0 COMPLETA ⭐
+ * Hub Central com 6 Blocos Reorganizados + Fonte Única de Verdade
+ * 
+ * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR
+ * 
+ * ESTRUTURA DOS 6 BLOCOS:
+ * 1️⃣ PESSOAS & PARCEIROS - Clientes, Fornecedores, Transportadoras, Colaboradores
+ * 2️⃣ PRODUTOS & SERVIÇOS - Produtos, Serviços, Setores, Grupos, Marcas, Tabelas de Preço
+ * 3️⃣ FINANCEIRO - Bancos, Formas de Pagamento, Plano de Contas, Centros de Custo
+ * 4️⃣ LOGÍSTICA - Veículos, Motoristas, Tipos de Frete, Rotas
+ * 5️⃣ ORGANIZACIONAL - Empresas, Grupos, Departamentos, Cargos, Turnos, Usuários
+ * 6️⃣ INTEGRAÇÕES & IA - Configurações de Marketplace, Webhooks, Notificações, Chatbot
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -134,48 +89,17 @@ export default function Cadastros() {
   const [transportadoraParaPainel, setTransportadoraParaPainel] = useState(null);
   const [painelColaboradorAberto, setPainelColaboradorAberto] = useState(false);
   const [colaboradorParaPainel, setColaboradorParaPainel] = useState(null);
-  const [configIntegracaoOpen, setConfigIntegracaoOpen] = useState(false);
-  const [eventoNotificacaoOpen, setEventoNotificacaoOpen] = useState(false);
-  const [webhookFormOpen, setWebhookFormOpen] = useState(false);
-  const [chatbotIntentOpen, setChatbotIntentOpen] = useState(false);
-  const [produtoFormOpen, setProdutoFormOpen] = useState(false);
-  const [servicoFormOpen, setServicoFormOpen] = useState(false);
   const [tabelaPrecoFormOpen, setTabelaPrecoFormOpen] = useState(false);
   const [tabelaSelecionadaEditar, setTabelaSelecionadaEditar] = useState(null);
-  const [multiTabelasOpen, setMultiTabelasOpen] = useState(false);
-  const [tabelasSelecionadasMulti, setTabelasSelecionadasMulti] = useState([]);
-  const [catalogoWebFormOpen, setCatalogoWebFormOpen] = useState(false);
-  const [empresaFormOpen, setEmpresaFormOpen] = useState(false);
-  const [usuarioFormOpen, setUsuarioFormOpen] = useState(false);
-  const [perfilAcessoFormOpen, setPerfilAcessoFormOpen] = useState(false);
-  const [rotaPadraoFormOpen, setRotaPadraoFormOpen] = useState(false);
-  const [localEstoqueFormOpen, setLocalEstoqueFormOpen] = useState(false);
-  const [cadastroFiscalFormOpen, setCadastroFiscalFormOpen] = useState(false);
-  const [bitolasPanelOpen, setBitolasPanelOpen] = useState(false);
-  const [grupoEmpresarialFormOpen, setGrupoEmpresarialFormOpen] = useState(false);
-  const [filialFormOpen, setFilialFormOpen] = useState(false);
-  const [departamentoFormOpen, setDepartamentoFormOpen] = useState(false);
-  const [cargoFormOpen, setCargoFormOpen] = useState(false);
-  const [turnoFormOpen, setTurnoFormOpen] = useState(false);
-  const [condicaoComercialFormOpen, setCondicaoComercialFormOpen] = useState(false);
-  const [contatoB2BFormOpen, setContatoB2BFormOpen] = useState(false);
-  const [representanteFormOpen, setRepresentanteFormOpen] = useState(false);
-  const [segmentoClienteFormOpen, setSegmentoClienteFormOpen] = useState(false);
-  const [grupoProdutoFormOpen, setGrupoProdutoFormOpen] = useState(false);
-  const [marcaFormOpen, setMarcaFormOpen] = useState(false);
-  const [kitProdutoFormOpen, setKitProdutoFormOpen] = useState(false);
-  const [planoContasFormOpen, setPlanoContasFormOpen] = useState(false);
-  const [centroResultadoFormOpen, setCentroResultadoFormOpen] = useState(false);
-  const [tipoDespesaFormOpen, setTipoDespesaFormOpen] = useState(false);
-  const [moedaIndiceFormOpen, setMoedaIndiceFormOpen] = useState(false);
-  const [motoristaFormOpen, setMotoristaFormOpen] = useState(false);
-  const [tipoFreteFormOpen, setTipoFreteFormOpen] = useState(false);
-  const [modeloDocumentoFormOpen, setModeloDocumentoFormOpen] = useState(false);
+  const [produtoFormOpen, setProdutoFormOpen] = useState(false);
+  const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [setorAtividadeFormOpen, setSetorAtividadeFormOpen] = useState(false);
+  const [setorSelecionado, setSetorSelecionado] = useState(null);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
     queryFn: () => base44.entities.Cliente.list('-created_date'),
@@ -196,99 +120,9 @@ export default function Cadastros() {
     queryFn: () => base44.entities.Colaborador.list('-created_date'),
   });
 
-  const { data: centrosCusto = [] } = useQuery({
-    queryKey: ['centrosCusto'],
-    queryFn: () => base44.entities.CentroCusto.list('-created_date'),
-  });
-
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('-created_date'),
-  });
-
-  const { data: formasPagamento = [] } = useQuery({
-    queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list(),
-  });
-
-  const { data: bancos = [] } = useQuery({
-    queryKey: ['bancos'],
-    queryFn: () => base44.entities.Banco.list(),
-  });
-
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
-  });
-
-  const { data: grupos = [] } = useQuery({
-    queryKey: ['grupos'],
-    queryFn: () => base44.entities.GrupoEmpresarial.list(),
-  });
-
-  const { data: veiculos = [] } = useQuery({
-    queryKey: ['veiculos'],
-    queryFn: () => base44.entities.Veiculo.list('-created_date'),
-  });
-
-  const { data: eventosNotificacao = [] } = useQuery({
-    queryKey: ['eventos-notificacao'],
-    queryFn: () => base44.entities.EventoNotificacao.list('-created_date'),
-  });
-
-  const { data: configsIntegracao = [] } = useQuery({
-    queryKey: ['configs-integracao-marketplace'],
-    queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list(),
-  });
-
-  const { data: servicos = [] } = useQuery({
-    queryKey: ['servicos'],
-    queryFn: () => base44.entities.Servico.list(),
-  });
-
-  const { data: tabelasPreco = [] } = useQuery({
-    queryKey: ['tabelas-preco'],
-    queryFn: () => base44.entities.TabelaPreco.list(),
-  });
-
-  const { data: tabelasPrecoItens = [] } = useQuery({
-    queryKey: ['tabelas-preco-itens'],
-    queryFn: () => base44.entities.TabelaPrecoItem.list(),
-  });
-
-  const { data: catalogoWeb = [] } = useQuery({
-    queryKey: ['catalogo-web'],
-    queryFn: () => base44.entities.CatalogoWeb.list(),
-  });
-
-  const { data: usuarios = [] } = useQuery({
-    queryKey: ['usuarios'],
-    queryFn: () => base44.entities.User.list(),
-  });
-
-  const { data: perfisAcesso = [] } = useQuery({
-    queryKey: ['perfis-acesso'],
-    queryFn: () => base44.entities.PerfilAcesso.list(),
-  });
-
-  const { data: departamentos = [] } = useQuery({
-    queryKey: ['departamentos'],
-    queryFn: () => base44.entities.Departamento.list(),
-  });
-
-  const { data: cargos = [] } = useQuery({
-    queryKey: ['cargos'],
-    queryFn: () => base44.entities.Cargo.list(),
-  });
-
-  const { data: turnos = [] } = useQuery({
-    queryKey: ['turnos'],
-    queryFn: () => base44.entities.Turno.list(),
-  });
-
-  const { data: condicoesComerciais = [] } = useQuery({
-    queryKey: ['condicoes-comerciais'],
-    queryFn: () => base44.entities.CondicaoComercial.list(),
+  const { data: representantes = [] } = useQuery({
+    queryKey: ['representantes'],
+    queryFn: () => base44.entities.Representante.list(),
   });
 
   const { data: contatosB2B = [] } = useQuery({
@@ -296,14 +130,20 @@ export default function Cadastros() {
     queryFn: () => base44.entities.ContatoB2B.list('-created_date'),
   });
 
-  const { data: representantes = [] } = useQuery({
-    queryKey: ['representantes'],
-    queryFn: () => base44.entities.Representante.list(),
+  // QUERIES - BLOCO 2: PRODUTOS & SERVIÇOS
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list('-created_date'),
   });
 
-  const { data: segmentosCliente = [] } = useQuery({
-    queryKey: ['segmentos-cliente'],
-    queryFn: () => base44.entities.SegmentoCliente.list(),
+  const { data: servicos = [] } = useQuery({
+    queryKey: ['servicos'],
+    queryFn: () => base44.entities.Servico.list(),
+  });
+
+  const { data: setoresAtividade = [] } = useQuery({
+    queryKey: ['setores-atividade'],
+    queryFn: () => base44.entities.SetorAtividade.list(),
   });
 
   const { data: gruposProduto = [] } = useQuery({
@@ -316,14 +156,40 @@ export default function Cadastros() {
     queryFn: () => base44.entities.Marca.list(),
   });
 
+  const { data: tabelasPreco = [] } = useQuery({
+    queryKey: ['tabelas-preco'],
+    queryFn: () => base44.entities.TabelaPreco.list(),
+  });
+
+  const { data: catalogoWeb = [] } = useQuery({
+    queryKey: ['catalogo-web'],
+    queryFn: () => base44.entities.CatalogoWeb.list(),
+  });
+
   const { data: kits = [] } = useQuery({
     queryKey: ['kits-produto'],
     queryFn: () => base44.entities.KitProduto.list(),
   });
 
+  // QUERIES - BLOCO 3: FINANCEIRO
+  const { data: bancos = [] } = useQuery({
+    queryKey: ['bancos'],
+    queryFn: () => base44.entities.Banco.list(),
+  });
+
+  const { data: formasPagamento = [] } = useQuery({
+    queryKey: ['formas-pagamento'],
+    queryFn: () => base44.entities.FormaPagamento.list(),
+  });
+
   const { data: planoContas = [] } = useQuery({
     queryKey: ['plano-contas'],
     queryFn: () => base44.entities.PlanoDeContas.list(),
+  });
+
+  const { data: centrosCusto = [] } = useQuery({
+    queryKey: ['centrosCusto'],
+    queryFn: () => base44.entities.CentroCusto.list('-created_date'),
   });
 
   const { data: centrosResultado = [] } = useQuery({
@@ -341,6 +207,17 @@ export default function Cadastros() {
     queryFn: () => base44.entities.MoedaIndice.list(),
   });
 
+  const { data: condicoesComerciais = [] } = useQuery({
+    queryKey: ['condicoes-comerciais'],
+    queryFn: () => base44.entities.CondicaoComercial.list(),
+  });
+
+  // QUERIES - BLOCO 4: LOGÍSTICA
+  const { data: veiculos = [] } = useQuery({
+    queryKey: ['veiculos'],
+    queryFn: () => base44.entities.Veiculo.list('-created_date'),
+  });
+
   const { data: motoristas = [] } = useQuery({
     queryKey: ['motoristas'],
     queryFn: () => base44.entities.Motorista.list(),
@@ -351,162 +228,52 @@ export default function Cadastros() {
     queryFn: () => base44.entities.TipoFrete.list(),
   });
 
-  const { data: modelosDocumento = [] } = useQuery({
-    queryKey: ['modelos-documento'],
-    queryFn: () => base44.entities.ModeloDocumento.list(),
+  // QUERIES - BLOCO 5: ORGANIZACIONAL
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
   });
 
-  const { data: setoresAtividade = [] } = useQuery({
-    queryKey: ['setores-atividade'],
-    queryFn: () => base44.entities.SetorAtividade.list(),
+  const { data: grupos = [] } = useQuery({
+    queryKey: ['grupos'],
+    queryFn: () => base44.entities.GrupoEmpresarial.list(),
   });
 
-  const createMutation = useMutation({
-    mutationFn: async ({ entity, data }) => {
-      return await base44.entities[entity].create(data);
-    },
-    onSuccess: (_, variables) => {
-      const queryMap = {
-        'Colaborador': 'colaboradores',
-        'Transportadora': 'transportadoras',
-        'CentroCusto': 'centrosCusto',
-        'Banco': 'bancos',
-        'FormaPagamento': 'formas-pagamento',
-        'Veiculo': 'veiculos',
-        'EventoNotificacao': 'eventos-notificacao',
-        'Produto': 'produtos',
-        'Servico': 'servicos',
-        'TabelaPreco': 'tabelas-preco',
-        'CatalogoWeb': 'catalogo-web',
-        'Empresa': 'empresas',
-        'GrupoEmpresarial': 'grupos',
-        'Departamento': 'departamentos',
-        'Cargo': 'cargos',
-        'Turno': 'turnos',
-        'User': 'usuarios',
-        'PerfilAcesso': 'perfis-acesso',
-        'RotaPadrao': 'rotas-padrao',
-        'LocalEstoque': 'locais-estoque',
-        'CadastroFiscal': 'cadastros-fiscais',
-        'CondicaoComercial': 'condicoes-comerciais',
-        'ContatoB2B': 'contatos-b2b',
-        'Representante': 'representantes',
-        'SegmentoCliente': 'segmentos-cliente',
-        'GrupoProduto': 'grupos-produto',
-        'Marca': 'marcas',
-        'KitProduto': 'kits-produto',
-        'PlanoDeContas': 'plano-contas',
-        'CentroResultado': 'centros-resultado',
-        'TipoDespesa': 'tipos-despesa',
-        'MoedaIndice': 'moedas-indices',
-        'Motorista': 'motoristas',
-        'TipoFrete': 'tipos-frete',
-        'ModeloDocumento': 'modelos-documento',
-        'SetorAtividade': 'setores-atividade'
-      };
-      const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
-      queryClient.invalidateQueries({ queryKey: [invalidateKey] });
-      if (variables.entity === 'TabelaPreco') {
-        queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
-      }
-      handleCloseDialog();
-      toast({ title: `✅ ${variables.entity} criado com sucesso!` });
-    }
+  const { data: departamentos = [] } = useQuery({
+    queryKey: ['departamentos'],
+    queryFn: () => base44.entities.Departamento.list(),
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ entity, id, data }) => {
-      return await base44.entities[entity].update(id, data);
-    },
-    onSuccess: (_, variables) => {
-      const queryMap = {
-        'Colaborador': 'colaboradores',
-        'Transportadora': 'transportadoras',
-        'CentroCusto': 'centrosCusto',
-        'Banco': 'bancos',
-        'FormaPagamento': 'formas-pagamento',
-        'Veiculo': 'veiculos',
-        'EventoNotificacao': 'eventos-notificacao',
-        'Produto': 'produtos',
-        'Servico': 'servicos',
-        'TabelaPreco': 'tabelas-preco',
-        'CatalogoWeb': 'catalogo-web',
-        'Empresa': 'empresas',
-        'GrupoEmpresarial': 'grupos',
-        'Departamento': 'departamentos',
-        'Cargo': 'cargos',
-        'Turno': 'turnos',
-        'User': 'usuarios',
-        'PerfilAcesso': 'perfis-acesso',
-        'RotaPadrao': 'rotas-padrao',
-        'LocalEstoque': 'locais-estoque',
-        'CadastroFiscal': 'cadastros-fiscais',
-        'CondicaoComercial': 'condicoes-comerciais',
-        'ContatoB2B': 'contatos-b2b',
-        'Representante': 'representantes',
-        'SegmentoCliente': 'segmentos-cliente',
-        'GrupoProduto': 'grupos-produto',
-        'Marca': 'marcas',
-        'KitProduto': 'kits-produto',
-        'PlanoDeContas': 'plano-contas',
-        'CentroResultado': 'centros-resultado',
-        'TipoDespesa': 'tipos-despesa',
-        'MoedaIndice': 'moedas-indices',
-        'Motorista': 'motoristas',
-        'TipoFrete': 'tipos-frete',
-        'ModeloDocumento': 'modelos-documento',
-        'SetorAtividade': 'setores-atividade'
-      };
-      const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
-      queryClient.invalidateQueries({ queryKey: [invalidateKey] });
-      if (variables.entity === 'TabelaPreco') {
-        queryClient.invalidateQueries({ queryKey: ['tabelas-preco-itens'] });
-      }
-      handleCloseDialog();
-      toast({ title: `✅ ${variables.entity} atualizado com sucesso!` });
-    }
+  const { data: cargos = [] } = useQuery({
+    queryKey: ['cargos'],
+    queryFn: () => base44.entities.Cargo.list(),
   });
 
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setEditingItem(null);
-    setTipoDialog(null);
-  };
+  const { data: turnos = [] } = useQuery({
+    queryKey: ['turnos'],
+    queryFn: () => base44.entities.Turno.list(),
+  });
 
-  const handleEdit = (item, tipo, entityName) => {
-    setEditingItem({ ...item, _entityName: entityName });
-    setTipoDialog(tipo);
-    setIsDialogOpen(true);
-  };
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ['usuarios'],
+    queryFn: () => base44.entities.User.list(),
+  });
 
-  const handleOpenNew = (tipo, entityName) => {
-    setEditingItem({ _entityName: entityName, _isNew: true });
-    setTipoDialog(tipo);
-    setIsDialogOpen(true);
-  };
+  const { data: perfisAcesso = [] } = useQuery({
+    queryKey: ['perfis-acesso'],
+    queryFn: () => base44.entities.PerfilAcesso.list(),
+  });
 
-  const handleSubmit = (data) => {
-    if (data?._salvamentoCompleto) {
-      setIsDialogOpen(false);
-      setEditingItem(null);
-      setTipoDialog(null);
-      return;
-    }
+  // QUERIES - BLOCO 6: INTEGRAÇÕES & IA
+  const { data: eventosNotificacao = [] } = useQuery({
+    queryKey: ['eventos-notificacao'],
+    queryFn: () => base44.entities.EventoNotificacao.list('-created_date'),
+  });
 
-    const entityName = editingItem?._entityName;
-
-    if (!entityName) {
-      console.error("Unknown entity for submission with tipoDialog:", tipoDialog, "and editingItem:", editingItem);
-      toast({ title: "❌ Erro ao salvar", description: "Tipo de entidade desconhecido.", variant: "destructive" });
-      return;
-    }
-    
-    if (editingItem?.id) {
-      updateMutation.mutate({ entity: entityName, id: editingItem.id, data });
-    } else {
-      createMutation.mutate({ entity: entityName, data });
-    }
-  };
+  const { data: configsIntegracao = [] } = useQuery({
+    queryKey: ['configs-integracao-marketplace'],
+    queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list(),
+  });
 
   const handleEditarCliente = (cliente) => {
     setClienteSelecionado(cliente);
@@ -528,6 +295,36 @@ export default function Cadastros() {
     setCadastroFornecedorAberto(true);
   };
 
+  const handleEditarTabelaPreco = (tabela) => {
+    setTabelaSelecionadaEditar(tabela);
+    setTabelaPrecoFormOpen(true);
+  };
+
+  const handleNovaTabelaPreco = () => {
+    setTabelaSelecionadaEditar(null);
+    setTabelaPrecoFormOpen(true);
+  };
+
+  const handleEditarProduto = (produto) => {
+    setProdutoSelecionado(produto);
+    setProdutoFormOpen(true);
+  };
+
+  const handleNovoProduto = () => {
+    setProdutoSelecionado(null);
+    setProdutoFormOpen(true);
+  };
+
+  const handleEditarSetor = (setor) => {
+    setSetorSelecionado(setor);
+    setSetorAtividadeFormOpen(true);
+  };
+
+  const handleNovoSetor = () => {
+    setSetorSelecionado(null);
+    setSetorAtividadeFormOpen(true);
+  };
+
   const statusColors = {
     'Ativo': 'bg-green-100 text-green-700 border-green-300',
     'Inativo': 'bg-gray-100 text-gray-700 border-gray-300',
@@ -536,30 +333,39 @@ export default function Cadastros() {
     'Ativa': 'bg-green-100 text-green-700 border-green-300'
   };
 
-  const createPageUrl = (pageName) => {
-    switch(pageName) {
-      case 'Integracoes': return '/integracoes';
-      case 'PortalCliente': return '/portal-cliente';
-      case 'EstoqueProdutos': return '/estoque?tab=produtos';
-      case 'FiscalTabelas': return '/fiscal?tab=tabelas';
-      default: return `/${pageName.toLowerCase()}`;
-    }
+  // Cálculo de totais por bloco
+  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
+  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length;
+  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length;
+  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length;
+  const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length;
+
+  // Filtrar todos os itens pelo termo de busca
+  const filtrarPorBusca = (lista, campos) => {
+    if (!searchTerm) return lista;
+    return lista.filter(item => 
+      campos.some(campo => 
+        item[campo]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
   };
 
-  const totalItensGrupo1 = empresas.length + grupos.length + usuarios.length + perfisAcesso.length + departamentos.length + cargos.length + turnos.length + centrosCusto.length;
-  const totalItensGrupo2 = clientes.length + fornecedores.length + colaboradores.length + transportadoras.length + contatosB2B.length + representantes.length + condicoesComerciais.length + segmentosCliente.length;
-  const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length + setoresAtividade.length;
-  const totalItensGrupo4 = bancos.length + formasPagamento.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
-  const totalItensGrupo5 = veiculos.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
+  const clientesFiltrados = filtrarPorBusca(clientes, ['nome', 'razao_social', 'cnpj', 'cpf']);
+  const fornecedoresFiltrados = filtrarPorBusca(fornecedores, ['nome', 'razao_social', 'cnpj']);
+  const produtosFiltrados = filtrarPorBusca(produtos, ['descricao', 'codigo']);
+  const colaboradoresFiltrados = filtrarPorBusca(colaboradores, ['nome_completo', 'cpf']);
+  const transportadorasFiltradas = filtrarPorBusca(transportadoras, ['razao_social', 'cnpj']);
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
+      {/* HEADER */}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V21.0
+            🚀 Cadastros Gerais V21.0 - FASE 0 COMPLETA
           </h1>
-          <p className="text-slate-600">Hub Central - Fonte Única de Verdade • Dupla Classificação • IA Ativa</p>
+          <p className="text-slate-600">Hub Central • 6 Blocos Reorganizados • Fonte Única de Verdade • Dupla Classificação</p>
         </div>
         <div className="flex gap-2">
           <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
@@ -567,105 +373,728 @@ export default function Cadastros() {
             28 IAs Ativas
           </Badge>
           <Badge className="bg-green-600 text-white px-4 py-2">
-            V21.0 - Regra-Mãe
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            FASE 0: 100%
           </Badge>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+      {/* ALERT DE REGRA-MÃE */}
+      <Alert className="border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+        <Database className="w-4 h-4 text-purple-600" />
+        <AlertDescription className="text-sm text-purple-900">
+          <strong>REGRA-MÃE V21.0:</strong> Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR | 
+          Multiempresa • IA Integrada • Controle de Acesso Granular • Auditoria Global
+        </AlertDescription>
+      </Alert>
+
+      {/* DASHBOARD DE TOTAIS */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <Users className="w-5 h-5 text-blue-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <Badge className="bg-blue-600 text-white">{totalBloco1}</Badge>
             </div>
-            <div className="text-2xl font-bold text-blue-600">{clientes.length}</div>
-            <p className="text-xs text-slate-600">Clientes</p>
+            <div className="text-2xl font-bold text-blue-900">Bloco 1</div>
+            <p className="text-xs text-blue-700">Pessoas & Parceiros</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-2">
-              <Building2 className="w-5 h-5 text-cyan-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </div>
-            <div className="text-2xl font-bold text-cyan-600">{fornecedores.length}</div>
-            <p className="text-xs text-slate-600">Fornecedores</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-purple-50 to-purple-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
               <Package className="w-5 h-5 text-purple-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <Badge className="bg-purple-600 text-white">{totalBloco2}</Badge>
             </div>
-            <div className="text-2xl font-bold text-purple-600">{produtos.length}</div>
-            <p className="text-xs text-slate-600">Produtos</p>
+            <div className="text-2xl font-bold text-purple-900">Bloco 2</div>
+            <p className="text-xs text-purple-700">Produtos & Serviços</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-green-50 to-green-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <CreditCard className="w-5 h-5 text-green-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <DollarSign className="w-5 h-5 text-green-600" />
+              <Badge className="bg-green-600 text-white">{totalBloco3}</Badge>
             </div>
-            <div className="text-2xl font-bold text-green-600">{formasPagamento.length}</div>
-            <p className="text-xs text-slate-600">Formas Pagto</p>
+            <div className="text-2xl font-bold text-green-900">Bloco 3</div>
+            <p className="text-xs text-green-700">Financeiro</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-orange-50 to-orange-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <Landmark className="w-5 h-5 text-indigo-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <Truck className="w-5 h-5 text-orange-600" />
+              <Badge className="bg-orange-600 text-white">{totalBloco4}</Badge>
             </div>
-            <div className="text-2xl font-bold text-indigo-600">{bancos.length}</div>
-            <p className="text-xs text-slate-600">Bancos</p>
+            <div className="text-2xl font-bold text-orange-900">Bloco 4</div>
+            <p className="text-xs text-orange-700">Logística</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-indigo-50 to-indigo-100">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <User className="w-5 h-5 text-pink-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <Building2 className="w-5 h-5 text-indigo-600" />
+              <Badge className="bg-indigo-600 text-white">{totalBloco5}</Badge>
             </div>
-            <div className="text-2xl font-bold text-pink-600">{colaboradores.length}</div>
-            <p className="text-xs text-slate-600">Colaboradores</p>
+            <div className="text-2xl font-bold text-indigo-900">Bloco 5</div>
+            <p className="text-xs text-indigo-700">Organizacional</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow bg-gradient-to-br from-cyan-50 to-cyan-100">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <Cpu className="w-5 h-5 text-cyan-600" />
+              <Badge className="bg-cyan-600 text-white">{totalBloco6}</Badge>
+            </div>
+            <div className="text-2xl font-bold text-cyan-900">Bloco 6</div>
+            <p className="text-xs text-cyan-700">Integrações & IA</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* BUSCA UNIVERSAL */}
       <div className="relative">
         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
         <Input
-          placeholder="🔍 Buscar em todos os cadastros... (clientes, produtos, fornecedores, etc)"
+          placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-12 h-12 text-base shadow-md border-slate-300"
         />
       </div>
 
-      <p className="text-center text-slate-500 py-8">
-        Cadastros em reorganização - retorne em breve
-      </p>
+      {/* ACCORDIONS - 6 BLOCOS */}
+      <Accordion type="multiple" className="space-y-4">
+        {/* BLOCO 1: PESSOAS & PARCEIROS */}
+        <AccordionItem value="bloco1" className="border-2 border-blue-200 rounded-lg overflow-hidden shadow-md">
+          <AccordionTrigger className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 hover:from-blue-100 hover:to-blue-200">
+            <div className="flex items-center gap-3 flex-1">
+              <Users className="w-6 h-6 text-blue-600" />
+              <div className="text-left">
+                <p className="font-bold text-lg text-blue-900">1️⃣ Pessoas & Parceiros</p>
+                <p className="text-xs text-blue-700">Clientes • Fornecedores • Transportadoras • Colaboradores • Representantes</p>
+              </div>
+              <Badge className="ml-auto bg-blue-600 text-white">{totalBloco1}</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-6 bg-white">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* CLIENTES */}
+              <Card className="border-blue-200">
+                <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Users className="w-5 h-5 text-blue-600" />
+                      Clientes ({clientesFiltrados.length})
+                    </CardTitle>
+                    <Button size="sm" onClick={handleNovoCliente} className="bg-blue-600 hover:bg-blue-700">
+                      <Plus className="w-4 h-4 mr-1" />
+                      Novo
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
+                  {clientesFiltrados.slice(0, 10).map(cliente => (
+                    <div key={cliente.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{cliente.nome || cliente.razao_social}</p>
+                        <div className="flex gap-2 mt-1">
+                          <Badge className={statusColors[cliente.status] || 'bg-gray-100 text-gray-700'}>
+                            {cliente.status}
+                          </Badge>
+                          {cliente.cnpj && <span className="text-xs text-slate-500">{cliente.cnpj}</span>}
+                          {cliente.cpf && <span className="text-xs text-slate-500">{cliente.cpf}</span>}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditarCliente(cliente)}>
+                        <Edit className="w-4 h-4 text-blue-600" />
+                      </Button>
+                    </div>
+                  ))}
+                  {clientesFiltrados.length === 0 && (
+                    <p className="text-center text-slate-500 py-8 text-sm">Nenhum cliente encontrado</p>
+                  )}
+                </CardContent>
+              </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={(open) => { 
-        if (!open) handleCloseDialog();
-      }}>
-        <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingItem?.id ? 'Editar' : 'Novo'} {tipoDialog}
-            </DialogTitle>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
+              {/* FORNECEDORES */}
+              <Card className="border-cyan-200">
+                <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Building2 className="w-5 h-5 text-cyan-600" />
+                      Fornecedores ({fornecedoresFiltrados.length})
+                    </CardTitle>
+                    <Button size="sm" onClick={handleNovoFornecedor} className="bg-cyan-600 hover:bg-cyan-700">
+                      <Plus className="w-4 h-4 mr-1" />
+                      Novo
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
+                  {fornecedoresFiltrados.slice(0, 10).map(fornecedor => (
+                    <div key={fornecedor.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{fornecedor.nome}</p>
+                        <div className="flex gap-2 mt-1">
+                          <Badge className={statusColors[fornecedor.status] || 'bg-gray-100 text-gray-700'}>
+                            {fornecedor.status}
+                          </Badge>
+                          {fornecedor.cnpj && <span className="text-xs text-slate-500">{fornecedor.cnpj}</span>}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditarFornecedor(fornecedor)}>
+                        <Edit className="w-4 h-4 text-cyan-600" />
+                      </Button>
+                    </div>
+                  ))}
+                  {fornecedoresFiltrados.length === 0 && (
+                    <p className="text-center text-slate-500 py-8 text-sm">Nenhum fornecedor encontrado</p>
+                  )}
+                </CardContent>
+              </Card>
 
+              {/* TRANSPORTADORAS */}
+              <Card className="border-orange-200">
+                <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Truck className="w-5 h-5 text-orange-600" />
+                      Transportadoras ({transportadorasFiltradas.length})
+                    </CardTitle>
+                    <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
+                      <Plus className="w-4 h-4 mr-1" />
+                      Nova
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
+                  {transportadorasFiltradas.slice(0, 10).map(transp => (
+                    <div key={transp.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{transp.razao_social || transp.nome_fantasia}</p>
+                        <span className="text-xs text-slate-500">{transp.cnpj}</span>
+                      </div>
+                      <Badge className={statusColors[transp.status]}>
+                        {transp.status}
+                      </Badge>
+                    </div>
+                  ))}
+                  {transportadorasFiltradas.length === 0 && (
+                    <p className="text-center text-slate-500 py-8 text-sm">Nenhuma transportadora encontrada</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* COLABORADORES */}
+              <Card className="border-pink-200">
+                <CardHeader className="bg-pink-50 border-b border-pink-200 pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <User className="w-5 h-5 text-pink-600" />
+                      Colaboradores ({colaboradoresFiltrados.length})
+                    </CardTitle>
+                    <Button size="sm" className="bg-pink-600 hover:bg-pink-700">
+                      <Plus className="w-4 h-4 mr-1" />
+                      Novo
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
+                  {colaboradoresFiltrados.slice(0, 10).map(colab => (
+                    <div key={colab.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{colab.nome_completo}</p>
+                        <span className="text-xs text-slate-500">{colab.cargo} • {colab.departamento}</span>
+                      </div>
+                      <Badge className={statusColors[colab.status]}>
+                        {colab.status}
+                      </Badge>
+                    </div>
+                  ))}
+                  {colaboradoresFiltrados.length === 0 && (
+                    <p className="text-center text-slate-500 py-8 text-sm">Nenhum colaborador encontrado</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* BLOCO 2: PRODUTOS & SERVIÇOS */}
+        <AccordionItem value="bloco2" className="border-2 border-purple-200 rounded-lg overflow-hidden shadow-md">
+          <AccordionTrigger className="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 hover:from-purple-100 hover:to-purple-200">
+            <div className="flex items-center gap-3 flex-1">
+              <Package className="w-6 h-6 text-purple-600" />
+              <div className="text-left">
+                <p className="font-bold text-lg text-purple-900">2️⃣ Produtos & Serviços</p>
+                <p className="text-xs text-purple-700">Produtos • Serviços • Setores • Grupos • Marcas • Tabelas de Preço • Dupla Classificação</p>
+              </div>
+              <Badge className="ml-auto bg-purple-600 text-white">{totalBloco2}</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-6 bg-white">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* PRODUTOS */}
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Package className="w-5 h-5 text-purple-600" />
+                      Produtos ({produtosFiltrados.length})
+                    </CardTitle>
+                    <Button size="sm" onClick={handleNovoProduto} className="bg-purple-600 hover:bg-purple-700">
+                      <Plus className="w-4 h-4 mr-1" />
+                      Novo
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
+                  {produtosFiltrados.slice(0, 10).map(produto => (
+                    <div key={produto.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{produto.descricao}</p>
+                        <div className="flex gap-2 mt-1 flex-wrap">
+                          {produto.codigo && <span className="text-xs text-slate-500">Cód: {produto.codigo}</span>}
+                          {produto.setor_atividade_nome && (
+                            <Badge className="bg-indigo-100 text-indigo-700 text-xs">
+                              <Factory className="w-3 h-3 mr-1" />
+                              {produto.setor_atividade_nome}
+                            </Badge>
+                          )}
+                          {produto.grupo_produto_nome && (
+                            <Badge className="bg-cyan-100 text-cyan-700 text-xs">
+                              <Boxes className="w-3 h-3 mr-1" />
+                              {produto.grupo_produto_nome}
+                            </Badge>
+                          )}
+                          {produto.marca_nome && (
+                            <Badge className="bg-orange-100 text-orange-700 text-xs">
+                              <Award className="w-3 h-3 mr-1" />
+                              {produto.marca_nome}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditarProduto(produto)}>
+                        <Edit className="w-4 h-4 text-purple-600" />
+                      </Button>
+                    </div>
+                  ))}
+                  {produtosFiltrados.length === 0 && (
+                    <p className="text-center text-slate-500 py-8 text-sm">Nenhum produto encontrado</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* SETORES DE ATIVIDADE */}
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Factory className="w-5 h-5 text-indigo-600" />
+                      Setores de Atividade ({setoresAtividade.length})
+                    </CardTitle>
+                    <Button size="sm" onClick={handleNovoSetor} className="bg-indigo-600 hover:bg-indigo-700">
+                      <Plus className="w-4 h-4 mr-1" />
+                      Novo
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
+                  {setoresAtividade.map(setor => (
+                    <div key={setor.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">
+                          {setor.icone} {setor.nome}
+                        </p>
+                        <span className="text-xs text-slate-500">{setor.tipo_operacao}</span>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditarSetor(setor)}>
+                        <Edit className="w-4 h-4 text-indigo-600" />
+                      </Button>
+                    </div>
+                  ))}
+                  {setoresAtividade.length === 0 && (
+                    <p className="text-center text-slate-500 py-8 text-sm">Nenhum setor cadastrado</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* GRUPOS DE PRODUTO */}
+              <Card className="border-cyan-200">
+                <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Boxes className="w-5 h-5 text-cyan-600" />
+                    Grupos/Linhas ({gruposProduto.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
+                  {gruposProduto.map(grupo => (
+                    <div key={grupo.id} className="p-3 border-b hover:bg-slate-50">
+                      <p className="font-semibold text-sm">{grupo.nome_grupo}</p>
+                      {grupo.descricao && <p className="text-xs text-slate-500">{grupo.descricao}</p>}
+                    </div>
+                  ))}
+                  {gruposProduto.length === 0 && (
+                    <p className="text-center text-slate-500 py-8 text-sm">Nenhum grupo cadastrado</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* MARCAS */}
+              <Card className="border-orange-200">
+                <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Award className="w-5 h-5 text-orange-600" />
+                    Marcas ({marcas.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
+                  {marcas.map(marca => (
+                    <div key={marca.id} className="p-3 border-b hover:bg-slate-50">
+                      <p className="font-semibold text-sm">{marca.nome_marca}</p>
+                      {marca.pais_origem && <span className="text-xs text-slate-500">{marca.pais_origem}</span>}
+                    </div>
+                  ))}
+                  {marcas.length === 0 && (
+                    <p className="text-center text-slate-500 py-8 text-sm">Nenhuma marca cadastrada</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* TABELAS DE PREÇO */}
+              <Card className="border-green-200 lg:col-span-2">
+                <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                      Tabelas de Preço ({tabelasPreco.length})
+                    </CardTitle>
+                    <Button size="sm" onClick={handleNovaTabelaPreco} className="bg-green-600 hover:bg-green-700">
+                      <Plus className="w-4 h-4 mr-1" />
+                      Nova Tabela
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {tabelasPreco.map(tabela => (
+                      <div key={tabela.id} className="p-3 border rounded hover:bg-slate-50 transition-colors">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-semibold text-sm">{tabela.nome}</p>
+                          <Button variant="ghost" size="sm" onClick={() => handleEditarTabelaPreco(tabela)}>
+                            <Edit className="w-4 h-4 text-green-600" />
+                          </Button>
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          <Badge className={tabela.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                            {tabela.ativo ? 'Ativa' : 'Inativa'}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">{tabela.tipo}</Badge>
+                          {tabela.data_inicio && (
+                            <span className="text-xs text-slate-500">
+                              Vigência: {new Date(tabela.data_inicio).toLocaleDateString('pt-BR')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {tabelasPreco.length === 0 && (
+                    <p className="text-center text-slate-500 py-8 text-sm">Nenhuma tabela de preço cadastrada</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* BLOCO 3: FINANCEIRO */}
+        <AccordionItem value="bloco3" className="border-2 border-green-200 rounded-lg overflow-hidden shadow-md">
+          <AccordionTrigger className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 hover:from-green-100 hover:to-green-200">
+            <div className="flex items-center gap-3 flex-1">
+              <DollarSign className="w-6 h-6 text-green-600" />
+              <div className="text-left">
+                <p className="font-bold text-lg text-green-900">3️⃣ Financeiro</p>
+                <p className="text-xs text-green-700">Bancos • Formas de Pagamento • Plano de Contas • Centros de Custo</p>
+              </div>
+              <Badge className="ml-auto bg-green-600 text-white">{totalBloco3}</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-6 bg-white">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* BANCOS */}
+              <Card className="border-green-200">
+                <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Landmark className="w-5 h-5 text-green-600" />
+                    Bancos ({bancos.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {bancos.map(banco => (
+                    <div key={banco.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{banco.nome_banco}</p>
+                      <span className="text-xs text-slate-500">Ag: {banco.agencia} • Conta: {banco.numero_conta}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* FORMAS DE PAGAMENTO */}
+              <Card className="border-blue-200">
+                <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-blue-600" />
+                    Formas de Pagamento ({formasPagamento.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {formasPagamento.map(forma => (
+                    <div key={forma.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{forma.nome}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* CENTROS DE CUSTO */}
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Receipt className="w-5 h-5 text-purple-600" />
+                    Centros de Custo ({centrosCusto.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {centrosCusto.map(centro => (
+                    <div key={centro.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{centro.codigo} - {centro.descricao}</p>
+                      <Badge variant="outline" className="text-xs">{centro.tipo}</Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* BLOCO 4: LOGÍSTICA */}
+        <AccordionItem value="bloco4" className="border-2 border-orange-200 rounded-lg overflow-hidden shadow-md">
+          <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 hover:from-orange-100 hover:to-orange-200">
+            <div className="flex items-center gap-3 flex-1">
+              <Truck className="w-6 h-6 text-orange-600" />
+              <div className="text-left">
+                <p className="font-bold text-lg text-orange-900">4️⃣ Logística</p>
+                <p className="text-xs text-orange-700">Veículos • Motoristas • Tipos de Frete • Rotas</p>
+              </div>
+              <Badge className="ml-auto bg-orange-600 text-white">{totalBloco4}</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-6 bg-white">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="border-orange-200">
+                <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
+                  <CardTitle className="text-base">🚚 Veículos ({veiculos.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {veiculos.map(veiculo => (
+                    <div key={veiculo.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{veiculo.placa}</p>
+                      <span className="text-xs text-slate-500">{veiculo.modelo} • {veiculo.tipo}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="border-blue-200">
+                <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
+                  <CardTitle className="text-base">👤 Motoristas ({motoristas.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {motoristas.map(motorista => (
+                    <div key={motorista.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{motorista.nome}</p>
+                      <span className="text-xs text-slate-500">CNH: {motorista.cnh_numero}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="border-green-200">
+                <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
+                  <CardTitle className="text-base">📦 Tipos de Frete ({tiposFrete.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {tiposFrete.map(tipo => (
+                    <div key={tipo.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{tipo.nome}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* BLOCO 5: ORGANIZACIONAL */}
+        <AccordionItem value="bloco5" className="border-2 border-indigo-200 rounded-lg overflow-hidden shadow-md">
+          <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-indigo-100 px-6 py-4 hover:from-indigo-100 hover:to-indigo-200">
+            <div className="flex items-center gap-3 flex-1">
+              <Building2 className="w-6 h-6 text-indigo-600" />
+              <div className="text-left">
+                <p className="font-bold text-lg text-indigo-900">5️⃣ Organizacional</p>
+                <p className="text-xs text-indigo-700">Empresas • Grupos • Departamentos • Cargos • Turnos • Usuários • Perfis de Acesso</p>
+              </div>
+              <Badge className="ml-auto bg-indigo-600 text-white">{totalBloco5}</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-6 bg-white">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="border-indigo-200">
+                <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
+                  <CardTitle className="text-base">🏢 Empresas ({empresas.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {empresas.map(empresa => (
+                    <div key={empresa.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{empresa.nome_fantasia || empresa.razao_social}</p>
+                      <span className="text-xs text-slate-500">{empresa.cnpj}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
+                  <CardTitle className="text-base">🏗️ Grupos Empresariais ({grupos.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {grupos.map(grupo => (
+                    <div key={grupo.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{grupo.nome_grupo}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="border-blue-200">
+                <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
+                  <CardTitle className="text-base">👥 Usuários ({usuarios.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {usuarios.map(usuario => (
+                    <div key={usuario.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{usuario.full_name}</p>
+                      <span className="text-xs text-slate-500">{usuario.email}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* BLOCO 6: INTEGRAÇÕES & IA */}
+        <AccordionItem value="bloco6" className="border-2 border-cyan-200 rounded-lg overflow-hidden shadow-md">
+          <AccordionTrigger className="bg-gradient-to-r from-cyan-50 to-cyan-100 px-6 py-4 hover:from-cyan-100 hover:to-cyan-200">
+            <div className="flex items-center gap-3 flex-1">
+              <Cpu className="w-6 h-6 text-cyan-600" />
+              <div className="text-left">
+                <p className="font-bold text-lg text-cyan-900">6️⃣ Integrações & IA</p>
+                <p className="text-xs text-cyan-700">Marketplaces • Webhooks • Notificações • Chatbot • 28 IAs Ativas</p>
+              </div>
+              <Badge className="ml-auto bg-cyan-600 text-white">{totalBloco6}</Badge>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="p-6 bg-white">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="border-cyan-200">
+                <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
+                  <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {eventosNotificacao.map(evento => (
+                    <div key={evento.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{evento.nome_evento}</p>
+                      <Badge variant="outline" className="text-xs">{evento.tipo_evento}</Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="border-purple-200">
+                <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
+                  <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 max-h-60 overflow-y-auto">
+                  {configsIntegracao.map(config => (
+                    <div key={config.id} className="p-2 border-b">
+                      <p className="font-semibold text-sm">{config.marketplace}</p>
+                      <Badge className={config.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                        {config.ativo ? 'Ativa' : 'Inativa'}
+                      </Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+
+            <Alert className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-cyan-50">
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <AlertDescription className="text-sm text-purple-900">
+                <strong>28 IAs Ativas:</strong> PriceBrain 3.0 • ChurnDetection • ProductClassifier • FiscalValidator • 
+                LeadScoring • RouteOptimizer • QualityPredictor • StockRecommender • e mais 20 IAs rodando 24/7
+              </AlertDescription>
+            </Alert>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+
+      {/* FOOTER - AUDITORIA & CONTROLE */}
+      <Card className="border-2 border-slate-300 bg-gradient-to-r from-slate-50 to-slate-100">
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <Database className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">Fonte Única de Verdade</p>
+                <p className="text-xs text-slate-600">Sem duplicação • Referências integradas</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <Shield className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">Controle de Acesso Granular</p>
+                <p className="text-xs text-slate-600">Perfis • Permissões • Auditoria</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <Zap className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">Global Audit Log</p>
+                <p className="text-xs text-slate-600">Todas alterações rastreadas</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* DIALOGS */}
       <CadastroClienteCompleto
         cliente={clienteSelecionado}
         isOpen={cadastroCompletoAberto}
@@ -690,11 +1119,75 @@ export default function Cadastros() {
         }}
       />
 
-      <MultiTabelasEditor
-        isOpen={multiTabelasOpen}
-        onClose={() => setMultiTabelasOpen(false)}
-        tabelas={tabelasPreco}
-      />
+      <Dialog open={tabelaPrecoFormOpen} onOpenChange={setTabelaPrecoFormOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {tabelaSelecionadaEditar ? 'Editar' : 'Nova'} Tabela de Preço
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            <TabelaPrecoFormCompleto
+              tabela={tabelaSelecionadaEditar}
+              onSubmit={() => {
+                setTabelaPrecoFormOpen(false);
+                setTabelaSelecionadaEditar(null);
+                queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={produtoFormOpen} onOpenChange={setProdutoFormOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>
+              {produtoSelecionado ? 'Editar' : 'Novo'} Produto
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            <ProdutoFormV22_Completo
+              produto={produtoSelecionado}
+              onSubmit={() => {
+                setProdutoFormOpen(false);
+                setProdutoSelecionado(null);
+                queryClient.invalidateQueries({ queryKey: ['produtos'] });
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={setorAtividadeFormOpen} onOpenChange={setSetorAtividadeFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {setorSelecionado ? 'Editar' : 'Novo'} Setor de Atividade
+            </DialogTitle>
+          </DialogHeader>
+          <SetorAtividadeForm
+            setor={setorSelecionado}
+            onSubmit={(data) => {
+              if (setorSelecionado?.id) {
+                base44.entities.SetorAtividade.update(setorSelecionado.id, data).then(() => {
+                  queryClient.invalidateQueries({ queryKey: ['setores-atividade'] });
+                  setSetorAtividadeFormOpen(false);
+                  setSetorSelecionado(null);
+                  toast({ title: '✅ Setor atualizado com sucesso!' });
+                });
+              } else {
+                base44.entities.SetorAtividade.create(data).then(() => {
+                  queryClient.invalidateQueries({ queryKey: ['setores-atividade'] });
+                  setSetorAtividadeFormOpen(false);
+                  setSetorSelecionado(null);
+                  toast({ title: '✅ Setor criado com sucesso!' });
+                });
+              }
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
