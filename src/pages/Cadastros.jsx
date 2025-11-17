@@ -1873,7 +1873,7 @@ export default function Cadastros() {
                     <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
                     <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
-                  </CardContent>
+                  </div>
                 )}
               </div>
 
