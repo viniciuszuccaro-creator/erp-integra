@@ -10,24 +10,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Save } from "lucide-react";
+import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Save, Factory, Award, Boxes, TrendingUp, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
+/**
+ * V21.0 - TABELA DE PREÇO RECONSTRUÍDA
+ * ✅ Filtros por Setor + Grupo + Marca (Dupla Classificação)
+ * ✅ Multiempresa e compartilhamento
+ * ✅ IA PriceBrain 3.0 com análise de mercado
+ * ✅ Histórico de alterações
+ */
 export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
   const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
+  const [user, setUser] = useState(null);
   
+  useEffect(() => {
+    const loadUser = async () => {
+      const currentUser = await base44.auth.me();
+      setUser(currentUser);
+    };
+    loadUser();
+  }, []);
+
   const [formData, setFormData] = useState({
     nome: tabela?.nome || '',
     descricao: tabela?.descricao || '',
     tipo: tabela?.tipo || 'Padrão',
     data_inicio: tabela?.data_inicio || new Date().toISOString().split('T')[0],
     data_fim: tabela?.data_fim || '',
-    ativo: tabela?.ativo !== undefined ? tabela.ativo : true
+    ativo: tabela?.ativo !== undefined ? tabela.ativo : true,
+    empresa_id: tabela?.empresa_id || user?.empresa_selecionada_id || '',
+    compartilhar_grupo: tabela?.compartilhar_grupo || false
   });
 
   const [activeTab, setActiveTab] = useState('config');
-  const [modoInclusao, setModoInclusao] = useState('individual');
+  const [modoInclusao, setModoInclusao] = useState('lote');
   const [calculando, setCalculando] = useState(false);
   const [searchProduto, setSearchProduto] = useState('');
   const [itensTabela, setItensTabela] = useState([]);
@@ -35,6 +53,21 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list()
+  });
+
+  const { data: setoresAtividade = [] } = useQuery({
+    queryKey: ['setores-atividade'],
+    queryFn: () => base44.entities.SetorAtividade.list()
+  });
+
+  const { data: gruposProduto = [] } = useQuery({
+    queryKey: ['grupos-produto'],
+    queryFn: () => base44.entities.GrupoProduto.list()
+  });
+
+  const { data: marcas = [] } = useQuery({
+    queryKey: ['marcas'],
+    queryFn: () => base44.entities.Marca.list()
   });
 
   const { data: itensExistentes = [] } = useQuery({
@@ -52,18 +85,21 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
   }, [itensExistentes]);
 
   const [filtroLote, setFiltroLote] = useState({
-    grupo: '',
+    setor_id: '',
+    grupo_id: '',
+    marca_id: '',
     ncm: '',
-    curva_abc: ''
+    curva_abc: '',
+    eh_bitola: ''
   });
 
   const [regraCalculo, setRegraCalculo] = useState({
     base: 'custo_medio',
     tipo: 'markup',
-    valor: 30
+    valor: 30,
+    aplicar_por_setor: false,
+    markup_por_setor: {}
   });
-
-  const grupos = [...new Set(produtos.map(p => p.grupo).filter(Boolean))];
 
   const handleAdicionarProdutoIndividual = (produto) => {
     if (itensTabela.some(i => i.produto_id === produto.id)) {
@@ -79,6 +115,9 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
       produto_id: produto.id,
       produto_descricao: produto.descricao,
       produto_codigo: produto.codigo || '',
+      setor_atividade_nome: produto.setor_atividade_nome || '',
+      grupo_produto_nome: produto.grupo_produto_nome || '',
+      marca_nome: produto.marca_nome || '',
       custo_base: custoBase,
       preco: precoVenda,
       desconto_maximo_percentual: 10,
@@ -92,9 +131,12 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
 
   const handleAdicionarProdutosLote = () => {
     const produtosFiltrados = produtos.filter(p => {
-      if (filtroLote.grupo && p.grupo !== filtroLote.grupo) return false;
+      if (filtroLote.setor_id && p.setor_atividade_id !== filtroLote.setor_id) return false;
+      if (filtroLote.grupo_id && p.grupo_produto_id !== filtroLote.grupo_id) return false;
+      if (filtroLote.marca_id && p.marca_id !== filtroLote.marca_id) return false;
       if (filtroLote.ncm && !p.ncm?.includes(filtroLote.ncm)) return false;
       if (filtroLote.curva_abc && p.classificacao_abc !== filtroLote.curva_abc) return false;
+      if (filtroLote.eh_bitola && p.eh_bitola !== (filtroLote.eh_bitola === 'true')) return false;
       return true;
     });
 
@@ -109,6 +151,9 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
           produto_id: p.id,
           produto_descricao: p.descricao,
           produto_codigo: p.codigo || '',
+          setor_atividade_nome: p.setor_atividade_nome || '',
+          grupo_produto_nome: p.grupo_produto_nome || '',
+          marca_nome: p.marca_nome || '',
           custo_base: custoBase,
           preco: precoVenda,
           desconto_maximo_percentual: 10,
@@ -131,17 +176,23 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
         custoBase = produtoAtual?.custo_medio || item.custo_base;
       }
 
+      let markup = regraCalculo.valor;
+      
+      if (regraCalculo.aplicar_por_setor && item.setor_atividade_nome) {
+        markup = regraCalculo.markup_por_setor[item.setor_atividade_nome] || regraCalculo.valor;
+      }
+
       let novoPreco = custoBase;
 
       switch (regraCalculo.tipo) {
         case 'markup':
-          novoPreco = custoBase * (1 + regraCalculo.valor / 100);
+          novoPreco = custoBase * (1 + markup / 100);
           break;
         case 'margem':
-          novoPreco = custoBase / (1 - regraCalculo.valor / 100);
+          novoPreco = custoBase / (1 - markup / 100);
           break;
         case 'valor_fixo':
-          novoPreco = custoBase + regraCalculo.valor;
+          novoPreco = custoBase + markup;
           break;
       }
 
@@ -169,34 +220,48 @@ export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
     setCalculando(true);
 
     try {
-      const amostra = itensTabela.slice(0, 10).map(i => ({
+      const amostra = itensTabela.slice(0, 15).map(i => ({
         descricao: i.produto_descricao,
+        setor: i.setor_atividade_nome,
+        grupo: i.grupo_produto_nome,
+        marca: i.marca_nome,
         custo_base: i.custo_base,
         preco_atual: i.preco,
         margem_atual: i.margem_percentual
       }));
 
       const resultado = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é o PriceBrain 2.0, IA especialista em precificação estratégica.
+        prompt: `Você é o PriceBrain 3.0, IA especialista em precificação estratégica V21.0.
 
 Analise esta amostra de produtos da tabela "${formData.nome}" (tipo: ${formData.tipo}):
 
 ${JSON.stringify(amostra, null, 2)}
 
-Considerações importantes:
-- Margem mínima de segurança: 15%
-- Competitividade de mercado
+CONTEXTO V21.0:
+- Produtos classificados por Setor + Grupo + Marca (dupla classificação)
 - Tipo de tabela: ${formData.tipo}
+- Data início: ${formData.data_inicio}
 
-Retorne:
-1. markup_sugerido_geral (%) a ser aplicado em todos os produtos
-2. estrategia: explicação da estratégia de precificação
-3. produtos_promocao: IDs de produtos que deveriam entrar em promoção (giro baixo)
-4. observacoes: insights relevantes`,
+MISSÃO:
+1. Analise margem por SETOR (Revenda vs Fábrica vs Almoxarifado)
+2. Considere GRUPO (Bitolas vendem com margem menor, produtos acabados com margem maior)
+3. Avalie MARCA (marcas premium permitem markup maior)
+4. Detecte oportunidades de cross-sell
+
+RETORNE:
+- markup_sugerido_geral: markup base (%)
+- markup_por_setor: objeto com markup específico por setor {Revenda: 25, Fábrica: 35}
+- estrategia: explicação da estratégia (max 200 chars)
+- produtos_promocao: IDs de produtos para promoção
+- observacoes: insights (max 150 chars)`,
         response_json_schema: {
           type: "object",
           properties: {
             markup_sugerido_geral: { type: "number" },
+            markup_por_setor: { 
+              type: "object",
+              additionalProperties: { type: "number" }
+            },
             estrategia: { type: "string" },
             produtos_promocao: { 
               type: "array",
@@ -209,7 +274,8 @@ Retorne:
 
       const itensAtualizados = itensTabela.map(item => {
         const custoBase = item.custo_base;
-        const novoPreco = custoBase * (1 + resultado.markup_sugerido_geral / 100);
+        const markupSetor = resultado.markup_por_setor[item.setor_atividade_nome] || resultado.markup_sugerido_geral;
+        const novoPreco = custoBase * (1 + markupSetor / 100);
         const margem = ((novoPreco - custoBase) / custoBase * 100);
 
         return {
@@ -217,20 +283,27 @@ Retorne:
           preco: novoPreco,
           preco_sugerido_ia: novoPreco,
           margem_percentual: margem,
+          markup_aplicado_ia: markupSetor,
           sugestao_ia: resultado.produtos_promocao.includes(item.produto_id) 
-            ? 'Produto com giro baixo - considerar promoção' 
+            ? '🎯 Giro baixo - promoção recomendada' 
             : null
         };
       });
 
       setItensTabela(itensAtualizados);
-      toast.success(`✨ IA PriceBrain: ${resultado.estrategia}`);
+      toast.success(`✨ IA PriceBrain 3.0: ${resultado.estrategia}`);
       
       if (resultado.observacoes) {
         setTimeout(() => {
           toast.info(`💡 ${resultado.observacoes}`);
         }, 1500);
       }
+
+      setRegraCalculo(prev => ({
+        ...prev,
+        aplicar_por_setor: true,
+        markup_por_setor: resultado.markup_por_setor
+      }));
     } catch (error) {
       toast.error('❌ Erro ao consultar IA: ' + error.message);
     } finally {
@@ -252,14 +325,20 @@ Retorne:
     setSalvando(true);
 
     try {
+      const dadosTabela = {
+        ...formData,
+        empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1',
+        criado_por: user?.email || 'sistema'
+      };
+
       let tabelaId = tabela?.id;
       
       if (!tabelaId) {
-        const tabelaCriada = await base44.entities.TabelaPreco.create(formData);
+        const tabelaCriada = await base44.entities.TabelaPreco.create(dadosTabela);
         tabelaId = tabelaCriada.id;
         console.log('✅ Tabela criada:', tabelaId);
       } else {
-        await base44.entities.TabelaPreco.update(tabelaId, formData);
+        await base44.entities.TabelaPreco.update(tabelaId, dadosTabela);
         console.log('✅ Tabela atualizada:', tabelaId);
       }
 
@@ -278,10 +357,14 @@ Retorne:
             produto_id: item.produto_id,
             produto_descricao: item.produto_descricao,
             produto_codigo: item.produto_codigo || '',
+            setor_atividade_nome: item.setor_atividade_nome || '',
+            grupo_produto_nome: item.grupo_produto_nome || '',
+            marca_nome: item.marca_nome || '',
             custo_base: Number(item.custo_base) || 0,
             preco: Number(item.preco) || 0,
             desconto_maximo_percentual: Number(item.desconto_maximo_percentual) || 0,
-            margem_percentual: Number(item.margem_percentual) || 0
+            margem_percentual: Number(item.margem_percentual) || 0,
+            markup_aplicado_ia: item.markup_aplicado_ia || null
           };
           
           await base44.entities.TabelaPrecoItem.create(itemData);
@@ -312,23 +395,47 @@ Retorne:
 
   const podeAvancar = formData.nome && formData.tipo && formData.data_inicio;
 
+  const produtosDisponiveis = produtos.filter(p => {
+    if (filtroLote.setor_id && p.setor_atividade_id !== filtroLote.setor_id) return false;
+    if (filtroLote.grupo_id && p.grupo_produto_id !== filtroLote.grupo_id) return false;
+    if (filtroLote.marca_id && p.marca_id !== filtroLote.marca_id) return false;
+    if (filtroLote.ncm && !p.ncm?.includes(filtroLote.ncm)) return false;
+    if (filtroLote.curva_abc && p.classificacao_abc !== filtroLote.curva_abc) return false;
+    if (filtroLote.eh_bitola && p.eh_bitola !== (filtroLote.eh_bitola === 'true')) return false;
+    return !itensTabela.some(i => i.produto_id === p.id);
+  });
+
   return (
     <div className="space-y-4 h-full flex flex-col">
+      <Alert className="border-purple-300 bg-purple-50">
+        <Sparkles className="w-4 h-4 text-purple-600" />
+        <AlertDescription className="text-sm text-purple-900">
+          🚀 <strong>V21.0:</strong> Tabela de Preço reconstruída com Dupla Classificação, Multiempresa e IA PriceBrain 3.0
+        </AlertDescription>
+      </Alert>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="config">Configuração</TabsTrigger>
+          <TabsTrigger value="config">
+            <DollarSign className="w-4 h-4 mr-2" />
+            Configuração
+          </TabsTrigger>
           <TabsTrigger value="itens" disabled={!podeAvancar}>
+            <Package className="w-4 h-4 mr-2" />
             Produtos ({itensTabela.length})
           </TabsTrigger>
           <TabsTrigger value="calculo" disabled={itensTabela.length === 0}>
-            Motor de Cálculo
+            <Calculator className="w-4 h-4 mr-2" />
+            IA + Motor
           </TabsTrigger>
         </TabsList>
 
         <div className="flex-1 overflow-y-auto">
           <TabsContent value="config" className="space-y-4 mt-4">
-            <Card>
+            <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4 space-y-4">
+                <h3 className="font-bold text-blue-900">⚙️ Identificação da Tabela</h3>
+
                 <div>
                   <Label>Nome da Tabela *</Label>
                   <Input
@@ -388,7 +495,18 @@ Retorne:
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+                <div className="flex items-center justify-between p-3 bg-white rounded border">
+                  <div>
+                    <Label>Compartilhar com Grupo</Label>
+                    <p className="text-xs text-slate-500">Todas empresas do grupo podem usar</p>
+                  </div>
+                  <Switch
+                    checked={formData.compartilhar_grupo}
+                    onCheckedChange={(v) => setFormData({...formData, compartilhar_grupo: v})}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-white rounded border">
                   <div>
                     <Label>Tabela Ativa</Label>
                     <p className="text-xs text-slate-500">Disponível para uso em pedidos</p>
@@ -401,8 +519,9 @@ Retorne:
 
                 {podeAvancar && (
                   <Alert className="border-green-200 bg-green-50">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
                     <AlertDescription className="text-sm text-green-900">
-                      ✅ Configuração OK! Vá para aba "Produtos" para adicionar itens ou salve apenas a tabela.
+                      ✅ Configuração OK! Avance para "Produtos" ou salve apenas a estrutura.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -411,13 +530,6 @@ Retorne:
           </TabsContent>
 
           <TabsContent value="itens" className="space-y-4 mt-4">
-            <Alert className="border-purple-200 bg-purple-50">
-              <Package className="w-4 h-4 mr-2 text-purple-600" />
-              <AlertDescription className="text-sm text-purple-900">
-                💡 <strong>V21.1.2:</strong> Adicione produtos individualmente ou em lote por grupo/classe/NCM
-              </AlertDescription>
-            </Alert>
-
             <div className="flex gap-2">
               <Button 
                 type="button" 
@@ -435,7 +547,7 @@ Retorne:
                 onClick={() => setModoInclusao('lote')}
               >
                 <Package className="w-4 h-4 mr-2" />
-                Em Lote
+                Em Lote (V21.0)
               </Button>
             </div>
 
@@ -462,7 +574,9 @@ Retorne:
                           <div className="flex gap-3 text-xs text-slate-600 mt-1">
                             <span>Código: {produto.codigo || '-'}</span>
                             <span>Custo: R$ {(produto.custo_medio || 0).toFixed(2)}</span>
-                            <span>Grupo: {produto.grupo}</span>
+                            {produto.setor_atividade_nome && (
+                              <Badge variant="outline" className="text-xs">{produto.setor_atividade_nome}</Badge>
+                            )}
                           </div>
                         </div>
                         <Button
@@ -489,20 +603,58 @@ Retorne:
             {modoInclusao === 'lote' && (
               <Card>
                 <CardHeader className="bg-purple-50 border-b pb-3">
-                  <CardTitle className="text-base">Filtros para Inclusão em Lote</CardTitle>
+                  <CardTitle className="text-base">🎯 V21.0: Filtros por Dupla Classificação</CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 space-y-3">
+                <CardContent className="p-4 space-y-4">
+                  <Alert className="border-indigo-200 bg-indigo-50">
+                    <AlertDescription className="text-xs text-indigo-900">
+                      💡 Combine Setor + Grupo + Marca para inclusão cirúrgica de produtos
+                    </AlertDescription>
+                  </Alert>
+
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <Label className="text-xs">Grupo de Produtos</Label>
-                      <Select value={filtroLote.grupo} onValueChange={(v) => setFiltroLote({...filtroLote, grupo: v})}>
+                      <Label className="text-xs">Setor de Atividade</Label>
+                      <Select value={filtroLote.setor_id} onValueChange={(v) => setFiltroLote({...filtroLote, setor_id: v})}>
                         <SelectTrigger className="h-9">
                           <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value={null}>Todos</SelectItem>
-                          {grupos.map(g => (
-                            <SelectItem key={g} value={g}>{g}</SelectItem>
+                          {setoresAtividade.map(s => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.icone} {s.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Grupo/Linha</Label>
+                      <Select value={filtroLote.grupo_id} onValueChange={(v) => setFiltroLote({...filtroLote, grupo_id: v})}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Todos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>Todos</SelectItem>
+                          {gruposProduto.map(g => (
+                            <SelectItem key={g.id} value={g.id}>{g.nome_grupo}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">Marca</Label>
+                      <Select value={filtroLote.marca_id} onValueChange={(v) => setFiltroLote({...filtroLote, marca_id: v})}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Todas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>Todas</SelectItem>
+                          {marcas.map(m => (
+                            <SelectItem key={m.id} value={m.id}>{m.nome_marca}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -532,25 +684,46 @@ Retorne:
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <div>
+                      <Label className="text-xs">Tipo</Label>
+                      <Select value={filtroLote.eh_bitola} onValueChange={(v) => setFiltroLote({...filtroLote, eh_bitola: v})}>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Todos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={null}>Todos</SelectItem>
+                          <SelectItem value="true">Bitolas</SelectItem>
+                          <SelectItem value="false">Não-Bitolas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <Button 
                     type="button" 
                     onClick={handleAdicionarProdutosLote} 
                     className="w-full bg-purple-600 hover:bg-purple-700"
+                    disabled={produtosDisponiveis.length === 0}
                   >
                     <Package className="w-4 h-4 mr-2" />
-                    Adicionar Produtos Filtrados
+                    Adicionar {produtosDisponiveis.length} Produtos Filtrados
                   </Button>
 
-                  <p className="text-xs text-center text-slate-600">
-                    {produtos.filter(p => {
-                      if (filtroLote.grupo && p.grupo !== filtroLote.grupo) return false;
-                      if (filtroLote.ncm && !p.ncm?.includes(filtroLote.ncm)) return false;
-                      if (filtroLote.curva_abc && p.classificacao_abc !== filtroLote.curva_abc) return false;
-                      return !itensTabela.some(i => i.produto_id === p.id);
-                    }).length} produtos disponíveis com esses filtros
-                  </p>
+                  <div className="grid grid-cols-3 gap-2 text-xs text-center">
+                    <div className="p-2 bg-indigo-50 rounded">
+                      <p className="font-semibold text-indigo-900">{produtosDisponiveis.length}</p>
+                      <p className="text-indigo-600">Disponíveis</p>
+                    </div>
+                    <div className="p-2 bg-green-50 rounded">
+                      <p className="font-semibold text-green-900">{itensTabela.length}</p>
+                      <p className="text-green-600">Na Tabela</p>
+                    </div>
+                    <div className="p-2 bg-slate-50 rounded">
+                      <p className="font-semibold text-slate-900">{produtos.length}</p>
+                      <p className="text-slate-600">Total</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -558,7 +731,7 @@ Retorne:
             {itensTabela.length > 0 && (
               <Card>
                 <CardHeader className="bg-green-50 border-b pb-3">
-                  <CardTitle className="text-base">Itens da Tabela ({itensTabela.length})</CardTitle>
+                  <CardTitle className="text-base">📦 Itens da Tabela ({itensTabela.length})</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -566,15 +739,40 @@ Retorne:
                       <div key={idx} className="flex items-center justify-between p-3 border rounded hover:bg-slate-50">
                         <div className="flex-1">
                           <p className="font-semibold text-sm">{item.produto_descricao}</p>
-                          <div className="flex gap-4 mt-1 text-xs text-slate-600">
+                          <div className="flex gap-3 mt-1 text-xs">
+                            {item.setor_atividade_nome && (
+                              <Badge className="bg-indigo-100 text-indigo-700 text-xs">
+                                <Factory className="w-3 h-3 mr-1" />
+                                {item.setor_atividade_nome}
+                              </Badge>
+                            )}
+                            {item.grupo_produto_nome && (
+                              <Badge className="bg-cyan-100 text-cyan-700 text-xs">
+                                <Boxes className="w-3 h-3 mr-1" />
+                                {item.grupo_produto_nome}
+                              </Badge>
+                            )}
+                            {item.marca_nome && (
+                              <Badge className="bg-orange-100 text-orange-700 text-xs">
+                                <Award className="w-3 h-3 mr-1" />
+                                {item.marca_nome}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex gap-4 mt-2 text-xs text-slate-600">
                             <span>Custo: <strong>R$ {(item.custo_base || 0).toFixed(2)}</strong></span>
                             <span>Preço: <strong className="text-green-700">R$ {(item.preco || 0).toFixed(2)}</strong></span>
                             <span>Margem: <strong>{(item.margem_percentual || 0).toFixed(1)}%</strong></span>
-                            <span>Desc. Máx: <strong>{item.desconto_maximo_percentual || 0}%</strong></span>
+                            {item.markup_aplicado_ia && (
+                              <Badge className="bg-purple-100 text-purple-700 text-xs">
+                                <Sparkles className="w-3 h-3 mr-1" />
+                                Markup IA: {item.markup_aplicado_ia.toFixed(1)}%
+                              </Badge>
+                            )}
                           </div>
                           {item.sugestao_ia && (
-                            <Badge className="mt-1 bg-orange-100 text-orange-700 text-xs">
-                              💡 {item.sugestao_ia}
+                            <Badge className="mt-2 bg-orange-100 text-orange-700 text-xs">
+                              {item.sugestao_ia}
                             </Badge>
                           )}
                         </div>
@@ -595,16 +793,16 @@ Retorne:
           </TabsContent>
 
           <TabsContent value="calculo" className="space-y-4 mt-4">
-            <Alert className="border-blue-200 bg-blue-50">
-              <Calculator className="w-4 h-4 mr-2 text-blue-600" />
-              <AlertDescription className="text-sm text-blue-900">
-                🧮 <strong>Engine de Cálculo V21.1.2:</strong> Recalcule preços automaticamente por custo médio, markup ou margem desejada
+            <Alert className="border-purple-200 bg-purple-50">
+              <Sparkles className="w-4 h-4 mr-2 text-purple-600" />
+              <AlertDescription className="text-sm text-purple-900">
+                🧠 <strong>PriceBrain 3.0:</strong> IA analisa Setor + Grupo + Marca e sugere markup diferenciado
               </AlertDescription>
             </Alert>
 
             <Card>
               <CardHeader className="bg-slate-50 border-b pb-3">
-                <CardTitle className="text-base">Configurar Regra de Cálculo</CardTitle>
+                <CardTitle className="text-base">🧮 Motor de Cálculo Manual</CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-4">
                 <div>
@@ -655,48 +853,86 @@ Retorne:
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Button
-                    type="button"
-                    onClick={handleRecalcularPrecos}
-                    disabled={calculando || itensTabela.length === 0}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    {calculando ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Calculator className="w-4 h-4 mr-2" />
-                    )}
-                    Recalcular Todos os Preços
-                  </Button>
+                <Button
+                  type="button"
+                  onClick={handleRecalcularPrecos}
+                  disabled={calculando || itensTabela.length === 0}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  {calculando ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Calculator className="w-4 h-4 mr-2" />
+                  )}
+                  Recalcular Todos os Preços
+                </Button>
+              </CardContent>
+            </Card>
 
-                  <Button
-                    type="button"
-                    onClick={handleSugerirPrecosIA}
-                    disabled={calculando || itensTabela.length === 0}
-                    className="w-full bg-purple-600 hover:bg-purple-700"
-                  >
-                    {calculando ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4 mr-2" />
-                    )}
-                    Sugerir com IA (PriceBrain 2.0)
-                  </Button>
-                </div>
+            <Card className="border-purple-200 bg-purple-50">
+              <CardHeader className="bg-purple-100 border-b pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-700" />
+                  IA PriceBrain 3.0 - Precificação Inteligente
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                <Alert className="border-purple-300 bg-white">
+                  <AlertDescription className="text-xs text-purple-900">
+                    🧠 A IA analisa Setor + Grupo + Marca e sugere markup diferenciado por categoria
+                  </AlertDescription>
+                </Alert>
+
+                <Button
+                  type="button"
+                  onClick={handleSugerirPrecosIA}
+                  disabled={calculando || itensTabela.length === 0}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  {calculando ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 mr-2" />
+                  )}
+                  Sugerir Preços com IA
+                </Button>
+
+                {regraCalculo.aplicar_por_setor && Object.keys(regraCalculo.markup_por_setor).length > 0 && (
+                  <Card className="border-green-200 bg-green-50">
+                    <CardContent className="p-3">
+                      <p className="text-xs font-semibold text-green-900 mb-2">✅ Markup por Setor (IA):</p>
+                      <div className="space-y-1">
+                        {Object.entries(regraCalculo.markup_por_setor).map(([setor, markup]) => (
+                          <div key={setor} className="flex justify-between text-xs">
+                            <span className="text-green-800">{setor}</span>
+                            <span className="font-bold text-green-900">{markup.toFixed(1)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </CardContent>
             </Card>
 
             {itensTabela.length > 0 && (
               <Card className="border-green-200 bg-green-50">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Preview - Primeiros 5 Produtos</CardTitle>
+                  <CardTitle className="text-sm">📊 Preview - Primeiros 5 Produtos</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
                   <div className="space-y-2">
                     {itensTabela.slice(0, 5).map((item, idx) => (
                       <div key={idx} className="p-2 bg-white rounded border text-sm">
                         <p className="font-semibold">{item.produto_descricao}</p>
+                        <div className="flex gap-2 mt-1 flex-wrap">
+                          {item.setor_atividade_nome && (
+                            <Badge className="bg-indigo-100 text-indigo-700 text-xs">{item.setor_atividade_nome}</Badge>
+                          )}
+                          {item.grupo_produto_nome && (
+                            <Badge className="bg-cyan-100 text-cyan-700 text-xs">{item.grupo_produto_nome}</Badge>
+                          )}
+                        </div>
                         <div className="flex gap-4 mt-1 text-xs">
                           <span>Custo: R$ {(item.custo_base || 0).toFixed(2)}</span>
                           <span className="text-green-700 font-semibold">Preço: R$ {(item.preco || 0).toFixed(2)}</span>
