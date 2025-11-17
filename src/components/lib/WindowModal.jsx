@@ -1,252 +1,259 @@
-import React, { useEffect, useRef } from 'react';
-import { X, Minus, Maximize2, Minimize2, Pin, PinOff } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { Minus, Maximize2, Minimize2, X, Move } from 'lucide-react';
+import { useWindowManager } from './WindowManager';
 
 /**
- * V21.1.2-R2 - Componente de Janela/Modal Aprimorado
- * ✅ Highlighting visual de janela ativa
- * ✅ Drag melhorado com cursor feedback
- * ✅ Foco automático ao clicar
+ * 🪟 WINDOW MODAL V21.0 - ETAPA 1
+ * Componente de Janela Individual Multitarefa
+ * 
+ * Características:
+ * - Draggable (arrastar pela barra de título)
+ * - Resizable (redimensionar pelas bordas)
+ * - Minimizar, Maximizar, Fechar
+ * - Z-index dinâmico (janela ativa sempre na frente)
  */
-export default function WindowModal({ 
-  window, 
-  isActive,
-  onClose, 
-  onMinimize, 
-  onMaximize, 
-  onRestore,
-  onTogglePin,
-  onBringToFront,
-  children 
-}) {
-  const dragRef = useRef(null);
-  const isDragging = useRef(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
 
+export default function WindowModal({ window, children }) {
+  const {
+    closeWindow,
+    minimizeWindow,
+    toggleMaximize,
+    bringToFront,
+    updateWindowPosition,
+    updateWindowDimensions,
+    activeWindowId
+  } = useWindowManager();
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  
+  const windowRef = useRef(null);
+  const isActive = activeWindowId === window.id;
+
+  // Configuração de dimensões
+  const getDimensions = () => {
+    if (window.isMaximized) {
+      return {
+        width: '100vw',
+        height: '100vh',
+        top: 0,
+        left: 0
+      };
+    }
+
+    return {
+      width: window.dimensions.width,
+      height: window.dimensions.height,
+      top: window.position.y,
+      left: window.position.x
+    };
+  };
+
+  const dimensions = getDimensions();
+
+  // Handler para início de drag
+  const handleDragStart = (e) => {
+    if (window.isMaximized) return;
+    
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - window.position.x,
+      y: e.clientY - window.position.y
+    });
+    bringToFront(window.id);
+  };
+
+  // Handler para movimento de drag
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!isDragging.current || window.state === 'maximized') return;
+    if (!isDragging) return;
+
+    const handleDragMove = (e) => {
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
       
-      const element = dragRef.current;
-      if (!element) return;
-
-      element.style.left = `${e.clientX - dragOffset.current.x}px`;
-      element.style.top = `${e.clientY - dragOffset.current.y}px`;
+      updateWindowPosition(window.id, {
+        x: Math.max(0, Math.min(newX, window.innerWidth - 300)),
+        y: Math.max(0, Math.min(newY, window.innerHeight - 100))
+      });
     };
 
-    const handleMouseUp = () => {
-      isDragging.current = false;
-      document.body.style.cursor = 'default';
-      document.body.style.userSelect = '';
+    const handleDragEnd = () => {
+      setIsDragging(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousemove', handleDragMove);
+    document.addEventListener('mouseup', handleDragEnd);
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', handleDragMove);
+      document.removeEventListener('mouseup', handleDragEnd);
     };
-  }, [window.state]);
+  }, [isDragging, dragStart, window.id, updateWindowPosition]);
 
-  const handleMouseDown = (e) => {
-    if (window.state === 'maximized') return;
+  // Handler para resize (simplificado)
+  const handleResizeStart = (e, direction) => {
+    if (window.isMaximized || !window.canResize) return;
     
-    isDragging.current = true;
-    document.body.style.cursor = 'move';
-    document.body.style.userSelect = 'none';
+    e.preventDefault();
+    e.stopPropagation();
     
-    const rect = dragRef.current.getBoundingClientRect();
-    dragOffset.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
-
-    onBringToFront();
+    const rect = windowRef.current.getBoundingClientRect();
+    setIsResizing(direction);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: rect.width,
+      height: rect.height
+    });
+    bringToFront(window.id);
   };
 
-  // Trazer para frente ao clicar em qualquer parte da janela
-  const handleWindowClick = (e) => {
-    if (!isActive) {
-      onBringToFront();
-    }
-  };
+  useEffect(() => {
+    if (!isResizing) return;
 
-  if (window.state === 'minimized') {
-    return null;
-  }
+    const handleResizeMove = (e) => {
+      const deltaX = e.clientX - resizeStart.x;
+      const deltaY = e.clientY - resizeStart.y;
+      
+      let newWidth = resizeStart.width;
+      let newHeight = resizeStart.height;
 
-  const isMaximized = window.state === 'maximized';
+      if (isResizing.includes('e')) newWidth += deltaX;
+      if (isResizing.includes('s')) newHeight += deltaY;
+      if (isResizing.includes('w')) newWidth -= deltaX;
+      if (isResizing.includes('n')) newHeight -= deltaY;
+
+      // Dimensões mínimas
+      newWidth = Math.max(400, newWidth);
+      newHeight = Math.max(300, newHeight);
+
+      updateWindowDimensions(window.id, {
+        width: `${newWidth}px`,
+        height: `${newHeight}px`
+      });
+    };
+
+    const handleResizeEnd = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('mouseup', handleResizeEnd);
+
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove);
+      document.removeEventListener('mouseup', handleResizeEnd);
+    };
+  }, [isResizing, resizeStart, window.id, updateWindowDimensions]);
 
   return (
-    <div
-      ref={dragRef}
-      className={cn(
-        "fixed bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden transition-all duration-200",
-        isMaximized ? "inset-4" : "max-w-[90vw] max-h-[95vh]",
-        // V21.1.2-R2: Border visual para janela ativa
-        isActive 
-          ? window.pinned 
-            ? "border-4 border-blue-500 ring-2 ring-blue-300" 
-            : "border-4 border-purple-500 ring-2 ring-purple-300"
-          : window.pinned
-            ? "border-2 border-blue-300"
-            : "border-2 border-slate-300",
-        // Sombra mais intensa na janela ativa
-        isActive ? "shadow-2xl" : "shadow-lg"
-      )}
+    <Card
+      ref={windowRef}
+      className={`fixed shadow-2xl transition-all ${
+        isActive ? 'ring-2 ring-blue-500' : 'ring-1 ring-slate-300'
+      } ${isDragging ? 'cursor-move' : ''}`}
       style={{
-        zIndex: window.zIndex,
-        left: isMaximized ? undefined : '5%',
-        top: isMaximized ? undefined : '5%',
-        width: isMaximized ? undefined : '90vw',
-        height: isMaximized ? undefined : '90vh'
+        width: dimensions.width,
+        height: dimensions.height,
+        top: dimensions.top,
+        left: dimensions.left,
+        zIndex: isActive ? 1000 : 900,
+        display: window.isMinimized ? 'none' : 'flex',
+        flexDirection: 'column'
       }}
-      onClick={handleWindowClick}
+      onClick={() => bringToFront(window.id)}
     >
-      {/* Header */}
-      <div 
-        className={cn(
-          "flex items-center justify-between px-4 py-3 border-b cursor-move transition-colors",
-          isActive
-            ? window.pinned 
-              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
-              : "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
-            : window.pinned
-              ? "bg-blue-50"
-              : "bg-slate-50"
-        )}
-        onMouseDown={handleMouseDown}
+      {/* BARRA DE TÍTULO */}
+      <div
+        className={`flex items-center justify-between px-4 py-2 bg-gradient-to-r ${
+          isActive ? 'from-blue-600 to-blue-700' : 'from-slate-600 to-slate-700'
+        } text-white rounded-t-lg cursor-move select-none`}
+        onMouseDown={handleDragStart}
       >
-        <div className="flex items-center gap-3">
-          {window.icon && (
-            <window.icon className={cn(
-              "w-5 h-5",
-              isActive ? "text-white" : "text-slate-700"
-            )} />
-          )}
-          <div>
-            <h3 className={cn(
-              "font-semibold",
-              isActive ? "text-white" : "text-slate-900"
-            )}>
-              {window.title}
-            </h3>
-            {window.subtitle && (
-              <p className={cn(
-                "text-xs",
-                isActive ? "text-white/80" : "text-slate-500"
-              )}>
-                {window.subtitle}
-              </p>
-            )}
-          </div>
-          {window.badge && (
-            <Badge className={cn(
-              "ml-2",
-              isActive ? "bg-white/20 text-white" : ""
-            )}>
-              {window.badge}
-            </Badge>
-          )}
-          {window.pinned && (
-            <Badge className={cn(
-              "ml-2",
-              isActive ? "bg-white/20 text-white" : "bg-blue-600 text-white"
-            )}>
-              Fixado
-            </Badge>
-          )}
-          {isActive && !window.pinned && (
-            <Badge className="ml-2 bg-white/20 text-white animate-pulse">
-              Ativa
-            </Badge>
+        <div className="flex items-center gap-2 flex-1">
+          <Move className="w-4 h-4" />
+          <span className="font-semibold text-sm truncate">{window.title}</span>
+          {window.empresaId && (
+            <span className="text-xs opacity-75">• Empresa: {window.empresaId}</span>
           )}
         </div>
 
         <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onTogglePin();
-            }}
-            className={cn(
-              "h-8 w-8",
-              isActive ? "hover:bg-white/20 text-white" : ""
-            )}
-            title={window.pinned ? "Desfixar" : "Fixar"}
-          >
-            {window.pinned ? (
-              <PinOff className="w-4 h-4" />
-            ) : (
-              <Pin className="w-4 h-4" />
-            )}
-          </Button>
+          {window.canMinimize && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 hover:bg-white/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                minimizeWindow(window.id);
+              }}
+            >
+              <Minus className="w-4 h-4" />
+            </Button>
+          )}
+
+          {window.canMaximize && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 hover:bg-white/20"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleMaximize(window.id);
+              }}
+            >
+              {window.isMaximized ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </Button>
+          )}
 
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
+            className="h-6 w-6 p-0 hover:bg-red-500/80"
             onClick={(e) => {
               e.stopPropagation();
-              onMinimize();
+              closeWindow(window.id);
             }}
-            className={cn(
-              "h-8 w-8",
-              isActive ? "hover:bg-white/20 text-white" : ""
-            )}
-            title="Minimizar"
-          >
-            <Minus className="w-4 h-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              isMaximized ? onRestore() : onMaximize();
-            }}
-            className={cn(
-              "h-8 w-8",
-              isActive ? "hover:bg-white/20 text-white" : ""
-            )}
-            title={isMaximized ? "Restaurar" : "Maximizar"}
-          >
-            {isMaximized ? (
-              <Minimize2 className="w-4 h-4" />
-            ) : (
-              <Maximize2 className="w-4 h-4" />
-            )}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className={cn(
-              "h-8 w-8",
-              isActive 
-                ? "hover:bg-red-500 text-white" 
-                : "hover:bg-red-100 hover:text-red-600"
-            )}
-            title="Fechar"
           >
             <X className="w-4 h-4" />
           </Button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-hidden">
-        {children}
-      </div>
-    </div>
+      {/* CONTEÚDO DA JANELA */}
+      <CardContent className="flex-1 p-0 overflow-hidden">
+        <div className="h-full overflow-y-auto">
+          {children}
+        </div>
+      </CardContent>
+
+      {/* HANDLES DE RESIZE (se habilitado) */}
+      {window.canResize && !window.isMaximized && (
+        <>
+          <div
+            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
+            onMouseDown={(e) => handleResizeStart(e, 'se')}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize"
+            onMouseDown={(e) => handleResizeStart(e, 's')}
+          />
+          <div
+            className="absolute top-0 bottom-0 right-0 w-1 cursor-e-resize"
+            onMouseDown={(e) => handleResizeStart(e, 'e')}
+          />
+        </>
+      )}
+    </Card>
   );
 }
