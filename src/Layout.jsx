@@ -43,6 +43,9 @@ import { base44 } from "@/api/base44Client";
 import NotificationCenter from "@/components/NotificationCenter";
 import EmpresaSwitcher from "@/components/EmpresaSwitcher";
 import { UserProvider, useUser } from "@/components/lib/UserContext";
+import { WindowManagerProvider } from "@/components/lib/WindowManager";
+import WindowRenderer from "@/components/lib/WindowRenderer";
+import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
@@ -188,161 +191,169 @@ function LayoutContent({ children, currentPageName }) {
   };
 
   return (
-    <SidebarProvider>
-      {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
-      
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
-        <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
-          <SidebarHeader className="border-b border-slate-200 p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">V21.1.2</p>
-              </div>
-            </div>
-          </SidebarHeader>
-          
-          <SidebarContent className="p-3">
-            {Object.entries(groupedItems).map(([groupName, items]) => {
-              if (items.length === 0) return null;
-              
-              const groupLabels = {
-                principal: "Principal",
-                cadastros: "Cadastros",
-                operacional: "Operacional",
-                administrativo: "Administrativo",
-                sistema: "Sistema",
-                publico: "Público"
-              };
-
-              return (
-                <SidebarGroup key={groupName}>
-                  <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2 mb-1">
-                    {groupLabels[groupName]}
-                  </SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {items.map((item) => {
-                        const isActive = location.pathname === item.url;
-                        return (
-                          <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton 
-                              asChild 
-                              className={`transition-all duration-200 rounded-lg mb-1 ${
-                                isActive 
-                                  ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200' 
-                                  : 'hover:bg-slate-100 text-slate-700'
-                              }`}
-                            >
-                              <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
-                                <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-                                <span className="font-medium">{item.title}</span>
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              );
-            })}
-          </SidebarContent>
-
-          <SidebarFooter className="border-t border-slate-200 p-4 bg-slate-50/50">
-            <div className="flex items-center justify-between">
-              <Link to={createPageUrl("ConfiguracoesUsuario")} className="flex items-center gap-3 hover:bg-slate-100 p-2 rounded-lg transition-colors flex-1">
-                <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-semibold text-sm">
-                    {user?.full_name?.[0] || 'U'}
-                  </span>
+    <WindowManagerProvider>
+      <SidebarProvider>
+        {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
+        
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
+          <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
+            <SidebarHeader className="border-b border-slate-200 p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                  <FileText className="w-6 h-6 text-white" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 text-sm truncate">
-                    {user?.full_name || 'Usuário'}
-                  </p>
-                  <p className="text-xs text-slate-500 truncate">
-                    {user?.role === 'admin' ? 'Administrador' : 'Usuário'}
-                  </p>
+                <div>
+                  <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
+                  <p className="text-xs text-slate-500">V21.1.2 • Multitarefa</p>
                 </div>
-              </Link>
-              <button
-                onClick={() => base44.auth.logout()}
-                className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
-                title="Sair"
-              >
-                <LogOut className="w-4 h-4 text-slate-500" />
-              </button>
-            </div>
+              </div>
+            </SidebarHeader>
             
-            <div className="mt-2 pt-2 border-t border-slate-200">
-              <button
-                onClick={() => setModoEscuro(!modoEscuro)}
-                className="w-full flex items-center gap-2 p-2 rounded hover:bg-slate-100 text-sm text-slate-600 transition-colors"
-                title="Ctrl+M"
-              >
-                {modoEscuro ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
-              </button>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-
-        <main className="flex-1 flex flex-col">
-          <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4 flex-1">
-                <div className="lg:hidden">
-                  <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors">
-                    <Menu className="w-5 h-5" />
-                  </SidebarTrigger>
-                </div>
+            <SidebarContent className="p-3">
+              {Object.entries(groupedItems).map(([groupName, items]) => {
+                if (items.length === 0) return null;
                 
-                <div className="hidden lg:block flex-1 max-w-md">
-                  <MiniMapaNavegacao />
-                </div>
-              </div>
+                const groupLabels = {
+                  principal: "Principal",
+                  cadastros: "Cadastros",
+                  operacional: "Operacional",
+                  administrativo: "Administrativo",
+                  sistema: "Sistema",
+                  publico: "Público"
+                };
 
-              <div className="hidden sm:block">
-                <EmpresaSwitcher />
-              </div>
+                return (
+                  <SidebarGroup key={groupName}>
+                    <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 py-2 mb-1">
+                      {groupLabels[groupName]}
+                    </SidebarGroupLabel>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {items.map((item) => {
+                          const isActive = location.pathname === item.url;
+                          return (
+                            <SidebarMenuItem key={item.title}>
+                              <SidebarMenuButton 
+                                asChild 
+                                className={`transition-all duration-200 rounded-lg mb-1 ${
+                                  isActive 
+                                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-200' 
+                                    : 'hover:bg-slate-100 text-slate-700'
+                                }`}
+                              >
+                                <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
+                                  <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
+                                  <span className="font-medium">{item.title}</span>
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                );
+              })}
+            </SidebarContent>
 
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setPesquisaOpen(true)}
-                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors hidden md:flex items-center gap-2"
-                  title="Pesquisa Universal (Ctrl+K)"
-                >
-                  <Search className="w-5 h-5 text-slate-600" />
-                  <span className="text-sm text-slate-500 hidden lg:inline">Ctrl+K</span>
-                </button>
-
-                <AcoesRapidasGlobal />
-
-                <NotificationCenter />
-                
-                <Link to={createPageUrl("ConfiguracoesUsuario")}>
-                  <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <Settings className="w-5 h-5 text-slate-600" />
-                  </button>
+            <SidebarFooter className="border-t border-slate-200 p-4 bg-slate-50/50">
+              <div className="flex items-center justify-between">
+                <Link to={createPageUrl("ConfiguracoesUsuario")} className="flex items-center gap-3 hover:bg-slate-100 p-2 rounded-lg transition-colors flex-1">
+                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-semibold text-sm">
+                      {user?.full_name?.[0] || 'U'}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 text-sm truncate">
+                      {user?.full_name || 'Usuário'}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">
+                      {user?.role === 'admin' ? 'Administrador' : 'Usuário'}
+                    </p>
+                  </div>
                 </Link>
+                <button
+                  onClick={() => base44.auth.logout()}
+                  className="p-2 hover:bg-slate-200 rounded-lg transition-colors"
+                  title="Sair"
+                >
+                  <LogOut className="w-4 h-4 text-slate-500" />
+                </button>
               </div>
+              
+              <div className="mt-2 pt-2 border-t border-slate-200">
+                <button
+                  onClick={() => setModoEscuro(!modoEscuro)}
+                  className="w-full flex items-center gap-2 p-2 rounded hover:bg-slate-100 text-sm text-slate-600 transition-colors"
+                  title="Ctrl+M"
+                >
+                  {modoEscuro ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+                </button>
+              </div>
+            </SidebarFooter>
+          </Sidebar>
+
+          <main className="flex-1 flex flex-col">
+            <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="lg:hidden">
+                    <SidebarTrigger className="hover:bg-slate-100 p-2 rounded-lg transition-colors">
+                      <Menu className="w-5 h-5" />
+                    </SidebarTrigger>
+                  </div>
+                  
+                  <div className="hidden lg:block flex-1 max-w-md">
+                    <MiniMapaNavegacao />
+                  </div>
+                </div>
+
+                <div className="hidden sm:block">
+                  <EmpresaSwitcher />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setPesquisaOpen(true)}
+                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors hidden md:flex items-center gap-2"
+                    title="Pesquisa Universal (Ctrl+K)"
+                  >
+                    <Search className="w-5 h-5 text-slate-600" />
+                    <span className="text-sm text-slate-500 hidden lg:inline">Ctrl+K</span>
+                  </button>
+
+                  <AcoesRapidasGlobal />
+
+                  <NotificationCenter />
+                  
+                  <Link to={createPageUrl("ConfiguracoesUsuario")}>
+                    <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                      <Settings className="w-5 h-5 text-slate-600" />
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </header>
+
+            <div className="flex-1 overflow-auto relative">
+              {children}
+              
+              {/* RENDERIZADOR DE JANELAS MULTITAREFA */}
+              <WindowRenderer />
             </div>
-          </header>
 
-          <div className="flex-1 overflow-auto">
-            {children}
-          </div>
-        </main>
+            {/* BARRA DE JANELAS MINIMIZADAS */}
+            <MinimizedWindowsBar />
+          </main>
 
-        <PesquisaUniversal 
-          open={pesquisaOpen} 
-          onOpenChange={setPesquisaOpen} 
-        />
-      </div>
-    </SidebarProvider>
+          <PesquisaUniversal 
+            open={pesquisaOpen} 
+            onOpenChange={setPesquisaOpen} 
+          />
+        </div>
+      </SidebarProvider>
+    </WindowManagerProvider>
   );
 }
 
