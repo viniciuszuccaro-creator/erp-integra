@@ -53,6 +53,7 @@ import {
   Receipt,
   TrendingUp,
   Eye,
+  Layers, // Added Layers icon
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -114,21 +115,29 @@ import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoPro
 import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 
 /**
- * CADASTROS GERAIS V21.0 - HUB CENTRAL COM DUPLA CLASSIFICAÇÃO
+ * 📚 CADASTROS GERAIS V21.1 - HUB CENTRAL REORGANIZADO
  * Regra-Mãe: Acrescentar • Reorganizar • Conectar • Melhorar – nunca apagar
+ *
+ * 🎯 FONTE ÚNICA DE VERDADE - 6 BLOCOS
+ * Bloco 1: Organizacional (Empresas, Grupos, Usuários, Perfis, Departamentos, Cargos, Turnos, Centros Custo)
+ * Bloco 2: Pessoas e Parceiros (Clientes, Fornecedores, Transportadoras, Colaboradores, Representantes, Contatos B2B)
+ * Bloco 3: Produtos e Serviços (Produtos, Serviços, Setores, Grupos, Marcas, Kits, Tabelas Preço, Catálogo)
+ * Bloco 4: Financeiro e Fiscal (Bancos, Formas Pagamento, Plano Contas, Centros Resultado, Tipos Despesa, Moedas)
+ * Bloco 5: Logística e Operação (Veículos, Motoristas, Tipos Frete, Modelos Documento, Locais Estoque, Rotas)
+ * Bloco 6: Integrações e IA (APIs, Webhooks, Eventos, Chatbot, Marketplace, Portal)
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [tipoDialog, setTipoDialog] = useState(null);
-  
+
   // Estados para cadastros completos
   const [cadastroCompletoAberto, setCadastroCompletoAberto] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null);
   const [cadastroFornecedorAberto, setCadastroFornecedorAberto] = useState(false);
-  
+
   // Estados para painéis dinâmicos
   const [painelClienteAberto, setPainelClienteAberto] = useState(false);
   const [clienteParaPainel, setClienteParaPainel] = useState(null);
@@ -525,7 +534,7 @@ export default function Cadastros() {
       toast({ title: "❌ Erro ao salvar", description: "Tipo de entidade desconhecido.", variant: "destructive" });
       return;
     }
-    
+
     if (editingItem?.id) {
       updateMutation.mutate({ entity: entityName, id: editingItem.id, data });
     } else {
@@ -572,21 +581,25 @@ export default function Cadastros() {
     }
   };
 
-  const totalItensGrupo1 = empresas.length + grupos.length + usuarios.length + perfisAcesso.length + departamentos.length + cargos.length + turnos.length + centrosCusto.length;
-  const totalItensGrupo2 = clientes.length + fornecedores.length + colaboradores.length + transportadoras.length + contatosB2B.length + representantes.length + condicoesComerciais.length + segmentosCliente.length;
-  const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length + setoresAtividade.length;
-  const totalItensGrupo4 = bancos.length + formasPagamento.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
-  const totalItensGrupo5 = veiculos.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
+  // V21.1: Contadores por bloco reorganizado
+  const totalBloco1 = empresas.length + grupos.length + usuarios.length + perfisAcesso.length + departamentos.length + cargos.length + turnos.length + centrosCusto.length;
+  const totalBloco2 = clientes.length + fornecedores.length + colaboradores.length + transportadoras.length + contatosB2B.length + representantes.length + condicoesComerciais.length + segmentosCliente.length;
+  const totalBloco3 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + kits.length + tabelasPreco.length + catalogoWeb.length;
+  const totalBloco4 = bancos.length + formasPagamento.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
+  const totalBloco5 = veiculos.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + 6; // 6 integrações base (NFE, Boleto, WhatsApp, Google Maps, Marketplace, Portal)
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      {/* HEADER */}
+      {/* HEADER V21.1 */}
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V21.0
+            📚 Cadastros Gerais V21.1
           </h1>
-          <p className="text-slate-600">Hub Central - Fonte Única de Verdade • Dupla Classificação • IA Ativa</p>
+          <p className="text-slate-600">
+            🎯 Fonte Única de Verdade • 6 Blocos Organizados • Regra-Mãe Ativa
+          </p>
         </div>
         <div className="flex gap-2">
           <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
@@ -594,76 +607,71 @@ export default function Cadastros() {
             28 IAs Ativas
           </Badge>
           <Badge className="bg-green-600 text-white px-4 py-2">
-            V21.0 - Regra-Mãe
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            FASE 0 Completa
           </Badge>
         </div>
       </div>
 
-      {/* DASHBOARD DE CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+      {/* DASHBOARD V21.1 - 6 BLOCOS */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-indigo-50 to-blue-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <Users className="w-5 h-5 text-blue-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <Layers className="w-6 h-6 text-indigo-600" />
             </div>
-            <div className="text-2xl font-bold text-blue-600">{clientes.length}</div>
-            <p className="text-xs text-slate-600">Clientes</p>
+            <div className="text-2xl font-bold text-indigo-600">{totalBloco1}</div>
+            <p className="text-xs text-slate-600 font-semibold">Bloco 1: Organizacional</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-cyan-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <Building2 className="w-5 h-5 text-cyan-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <Users className="w-6 h-6 text-green-600" />
             </div>
-            <div className="text-2xl font-bold text-cyan-600">{fornecedores.length}</div>
-            <p className="text-xs text-slate-600">Fornecedores</p>
+            <div className="text-2xl font-bold text-green-600">{totalBloco2}</div>
+            <p className="text-xs text-slate-600 font-semibold">Bloco 2: Pessoas</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-purple-50 to-pink-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <Package className="w-5 h-5 text-purple-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <Package className="w-6 h-6 text-purple-600" />
             </div>
-            <div className="text-2xl font-bold text-purple-600">{produtos.length}</div>
-            <p className="text-xs text-slate-600">Produtos</p>
+            <div className="text-2xl font-bold text-purple-600">{totalBloco3}</div>
+            <p className="text-xs text-slate-600 font-semibold">Bloco 3: Produtos</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-green-50 to-emerald-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <CreditCard className="w-5 h-5 text-green-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <DollarSign className="w-6 h-6 text-green-600" />
             </div>
-            <div className="text-2xl font-bold text-green-600">{formasPagamento.length}</div>
-            <p className="text-xs text-slate-600">Formas Pagto</p>
+            <div className="text-2xl font-bold text-green-600">{totalBloco4}</div>
+            <p className="text-xs text-slate-600 font-semibold">Bloco 4: Financeiro</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-orange-50 to-red-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <Landmark className="w-5 h-5 text-indigo-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <Truck className="w-6 h-6 text-orange-600" />
             </div>
-            <div className="text-2xl font-bold text-indigo-600">{bancos.length}</div>
-            <p className="text-xs text-slate-600">Bancos</p>
+            <div className="text-2xl font-bold text-orange-600">{totalBloco5}</div>
+            <p className="text-xs text-slate-600 font-semibold">Bloco 5: Logística</p>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow">
+        <Card className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer bg-gradient-to-br from-indigo-50 to-purple-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between mb-2">
-              <User className="w-5 h-5 text-pink-600" />
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+              <Cpu className="w-6 h-6 text-indigo-600" />
             </div>
-            <div className="text-2xl font-bold text-pink-600">{colaboradores.length}</div>
-            <p className="text-xs text-slate-600">Colaboradores</p>
+            <div className="text-2xl font-bold text-indigo-600">{totalBloco6}</div>
+            <p className="text-xs text-slate-600 font-semibold">Bloco 6: IA</p>
           </CardContent>
         </Card>
       </div>
@@ -679,26 +687,31 @@ export default function Cadastros() {
         />
       </div>
 
-      {/* ACCORDION COM 6 GRUPOS */}
-      <Accordion type="multiple" defaultValue={["grupo-1", "grupo-3"]} className="space-y-4">
-        
-        {/* 🏢 GRUPO 1: EMPRESA E ESTRUTURA - SINCRONIZADO V20.1 */}
-        <AccordionItem value="grupo-1" className="border-0 shadow-md rounded-lg overflow-hidden">
-          <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:bg-blue-100 transition-colors">
+      {/* ACCORDION COM 6 BLOCOS REORGANIZADOS */}
+      <Accordion type="multiple" defaultValue={["bloco-2", "bloco-3"]} className="space-y-4">
+
+        {/* 🏢 BLOCO 1: ORGANIZACIONAL (Empresas, Grupos, Usuários, Estrutura) */}
+        <AccordionItem value="bloco-1" className="border-0 shadow-md rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-blue-50 hover:bg-indigo-100 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center">
+                <Layers className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg">🏢 Empresa e Estrutura</h3>
-                <p className="text-xs text-slate-600">Multiempresa, Grupos, Filiais, Usuários e Controle de Acesso</p>
+                <h3 className="font-bold text-lg">🏢 Bloco 1: Organizacional</h3>
+                <p className="text-xs text-slate-600">Empresas • Grupos • Usuários • Perfis • Departamentos • Cargos • Turnos • Centros Custo</p>
               </div>
-              <Badge className="ml-auto">
-                {totalItensGrupo1} itens
-              </Badge>
+              <Badge className="ml-auto bg-indigo-100 text-indigo-700">{totalBloco1} itens</Badge>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
+            <Alert className="border-indigo-200 bg-indigo-50">
+              <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+              <AlertDescription className="text-sm text-indigo-900">
+                ✅ <strong>Bloco 1 V21.1:</strong> Estrutura organizacional com multiempresa, controle de acesso granular e governança ativa
+              </AlertDescription>
+            </Alert>
+
             {/* 1.1 Empresas - TABELA COMPLETA */}
             <div>
               <div className="flex justify-between items-center mb-3">
@@ -711,7 +724,7 @@ export default function Cadastros() {
                   Nova Empresa
                 </Button>
               </div>
-              
+
               <div className="border rounded-lg max-h-96 overflow-y-auto">
                 <Table>
                   <TableHeader className="sticky top-0 bg-slate-50">
@@ -756,7 +769,7 @@ export default function Cadastros() {
                   Novo Grupo
                 </Button>
               </div>
-              
+
               <div className="border rounded-lg max-h-96 overflow-y-auto">
                 <Table>
                   <TableHeader className="sticky top-0 bg-slate-50">
@@ -1039,21 +1052,28 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 👥 GRUPO 2: PESSOAS E PARCEIROS - SINCRONIZADO V20.1 */}
-        <AccordionItem value="grupo-2" className="border-0 shadow-md rounded-lg overflow-hidden">
+        {/* 👥 BLOCO 2: PESSOAS E PARCEIROS (Clientes, Fornecedores, Transportadoras, Colaboradores) */}
+        <AccordionItem value="bloco-2" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-green-50 to-cyan-50 hover:bg-green-100 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center">
                 <Users className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg">👥 Pessoas e Parceiros</h3>
-                <p className="text-xs text-slate-600">CRM, Portal, Fornecedores, Colaboradores e Contatos B2B</p>
+                <h3 className="font-bold text-lg">👥 Bloco 2: Pessoas e Parceiros</h3>
+                <p className="text-xs text-slate-600">Clientes • Fornecedores • Transportadoras • Colaboradores • Representantes • Contatos B2B</p>
               </div>
-              <Badge className="ml-auto">{totalItensGrupo2} itens</Badge>
+              <Badge className="ml-auto bg-green-100 text-green-700">{totalBloco2} itens</Badge>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
+            <Alert className="border-green-200 bg-green-50">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              <AlertDescription className="text-sm text-green-900">
+                ✅ <strong>Fonte Única:</strong> Transportadoras agora estão SOMENTE aqui (removidas duplicações em outros módulos)
+              </AlertDescription>
+            </Alert>
+
             {/* Clientes - TABELA COMPLETA */}
             <div>
               <div className="flex justify-between items-center mb-3">
@@ -1148,6 +1168,54 @@ export default function Cadastros() {
               </div>
             </div>
 
+            {/* Transportadoras - TABELA COMPLETA */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-orange-600" />
+                  Transportadoras ({transportadoras.length})
+                  <Badge className="ml-2 bg-orange-100 text-orange-700 text-xs">Fonte Única</Badge>
+                </h4>
+                <Button
+                  size="sm"
+                  className="bg-orange-600 hover:bg-orange-700"
+                  onClick={() => handleOpenNew('transportadoras', 'Transportadora')}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Transportadora
+                </Button>
+              </div>
+              <div className="border rounded-lg max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Razão Social</TableHead>
+                      <TableHead>CNPJ</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transportadoras.map((t) => (
+                      <TableRow key={t.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{t.razao_social}</TableCell>
+                        <TableCell className="text-xs">{t.cnpj}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => { setTransportadoraParaPainel(t); setPainelTransportadoraAberto(true); }}>
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(t, 'transportadoras', 'Transportadora')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
             {/* Colaboradores - TABELA COMPLETA */}
             <div>
               <div className="flex justify-between items-center mb-3">
@@ -1155,8 +1223,8 @@ export default function Cadastros() {
                   <User className="w-5 h-5 text-pink-600" />
                   Colaboradores ({colaboradores.length})
                 </h4>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   className="bg-pink-600 hover:bg-pink-700"
                   onClick={() => handleOpenNew('colaboradores', 'Colaborador')}
                 >
@@ -1197,54 +1265,7 @@ export default function Cadastros() {
               </div>
             </div>
 
-            {/* Transportadoras - TABELA COMPLETA */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="font-bold flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-orange-600" />
-                  Transportadoras ({transportadoras.length})
-                </h4>
-                <Button 
-                  size="sm" 
-                  className="bg-orange-600 hover:bg-orange-700"
-                  onClick={() => handleOpenNew('transportadoras', 'Transportadora')}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Transportadora
-                </Button>
-              </div>
-              <div className="border rounded-lg max-h-96 overflow-y-auto">
-                <Table>
-                  <TableHeader className="sticky top-0 bg-slate-50">
-                    <TableRow>
-                      <TableHead>Razão Social</TableHead>
-                      <TableHead>CNPJ</TableHead>
-                      <TableHead className="text-right">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {transportadoras.map((t) => (
-                      <TableRow key={t.id} className="hover:bg-slate-50">
-                        <TableCell className="font-medium text-sm">{t.razao_social}</TableCell>
-                        <TableCell className="text-xs">{t.cnpj}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button size="sm" variant="ghost" onClick={() => { setTransportadoraParaPainel(t); setPainelTransportadoraAberto(true); }}>
-                              <Eye className="w-3 h-3" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(t, 'transportadoras', 'Transportadora')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-
-            {/* Outros cadastros do Grupo 2 - TABELAS COMPLETAS */}
+            {/* Outros cadastros do Bloco 2 - TABELAS COMPLETAS */}
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Contatos B2B */}
               <div>
@@ -1406,7 +1427,7 @@ export default function Cadastros() {
               <Alert className="border-red-200 bg-red-50">
                 <AlertTriangle className="w-4 h-4 text-red-600" />
                 <AlertDescription className="text-sm text-red-900">
-                  🚨 <strong>IA KYC/KYB Ativa:</strong> BLOQUEIA pedidos de clientes com status fiscal "Inapto" na Receita Federal
+                  🚨 <strong>IA KYC/KYB:</strong> BLOQUEIA pedidos de clientes com status fiscal "Inapto" na Receita Federal
                 </AlertDescription>
               </Alert>
 
@@ -1420,20 +1441,18 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - V21.0 RECONSTRUÍDO */}
-        <AccordionItem value="grupo-3" className="border-0 shadow-md rounded-lg overflow-hidden">
+        {/* 🧱 BLOCO 3: PRODUTOS E SERVIÇOS (Produtos, Serviços, Classificações, Tabelas) */}
+        <AccordionItem value="bloco-3" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 hover:bg-purple-100 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg">🧱 Produtos e Serviços V21.0</h3>
-                <p className="text-xs text-slate-600">Dupla Classificação • Cadastro Manual/IA/NF-e/Lote • Tabelas de Preço</p>
+                <h3 className="font-bold text-lg">🧱 Bloco 3: Produtos e Serviços</h3>
+                <p className="text-xs text-slate-600">Produtos • Serviços • Setores • Grupos • Marcas • Kits • Tabelas Preço • Catálogo Web</p>
               </div>
-              <Badge className="ml-auto">
-                {totalItensGrupo3} itens
-              </Badge>
+              <Badge className="ml-auto bg-purple-100 text-purple-700">{totalBloco3} itens</Badge>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
@@ -1473,10 +1492,10 @@ export default function Cadastros() {
                   Novo Setor
                 </Button>
               </div>
-              
+
               <Alert className="border-indigo-200 bg-indigo-50 mb-3">
                 <AlertDescription className="text-sm text-indigo-900">
-                  🎯 <strong>Classificação Obrigatória 1/2:</strong> Todo produto deve ter um Setor de Atividade (Revenda, Almoxarifado, Fábrica, etc)
+                  🎯 <strong>Classificação Obrigatória 1/3:</strong> Todo produto deve ter um Setor de Atividade (Revenda, Almoxarifado, Fábrica, etc)
                 </AlertDescription>
               </Alert>
 
@@ -1542,10 +1561,10 @@ export default function Cadastros() {
 
               <Alert className="border-cyan-200 bg-cyan-50 mb-3">
                 <AlertDescription className="text-sm text-cyan-900">
-                  🎯 <strong>Classificação Obrigatória 2/2:</strong> Todo produto deve ter um Grupo/Linha (Vergalhões, Telas, Arames, etc)
+                  🎯 <strong>Classificação Obrigatória 2/3:</strong> Todo produto deve ter um Grupo/Linha (Vergalhões, Telas, Arames, etc)
                 </AlertDescription>
               </Alert>
-              
+
               <div className="border rounded-lg max-h-64 overflow-y-auto">
                 <Table>
                   <TableHeader className="sticky top-0 bg-slate-50">
@@ -1587,34 +1606,34 @@ export default function Cadastros() {
 
               <Alert className="border-orange-200 bg-orange-50 mb-3">
                 <AlertDescription className="text-sm text-orange-900">
-                  🏷️ <strong>Campo Obrigatório V21.0:</strong> Todo produto deve ter Marca (IA sugere a partir do fornecedor/NF-e)
+                  🏷️ <strong>Classificação Obrigatória 3/3:</strong> Todo produto deve ter Marca (IA sugere a partir do fornecedor/NF-e)
                 </AlertDescription>
               </Alert>
-              
+
               <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Marca</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Marca</TableHead>
+                      <TableHead>Categoria</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {marcas.map((m) => (
+                      <TableRow key={m.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{m.nome_marca}</TableCell>
+                        <TableCell className="text-xs">{m.categoria}</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(m, 'marcas', 'Marca')}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {marcas.map((m) => (
-                        <TableRow key={m.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{m.nome_marca}</TableCell>
-                          <TableCell className="text-xs">{m.categoria}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(m, 'marcas', 'Marca')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
 
             {/* PRODUTOS - HEADER COM IMPORTAÇÃO */}
@@ -1623,9 +1642,10 @@ export default function Cadastros() {
                 <h4 className="font-bold flex items-center gap-2">
                   <Package className="w-5 h-5 text-purple-600" />
                   Produtos ({produtos.length})
+                  <Badge className="ml-2 bg-purple-100 text-purple-700 text-xs">Fonte Única</Badge>
                 </h4>
                 <div className="flex gap-2">
-                  <BotoesImportacaoProduto 
+                  <BotoesImportacaoProduto
                     onProdutosCriados={() => {
                       queryClient.invalidateQueries({ queryKey: ['produtos'] });
                       toast({ title: "✅ Produtos importados com sucesso!" });
@@ -1637,7 +1657,7 @@ export default function Cadastros() {
                   </Button>
                 </div>
               </div>
-              
+
               <div className="border rounded-lg max-h-[500px] overflow-y-auto">
                 <Table>
                   <TableHeader className="sticky top-0 bg-slate-50 z-10">
@@ -1696,7 +1716,7 @@ export default function Cadastros() {
                   </TableBody>
                 </Table>
               </div>
-              
+
               {produtos.length === 0 && (
                 <div className="text-center py-12 text-slate-500 border rounded-lg">
                   <Package className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -1717,7 +1737,7 @@ export default function Cadastros() {
                   Novo Serviço
                 </Button>
               </div>
-              
+
               <div className="border rounded-lg max-h-96 overflow-y-auto">
                 <Table>
                   <TableHeader className="sticky top-0 bg-slate-50">
@@ -1750,7 +1770,7 @@ export default function Cadastros() {
               </div>
             </div>
 
-            {/* Grid 2x2 - Outros Cadastros do Grupo 3 - TABELAS COMPLETAS */}
+            {/* Grid 2x2 - Outros Cadastros do Bloco 3 - TABELAS COMPLETAS */}
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Kits */}
               <div>
@@ -1800,10 +1820,11 @@ export default function Cadastros() {
                   <h4 className="font-bold flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600" />
                     Tabelas de Preço ({tabelasPreco.length})
+                    <Badge className="ml-2 bg-green-100 text-green-700 text-xs">Fonte Única</Badge>
                   </h4>
                   <div className="flex gap-2">
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => setMultiTabelasOpen(true)}
                       disabled={tabelasPreco.length === 0}
@@ -1817,11 +1838,11 @@ export default function Cadastros() {
                     </Button>
                   </div>
                 </div>
-                
+
                 <Alert className="border-green-200 bg-green-50 mb-3">
                   <DollarSign className="w-4 h-4 text-green-600" />
                   <AlertDescription className="text-sm text-green-900">
-                    💰 <strong>Hub Central V21.1.2:</strong> Todas as tabelas de preço são gerenciadas aqui. Comercial apenas consome os preços definidos.
+                    💰 <strong>Hub Central V21.1:</strong> Todas as tabelas de preço são gerenciadas AQUI. Comercial apenas aplica tabelas.
                   </AlertDescription>
                 </Alert>
 
@@ -1867,84 +1888,84 @@ export default function Cadastros() {
                     </TableBody>
                   </Table>
                 </div>
-                
+
                 {tabelasPreco.length === 0 && (
                   <div className="text-center py-8 text-slate-500 border rounded-lg mt-2">
                     <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
                     <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
-                  </div>
-                )}
-              </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
             {/* Catálogo Web */}
             <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-cyan-600" />
-                    Catálogo Web ({catalogoWeb.length})
-                  </h4>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Item
-                  </Button>
-                </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Produto</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {catalogoWeb.map((c) => (
-                        <TableRow key={c.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
-                          <TableCell>
-                            {c.exibir_no_site ? (
-                              <Badge className="bg-green-100 text-green-700 text-xs">Ativo</Badge>
-                            ) : (
-                              <Badge className="bg-slate-100 text-slate-700 text-xs">Inativo</Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'catalogo', 'CatalogoWeb')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-cyan-600" />
+                  Catálogo Web ({catalogoWeb.length})
+                </h4>
+                <Button size="sm" variant="outline" onClick={() => handleOpenNew('catalogo', 'CatalogoWeb')}>
+                  <Plus className="w-3 h-3 mr-2" />
+                  Novo Item
+                </Button>
               </div>
-
-              {/* Bitolas */}
-              <Card className="border hover:shadow-md transition-shadow border-purple-200 bg-purple-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Package className="w-5 h-5 text-purple-600" />
-                    <h4 className="font-semibold">Bitolas</h4>
-                    <Badge className="ml-auto bg-purple-600 text-white">
-                      {produtos.filter(p => p.eh_bitola).length}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-slate-600 mb-3">
-                    Barras de aço CA-25/50/60
-                  </p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setBitolasPanelOpen(true)}
-                  >
-                    Gerenciar Bitolas →
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Produto</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {catalogoWeb.map((c) => (
+                      <TableRow key={c.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{c.produto_descricao}</TableCell>
+                        <TableCell>
+                          {c.exibir_no_site ? (
+                            <Badge className="bg-green-100 text-green-700 text-xs">Ativo</Badge>
+                          ) : (
+                            <Badge className="bg-slate-100 text-slate-700 text-xs">Inativo</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(c, 'catalogo', 'CatalogoWeb')}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
+
+            {/* Bitolas */}
+            <Card className="border hover:shadow-md transition-shadow border-purple-200 bg-purple-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Package className="w-5 h-5 text-purple-600" />
+                  <h4 className="font-semibold">Bitolas</h4>
+                  <Badge className="ml-auto bg-purple-600 text-white">
+                    {produtos.filter(p => p.eh_bitola).length}
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-600 mb-3">
+                  Barras de aço CA-25/50/60
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setBitolasPanelOpen(true)}
+                >
+                  Gerenciar Bitolas →
+                </Button>
+              </CardContent>
+            </Card>
 
             {/* IAs ATIVAS */}
             <div className="grid lg:grid-cols-3 gap-4 mt-6">
@@ -1972,28 +1993,25 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 💰 GRUPO 4: FINANCEIRO E FISCAL - SINCRONIZADO V20.1 */}
-        <AccordionItem value="grupo-4" className="border-0 shadow-md rounded-lg overflow-hidden">
+        {/* 💰 BLOCO 4: FINANCEIRO E FISCAL (Bancos, Formas Pagto, Plano Contas, etc) */}
+        <AccordionItem value="bloco-4" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:bg-green-100 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg">💰 Financeiro e Fiscal</h3>
-                <p className="text-xs text-slate-600">Bancos, Formas de Pagamento, Plano de Contas e Tabelas Fiscais</p>
+                <h3 className="font-bold text-lg">💰 Bloco 4: Financeiro e Fiscal</h3>
+                <p className="text-xs text-slate-600">Bancos • Formas Pagamento • Plano Contas • Centros Resultado • Tipos Despesa • Moedas • NCM/CFOP</p>
               </div>
-              <Badge className="ml-auto">
-                {totalItensGrupo4} itens
-              </Badge>
+              <Badge className="ml-auto bg-green-100 text-green-700">{totalBloco4} itens</Badge>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
-            {/* ALERTA ARQUITETURAL */}
             <Alert className="border-green-200 bg-green-50">
               <CheckCircle2 className="w-4 h-4" />
               <AlertDescription className="text-sm text-green-900">
-                ✅ <strong>Hub Financeiro V20.0:</strong> Todos os cadastros mestres contábeis e fiscais centralizados. IAs de Open Banking, DIFAL e Classificação ativas.
+                ✅ <strong>Bloco 4 V21.1:</strong> Cadastros mestres contábeis e fiscais centralizados. IAs de Open Banking, DIFAL e Classificação ativas.
               </AlertDescription>
             </Alert>
 
@@ -2006,8 +2024,8 @@ export default function Cadastros() {
                     <Landmark className="w-4 h-4 text-blue-600" />
                     Contas Bancárias ({bancos.length})
                   </h4>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="bg-blue-600 hover:bg-blue-700"
                     onClick={() => handleOpenNew('bancos', 'Banco')}
                   >
@@ -2052,8 +2070,8 @@ export default function Cadastros() {
                     <CreditCard className="w-4 h-4 text-green-600" />
                     Formas Pagamento ({formasPagamento.length})
                   </h4>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="bg-green-600 hover:bg-green-700"
                     onClick={() => handleOpenNew('formas-pagamento', 'FormaPagamento')}
                   >
@@ -2103,9 +2121,9 @@ export default function Cadastros() {
                     <FileText className="w-4 h-4 text-indigo-600" />
                     Plano de Contas ({planoContas.length})
                   </h4>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => handleOpenNew('plano-contas', 'PlanoDeContas')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
@@ -2147,9 +2165,9 @@ export default function Cadastros() {
                     <Target className="w-4 h-4 text-purple-600" />
                     Centros Resultado ({centrosResultado.length})
                   </h4>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => handleOpenNew('centros-resultado', 'CentroResultado')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
@@ -2191,9 +2209,9 @@ export default function Cadastros() {
                     <Receipt className="w-4 h-4 text-red-600" />
                     Tipos Despesa ({tiposDespesa.length})
                   </h4>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => handleOpenNew('tipos-despesa', 'TipoDespesa')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
@@ -2233,9 +2251,9 @@ export default function Cadastros() {
                     <TrendingUp className="w-4 h-4 text-cyan-600" />
                     Moedas/Índices ({moedasIndices.length})
                   </h4>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     onClick={() => handleOpenNew('moedas', 'MoedaIndice')}
                   >
                     <Plus className="w-3 h-3 mr-2" />
@@ -2290,16 +2308,16 @@ export default function Cadastros() {
                   </AlertDescription>
                 </Alert>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={() => setCadastroFiscalFormOpen(true)}
                   >
                     <Plus className="w-3 h-3 mr-2" />
                     Novo NCM/CFOP
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={() => window.location.href = createPageUrl('FiscalTabelas')}
                   >
@@ -2335,25 +2353,25 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🚚 GRUPO 5: OPERAÇÃO E LOGÍSTICA - SINCRONIZADO V20.1 */}
-        <AccordionItem value="grupo-5" className="border-0 shadow-md rounded-lg overflow-hidden">
+        {/* 🚚 BLOCO 5: LOGÍSTICA E OPERAÇÃO (Veículos, Motoristas, Rotas, Locais) */}
+        <AccordionItem value="bloco-5" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-orange-50 to-red-50 hover:bg-orange-100 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-orange-600 flex items-center justify-center">
                 <Truck className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg">🚚 Operação e Logística</h3>
-                <p className="text-xs text-slate-600">Veículos, Motoristas, Rotas e Locais</p>
+                <h3 className="font-bold text-lg">🚚 Bloco 5: Logística e Operação</h3>
+                <p className="text-xs text-slate-600">Veículos • Motoristas • Tipos Frete • Modelos Documento • Locais Estoque • Rotas Padrão</p>
               </div>
-              <Badge className="ml-auto">{totalItensGrupo5} itens</Badge>
+              <Badge className="ml-auto bg-orange-100 text-orange-700">{totalBloco5} itens</Badge>
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
             <Alert className="border-orange-200 bg-orange-50">
               <CheckCircle2 className="w-4 h-4" />
               <AlertDescription className="text-sm text-orange-900">
-                ✅ <strong>Bloco 5 V20.0:</strong> Transportadoras movidas para Bloco 2. IAs de Manutenção, Alocação e Roteirização ativas.
+                ✅ <strong>Bloco 5 V21.1:</strong> IAs de Manutenção Preditiva, Alocação Inteligente e Roteirização ativas.
               </AlertDescription>
             </Alert>
 
@@ -2454,8 +2472,8 @@ export default function Cadastros() {
                       <TableHead>Descrição</TableHead>
                       <TableHead>Modalidade</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    </TableRow>
+                  </TableHeader>
                   <TableBody>
                     {tiposFrete.map((tf) => (
                       <TableRow key={tf.id} className="hover:bg-slate-50">
@@ -2521,9 +2539,9 @@ export default function Cadastros() {
                     <Badge className="ml-auto">0</Badge>
                   </div>
                   <p className="text-xs text-slate-600 mb-3">CDs e almoxarifados</p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     className="w-full"
                     onClick={() => setLocalEstoqueFormOpen(true)}
                   >
@@ -2541,9 +2559,9 @@ export default function Cadastros() {
                     <Badge className="ml-auto">0</Badge>
                   </div>
                   <p className="text-xs text-slate-600 mb-3">IA Roteirização</p>
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
+                  <Button
+                    size="sm"
+                    variant="outline"
                     className="w-full"
                     onClick={() => setRotaPadraoFormOpen(true)}
                   >
@@ -2579,20 +2597,20 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🤖 GRUPO 6: INTEGRAÇÕES, IA E PORTAL - CORRIGIDO V20.1 */}
-        <AccordionItem value="grupo-6" className="border-0 shadow-md rounded-lg overflow-hidden">
-          <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-blue-50 hover:bg-indigo-100 transition-colors">
+        {/* 🤖 BLOCO 6: INTEGRAÇÕES E IA (APIs, Webhooks, Eventos, Chatbot, Portal) */}
+        <AccordionItem value="bloco-6" className="border-0 shadow-md rounded-lg overflow-hidden">
+          <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 hover:bg-indigo-100 transition-colors">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center">
                 <Cpu className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg">🤖 Integrações, IA e Portal</h3>
-                <p className="text-xs text-slate-600">APIs, Webhooks, Chatbot, Marketplace e Portal do Cliente</p>
+                <h3 className="font-bold text-lg">🤖 Bloco 6: Integrações e IA</h3>
+                <p className="text-xs text-slate-600">APIs • Webhooks • Eventos • Chatbot • Marketplace • Portal do Cliente</p>
               </div>
               <Badge className="ml-auto bg-gradient-to-r from-purple-600 to-blue-600 text-white">
                 <Sparkles className="w-3 h-3 mr-1" />
-                Motor de IA V16.1
+                {totalBloco6} itens
               </Badge>
             </div>
           </AccordionTrigger>
@@ -2613,7 +2631,7 @@ export default function Cadastros() {
                   Configurar APIs
                 </Button>
               </div>
-              
+
               <div className="grid lg:grid-cols-3 gap-4">
                 <Card className="border hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
@@ -2702,9 +2720,9 @@ export default function Cadastros() {
                         <p className="text-xs text-slate-500">Acesso self-service</p>
                       </div>
                     </div>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
+                    <Button
+                      size="sm"
+                      variant="outline"
                       className="w-full text-xs"
                       onClick={() => window.location.href = createPageUrl('PortalCliente')}
                     >
@@ -2863,10 +2881,10 @@ export default function Cadastros() {
                     <p className="text-sm text-slate-600">Enviar eventos para sistemas externos via HTTP</p>
                   </div>
                 </div>
-                
-                <Button 
-                  size="sm" 
-                  className="w-full bg-orange-600 hover:bg-orange-600"
+
+                <Button
+                  size="sm"
+                  className="w-full bg-orange-600 hover:bg-orange-700"
                   onClick={() => setWebhookFormOpen(true)}
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -2879,7 +2897,7 @@ export default function Cadastros() {
       </Accordion>
 
       {/* DIALOGS UNIVERSAIS */}
-      <Dialog open={isDialogOpen} onOpenChange={(open) => { 
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
         if (!open) handleCloseDialog();
       }}>
         <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-y-auto">
@@ -2920,7 +2938,7 @@ export default function Cadastros() {
               {tipoDialog === 'setores-atividade' && 'Setor de Atividade'}
             </DialogTitle>
           </DialogHeader>
-          
+
           {tipoDialog === 'colaboradores' && <ColaboradorForm colaborador={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'transportadoras' && <TransportadoraForm transportadora={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'centroscusto' && <CentroCustoForm centroCusto={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
@@ -2939,10 +2957,10 @@ export default function Cadastros() {
           {tipoDialog === 'representantes' && <RepresentanteForm representante={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'segmentos' && <SegmentoClienteForm segmento={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'produtos' && (
-            <ProdutoFormV22_Completo 
-              produto={editingItem?.id ? editingItem : null} 
-              onSubmit={handleSubmit} 
-              isSubmitting={createMutation.isPending || updateMutation.isPending} 
+            <ProdutoFormV22_Completo
+              produto={editingItem?.id ? editingItem : null}
+              onSubmit={handleSubmit}
+              isSubmitting={createMutation.isPending || updateMutation.isPending}
             />
           )}
           {tipoDialog === 'servicos' && <ServicoForm servico={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
@@ -2950,10 +2968,10 @@ export default function Cadastros() {
           {tipoDialog === 'marcas' && <MarcaForm marca={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'kits' && <KitProdutoForm kit={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'tabelas' && (
-            <TabelaPrecoFormCompleto 
-              tabela={editingItem?.id ? editingItem : null} 
-              onSubmit={handleSubmit} 
-              isSubmitting={createMutation.isPending || updateMutation.isPending} 
+            <TabelaPrecoFormCompleto
+              tabela={editingItem?.id ? editingItem : null}
+              onSubmit={handleSubmit}
+              isSubmitting={createMutation.isPending || updateMutation.isPending}
             />
           )}
           {tipoDialog === 'catalogo' && <CatalogoWebForm catalogoItem={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
@@ -3129,7 +3147,7 @@ export default function Cadastros() {
           />
         </DialogContent>
       </Dialog>
-      
+
       <Dialog open={filialFormOpen} onOpenChange={setFilialFormOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -3205,7 +3223,7 @@ export default function Cadastros() {
                 📊 Exibindo apenas produtos com <strong>eh_bitola = true</strong>
               </AlertDescription>
             </Alert>
-            
+
             <Table>
               <TableHeader>
                 <TableRow>
