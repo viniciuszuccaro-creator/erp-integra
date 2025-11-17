@@ -1,14 +1,14 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, ShoppingCart, Building2, FileText, TrendingUp } from "lucide-react";
+import { Package, Users, ShoppingCart, Building2, FileText, TrendingUp, Upload } from "lucide-react";
 import FornecedoresTab from "../components/compras/FornecedoresTab";
 import OrdensCompraTab from "../components/compras/OrdensCompraTab";
 import SolicitacoesCompraTab from "../components/compras/SolicitacoesCompraTab";
 import CotacoesTab from "../components/compras/CotacoesTab";
+import ImportacaoNFeRecebimento from "../components/compras/ImportacaoNFeRecebimento";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function Compras() {
@@ -92,6 +92,10 @@ export default function Compras() {
             <Building2 className="w-4 h-4 mr-2" />
             Fornecedores
           </TabsTrigger>
+          <TabsTrigger value="recebimento" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
+            <Upload className="w-4 h-4 mr-2" />
+            Recebimento NF-e
+          </TabsTrigger>
           <TabsTrigger value="solicitacoes" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
             Solicitações ({solicitacoes.filter(s => s.status === 'Pendente').length})
@@ -108,6 +112,10 @@ export default function Compras() {
 
         <TabsContent value="fornecedores">
           <FornecedoresTab fornecedores={fornecedores} isLoading={loadingFornecedores} />
+        </TabsContent>
+
+        <TabsContent value="recebimento">
+          <ImportacaoNFeRecebimento />
         </TabsContent>
 
         <TabsContent value="solicitacoes">
