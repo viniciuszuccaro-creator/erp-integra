@@ -35,7 +35,13 @@ import {
   Database,
   Zap,
   CheckCircle2,
-  Lock,
+  MessageCircle,
+  Briefcase,
+  Clock,
+  Globe,
+  FileText,
+  Bell,
+  Link2,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -50,6 +56,28 @@ import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
 import DashboardControleAcesso from "../components/sistema/DashboardControleAcesso";
 import FonteUnicaVerdade from "../components/sistema/FonteUnicaVerdade";
 import usePermissions from "../components/lib/usePermissions";
+import TransportadoraForm from "../components/cadastros/TransportadoraForm";
+import ColaboradorForm from "../components/rh/ColaboradorForm";
+import BancoForm from "../components/cadastros/BancoForm";
+import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
+import VeiculoForm from "../components/cadastros/VeiculoForm";
+import MotoristaForm from "../components/cadastros/MotoristaForm";
+import TipoFreteForm from "../components/cadastros/TipoFreteForm";
+import EmpresaForm from "../components/cadastros/EmpresaForm";
+import GrupoEmpresarialForm from "../components/cadastros/GrupoEmpresarialForm";
+import DepartamentoForm from "../components/cadastros/DepartamentoForm";
+import CargoForm from "../components/cadastros/CargoForm";
+import TurnoForm from "../components/cadastros/TurnoForm";
+import UsuarioForm from "../components/cadastros/UsuarioForm";
+import PerfilAcessoForm from "../components/cadastros/PerfilAcessoForm";
+import EventoNotificacaoForm from "../components/cadastros/EventoNotificacaoForm";
+import ConfiguracaoIntegracaoForm from "../components/cadastros/ConfiguracaoIntegracaoForm";
+import CentroCustoForm from "../components/cadastros/CentroCustoForm";
+import GrupoProdutoForm from "../components/cadastros/GrupoProdutoForm";
+import MarcaForm from "../components/cadastros/MarcaForm";
+import ServicoForm from "../components/cadastros/ServicoForm";
+import RepresentanteForm from "../components/cadastros/RepresentanteForm";
+import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
 
 /**
  * ⭐⭐⭐ CADASTROS GERAIS V21.0 - FASE 0: 100% COMPLETA ⭐⭐⭐
@@ -57,13 +85,13 @@ import usePermissions from "../components/lib/usePermissions";
  * 
  * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR
  * 
- * ✅ ESTRUTURA DOS 6 BLOCOS:
- * 1️⃣ PESSOAS & PARCEIROS - Clientes, Fornecedores, Transportadoras, Colaboradores
- * 2️⃣ PRODUTOS & SERVIÇOS - Produtos, Serviços, Setores, Grupos, Marcas, Tabelas de Preço
+ * ✅ ESTRUTURA DOS 6 BLOCOS COMPLETA:
+ * 1️⃣ PESSOAS & PARCEIROS - Clientes, Fornecedores, Transportadoras, Colaboradores, Representantes, Contatos B2B
+ * 2️⃣ PRODUTOS & SERVIÇOS - Produtos, Serviços, Setores, Grupos, Marcas, Tabelas de Preço, Kits
  * 3️⃣ FINANCEIRO - Bancos, Formas de Pagamento, Plano de Contas, Centros de Custo
- * 4️⃣ LOGÍSTICA - Veículos, Motoristas, Tipos de Frete, Rotas
- * 5️⃣ ORGANIZACIONAL - Empresas, Grupos, Departamentos, Cargos, Turnos, Usuários
- * 6️⃣ INTEGRAÇÕES & IA - Configurações de Marketplace, Webhooks, Notificações, Chatbot
+ * 4️⃣ LOGÍSTICA - Veículos, Motoristas, Tipos de Frete, Transportadoras
+ * 5️⃣ ORGANIZACIONAL - Empresas, Grupos, Departamentos, Cargos, Turnos, Usuários, Perfis
+ * 6️⃣ INTEGRAÇÕES & IA - Marketplaces, Webhooks, Notificações, Chatbot, 28 IAs
  * 
  * ✅ FONTE ÚNICA DE VERDADE - Zero duplicação, referências normalizadas
  * ✅ CONTROLE DE ACESSO GRANULAR - Permissões por módulo e perfil
@@ -75,6 +103,7 @@ export default function Cadastros() {
   const [acordeonAberto, setAcordeonAberto] = useState([]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
   
+  // Estados para todos os formulários
   const [cadastroCompletoAberto, setCadastroCompletoAberto] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null);
@@ -85,6 +114,50 @@ export default function Cadastros() {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [setorAtividadeFormOpen, setSetorAtividadeFormOpen] = useState(false);
   const [setorSelecionado, setSetorSelecionado] = useState(null);
+  const [transportadoraFormOpen, setTransportadoraFormOpen] = useState(false);
+  const [transportadoraSelecionada, setTransportadoraSelecionada] = useState(null);
+  const [colaboradorFormOpen, setColaboradorFormOpen] = useState(false);
+  const [colaboradorSelecionado, setColaboradorSelecionado] = useState(null);
+  const [bancoFormOpen, setBancoFormOpen] = useState(false);
+  const [bancoSelecionado, setBancoSelecionado] = useState(null);
+  const [formaPagamentoFormOpen, setFormaPagamentoFormOpen] = useState(false);
+  const [formaPagamentoSelecionada, setFormaPagamentoSelecionada] = useState(null);
+  const [veiculoFormOpen, setVeiculoFormOpen] = useState(false);
+  const [veiculoSelecionado, setVeiculoSelecionado] = useState(null);
+  const [motoristaFormOpen, setMotoristaFormOpen] = useState(false);
+  const [motoristaSelecionado, setMotoristaSelecionado] = useState(null);
+  const [tipoFreteFormOpen, setTipoFreteFormOpen] = useState(false);
+  const [tipoFreteSelecionado, setTipoFreteSelecionado] = useState(null);
+  const [empresaFormOpen, setEmpresaFormOpen] = useState(false);
+  const [empresaSelecionada, setEmpresaSelecionada] = useState(null);
+  const [grupoEmpresarialFormOpen, setGrupoEmpresarialFormOpen] = useState(false);
+  const [grupoSelecionado, setGrupoSelecionado] = useState(null);
+  const [departamentoFormOpen, setDepartamentoFormOpen] = useState(false);
+  const [departamentoSelecionado, setDepartamentoSelecionado] = useState(null);
+  const [cargoFormOpen, setCargoFormOpen] = useState(false);
+  const [cargoSelecionado, setCargoSelecionado] = useState(null);
+  const [turnoFormOpen, setTurnoFormOpen] = useState(false);
+  const [turnoSelecionado, setTurnoSelecionado] = useState(null);
+  const [usuarioFormOpen, setUsuarioFormOpen] = useState(false);
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+  const [perfilAcessoFormOpen, setPerfilAcessoFormOpen] = useState(false);
+  const [perfilSelecionado, setPerfilSelecionado] = useState(null);
+  const [eventoNotificacaoFormOpen, setEventoNotificacaoFormOpen] = useState(false);
+  const [eventoSelecionado, setEventoSelecionado] = useState(null);
+  const [configIntegracaoFormOpen, setConfigIntegracaoFormOpen] = useState(false);
+  const [configSelecionada, setConfigSelecionada] = useState(null);
+  const [centroCustoFormOpen, setCentroCustoFormOpen] = useState(false);
+  const [centroCustoSelecionado, setCentroCustoSelecionado] = useState(null);
+  const [grupoProdutoFormOpen, setGrupoProdutoFormOpen] = useState(false);
+  const [grupoProdutoSelecionado, setGrupoProdutoSelecionado] = useState(null);
+  const [marcaFormOpen, setMarcaFormOpen] = useState(false);
+  const [marcaSelecionada, setMarcaSelecionada] = useState(null);
+  const [servicoFormOpen, setServicoFormOpen] = useState(false);
+  const [servicoSelecionado, setServicoSelecionado] = useState(null);
+  const [representanteFormOpen, setRepresentanteFormOpen] = useState(false);
+  const [representanteSelecionado, setRepresentanteSelecionado] = useState(null);
+  const [contatoB2BFormOpen, setContatoB2BFormOpen] = useState(false);
+  const [contatoB2BSelecionado, setContatoB2BSelecionado] = useState(null);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -266,64 +339,6 @@ export default function Cadastros() {
     queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list(),
   });
 
-  const handleEditarCliente = (cliente) => {
-    setClienteSelecionado(cliente);
-    setCadastroCompletoAberto(true);
-  };
-
-  const handleNovoCliente = () => {
-    setClienteSelecionado(null);
-    setCadastroCompletoAberto(true);
-  };
-
-  const handleEditarFornecedor = (fornecedor) => {
-    setFornecedorSelecionado(fornecedor);
-    setCadastroFornecedorAberto(true);
-  };
-
-  const handleNovoFornecedor = () => {
-    setFornecedorSelecionado(null);
-    setCadastroFornecedorAberto(true);
-  };
-
-  const handleEditarTabelaPreco = (tabela) => {
-    setTabelaSelecionadaEditar(tabela);
-    setTabelaPrecoFormOpen(true);
-  };
-
-  const handleNovaTabelaPreco = () => {
-    setTabelaSelecionadaEditar(null);
-    setTabelaPrecoFormOpen(true);
-  };
-
-  const handleEditarProduto = (produto) => {
-    setProdutoSelecionado(produto);
-    setProdutoFormOpen(true);
-  };
-
-  const handleNovoProduto = () => {
-    setProdutoSelecionado(null);
-    setProdutoFormOpen(true);
-  };
-
-  const handleEditarSetor = (setor) => {
-    setSetorSelecionado(setor);
-    setSetorAtividadeFormOpen(true);
-  };
-
-  const handleNovoSetor = () => {
-    setSetorSelecionado(null);
-    setSetorAtividadeFormOpen(true);
-  };
-
-  const statusColors = {
-    'Ativo': 'bg-green-100 text-green-700 border-green-300',
-    'Inativo': 'bg-gray-100 text-gray-700 border-gray-300',
-    'Prospect': 'bg-blue-100 text-blue-700 border-blue-300',
-    'Bloqueado': 'bg-red-100 text-red-700 border-red-300',
-    'Ativa': 'bg-green-100 text-green-700 border-green-300'
-  };
-
   // Cálculo de totais por bloco
   const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
   const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length;
@@ -332,7 +347,7 @@ export default function Cadastros() {
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
   const totalBloco6 = eventosNotificacao.length + configsIntegracao.length;
 
-  // Filtrar todos os itens pelo termo de busca
+  // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
     if (!searchTerm) return lista;
     return lista.filter(item => 
@@ -348,12 +363,40 @@ export default function Cadastros() {
   const colaboradoresFiltrados = filtrarPorBusca(colaboradores, ['nome_completo', 'cpf']);
   const transportadorasFiltradas = filtrarPorBusca(transportadoras, ['razao_social', 'cnpj']);
 
+  const statusColors = {
+    'Ativo': 'bg-green-100 text-green-700 border-green-300',
+    'Inativo': 'bg-gray-100 text-gray-700 border-gray-300',
+    'Prospect': 'bg-blue-100 text-blue-700 border-blue-300',
+    'Bloqueado': 'bg-red-100 text-red-700 border-red-300',
+    'Ativa': 'bg-green-100 text-green-700 border-green-300'
+  };
+
   // Handler para clicar nos cards do dashboard
   const handleCardClick = (blocoId) => {
     if (acordeonAberto.includes(blocoId)) {
       setAcordeonAberto(acordeonAberto.filter(id => id !== blocoId));
     } else {
       setAcordeonAberto([...acordeonAberto, blocoId]);
+    }
+  };
+
+  // Generic handlers
+  const handleSubmitGenerico = (entityName, queryKey) => async (data) => {
+    if (data?._salvamentoCompleto) {
+      return;
+    }
+
+    try {
+      if (data.id) {
+        await base44.entities[entityName].update(data.id, data);
+        toast({ title: `✅ ${entityName} atualizado com sucesso!` });
+      } else {
+        await base44.entities[entityName].create(data);
+        toast({ title: `✅ ${entityName} criado com sucesso!` });
+      }
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+    } catch (error) {
+      toast({ title: `❌ Erro ao salvar ${entityName}`, description: error.message, variant: "destructive" });
     }
   };
 
@@ -518,13 +561,13 @@ export default function Cadastros() {
                   <Users className="w-6 h-6 text-blue-600" />
                   <div className="text-left">
                     <p className="font-bold text-lg text-blue-900">1️⃣ Pessoas & Parceiros</p>
-                    <p className="text-xs text-blue-700">Clientes • Fornecedores • Transportadoras • Colaboradores • Representantes</p>
+                    <p className="text-xs text-blue-700">Clientes • Fornecedores • Transportadoras • Colaboradores • Representantes • Contatos B2B</p>
                   </div>
                   <Badge className="ml-auto bg-blue-600 text-white">{totalBloco1}</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {/* CLIENTES */}
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
@@ -535,7 +578,10 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button 
                           size="sm" 
-                          onClick={handleNovoCliente} 
+                          onClick={() => {
+                            setClienteSelecionado(null);
+                            setCadastroCompletoAberto(true);
+                          }} 
                           className="bg-blue-600 hover:bg-blue-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -560,7 +606,10 @@ export default function Cadastros() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => handleEditarCliente(cliente)}
+                            onClick={() => {
+                              setClienteSelecionado(cliente);
+                              setCadastroCompletoAberto(true);
+                            }}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-blue-600" />
@@ -583,7 +632,10 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button 
                           size="sm" 
-                          onClick={handleNovoFornecedor} 
+                          onClick={() => {
+                            setFornecedorSelecionado(null);
+                            setCadastroFornecedorAberto(true);
+                          }} 
                           className="bg-cyan-600 hover:bg-cyan-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -599,7 +651,7 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{fornecedor.nome}</p>
                             <div className="flex gap-2 mt-1">
                               <Badge className={statusColors[fornecedor.status] || 'bg-gray-100 text-gray-700'}>
-                                {fornecedor.status}
+                                {fornecedor.status || fornecedor.status_fornecedor}
                               </Badge>
                               {fornecedor.cnpj && <span className="text-xs text-slate-500">{fornecedor.cnpj}</span>}
                             </div>
@@ -607,7 +659,10 @@ export default function Cadastros() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => handleEditarFornecedor(fornecedor)}
+                            onClick={() => {
+                              setFornecedorSelecionado(fornecedor);
+                              setCadastroFornecedorAberto(true);
+                            }}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-cyan-600" />
@@ -630,6 +685,10 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button 
                           size="sm" 
+                          onClick={() => {
+                            setTransportadoraSelecionada(null);
+                            setTransportadoraFormOpen(true);
+                          }}
                           className="bg-orange-600 hover:bg-orange-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -645,9 +704,22 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{transp.razao_social || transp.nome_fantasia}</p>
                             <span className="text-xs text-slate-500">{transp.cnpj}</span>
                           </div>
-                          <Badge className={statusColors[transp.status]}>
-                            {transp.status}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className={statusColors[transp.status]}>
+                              {transp.status}
+                            </Badge>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setTransportadoraSelecionada(transp);
+                                setTransportadoraFormOpen(true);
+                              }}
+                              disabled={!hasPermission('cadastros', 'editar')}
+                            >
+                              <Edit className="w-4 h-4 text-orange-600" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                       {transportadorasFiltradas.length === 0 && (
@@ -666,6 +738,10 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button 
                           size="sm" 
+                          onClick={() => {
+                            setColaboradorSelecionado(null);
+                            setColaboradorFormOpen(true);
+                          }}
                           className="bg-pink-600 hover:bg-pink-700"
                           disabled={!hasPermission('rh', 'criar')}
                         >
@@ -681,13 +757,96 @@ export default function Cadastros() {
                             <p className="font-semibold text-sm">{colab.nome_completo}</p>
                             <span className="text-xs text-slate-500">{colab.cargo} • {colab.departamento}</span>
                           </div>
-                          <Badge className={statusColors[colab.status]}>
-                            {colab.status}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge className={statusColors[colab.status]}>
+                              {colab.status}
+                            </Badge>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                setColaboradorSelecionado(colab);
+                                setColaboradorFormOpen(true);
+                              }}
+                              disabled={!hasPermission('rh', 'editar')}
+                            >
+                              <Edit className="w-4 h-4 text-pink-600" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                       {colaboradoresFiltrados.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum colaborador encontrado</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* REPRESENTANTES */}
+                  <Card className="border-teal-200">
+                    <CardHeader className="bg-teal-50 border-b border-teal-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Briefcase className="w-5 h-5 text-teal-600" />
+                          Representantes ({representantes.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setRepresentanteSelecionado(null);
+                            setRepresentanteFormOpen(true);
+                          }}
+                          className="bg-teal-600 hover:bg-teal-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {representantes.map(rep => (
+                        <div key={rep.id} className="p-3 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{rep.nome}</p>
+                          {rep.email && <span className="text-xs text-slate-500">{rep.email}</span>}
+                        </div>
+                      ))}
+                      {representantes.length === 0 && (
+                        <p className="text-center text-slate-500 py-8 text-sm">Nenhum representante cadastrado</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* CONTATOS B2B */}
+                  <Card className="border-violet-200">
+                    <CardHeader className="bg-violet-50 border-b border-violet-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <MessageCircle className="w-5 h-5 text-violet-600" />
+                          Contatos B2B ({contatosB2B.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setContatoB2BSelecionado(null);
+                            setContatoB2BFormOpen(true);
+                          }}
+                          className="bg-violet-600 hover:bg-violet-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {contatosB2B.map(contato => (
+                        <div key={contato.id} className="p-3 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{contato.nome}</p>
+                          {contato.empresa && <span className="text-xs text-slate-500">{contato.empresa}</span>}
+                        </div>
+                      ))}
+                      {contatosB2B.length === 0 && (
+                        <p className="text-center text-slate-500 py-8 text-sm">Nenhum contato cadastrado</p>
                       )}
                     </CardContent>
                   </Card>
@@ -708,7 +867,7 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {/* PRODUTOS */}
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
@@ -719,7 +878,10 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button 
                           size="sm" 
-                          onClick={handleNovoProduto} 
+                          onClick={() => {
+                            setProdutoSelecionado(null);
+                            setProdutoFormOpen(true);
+                          }} 
                           className="bg-purple-600 hover:bg-purple-700"
                           disabled={!hasPermission('estoque', 'criar')}
                         >
@@ -758,7 +920,10 @@ export default function Cadastros() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => handleEditarProduto(produto)}
+                            onClick={() => {
+                              setProdutoSelecionado(produto);
+                              setProdutoFormOpen(true);
+                            }}
                             disabled={!hasPermission('estoque', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-purple-600" />
@@ -781,7 +946,10 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button 
                           size="sm" 
-                          onClick={handleNovoSetor} 
+                          onClick={() => {
+                            setSetorSelecionado(null);
+                            setSetorAtividadeFormOpen(true);
+                          }} 
                           className="bg-indigo-600 hover:bg-indigo-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -802,7 +970,10 @@ export default function Cadastros() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => handleEditarSetor(setor)}
+                            onClick={() => {
+                              setSetorSelecionado(setor);
+                              setSetorAtividadeFormOpen(true);
+                            }}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-indigo-600" />
@@ -818,16 +989,43 @@ export default function Cadastros() {
                   {/* GRUPOS DE PRODUTO */}
                   <Card className="border-cyan-200">
                     <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Boxes className="w-5 h-5 text-cyan-600" />
-                        Grupos/Linhas ({gruposProduto.length})
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Boxes className="w-5 h-5 text-cyan-600" />
+                          Grupos/Linhas ({gruposProduto.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setGrupoProdutoSelecionado(null);
+                            setGrupoProdutoFormOpen(true);
+                          }}
+                          className="bg-cyan-600 hover:bg-cyan-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {gruposProduto.map(grupo => (
-                        <div key={grupo.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{grupo.nome_grupo}</p>
-                          {grupo.descricao && <p className="text-xs text-slate-500">{grupo.descricao}</p>}
+                        <div key={grupo.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{grupo.nome_grupo}</p>
+                            {grupo.descricao && <p className="text-xs text-slate-500">{grupo.descricao}</p>}
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setGrupoProdutoSelecionado(grupo);
+                              setGrupoProdutoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-cyan-600" />
+                          </Button>
                         </div>
                       ))}
                       {gruposProduto.length === 0 && (
@@ -839,16 +1037,43 @@ export default function Cadastros() {
                   {/* MARCAS */}
                   <Card className="border-orange-200">
                     <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Award className="w-5 h-5 text-orange-600" />
-                        Marcas ({marcas.length})
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Award className="w-5 h-5 text-orange-600" />
+                          Marcas ({marcas.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setMarcaSelecionada(null);
+                            setMarcaFormOpen(true);
+                          }}
+                          className="bg-orange-600 hover:bg-orange-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {marcas.map(marca => (
-                        <div key={marca.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{marca.nome_marca}</p>
-                          {marca.pais_origem && <span className="text-xs text-slate-500">{marca.pais_origem}</span>}
+                        <div key={marca.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{marca.nome_marca}</p>
+                            {marca.pais_origem && <span className="text-xs text-slate-500">{marca.pais_origem}</span>}
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setMarcaSelecionada(marca);
+                              setMarcaFormOpen(true);
+                            }}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-orange-600" />
+                          </Button>
                         </div>
                       ))}
                       {marcas.length === 0 && (
@@ -867,7 +1092,10 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button 
                           size="sm" 
-                          onClick={handleNovaTabelaPreco} 
+                          onClick={() => {
+                            setTabelaSelecionadaEditar(null);
+                            setTabelaPrecoFormOpen(true);
+                          }} 
                           className="bg-green-600 hover:bg-green-700"
                           disabled={!hasPermission('comercial', 'criar')}
                         >
@@ -885,7 +1113,10 @@ export default function Cadastros() {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                onClick={() => handleEditarTabelaPreco(tabela)}
+                                onClick={() => {
+                                  setTabelaSelecionadaEditar(tabela);
+                                  setTabelaPrecoFormOpen(true);
+                                }}
                                 disabled={!hasPermission('comercial', 'editar')}
                               >
                                 <Edit className="w-4 h-4 text-green-600" />
@@ -910,6 +1141,41 @@ export default function Cadastros() {
                       )}
                     </CardContent>
                   </Card>
+
+                  {/* SERVIÇOS */}
+                  <Card className="border-blue-200">
+                    <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Sparkles className="w-5 h-5 text-blue-600" />
+                          Serviços ({servicos.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setServicoSelecionado(null);
+                            setServicoFormOpen(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {servicos.map(servico => (
+                        <div key={servico.id} className="p-3 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{servico.nome}</p>
+                          {servico.descricao && <p className="text-xs text-slate-500">{servico.descricao}</p>}
+                        </div>
+                      ))}
+                      {servicos.length === 0 && (
+                        <p className="text-center text-slate-500 py-8 text-sm">Nenhum serviço cadastrado</p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -928,51 +1194,133 @@ export default function Cadastros() {
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* BANCOS */}
                   <Card className="border-green-200">
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Landmark className="w-5 h-5 text-green-600" />
-                        Bancos ({bancos.length})
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Landmark className="w-5 h-5 text-green-600" />
+                          Bancos ({bancos.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setBancoSelecionado(null);
+                            setBancoFormOpen(true);
+                          }}
+                          className="bg-green-600 hover:bg-green-700"
+                          disabled={!hasPermission('financeiro', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {bancos.map(banco => (
-                        <div key={banco.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{banco.nome_banco}</p>
-                          <span className="text-xs text-slate-500">Ag: {banco.agencia} • Conta: {banco.numero_conta}</span>
+                        <div key={banco.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{banco.nome_banco}</p>
+                            <span className="text-xs text-slate-500">Ag: {banco.agencia} • Conta: {banco.numero_conta}</span>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setBancoSelecionado(banco);
+                              setBancoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-green-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
                   </Card>
 
+                  {/* FORMAS DE PAGAMENTO */}
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <CreditCard className="w-5 h-5 text-blue-600" />
-                        Formas de Pagamento ({formasPagamento.length})
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <CreditCard className="w-5 h-5 text-blue-600" />
+                          Formas de Pagamento ({formasPagamento.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setFormaPagamentoSelecionada(null);
+                            setFormaPagamentoFormOpen(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700"
+                          disabled={!hasPermission('financeiro', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {formasPagamento.map(forma => (
-                        <div key={forma.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{forma.nome}</p>
+                        <div key={forma.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm flex-1">{forma.nome}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setFormaPagamentoSelecionada(forma);
+                              setFormaPagamentoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-blue-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
                   </Card>
 
+                  {/* CENTROS DE CUSTO */}
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Receipt className="w-5 h-5 text-purple-600" />
-                        Centros de Custo ({centrosCusto.length})
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Receipt className="w-5 h-5 text-purple-600" />
+                          Centros de Custo ({centrosCusto.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setCentroCustoSelecionado(null);
+                            setCentroCustoFormOpen(true);
+                          }}
+                          className="bg-purple-600 hover:bg-purple-700"
+                          disabled={!hasPermission('financeiro', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {centrosCusto.map(centro => (
-                        <div key={centro.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{centro.codigo} - {centro.descricao}</p>
-                          <Badge variant="outline" className="text-xs">{centro.tipo}</Badge>
+                        <div key={centro.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{centro.codigo} - {centro.descricao}</p>
+                            <Badge variant="outline" className="text-xs">{centro.tipo}</Badge>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setCentroCustoSelecionado(centro);
+                              setCentroCustoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-purple-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -988,49 +1336,131 @@ export default function Cadastros() {
                   <Truck className="w-6 h-6 text-orange-600" />
                   <div className="text-left">
                     <p className="font-bold text-lg text-orange-900">4️⃣ Logística</p>
-                    <p className="text-xs text-orange-700">Veículos • Motoristas • Tipos de Frete • Rotas</p>
+                    <p className="text-xs text-orange-700">Veículos • Motoristas • Tipos de Frete</p>
                   </div>
                   <Badge className="ml-auto bg-orange-600 text-white">{totalBloco4}</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* VEÍCULOS */}
                   <Card className="border-orange-200">
                     <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
-                      <CardTitle className="text-base">🚚 Veículos ({veiculos.length})</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🚚 Veículos ({veiculos.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setVeiculoSelecionado(null);
+                            setVeiculoFormOpen(true);
+                          }}
+                          className="bg-orange-600 hover:bg-orange-700"
+                          disabled={!hasPermission('expedicao', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {veiculos.map(veiculo => (
-                        <div key={veiculo.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{veiculo.placa}</p>
-                          <span className="text-xs text-slate-500">{veiculo.modelo} • {veiculo.tipo}</span>
+                        <div key={veiculo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{veiculo.placa}</p>
+                            <span className="text-xs text-slate-500">{veiculo.modelo} • {veiculo.tipo}</span>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setVeiculoSelecionado(veiculo);
+                              setVeiculoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('expedicao', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-orange-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
                   </Card>
 
+                  {/* MOTORISTAS */}
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
-                      <CardTitle className="text-base">👤 Motoristas ({motoristas.length})</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">👤 Motoristas ({motoristas.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setMotoristaSelecionado(null);
+                            setMotoristaFormOpen(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700"
+                          disabled={!hasPermission('expedicao', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {motoristas.map(motorista => (
-                        <div key={motorista.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{motorista.nome}</p>
-                          <span className="text-xs text-slate-500">CNH: {motorista.cnh_numero}</span>
+                        <div key={motorista.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{motorista.nome}</p>
+                            <span className="text-xs text-slate-500">CNH: {motorista.cnh_numero}</span>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setMotoristaSelecionado(motorista);
+                              setMotoristaFormOpen(true);
+                            }}
+                            disabled={!hasPermission('expedicao', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-blue-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
                   </Card>
 
+                  {/* TIPOS DE FRETE */}
                   <Card className="border-green-200">
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
-                      <CardTitle className="text-base">📦 Tipos de Frete ({tiposFrete.length})</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">📦 Tipos de Frete ({tiposFrete.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setTipoFreteSelecionado(null);
+                            setTipoFreteFormOpen(true);
+                          }}
+                          className="bg-green-600 hover:bg-green-700"
+                          disabled={!hasPermission('expedicao', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {tiposFrete.map(tipo => (
-                        <div key={tipo.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{tipo.nome}</p>
+                        <div key={tipo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm flex-1">{tipo.nome}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setTipoFreteSelecionado(tipo);
+                              setTipoFreteFormOpen(true);
+                            }}
+                            disabled={!hasPermission('expedicao', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-green-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1053,42 +1483,291 @@ export default function Cadastros() {
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* EMPRESAS */}
                   <Card className="border-indigo-200">
                     <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
-                      <CardTitle className="text-base">🏢 Empresas ({empresas.length})</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🏢 Empresas ({empresas.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setEmpresaSelecionada(null);
+                            setEmpresaFormOpen(true);
+                          }}
+                          className="bg-indigo-600 hover:bg-indigo-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {empresas.map(empresa => (
-                        <div key={empresa.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{empresa.nome_fantasia || empresa.razao_social}</p>
-                          <span className="text-xs text-slate-500">{empresa.cnpj}</span>
+                        <div key={empresa.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{empresa.nome_fantasia || empresa.razao_social}</p>
+                            <span className="text-xs text-slate-500">{empresa.cnpj}</span>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setEmpresaSelecionada(empresa);
+                              setEmpresaFormOpen(true);
+                            }}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-indigo-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
                   </Card>
 
+                  {/* GRUPOS EMPRESARIAIS */}
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
-                      <CardTitle className="text-base">🏗️ Grupos Empresariais ({grupos.length})</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🏗️ Grupos Empresariais ({grupos.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setGrupoSelecionado(null);
+                            setGrupoEmpresarialFormOpen(true);
+                          }}
+                          className="bg-purple-600 hover:bg-purple-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {grupos.map(grupo => (
-                        <div key={grupo.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{grupo.nome_grupo}</p>
+                        <div key={grupo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm flex-1">{grupo.nome_grupo}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setGrupoSelecionado(grupo);
+                              setGrupoEmpresarialFormOpen(true);
+                            }}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-purple-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
                   </Card>
 
+                  {/* USUÁRIOS */}
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
-                      <CardTitle className="text-base">👥 Usuários ({usuarios.length})</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">👥 Usuários ({usuarios.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setUsuarioSelecionado(null);
+                            setUsuarioFormOpen(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {usuarios.map(usuario => (
-                        <div key={usuario.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{usuario.full_name}</p>
-                          <span className="text-xs text-slate-500">{usuario.email}</span>
+                        <div key={usuario.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{usuario.full_name}</p>
+                            <span className="text-xs text-slate-500">{usuario.email}</span>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setUsuarioSelecionado(usuario);
+                              setUsuarioFormOpen(true);
+                            }}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-blue-600" />
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* DEPARTAMENTOS */}
+                  <Card className="border-green-200">
+                    <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🏛️ Departamentos ({departamentos.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setDepartamentoSelecionado(null);
+                            setDepartamentoFormOpen(true);
+                          }}
+                          className="bg-green-600 hover:bg-green-700"
+                          disabled={!hasPermission('rh', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {departamentos.map(dept => (
+                        <div key={dept.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm flex-1">{dept.nome}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setDepartamentoSelecionado(dept);
+                              setDepartamentoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('rh', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-green-600" />
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* CARGOS */}
+                  <Card className="border-cyan-200">
+                    <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">💼 Cargos ({cargos.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setCargoSelecionado(null);
+                            setCargoFormOpen(true);
+                          }}
+                          className="bg-cyan-600 hover:bg-cyan-700"
+                          disabled={!hasPermission('rh', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {cargos.map(cargo => (
+                        <div key={cargo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm flex-1">{cargo.nome}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setCargoSelecionado(cargo);
+                              setCargoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('rh', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-cyan-600" />
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* TURNOS */}
+                  <Card className="border-amber-200">
+                    <CardHeader className="bg-amber-50 border-b border-amber-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">
+                          <Clock className="w-4 h-4 inline mr-2 text-amber-600" />
+                          Turnos ({turnos.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setTurnoSelecionado(null);
+                            setTurnoFormOpen(true);
+                          }}
+                          className="bg-amber-600 hover:bg-amber-700"
+                          disabled={!hasPermission('rh', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {turnos.map(turno => (
+                        <div key={turno.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm flex-1">{turno.nome}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setTurnoSelecionado(turno);
+                              setTurnoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('rh', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-amber-600" />
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* PERFIS DE ACESSO */}
+                  <Card className="border-red-200">
+                    <CardHeader className="bg-red-50 border-b border-red-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">
+                          <Shield className="w-4 h-4 inline mr-2 text-red-600" />
+                          Perfis de Acesso ({perfisAcesso.length})
+                        </CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setPerfilSelecionado(null);
+                            setPerfilAcessoFormOpen(true);
+                          }}
+                          className="bg-red-600 hover:bg-red-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {perfisAcesso.map(perfil => (
+                        <div key={perfil.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{perfil.nome_perfil}</p>
+                            <Badge className={perfil.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                              {perfil.ativo ? 'Ativo' : 'Inativo'}
+                            </Badge>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setPerfilSelecionado(perfil);
+                              setPerfilAcessoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-red-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1111,31 +1790,87 @@ export default function Cadastros() {
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* EVENTOS DE NOTIFICAÇÃO */}
                   <Card className="border-cyan-200">
                     <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
-                      <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setEventoSelecionado(null);
+                            setEventoNotificacaoFormOpen(true);
+                          }}
+                          className="bg-cyan-600 hover:bg-cyan-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {eventosNotificacao.map(evento => (
-                        <div key={evento.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{evento.nome_evento}</p>
-                          <Badge variant="outline" className="text-xs">{evento.tipo_evento}</Badge>
+                        <div key={evento.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{evento.nome_evento}</p>
+                            <Badge variant="outline" className="text-xs">{evento.tipo_evento}</Badge>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setEventoSelecionado(evento);
+                              setEventoNotificacaoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-cyan-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
                   </Card>
 
+                  {/* CONFIGURAÇÕES DE INTEGRAÇÃO */}
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
-                      <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
+                        <Button 
+                          size="sm"
+                          onClick={() => {
+                            setConfigSelecionada(null);
+                            setConfigIntegracaoFormOpen(true);
+                          }}
+                          className="bg-purple-600 hover:bg-purple-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {configsIntegracao.map(config => (
-                        <div key={config.id} className="p-2 border-b">
-                          <p className="font-semibold text-sm">{config.marketplace}</p>
-                          <Badge className={config.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                            {config.ativo ? 'Ativa' : 'Inativa'}
-                          </Badge>
+                        <div key={config.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{config.marketplace}</p>
+                            <Badge className={config.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                              {config.ativo ? 'Ativa' : 'Inativa'}
+                            </Badge>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setConfigSelecionada(config);
+                              setConfigIntegracaoFormOpen(true);
+                            }}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-purple-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1207,7 +1942,9 @@ export default function Cadastros() {
         </TabsContent>
       </Tabs>
 
-      {/* DIALOGS */}
+      {/* ==================== DIALOGS - TODOS OS FORMULÁRIOS ==================== */}
+      
+      {/* CLIENTES */}
       <CadastroClienteCompleto
         cliente={clienteSelecionado}
         isOpen={cadastroCompletoAberto}
@@ -1220,6 +1957,7 @@ export default function Cadastros() {
         }}
       />
 
+      {/* FORNECEDORES */}
       <CadastroFornecedorCompleto
         fornecedor={fornecedorSelecionado}
         isOpen={cadastroFornecedorAberto}
@@ -1232,32 +1970,107 @@ export default function Cadastros() {
         }}
       />
 
-      <Dialog open={tabelaPrecoFormOpen} onOpenChange={setTabelaPrecoFormOpen}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
+      {/* TRANSPORTADORAS */}
+      <Dialog open={transportadoraFormOpen} onOpenChange={setTransportadoraFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {tabelaSelecionadaEditar ? 'Editar' : 'Nova'} Tabela de Preço
-            </DialogTitle>
+            <DialogTitle>{transportadoraSelecionada ? 'Editar' : 'Nova'} Transportadora</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
-            <TabelaPrecoFormCompleto
-              tabela={tabelaSelecionadaEditar}
-              onSubmit={() => {
-                setTabelaPrecoFormOpen(false);
-                setTabelaSelecionadaEditar(null);
-                queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
-              }}
-            />
-          </div>
+          <TransportadoraForm
+            transportadora={transportadoraSelecionada}
+            onSubmit={async (data) => {
+              if (transportadoraSelecionada?.id) {
+                await base44.entities.Transportadora.update(transportadoraSelecionada.id, data);
+                toast({ title: '✅ Transportadora atualizada!' });
+              } else {
+                await base44.entities.Transportadora.create(data);
+                toast({ title: '✅ Transportadora criada!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['transportadoras'] });
+              setTransportadoraFormOpen(false);
+              setTransportadoraSelecionada(null);
+            }}
+          />
         </DialogContent>
       </Dialog>
 
+      {/* COLABORADORES */}
+      <Dialog open={colaboradorFormOpen} onOpenChange={setColaboradorFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{colaboradorSelecionado ? 'Editar' : 'Novo'} Colaborador</DialogTitle>
+          </DialogHeader>
+          <ColaboradorForm
+            colaborador={colaboradorSelecionado}
+            onSubmit={async (data) => {
+              if (colaboradorSelecionado?.id) {
+                await base44.entities.Colaborador.update(colaboradorSelecionado.id, data);
+                toast({ title: '✅ Colaborador atualizado!' });
+              } else {
+                await base44.entities.Colaborador.create(data);
+                toast({ title: '✅ Colaborador criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['colaboradores'] });
+              setColaboradorFormOpen(false);
+              setColaboradorSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* REPRESENTANTES */}
+      <Dialog open={representanteFormOpen} onOpenChange={setRepresentanteFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{representanteSelecionado ? 'Editar' : 'Novo'} Representante</DialogTitle>
+          </DialogHeader>
+          <RepresentanteForm
+            representante={representanteSelecionado}
+            onSubmit={async (data) => {
+              if (representanteSelecionado?.id) {
+                await base44.entities.Representante.update(representanteSelecionado.id, data);
+                toast({ title: '✅ Representante atualizado!' });
+              } else {
+                await base44.entities.Representante.create(data);
+                toast({ title: '✅ Representante criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['representantes'] });
+              setRepresentanteFormOpen(false);
+              setRepresentanteSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* CONTATOS B2B */}
+      <Dialog open={contatoB2BFormOpen} onOpenChange={setContatoB2BFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{contatoB2BSelecionado ? 'Editar' : 'Novo'} Contato B2B</DialogTitle>
+          </DialogHeader>
+          <ContatoB2BForm
+            contato={contatoB2BSelecionado}
+            onSubmit={async (data) => {
+              if (contatoB2BSelecionado?.id) {
+                await base44.entities.ContatoB2B.update(contatoB2BSelecionado.id, data);
+                toast({ title: '✅ Contato atualizado!' });
+              } else {
+                await base44.entities.ContatoB2B.create(data);
+                toast({ title: '✅ Contato criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['contatos-b2b'] });
+              setContatoB2BFormOpen(false);
+              setContatoB2BSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* PRODUTOS */}
       <Dialog open={produtoFormOpen} onOpenChange={setProdutoFormOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>
-              {produtoSelecionado ? 'Editar' : 'Novo'} Produto
-            </DialogTitle>
+            <DialogTitle>{produtoSelecionado ? 'Editar' : 'Novo'} Produto</DialogTitle>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto">
             <ProdutoFormV22_Completo
@@ -1272,31 +2085,476 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
+      {/* SETORES DE ATIVIDADE */}
       <Dialog open={setorAtividadeFormOpen} onOpenChange={setSetorAtividadeFormOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              {setorSelecionado ? 'Editar' : 'Novo'} Setor de Atividade
-            </DialogTitle>
+            <DialogTitle>{setorSelecionado ? 'Editar' : 'Novo'} Setor de Atividade</DialogTitle>
           </DialogHeader>
           <SetorAtividadeForm
             setor={setorSelecionado}
-            onSubmit={(data) => {
+            onSubmit={async (data) => {
               if (setorSelecionado?.id) {
-                base44.entities.SetorAtividade.update(setorSelecionado.id, data).then(() => {
-                  queryClient.invalidateQueries({ queryKey: ['setores-atividade'] });
-                  setSetorAtividadeFormOpen(false);
-                  setSetorSelecionado(null);
-                  toast({ title: '✅ Setor atualizado com sucesso!' });
-                });
+                await base44.entities.SetorAtividade.update(setorSelecionado.id, data);
+                toast({ title: '✅ Setor atualizado com sucesso!' });
               } else {
-                base44.entities.SetorAtividade.create(data).then(() => {
-                  queryClient.invalidateQueries({ queryKey: ['setores-atividade'] });
-                  setSetorAtividadeFormOpen(false);
-                  setSetorSelecionado(null);
-                  toast({ title: '✅ Setor criado com sucesso!' });
-                });
+                await base44.entities.SetorAtividade.create(data);
+                toast({ title: '✅ Setor criado com sucesso!' });
               }
+              queryClient.invalidateQueries({ queryKey: ['setores-atividade'] });
+              setSetorAtividadeFormOpen(false);
+              setSetorSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* GRUPOS DE PRODUTO */}
+      <Dialog open={grupoProdutoFormOpen} onOpenChange={setGrupoProdutoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{grupoProdutoSelecionado ? 'Editar' : 'Novo'} Grupo de Produto</DialogTitle>
+          </DialogHeader>
+          <GrupoProdutoForm
+            grupo={grupoProdutoSelecionado}
+            onSubmit={async (data) => {
+              if (grupoProdutoSelecionado?.id) {
+                await base44.entities.GrupoProduto.update(grupoProdutoSelecionado.id, data);
+                toast({ title: '✅ Grupo atualizado!' });
+              } else {
+                await base44.entities.GrupoProduto.create(data);
+                toast({ title: '✅ Grupo criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['grupos-produto'] });
+              setGrupoProdutoFormOpen(false);
+              setGrupoProdutoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* MARCAS */}
+      <Dialog open={marcaFormOpen} onOpenChange={setMarcaFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{marcaSelecionada ? 'Editar' : 'Nova'} Marca</DialogTitle>
+          </DialogHeader>
+          <MarcaForm
+            marca={marcaSelecionada}
+            onSubmit={async (data) => {
+              if (marcaSelecionada?.id) {
+                await base44.entities.Marca.update(marcaSelecionada.id, data);
+                toast({ title: '✅ Marca atualizada!' });
+              } else {
+                await base44.entities.Marca.create(data);
+                toast({ title: '✅ Marca criada!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['marcas'] });
+              setMarcaFormOpen(false);
+              setMarcaSelecionada(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* TABELAS DE PREÇO */}
+      <Dialog open={tabelaPrecoFormOpen} onOpenChange={setTabelaPrecoFormOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{tabelaSelecionadaEditar ? 'Editar' : 'Nova'} Tabela de Preço</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            <TabelaPrecoFormCompleto
+              tabela={tabelaSelecionadaEditar}
+              onSubmit={() => {
+                setTabelaPrecoFormOpen(false);
+                setTabelaSelecionadaEditar(null);
+                queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* SERVIÇOS */}
+      <Dialog open={servicoFormOpen} onOpenChange={setServicoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{servicoSelecionado ? 'Editar' : 'Novo'} Serviço</DialogTitle>
+          </DialogHeader>
+          <ServicoForm
+            servico={servicoSelecionado}
+            onSubmit={async (data) => {
+              if (servicoSelecionado?.id) {
+                await base44.entities.Servico.update(servicoSelecionado.id, data);
+                toast({ title: '✅ Serviço atualizado!' });
+              } else {
+                await base44.entities.Servico.create(data);
+                toast({ title: '✅ Serviço criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['servicos'] });
+              setServicoFormOpen(false);
+              setServicoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* BANCOS */}
+      <Dialog open={bancoFormOpen} onOpenChange={setBancoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{bancoSelecionado ? 'Editar' : 'Novo'} Banco</DialogTitle>
+          </DialogHeader>
+          <BancoForm
+            banco={bancoSelecionado}
+            onSubmit={async (data) => {
+              if (bancoSelecionado?.id) {
+                await base44.entities.Banco.update(bancoSelecionado.id, data);
+                toast({ title: '✅ Banco atualizado!' });
+              } else {
+                await base44.entities.Banco.create(data);
+                toast({ title: '✅ Banco criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['bancos'] });
+              setBancoFormOpen(false);
+              setBancoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* FORMAS DE PAGAMENTO */}
+      <Dialog open={formaPagamentoFormOpen} onOpenChange={setFormaPagamentoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{formaPagamentoSelecionada ? 'Editar' : 'Nova'} Forma de Pagamento</DialogTitle>
+          </DialogHeader>
+          <FormaPagamentoForm
+            forma={formaPagamentoSelecionada}
+            onSubmit={async (data) => {
+              if (formaPagamentoSelecionada?.id) {
+                await base44.entities.FormaPagamento.update(formaPagamentoSelecionada.id, data);
+                toast({ title: '✅ Forma de pagamento atualizada!' });
+              } else {
+                await base44.entities.FormaPagamento.create(data);
+                toast({ title: '✅ Forma de pagamento criada!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['formas-pagamento'] });
+              setFormaPagamentoFormOpen(false);
+              setFormaPagamentoSelecionada(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* CENTROS DE CUSTO */}
+      <Dialog open={centroCustoFormOpen} onOpenChange={setCentroCustoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{centroCustoSelecionado ? 'Editar' : 'Novo'} Centro de Custo</DialogTitle>
+          </DialogHeader>
+          <CentroCustoForm
+            centroCusto={centroCustoSelecionado}
+            onSubmit={async (data) => {
+              if (centroCustoSelecionado?.id) {
+                await base44.entities.CentroCusto.update(centroCustoSelecionado.id, data);
+                toast({ title: '✅ Centro de custo atualizado!' });
+              } else {
+                await base44.entities.CentroCusto.create(data);
+                toast({ title: '✅ Centro de custo criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['centrosCusto'] });
+              setCentroCustoFormOpen(false);
+              setCentroCustoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* VEÍCULOS */}
+      <Dialog open={veiculoFormOpen} onOpenChange={setVeiculoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{veiculoSelecionado ? 'Editar' : 'Novo'} Veículo</DialogTitle>
+          </DialogHeader>
+          <VeiculoForm
+            veiculo={veiculoSelecionado}
+            onSubmit={async (data) => {
+              if (veiculoSelecionado?.id) {
+                await base44.entities.Veiculo.update(veiculoSelecionado.id, data);
+                toast({ title: '✅ Veículo atualizado!' });
+              } else {
+                await base44.entities.Veiculo.create(data);
+                toast({ title: '✅ Veículo criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['veiculos'] });
+              setVeiculoFormOpen(false);
+              setVeiculoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* MOTORISTAS */}
+      <Dialog open={motoristaFormOpen} onOpenChange={setMotoristaFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{motoristaSelecionado ? 'Editar' : 'Novo'} Motorista</DialogTitle>
+          </DialogHeader>
+          <MotoristaForm
+            motorista={motoristaSelecionado}
+            onSubmit={async (data) => {
+              if (motoristaSelecionado?.id) {
+                await base44.entities.Motorista.update(motoristaSelecionado.id, data);
+                toast({ title: '✅ Motorista atualizado!' });
+              } else {
+                await base44.entities.Motorista.create(data);
+                toast({ title: '✅ Motorista criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['motoristas'] });
+              setMotoristaFormOpen(false);
+              setMotoristaSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* TIPOS DE FRETE */}
+      <Dialog open={tipoFreteFormOpen} onOpenChange={setTipoFreteFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{tipoFreteSelecionado ? 'Editar' : 'Novo'} Tipo de Frete</DialogTitle>
+          </DialogHeader>
+          <TipoFreteForm
+            tipo={tipoFreteSelecionado}
+            onSubmit={async (data) => {
+              if (tipoFreteSelecionado?.id) {
+                await base44.entities.TipoFrete.update(tipoFreteSelecionado.id, data);
+                toast({ title: '✅ Tipo de frete atualizado!' });
+              } else {
+                await base44.entities.TipoFrete.create(data);
+                toast({ title: '✅ Tipo de frete criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['tipos-frete'] });
+              setTipoFreteFormOpen(false);
+              setTipoFreteSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* EMPRESAS */}
+      <Dialog open={empresaFormOpen} onOpenChange={setEmpresaFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{empresaSelecionada ? 'Editar' : 'Nova'} Empresa</DialogTitle>
+          </DialogHeader>
+          <EmpresaForm
+            empresa={empresaSelecionada}
+            onSubmit={async (data) => {
+              if (empresaSelecionada?.id) {
+                await base44.entities.Empresa.update(empresaSelecionada.id, data);
+                toast({ title: '✅ Empresa atualizada!' });
+              } else {
+                await base44.entities.Empresa.create(data);
+                toast({ title: '✅ Empresa criada!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['empresas'] });
+              setEmpresaFormOpen(false);
+              setEmpresaSelecionada(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* GRUPOS EMPRESARIAIS */}
+      <Dialog open={grupoEmpresarialFormOpen} onOpenChange={setGrupoEmpresarialFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{grupoSelecionado ? 'Editar' : 'Novo'} Grupo Empresarial</DialogTitle>
+          </DialogHeader>
+          <GrupoEmpresarialForm
+            grupo={grupoSelecionado}
+            onSubmit={async (data) => {
+              if (grupoSelecionado?.id) {
+                await base44.entities.GrupoEmpresarial.update(grupoSelecionado.id, data);
+                toast({ title: '✅ Grupo atualizado!' });
+              } else {
+                await base44.entities.GrupoEmpresarial.create(data);
+                toast({ title: '✅ Grupo criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['grupos'] });
+              setGrupoEmpresarialFormOpen(false);
+              setGrupoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* DEPARTAMENTOS */}
+      <Dialog open={departamentoFormOpen} onOpenChange={setDepartamentoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{departamentoSelecionado ? 'Editar' : 'Novo'} Departamento</DialogTitle>
+          </DialogHeader>
+          <DepartamentoForm
+            departamento={departamentoSelecionado}
+            onSubmit={async (data) => {
+              if (departamentoSelecionado?.id) {
+                await base44.entities.Departamento.update(departamentoSelecionado.id, data);
+                toast({ title: '✅ Departamento atualizado!' });
+              } else {
+                await base44.entities.Departamento.create(data);
+                toast({ title: '✅ Departamento criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['departamentos'] });
+              setDepartamentoFormOpen(false);
+              setDepartamentoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* CARGOS */}
+      <Dialog open={cargoFormOpen} onOpenChange={setCargoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{cargoSelecionado ? 'Editar' : 'Novo'} Cargo</DialogTitle>
+          </DialogHeader>
+          <CargoForm
+            cargo={cargoSelecionado}
+            onSubmit={async (data) => {
+              if (cargoSelecionado?.id) {
+                await base44.entities.Cargo.update(cargoSelecionado.id, data);
+                toast({ title: '✅ Cargo atualizado!' });
+              } else {
+                await base44.entities.Cargo.create(data);
+                toast({ title: '✅ Cargo criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['cargos'] });
+              setCargoFormOpen(false);
+              setCargoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* TURNOS */}
+      <Dialog open={turnoFormOpen} onOpenChange={setTurnoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{turnoSelecionado ? 'Editar' : 'Novo'} Turno</DialogTitle>
+          </DialogHeader>
+          <TurnoForm
+            turno={turnoSelecionado}
+            onSubmit={async (data) => {
+              if (turnoSelecionado?.id) {
+                await base44.entities.Turno.update(turnoSelecionado.id, data);
+                toast({ title: '✅ Turno atualizado!' });
+              } else {
+                await base44.entities.Turno.create(data);
+                toast({ title: '✅ Turno criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['turnos'] });
+              setTurnoFormOpen(false);
+              setTurnoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* USUÁRIOS */}
+      <Dialog open={usuarioFormOpen} onOpenChange={setUsuarioFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{usuarioSelecionado ? 'Editar' : 'Novo'} Usuário</DialogTitle>
+          </DialogHeader>
+          <UsuarioForm
+            usuario={usuarioSelecionado}
+            onSubmit={async (data) => {
+              if (usuarioSelecionado?.id) {
+                await base44.entities.User.update(usuarioSelecionado.id, data);
+                toast({ title: '✅ Usuário atualizado!' });
+              } else {
+                await base44.entities.User.create(data);
+                toast({ title: '✅ Usuário criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+              setUsuarioFormOpen(false);
+              setUsuarioSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* PERFIS DE ACESSO */}
+      <Dialog open={perfilAcessoFormOpen} onOpenChange={setPerfilAcessoFormOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{perfilSelecionado ? 'Editar' : 'Novo'} Perfil de Acesso</DialogTitle>
+          </DialogHeader>
+          <PerfilAcessoForm
+            perfil={perfilSelecionado}
+            onSubmit={async (data) => {
+              if (perfilSelecionado?.id) {
+                await base44.entities.PerfilAcesso.update(perfilSelecionado.id, data);
+                toast({ title: '✅ Perfil atualizado!' });
+              } else {
+                await base44.entities.PerfilAcesso.create(data);
+                toast({ title: '✅ Perfil criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
+              setPerfilAcessoFormOpen(false);
+              setPerfilSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* EVENTOS DE NOTIFICAÇÃO */}
+      <Dialog open={eventoNotificacaoFormOpen} onOpenChange={setEventoNotificacaoFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{eventoSelecionado ? 'Editar' : 'Novo'} Evento de Notificação</DialogTitle>
+          </DialogHeader>
+          <EventoNotificacaoForm
+            evento={eventoSelecionado}
+            onSubmit={async (data) => {
+              if (eventoSelecionado?.id) {
+                await base44.entities.EventoNotificacao.update(eventoSelecionado.id, data);
+                toast({ title: '✅ Evento atualizado!' });
+              } else {
+                await base44.entities.EventoNotificacao.create(data);
+                toast({ title: '✅ Evento criado!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['eventos-notificacao'] });
+              setEventoNotificacaoFormOpen(false);
+              setEventoSelecionado(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* CONFIGURAÇÕES DE INTEGRAÇÃO */}
+      <Dialog open={configIntegracaoFormOpen} onOpenChange={setConfigIntegracaoFormOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{configSelecionada ? 'Editar' : 'Nova'} Configuração de Integração</DialogTitle>
+          </DialogHeader>
+          <ConfiguracaoIntegracaoForm
+            config={configSelecionada}
+            onSubmit={async (data) => {
+              if (configSelecionada?.id) {
+                await base44.entities.ConfiguracaoIntegracaoMarketplace.update(configSelecionada.id, data);
+                toast({ title: '✅ Configuração atualizada!' });
+              } else {
+                await base44.entities.ConfiguracaoIntegracaoMarketplace.create(data);
+                toast({ title: '✅ Configuração criada!' });
+              }
+              queryClient.invalidateQueries({ queryKey: ['configs-integracao-marketplace'] });
+              setConfigIntegracaoFormOpen(false);
+              setConfigSelecionada(null);
             }}
           />
         </DialogContent>
