@@ -111,10 +111,11 @@ import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 import MultiTabelasEditor from "../components/cadastros/MultiTabelasEditor";
 import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
 import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoProduto";
+import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 
 /**
- * CADASTROS GERAIS V20.1 - HUB CENTRAL COM AUDITORIA COMPLETA
- * Blocos 1/6, 2/6, 3/6, 4/6 e 5/6 totalmente sincronizados
+ * CADASTROS GERAIS V21.0 - HUB CENTRAL COM DUPLA CLASSIFICAÇÃO
+ * Regra-Mãe: Acrescentar • Reorganizar • Conectar • Melhorar – nunca apagar
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -185,6 +186,8 @@ export default function Cadastros() {
   const [motoristaFormOpen, setMotoristaFormOpen] = useState(false);
   const [tipoFreteFormOpen, setTipoFreteFormOpen] = useState(false);
   const [modeloDocumentoFormOpen, setModeloDocumentoFormOpen] = useState(false);
+
+  const [setorAtividadeFormOpen, setSetorAtividadeFormOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -371,6 +374,11 @@ export default function Cadastros() {
     queryFn: () => base44.entities.ModeloDocumento.list(),
   });
 
+  const { data: setoresAtividade = [] } = useQuery({
+    queryKey: ['setores-atividade'],
+    queryFn: () => base44.entities.SetorAtividade.list(),
+  });
+
   // MUTATIONS UNIVERSAIS - TODAS AS ENTIDADES
   const createMutation = useMutation({
     mutationFn: async ({ entity, data }) => {
@@ -412,7 +420,8 @@ export default function Cadastros() {
         'MoedaIndice': 'moedas-indices',
         'Motorista': 'motoristas',
         'TipoFrete': 'tipos-frete',
-        'ModeloDocumento': 'modelos-documento'
+        'ModeloDocumento': 'modelos-documento',
+        'SetorAtividade': 'setores-atividade'
       };
       // Use variables.entity directly if it's the exact key, otherwise map
       const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
@@ -468,7 +477,8 @@ export default function Cadastros() {
         'MoedaIndice': 'moedas-indices',
         'Motorista': 'motoristas',
         'TipoFrete': 'tipos-frete',
-        'ModeloDocumento': 'modelos-documento'
+        'ModeloDocumento': 'modelos-documento',
+        'SetorAtividade': 'setores-atividade'
       };
       const invalidateKey = queryMap[variables.entity] || variables.entity.toLowerCase() + 's';
       queryClient.invalidateQueries({ queryKey: [invalidateKey] });
@@ -564,7 +574,7 @@ export default function Cadastros() {
 
   const totalItensGrupo1 = empresas.length + grupos.length + usuarios.length + perfisAcesso.length + departamentos.length + cargos.length + turnos.length + centrosCusto.length;
   const totalItensGrupo2 = clientes.length + fornecedores.length + colaboradores.length + transportadoras.length + contatosB2B.length + representantes.length + condicoesComerciais.length + segmentosCliente.length;
-  const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length;
+  const totalItensGrupo3 = produtos.length + servicos.length + tabelasPreco.length + catalogoWeb.length + gruposProduto.length + marcas.length + kits.length + setoresAtividade.length;
   const totalItensGrupo4 = bancos.length + formasPagamento.length + planoContas.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length;
   const totalItensGrupo5 = veiculos.length + motoristas.length + tiposFrete.length + modelosDocumento.length;
 
@@ -574,14 +584,19 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V20.1
+            🚀 Cadastros Gerais V21.0
           </h1>
-          <p className="text-slate-600">Hub Central - Visualização e Edição Completa</p>
+          <p className="text-slate-600">Hub Central - Fonte Única de Verdade • Dupla Classificação • IA Ativa</p>
         </div>
-        <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
-          <Sparkles className="w-4 h-4 mr-2" />
-          28 IAs Ativas
-        </Badge>
+        <div className="flex gap-2">
+          <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
+            <Sparkles className="w-4 h-4 mr-2" />
+            28 IAs Ativas
+          </Badge>
+          <Badge className="bg-green-600 text-white px-4 py-2">
+            V21.0 - Regra-Mãe
+          </Badge>
+        </div>
       </div>
 
       {/* DASHBOARD DE CARDS */}
@@ -665,7 +680,7 @@ export default function Cadastros() {
       </div>
 
       {/* ACCORDION COM 6 GRUPOS */}
-      <Accordion type="multiple" defaultValue={["grupo-1"]} className="space-y-4">
+      <Accordion type="multiple" defaultValue={["grupo-1", "grupo-3"]} className="space-y-4">
         
         {/* 🏢 GRUPO 1: EMPRESA E ESTRUTURA - SINCRONIZADO V20.1 */}
         <AccordionItem value="grupo-1" className="border-0 shadow-md rounded-lg overflow-hidden">
@@ -1405,7 +1420,7 @@ export default function Cadastros() {
           </AccordionContent>
         </AccordionItem>
 
-        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - V21.1.2-R2 APRIMORADO */}
+        {/* 🧱 GRUPO 3: PRODUTOS E SERVIÇOS - V21.0 RECONSTRUÍDO */}
         <AccordionItem value="grupo-3" className="border-0 shadow-md rounded-lg overflow-hidden">
           <AccordionTrigger className="px-6 py-4 bg-gradient-to-r from-purple-50 to-pink-50 hover:bg-purple-100 transition-colors">
             <div className="flex items-center gap-3">
@@ -1413,8 +1428,8 @@ export default function Cadastros() {
                 <Package className="w-6 h-6 text-white" />
               </div>
               <div className="text-left">
-                <h3 className="font-bold text-lg">🧱 Produtos e Serviços V21.1.2-R2</h3>
-                <p className="text-xs text-slate-600">Cadastro Master com IA, NF-e, Lote, Conversões e E-commerce</p>
+                <h3 className="font-bold text-lg">🧱 Produtos e Serviços V21.0</h3>
+                <p className="text-xs text-slate-600">Dupla Classificação • Cadastro Manual/IA/NF-e/Lote • Tabelas de Preço</p>
               </div>
               <Badge className="ml-auto">
                 {totalItensGrupo3} itens
@@ -1422,20 +1437,184 @@ export default function Cadastros() {
             </div>
           </AccordionTrigger>
           <AccordionContent className="px-6 py-4 bg-white space-y-6">
-            {/* ALERTAS V21.1.2-R2 */}
-            <div className="grid lg:grid-cols-2 gap-4">
-              <Alert className="border-blue-200 bg-blue-50">
-                <AlertDescription className="text-sm text-blue-900">
-                  ✅ <strong>V21.1.2-R2:</strong> Cadastro com 5 abas (Dados, Conversões, Dimensões, E-commerce, Histórico)
+            {/* ALERTAS V21.0 */}
+            <div className="grid lg:grid-cols-3 gap-4">
+              <Alert className="border-purple-200 bg-purple-50">
+                <CheckCircle2 className="w-4 h-4 text-purple-600" />
+                <AlertDescription className="text-sm text-purple-900">
+                  ✅ <strong>V21.0:</strong> Dupla Classificação obrigatória (Setor + Grupo + Marca)
                 </AlertDescription>
               </Alert>
 
-              <Alert className="border-purple-200 bg-purple-50">
-                <Sparkles className="w-4 h-4 text-purple-600" />
-                <AlertDescription className="text-sm text-purple-900">
-                  🤖 <strong>IA Ativa:</strong> NCM, Bitola, Peso, Tributação, SEO e Imagem automáticos
+              <Alert className="border-blue-200 bg-blue-50">
+                <Sparkles className="w-4 h-4 text-blue-600" />
+                <AlertDescription className="text-sm text-blue-900">
+                  🤖 <strong>3 Modos:</strong> Manual, Assistido IA, Automático via NF-e
                 </AlertDescription>
               </Alert>
+
+              <Alert className="border-green-200 bg-green-50">
+                <Package className="w-4 h-4 text-green-600" />
+                <AlertDescription className="text-sm text-green-900">
+                  📦 <strong>Multi-Unidade:</strong> Conversão automática KG ↔ MT ↔ PÇ
+                </AlertDescription>
+              </Alert>
+            </div>
+
+            {/* NOVA SEÇÃO: SETORES DE ATIVIDADE */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Factory className="w-5 h-5 text-indigo-600" />
+                  Setores de Atividade ({setoresAtividade.length})
+                </h4>
+                <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700" onClick={() => handleOpenNew('setores-atividade', 'SetorAtividade')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Setor
+                </Button>
+              </div>
+              
+              <Alert className="border-indigo-200 bg-indigo-50 mb-3">
+                <AlertDescription className="text-sm text-indigo-900">
+                  🎯 <strong>Classificação Obrigatória 1/2:</strong> Todo produto deve ter um Setor de Atividade (Revenda, Almoxarifado, Fábrica, etc)
+                </AlertDescription>
+              </Alert>
+
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Tipo Operação</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {setoresAtividade.map((setor) => (
+                      <TableRow key={setor.id} className="hover:bg-slate-50">
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {setor.icone && <span className="text-lg">{setor.icone}</span>}
+                            <span className="font-medium text-sm">{setor.nome}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs">{setor.tipo_operacao}</TableCell>
+                        <TableCell>
+                          <Badge className={setor.ativo ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}>
+                            {setor.ativo ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(setor, 'setores-atividade', 'SetorAtividade')}>
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {setoresAtividade.length === 0 && (
+                <Card className="border-dashed border-2 mt-3">
+                  <CardContent className="p-6 text-center text-slate-500">
+                    <Factory className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">Nenhum setor cadastrado</p>
+                    <p className="text-xs mt-1">Crie setores como: Revenda, Almoxarifado, Fábrica, Corte e Dobra, etc.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* GRUPOS DE PRODUTOS - CLASSIFICAÇÃO 2/2 */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Boxes className="w-5 h-5 text-cyan-600" />
+                  Grupos/Linhas de Produtos ({gruposProduto.length})
+                </h4>
+                <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700" onClick={() => handleOpenNew('grupos-produto', 'GrupoProduto')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Grupo
+                </Button>
+              </div>
+
+              <Alert className="border-cyan-200 bg-cyan-50 mb-3">
+                <AlertDescription className="text-sm text-cyan-900">
+                  🎯 <strong>Classificação Obrigatória 2/2:</strong> Todo produto deve ter um Grupo/Linha (Vergalhões, Telas, Arames, etc)
+                </AlertDescription>
+              </Alert>
+              
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                <Table>
+                  <TableHeader className="sticky top-0 bg-slate-50">
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Natureza</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {gruposProduto.map((g) => (
+                      <TableRow key={g.id} className="hover:bg-slate-50">
+                        <TableCell className="font-medium text-sm">{g.nome_grupo}</TableCell>
+                        <TableCell className="text-xs">{g.natureza}</TableCell>
+                        <TableCell className="text-right">
+                          <Button size="sm" variant="ghost" onClick={() => handleEdit(g, 'grupos-produto', 'GrupoProduto')}>
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* MARCAS - OBRIGATÓRIO V21.0 */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="font-bold flex items-center gap-2">
+                  <Award className="w-5 h-5 text-orange-600" />
+                  Marcas ({marcas.length})
+                </h4>
+                <Button size="sm" className="bg-orange-600 hover:bg-orange-700" onClick={() => handleOpenNew('marcas', 'Marca')}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Marca
+                </Button>
+              </div>
+
+              <Alert className="border-orange-200 bg-orange-50 mb-3">
+                <AlertDescription className="text-sm text-orange-900">
+                  🏷️ <strong>Campo Obrigatório V21.0:</strong> Todo produto deve ter Marca (IA sugere a partir do fornecedor/NF-e)
+                </AlertDescription>
+              </Alert>
+              
+              <div className="border rounded-lg max-h-64 overflow-y-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-slate-50">
+                      <TableRow>
+                        <TableHead>Marca</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {marcas.map((m) => (
+                        <TableRow key={m.id} className="hover:bg-slate-50">
+                          <TableCell className="font-medium text-sm">{m.nome_marca}</TableCell>
+                          <TableCell className="text-xs">{m.categoria}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="sm" variant="ghost" onClick={() => handleEdit(m, 'marcas', 'Marca')}>
+                              <Edit className="w-3 h-3" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
             </div>
 
             {/* PRODUTOS - HEADER COM IMPORTAÇÃO */}
@@ -1573,82 +1752,6 @@ export default function Cadastros() {
 
             {/* Grid 2x2 - Outros Cadastros do Grupo 3 - TABELAS COMPLETAS */}
             <div className="grid lg:grid-cols-2 gap-6">
-              {/* Grupos Produto */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Boxes className="w-4 h-4 text-cyan-600" />
-                    Grupos ({gruposProduto.length})
-                  </h4>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('grupos-produto', 'GrupoProduto')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Novo Grupo
-                  </Button>
-                </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Natureza</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {gruposProduto.map((g) => (
-                        <TableRow key={g.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{g.nome_grupo}</TableCell>
-                          <TableCell className="text-xs">{g.natureza}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(g, 'grupos-produto', 'GrupoProduto')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Marcas */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="font-bold flex items-center gap-2">
-                    <Award className="w-4 h-4 text-orange-600" />
-                    Marcas ({marcas.length})
-                  </h4>
-                  <Button size="sm" variant="outline" onClick={() => handleOpenNew('marcas', 'Marca')}>
-                    <Plus className="w-3 h-3 mr-2" />
-                    Nova Marca
-                  </Button>
-                </div>
-                <div className="border rounded-lg max-h-64 overflow-y-auto">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-slate-50">
-                      <TableRow>
-                        <TableHead>Marca</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {marcas.map((m) => (
-                        <TableRow key={m.id} className="hover:bg-slate-50">
-                          <TableCell className="font-medium text-sm">{m.nome_marca}</TableCell>
-                          <TableCell className="text-xs">{m.categoria}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(m, 'marcas', 'Marca')}>
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
               {/* Kits */}
               <div>
                 <div className="flex justify-between items-center mb-3">
@@ -1770,7 +1873,7 @@ export default function Cadastros() {
                     <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
                     <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
-                  </div>
+                  </CardContent>
                 )}
               </div>
 
@@ -1848,7 +1951,7 @@ export default function Cadastros() {
               <Alert className="border-purple-200 bg-purple-50">
                 <Sparkles className="w-4 h-4 text-purple-600" />
                 <AlertDescription className="text-sm text-purple-900">
-                  🤖 <strong>IA Cadastro Automático:</strong> Preenche NCM, peso e grupo a partir da descrição
+                  🤖 <strong>IA Cadastro Automático:</strong> Preenche NCM, peso, setor e grupo a partir da descrição
                 </AlertDescription>
               </Alert>
 
@@ -2814,6 +2917,7 @@ export default function Cadastros() {
               {tipoDialog === 'motoristas' && 'Motorista'}
               {tipoDialog === 'tipos-frete' && 'Tipo de Frete'}
               {tipoDialog === 'modelos' && 'Modelo de Documento'}
+              {tipoDialog === 'setores-atividade' && 'Setor de Atividade'}
             </DialogTitle>
           </DialogHeader>
           
@@ -2860,6 +2964,7 @@ export default function Cadastros() {
           {tipoDialog === 'motoristas' && <MotoristaForm motorista={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'tipos-frete' && <TipoFreteForm tipo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
           {tipoDialog === 'modelos' && <ModeloDocumentoForm modelo={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
+          {tipoDialog === 'setores-atividade' && <SetorAtividadeForm setor={editingItem} onSubmit={handleSubmit} isSubmitting={createMutation.isPending || updateMutation.isPending} />}
         </DialogContent>
       </Dialog>
 
