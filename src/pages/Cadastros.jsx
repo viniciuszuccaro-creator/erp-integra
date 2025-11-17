@@ -53,7 +53,7 @@ import {
   Receipt,
   TrendingUp,
   Eye,
-  Layers, // Added Layers icon
+  Layers,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -79,7 +79,7 @@ import BancoForm from "../components/cadastros/BancoForm";
 import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
 import VeiculoForm from "../components/cadastros/VeiculoForm";
 import EmpresaForm from "../components/cadastros/EmpresaForm";
-import ProdutoForm from "../components/cadastros/ProdutoForm"; // Keeping this import, but ProdutoFormV22_Completo will be used for main product editing
+import ProdutoForm from "../components/cadastros/ProdutoForm";
 import ServicoForm from "../components/cadastros/ServicoForm";
 import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
 import CatalogoWebForm from "../components/cadastros/CatalogoWebForm";
@@ -1890,14 +1890,15 @@ export default function Cadastros() {
                 </div>
 
                 {tabelasPreco.length === 0 && (
-                  <div className="text-center py-8 text-slate-500 border rounded-lg mt-2">
-                    <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                    <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
-                    <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                  <Card className="border-dashed border-2 mt-2">
+                    <CardContent className="p-8 text-center text-slate-500">
+                      <DollarSign className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p className="text-sm">Nenhuma tabela de preço cadastrada</p>
+                      <p className="text-xs">Crie tabelas para Varejo, Atacado, Obra, etc.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
 
             {/* Catálogo Web */}
             <div>
@@ -1949,7 +1950,7 @@ export default function Cadastros() {
                 <div className="flex items-center gap-3 mb-3">
                   <Package className="w-5 h-5 text-purple-600" />
                   <h4 className="font-semibold">Bitolas</h4>
-                  <Badge className="ml-auto bg-purple-600 text-white">
+                  <Badge className="ml-auto">
                     {produtos.filter(p => p.eh_bitola).length}
                   </Badge>
                 </div>
