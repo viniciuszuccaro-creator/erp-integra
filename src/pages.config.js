@@ -26,6 +26,7 @@ import ChatbotAtendimento from './pages/ChatbotAtendimento';
 import ValidadorFase1 from './pages/ValidadorFase1';
 import LimparDados from './pages/LimparDados';
 import DemoMultitarefas from './pages/DemoMultitarefas';
+import Cadastros from './pages/Cadastros';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "ValidadorFase1": ValidadorFase1,
     "LimparDados": LimparDados,
     "DemoMultitarefas": DemoMultitarefas,
+    "Cadastros": Cadastros,
 }
 
 export const pagesConfig = {
