@@ -49,6 +49,22 @@ body > div:first-child,
   margin-right: 0 !important;
 }
 
+/* FORÇA TODAS AS ABAS E CONTEÚDOS A SEREM W-FULL */
+[role="tabpanel"],
+[data-state="active"],
+.tab-content,
+div[class*="TabsContent"],
+[data-radix-scroll-area-viewport] {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* JANELAS MULTITAREFA SEMPRE CLICÁVEIS - NÃO FECHAM AO CLICAR FORA */
+.window-modal,
+[class*="WindowModal"] {
+  pointer-events: auto !important;
+}
+
 /* Força páginas a ocuparem 100% */
 div[class*="p-4"],
 div[class*="p-6"],
