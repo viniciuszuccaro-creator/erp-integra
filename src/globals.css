@@ -99,13 +99,14 @@ div[class*="space-y-6"] {
 /* Garante que o conteúdo principal ocupe tudo */
 main > div:first-child,
 main > div > div:first-child,
-main > div > div > div:first-child {
+main > div > div > div:first-child,
+main > div > div > div > div:first-child {
   width: 100% !important;
   max-width: none !important;
 }
 
-/* Força TUDO dentro de main */
-main *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(polygon) {
+/* Força TUDO dentro de main - REGRA ULTRA-AGRESSIVA */
+main *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(polygon):not(g):not(defs):not(clipPath) {
   max-width: none !important;
 }
 
@@ -113,5 +114,23 @@ main *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(poly
 .mx-auto {
   margin-left: 0 !important;
   margin-right: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Força páginas específicas */
+[class*="p-4"],
+[class*="p-6"],
+[class*="p-8"],
+[class*="lg:p-8"],
+[class*="sm:p-6"],
+[class*="space-y-6"],
+[class*="space-y-4"] {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Remove QUALQUER limitador de largura */
+[style*="max-width"]:not([style*="max-width: 100%"]):not([style*="max-width: none"]) {
   max-width: 100% !important;
 }
