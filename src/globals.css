@@ -98,7 +98,20 @@ div[class*="space-y-6"] {
 
 /* Garante que o conteúdo principal ocupe tudo */
 main > div:first-child,
-main > div > div:first-child {
+main > div > div:first-child,
+main > div > div > div:first-child {
   width: 100% !important;
   max-width: none !important;
+}
+
+/* Força TUDO dentro de main */
+main *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(polygon) {
+  max-width: none !important;
+}
+
+/* Remove mx-auto que centraliza e limita */
+.mx-auto {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  max-width: 100% !important;
 }
