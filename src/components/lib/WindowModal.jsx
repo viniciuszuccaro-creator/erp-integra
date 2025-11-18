@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Minus, Maximize2, Minimize2, X, Move } from 'lucide-react';
 import { useWindowManager } from './WindowManagerPersistent';
+import { useToast } from '@/components/ui/use-toast';
 
 /**
  * 🪟 WINDOW MODAL V21.0 - ETAPA 1
@@ -33,6 +34,30 @@ export default function WindowModal({ window, children }) {
   
   const windowRef = useRef(null);
   const isActive = activeWindowId === window.id;
+
+  // PREVENIR FECHAMENTO ABSOLUTO
+  useEffect(() => {
+    const preventClose = (e) => {
+      const clickedInside = e.target.closest('[data-window-modal]');
+      const clickedOverlay = e.target.classList.contains('fixed') && e.target.classList.contains('inset-0');
+      
+      if (clickedOverlay || (!clickedInside && document.querySelector('[data-window-modal]'))) {
+        e.stopPropagation();
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    document.addEventListener('mousedown', preventClose, true);
+    document.addEventListener('click', preventClose, true);
+    document.addEventListener('pointerdown', preventClose, true);
+
+    return () => {
+      document.removeEventListener('mousedown', preventClose, true);
+      document.removeEventListener('click', preventClose, true);
+      document.removeEventListener('pointerdown', preventClose, true);
+    };
+  }, []);
 
   // Configuração de dimensões
   const getDimensions = () => {
