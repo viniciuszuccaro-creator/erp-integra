@@ -436,7 +436,7 @@ export default function FiscalPage() {
 
       {/* Dialog Detalhes NF-e */}
       <Dialog open={dialogDetalhesOpen} onOpenChange={setDialogDetalhesOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
           <DialogHeader>
             <DialogTitle>
               Detalhes NF-e {notaSelecionada?.numero}/{notaSelecionada?.serie}
@@ -617,7 +617,7 @@ export default function FiscalPage() {
 
       {/* Dialog Logs */}
       <Dialog open={dialogLogsOpen} onOpenChange={setDialogLogsOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
           <DialogHeader>
             <DialogTitle>Logs Fiscais - NF-e {notaSelecionada?.numero}</DialogTitle>
           </DialogHeader>

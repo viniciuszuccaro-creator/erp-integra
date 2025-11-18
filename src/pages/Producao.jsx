@@ -530,7 +530,7 @@ export default function Producao() {
 
         {/* Dialog Inspeção */}
         <Dialog open={inspecaoDialogOpen} onOpenChange={setInspecaoDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
             <DialogHeader>
               <DialogTitle>Inspeção de Qualidade: {opSelecionada?.numero_op}</DialogTitle>
             </DialogHeader>
@@ -549,7 +549,7 @@ export default function Producao() {
 
         {/* Dialog Detalhes */}
         <Dialog open={detalhesDialogOpen} onOpenChange={setDetalhesDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
             <DialogHeader>
               <DialogTitle>Detalhes da OP: {opSelecionada?.numero_op}</DialogTitle>
             </DialogHeader>

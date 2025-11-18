@@ -607,7 +607,7 @@ export default function CRMPage() {
                     Nova Oportunidade
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
                   <DialogHeader>
                     <DialogTitle>{editingOpp ? 'Editar Oportunidade' : 'Nova Oportunidade'}</DialogTitle>
                   </DialogHeader>
@@ -1279,7 +1279,7 @@ export default function CRMPage() {
       </Tabs>
 
       <Dialog open={!!viewingOpp} onOpenChange={() => setViewingOpp(null)}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
           <DialogHeader>
             <DialogTitle>Detalhes da Oportunidade</DialogTitle>
           </DialogHeader>
