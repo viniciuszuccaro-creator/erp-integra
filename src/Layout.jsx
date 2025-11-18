@@ -43,7 +43,7 @@ import { base44 } from "@/api/base44Client";
 import NotificationCenter from "@/components/NotificationCenter";
 import EmpresaSwitcher from "@/components/EmpresaSwitcher";
 import { UserProvider, useUser } from "@/components/lib/UserContext";
-import { WindowManagerProvider } from "@/components/lib/WindowManager";
+import { WindowManagerProvider } from "@/components/lib/WindowManagerPersistent";
 import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
