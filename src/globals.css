@@ -174,7 +174,10 @@ div[class*="w-"],
   }
 }
 
-/* SISTEMA 100% COMPLETO */
+/* ============================================ */
+/* SISTEMA 100% COMPLETO - ETAPA 1 FINALIZADA */
+/* ============================================ */
+
 * {
   box-sizing: border-box !important;
 }
@@ -204,6 +207,35 @@ section, article, form, div {
 [data-window-modal] {
   pointer-events: auto !important;
   z-index: 1000 !important;
+}
+
+/* Animações suaves para janelas */
+[data-window-modal] {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sombras para janelas ativas */
+[data-window-modal][data-active="true"] {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Scrollbar customizada */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
 }
 
 /* Força páginas a ocuparem 100% */

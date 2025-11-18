@@ -46,6 +46,8 @@ import { UserProvider, useUser } from "@/components/lib/UserContext";
 import { WindowManagerProvider } from "@/components/lib/WindowManagerPersistent";
 import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
+import WindowKeyboardShortcuts from "@/components/lib/WindowKeyboardShortcuts";
+import WindowWorkspaces from "@/components/lib/WindowWorkspaces";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
@@ -358,6 +360,12 @@ function LayoutContent({ children, currentPageName }) {
 
             {/* BARRA DE JANELAS MINIMIZADAS */}
             <MinimizedWindowsBar />
+            
+            {/* ATALHOS DE TECLADO GLOBAIS */}
+            <WindowKeyboardShortcuts />
+            
+            {/* WORKSPACES (GRUPOS DE JANELAS) */}
+            <WindowWorkspaces />
           </main>
 
           <PesquisaUniversal 
