@@ -1,30 +1,34 @@
 import React from 'react';
 
 /**
- * 📦 STANDARD PAGE WRAPPER - V21.1
+ * 📐 STANDARD PAGE WRAPPER V21.0 - ETAPA 1
+ * Wrapper padrão para todas as páginas principais do ERP
  * 
- * Wrapper padrão para TODAS as páginas do sistema
- * Garante w-full responsivo e consistência visual
+ * Características:
+ * - w-full para ocupar toda largura disponível
+ * - Responsivo em todas as resoluções
+ * - Padding consistente
+ * - Scroll interno quando necessário
  */
-export default function StandardPageWrapper({ children, title, subtitle, actions }) {
+
+export default function StandardPageWrapper({ 
+  children, 
+  className = '',
+  noPadding = false,
+  fullHeight = false
+}) {
   return (
-    <div className="w-full h-full flex flex-col" style={{width: '100%', maxWidth: '100%'}}>
-      {/* HEADER */}
-      {(title || actions) && (
-        <div className="w-full flex items-center justify-between p-6 border-b bg-white" style={{width: '100%'}}>
-          <div className="flex-1">
-            {title && <h1 className="text-2xl font-bold text-slate-900">{title}</h1>}
-            {subtitle && <p className="text-sm text-slate-600 mt-1">{subtitle}</p>}
-          </div>
-          {actions && <div className="flex items-center gap-2">{actions}</div>}
-        </div>
-      )}
-      
-      {/* CONTENT - W-FULL FORÇADO */}
-      <div className="flex-1 overflow-auto w-full" style={{width: '100%', maxWidth: '100%'}}>
-        <div className="w-full h-full" style={{width: '100%', maxWidth: '100%'}}>
-          {children}
-        </div>
+    <div 
+      className={`
+        w-full 
+        ${noPadding ? '' : 'p-4 sm:p-6 lg:p-8'} 
+        ${fullHeight ? 'min-h-screen' : 'min-h-[calc(100vh-4rem)]'}
+        overflow-y-auto
+        ${className}
+      `}
+    >
+      <div className="max-w-[1920px] mx-auto">
+        {children}
       </div>
     </div>
   );
