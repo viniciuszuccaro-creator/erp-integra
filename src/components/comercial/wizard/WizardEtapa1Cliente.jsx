@@ -139,8 +139,8 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
   };
 
   return (
-    <div className="w-full space-y-4 sm:space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="md:col-span-2">
           <Label htmlFor="cliente-select">Cliente *</Label>
           <Select value={formData.cliente_id} onValueChange={handleClienteChange}>
@@ -249,7 +249,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
 
       {/* NOVO V21.1: Obra de Destino */}
       {formData.cliente_id && enderecosCliente.length > 0 && (
-        <div className="w-full md:col-span-2">
+        <div className="col-span-2">
           <Label htmlFor="obra-destino-select" className="flex items-center gap-2 mb-1">
             <MapPin className="w-4 h-4 text-blue-600" />
             Obra de Destino (opcional)
@@ -261,19 +261,13 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             <SelectTrigger id="obra-destino-select">
               <SelectValue placeholder="Selecione a obra/local de entrega..." />
             </SelectTrigger>
-            <SelectContent className="max-w-[90vw]">
+            <SelectContent>
               <SelectItem value="none">
-                <span className="truncate block max-w-full">
-                  {clienteSelecionado?.endereco_principal?.logradouro 
-                    ? `Principal: ${clienteSelecionado.endereco_principal.logradouro}, ${clienteSelecionado.endereco_principal.cidade}` 
-                    : "Usar Endereço Principal"}
-                </span>
+                {clienteSelecionado?.endereco_principal?.logradouro ? `Endereço Principal: ${clienteSelecionado.endereco_principal.logradouro}, ${clienteSelecionado.endereco_principal.cidade}` : "Usar Endereço Principal do Cliente"}
               </SelectItem>
               {enderecosCliente.map((obra) => (
                 <SelectItem key={obra.id} value={obra.id}>
-                  <span className="truncate block max-w-full">
-                    {obra.apelido || `${obra.logradouro}`} - {obra.cidade}/{obra.estado}
-                  </span>
+                  {obra.apelido || `Endereço: ${obra.logradouro}`} - {obra.cidade}/{obra.estado}
                 </SelectItem>
               ))}
             </SelectContent>

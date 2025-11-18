@@ -13,7 +13,6 @@ import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
 import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab"; // Keeping import as outline didn't specify removal
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
-import { useWindow } from "@/components/lib/useWindow";
 
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
@@ -101,28 +100,36 @@ export default function Comercial() {
     // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
 
-  const { openLargeWindow } = useWindow();
-
-  // Handlers para abrir pedido em JANELA MULTITAREFA
+  // Handlers for PedidoFormCompleto
   const handleCreateNewPedido = () => {
-    openLargeWindow({
-      title: 'Novo Pedido',
-      component: 'PedidoFormCompleto',
-      props: { pedido: null, clientes },
-      module: 'comercial'
-    });
+    setEditingPedido(null); // For new order, no existing pedido
+    setIsFormOpen(true);
   };
 
   const handleEditPedido = (pedido) => {
-    openLargeWindow({
-      title: `Pedido ${pedido.numero_pedido}`,
-      component: 'PedidoFormCompleto',
-      props: { pedido, clientes },
-      module: 'comercial'
-    });
+    setEditingPedido(pedido);
+    setIsFormOpen(true);
   };
 
-
+  const handleFormSubmit = async (formData) => {
+    try {
+      if (formData.id) {
+        // Update existing pedido
+        await base44.entities.Pedido.update(formData.id, formData);
+        toast.success("Pedido atualizado com sucesso!");
+      } else {
+        // Create new pedido
+        await base44.entities.Pedido.create(formData);
+        toast.success("Pedido criado com sucesso!");
+      }
+      setIsFormOpen(false);
+      setEditingPedido(null);
+      pedidosQuery.refetch(); // Refetch pedidos data after submission
+    } catch (error) {
+      toast.error("Erro ao salvar pedido: " + error.message);
+      console.error("Erro ao salvar pedido:", error);
+    }
+  };
 
 
   if (loadingPermissions) {
@@ -336,7 +343,25 @@ export default function Comercial() {
         }}
       />
 
-      {/* JANELAS DE PEDIDO SÃO RENDERIZADAS PELO WindowRenderer NO LAYOUT */}
+      {/* V21.1.2-R1: MODAL COM TAMANHO FIXO GRANDE - MULTI-INSTÂNCIA */}
+      <Dialog open={isFormOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsFormOpen(false);
+          setEditingPedido(null);
+        }
+      }}>
+        <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
+          <PedidoFormCompleto
+            pedido={editingPedido}
+            clientes={clientes}
+            onSubmit={handleFormSubmit}
+            onCancel={() => {
+              setIsFormOpen(false);
+              setEditingPedido(null);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

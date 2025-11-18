@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -249,9 +250,9 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
   }
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden">
+    <div className="h-full flex flex-col">
       {/* Header - FIXO */}
-      <div className="flex-shrink-0 p-4 sm:p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
+      <div className="flex-shrink-0 p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">
@@ -293,7 +294,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
         </div>
 
         {/* Resumo Rápido */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4">
+        <div className="grid grid-cols-4 gap-4 mt-4">
           <div className="bg-white/80 rounded-lg p-3 border">
             <p className="text-xs text-slate-600">Itens Revenda</p>
             <p className="text-lg font-bold text-blue-600">
@@ -322,8 +323,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
       </div>
 
       {/* Tabs - FIXO */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden min-h-0">
-        <TabsList className="flex-shrink-0 bg-white border-b px-2 sm:px-6 py-0 h-auto rounded-none flex-wrap justify-start overflow-x-auto">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="flex-shrink-0 bg-white border-b px-6 py-0 h-auto rounded-none flex-wrap justify-start">
           {abas.map((aba) => {
             const Icon = aba.icon;
             return (
@@ -350,10 +351,10 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           })}
         </TabsList>
 
-        {/* 🔥 V21.1.2-ETAPA1: ÁREA DE CONTEÚDO PADRONIZADA */}
-        <div className="flex-1 overflow-hidden min-h-0">
+        {/* 🔥 V21.1.2-R1: CORREÇÃO CRÍTICA - ÁREA DE CONTEÚDO COM ALTURA FIXA E SCROLL */}
+        <div className="flex-1 overflow-hidden">
           {/* ABA 1: IDENTIFICAÇÃO */}
-          <TabsContent value="identificacao" className="h-full overflow-y-auto p-4 sm:p-6 m-0 data-[state=active]:flex data-[state=active]:flex-col">
+          <TabsContent value="identificacao" className="h-full overflow-y-auto p-6 m-0">
             <WizardEtapa1Cliente
               formData={formData}
               setFormData={setFormData}
@@ -363,7 +364,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 2: ITENS DE REVENDA */}
-          <TabsContent value="revenda" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="revenda" className="h-full overflow-y-auto p-6 m-0">
             <ItensRevendaTab
               formData={formData}
               setFormData={setFormData}
@@ -372,7 +373,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 3: ARMADO PADRÃO */}
-          <TabsContent value="armado" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="armado" className="h-full overflow-y-auto p-6 m-0">
             <ArmadoPadraoTab
               formData={formData}
               setFormData={setFormData}
@@ -382,7 +383,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 4: CORTE E DOBRA (IA) */}
-          <TabsContent value="corte" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="corte" className="h-full overflow-y-auto p-6 m-0">
             <CorteDobraIATab
               formData={formData}
               setFormData={setFormData}
@@ -391,20 +392,21 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
             />
           </TabsContent>
 
-          {/* V21.1.2-ETAPA1: ABA 5 - HISTÓRICO (ALTURA PADRONIZADA) */}
-          <TabsContent value="historico" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          {/* V21.1.2-R1: ABA 5 - HISTÓRICO DO CLIENTE (EXPANDIDA) */}
+          <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
             <HistoricoClienteTab
               formData={formData}
               setFormData={setFormData}
               onAdicionarItemAoPedido={(produto) => {
                 toast.success(`Produto ${produto.descricao} adicionado!`);
+                // Optionally update formData here or let the HistoricoClienteTab do it
                 setActiveTab('revenda');
               }}
             />
           </TabsContent>
 
           {/* ABA 6: LOGÍSTICA */}
-          <TabsContent value="logistica" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="logistica" className="h-full overflow-y-auto p-6 m-0">
             <LogisticaEntregaTab
               formData={formData}
               setFormData={setFormData}
@@ -414,7 +416,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 7: FINANCEIRO */}
-          <TabsContent value="financeiro" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="financeiro" className="h-full overflow-y-auto p-6 m-0">
             <FechamentoFinanceiroTab
               formData={formData}
               setFormData={setFormData}
@@ -423,15 +425,15 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 8: ARQUIVOS */}
-          <TabsContent value="arquivos" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="arquivos" className="h-full overflow-y-auto p-6 m-0">
             <ArquivosProjetosTab
               formData={formData}
               setFormData={setFormData}
             />
           </TabsContent>
 
-          {/* V21.1.2-ETAPA1: ABA 9 - AUDITORIA (ALTURA PADRONIZADA) */}
-          <TabsContent value="auditoria" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          {/* V21.1.2-R1: ABA 9 - AUDITORIA (ALTURA CORRIGIDA) */}
+          <TabsContent value="auditoria" className="h-full overflow-y-auto p-6 m-0">
             <AuditoriaAprovacaoTab
               formData={formData}
               pedido={pedido}
@@ -441,9 +443,9 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
       </Tabs>
 
       {/* Footer com Ações - FIXO */}
-      <div className="flex-shrink-0 p-4 sm:p-6 border-t bg-slate-50">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3 md:gap-4">
+      <div className="flex-shrink-0 p-6 border-t bg-slate-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <div className="text-sm">
               <p className="text-slate-600">Valor Total</p>
               <p className="text-2xl font-bold text-green-600">
