@@ -194,7 +194,7 @@ function LayoutContent({ children, currentPageName }) {
 
   return (
     <WindowManagerProvider>
-      <SidebarProvider>
+      <SidebarProvider style={{width: '100%', maxWidth: '100%'}}>
         {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
 
         <DebugWidthIndicator />
