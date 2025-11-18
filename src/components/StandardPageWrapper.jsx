@@ -1,24 +1,35 @@
 import React from 'react';
 
 /**
- * 📄 STANDARD PAGE WRAPPER - ETAPA 1 V21.0
+ * 📐 STANDARD PAGE WRAPPER V21.0 - ETAPA 1
+ * Wrapper padrão para todas as páginas principais do ERP
  * 
- * Wrapper universal para TODAS as páginas do sistema
- * Garante comportamento padronizado:
- * - w-full absoluto
- * - Responsivo (sm/md/lg padding)
- * - Overflow-y auto
- * - Min-height calculado
- * - Preparado para multitarefa
+ * Características:
+ * - w-full para ocupar toda largura disponível
+ * - Responsivo em todas as resoluções
+ * - Padding consistente
+ * - Scroll interno quando necessário
  */
 
-export default function StandardPageWrapper({ children, className = '' }) {
+export default function StandardPageWrapper({ 
+  children, 
+  className = '',
+  noPadding = false,
+  fullHeight = false
+}) {
   return (
     <div 
-      className={`w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)] max-w-full ${className}`}
-      style={{ width: '100%', maxWidth: '100%' }}
+      className={`
+        w-full 
+        ${noPadding ? '' : 'p-4 sm:p-6 lg:p-8'} 
+        ${fullHeight ? 'min-h-screen' : 'min-h-[calc(100vh-4rem)]'}
+        overflow-y-auto
+        ${className}
+      `}
     >
-      {children}
+      <div className="max-w-[1920px] mx-auto">
+        {children}
+      </div>
     </div>
   );
 }

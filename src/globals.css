@@ -4,7 +4,7 @@ css
 @tailwind utilities;
 
 /* ========================================== */
-/* ETAPA 1 - W-FULL ABSOLUTO EM TUDO         */
+/* FORÇA W-FULL ABSOLUTO - ETAPA 1 CRÍTICA   */
 /* ========================================== */
 
 * {
@@ -12,42 +12,29 @@ css
 }
 
 html,
-body {
-  width: 100vw !important;
-  max-width: 100vw !important;
-  overflow-x: hidden !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
+body,
 #root,
 #root > *,
 #root > * > *,
-#root > * > * > * {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
 main,
-main > div,
-main > div > *,
+main > *,
+main > * > *,
 [data-sidebar-provider],
-[data-sidebar-provider] > div {
+[data-sidebar-provider] > *,
+[class*="group"],
+[class*="flex"],
+.flex-1 {
   width: 100% !important;
-  max-width: 100% !important;
+  max-width: 100vw !important;
   overflow-x: hidden !important;
 }
 
-/* Remove limitações de containers */
-.container,
-.max-w-7xl,
-.max-w-6xl,
-.max-w-5xl,
-.max-w-4xl,
-.max-w-3xl {
-  max-width: 100% !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
+/* Força o container principal */
+body > div:first-child,
+#root,
+#root > div:first-child {
+  width: 100vw !important;
+  max-width: 100vw !important;
 }
 
 /* Remove TODOS os limitadores de largura */
