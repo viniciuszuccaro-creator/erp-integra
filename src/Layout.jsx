@@ -340,8 +340,11 @@ function LayoutContent({ children, currentPageName }) {
               </div>
             </header>
 
-            <div className="flex-1 overflow-auto relative w-full max-w-full" style={{width: '100%', maxWidth: '100%'}}>
-              {children}
+            <div className="flex-1 overflow-hidden relative w-full max-w-full" style={{width: '100%', maxWidth: '100%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
+              {/* AUTO WINDOW WRAPPER - CONVERTE TUDO EM JANELA */}
+              <AutoWindowWrapper pathname={pathname}>
+                {children}
+              </AutoWindowWrapper>
             </div>
 
             {/* RENDERIZADOR DE JANELAS MULTITAREFA - FORA DO SCROLL */}

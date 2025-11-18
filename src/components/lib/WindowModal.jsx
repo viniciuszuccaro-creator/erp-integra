@@ -239,9 +239,9 @@ export default function WindowModal({ window, children }) {
         </div>
       </div>
 
-      {/* CONTEÚDO DA JANELA - W-FULL FORÇADO */}
+      {/* CONTEÚDO DA JANELA - W-FULL FORÇADO + PADDING RESPONSIVO */}
       <CardContent className="flex-1 p-0 overflow-hidden w-full">
-        <div className="w-full h-full overflow-y-auto">
+        <div className="w-full h-full overflow-y-auto p-4 md:p-6" style={{boxSizing: 'border-box'}}>
           {children}
         </div>
       </CardContent>

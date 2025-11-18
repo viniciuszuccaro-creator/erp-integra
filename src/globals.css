@@ -85,6 +85,28 @@ button[role="tab"] {
   white-space: nowrap !important;
 }
 
+/* FORÇA W-FULL EM TODAS AS PÁGINAS E COMPONENTES */
+.page-container,
+main > div,
+section,
+article,
+[data-page] {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* JANELAS SEMPRE NO TOPO E ISOLADAS */
+[data-window-modal] {
+  z-index: 1000 !important;
+  pointer-events: auto !important;
+}
+
+/* BACKGROUND GRADIENTE SISTEMA */
+.main-content-area {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
 /* Força páginas a ocuparem 100% */
 div[class*="p-4"],
 div[class*="p-6"],
