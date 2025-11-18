@@ -52,7 +52,6 @@ import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
 import ForcarAtualizacao from "@/components/ForcarAtualizacao";
 import DebugWidthIndicator from "@/components/DebugWidthIndicator";
 import ForceFullWidthWrapper from "@/components/ForceFullWidthWrapper";
-import { NavigationInterceptor } from "@/components/lib/NavigationInterceptor";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -197,12 +196,11 @@ function LayoutContent({ children, currentPageName }) {
   return (
     <ForceFullWidthWrapper>
       <WindowManagerProvider>
-        <NavigationInterceptor>
-          <SidebarProvider style={{width: '100%', maxWidth: '100%'}}>
-            {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
+        <SidebarProvider style={{width: '100%', maxWidth: '100%'}}>
+          {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
 
-            <DebugWidthIndicator />
-            <ForcarAtualizacao />
+          <DebugWidthIndicator />
+          <ForcarAtualizacao />
         <div className="min-h-screen flex w-full max-w-full bg-gradient-to-br from-slate-50 to-blue-50" style={{width: '100vw', maxWidth: '100vw', overflow: 'hidden'}}>
           <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm flex-shrink-0" style={{width: 'auto', minWidth: '250px'}}>
             <SidebarHeader className="border-b border-slate-200 p-6">
@@ -360,8 +358,7 @@ function LayoutContent({ children, currentPageName }) {
             onOpenChange={setPesquisaOpen} 
           />
         </div>
-          </SidebarProvider>
-        </NavigationInterceptor>
+        </SidebarProvider>
         </WindowManagerProvider>
         </ForceFullWidthWrapper>
         );
