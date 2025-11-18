@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -57,6 +56,7 @@ import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
 import DashboardControleAcesso from "../components/sistema/DashboardControleAcesso";
 import FonteUnicaVerdade from "../components/sistema/FonteUnicaVerdade";
 import usePermissions from "../components/lib/usePermissions";
+import { useWindow } from "../components/lib/useWindow";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
 import ColaboradorForm from "../components/rh/ColaboradorForm";
 import BancoForm from "../components/cadastros/BancoForm";
@@ -163,6 +163,7 @@ export default function Cadastros() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
+  const { openLargeWindow } = useWindow();
 
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
@@ -402,7 +403,7 @@ export default function Cadastros() {
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
       {/* HEADER */}
       <div className="flex justify-between items-start">
         <div>
