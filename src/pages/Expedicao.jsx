@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -471,8 +470,8 @@ export default function Expedicao() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
+      <div className="max-w-full space-y-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
@@ -516,7 +515,7 @@ export default function Expedicao() {
                   Nova Entrega
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
                 <DialogHeader>
                   <DialogTitle>{editingEntrega ? 'Editar Entrega' : 'Nova Entrega'}</DialogTitle>
                 </DialogHeader>
@@ -1070,11 +1069,11 @@ export default function Expedicao() {
         {/* Dialog de Visualização com Timeline */}
         <Dialog open={!!viewingEntrega} onOpenChange={(open) => {
           setViewingEntrega(null);
-          if (!open) { // Only clear selected entrega for map if dialog is closing
+          if (!open) {
             setEntregaSelecionada(null);
           }
         }}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Truck className="w-5 h-5" />
@@ -1323,7 +1322,7 @@ export default function Expedicao() {
         {/* NOVO: Dialog Separação */}
         {pedidoParaSeparacao && (
           <Dialog open={separacaoDialogOpen} onOpenChange={setSeparacaoDialogOpen}>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
               <DialogHeader>
                 <DialogTitle>Separação e Conferência - Pedido {pedidoParaSeparacao.numero_pedido}</DialogTitle>
               </DialogHeader>
@@ -1339,7 +1338,7 @@ export default function Expedicao() {
         {/* Dialog Seletor de Endereço */}
         {clienteParaEndereco && (
           <Dialog open={seletorEnderecoOpen} onOpenChange={setSeletorEnderecoOpen}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
               <DialogHeader>
                 <DialogTitle>Selecionar Endereço de Entrega</DialogTitle>
               </DialogHeader>
