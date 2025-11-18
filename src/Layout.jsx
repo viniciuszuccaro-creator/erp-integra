@@ -51,7 +51,6 @@ import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
 import ForcarAtualizacao from "@/components/ForcarAtualizacao";
 import DebugWidthIndicator from "@/components/DebugWidthIndicator";
-import ForceFullWidthWrapper from "@/components/ForceFullWidthWrapper";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -194,15 +193,14 @@ function LayoutContent({ children, currentPageName }) {
   };
 
   return (
-    <ForceFullWidthWrapper>
-      <WindowManagerProvider>
-        <SidebarProvider style={{width: '100%', maxWidth: '100%'}}>
-          {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
+    <WindowManagerProvider>
+      <SidebarProvider style={{width: '100%', maxWidth: '100%'}}>
+        {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
 
-          <DebugWidthIndicator />
-          <ForcarAtualizacao />
-        <div className="min-h-screen flex w-full max-w-full bg-gradient-to-br from-slate-50 to-blue-50" style={{width: '100vw', maxWidth: '100vw', overflow: 'hidden'}}>
-          <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm flex-shrink-0" style={{width: 'auto', minWidth: '250px'}}>
+        <DebugWidthIndicator />
+        <ForcarAtualizacao />
+        <div className="min-h-screen flex w-full max-w-full bg-gradient-to-br from-slate-50 to-blue-50" style={{width: '100vw', maxWidth: '100vw'}}>
+          <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm flex-shrink-0">
             <SidebarHeader className="border-b border-slate-200 p-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
@@ -358,11 +356,10 @@ function LayoutContent({ children, currentPageName }) {
             onOpenChange={setPesquisaOpen} 
           />
         </div>
-        </SidebarProvider>
-        </WindowManagerProvider>
-        </ForceFullWidthWrapper>
-        );
-        }
+      </SidebarProvider>
+    </WindowManagerProvider>
+  );
+}
 
 export default function Layout({ children, currentPageName }) {
   return (
