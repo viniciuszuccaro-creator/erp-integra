@@ -35,29 +35,11 @@ export default function ForcarAtualizacao() {
         container.style.cssText = 'max-width: 100% !important; width: 100% !important; margin-left: 0 !important; margin-right: 0 !important;';
       });
       
-      // Forçar main e seus filhos RECURSIVAMENTE (10 níveis)
-      if (main) {
-        const forcarRecursivo = (elemento, nivel = 0) => {
-          if (!elemento || nivel > 10) return;
-          elemento.style.cssText += 'width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;';
-          Array.from(elemento.children).forEach(filho => forcarRecursivo(filho, nivel + 1));
-        };
-        forcarRecursivo(main);
-      }
-
-      // Forçar flex e grid
-      document.querySelectorAll('.flex, .grid, [class*="grid-cols"], [class*="flex-"]').forEach(el => {
-        el.style.cssText += 'width: 100% !important; max-width: 100% !important;';
+      // Forçar main e seus filhos diretos (3 níveis)
+      const mains = document.querySelectorAll('main, main > div, main > div > div, main > div > div > div');
+      mains.forEach(el => {
+        el.style.cssText = 'width: 100% !important; max-width: 100% !important;';
       });
-
-      // Forçar divs genéricas dentro de main que tenham max-width inline
-      if (main) {
-        main.querySelectorAll('div').forEach(el => {
-          if (el.style.maxWidth && el.style.maxWidth !== '100%' && el.style.maxWidth !== 'none') {
-            el.style.cssText += 'max-width: 100% !important;';
-          }
-        });
-      }
     };
 
     applyStyles();

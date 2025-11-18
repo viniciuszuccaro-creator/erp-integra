@@ -99,14 +99,13 @@ div[class*="space-y-6"] {
 /* Garante que o conteúdo principal ocupe tudo */
 main > div:first-child,
 main > div > div:first-child,
-main > div > div > div:first-child,
-main > div > div > div > div:first-child {
+main > div > div > div:first-child {
   width: 100% !important;
   max-width: none !important;
 }
 
-/* Força TUDO dentro de main - REGRA ULTRA-AGRESSIVA */
-main *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(polygon):not(g):not(defs):not(clipPath) {
+/* Força TUDO dentro de main */
+main *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(polygon) {
   max-width: none !important;
 }
 
@@ -114,122 +113,5 @@ main *:not(svg):not(path):not(circle):not(rect):not(line):not(polyline):not(poly
 .mx-auto {
   margin-left: 0 !important;
   margin-right: 0 !important;
-  max-width: 100% !important;
-  width: 100% !important;
-}
-
-/* Força páginas específicas */
-[class*="p-4"],
-[class*="p-6"],
-[class*="p-8"],
-[class*="lg:p-8"],
-[class*="sm:p-6"],
-[class*="space-y-6"],
-[class*="space-y-4"] {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-/* Remove QUALQUER limitador de largura */
-[style*="max-width"]:not([style*="max-width: 100%"]):not([style*="max-width: none"]) {
-  max-width: 100% !important;
-}
-
-/* ========================================== */
-/* RESPONSIVIDADE ABSOLUTA - MOBILE/TABLET   */
-/* ========================================== */
-
-/* Garante w-full em TODOS os breakpoints */
-@media (max-width: 1536px) {
-  * {
-    max-width: 100% !important;
-  }
-  
-  .container,
-  [class*="max-w-"],
-  [class*="lg:max-w-"],
-  [class*="xl:max-w-"],
-  [class*="2xl:max-w-"] {
-    max-width: 100% !important;
-    width: 100% !important;
-  }
-}
-
-@media (max-width: 1024px) {
-  main,
-  main > *,
-  main > * > *,
-  main > * > * > * {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-}
-
-@media (max-width: 768px) {
-  body,
-  #root,
-  [data-sidebar-provider],
-  main {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    overflow-x: hidden !important;
-  }
-  
-  .mx-auto {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-  }
-}
-
-@media (max-width: 640px) {
-  * {
-    max-width: 100vw !important;
-  }
-  
-  div,
-  section,
-  article,
-  nav,
-  aside,
-  header,
-  footer,
-  form {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-}
-
-/* Força TODOS os elementos filhos a ocuparem 100% */
-body * {
-  box-sizing: border-box !important;
-}
-
-/* Remove padding/margin que limitam largura */
-.container,
-[class*="container"] {
-  padding-left: 1rem !important;
-  padding-right: 1rem !important;
-}
-
-/* Garante que grids ocupem 100% */
-[class*="grid"],
-[class*="flex"],
-.grid,
-.flex {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-/* Força tabelas responsivas */
-table {
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-/* Força cards e painéis */
-[class*="card"],
-[class*="panel"],
-[class*="widget"] {
-  width: 100% !important;
   max-width: 100% !important;
 }
