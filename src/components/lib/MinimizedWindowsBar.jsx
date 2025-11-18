@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
-import { useWindowManager } from './WindowManagerPersistent';
+import { useWindowManager } from './WindowManager';
 
 /**
  * 🪟 BARRA DE JANELAS MINIMIZADAS V21.0 - ETAPA 1

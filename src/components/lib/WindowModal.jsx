@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Minus, Maximize2, Minimize2, X, Move } from 'lucide-react';
-import { useWindowManager } from './WindowManagerPersistent';
+import { useWindowManager } from './WindowManager';
 
 /**
  * 🪟 WINDOW MODAL V21.0 - ETAPA 1
