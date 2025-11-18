@@ -21,7 +21,8 @@ export default function WindowRenderer() {
           : window.component;
 
         if (!Component) {
-          console.error(`Componente não encontrado: ${window.component}`);
+          console.error(`⚠️ Componente não encontrado no WindowRegistry: "${window.component}"`);
+          console.log('🔍 Componentes disponíveis:', Object.keys(WINDOW_COMPONENTS));
           return null;
         }
         
