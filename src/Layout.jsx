@@ -249,12 +249,7 @@ function LayoutContent({ children, currentPageName }) {
                                     : 'hover:bg-slate-100 text-slate-700'
                                 }`}
                               >
-                                <Link 
-                                  to={item.url} 
-                                  className="flex items-center gap-3 px-4 py-3"
-                                  data-open-window
-                                  data-window-title={item.title}
-                                >
+                                <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
                                   <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
                                   <span className="font-medium">{item.title}</span>
                                 </Link>
