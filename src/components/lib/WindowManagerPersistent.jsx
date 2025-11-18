@@ -205,6 +205,18 @@ export function WindowManagerProvider({ children }) {
     setActiveWindowId(null);
   }, []);
 
+  // Minimizar todas as janelas
+  const minimizeAllWindows = useCallback(() => {
+    setWindows(prev => prev.map(w => ({ ...w, isMinimized: true })));
+    setMinimizedWindows(windows.map(w => w.id));
+  }, [windows]);
+
+  // Restaurar todas as janelas
+  const restoreAllWindows = useCallback(() => {
+    setWindows(prev => prev.map(w => ({ ...w, isMinimized: false })));
+    setMinimizedWindows([]);
+  }, []);
+
   // Obter janela por ID
   const getWindow = useCallback((windowId) => {
     return windows.find(w => w.id === windowId);
@@ -258,6 +270,8 @@ export function WindowManagerProvider({ children }) {
     updateWindowDimensions,
     updateWindowProps,
     closeAllWindows,
+    minimizeAllWindows,
+    restoreAllWindows,
     getWindow,
     hasWindowOfType,
     handleEmpresaChange

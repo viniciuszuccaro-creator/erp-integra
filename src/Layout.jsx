@@ -48,6 +48,7 @@ import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import WindowKeyboardShortcuts from "@/components/lib/WindowKeyboardShortcuts";
 import WindowWorkspaces from "@/components/lib/WindowWorkspaces";
+import GlobalWindowControls from "@/components/lib/GlobalWindowControls";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
@@ -366,6 +367,9 @@ function LayoutContent({ children, currentPageName }) {
             
             {/* WORKSPACES (GRUPOS DE JANELAS) */}
             <WindowWorkspaces />
+            
+            {/* CONTROLES GLOBAIS */}
+            <GlobalWindowControls />
           </main>
 
           <PesquisaUniversal 

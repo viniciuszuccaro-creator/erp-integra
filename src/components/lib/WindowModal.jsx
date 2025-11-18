@@ -3,7 +3,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Minus, Maximize2, Minimize2, X, Move } from 'lucide-react';
 import { useWindowManager } from './WindowManagerPersistent';
-import { useToast } from '@/components/ui/use-toast';
 
 /**
  * 🪟 WINDOW MODAL V21.0 - ETAPA 1
@@ -34,6 +33,7 @@ export default function WindowModal({ window, children }) {
   
   const windowRef = useRef(null);
   const isActive = activeWindowId === window.id;
+  const [snapZone, setSnapZone] = useState(null);
 
   // PREVENIR FECHAMENTO ABSOLUTO
   useEffect(() => {
@@ -58,6 +58,26 @@ export default function WindowModal({ window, children }) {
       document.removeEventListener('pointerdown', preventClose, true);
     };
   }, []);
+
+  // SNAP TO EDGES
+  useEffect(() => {
+    if (!isDragging) {
+      setSnapZone(null);
+      return;
+    }
+
+    const SNAP_THRESHOLD = 30;
+    const { x, y } = window.position;
+    const screenWidth = globalThis.innerWidth;
+    const screenHeight = globalThis.innerHeight;
+
+    let zone = null;
+    if (y < SNAP_THRESHOLD) zone = 'top';
+    else if (x < SNAP_THRESHOLD) zone = 'left';
+    else if (x > screenWidth - SNAP_THRESHOLD) zone = 'right';
+    
+    setSnapZone(zone);
+  }, [isDragging, window.position]);
 
   // Configuração de dimensões
   const getDimensions = () => {
@@ -102,12 +122,28 @@ export default function WindowModal({ window, children }) {
       const newY = e.clientY - dragStart.y;
       
       updateWindowPosition(window.id, {
-        x: Math.max(0, Math.min(newX, window.innerWidth - 300)),
-        y: Math.max(0, Math.min(newY, window.innerHeight - 100))
+        x: Math.max(0, Math.min(newX, globalThis.innerWidth - 300)),
+        y: Math.max(0, Math.min(newY, globalThis.innerHeight - 100))
       });
     };
 
     const handleDragEnd = () => {
+      // Aplicar snap se houver zona ativa
+      if (snapZone) {
+        const screenWidth = globalThis.innerWidth;
+        const screenHeight = globalThis.innerHeight;
+        
+        if (snapZone === 'top') {
+          toggleMaximize(window.id);
+        } else if (snapZone === 'left') {
+          updateWindowDimensions(window.id, { width: `${screenWidth / 2}px`, height: `${screenHeight}px` });
+          updateWindowPosition(window.id, { x: 0, y: 0 });
+        } else if (snapZone === 'right') {
+          updateWindowDimensions(window.id, { width: `${screenWidth / 2}px`, height: `${screenHeight}px` });
+          updateWindowPosition(window.id, { x: screenWidth / 2, y: 0 });
+        }
+        setSnapZone(null);
+      }
       setIsDragging(false);
     };
 
@@ -118,7 +154,7 @@ export default function WindowModal({ window, children }) {
       document.removeEventListener('mousemove', handleDragMove);
       document.removeEventListener('mouseup', handleDragEnd);
     };
-  }, [isDragging, dragStart, window.id, updateWindowPosition]);
+  }, [isDragging, dragStart, window.id, updateWindowPosition, snapZone, toggleMaximize, updateWindowDimensions]);
 
   // Handler para resize (simplificado)
   const handleResizeStart = (e, direction) => {
@@ -177,25 +213,43 @@ export default function WindowModal({ window, children }) {
   }, [isResizing, resizeStart, window.id, updateWindowDimensions]);
 
   return (
-    <div
-      data-window-modal
-      className="fixed"
-      style={{
-        width: dimensions.width,
-        height: dimensions.height,
-        top: dimensions.top,
-        left: dimensions.left,
-        zIndex: isActive ? 1000 : 900,
-        display: window.isMinimized ? 'none' : 'block',
-        pointerEvents: 'auto',
-        isolation: 'isolate'
-      }}
-      onClick={(e) => {
-        e.stopPropagation();
-        bringToFront(window.id);
-      }}
-      onMouseDown={(e) => e.stopPropagation()}
-    >
+    <>
+      {/* SNAP PREVIEW */}
+      {snapZone && (
+        <div
+          className="fixed pointer-events-none z-[9999]"
+          style={{
+            left: snapZone === 'left' ? 0 : snapZone === 'right' ? '50%' : 0,
+            top: 0,
+            width: snapZone === 'top' ? '100%' : '50%',
+            height: '100%',
+            backgroundColor: 'rgba(59, 130, 246, 0.2)',
+            border: '2px solid rgba(59, 130, 246, 0.5)',
+            transition: 'all 0.2s ease'
+          }}
+        />
+      )}
+
+      <div
+        data-window-modal
+        data-active={isActive}
+        className="fixed"
+        style={{
+          width: dimensions.width,
+          height: dimensions.height,
+          top: dimensions.top,
+          left: dimensions.left,
+          zIndex: isActive ? 1000 : 900,
+          display: window.isMinimized ? 'none' : 'block',
+          pointerEvents: 'auto',
+          isolation: 'isolate'
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          bringToFront(window.id);
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
       <Card
         ref={windowRef}
         className={`w-full h-full shadow-2xl transition-all ${
@@ -289,6 +343,7 @@ export default function WindowModal({ window, children }) {
         </>
       )}
       </Card>
-    </div>
+      </div>
+    </>
   );
 }
