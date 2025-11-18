@@ -10,16 +10,34 @@ import WindowModal from './WindowModal';
  */
 
 export default function WindowRenderer() {
-  const { windows } = useWindowManager();
+  const { windows, closeWindow } = useWindowManager();
 
   return (
     <>
       {windows.map(window => {
-        const Component = window.component;
+        // Resolver componente do registro se for string
+        const Component = typeof window.component === 'string'
+          ? WINDOW_COMPONENTS[window.component]
+          : window.component;
+
+        if (!Component) {
+          console.error(`Componente não encontrado: ${window.component}`);
+          return null;
+        }
         
         return (
           <WindowModal key={window.id} window={window}>
-            <Component {...window.props} windowId={window.id} />
+            <Component 
+              {...window.props} 
+              windowId={window.id}
+              onSubmit={async (data) => {
+                if (window.props?.onSubmit) {
+                  await window.props.onSubmit(data);
+                }
+                closeWindow(window.id);
+              }}
+              onCancel={() => closeWindow(window.id)}
+            />
           </WindowModal>
         );
       })}
