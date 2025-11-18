@@ -174,6 +174,38 @@ div[class*="w-"],
   }
 }
 
+/* SISTEMA 100% COMPLETO */
+* {
+  box-sizing: border-box !important;
+}
+
+body, html, #root {
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
+}
+
+/* Todas as páginas, modulos, abas = W-FULL */
+[data-window-modal],
+[data-window-content],
+[role="tabpanel"],
+.TabsContent,
+section, article, form, div {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Janelas NUNCA fecham ao clicar fora - ABSOLUTO */
+[data-radix-dialog-overlay],
+.fixed.inset-0 {
+  pointer-events: none !important;
+}
+
+[data-window-modal] {
+  pointer-events: auto !important;
+  z-index: 1000 !important;
+}
+
 /* Força páginas a ocuparem 100% */
 div[class*="p-4"],
 div[class*="p-6"],
