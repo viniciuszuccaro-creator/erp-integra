@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWindowManager } from './WindowManager';
+import { useWindowManager } from './WindowManagerPersistent';
 import WindowModal from './WindowModal';
 
 /**
