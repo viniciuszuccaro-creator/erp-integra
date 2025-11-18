@@ -51,6 +51,7 @@ import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
 import ForcarAtualizacao from "@/components/ForcarAtualizacao";
 import DebugWidthIndicator from "@/components/DebugWidthIndicator";
+import ForceFullWidthWrapper from "@/components/ForceFullWidthWrapper";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -193,12 +194,13 @@ function LayoutContent({ children, currentPageName }) {
   };
 
   return (
-    <WindowManagerProvider>
-      <SidebarProvider style={{width: '100%', maxWidth: '100%'}}>
-        {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
+    <ForceFullWidthWrapper>
+      <WindowManagerProvider>
+        <SidebarProvider style={{width: '100%', maxWidth: '100%'}}>
+          {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
 
-        <DebugWidthIndicator />
-        <ForcarAtualizacao />
+          <DebugWidthIndicator />
+          <ForcarAtualizacao />
         <div className="min-h-screen flex w-full max-w-full bg-gradient-to-br from-slate-50 to-blue-50" style={{width: '100vw', maxWidth: '100vw'}}>
           <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm flex-shrink-0">
             <SidebarHeader className="border-b border-slate-200 p-6">
@@ -356,10 +358,11 @@ function LayoutContent({ children, currentPageName }) {
             onOpenChange={setPesquisaOpen} 
           />
         </div>
-      </SidebarProvider>
-    </WindowManagerProvider>
-  );
-}
+        </SidebarProvider>
+        </WindowManagerProvider>
+        </ForceFullWidthWrapper>
+        );
+        }
 
 export default function Layout({ children, currentPageName }) {
   return (

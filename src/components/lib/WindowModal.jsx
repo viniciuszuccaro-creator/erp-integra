@@ -240,8 +240,8 @@ export default function WindowModal({ window, children }) {
       </div>
 
       {/* CONTEÚDO DA JANELA - W-FULL FORÇADO */}
-      <CardContent className="flex-1 p-0 overflow-hidden w-full">
-        <div className="w-full h-full overflow-y-auto">
+      <CardContent className="flex-1 p-0 overflow-hidden w-full" data-window-content>
+        <div className="w-full h-full overflow-y-auto" style={{width: '100%', maxWidth: '100%'}}>
           {children}
         </div>
       </CardContent>

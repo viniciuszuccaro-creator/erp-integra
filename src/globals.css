@@ -78,11 +78,28 @@ body:has([data-window-modal]) {
 [role="tablist"] {
   flex-wrap: wrap !important;
   overflow-x: auto !important;
+  width: 100% !important;
 }
 
 button[role="tab"] {
   flex-shrink: 0 !important;
   white-space: nowrap !important;
+}
+
+/* JANELAS NUNCA FECHAM AO CLICAR FORA */
+[data-window-modal] * {
+  pointer-events: auto !important;
+}
+
+/* FORÇA W-FULL EM TUDO - SISTEMA INTEIRO */
+.space-y-6,
+.space-y-4,
+.grid,
+form,
+.flex-col {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* Força páginas a ocuparem 100% */
