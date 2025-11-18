@@ -40,13 +40,35 @@ export default function ForceFullWidthWrapper({ children }) {
     document.addEventListener('click', preventWindowClose, true);
     document.addEventListener('pointerdown', preventWindowClose, true);
 
-    // Forçar w-full em todos os TabsContent
+    // Forçar w-full em TODOS os elementos dinamicamente
     const observer = new MutationObserver(() => {
-      const tabContents = document.querySelectorAll('[role="tabpanel"]');
-      tabContents.forEach(tab => {
-        tab.style.width = '100%';
-        tab.style.maxWidth = '100%';
-        tab.style.boxSizing = 'border-box';
+      // Tabs
+      document.querySelectorAll('[role="tabpanel"], [data-state="active"]').forEach(el => {
+        el.style.width = '100%';
+        el.style.maxWidth = '100%';
+        el.style.boxSizing = 'border-box';
+      });
+      
+      // Formulários
+      document.querySelectorAll('form, .space-y-6, .space-y-4').forEach(el => {
+        el.style.width = '100%';
+        el.style.maxWidth = '100%';
+        el.style.boxSizing = 'border-box';
+      });
+      
+      // Cards
+      document.querySelectorAll('.card, [class*="Card"]').forEach(el => {
+        el.style.width = '100%';
+        el.style.maxWidth = '100%';
+        el.style.boxSizing = 'border-box';
+      });
+      
+      // Containers
+      document.querySelectorAll('.container, [class*="max-w-"]').forEach(el => {
+        el.style.maxWidth = '100%';
+        el.style.width = '100%';
+        el.style.marginLeft = '0';
+        el.style.marginRight = '0';
       });
     });
 

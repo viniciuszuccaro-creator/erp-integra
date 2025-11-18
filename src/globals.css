@@ -132,18 +132,51 @@ button[role="tab"] {
 .space-y-6,
 .space-y-4,
 .space-y-8,
+.space-y-2,
 .grid,
 form,
 .flex-col,
+.flex-1,
 section,
 article,
 .w-full,
 div[class*="w-"],
+div[class*="space-"],
+div[class*="flex"],
 [class*="TabsContent"],
 [role="tabpanel"],
-[data-state="active"] {
+[data-state="active"],
+[data-radix-tabs-content],
+.card,
+.Card,
+[class*="Card"] {
   width: 100% !important;
   max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* FORÇA FORMS E INPUTS RESPONSIVOS */
+input,
+textarea,
+select,
+button[type="submit"],
+.input,
+.Input,
+[class*="Input"] {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* FORÇA DIALOGS E MODALS W-FULL */
+[role="dialog"],
+[data-radix-dialog-content],
+.dialog,
+.Dialog,
+.modal,
+.Modal {
+  width: 100% !important;
+  max-width: 90vw !important;
   box-sizing: border-box !important;
 }
 
