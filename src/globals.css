@@ -4,7 +4,7 @@ css
 @tailwind utilities;
 
 /* ========================================== */
-/* FORÇA W-FULL ABSOLUTO - ETAPA 1 CRÍTICA   */
+/* FORÇA W-FULL ABSOLUTO - V21.1 DEFINITIVO  */
 /* ========================================== */
 
 * {
@@ -14,54 +14,54 @@ css
 html,
 body,
 #root,
-#root > *,
-#root > * > *,
+#root > div,
+#root > div > div,
 main,
-main > *,
-main > * > *,
+main > div,
+main > div > div,
 [data-sidebar-provider],
-[data-sidebar-provider] > *,
-[class*="group"],
-[class*="flex"],
-.flex-1 {
+[data-sidebar-provider] > div,
+[class*="flex-1"] {
   width: 100% !important;
   max-width: 100vw !important;
   overflow-x: hidden !important;
 }
 
-/* Força o container principal */
-body > div:first-child,
-#root,
-#root > div:first-child {
+/* FORÇA CONTAINERS */
+body > div,
+#root > div,
+[data-sidebar-provider] {
   width: 100vw !important;
   max-width: 100vw !important;
 }
 
-/* Remove TODOS os limitadores de largura */
+/* REMOVE LIMITAÇÕES */
 .container,
 .max-w-7xl,
 .max-w-6xl,
 .max-w-5xl,
 .max-w-4xl,
+.max-w-3xl,
+.max-w-2xl,
+.max-w-xl,
 .mx-auto {
   max-width: 100% !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
 }
 
-/* Força páginas a ocuparem 100% */
+/* FORÇA PÁGINAS */
 div[class*="p-4"],
 div[class*="p-6"],
-div[class*="p-8"],
-div[class*="lg:p-8"],
-div[class*="space-y-6"] {
+div[class*="p-8"] {
   width: 100% !important;
   max-width: 100% !important;
 }
 
-/* Garante que o conteúdo principal ocupe tudo */
-main > div:first-child,
-main > div > div:first-child {
-  width: 100% !important;
-  max-width: none !important;
+/* SIDEBAR NÃO DEVE OCUPAR 100% */
+[data-sidebar],
+aside {
+  width: auto !important;
+  max-width: 280px !important;
+  flex-shrink: 0 !important;
 }
