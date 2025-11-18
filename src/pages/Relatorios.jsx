@@ -263,7 +263,7 @@ export default function Relatorios() {
   };
 
   return (
-    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)] max-w-full" style={{ width: '100%', maxWidth: '100%' }}> {/* ETAPA 1: w-full + inline */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Relatórios e Análises</h1>
         <p className="text-slate-600">Relatórios estratégicos, análises gerenciais e exportação de dados</p>
