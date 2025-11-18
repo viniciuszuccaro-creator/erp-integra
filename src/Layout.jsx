@@ -46,6 +46,7 @@ import { UserProvider, useUser } from "@/components/lib/UserContext";
 import { WindowManagerProvider } from "@/components/lib/WindowManagerPersistent";
 import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
+import AutoWindowWrapper from "@/components/lib/AutoWindowWrapper";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
@@ -84,6 +85,7 @@ function LayoutContent({ children, currentPageName }) {
   const { user } = useUser();
   const [pesquisaOpen, setPesquisaOpen] = useState(false);
   const [modoEscuro, setModoEscuro] = useState(false);
+  const pathname = location.pathname;
 
   useEffect(() => {
     const handleKeyDown = (e) => {
