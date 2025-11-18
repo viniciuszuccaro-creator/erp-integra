@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* FORÇA W-FULL EM TODAS AS PÁGINAS - ETAPA 1 CRÍTICA */
+#root,
+#root > div,
+main,
+main > div {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Remove limitações de container */
+.container {
+  max-width: 100% !important;
+}
+
+/* Garante que páginas ocupem largura total */
+[class*="p-6"],
+[class*="p-8"],
+[class*="lg:p-8"] {
+  width: 100%;
+}

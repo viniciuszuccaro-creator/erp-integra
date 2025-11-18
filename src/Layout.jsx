@@ -296,8 +296,8 @@ function LayoutContent({ children, currentPageName }) {
             </SidebarFooter>
           </Sidebar>
 
-          <main className="flex-1 flex flex-col">
-            <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
+          <main className="flex-1 flex flex-col w-full max-w-full">
+            <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 sticky top-0 z-10 w-full">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-1">
                   <div className="lg:hidden">
@@ -338,7 +338,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
             </header>
 
-            <div className="flex-1 overflow-auto relative">
+            <div className="flex-1 overflow-auto relative w-full max-w-full">
               {children}
               
               {/* RENDERIZADOR DE JANELAS MULTITAREFA */}
