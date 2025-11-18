@@ -1,24 +1,55 @@
+css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* FORÇA W-FULL EM TODAS AS PÁGINAS - ETAPA 1 CRÍTICA */
+/* ========================================== */
+/* FORÇA W-FULL ABSOLUTO - ETAPA 1 CRÍTICA   */
+/* ========================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+body,
 #root,
-#root > div,
+#root > *,
 main,
-main > div {
+main > *,
+main > * > *,
+[data-sidebar-provider],
+[data-sidebar-provider] > *,
+.flex-1 {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* Remove TODOS os limitadores de largura */
+.container,
+.max-w-7xl,
+.max-w-6xl,
+.max-w-5xl,
+.max-w-4xl,
+.mx-auto {
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Força páginas a ocuparem 100% */
+div[class*="p-4"],
+div[class*="p-6"],
+div[class*="p-8"],
+div[class*="lg:p-8"],
+div[class*="space-y-6"] {
   width: 100% !important;
   max-width: 100% !important;
 }
 
-/* Remove limitações de container */
-.container {
-  max-width: 100% !important;
-}
-
-/* Garante que páginas ocupem largura total */
-[class*="p-6"],
-[class*="p-8"],
-[class*="lg:p-8"] {
-  width: 100%;
+/* Garante que o conteúdo principal ocupe tudo */
+main > div:first-child,
+main > div > div:first-child {
+  width: 100% !important;
+  max-width: none !important;
 }
