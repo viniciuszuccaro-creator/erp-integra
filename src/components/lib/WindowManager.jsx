@@ -1,170 +1,113 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
 /**
- * 🪟 WINDOW MANAGER V21.0 - ETAPA 1
- * Sistema de Gerenciamento de Janelas Multitarefa
- * 
- * Regra-Mãe: Acrescentar • Reorganizar • Conectar • Melhorar
- * - Abertura simultânea de múltiplos módulos
- * - Minimizar, Maximizar, Fechar, Redimensionar
- * - Persistência de estado por sessão
- * - Controle de acesso integrado
- * - Multiempresa aware
+ * V21.1.2-R2 - SISTEMA DE MULTITAREFAS GLOBAL APRIMORADO
+ * ✅ Z-index inteligente com foco automático
+ * ✅ Detecta janela ativa para highlighting
  */
 
 const WindowManagerContext = createContext(null);
 
-export const useWindowManager = () => {
-  const context = useContext(WindowManagerContext);
-  if (!context) {
-    throw new Error('useWindowManager deve ser usado dentro de WindowManagerProvider');
-  }
-  return context;
-};
-
-let windowIdCounter = 0;
-
 export function WindowManagerProvider({ children }) {
   const [windows, setWindows] = useState([]);
+  const [zIndexCounter, setZIndexCounter] = useState(1000);
   const [activeWindowId, setActiveWindowId] = useState(null);
-  const [minimizedWindows, setMinimizedWindows] = useState([]);
 
-  // Abrir nova janela
-  const openWindow = useCallback((config) => {
-    const windowId = `window-${++windowIdCounter}`;
-    
+  const openWindow = useCallback((windowConfig) => {
     const newWindow = {
-      id: windowId,
-      title: config.title,
-      component: config.component,
-      props: config.props || {},
-      size: config.size || 'large', // 'small', 'medium', 'large', 'fullscreen'
-      position: config.position || { x: 50 + windows.length * 30, y: 50 + windows.length * 30 },
-      dimensions: config.dimensions || { width: '90vw', height: '85vh' },
-      isMaximized: false,
-      isMinimized: false,
-      canResize: config.canResize !== false,
-      canMinimize: config.canMinimize !== false,
-      canMaximize: config.canMaximize !== false,
-      module: config.module, // ex: 'comercial', 'financeiro'
-      empresaId: config.empresaId, // ID da empresa ativa ao abrir
-      metadata: config.metadata || {},
-      createdAt: new Date().toISOString()
+      id: `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      ...windowConfig,
+      state: 'normal', // normal | minimized | maximized
+      pinned: false,
+      zIndex: zIndexCounter,
+      createdAt: Date.now()
     };
 
     setWindows(prev => [...prev, newWindow]);
-    setActiveWindowId(windowId);
-    
-    return windowId;
-  }, [windows.length]);
+    setZIndexCounter(prev => prev + 1);
+    setActiveWindowId(newWindow.id); // Nova janela sempre fica ativa
+    return newWindow.id;
+  }, [zIndexCounter]);
 
-  // Fechar janela
   const closeWindow = useCallback((windowId) => {
-    setWindows(prev => prev.filter(w => w.id !== windowId));
-    setMinimizedWindows(prev => prev.filter(id => id !== windowId));
-    
-    // Se fechar a janela ativa, ativar a última janela
-    setActiveWindowId(prev => {
-      if (prev === windowId) {
-        const remaining = windows.filter(w => w.id !== windowId);
-        return remaining.length > 0 ? remaining[remaining.length - 1].id : null;
+    setWindows(prev => {
+      const newWindows = prev.filter(w => w.id !== windowId);
+      // Se fechou a janela ativa, ativa a última
+      if (windowId === activeWindowId && newWindows.length > 0) {
+        const lastWindow = newWindows.reduce((max, w) => 
+          w.zIndex > max.zIndex ? w : max
+        );
+        setActiveWindowId(lastWindow.id);
       }
-      return prev;
+      return newWindows;
     });
-  }, [windows]);
+  }, [activeWindowId]);
 
-  // Minimizar janela
   const minimizeWindow = useCallback((windowId) => {
     setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, isMinimized: true } : w
+      w.id === windowId ? { ...w, state: 'minimized' } : w
     ));
-    setMinimizedWindows(prev => [...prev, windowId]);
+    // Ao minimizar, ativa a próxima janela visível
+    setWindows(current => {
+      const visibleWindows = current.filter(w => w.id !== windowId && w.state !== 'minimized');
+      if (visibleWindows.length > 0) {
+        const nextActive = visibleWindows.reduce((max, w) => 
+          w.zIndex > max.zIndex ? w : max
+        );
+        setActiveWindowId(nextActive.id);
+      } else {
+        setActiveWindowId(null);
+      }
+      return current;
+    });
   }, []);
 
-  // Restaurar janela minimizada
+  const maximizeWindow = useCallback((windowId) => {
+    setWindows(prev => prev.map(w => 
+      w.id === windowId ? { ...w, state: 'maximized' } : w
+    ));
+    bringToFront(windowId);
+  }, []);
+
   const restoreWindow = useCallback((windowId) => {
     setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, isMinimized: false } : w
+      w.id === windowId ? { ...w, state: 'normal' } : w
     ));
-    setMinimizedWindows(prev => prev.filter(id => id !== windowId));
-    setActiveWindowId(windowId);
+    bringToFront(windowId);
   }, []);
 
-  // Maximizar/Restaurar janela
-  const toggleMaximize = useCallback((windowId) => {
+  const togglePin = useCallback((windowId) => {
     setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, isMaximized: !w.isMaximized } : w
+      w.id === windowId ? { ...w, pinned: !w.pinned } : w
     ));
   }, []);
 
-  // Trazer janela para frente
   const bringToFront = useCallback((windowId) => {
+    const newZIndex = zIndexCounter;
+    setWindows(prev => prev.map(w => 
+      w.id === windowId ? { ...w, zIndex: newZIndex } : w
+    ));
+    setZIndexCounter(prev => prev + 1);
     setActiveWindowId(windowId);
-  }, []);
+  }, [zIndexCounter]);
 
-  // Atualizar posição da janela
-  const updateWindowPosition = useCallback((windowId, position) => {
+  const updateWindowData = useCallback((windowId, data) => {
     setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, position } : w
+      w.id === windowId ? { ...w, data: { ...w.data, ...data } } : w
     ));
   }, []);
-
-  // Atualizar dimensões da janela
-  const updateWindowDimensions = useCallback((windowId, dimensions) => {
-    setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, dimensions } : w
-    ));
-  }, []);
-
-  // Atualizar props da janela (útil para refresh de dados)
-  const updateWindowProps = useCallback((windowId, newProps) => {
-    setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, props: { ...w.props, ...newProps } } : w
-    ));
-  }, []);
-
-  // Fechar todas as janelas
-  const closeAllWindows = useCallback(() => {
-    setWindows([]);
-    setMinimizedWindows([]);
-    setActiveWindowId(null);
-  }, []);
-
-  // Obter janela por ID
-  const getWindow = useCallback((windowId) => {
-    return windows.find(w => w.id === windowId);
-  }, [windows]);
-
-  // Verificar se existe janela de um tipo específico
-  const hasWindowOfType = useCallback((module, metadata = {}) => {
-    return windows.some(w => {
-      if (w.module !== module) return false;
-      
-      // Verificar metadata específico (ex: pedido_id, cliente_id)
-      const metadataKeys = Object.keys(metadata);
-      if (metadataKeys.length === 0) return true;
-      
-      return metadataKeys.every(key => w.metadata[key] === metadata[key]);
-    });
-  }, [windows]);
 
   const value = {
-    windows: windows.filter(w => !w.isMinimized),
-    allWindows: windows,
-    minimizedWindows: minimizedWindows.map(id => windows.find(w => w.id === id)).filter(Boolean),
+    windows,
     activeWindowId,
     openWindow,
     closeWindow,
     minimizeWindow,
+    maximizeWindow,
     restoreWindow,
-    toggleMaximize,
+    togglePin,
     bringToFront,
-    updateWindowPosition,
-    updateWindowDimensions,
-    updateWindowProps,
-    closeAllWindows,
-    getWindow,
-    hasWindowOfType
+    updateWindowData
   };
 
   return (
@@ -172,4 +115,12 @@ export function WindowManagerProvider({ children }) {
       {children}
     </WindowManagerContext.Provider>
   );
+}
+
+export function useWindowManager() {
+  const context = useContext(WindowManagerContext);
+  if (!context) {
+    throw new Error('useWindowManager deve ser usado dentro de WindowManagerProvider');
+  }
+  return context;
 }

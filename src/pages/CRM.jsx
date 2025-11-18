@@ -509,7 +509,7 @@ export default function CRMPage() {
   };
 
   return (
-    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
+    <div className="p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">CRM - Gestão de Relacionamento com Clientes</h1>
         <p className="text-slate-600">V21.1 - Gerencie oportunidades, interações, campanhas + IA de Churn</p>
@@ -607,7 +607,7 @@ export default function CRMPage() {
                     Nova Oportunidade
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
+                <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>{editingOpp ? 'Editar Oportunidade' : 'Nova Oportunidade'}</DialogTitle>
                   </DialogHeader>
@@ -1279,7 +1279,7 @@ export default function CRMPage() {
       </Tabs>
 
       <Dialog open={!!viewingOpp} onOpenChange={() => setViewingOpp(null)}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
+        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detalhes da Oportunidade</DialogTitle>
           </DialogHeader>

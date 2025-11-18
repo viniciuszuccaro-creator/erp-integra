@@ -1,65 +1,129 @@
-import { useWindowManager } from './WindowManagerPersistent';
+import React, { lazy, Suspense } from 'react';
+import { useWindowManager } from './WindowManager';
+import { Package, ShoppingCart, Users, DollarSign, FileText, Truck, Loader2 } from 'lucide-react';
+
+const ProdutoFormV22_Completo = lazy(() => import('@/components/cadastros/ProdutoFormV22_Completo'));
 
 /**
- * 🪟 USE WINDOW HOOK V21.0 - ETAPA 1 COMPLETA
- * Hook simplificado para abrir janelas de qualquer lugar do sistema
- * 
- * Exemplo de uso:
- * 
- * import { useWindow } from '@/components/lib/useWindow';
- * import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
- * 
- * const { openWindow } = useWindow();
- * 
- * // Abrir janela grande (padrão max-w-[90vw])
- * openWindow({
- *   title: 'Editar Cliente - João Silva',
- *   component: CadastroClienteCompleto,
- *   props: { cliente: clienteData, onSuccess: () => console.log('salvo') },
- *   module: 'comercial',
- *   metadata: { cliente_id: clienteData.id }
- * });
- * 
- * // Atalho para janela grande
- * openLargeWindow({ ... });
+ * V21.1.2-R2 - Hook para abrir janelas facilmente
+ * ✅ Lazy loading dos formulários
+ * ✅ Suspense com loading state
+ * ✅ ProdutoFormV22_Completo integrado
  */
-
 export function useWindow() {
-  const windowManager = useWindowManager();
+  const { openWindow } = useWindowManager();
+
+  const openProductWindow = (produto = null, onSave) => {
+    return openWindow({
+      title: produto ? `Editar: ${produto.descricao}` : 'Novo Produto',
+      subtitle: 'V21.1.2-R2 - IA + Peso/Dimensões + E-commerce',
+      icon: Package,
+      badge: produto ? 'Edição' : 'Novo',
+      content: (
+        <div className="h-full overflow-hidden">
+          <Suspense fallback={
+            <div className="flex items-center justify-center h-96">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            </div>
+          }>
+            <ProdutoFormV22_Completo
+              produto={produto}
+              onSubmit={(data) => {
+                if (onSave) onSave(data);
+              }}
+              isSubmitting={false}
+            />
+          </Suspense>
+        </div>
+      ),
+      data: { produto, onSave }
+    });
+  };
+
+  const openPedidoWindow = (pedido = null, onSave) => {
+    return openWindow({
+      title: pedido ? `Pedido ${pedido.numero_pedido}` : 'Novo Pedido',
+      subtitle: '9 Abas - Multi-Instância V21.1.2',
+      icon: ShoppingCart,
+      badge: pedido ? `#${pedido.numero_pedido}` : 'Novo',
+      content: (
+        <div className="h-full overflow-hidden">
+          <div className="p-6">
+            <p className="text-slate-600">🚧 PedidoFormCompleto será conectado aqui</p>
+            <p className="text-xs text-slate-500 mt-2">
+              Formulário completo de pedido com 9 abas já existe, apenas falta conectar ao WindowManager
+            </p>
+          </div>
+        </div>
+      ),
+      data: { pedido, onSave }
+    });
+  };
+
+  const openClienteWindow = (cliente = null, onSave) => {
+    return openWindow({
+      title: cliente ? `Cliente: ${cliente.nome}` : 'Novo Cliente',
+      subtitle: 'Cadastro Completo de Cliente',
+      icon: Users,
+      content: (
+        <div className="h-full overflow-auto p-6">
+          <p className="text-slate-600">🚧 ClienteForm será conectado aqui</p>
+        </div>
+      ),
+      data: { cliente, onSave }
+    });
+  };
+
+  const openTabelaPrecoWindow = (tabela = null, onSave) => {
+    return openWindow({
+      title: tabela ? `Tabela: ${tabela.nome}` : 'Nova Tabela de Preço',
+      subtitle: 'Gerenciamento de Preços V21.1.2',
+      icon: DollarSign,
+      content: (
+        <div className="h-full overflow-auto p-6">
+          <p className="text-slate-600">🚧 TabelaPrecoForm será conectado aqui</p>
+        </div>
+      ),
+      data: { tabela, onSave }
+    });
+  };
+
+  const openNFeWindow = (nfe = null, pedido = null) => {
+    return openWindow({
+      title: 'Emitir NF-e',
+      subtitle: nfe ? `NF-e ${nfe.numero}` : 'Nova Nota Fiscal',
+      icon: FileText,
+      badge: 'Fiscal',
+      content: (
+        <div className="h-full overflow-auto p-6">
+          <p className="text-slate-600">🚧 GerarNFeModal será conectado aqui</p>
+        </div>
+      ),
+      data: { nfe, pedido }
+    });
+  };
+
+  const openFornecedorWindow = (fornecedor = null, onSave) => {
+    return openWindow({
+      title: fornecedor ? `Fornecedor: ${fornecedor.nome}` : 'Novo Fornecedor',
+      subtitle: 'Cadastro de Fornecedores',
+      icon: Truck,
+      content: (
+        <div className="h-full overflow-auto p-6">
+          <p className="text-slate-600">🚧 FornecedorForm será conectado aqui</p>
+        </div>
+      ),
+      data: { fornecedor, onSave }
+    });
+  };
 
   return {
-    ...windowManager,
-    
-    // Atalho padrão - Modal Grande (90vw x 85vh) - PADRÃO ETAPA 1
-    openWindow: (config) => windowManager.openWindow({
-      ...config,
-      dimensions: config.dimensions || { width: '90vw', height: '85vh' }
-    }),
-    
-    // Janela Grande - max-w-[90vw] (Padrão de formulários complexos)
-    openLargeWindow: (config) => windowManager.openWindow({
-      ...config,
-      dimensions: { width: '90vw', height: '85vh' }
-    }),
-
-    // Janela Média - Para visualizações e relatórios
-    openMediumWindow: (config) => windowManager.openWindow({
-      ...config,
-      dimensions: { width: '70vw', height: '70vh' }
-    }),
-
-    // Janela Pequena - Para confirmações e formulários simples
-    openSmallWindow: (config) => windowManager.openWindow({
-      ...config,
-      dimensions: { width: '50vw', height: '60vh' }
-    }),
-
-    // Janela Fullscreen - Para dashboards e visualizações complexas
-    openFullscreenWindow: (config) => windowManager.openWindow({
-      ...config,
-      dimensions: { width: '100vw', height: '100vh' },
-      isMaximized: true,
-      canResize: false
-    })
+    openProductWindow,
+    openPedidoWindow,
+    openClienteWindow,
+    openTabelaPrecoWindow,
+    openNFeWindow,
+    openFornecedorWindow,
+    openWindow
   };
 }

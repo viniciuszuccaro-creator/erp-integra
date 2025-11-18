@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -131,8 +132,8 @@ export default function Producao() {
   const [itemSelecionado3D, setItemSelecionado3D] = useState(null);
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 p-4 sm:p-6 lg:p-8 overflow-y-auto"> {/* ETAPA 1: w-full + responsivo */}
-      <div className="max-w-full space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
@@ -530,7 +531,7 @@ export default function Producao() {
 
         {/* Dialog Inspeção */}
         <Dialog open={inspecaoDialogOpen} onOpenChange={setInspecaoDialogOpen}>
-          <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Inspeção de Qualidade: {opSelecionada?.numero_op}</DialogTitle>
             </DialogHeader>
@@ -549,7 +550,7 @@ export default function Producao() {
 
         {/* Dialog Detalhes */}
         <Dialog open={detalhesDialogOpen} onOpenChange={setDetalhesDialogOpen}>
-          <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Detalhes da OP: {opSelecionada?.numero_op}</DialogTitle>
             </DialogHeader>

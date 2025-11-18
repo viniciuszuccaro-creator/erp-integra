@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -56,7 +57,6 @@ import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
 import DashboardControleAcesso from "../components/sistema/DashboardControleAcesso";
 import FonteUnicaVerdade from "../components/sistema/FonteUnicaVerdade";
 import usePermissions from "../components/lib/usePermissions";
-import { useWindow } from "../components/lib/useWindow";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
 import ColaboradorForm from "../components/rh/ColaboradorForm";
 import BancoForm from "../components/cadastros/BancoForm";
@@ -163,7 +163,6 @@ export default function Cadastros() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
-  const { openLargeWindow } = useWindow();
 
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
@@ -403,7 +402,7 @@ export default function Cadastros() {
   };
 
   return (
-    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
+    <div className="p-6 lg:p-8 space-y-6">
       {/* HEADER */}
       <div className="flex justify-between items-start">
         <div>
@@ -1946,43 +1945,35 @@ export default function Cadastros() {
 
       {/* ==================== DIALOGS - TODOS OS FORMULÁRIOS ==================== */}
 
-      {/* CLIENTES - MODAL GRANDE max-w-[90vw] */}
-      <Dialog open={cadastroCompletoAberto} onOpenChange={setCadastroCompletoAberto}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
-          <CadastroClienteCompleto
-            cliente={clienteSelecionado}
-            isOpen={cadastroCompletoAberto}
-            onClose={() => {
-              setCadastroCompletoAberto(false);
-              setClienteSelecionado(null);
-            }}
-            onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ['clientes'] });
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* CLIENTES */}
+      <CadastroClienteCompleto
+        cliente={clienteSelecionado}
+        isOpen={cadastroCompletoAberto}
+        onClose={() => {
+          setCadastroCompletoAberto(false);
+          setClienteSelecionado(null);
+        }}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['clientes'] });
+        }}
+      />
 
-      {/* FORNECEDORES - MODAL GRANDE max-w-[90vw] */}
-      <Dialog open={cadastroFornecedorAberto} onOpenChange={setCadastroFornecedorAberto}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
-          <CadastroFornecedorCompleto
-            fornecedor={fornecedorSelecionado}
-            isOpen={cadastroFornecedorAberto}
-            onClose={() => {
-              setCadastroFornecedorAberto(false);
-              setFornecedorSelecionado(null);
-            }}
-            onSuccess={() => {
-              queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
-            }}
-          />
-        </DialogContent>
-      </Dialog>
+      {/* FORNECEDORES */}
+      <CadastroFornecedorCompleto
+        fornecedor={fornecedorSelecionado}
+        isOpen={cadastroFornecedorAberto}
+        onClose={() => {
+          setCadastroFornecedorAberto(false);
+          setFornecedorSelecionado(null);
+        }}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
+        }}
+      />
 
-      {/* TRANSPORTADORAS - MODAL GRANDE max-w-[90vw] */}
+      {/* TRANSPORTADORAS */}
       <Dialog open={transportadoraFormOpen} onOpenChange={setTransportadoraFormOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{transportadoraSelecionada ? 'Editar' : 'Nova'} Transportadora</DialogTitle>
           </DialogHeader>
@@ -2004,9 +1995,9 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* COLABORADORES - MODAL GRANDE max-w-[90vw] */}
+      {/* COLABORADORES */}
       <Dialog open={colaboradorFormOpen} onOpenChange={setColaboradorFormOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{colaboradorSelecionado ? 'Editar' : 'Novo'} Colaborador</DialogTitle>
           </DialogHeader>
@@ -2354,9 +2345,9 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* EMPRESAS - MODAL GRANDE max-w-[90vw] */}
+      {/* EMPRESAS */}
       <Dialog open={empresaFormOpen} onOpenChange={setEmpresaFormOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{empresaSelecionada ? 'Editar' : 'Nova'} Empresa</DialogTitle>
           </DialogHeader>
@@ -2498,9 +2489,9 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* PERFIS DE ACESSO - MODAL GRANDE max-w-[90vw] */}
+      {/* PERFIS DE ACESSO */}
       <Dialog open={perfilAcessoFormOpen} onOpenChange={setPerfilAcessoFormOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{perfilSelecionado ? 'Editar' : 'Novo'} Perfil de Acesso</DialogTitle>
           </DialogHeader>
@@ -2546,9 +2537,9 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* CONFIGURAÇÕES DE INTEGRAÇÃO - MODAL GRANDE max-w-[90vw] */}
+      {/* CONFIGURAÇÕES DE INTEGRAÇÃO */}
       <Dialog open={configIntegracaoFormOpen} onOpenChange={setConfigIntegracaoFormOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{configSelecionada ? 'Editar' : 'Nova'} Configuração de Integração</DialogTitle>
           </DialogHeader>

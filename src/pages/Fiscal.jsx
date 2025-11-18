@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -207,7 +208,7 @@ export default function FiscalPage() {
   };
 
   return (
-    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
+    <div className="p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Fiscal e Tributário</h1>
         <p className="text-slate-600">
@@ -436,7 +437,7 @@ export default function FiscalPage() {
 
       {/* Dialog Detalhes NF-e */}
       <Dialog open={dialogDetalhesOpen} onOpenChange={setDialogDetalhesOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Detalhes NF-e {notaSelecionada?.numero}/{notaSelecionada?.serie}
@@ -617,7 +618,7 @@ export default function FiscalPage() {
 
       {/* Dialog Logs */}
       <Dialog open={dialogLogsOpen} onOpenChange={setDialogLogsOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"> {/* ETAPA 1: Modal Grande */}
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Logs Fiscais - NF-e {notaSelecionada?.numero}</DialogTitle>
           </DialogHeader>

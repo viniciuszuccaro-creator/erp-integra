@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { useContextoVisual } from '@/components/lib/useContextoVisual';
-import { useWindow } from '@/components/lib/useWindow';
+import { useContextoVisual } from '@/components/lib/useContextoVisual'; // Updated import path
 import {
   DollarSign,
   TrendingUp,
@@ -56,7 +56,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 export default function Dashboard() {
   const navigate = useNavigate();
   const { empresaAtual } = useContextoVisual();
-  const { openLargeWindow } = useWindow();
 
   const [periodo, setPeriodo] = useState(() => {
     try {
@@ -413,19 +412,9 @@ export default function Dashboard() {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-  // DRILL-DOWN - Função para navegar ao clicar em KPI ou abrir em janela
+  // DRILL-DOWN - Função para navegar ao clicar em KPI
   const handleDrillDown = (rota) => {
     navigate(rota);
-  };
-
-  // Abrir detalhes em janela multitarefa
-  const abrirDetalhesEmJanela = (titulo, componente, props, modulo) => {
-    openLargeWindow({
-      title: titulo,
-      component: componente,
-      props: props,
-      module: modulo
-    });
   };
 
   const statsCards = [
@@ -604,7 +593,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
+    <div className="p-6 lg:p-8 space-y-6"> {/* Changed space-y-8 to space-y-6 */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Executivo</h1>

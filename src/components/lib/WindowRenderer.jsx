@@ -1,27 +1,46 @@
 import React from 'react';
 import { useWindowManager } from './WindowManager';
 import WindowModal from './WindowModal';
+import MinimizedWindowsBar from './MinimizedWindowsBar';
 
 /**
- * 🪟 WINDOW RENDERER V21.0 - ETAPA 1
- * Renderiza todas as janelas abertas
- * Gerencia ordem e visibilidade
+ * V21.1.2-R2 - Renderizador Global de Janelas APRIMORADO
+ * ✅ Passa isActive para cada janela
+ * ✅ Z-index dinâmico gerenciado
  */
-
 export default function WindowRenderer() {
-  const { windows } = useWindowManager();
+  const {
+    windows,
+    activeWindowId,
+    closeWindow,
+    minimizeWindow,
+    maximizeWindow,
+    restoreWindow,
+    togglePin,
+    bringToFront
+  } = useWindowManager();
 
   return (
     <>
-      {windows.map(window => {
-        const Component = window.component;
-        
-        return (
-          <WindowModal key={window.id} window={window}>
-            <Component {...window.props} windowId={window.id} />
-          </WindowModal>
-        );
-      })}
+      {/* Janelas ativas */}
+      {windows.map((window) => (
+        <WindowModal
+          key={window.id}
+          window={window}
+          isActive={window.id === activeWindowId}
+          onClose={() => closeWindow(window.id)}
+          onMinimize={() => minimizeWindow(window.id)}
+          onMaximize={() => maximizeWindow(window.id)}
+          onRestore={() => restoreWindow(window.id)}
+          onTogglePin={() => togglePin(window.id)}
+          onBringToFront={() => bringToFront(window.id)}
+        >
+          {window.content}
+        </WindowModal>
+      ))}
+
+      {/* Barra de minimizados */}
+      <MinimizedWindowsBar />
     </>
   );
 }
