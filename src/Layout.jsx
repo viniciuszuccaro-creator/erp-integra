@@ -49,8 +49,6 @@ import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
-import ForcarAtualizacao from "@/components/ForcarAtualizacao";
-import DebugWidthIndicator from "@/components/DebugWidthIndicator";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -194,13 +192,11 @@ function LayoutContent({ children, currentPageName }) {
 
   return (
     <WindowManagerProvider>
-      <SidebarProvider style={{width: '100%', maxWidth: '100%'}}>
+      <SidebarProvider>
         {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
-
-        <DebugWidthIndicator />
-        <ForcarAtualizacao />
-        <div className="min-h-screen flex w-full max-w-full bg-gradient-to-br from-slate-50 to-blue-50" style={{width: '100vw', maxWidth: '100vw'}}>
-          <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm flex-shrink-0">
+        
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
+          <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
             <SidebarHeader className="border-b border-slate-200 p-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
@@ -298,8 +294,8 @@ function LayoutContent({ children, currentPageName }) {
             </SidebarFooter>
           </Sidebar>
 
-          <main className="flex-1 flex flex-col w-full max-w-full" style={{width: '100%', maxWidth: '100%', flex: '1 1 auto'}}>
-            <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 sticky top-0 z-10 w-full" style={{width: '100%'}}>
+          <main className="flex-1 flex flex-col">
+            <header className="bg-white/80 backdrop-blur-sm border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4 flex-1">
                   <div className="lg:hidden">
@@ -340,7 +336,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
             </header>
 
-            <div className="flex-1 overflow-auto relative w-full max-w-full" style={{width: '100%', maxWidth: '100%'}}>
+            <div className="flex-1 overflow-auto relative">
               {children}
               
               {/* RENDERIZADOR DE JANELAS MULTITAREFA */}
