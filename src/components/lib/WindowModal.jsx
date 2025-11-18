@@ -164,9 +164,11 @@ export default function WindowModal({ window, children }) {
         left: dimensions.left,
         zIndex: isActive ? 1000 : 900,
         display: window.isMinimized ? 'none' : 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        pointerEvents: 'auto'
       }}
       onClick={() => bringToFront(window.id)}
+      onMouseDown={(e) => e.stopPropagation()}
     >
       {/* BARRA DE TÍTULO */}
       <div
@@ -230,9 +232,9 @@ export default function WindowModal({ window, children }) {
         </div>
       </div>
 
-      {/* CONTEÚDO DA JANELA */}
-      <CardContent className="flex-1 p-0 overflow-hidden">
-        <div className="h-full overflow-y-auto">
+      {/* CONTEÚDO DA JANELA - W-FULL FORÇADO */}
+      <CardContent className="flex-1 p-0 overflow-hidden w-full">
+        <div className="w-full h-full overflow-y-auto">
           {children}
         </div>
       </CardContent>
