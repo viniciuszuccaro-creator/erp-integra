@@ -353,7 +353,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
         {/* 🔥 V21.1.2-ETAPA1: ÁREA DE CONTEÚDO PADRONIZADA */}
         <div className="flex-1 overflow-hidden min-h-0">
           {/* ABA 1: IDENTIFICAÇÃO */}
-          <TabsContent value="identificacao" className="w-full h-full overflow-y-auto p-4 sm:p-6 m-0 data-[state=active]:flex data-[state=active]:flex-col">
+          <TabsContent value="identificacao" className="h-full overflow-y-auto p-4 sm:p-6 m-0 data-[state=active]:flex data-[state=active]:flex-col">
             <WizardEtapa1Cliente
               formData={formData}
               setFormData={setFormData}
@@ -363,7 +363,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 2: ITENS DE REVENDA */}
-          <TabsContent value="revenda" className="w-full h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="revenda" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
             <ItensRevendaTab
               formData={formData}
               setFormData={setFormData}
@@ -372,7 +372,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 3: ARMADO PADRÃO */}
-          <TabsContent value="armado" className="w-full h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="armado" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
             <ArmadoPadraoTab
               formData={formData}
               setFormData={setFormData}
@@ -382,7 +382,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 4: CORTE E DOBRA (IA) */}
-          <TabsContent value="corte" className="w-full h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="corte" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
             <CorteDobraIATab
               formData={formData}
               setFormData={setFormData}
@@ -392,7 +392,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* V21.1.2-ETAPA1: ABA 5 - HISTÓRICO (ALTURA PADRONIZADA) */}
-          <TabsContent value="historico" className="w-full h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="historico" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
             <HistoricoClienteTab
               formData={formData}
               setFormData={setFormData}
@@ -404,7 +404,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 6: LOGÍSTICA */}
-          <TabsContent value="logistica" className="w-full h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="logistica" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
             <LogisticaEntregaTab
               formData={formData}
               setFormData={setFormData}
@@ -414,7 +414,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 7: FINANCEIRO */}
-          <TabsContent value="financeiro" className="w-full h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="financeiro" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
             <FechamentoFinanceiroTab
               formData={formData}
               setFormData={setFormData}
@@ -423,7 +423,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* ABA 8: ARQUIVOS */}
-          <TabsContent value="arquivos" className="w-full h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="arquivos" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
             <ArquivosProjetosTab
               formData={formData}
               setFormData={setFormData}
@@ -431,7 +431,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           </TabsContent>
 
           {/* V21.1.2-ETAPA1: ABA 9 - AUDITORIA (ALTURA PADRONIZADA) */}
-          <TabsContent value="auditoria" className="w-full h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
+          <TabsContent value="auditoria" className="h-full overflow-y-auto p-4 sm:p-6 m-0 min-h-[500px]">
             <AuditoriaAprovacaoTab
               formData={formData}
               pedido={pedido}
