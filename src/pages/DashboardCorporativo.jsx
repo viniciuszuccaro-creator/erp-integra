@@ -135,8 +135,8 @@ export default function DashboardCorporativo() {
   }
 
   return (
-    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
-      <div className="max-w-full space-y-6">
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)] max-w-full" style={{ width: '100%', maxWidth: '100%' }}> {/* ETAPA 1: w-full + inline */}
+      <div className="max-w-full space-y-6" style={{ width: '100%', maxWidth: '100%' }}>
         {/* Header com Filtros */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
