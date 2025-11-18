@@ -96,15 +96,17 @@ article,
   box-sizing: border-box !important;
 }
 
-/* JANELAS SEMPRE NO TOPO E ISOLADAS */
+/* JANELAS SEMPRE NO TOPO E ISOLADAS - ACIMA DE TUDO */
 [data-window-modal] {
-  z-index: 1000 !important;
+  z-index: 9999 !important;
   pointer-events: auto !important;
+  position: fixed !important;
 }
 
-/* BACKGROUND GRADIENTE SISTEMA */
-.main-content-area {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+/* OVERLAY DE JANELAS */
+[data-radix-dialog-overlay],
+[data-radix-popover-overlay] {
+  z-index: 9998 !important;
 }
 
 /* Força páginas a ocuparem 100% */

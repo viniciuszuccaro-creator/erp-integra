@@ -46,7 +46,6 @@ import { UserProvider, useUser } from "@/components/lib/UserContext";
 import { WindowManagerProvider } from "@/components/lib/WindowManagerPersistent";
 import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
-import AutoWindowWrapper from "@/components/lib/AutoWindowWrapper";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
@@ -85,7 +84,6 @@ function LayoutContent({ children, currentPageName }) {
   const { user } = useUser();
   const [pesquisaOpen, setPesquisaOpen] = useState(false);
   const [modoEscuro, setModoEscuro] = useState(false);
-  const pathname = location.pathname;
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -342,15 +340,9 @@ function LayoutContent({ children, currentPageName }) {
               </div>
             </header>
 
-            <div className="flex-1 overflow-hidden relative w-full max-w-full" style={{width: '100%', maxWidth: '100%', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
-              {/* AUTO WINDOW WRAPPER - CONVERTE TUDO EM JANELA */}
-              <AutoWindowWrapper pathname={pathname}>
-                {children}
-              </AutoWindowWrapper>
+            <div className="flex-1 overflow-auto relative w-full max-w-full" style={{width: '100%', maxWidth: '100%'}}>
+              {children}
             </div>
-
-            {/* RENDERIZADOR DE JANELAS MULTITAREFA - FORA DO SCROLL */}
-            <WindowRenderer />
 
             {/* BARRA DE JANELAS MINIMIZADAS */}
             <MinimizedWindowsBar />
@@ -361,6 +353,9 @@ function LayoutContent({ children, currentPageName }) {
             onOpenChange={setPesquisaOpen} 
           />
         </div>
+
+        {/* RENDERIZADOR DE JANELAS MULTITAREFA - FIXED GLOBAL */}
+        <WindowRenderer />
       </SidebarProvider>
     </WindowManagerProvider>
   );
