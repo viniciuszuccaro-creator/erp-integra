@@ -85,30 +85,6 @@ button[role="tab"] {
   white-space: nowrap !important;
 }
 
-/* FORÇA W-FULL EM TODAS AS PÁGINAS E COMPONENTES */
-.page-container,
-main > div,
-section,
-article,
-[data-page] {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-/* JANELAS SEMPRE NO TOPO E ISOLADAS - ACIMA DE TUDO */
-[data-window-modal] {
-  z-index: 9999 !important;
-  pointer-events: auto !important;
-  position: fixed !important;
-}
-
-/* OVERLAY DE JANELAS */
-[data-radix-dialog-overlay],
-[data-radix-popover-overlay] {
-  z-index: 9998 !important;
-}
-
 /* Força páginas a ocuparem 100% */
 div[class*="p-4"],
 div[class*="p-6"],

@@ -344,6 +344,9 @@ function LayoutContent({ children, currentPageName }) {
               {children}
             </div>
 
+            {/* RENDERIZADOR DE JANELAS MULTITAREFA - FORA DO SCROLL */}
+            <WindowRenderer />
+
             {/* BARRA DE JANELAS MINIMIZADAS */}
             <MinimizedWindowsBar />
           </main>
@@ -353,9 +356,6 @@ function LayoutContent({ children, currentPageName }) {
             onOpenChange={setPesquisaOpen} 
           />
         </div>
-
-        {/* RENDERIZADOR DE JANELAS MULTITAREFA - FIXED GLOBAL */}
-        <WindowRenderer />
       </SidebarProvider>
     </WindowManagerProvider>
   );
