@@ -514,7 +514,7 @@ Retorne um JSON estruturado com as peças.`,
   ];
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
       <Card className="border-0 shadow-lg bg-gradient-to-r from-purple-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
