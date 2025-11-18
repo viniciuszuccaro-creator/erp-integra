@@ -152,24 +152,31 @@ export default function WindowModal({ window, children }) {
   }, [isResizing, resizeStart, window.id, updateWindowDimensions]);
 
   return (
-    <Card
-      ref={windowRef}
-      className={`fixed shadow-2xl transition-all ${
-        isActive ? 'ring-2 ring-blue-500' : 'ring-1 ring-slate-300'
-      } ${isDragging ? 'cursor-move' : ''}`}
+    <div
+      data-window-modal
+      className="fixed"
       style={{
         width: dimensions.width,
         height: dimensions.height,
         top: dimensions.top,
         left: dimensions.left,
         zIndex: isActive ? 1000 : 900,
-        display: window.isMinimized ? 'none' : 'flex',
-        flexDirection: 'column',
-        pointerEvents: 'auto'
+        display: window.isMinimized ? 'none' : 'block',
+        pointerEvents: 'auto',
+        isolation: 'isolate'
       }}
-      onClick={() => bringToFront(window.id)}
+      onClick={(e) => {
+        e.stopPropagation();
+        bringToFront(window.id);
+      }}
       onMouseDown={(e) => e.stopPropagation()}
     >
+      <Card
+        ref={windowRef}
+        className={`w-full h-full shadow-2xl transition-all ${
+          isActive ? 'ring-2 ring-blue-500' : 'ring-1 ring-slate-300'
+        } ${isDragging ? 'cursor-move' : ''} flex flex-col`}
+      >
       {/* BARRA DE TÍTULO */}
       <div
         className={`flex items-center justify-between px-4 py-2 bg-gradient-to-r ${
@@ -256,6 +263,7 @@ export default function WindowModal({ window, children }) {
           />
         </>
       )}
-    </Card>
+      </Card>
+    </div>
   );
 }

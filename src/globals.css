@@ -54,15 +54,35 @@ body > div:first-child,
 [data-state="active"],
 .tab-content,
 div[class*="TabsContent"],
-[data-radix-scroll-area-viewport] {
+[data-radix-scroll-area-viewport],
+[data-radix-tabs-content] {
   width: 100% !important;
   max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 /* JANELAS MULTITAREFA SEMPRE CLICÁVEIS - NÃO FECHAM AO CLICAR FORA */
 .window-modal,
-[class*="WindowModal"] {
+[class*="WindowModal"],
+[data-window-modal] {
   pointer-events: auto !important;
+  isolation: isolate !important;
+}
+
+/* PREVINE FECHAMENTO DE JANELAS POR OVERLAY */
+body:has([data-window-modal]) {
+  pointer-events: auto !important;
+}
+
+/* TABS RESPONSIVAS SISTEMA TODO */
+[role="tablist"] {
+  flex-wrap: wrap !important;
+  overflow-x: auto !important;
+}
+
+button[role="tab"] {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
 }
 
 /* Força páginas a ocuparem 100% */

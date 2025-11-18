@@ -51,7 +51,6 @@ import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
 import ForcarAtualizacao from "@/components/ForcarAtualizacao";
 import DebugWidthIndicator from "@/components/DebugWidthIndicator";
-import ForceFullWidth from "@/components/ForceFullWidth";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -198,7 +197,6 @@ function LayoutContent({ children, currentPageName }) {
       <SidebarProvider style={{width: '100%', maxWidth: '100%'}}>
         {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
 
-        <ForceFullWidth />
         <DebugWidthIndicator />
         <ForcarAtualizacao />
         <div className="min-h-screen flex w-full max-w-full bg-gradient-to-br from-slate-50 to-blue-50" style={{width: '100vw', maxWidth: '100vw'}}>
@@ -344,10 +342,10 @@ function LayoutContent({ children, currentPageName }) {
 
             <div className="flex-1 overflow-auto relative w-full max-w-full" style={{width: '100%', maxWidth: '100%'}}>
               {children}
-              
-              {/* RENDERIZADOR DE JANELAS MULTITAREFA */}
-              <WindowRenderer />
             </div>
+
+            {/* RENDERIZADOR DE JANELAS MULTITAREFA - FORA DO SCROLL */}
+            <WindowRenderer />
 
             {/* BARRA DE JANELAS MINIMIZADAS */}
             <MinimizedWindowsBar />
