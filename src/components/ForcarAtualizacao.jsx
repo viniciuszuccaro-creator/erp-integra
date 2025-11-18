@@ -1,52 +1,41 @@
 import { useEffect } from 'react';
 
-/**
- * FORÇAR W-FULL - V21.1.2-FINAL
- * Aplica estilos inline via JavaScript para garantir 100% de largura
- */
+// FORÇAR ATUALIZAÇÃO - V21.1.2 FINAL + APLICAR ESTILOS INLINE
 export default function ForcarAtualizacao() {
   useEffect(() => {
+    // Força aplicação de estilos inline no DOM
     const applyStyles = () => {
       const root = document.getElementById('root');
       const body = document.body;
       const html = document.documentElement;
+      
+      [html, body, root].forEach(el => {
+        if (el) {
+          el.style.width = '100%';
+          el.style.maxWidth = '100vw';
+          el.style.overflowX = 'hidden';
+        }
+      });
+
+      // Força no main e containers
       const main = document.querySelector('main');
-      
-      // Aplicar estilos de forma AGRESSIVA com cssText + !important
-      if (html) {
-        html.style.cssText = 'width: 100vw !important; max-width: 100vw !important; overflow-x: hidden !important; margin: 0 !important; padding: 0 !important;';
-      }
-      
-      if (body) {
-        body.style.cssText = 'width: 100vw !important; max-width: 100vw !important; overflow-x: hidden !important; margin: 0 !important; padding: 0 !important;';
-      }
-      
-      if (root) {
-        root.style.cssText = 'width: 100% !important; max-width: 100% !important;';
-      }
-      
       if (main) {
-        main.style.cssText = 'width: 100% !important; max-width: 100% !important; flex: 1 1 auto !important;';
+        main.style.width = '100%';
+        main.style.maxWidth = '100%';
+        main.style.flex = '1 1 auto';
       }
 
-      // Remover max-width de containers de forma AGRESSIVA
-      const containers = document.querySelectorAll('.container, .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl, .max-w-xl, .max-w-lg, .max-w-md, .max-w-sm, .mx-auto');
-      containers.forEach(container => {
-        container.style.cssText = 'max-width: 100% !important; width: 100% !important; margin-left: 0 !important; margin-right: 0 !important;';
-      });
-      
-      // Forçar main e seus filhos diretos (3 níveis)
-      const mains = document.querySelectorAll('main, main > div, main > div > div, main > div > div > div');
-      mains.forEach(el => {
-        el.style.cssText = 'width: 100% !important; max-width: 100% !important;';
+      // Remove limitações de container
+      document.querySelectorAll('.container, .max-w-7xl, .max-w-6xl').forEach(el => {
+        el.style.maxWidth = '100%';
+        el.style.marginLeft = '0';
+        el.style.marginRight = '0';
       });
     };
 
     applyStyles();
-    // Reaplica após 100ms para garantir execução
+    // Reaplica após 100ms para garantir
     setTimeout(applyStyles, 100);
-    // Reaplica após 500ms para garantir execução após todos componentes montarem
-    setTimeout(applyStyles, 500);
   }, []);
 
   return null;

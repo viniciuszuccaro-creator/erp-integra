@@ -75,7 +75,7 @@ export default function Documentacao() {
   };
 
   return (
-    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)] max-w-full" style={{ width: '100%', maxWidth: '100%' }}> {/* ETAPA 1: w-full + inline */}
+    <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6 overflow-y-auto min-h-[calc(100vh-4rem)]"> {/* ETAPA 1: w-full + responsivo */}
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
           📚 Documentação ERP Zuccaro v3.0
