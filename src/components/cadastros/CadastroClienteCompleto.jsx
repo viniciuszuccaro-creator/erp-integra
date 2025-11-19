@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,7 @@ import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineCliente";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
-export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSuccess }) {
+export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSuccess, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -256,20 +257,15 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
     return "";
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent
-        className="max-w-[1180px] h-[620px] overflow-hidden flex flex-col p-0"
-      >
-        <DialogHeader
-          className="border-b pb-4 px-6 pt-6 flex-shrink-0"
-        >
-          <div className="flex items-start justify-between">
+  const content = (
+    <>
+      <div className="border-b pb-4 px-6 pt-6 flex-shrink-0 bg-white sticky top-0 z-10">
+        <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="text-2xl flex items-center gap-2">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
                 <User className="w-6 h-6 text-blue-600" />
                 {cliente?.id ? 'Editar Cliente' : 'Novo Cliente'}
-              </DialogTitle>
+              </h2>
               {cliente?.id && (
                 <div className="flex items-center gap-2 mt-2">
                   <Badge className={
@@ -296,10 +292,10 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               {saveMutation.isPending ? 'Salvando..' : 'Salvar Cliente'}
             </Button>
           </div>
-        </DialogHeader>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid w-full grid-cols-7 flex-shrink-0 px-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="grid w-full grid-cols-7 flex-shrink-0 px-6 bg-slate-50">
             <TabsTrigger value="dados-gerais" className="text-xs">
               <User className="w-3 h-3 mr-1" />
               Dados Gerais
@@ -330,7 +326,8 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <ScrollArea className="flex-1">
+          <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-4 m-0 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1060,7 +1057,19 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               )}
             </TabsContent>
           </div>
-        </Tabs>
+        </ScrollArea>
+      </Tabs>
+    </>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
+        {content}
       </DialogContent>
     </Dialog>
   );
