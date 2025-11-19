@@ -16,17 +16,19 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import HistoricoProduto from "./HistoricoProduto";
 
 /**
- * V21.1.2-R2 - CADASTRO COMPLETO DE PRODUTOS COM ABAS
- * ✅ Aba 1: Dados Gerais (identificação, bitola, precificação)
+ * V21.2 FASE 2 - CADASTRO COMPLETO DE PRODUTOS
+ * ✅ Aba 1: Dados Gerais + TRIPLA CLASSIFICAÇÃO (Setor + Grupo + Marca)
  * ✅ Aba 2: Conversões (unidades, fatores)
  * ✅ Aba 3: Dimensões & Peso (frete/e-commerce)
  * ✅ Aba 4: E-Commerce & IA
  * ✅ Aba 5: Histórico (se edição)
- * ✅ Modo Manual vs IA
+ * ✅ Lookups automáticos dos estruturantes
+ * ✅ Herança de NCM do grupo
  */
 export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmitting, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
@@ -110,6 +112,22 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmittin
   const [modoManual, setModoManual] = useState(false);
   const [gerandoDescricaoSEO, setGerandoDescricaoSEO] = useState(false);
   const [gerandoImagem, setGerandoImagem] = useState(false);
+
+  // V21.2 FASE 2: Queries dos estruturantes
+  const { data: setores = [] } = useQuery({
+    queryKey: ['setores-atividade'],
+    queryFn: () => base44.entities.SetorAtividade.list(),
+  });
+
+  const { data: grupos = [] } = useQuery({
+    queryKey: ['grupos-produto'],
+    queryFn: () => base44.entities.GrupoProduto.list(),
+  });
+
+  const { data: marcas = [] } = useQuery({
+    queryKey: ['marcas'],
+    queryFn: () => base44.entities.Marca.list(),
+  });
 
   useEffect(() => {
     if (formData.eh_bitola) {
@@ -358,6 +376,25 @@ Caso contrário, sugira:
       return;
     }
 
+    // V21.2 FASE 2: Validação tripla classificação
+    if (!formData.setor_atividade_id) {
+      toast.error('Selecione o Setor de Atividade');
+      setAbaAtiva('dados-gerais');
+      return;
+    }
+
+    if (!formData.grupo_produto_id) {
+      toast.error('Selecione o Grupo de Produto');
+      setAbaAtiva('dados-gerais');
+      return;
+    }
+
+    if (!formData.marca_id) {
+      toast.error('Selecione a Marca');
+      setAbaAtiva('dados-gerais');
+      return;
+    }
+
     if (!formData.unidades_secundarias || formData.unidades_secundarias.length === 0) {
       toast.error('Selecione pelo menos 1 unidade de venda/compra');
       return;
@@ -473,6 +510,117 @@ Caso contrário, sugira:
                         Aplicar Tudo
                       </Button>
                     </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* V21.2 FASE 2: TRIPLA CLASSIFICAÇÃO OBRIGATÓRIA */}
+              <Alert className="border-blue-300 bg-gradient-to-r from-blue-50 to-purple-50">
+                <Sparkles className="w-4 h-4 text-blue-600" />
+                <AlertDescription className="text-sm">
+                  <strong className="text-blue-900">FASE 2:</strong> Classificação tripla obrigatória para rastreabilidade total
+                </AlertDescription>
+              </Alert>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <span className="text-indigo-600">🏭</span>
+                    Setor de Atividade *
+                  </Label>
+                  <Select 
+                    value={formData.setor_atividade_id} 
+                    onValueChange={(v) => {
+                      const setor = setores.find(s => s.id === v);
+                      setFormData(prev => ({
+                        ...prev, 
+                        setor_atividade_id: v,
+                        setor_atividade_nome: setor?.nome
+                      }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {setores.filter(s => s.ativo !== false).map(setor => (
+                        <SelectItem key={setor.id} value={setor.id}>
+                          {setor.icone} {setor.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <span className="text-cyan-600">📦</span>
+                    Grupo de Produto *
+                  </Label>
+                  <Select 
+                    value={formData.grupo_produto_id} 
+                    onValueChange={(v) => {
+                      const grupo = grupos.find(g => g.id === v);
+                      setFormData(prev => ({
+                        ...prev, 
+                        grupo_produto_id: v,
+                        grupo_produto_nome: grupo?.nome_grupo,
+                        ncm: grupo?.ncm_padrao || prev.ncm,
+                        margem_minima_percentual: grupo?.margem_sugerida || prev.margem_minima_percentual
+                      }));
+                      if (grupo?.ncm_padrao) {
+                        toast.success(`✅ NCM herdado: ${grupo.ncm_padrao}`);
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {grupos.filter(g => g.ativo !== false).map(grupo => (
+                        <SelectItem key={grupo.id} value={grupo.id}>
+                          {grupo.icone} {grupo.nome_grupo} ({grupo.codigo})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <span className="text-amber-600">🏆</span>
+                    Marca *
+                  </Label>
+                  <Select 
+                    value={formData.marca_id} 
+                    onValueChange={(v) => {
+                      const marca = marcas.find(m => m.id === v);
+                      setFormData(prev => ({
+                        ...prev, 
+                        marca_id: v,
+                        marca_nome: marca?.nome_marca
+                      }));
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {marcas.filter(m => m.ativo !== false).map(marca => (
+                        <SelectItem key={marca.id} value={marca.id}>
+                          {marca.pais_origem !== 'Brasil' && '🌍'} {marca.nome_marca}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {formData.setor_atividade_nome && formData.grupo_produto_nome && formData.marca_nome && (
+                <Alert className="border-green-300 bg-green-100">
+                  <CheckCircle2 className="w-4 h-4 text-green-700" />
+                  <AlertDescription className="text-sm text-green-900">
+                    <strong>Classificação Completa:</strong> {formData.setor_atividade_nome} → {formData.grupo_produto_nome} → {formData.marca_nome}
                   </AlertDescription>
                 </Alert>
               )}
