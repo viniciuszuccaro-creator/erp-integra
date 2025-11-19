@@ -27,6 +27,8 @@ import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedo
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
 import TabelaPrecoFormCompleto from "@/components/cadastros/TabelaPrecoFormCompleto";
 import { useWindowManager } from "@/components/lib/WindowManager";
+import GerenciadorJanelas from "@/components/sistema/GerenciadorJanelas";
+import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
 
 /**
  * 🏆 DEMO FASE 1: SISTEMA DE MULTITAREFAS - 100% COMPLETA
@@ -405,6 +407,11 @@ export default function DemoFase1Completa() {
         </Card>
       </div>
 
+      {/* ATALHOS */}
+      <div className="flex justify-center">
+        <AtalhosTecladoInfo />
+      </div>
+
       {/* CHECKLIST FINAL */}
       <Card className="border-2 border-green-300 bg-gradient-to-r from-green-50 to-emerald-50">
         <CardHeader className="bg-green-100 border-b">
@@ -434,6 +441,10 @@ export default function DemoFase1Completa() {
               '✅ Z-index gerenciado corretamente',
               '✅ Backward compatible com Dialog',
               '✅ README documentado',
+              '✅ Animações suaves com Framer Motion',
+              '✅ Atalhos de teclado implementados',
+              '✅ Gerenciador visual de janelas',
+              '✅ Barra de minimizados aprimorada',
               '✅ Testes manuais realizados',
               '✅ FASE 1: 100% COMPLETA'
             ].map((item, idx) => (
@@ -442,6 +453,47 @@ export default function DemoFase1Completa() {
                 <span className="font-medium text-sm">{item}</span>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* GERENCIADOR DE JANELAS */}
+      <GerenciadorJanelas />
+
+      {/* ATALHOS DE TECLADO */}
+      <Card className="border-2 border-purple-300 bg-purple-50">
+        <CardHeader className="bg-purple-100 border-b">
+          <CardTitle className="flex items-center gap-2 text-purple-900">
+            <Zap className="w-5 h-5" />
+            Atalhos de Teclado Implementados
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 bg-white rounded-lg border">
+              <kbd className="px-3 py-2 bg-slate-800 text-white rounded text-sm font-mono">
+                Ctrl + Shift + N
+              </kbd>
+              <p className="text-sm text-slate-700 mt-2">Abrir Novo Cliente (Janela)</p>
+            </div>
+            <div className="p-4 bg-white rounded-lg border">
+              <kbd className="px-3 py-2 bg-slate-800 text-white rounded text-sm font-mono">
+                Ctrl + Shift + P
+              </kbd>
+              <p className="text-sm text-slate-700 mt-2">Abrir Novo Produto (Janela)</p>
+            </div>
+            <div className="p-4 bg-white rounded-lg border">
+              <kbd className="px-3 py-2 bg-slate-800 text-white rounded text-sm font-mono">
+                Ctrl + K
+              </kbd>
+              <p className="text-sm text-slate-700 mt-2">Pesquisa Universal</p>
+            </div>
+            <div className="p-4 bg-white rounded-lg border">
+              <kbd className="px-3 py-2 bg-slate-800 text-white rounded text-sm font-mono">
+                Ctrl + M
+              </kbd>
+              <p className="text-sm text-slate-700 mt-2">Modo Escuro</p>
+            </div>
           </div>
         </CardContent>
       </Card>

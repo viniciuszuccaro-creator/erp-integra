@@ -59,6 +59,7 @@ import usePermissions from "../components/lib/usePermissions";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
 import { useWindow } from "../components/lib/useWindow";
 import ColaboradorForm from "../components/rh/ColaboradorForm";
+import GerenciadorJanelas from "../components/sistema/GerenciadorJanelas";
 import BancoForm from "../components/cadastros/BancoForm";
 import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
 import VeiculoForm from "../components/cadastros/VeiculoForm";
@@ -400,9 +401,9 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V21.0 - FASE 0: 100% COMPLETA
+            🚀 Cadastros Gerais V21.1 - FASE 1: MULTITAREFAS COMPLETA
           </h1>
-          <p className="text-slate-600">Hub Central • 6 Blocos • Fonte Única • Controle Granular • Audit Log Global • Dashboard Interativo</p>
+          <p className="text-slate-600">Hub Central • 6 Blocos • Fonte Única • Multitarefas • Janelas Redimensionáveis • Controle Granular</p>
         </div>
         <div className="flex gap-2">
           <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
@@ -411,7 +412,7 @@ export default function Cadastros() {
           </Badge>
           <Badge className="bg-green-600 text-white px-4 py-2">
             <CheckCircle2 className="w-4 h-4 mr-2" />
-            FASE 0: 100%
+            FASE 1: 100%
           </Badge>
         </div>
       </div>
@@ -420,10 +421,13 @@ export default function Cadastros() {
       <Alert className="border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
         <Database className="w-4 h-4 text-purple-600" />
         <AlertDescription className="text-sm text-purple-900">
-          <strong>REGRA-MÃE V21.0:</strong> Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR |
-          Multiempresa • IA Integrada • Controle de Acesso Granular • Auditoria Global • Inovação Futurística
+          <strong>REGRA-MÃE V21.1:</strong> Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR |
+          Multiempresa • Multitarefa • IA Integrada • Janelas Redimensionáveis • Atalhos de Teclado • Inovação Futurística
         </AlertDescription>
       </Alert>
+
+      {/* GERENCIADOR DE JANELAS ABERTAS */}
+      <GerenciadorJanelas />
 
       {/* TABS: CADASTROS vs GERENCIAMENTO */}
       <Tabs value={abaGerenciamento} onValueChange={setAbaGerenciamento}>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useWindowManager } from './WindowManager';
 import WindowModal from './WindowModal';
+import { AnimatePresence } from 'framer-motion';
 
 /**
  * WINDOW RENDERER V21.0
@@ -23,6 +24,6 @@ export default function WindowRenderer() {
           </WindowModal>
         );
       })}
-    </>
+    </AnimatePresence>
   );
 }

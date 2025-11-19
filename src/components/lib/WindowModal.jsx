@@ -95,7 +95,11 @@ export default function WindowModal({ window, children }) {
   }, [isDragging, isResizing, dragStart, resizeStart, window, updateWindow]);
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.15 }}
       ref={windowRef}
       style={windowStyle}
       className={`bg-white rounded-lg shadow-2xl border-2 border-slate-300 flex flex-col overflow-hidden ${
