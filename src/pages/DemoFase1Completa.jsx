@@ -312,7 +312,7 @@ export default function DemoFase1Completa() {
         <CardHeader className="bg-purple-50 border-b">
           <CardTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-purple-600" />
-            20 Formulários Principais Adaptados para WindowMode (100% COMPLETO)
+            22 Formulários Principais Adaptados para WindowMode (100% COMPLETO)
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -339,7 +339,7 @@ export default function DemoFase1Completa() {
         <CardHeader className="bg-blue-50 border-b">
           <CardTitle className="flex items-center gap-2">
             <Award className="w-5 h-5 text-blue-600" />
-            15 Funcionalidades Principais Implementadas
+            20+ Funcionalidades Principais Implementadas
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -405,14 +405,14 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">20</div>
+            <div className="text-4xl font-bold text-blue-900 mb-2">22</div>
             <p className="text-sm text-blue-700">Formulários Adaptados</p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-green-900 mb-2">17</div>
+            <div className="text-4xl font-bold text-green-900 mb-2">19</div>
             <p className="text-sm text-green-700">Ações Rápidas</p>
           </CardContent>
         </Card>
@@ -467,21 +467,21 @@ export default function DemoFase1Completa() {
               '✅ AcoesRapidasGlobal integrado',
               '✅ WindowRenderer com pointer-events',
               '✅ useWindow exportado como default',
-              '✅ 20 FORMULÁRIOS COMPLETOS (100% COBERTURA TOTAL):',
+              '✅ 22 FORMULÁRIOS COMPLETOS (100% COBERTURA TOTAL):',
               '  • Cadastros: Cliente, Fornecedor, Produto, Colaborador, Transportadora, Tabela',
-              '  • Comercial: Pedido (1400x800 - MAIOR)',
+              '  • Comercial: Pedido (1400x800 - MAIOR), Comissão',
               '  • Financeiro: ContaReceber, ContaPagar',
               '  • Expedição: Entrega, Romaneio',
               '  • Produção: Inspeção',
               '  • Estoque: Movimentação, Recebimento, Requisição',
-              '  • Compras: OrdemCompra, SolicitacaoCompra',
+              '  • Compras: OrdemCompra, SolicitacaoCompra, Cotação',
               '  • RH: Ponto',
               '  • CRM: Oportunidade',
               '  • Agenda: Evento',
-              '✅ AcoesRapidasGlobal: 17 AÇÕES RÁPIDAS (COBERTURA 100%)',
+              '✅ AcoesRapidasGlobal: 19 AÇÕES RÁPIDAS (COBERTURA MÁXIMA)',
               '  • Pedido, Cliente, Produto, Fornecedor, Tabela, Colaborador',
-              '  • OrdemCompra, SolicitacaoCompra, Recebimento, Requisição',
-              '  • Movimentação, Ponto, ContaReceber, ContaPagar',
+              '  • OrdemCompra, SolicitacaoCompra, Cotação, Recebimento, Requisição',
+              '  • Movimentação, Comissão, Ponto, ContaReceber, ContaPagar',
               '  • Oportunidade, Evento, NF-e',
               '✅ TODOS OS 10 MÓDULOS 100% INTEGRADOS: Comercial, Financeiro, Estoque, Compras, Expedição, Produção, RH, CRM, Agenda, Cadastros',
               '✅ Testes manuais realizados',

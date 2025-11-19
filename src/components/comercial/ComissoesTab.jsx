@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +27,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
+import ComissaoForm from "./ComissaoForm";
+import { useWindow } from "@/components/lib/useWindow";
+import { toast as sonnerToast } from "sonner";
 
 export default function ComissoesTab({ comissoes, pedidos }) {
   const [periodoCalculo, setPeriodoCalculo] = useState("mes");
@@ -36,6 +38,7 @@ export default function ComissoesTab({ comissoes, pedidos }) {
   const [visualizandoComissao, setVisualizandoComissao] = useState(null);
   const [statusFilter, setStatusFilter] = useState("todas");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { openWindow } = useWindow();
   const [formData, setFormData] = useState({
     vendedor: "",
     vendedor_id: "",

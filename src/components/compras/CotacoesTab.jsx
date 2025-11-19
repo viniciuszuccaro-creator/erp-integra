@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,11 +13,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus, Send, Eye, CheckCircle2, TrendingUp, Award, FileText, ShoppingCart, AlertCircle, Building2, Package } from "lucide-react";
+import CotacaoForm from "./CotacaoForm";
+import { useWindow } from "@/components/lib/useWindow";
+import { toast as sonnerToast } from "sonner";
 
 export default function CotacoesTab() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cotacaoSelecionada, setCotacaoSelecionada] = useState(null);
   const [comparativoModal, setComparativoModal] = useState(null);
+  const { openWindow } = useWindow();
   const [formCotacao, setFormCotacao] = useState({
     descricao: "",
     data_limite_resposta: "",
@@ -203,12 +206,31 @@ export default function CotacoesTab() {
           <h2 className="text-2xl font-bold">Sistema de Cotações</h2>
           <p className="text-sm text-slate-600">Cote com múltiplos fornecedores e escolha a melhor proposta</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Button
+          className="bg-cyan-600 hover:bg-cyan-700"
+          onClick={() => openWindow(CotacaoForm, {
+            windowMode: true,
+            onSubmit: async (data) => {
+              try {
+                await criarCotacaoMutation.mutateAsync(data);
+                sonnerToast.success("✅ Cotação criada e enviada!");
+              } catch (error) {
+                sonnerToast.error("Erro ao criar cotação");
+              }
+            }
+          }, {
+            title: '📊 Nova Cotação de Compras',
+            width: 1100,
+            height: 700
+          })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Cotação
+        </Button>
+
+        <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="bg-cyan-600 hover:bg-cyan-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Cotação
-            </Button>
+            <Button className="hidden">Removido</Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
