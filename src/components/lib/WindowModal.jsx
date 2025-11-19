@@ -111,13 +111,15 @@ export default function WindowModal({ window, children }) {
       transition={{ duration: 0.2, ease: "easeOut" }}
       ref={windowRef}
       style={windowStyle}
-      className={`bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden ${
-        isDragging ? 'cursor-move shadow-blue-500/50 transition-none' : 'transition-all duration-200'
+      className={`bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden select-none ${
+        isDragging ? 'cursor-grabbing shadow-blue-500/50 transition-none' : ''
       } ${
-        isResizing ? 'cursor-se-resize' : ''
+        isResizing ? 'cursor-se-resize transition-none' : ''
+      } ${
+        !isDragging && !isResizing ? 'transition-all duration-200' : ''
       } ${
         window.id === window.id && !window.isMinimized
-          ? 'border-blue-500 ring-2 ring-blue-200'
+          ? 'border-blue-500 ring-4 ring-blue-200/50'
           : 'border-slate-300'
       }`}
       onClick={() => bringToFront(window.id)}
@@ -158,8 +160,8 @@ export default function WindowModal({ window, children }) {
         </div>
       </div>
 
-      {/* Conteúdo com barra de rolagem */}
-      <div className="flex-1 overflow-auto bg-white">
+      {/* Conteúdo com barra de rolagem - w-full h-full */}
+      <div className="flex-1 overflow-auto bg-white w-full h-full">
         {children}
       </div>
 

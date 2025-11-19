@@ -20,9 +20,14 @@ export function WindowProvider({ children }) {
   const [windows, setWindows] = useState([]);
   const [activeWindowId, setActiveWindowId] = useState(null);
 
-  // Abrir nova janela
+  // Abrir nova janela - POSICIONAMENTO MELHORADO
   const openWindow = useCallback((component, props = {}, options = {}) => {
     const windowId = `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Cascata inteligente com limite de tela
+    const offsetBase = windows.length * 40;
+    const maxOffset = 400;
+    const cascade = offsetBase % maxOffset;
     
     const newWindow = {
       id: windowId,
@@ -33,9 +38,9 @@ export function WindowProvider({ children }) {
       isMaximized: false,
       width: options.width || 900,
       height: options.height || 600,
-      x: options.x || 50 + (windows.length * 30),
-      y: options.y || 50 + (windows.length * 30),
-      zIndex: windows.length + 1000,
+      x: options.x !== undefined ? options.x : 100 + cascade,
+      y: options.y !== undefined ? options.y : 80 + cascade,
+      zIndex: 1000 + windows.length + 1,
     };
 
     setWindows(prev => [...prev, newWindow]);

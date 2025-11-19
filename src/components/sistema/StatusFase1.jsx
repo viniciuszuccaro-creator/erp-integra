@@ -28,7 +28,7 @@ export default function StatusFase1() {
                   <Badge className="bg-green-600 text-white shadow-lg">✅ 100% COMPLETA</Badge>
                 </div>
                 <p className="text-sm text-green-700 mt-1">
-                  TODO • 7 core • 87 wins • 19 ações • 12 mód • TOTAL-100%
+                  ✅ 7 core • 87 wins • Drag OK • Resize OK • 100% FUNCIONAL
                 </p>
               </div>
             </div>
