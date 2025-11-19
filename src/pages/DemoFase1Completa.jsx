@@ -312,7 +312,7 @@ export default function DemoFase1Completa() {
         <CardHeader className="bg-purple-50 border-b">
           <CardTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-purple-600" />
-            45 Windows + 3 INLINE - Arquitetura 100% SUPREMO-COMPLETA
+            49 Windows + 0 INLINE - Arquitetura 100% ABSOLUTO-COMPLETA
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -405,7 +405,7 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">45</div>
+            <div className="text-4xl font-bold text-blue-900 mb-2">49</div>
             <p className="text-sm text-blue-700">Windows Ready</p>
           </CardContent>
         </Card>

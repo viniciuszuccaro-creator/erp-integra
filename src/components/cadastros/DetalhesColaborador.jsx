@@ -33,11 +33,11 @@ import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 
 /**
- * V21.1.2 - DETALHES INLINE (não é modal, é expansão inline)
- * Componente usado INLINE nas tabelas - NÃO PRECISA ser Window
+ * V21.1.2 - WINDOW MODE READY
+ * Convertido para suportar modo janela independente
  * SUB-DIALOGS internos mantidos para adicionar documentos (UX)
  */
-export default function DetalhesColaborador({ colaborador, onClose }) {
+export default function DetalhesColaborador({ colaborador, onClose, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("historico");
   const [showDocumentoDialog, setShowDocumentoDialog] = useState(false);
   const [showSalarioDialog, setShowSalarioDialog] = useState(false);
@@ -191,14 +191,9 @@ export default function DetalhesColaborador({ colaborador, onClose }) {
 
   const analiseDesempenho = getAnaliseDesempenho();
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      className="border-t-2 border-pink-200 bg-gradient-to-r from-pink-50 to-slate-50"
-    >
-      <Card className="border-0 shadow-none m-4">
+  const content = (
+    <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-4' : ''}>
+      <Card className={windowMode ? 'border shadow-sm' : 'border-0 shadow-none m-4'}>
         <CardHeader className="border-b bg-white">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -215,9 +210,11 @@ export default function DetalhesColaborador({ colaborador, onClose }) {
                 </span>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-5 h-5" />
-            </Button>
+            {!windowMode && (
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </CardHeader>
 
@@ -310,6 +307,21 @@ export default function DetalhesColaborador({ colaborador, onClose }) {
           </Tabs>
         </CardContent>
       </Card>
+    </div>
+  );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="border-t-2 border-pink-200 bg-gradient-to-r from-pink-50 to-slate-50"
+    >
+      {content}
     </motion.div>
   );
 }

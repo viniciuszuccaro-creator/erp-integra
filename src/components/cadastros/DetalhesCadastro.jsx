@@ -25,10 +25,10 @@ import {
 import TimelineCliente, { ResumoHistorico } from "../cliente/TimelineCliente";
 
 /**
- * V21.1.2 - DETALHES INLINE (não é modal, é expansão inline)
- * Componente usado INLINE nas tabelas - NÃO PRECISA ser Window
+ * V21.1.2 - WINDOW MODE READY
+ * Convertido para suportar modo janela independente
  */
-export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate }) {
+export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("historico");
 
   // Buscar dados relacionados
@@ -62,22 +62,19 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate }) 
     c.status === 'Pendente' && new Date(c.data_vencimento) < new Date()
   ).length;
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      className="bg-gradient-to-br from-slate-50 to-blue-50 border-t border-slate-200"
-    >
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-slate-900">
-            {tipo === 'cliente' ? 'Histórico Completo do Cliente' : 'Detalhes'}
-          </h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
+  const content = (
+    <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-6' : ''}>
+      <div className={windowMode ? '' : 'p-6'}>
+        {!windowMode && (
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-slate-900">
+              {tipo === 'cliente' ? 'Histórico Completo do Cliente' : 'Detalhes'}
+            </h2>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-6 mb-6">
@@ -353,6 +350,21 @@ export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate }) 
           </TabsContent>
         </Tabs>
       </div>
+    </div>
+  );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="bg-gradient-to-br from-slate-50 to-blue-50 border-t border-slate-200"
+    >
+      {content}
     </motion.div>
   );
 }

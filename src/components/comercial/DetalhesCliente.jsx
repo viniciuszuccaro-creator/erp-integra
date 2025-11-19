@@ -14,7 +14,10 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function DetalhesCliente({ cliente, onClose }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function DetalhesCliente({ cliente, onClose, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("historico");
 
   const { data: pedidos = [] } = useQuery({
@@ -36,14 +39,9 @@ export default function DetalhesCliente({ cliente, onClose }) {
     'Bloqueado': 'bg-orange-100 text-orange-700'
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      className="border-t-2 border-blue-200 bg-gradient-to-r from-blue-50 to-slate-50"
-    >
-      <Card className="border-0 shadow-none m-4">
+  const content = (
+    <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-4' : ''}>
+      <Card className={windowMode ? 'border shadow-sm' : 'border-0 shadow-none m-4'}>
         <CardHeader className="border-b bg-white">
           <div className="flex items-center justify-between">
             <div className="flex-1">
@@ -55,9 +53,11 @@ export default function DetalhesCliente({ cliente, onClose }) {
                 </Badge>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-5 h-5" />
-            </Button>
+            {!windowMode && (
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </CardHeader>
 
@@ -123,6 +123,21 @@ export default function DetalhesCliente({ cliente, onClose }) {
           </Tabs>
         </CardContent>
       </Card>
+    </div>
+  );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="border-t-2 border-blue-200 bg-gradient-to-r from-blue-50 to-slate-50"
+    >
+      {content}
     </motion.div>
   );
 }
