@@ -15,10 +15,14 @@ import { useWindowManager } from './WindowManager';
  */
 
 export function useWindow() {
-  const { openWindow, closeWindow } = useWindowManager();
+  const { openWindow, closeWindow, minimizeWindow, maximizeWindow } = useWindowManager();
 
   return {
     openWindow,
     closeWindow,
+    minimizeWindow,
+    maximizeWindow,
   };
 }
+
+export default useWindow;

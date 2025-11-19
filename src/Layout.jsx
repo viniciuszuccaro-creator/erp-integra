@@ -110,27 +110,7 @@ function LayoutContent({ children, currentPageName }) {
       }
 
       // V21.0 FASE 1: Atalhos para abrir janelas multitarefa
-      if (ctrl && e.shiftKey && e.key === 'N') {
-        e.preventDefault();
-        const { openWindow } = require('@/components/lib/useWindow');
-        const CadastroClienteCompleto = require('@/components/cadastros/CadastroClienteCompleto').default;
-        openWindow(CadastroClienteCompleto, { windowMode: true }, {
-          title: 'Novo Cliente',
-          width: 1100,
-          height: 650
-        });
-      }
-
-      if (ctrl && e.shiftKey && e.key === 'P') {
-        e.preventDefault();
-        const { openWindow } = require('@/components/lib/useWindow');
-        const ProdutoFormV22_Completo = require('@/components/cadastros/ProdutoFormV22_Completo').default;
-        openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
-          title: 'Novo Produto',
-          width: 1200,
-          height: 700
-        });
-      }
+      // Atalhos de janelas removidos (causavam problemas com require dinâmico)
     };
 
     document.addEventListener('keydown', handleKeyDown);
