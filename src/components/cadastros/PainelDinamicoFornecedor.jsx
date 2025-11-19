@@ -50,7 +50,7 @@ export default function PainelDinamicoFornecedor({ fornecedor, isOpen, onClose, 
   const notaMedia = fornecedor.nota_media || 0;
 
   const content = (
-    <div className={`${windowMode ? 'w-full h-full overflow-auto bg-white p-6' : ''}`}>
+    <>
       <div className="border-b pb-4 mb-6">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-4">
@@ -84,13 +84,13 @@ export default function PainelDinamicoFornecedor({ fornecedor, isOpen, onClose, 
               <Button onClick={handleEditarCadastro} className="gap-2">
                 <Edit className="w-4 h-4" />
                 Editar no Cadastro Gerais
-                <ExternalLink className="w-3 h-3" />
-              </Button>
-            )}
-          </div>
+              <ExternalLink className="w-3 h-3" />
+            </Button>
+          )}
         </div>
+      </div>
 
-        <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-3 gap-6">
           {/* Coluna 1: Dados Principais */}
           <div className="space-y-4">
             <h3 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -310,15 +310,14 @@ export default function PainelDinamicoFornecedor({ fornecedor, isOpen, onClose, 
                   <p className="text-sm">Nenhuma avaliação registrada</p>
                 </div>
               )}
-            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 
   if (windowMode) {
-    return content;
+    return <div className="w-full h-full overflow-auto bg-white p-6">{content}</div>;
   }
 
   return (

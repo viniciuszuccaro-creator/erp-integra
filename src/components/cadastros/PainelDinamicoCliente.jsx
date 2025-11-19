@@ -72,7 +72,7 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
     .reduce((sum, p) => sum + (p.valor_total || 0), 0);
 
   const content = (
-    <div className={`flex flex-col ${windowMode ? 'w-full h-full bg-white' : ''}`}>
+    <>
       <div className={`border-b pb-4 px-6 pt-6 flex-shrink-0 ${windowMode ? '' : 'bg-gradient-to-r from-blue-50 to-slate-50'}`}>
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -81,22 +81,22 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
               {cliente.nome || cliente.razao_social}
             </h2>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
-                <Badge className={
-                  cliente.status === 'Ativo' ? 'bg-green-100 text-green-700' :
-                  cliente.status === 'Prospect' ? 'bg-blue-100 text-blue-700' :
-                  cliente.status === 'Bloqueado' ? 'bg-red-100 text-red-700' :
-                  'bg-gray-100 text-gray-700'
-                }>
-                  {cliente.status}
-                </Badge>
-                {cliente.tipo && (
-                  <Badge variant="outline">{cliente.tipo}</Badge>
-                )}
+              <Badge className={
+                cliente.status === 'Ativo' ? 'bg-green-100 text-green-700' :
+                cliente.status === 'Prospect' ? 'bg-blue-100 text-blue-700' :
+                cliente.status === 'Bloqueado' ? 'bg-red-100 text-red-700' :
+                'bg-gray-100 text-gray-700'
+              }>
+                {cliente.status}
+              </Badge>
+              {cliente.tipo && (
+                <Badge variant="outline">{cliente.tipo}</Badge>
+              )}
               {cliente.cpf && <span className="text-sm text-slate-600">CPF: {cliente.cpf}</span>}
               {cliente.cnpj && <span className="text-sm text-slate-600">CNPJ: {cliente.cnpj}</span>}
             </div>
           </div>
-            
+          
           <Button 
             onClick={handleEditarCadastro}
             className="bg-blue-600 hover:bg-blue-700"
@@ -108,7 +108,7 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
       </div>
 
       <div className="flex-1 overflow-y-auto">
-          <div className="grid grid-cols-3 gap-6 p-6">
+        <div className="grid grid-cols-3 gap-6 p-6">
             {/* COLUNA 1: Informações Principais */}
             <div className="space-y-4">
               <Card className="border-0 shadow-sm">
@@ -447,11 +447,11 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 
   if (windowMode) {
-    return content;
+    return <div className="w-full h-full bg-white overflow-auto">{content}</div>;
   }
 
   return (
