@@ -82,7 +82,7 @@ import RepresentanteForm from "../components/cadastros/RepresentanteForm";
 import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
 
 /**
- * ⭐⭐⭐ CADASTROS GERAIS V21.0 - FASE 0: 100% COMPLETA ⭐⭐⭐
+ * ⭐⭐⭐ CADASTROS GERAIS V21.1.2 - FASE 1: 100% INFINITO-COMPLETA ⭐⭐⭐
  * Hub Central com 6 Blocos Reorganizados + Fonte Única de Verdade
  *
  * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR
@@ -403,7 +403,7 @@ export default function Cadastros() {
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
             🚀 Cadastros Gerais V21.1.2 - FASE 1: 100% COMPLETA
           </h1>
-          <p className="text-slate-600">Hub Central • 6 Blocos • Fonte Única • Multitarefas • 11 Formulários em Janelas • TODO O SISTEMA</p>
+          <p className="text-slate-600">Hub Central • 6 Blocos • Fonte Única • Multitarefas • 75 Janelas • TODO O SISTEMA 100%</p>
         </div>
         <div className="flex gap-2">
           <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
@@ -968,10 +968,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setSetorSelecionado(null);
-                            setSetorAtividadeFormOpen(true);
-                          }}
+                          onClick={() => openWindow(SetorAtividadeForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('SetorAtividade', 'setores-atividade')
+                          }, {
+                            title: '🏭 Novo Setor de Atividade',
+                            width: 800,
+                            height: 550
+                          })}
                           className="bg-indigo-600 hover:bg-indigo-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -992,10 +996,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setSetorSelecionado(setor);
-                              setSetorAtividadeFormOpen(true);
-                            }}
+                            onClick={() => openWindow(SetorAtividadeForm, {
+                              setor,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('SetorAtividade', 'setores-atividade')
+                            }, {
+                              title: `🏭 Editar: ${setor.nome}`,
+                              width: 800,
+                              height: 550
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-indigo-600" />
@@ -1018,10 +1027,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setGrupoProdutoSelecionado(null);
-                            setGrupoProdutoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(GrupoProdutoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('GrupoProduto', 'grupos-produto')
+                          }, {
+                            title: '📦 Novo Grupo de Produto',
+                            width: 800,
+                            height: 550
+                          })}
                           className="bg-cyan-600 hover:bg-cyan-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1040,10 +1053,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setGrupoProdutoSelecionado(grupo);
-                              setGrupoProdutoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(GrupoProdutoForm, {
+                              grupo,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('GrupoProduto', 'grupos-produto')
+                            }, {
+                              title: `📦 Editar: ${grupo.nome_grupo}`,
+                              width: 800,
+                              height: 550
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-cyan-600" />
@@ -1066,10 +1084,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setMarcaSelecionada(null);
-                            setMarcaFormOpen(true);
-                          }}
+                          onClick={() => openWindow(MarcaForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Marca', 'marcas')
+                          }, {
+                            title: '🏆 Nova Marca',
+                            width: 800,
+                            height: 550
+                          })}
                           className="bg-orange-600 hover:bg-orange-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1088,10 +1110,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setMarcaSelecionada(marca);
-                              setMarcaFormOpen(true);
-                            }}
+                            onClick={() => openWindow(MarcaForm, {
+                              marca,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Marca', 'marcas')
+                            }, {
+                              title: `🏆 Editar: ${marca.nome_marca}`,
+                              width: 800,
+                              height: 550
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-orange-600" />
@@ -1228,10 +1255,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setBancoSelecionado(null);
-                            setBancoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(BancoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Banco', 'bancos')
+                          }, {
+                            title: '🏦 Novo Banco',
+                            width: 900,
+                            height: 650
+                          })}
                           className="bg-green-600 hover:bg-green-700"
                           disabled={!hasPermission('financeiro', 'criar')}
                         >
@@ -1250,10 +1281,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setBancoSelecionado(banco);
-                              setBancoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(BancoForm, {
+                              banco,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Banco', 'bancos')
+                            }, {
+                              title: `🏦 Editar: ${banco.nome_banco}`,
+                              width: 900,
+                              height: 650
+                            })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-green-600" />
@@ -1273,10 +1309,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setFormaPagamentoSelecionada(null);
-                            setFormaPagamentoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(FormaPagamentoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('FormaPagamento', 'formas-pagamento')
+                          }, {
+                            title: '💳 Nova Forma de Pagamento',
+                            width: 800,
+                            height: 600
+                          })}
                           className="bg-blue-600 hover:bg-blue-700"
                           disabled={!hasPermission('financeiro', 'criar')}
                         >
@@ -1292,10 +1332,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setFormaPagamentoSelecionada(forma);
-                              setFormaPagamentoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(FormaPagamentoForm, {
+                              forma,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('FormaPagamento', 'formas-pagamento')
+                            }, {
+                              title: `💳 Editar: ${forma.descricao || forma.tipo}`,
+                              width: 800,
+                              height: 600
+                            })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-blue-600" />
@@ -1315,10 +1360,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setCentroCustoSelecionado(null);
-                            setCentroCustoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(CentroCustoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('CentroCusto', 'centrosCusto')
+                          }, {
+                            title: '📊 Novo Centro de Custo',
+                            width: 800,
+                            height: 550
+                          })}
                           className="bg-purple-600 hover:bg-purple-700"
                           disabled={!hasPermission('financeiro', 'criar')}
                         >
@@ -1337,10 +1386,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setCentroCustoSelecionado(centro);
-                              setCentroCustoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(CentroCustoForm, {
+                              centroCusto: centro,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('CentroCusto', 'centrosCusto')
+                            }, {
+                              title: `📊 Editar: ${centro.codigo} - ${centro.descricao}`,
+                              width: 800,
+                              height: 550
+                            })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-purple-600" />
@@ -1374,10 +1428,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">🚚 Veículos ({veiculos.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setVeiculoSelecionado(null);
-                            setVeiculoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(VeiculoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Veiculo', 'veiculos')
+                          }, {
+                            title: '🚚 Novo Veículo',
+                            width: 900,
+                            height: 600
+                          })}
                           className="bg-orange-600 hover:bg-orange-700"
                           disabled={!hasPermission('expedicao', 'criar')}
                         >
@@ -1396,10 +1454,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setVeiculoSelecionado(veiculo);
-                              setVeiculoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(VeiculoForm, {
+                              veiculo,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Veiculo', 'veiculos')
+                            }, {
+                              title: `🚚 Editar: ${veiculo.placa}`,
+                              width: 900,
+                              height: 600
+                            })}
                             disabled={!hasPermission('expedicao', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-orange-600" />
@@ -1416,10 +1479,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">👤 Motoristas ({motoristas.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setMotoristaSelecionado(null);
-                            setMotoristaFormOpen(true);
-                          }}
+                          onClick={() => openWindow(MotoristaForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Motorista', 'motoristas')
+                          }, {
+                            title: '👤 Novo Motorista',
+                            width: 800,
+                            height: 600
+                          })}
                           className="bg-blue-600 hover:bg-blue-700"
                           disabled={!hasPermission('expedicao', 'criar')}
                         >
@@ -1438,10 +1505,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setMotoristaSelecionado(motorista);
-                              setMotoristaFormOpen(true);
-                            }}
+                            onClick={() => openWindow(MotoristaForm, {
+                              motorista,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Motorista', 'motoristas')
+                            }, {
+                              title: `👤 Editar: ${motorista.nome}`,
+                              width: 800,
+                              height: 600
+                            })}
                             disabled={!hasPermission('expedicao', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-blue-600" />
@@ -1637,10 +1709,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">🏛️ Departamentos ({departamentos.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setDepartamentoSelecionado(null);
-                            setDepartamentoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(DepartamentoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Departamento', 'departamentos')
+                          }, {
+                            title: '🏛️ Novo Departamento',
+                            width: 700,
+                            height: 500
+                          })}
                           className="bg-green-600 hover:bg-green-700"
                           disabled={!hasPermission('rh', 'criar')}
                         >
@@ -1656,10 +1732,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setDepartamentoSelecionado(dept);
-                              setDepartamentoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(DepartamentoForm, {
+                              departamento: dept,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Departamento', 'departamentos')
+                            }, {
+                              title: `🏛️ Editar: ${dept.nome}`,
+                              width: 700,
+                              height: 500
+                            })}
                             disabled={!hasPermission('rh', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-green-600" />
@@ -1676,10 +1757,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">💼 Cargos ({cargos.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setCargoSelecionado(null);
-                            setCargoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(CargoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Cargo', 'cargos')
+                          }, {
+                            title: '💼 Novo Cargo',
+                            width: 800,
+                            height: 600
+                          })}
                           className="bg-cyan-600 hover:bg-cyan-700"
                           disabled={!hasPermission('rh', 'criar')}
                         >
@@ -1695,10 +1780,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setCargoSelecionado(cargo);
-                              setCargoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(CargoForm, {
+                              cargo,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Cargo', 'cargos')
+                            }, {
+                              title: `💼 Editar: ${cargo.nome}`,
+                              width: 800,
+                              height: 600
+                            })}
                             disabled={!hasPermission('rh', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-cyan-600" />
@@ -1718,10 +1808,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setTurnoSelecionado(null);
-                            setTurnoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(TurnoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Turno', 'turnos')
+                          }, {
+                            title: '⏰ Novo Turno',
+                            width: 800,
+                            height: 550
+                          })}
                           className="bg-amber-600 hover:bg-amber-700"
                           disabled={!hasPermission('rh', 'criar')}
                         >
@@ -1737,10 +1831,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setTurnoSelecionado(turno);
-                              setTurnoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(TurnoForm, {
+                              turno,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Turno', 'turnos')
+                            }, {
+                              title: `⏰ Editar: ${turno.nome}`,
+                              width: 800,
+                              height: 550
+                            })}
                             disabled={!hasPermission('rh', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-amber-600" />
