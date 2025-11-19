@@ -38,24 +38,18 @@ import usePermissions from "@/components/lib/usePermissions";
 import IconeAcessoColaborador from "@/components/cadastros/IconeAcessoColaborador";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import GameficacaoProducao from "@/components/rh/GameficacaoProducao"; // New import
+import GameficacaoProducao from "@/components/rh/GameficacaoProducao";
+import FeriasForm from "@/components/rh/FeriasForm";
+import { useWindow } from "@/components/lib/useWindow";
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
   const [search, setSearch] = useState("");
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const [showFeriasDialog, setShowFeriasDialog] = useState(false);
-  const [feriasForm, setFeriasForm] = useState({
-    colaborador_id: "",
-    tipo: "Férias",
-    data_inicio: "",
-    data_fim: "",
-    dias_solicitados: 0,
-    observacoes: ""
-  });
 
-  const { toast } = useToast(); // Initialized useToast hook
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
 
   const { data: user } = useQuery({
     queryKey: ['current-user'],
@@ -79,33 +73,7 @@ export default function RH() {
     queryFn: () => base44.entities.Ferias.list()
   });
 
-  const createFeriasMutation = useMutation({
-    mutationFn: (data) => base44.entities.Ferias.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ferias'] });
-      setShowFeriasDialog(false);
-      setFeriasForm({
-        colaborador_id: "",
-        tipo: "Férias",
-        data_inicio: "",
-        data_fim: "",
-        dias_solicitados: 0,
-        observacoes: ""
-      });
-      toast({
-        title: "Sucesso!",
-        description: "Solicitação de férias enviada com sucesso!",
-        variant: "success",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erro",
-        description: `Erro ao solicitar férias: ${error.message}`,
-        variant: "destructive",
-      });
-    }
-  });
+
 
   const updateFeriasMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Ferias.update(id, data),
@@ -126,30 +94,11 @@ export default function RH() {
     }
   });
 
-  const handleSubmitFerias = () => {
-    const colaborador = colaboradores.find(c => c.id === feriasForm.colaborador_id);
-    const data = {
-      ...feriasForm,
-      colaborador_nome: colaborador?.nome_completo,
-      status: "Solicitada"
-    };
-    createFeriasMutation.mutate(data);
-  };
-
   const handleAprovarFerias = (feriaId, status) => {
     updateFeriasMutation.mutate({
       id: feriaId,
       data: { status }
     });
-  };
-
-  const calcularDiasFerias = () => {
-    if (feriasForm.data_inicio && feriasForm.data_fim) {
-      const inicio = new Date(feriasForm.data_inicio);
-      const fim = new Date(feriasForm.data_fim);
-      const diff = Math.ceil((fim - inicio) / (1000 * 60 * 60 * 24)) + 1;
-      setFeriasForm({ ...feriasForm, dias_solicitados: diff });
-    }
   };
 
   const filteredColaboradores = colaboradores.filter(c =>
@@ -342,65 +291,28 @@ export default function RH() {
               <TabsContent value="ferias" className="space-y-4">
                 <div className="flex justify-end">
                   <ProtectedAction module="rh" action="criar">
-                    <Dialog open={showFeriasDialog} onOpenChange={setShowFeriasDialog}>
-                      <DialogTrigger asChild>
-                        <Button>
-                          <Plus className="w-4 h-4 mr-2" />
-                          Solicitar Férias
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Solicitar Férias</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div>
-                            <Label>Colaborador</Label>
-                            <Select value={feriasForm.colaborador_id} onValueChange={(v) => setFeriasForm({...feriasForm, colaborador_id: v})}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o colaborador" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {colaboradores.filter(c => c.status === "Ativo").map(c => (
-                                  <SelectItem key={c.id} value={c.id}>{c.nome_completo}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Label>Data Início</Label>
-                            <Input
-                              type="date"
-                              value={feriasForm.data_inicio}
-                              onChange={(e) => { setFeriasForm({...feriasForm, data_inicio: e.target.value}); calcularDiasFerias(); }}
-                            />
-                          </div>
-                          <div>
-                            <Label>Data Fim</Label>
-                            <Input
-                              type="date"
-                              value={feriasForm.data_fim}
-                              onChange={(e) => { setFeriasForm({...feriasForm, data_fim: e.target.value}); calcularDiasFerias(); }}
-                            />
-                          </div>
-                          <div>
-                            <Label>Dias Solicitados</Label>
-                            <Input type="number" value={feriasForm.dias_solicitados} readOnly />
-                          </div>
-                          <div>
-                            <Label>Observações</Label>
-                            <Textarea
-                              value={feriasForm.observacoes}
-                              onChange={(e) => setFeriasForm({...feriasForm, observacoes: e.target.value})}
-                              placeholder="Observações..."
-                            />
-                          </div>
-                          <Button onClick={handleSubmitFerias} disabled={!feriasForm.colaborador_id || !feriasForm.data_inicio} className="w-full">
-                            Solicitar
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                    <Button
+                      onClick={() => openWindow(FeriasForm, {
+                        colaboradores,
+                        windowMode: true,
+                        onSubmit: async (data) => {
+                          try {
+                            await base44.entities.Ferias.create(data);
+                            queryClient.invalidateQueries({ queryKey: ['ferias'] });
+                            toast({ title: "✅ Solicitação de férias enviada!" });
+                          } catch (error) {
+                            toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                          }
+                        }
+                      }, {
+                        title: '🏖️ Solicitar Férias',
+                        width: 800,
+                        height: 650
+                      })}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Solicitar Férias
+                    </Button>
                   </ProtectedAction>
                 </div>
 
