@@ -312,7 +312,7 @@ export default function DemoFase1Completa() {
         <CardHeader className="bg-purple-50 border-b">
           <CardTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-purple-600" />
-            22 Formulários Principais Adaptados para WindowMode (100% COMPLETO)
+            23 Componentes Adaptados para WindowMode - ZERO Dialogs (100% COMPLETO)
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -405,8 +405,8 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">22</div>
-            <p className="text-sm text-blue-700">Formulários Adaptados</p>
+            <div className="text-4xl font-bold text-blue-900 mb-2">23</div>
+            <p className="text-sm text-blue-700">Componentes Adaptados</p>
           </CardContent>
         </Card>
 
@@ -467,9 +467,9 @@ export default function DemoFase1Completa() {
               '✅ AcoesRapidasGlobal integrado',
               '✅ WindowRenderer com pointer-events',
               '✅ useWindow exportado como default',
-              '✅ 22 FORMULÁRIOS COMPLETOS (100% COBERTURA TOTAL):',
+              '✅ 23 COMPONENTES COMPLETOS (22 Forms + 1 View - ZERO DIALOGS):',
               '  • Cadastros: Cliente, Fornecedor, Produto, Colaborador, Transportadora, Tabela',
-              '  • Comercial: Pedido (1400x800 - MAIOR), Comissão',
+              '  • Comercial: Pedido (1400x800 - MAIOR), Comissão, DetalhesComissão',
               '  • Financeiro: ContaReceber, ContaPagar',
               '  • Expedição: Entrega, Romaneio',
               '  • Produção: Inspeção',

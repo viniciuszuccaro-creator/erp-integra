@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import ComissaoForm from "./ComissaoForm";
+import DetalhesComissao from "./DetalhesComissao";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
@@ -423,10 +424,17 @@ export default function ComissoesTab({ comissoes, pedidos }) {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => setVisualizandoComissao(comissao)}
+                        onClick={() => openWindow(DetalhesComissao, {
+                          comissao,
+                          windowMode: true
+                        }, {
+                          title: `💰 ${comissao.vendedor} - ${comissao.numero_pedido}`,
+                          width: 800,
+                          height: 600
+                        })}
                         title="Ver detalhes"
                       >
-                        <FileText className="w-4 h-4" /> {/* Changed icon to FileText */}
+                        <FileText className="w-4 h-4" />
                       </Button>
                       {comissao.status === 'Pendente' && (
                         <>
@@ -526,94 +534,7 @@ export default function ComissoesTab({ comissoes, pedidos }) {
         </CardContent>
       </Card>
 
-      {/* Dialog de Visualização */}
-      <Dialog open={!!visualizandoComissao} onOpenChange={() => setVisualizandoComissao(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Detalhes da Comissão</DialogTitle>
-          </DialogHeader>
-          {visualizandoComissao && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">Vendedor</p>
-                  <p className="font-semibold">{visualizandoComissao.vendedor}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Status</p>
-                  <Badge className={statusColors[visualizandoComissao.status]}>
-                    {visualizandoComissao.status}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Data da Venda</p>
-                  <p className="font-semibold">
-                    {new Date(visualizandoComissao.data_venda).toLocaleDateString('pt-BR')}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Pedido/Período</p>
-                  <p className="font-semibold">{visualizandoComissao.numero_pedido}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Valor da Venda</p>
-                  <p className="font-semibold text-blue-600">
-                    R$ {visualizandoComissao.valor_venda?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500">Percentual</p>
-                  <p className="font-semibold">{visualizandoComissao.percentual_comissao}%</p>
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-sm text-slate-600 mb-1">Valor da Comissão</p>
-                  <p className="text-3xl font-bold text-green-600">
-                    R$ {visualizandoComissao.valor_comissao?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
-
-              {visualizandoComissao.aprovador && (
-                <div className="border-t pt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-slate-500">Aprovado por</p>
-                      <p className="font-semibold">{visualizandoComissao.aprovador}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Data Aprovação</p>
-                      <p className="font-semibold">
-                        {new Date(visualizandoComissao.data_aprovacao).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {visualizandoComissao.data_pagamento && (
-                <div className="border-t pt-4">
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-slate-600">Pago em</p>
-                    <p className="font-semibold text-blue-700">
-                      {new Date(visualizandoComissao.data_pagamento).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {visualizandoComissao.observacoes && (
-                <div className="border-t pt-4">
-                  <p className="text-sm text-slate-500 mb-2">Observações</p>
-                  <p className="text-sm">{visualizandoComissao.observacoes}</p>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Dialog de Visualização REMOVIDO - Agora usa Window */}
     </div>
   );
 }
