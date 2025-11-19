@@ -213,11 +213,15 @@ Todos com **windowMode**, **w-full/h-full**, **responsivos** e **redimensionáve
 | Entidades Criadas | 5 | ✅ |
 | Formulários w-full/h-full | 5 | ✅ |
 | Componentes de Dashboard | 2 | ✅ |
+| Validadores Automáticos | 1 | ✅ |
 | Dados de Exemplo | 25 | ✅ |
+| Produtos Classificados | 5 | ✅ |
 | Janelas Ativas | 89 | ✅ |
 | IAs Integradas | 28 | ✅ |
 | Blocos de Cadastros | 6 | ✅ |
 | Abas no Gerenciamento | 5 | ✅ |
+| Páginas Sistema | 2 | ✅ |
+| Documentação | 3 docs | ✅ |
 
 ---
 
