@@ -18,7 +18,8 @@ import {
   Zap,
   Award,
   TrendingUp,
-  Square
+  Square,
+  Layers
 } from "lucide-react";
 import { useWindow } from "@/components/lib/useWindow";
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
@@ -184,7 +185,7 @@ export default function DemoFase1Completa() {
       <Card className="border-2 border-purple-300 shadow-xl">
         <CardHeader className="bg-gradient-to-r from-purple-100 to-blue-100 border-b">
           <CardTitle className="flex items-center gap-2 text-xl">
-            <Square className="w-6 h-6 text-purple-600" />
+            <Layers className="w-6 h-6 text-purple-600" />
             Demo Interativo - Abra Múltiplas Janelas
           </CardTitle>
         </CardHeader>
@@ -290,7 +291,7 @@ export default function DemoFase1Completa() {
       <Card>
         <CardHeader className="bg-purple-50 border-b">
           <CardTitle className="flex items-center gap-2">
-            <Square className="w-5 h-5 text-purple-600" />
+            <Layers className="w-5 h-5 text-purple-600" />
             4 Formulários Principais Adaptados para WindowMode
           </CardTitle>
         </CardHeader>
@@ -324,7 +325,7 @@ export default function DemoFase1Completa() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { feature: 'Abertura de múltiplas janelas', icon: Square },
+              { feature: 'Abertura de múltiplas janelas', icon: Layers },
               { feature: 'Redimensionamento com drag', icon: ArrowRightLeft },
               { feature: 'Movimentação via drag', icon: ArrowRightLeft },
               { feature: 'Minimizar janelas', icon: Minimize2 },
