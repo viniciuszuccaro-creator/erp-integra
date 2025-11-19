@@ -18,7 +18,7 @@ import {
   Box,
   Calendar,
   BarChart3,
-  PieChart, // This is the Lucide icon, kept for functionality
+  PieChart,
   Clock,
   CheckCircle,
   Percent,
@@ -50,6 +50,7 @@ import PainelOperacoes3D from "../components/dashboard/PainelOperacoes3D";
 import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import StatusFase1 from "@/components/sistema/StatusFase1";
 import StatusFase1 from "@/components/sistema/StatusFase1";
 
 
