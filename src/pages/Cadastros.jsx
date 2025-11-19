@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -58,6 +57,7 @@ import DashboardControleAcesso from "../components/sistema/DashboardControleAces
 import FonteUnicaVerdade from "../components/sistema/FonteUnicaVerdade";
 import usePermissions from "../components/lib/usePermissions";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
+import { useWindow } from "../components/lib/useWindow";
 import ColaboradorForm from "../components/rh/ColaboradorForm";
 import BancoForm from "../components/cadastros/BancoForm";
 import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
@@ -163,6 +163,7 @@ export default function Cadastros() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
+  const { openWindow } = useWindow();
 
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
@@ -579,10 +580,11 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setClienteSelecionado(null);
-                            setCadastroCompletoAberto(true);
-                          }}
+                          onClick={() => openWindow(CadastroClienteCompleto, {}, {
+                            title: 'Novo Cliente',
+                            width: 1100,
+                            height: 650
+                          })}
                           className="bg-blue-600 hover:bg-blue-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -607,10 +609,11 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setClienteSelecionado(cliente);
-                              setCadastroCompletoAberto(true);
-                            }}
+                            onClick={() => openWindow(CadastroClienteCompleto, { cliente }, {
+                              title: `Editar Cliente: ${cliente.nome || cliente.razao_social}`,
+                              width: 1100,
+                              height: 650
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-blue-600" />
@@ -633,10 +636,11 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setFornecedorSelecionado(null);
-                            setCadastroFornecedorAberto(true);
-                          }}
+                          onClick={() => openWindow(CadastroFornecedorCompleto, {}, {
+                            title: 'Novo Fornecedor',
+                            width: 1100,
+                            height: 650
+                          })}
                           className="bg-cyan-600 hover:bg-cyan-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -660,10 +664,11 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setFornecedorSelecionado(fornecedor);
-                              setCadastroFornecedorAberto(true);
-                            }}
+                            onClick={() => openWindow(CadastroFornecedorCompleto, { fornecedor }, {
+                              title: `Editar Fornecedor: ${fornecedor.nome}`,
+                              width: 1100,
+                              height: 650
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-cyan-600" />
@@ -879,10 +884,11 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setProdutoSelecionado(null);
-                            setProdutoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(ProdutoFormV22_Completo, {}, {
+                            title: 'Novo Produto',
+                            width: 1200,
+                            height: 700
+                          })}
                           className="bg-purple-600 hover:bg-purple-700"
                           disabled={!hasPermission('estoque', 'criar')}
                         >
@@ -921,10 +927,11 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setProdutoSelecionado(produto);
-                              setProdutoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(ProdutoFormV22_Completo, { produto }, {
+                              title: `Editar Produto: ${produto.descricao}`,
+                              width: 1200,
+                              height: 700
+                            })}
                             disabled={!hasPermission('estoque', 'editar')}
                           >
                             <Edit className="w-4 h-4 text-purple-600" />
@@ -1093,10 +1100,11 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setTabelaSelecionadaEditar(null);
-                            setTabelaPrecoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(TabelaPrecoFormCompleto, {}, {
+                            title: 'Nova Tabela de Preço',
+                            width: 1200,
+                            height: 700
+                          })}
                           className="bg-green-600 hover:bg-green-700"
                           disabled={!hasPermission('comercial', 'criar')}
                         >
@@ -1114,10 +1122,11 @@ export default function Cadastros() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => {
-                                  setTabelaSelecionadaEditar(tabela);
-                                  setTabelaPrecoFormOpen(true);
-                                }}
+                                onClick={() => openWindow(TabelaPrecoFormCompleto, { tabela }, {
+                                  title: `Editar Tabela: ${tabela.nome}`,
+                                  width: 1200,
+                                  height: 700
+                                })}
                                 disabled={!hasPermission('comercial', 'editar')}
                               >
                                 <Edit className="w-4 h-4 text-green-600" />
