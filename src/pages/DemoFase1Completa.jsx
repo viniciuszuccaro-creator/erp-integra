@@ -11,34 +11,29 @@ import {
   DollarSign,
   Building2,
   Sparkles,
-  Window,
   Maximize2,
   Minimize2,
   X as CloseIcon,
   ArrowRightLeft,
   Zap,
   Award,
-  TrendingUp
+  TrendingUp,
+  Square
 } from "lucide-react";
 import { useWindow } from "@/components/lib/useWindow";
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
 import TabelaPrecoFormCompleto from "@/components/cadastros/TabelaPrecoFormCompleto";
+import { useWindowManager } from "@/components/lib/WindowManager";
 
 /**
  * 🏆 DEMO FASE 1: SISTEMA DE MULTITAREFAS - 100% COMPLETA
  * Demonstração completa do sistema de janelas implementado
  */
 export default function DemoFase1Completa() {
-  const { openWindow, windows } = useWindow();
-  const [testesRealizados, setTestesRealizados] = useState({
-    multiplas: false,
-    redimensionar: false,
-    minimizar: false,
-    maximizar: false,
-    zindex: false
-  });
+  const { openWindow } = useWindow();
+  const { windows } = useWindowManager();
 
   const abrirDemoCompleto = () => {
     // Abre 4 janelas simultaneamente com posicionamento em cascata
@@ -81,8 +76,6 @@ export default function DemoFase1Completa() {
         y: 200
       });
     }, 900);
-
-    setTestesRealizados(prev => ({ ...prev, multiplas: true }));
   };
 
   const componentesImplementados = [
@@ -191,7 +184,7 @@ export default function DemoFase1Completa() {
       <Card className="border-2 border-purple-300 shadow-xl">
         <CardHeader className="bg-gradient-to-r from-purple-100 to-blue-100 border-b">
           <CardTitle className="flex items-center gap-2 text-xl">
-            <Window className="w-6 h-6 text-purple-600" />
+            <Square className="w-6 h-6 text-purple-600" />
             Demo Interativo - Abra Múltiplas Janelas
           </CardTitle>
         </CardHeader>
@@ -297,7 +290,7 @@ export default function DemoFase1Completa() {
       <Card>
         <CardHeader className="bg-purple-50 border-b">
           <CardTitle className="flex items-center gap-2">
-            <Window className="w-5 h-5 text-purple-600" />
+            <Square className="w-5 h-5 text-purple-600" />
             4 Formulários Principais Adaptados para WindowMode
           </CardTitle>
         </CardHeader>
@@ -331,7 +324,7 @@ export default function DemoFase1Completa() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { feature: 'Abertura de múltiplas janelas', icon: Window },
+              { feature: 'Abertura de múltiplas janelas', icon: Square },
               { feature: 'Redimensionamento com drag', icon: ArrowRightLeft },
               { feature: 'Movimentação via drag', icon: ArrowRightLeft },
               { feature: 'Minimizar janelas', icon: Minimize2 },
@@ -420,7 +413,7 @@ export default function DemoFase1Completa() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
               '✅ WindowManager implementado e testado',
               '✅ useWindow hook criado e exportado',
@@ -445,7 +438,7 @@ export default function DemoFase1Completa() {
             ].map((item, idx) => (
               <div key={idx} className="flex items-center gap-3 text-green-900">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <span className="font-medium">{item}</span>
+                <span className="font-medium text-sm">{item}</span>
               </div>
             ))}
           </div>
