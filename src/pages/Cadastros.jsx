@@ -80,6 +80,8 @@ import MarcaForm from "../components/cadastros/MarcaForm";
 import ServicoForm from "../components/cadastros/ServicoForm";
 import RepresentanteForm from "../components/cadastros/RepresentanteForm";
 import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
+import LocalEstoqueForm from "../components/cadastros/LocalEstoqueForm";
+import TabelaFiscalForm from "../components/cadastros/TabelaFiscalForm";
 
 /**
  * ⭐⭐⭐ CADASTROS GERAIS V21.1.2 - FASE 1: 100% INFINITO-COMPLETA ⭐⭐⭐
@@ -288,11 +290,22 @@ export default function Cadastros() {
     queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list(),
   });
 
+  // FASE 2: Novos cadastros
+  const { data: locaisEstoque = [] } = useQuery({
+    queryKey: ['locais-estoque'],
+    queryFn: () => base44.entities.LocalEstoque.list(),
+  });
+
+  const { data: tabelasFiscais = [] } = useQuery({
+    queryKey: ['tabelas-fiscais'],
+    queryFn: () => base44.entities.TabelaFiscal.list(),
+  });
+
   // Cálculo de totais por bloco
   const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
   const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length;
-  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length;
-  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length;
+  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
+  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
   const totalBloco6 = eventosNotificacao.length + configsIntegracao.length;
 
@@ -355,9 +368,9 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V21.1.2 - FASE 1: 100% COMPLETA
+            🚀 Cadastros Gerais V21.2 - FASE 2 INICIADA
           </h1>
-          <p className="text-slate-600">Hub Central • 6 Blocos • Fonte Única • Multitarefas • 75 Janelas • TODO O SISTEMA 100%</p>
+          <p className="text-slate-600">Hub Central • 6 Blocos • Fonte Única • Multiempresa • Tabelas Fiscais • Locais de Estoque • 89 Janelas</p>
         </div>
         <div className="flex gap-2">
           <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">
@@ -366,7 +379,7 @@ export default function Cadastros() {
           </Badge>
           <Badge className="bg-green-600 text-white px-4 py-2">
             <CheckCircle2 className="w-4 h-4 mr-2" />
-            FASE 1: 100%
+            FASE 1: ✅ | FASE 2: 🚀
           </Badge>
         </div>
       </div>
@@ -375,8 +388,8 @@ export default function Cadastros() {
       <Alert className="border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
         <Database className="w-4 h-4 text-purple-600" />
         <AlertDescription className="text-sm text-purple-900">
-          <strong>REGRA-MÃE V21.1:</strong> Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR |
-          Multiempresa • Multitarefa • IA Integrada • Janelas Redimensionáveis • Atalhos de Teclado • Inovação Futurística
+          <strong>REGRA-MÃE V21.2 FASE 2:</strong> Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR |
+          Hub Único • Multiempresa Total • Tabelas Fiscais • Locais de Estoque • IA Compliance • Lookups Centralizados
         </AlertDescription>
       </Alert>
 
@@ -1204,7 +1217,7 @@ export default function Cadastros() {
                   <DollarSign className="w-6 h-6 text-green-600" />
                   <div className="text-left">
                     <p className="font-bold text-lg text-green-900">3️⃣ Financeiro</p>
-                    <p className="text-xs text-green-700">Bancos • Formas de Pagamento • Plano de Contas • Centros de Custo</p>
+                    <p className="text-xs text-green-700">Bancos • Formas de Pagamento • Plano de Contas • Centros de Custo • Tabelas Fiscais</p>
                   </div>
                   <Badge className="ml-auto bg-green-600 text-white">{totalBloco3}</Badge>
                 </div>
@@ -1369,6 +1382,76 @@ export default function Cadastros() {
                       ))}
                     </CardContent>
                   </Card>
+
+                  {/* TABELAS FISCAIS - NOVO FASE 2 */}
+                  <Card className="border-red-200 lg:col-span-2">
+                    <CardHeader className="bg-red-50 border-b border-red-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Receipt className="w-5 h-5 text-red-600" />
+                          Tabelas Fiscais ({tabelasFiscais.length})
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(TabelaFiscalForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('TabelaFiscal', 'tabelas-fiscais')
+                          }, {
+                            title: '📋 Nova Tabela Fiscal',
+                            width: 1100,
+                            height: 700
+                          })}
+                          className="bg-red-600 hover:bg-red-700"
+                          disabled={!hasPermission('fiscal', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova Regra
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      <div className="space-y-2">
+                        {tabelasFiscais.map(tabela => (
+                          <div key={tabela.id} className="p-3 border rounded hover:bg-slate-50">
+                            <div className="flex items-center justify-between mb-2">
+                              <p className="font-semibold text-sm">{tabela.nome_regra}</p>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWindow(TabelaFiscalForm, {
+                                  tabela,
+                                  windowMode: true,
+                                  onSubmit: handleSubmitGenerico('TabelaFiscal', 'tabelas-fiscais')
+                                }, {
+                                  title: `📋 Editar: ${tabela.nome_regra}`,
+                                  width: 1100,
+                                  height: 700
+                                })}
+                                disabled={!hasPermission('fiscal', 'editar')}
+                              >
+                                <Edit className="w-4 h-4 text-red-600" />
+                              </Button>
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                              <Badge variant="outline" className="text-xs">{tabela.regime_tributario}</Badge>
+                              <Badge variant="outline" className="text-xs">{tabela.cfop}</Badge>
+                              <Badge className={tabela.regra_ativa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                                {tabela.regra_ativa ? 'Ativa' : 'Inativa'}
+                              </Badge>
+                              {tabela.validado_ia && (
+                                <Badge className="bg-purple-100 text-purple-700 text-xs">
+                                  ✨ Validado IA
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {tabelasFiscais.length === 0 && (
+                        <p className="text-center text-slate-500 py-8 text-sm">Nenhuma tabela fiscal configurada</p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -1380,7 +1463,7 @@ export default function Cadastros() {
                   <Truck className="w-6 h-6 text-orange-600" />
                   <div className="text-left">
                     <p className="font-bold text-lg text-orange-900">4️⃣ Logística</p>
-                    <p className="text-xs text-orange-700">Veículos • Motoristas • Tipos de Frete</p>
+                    <p className="text-xs text-orange-700">Veículos • Motoristas • Tipos de Frete • Locais de Estoque</p>
                   </div>
                   <Badge className="ml-auto bg-orange-600 text-white">{totalBloco4}</Badge>
                 </div>
@@ -1531,6 +1614,57 @@ export default function Cadastros() {
                             disabled={!hasPermission('expedicao', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-green-600" />
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* LOCAIS DE ESTOQUE - NOVO FASE 2 */}
+                  <Card className="border-indigo-200">
+                    <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">📍 Locais de Estoque ({locaisEstoque.length})</CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(LocalEstoqueForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('LocalEstoque', 'locais-estoque')
+                          }, {
+                            title: '📍 Novo Local de Estoque',
+                            width: 900,
+                            height: 650
+                          })}
+                          className="bg-indigo-600 hover:bg-indigo-700"
+                          disabled={!hasPermission('estoque', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {locaisEstoque.map(local => (
+                        <div key={local.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{local.nome}</p>
+                            <Badge variant="outline" className="text-xs">{local.tipo}</Badge>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(LocalEstoqueForm, {
+                              local,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('LocalEstoque', 'locais-estoque')
+                            }, {
+                              title: `📍 Editar: ${local.nome}`,
+                              width: 900,
+                              height: 650
+                            })}
+                            disabled={!hasPermission('estoque', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-indigo-600" />
                           </Button>
                         </div>
                       ))}

@@ -24,6 +24,7 @@ import { toast } from "sonner";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
+import NotaFiscalFormCompleto from "../components/comercial/NotaFiscalFormCompleto";
 import { useWindow } from "@/components/lib/useWindow";
 
 /**
@@ -55,6 +56,8 @@ export default function Comercial() {
     queryFn: () => base44.entities.Comissao.list(),
   });
 
+  const queryClient = useQueryClient();
+  
   const { data: notasFiscais = [] } = useQuery({
     queryKey: ['notasFiscais'],
     queryFn: () => base44.entities.NotaFiscal.list('-created_date'),
@@ -303,7 +306,32 @@ export default function Comercial() {
         </TabsContent>
 
         <TabsContent value="notas">
-          <NotasFiscaisTab notasFiscais={notasFiscais} pedidos={pedidos} clientes={clientes} />
+          <NotasFiscaisTab 
+            notasFiscais={notasFiscais} 
+            pedidos={pedidos} 
+            clientes={clientes}
+            onCreateNFe={() => openWindow(
+              NotaFiscalFormCompleto,
+              { 
+                windowMode: true,
+                onSubmit: async (formData) => {
+                  try {
+                    await base44.entities.NotaFiscal.create(formData);
+                    toast.success("✅ NF-e salva com sucesso!");
+                    queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
+                  } catch (error) {
+                    toast.error("Erro ao salvar NF-e: " + error.message);
+                  }
+                },
+                onCancel: () => {}
+              },
+              {
+                title: '📄 Nova NF-e',
+                width: 1200,
+                height: 750
+              }
+            )}
+          />
         </TabsContent>
 
         {/* NOVO: Conteúdo Tab Vendas Externas */}

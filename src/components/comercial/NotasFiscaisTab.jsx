@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,7 +31,7 @@ import { mockCancelarNFe } from "@/components/integracoes/MockIntegracoes";
 import usePermissions from "@/components/lib/usePermissions"; // Changed import path for usePermissions
 import { ProtectedAction } from "@/components/ProtectedAction"; // Added ProtectedAction
 
-export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes }) {
+export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [tipoFilter, setTipoFilter] = useState("todas");
@@ -269,18 +268,29 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes }) {
                 <SelectItem value="CT-e">CT-e</SelectItem>
               </SelectContent>
             </Select>
+            {onCreateNFe && (
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={onCreateNFe}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nova NF-e
+              </Button>
+            )}
             <Dialog open={isDialogOpen} onOpenChange={(open) => {
               setIsDialogOpen(open);
               if (!open) {
-                setSelectedNF(null); // Changed from setEditingNota
+                setSelectedNF(null);
                 resetForm();
               }
             }}>
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova NF-e
-                </Button>
+                {!onCreateNFe && (
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Nova NF-e (Rápido)
+                  </Button>
+                )}
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
