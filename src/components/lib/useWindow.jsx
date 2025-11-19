@@ -14,7 +14,7 @@ import { useWindowManager } from './WindowManager';
  * });
  */
 
-export default function useWindow() {
+export function useWindow() {
   const { openWindow, closeWindow } = useWindowManager();
 
   return {
