@@ -50,6 +50,7 @@ import PainelOperacoes3D from "../components/dashboard/PainelOperacoes3D";
 import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import StatusFase1 from "@/components/sistema/StatusFase1";
 
 
 export default function Dashboard() {
@@ -645,7 +646,7 @@ export default function Dashboard() {
           <DashboardTempoReal empresaId={empresaAtual?.id} />
         </TabsContent>
 
-        <TabsContent value="resumo">
+        <TabsContent value="resumo" className="space-y-6">
           {/* STATUS FASE 1 */}
           <StatusFase1 />
 
