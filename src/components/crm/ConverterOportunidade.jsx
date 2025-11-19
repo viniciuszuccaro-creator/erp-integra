@@ -5,21 +5,18 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ShoppingCart, FileText, ArrowRight, CheckCircle } from "lucide-react";
 
-export default function ConverterOportunidade({ oportunidade, open, onClose, onConverter }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function ConverterOportunidade({ oportunidade, open, onClose, onConverter, windowMode = false }) {
   const [tipoConversao, setTipoConversao] = useState("orcamento");
 
   const handleConverter = () => {
     onConverter(oportunidade, tipoConversao);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Converter Oportunidade em Venda</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
+  const formContent = (
+    <div className="space-y-4">
           <div className="p-4 bg-green-50 rounded border border-green-200">
             <div className="flex items-center gap-3 mb-3">
               <CheckCircle className="w-6 h-6 text-green-600" />
@@ -109,6 +106,23 @@ export default function ConverterOportunidade({ oportunidade, open, onClose, onC
             </Button>
           </div>
         </div>
+  );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Converter Oportunidade em Venda</DialogTitle>
+        </DialogHeader>
+        {formContent}
       </DialogContent>
     </Dialog>
   );

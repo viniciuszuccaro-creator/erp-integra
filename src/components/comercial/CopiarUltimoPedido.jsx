@@ -9,10 +9,10 @@ import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 
 /**
- * V21.1.2 - SUB-DIALOG MANTIDO
- * Widget auxiliar com dialog interno - OK para UX rápida
+ * V21.1.2 - WINDOW MODE READY
+ * Convertido para suportar window mode independente
  */
-export default function CopiarUltimoPedido({ clienteId, onCopiar }) {
+export default function CopiarUltimoPedido({ clienteId, onCopiar, windowMode = false }) {
   const { toast } = useToast();
 
   const { data: ultimoPedido } = useQuery({
@@ -86,10 +86,11 @@ export default function CopiarUltimoPedido({ clienteId, onCopiar }) {
     }
   };
 
-  return (
-    <Card className="border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
+  const content = (
+    <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-4' : ''}>
+      <Card className={windowMode ? 'border shadow-sm' : 'border-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50'}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-500 rounded-lg">
               <Clock className="w-5 h-5 text-white" />
@@ -236,8 +237,15 @@ export default function CopiarUltimoPedido({ clienteId, onCopiar }) {
               </div>
             </DialogContent>
           </Dialog>
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return content;
 }

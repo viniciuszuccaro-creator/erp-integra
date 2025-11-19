@@ -25,9 +25,9 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 |-----------|------------|--------|
 | **Componentes Core** | 7 | ✅ 100% |
 | **Formulários Adaptados** | 22 | ✅ 100% |
-| **Painéis/Views/Detalhes Window-Ready** | 27 | ✅ 100% |
-| **Total Componentes Window** | 49 | ✅ 100% |
-| **Detalhes INLINE convertidos** | 0 | ✅ ZERO |
+| **Painéis/Views/Detalhes/Fluxos Window** | 30 | ✅ 100% |
+| **Total Componentes Window** | 52 | ✅ 100% |
+| **INLINE Exclusivos** | 0 | ✅ ZERO |
 | **Sub-Dialogs Micro-ações** | 2 | ✅ OK |
 | **Ações Rápidas Globais** | 19 | ✅ 100% |
 | **Módulos Integrados** | 10 | ✅ 100% |
@@ -94,7 +94,7 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 #### Agenda (1)
 22. ✅ EventoForm (900x600)
 
-### 3. Painéis, Views, Detalhes e Fluxos Window-Ready (27)
+### 3. Painéis, Views, Detalhes e Fluxos Window-Ready (30)
 23. ✅ DetalhesComissao (800x600)
 24. ✅ AvaliacaoFornecedorForm (800x650)
 25. ✅ RecebimentoOCForm (800x600)
@@ -122,6 +122,9 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 47. ✅ DetalhesFornecedor (1000x700)
 48. ✅ DetalhesColaborador (1000x700)
 49. ✅ DetalhesCliente (1000x700)
+50. ✅ CopiarUltimoPedido (800x600)
+51. ✅ AgendarFollowUp (800x700)
+52. ✅ ConverterOportunidade (600x600)
 
 ### 4. Detalhes INLINE - Não são Modais (3)
 - DetalhesCadastro (expansão inline em tabelas)

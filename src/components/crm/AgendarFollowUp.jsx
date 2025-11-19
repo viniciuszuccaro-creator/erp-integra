@@ -7,7 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Mail, MessageCircle, Phone } from "lucide-react";
 
-export default function AgendarFollowUp({ oportunidade, open, onClose, onSalvar }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function AgendarFollowUp({ oportunidade, open, onClose, onSalvar, windowMode = false }) {
   const [followUp, setFollowUp] = useState({
     data: "",
     tipo: "E-mail",
@@ -70,14 +73,8 @@ Posso ajudar em algo? 😊`,
     });
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Agendar Follow-up Automático</DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+  const formContent = (
+    <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-3 bg-blue-50 rounded border border-blue-200">
             <p className="text-sm text-blue-900">
               <strong>📌 Automação:</strong> O follow-up será enviado automaticamente na data agendada
@@ -183,6 +180,23 @@ Posso ajudar em algo? 😊`,
             </Button>
           </div>
         </form>
+  );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Agendar Follow-up Automático</DialogTitle>
+        </DialogHeader>
+        {formContent}
       </DialogContent>
     </Dialog>
   );
