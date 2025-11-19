@@ -8,7 +8,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Building2, AlertTriangle, Upload } from "lucide-react";
 import { toast } from "sonner";
 
-export default function EmpresaForm({ empresa, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function EmpresaForm({ empresa, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(empresa || {
     razao_social: '',
     nome_fantasia: '',
@@ -64,7 +67,7 @@ export default function EmpresaForm({ empresa, onSubmit, isSubmitting }) {
     onSubmit(formData);
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -172,4 +175,20 @@ export default function EmpresaForm({ empresa, onSubmit, isSubmitting }) {
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-blue-600" />
+            {empresa ? 'Editar Empresa' : 'Nova Empresa'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

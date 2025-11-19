@@ -10,7 +10,10 @@ import { Loader2, Shield, AlertTriangle, XCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
-export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(perfil || {
     nome: '',
     descricao: '',
@@ -95,7 +98,7 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting }) {
     onSubmit(formData);
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label>Nome do Perfil *</Label>
@@ -198,4 +201,20 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting }) {
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Shield className="w-5 h-5 text-blue-600" />
+            {perfil ? 'Editar Perfil de Acesso' : 'Novo Perfil de Acesso'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

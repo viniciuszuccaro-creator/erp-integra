@@ -11,10 +11,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Bell, Mail, MessageCircle, Smartphone, Globe, Plus, X, Loader2 } from "lucide-react";
 
 /**
- * Formulário de Evento/Notificação Automática V16.1
+ * Formulário de Evento/Notificação Automática V21.1.2
  * Motor de Eventos do Sistema
+ * WINDOW MODE READY
  */
-export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting }) {
+export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(evento || {
     nome_evento: '',
     descricao: '',
@@ -81,7 +82,7 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting }
     return icones[canal] || Bell;
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardContent className="p-6 space-y-4">
@@ -272,4 +273,20 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting }
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Bell className="w-5 h-5 text-blue-600" />
+            {evento ? 'Editar Evento de Notificação' : 'Novo Evento de Notificação'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

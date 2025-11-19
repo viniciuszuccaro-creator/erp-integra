@@ -9,7 +9,10 @@ import { Loader2, User, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
-export default function UsuarioForm({ usuario, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function UsuarioForm({ usuario, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(usuario || {
     full_name: '',
     email: '',
@@ -38,7 +41,7 @@ export default function UsuarioForm({ usuario, onSubmit, isSubmitting }) {
     onSubmit(formData);
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label>Nome Completo *</Label>
@@ -112,4 +115,20 @@ export default function UsuarioForm({ usuario, onSubmit, isSubmitting }) {
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <User className="w-5 h-5 text-blue-600" />
+            {usuario ? 'Editar Usuário' : 'Convidar Usuário'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

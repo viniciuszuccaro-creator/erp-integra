@@ -4,11 +4,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
-export default function ContatoB2BForm({ contato, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function ContatoB2BForm({ contato, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(contato || {
     cliente_id: '',
     nome_contato: '',
@@ -40,7 +43,7 @@ export default function ContatoB2BForm({ contato, onSubmit, isSubmitting }) {
     onSubmit(formData);
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label>Cliente *</Label>
@@ -135,4 +138,20 @@ export default function ContatoB2BForm({ contato, onSubmit, isSubmitting }) {
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-blue-600" />
+            {contato ? 'Editar Contato B2B' : 'Novo Contato B2B'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

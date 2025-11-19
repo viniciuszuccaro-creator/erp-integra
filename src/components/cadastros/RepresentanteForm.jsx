@@ -4,9 +4,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
+import { Loader2, Briefcase } from "lucide-react";
 
-export default function RepresentanteForm({ representante, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function RepresentanteForm({ representante, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(representante || {
     nome: '',
     cpf_cnpj: '',
@@ -28,7 +31,7 @@ export default function RepresentanteForm({ representante, onSubmit, isSubmittin
     onSubmit(formData);
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label>Nome *</Label>
@@ -106,4 +109,20 @@ export default function RepresentanteForm({ representante, onSubmit, isSubmittin
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-blue-600" />
+            {representante ? 'Editar Representante' : 'Novo Representante'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

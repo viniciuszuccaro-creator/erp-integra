@@ -10,7 +10,10 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
 
-export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(grupo || {
     nome_do_grupo: '',
     cnpj_opcional: '',
@@ -52,7 +55,7 @@ export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting }) 
     }
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label>Nome do Grupo *</Label>
@@ -139,4 +142,20 @@ export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting }) 
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Network className="w-5 h-5 text-blue-600" />
+            {grupo ? 'Editar Grupo Empresarial' : 'Novo Grupo Empresarial'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

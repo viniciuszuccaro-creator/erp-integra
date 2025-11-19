@@ -4,8 +4,12 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Receipt } from "lucide-react";
 
-export default function CentroCustoForm({ centroCusto, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function CentroCustoForm({ centroCusto, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(centroCusto || {
     codigo: "",
     descricao: "",
@@ -26,7 +30,7 @@ export default function CentroCustoForm({ centroCusto, onSubmit, isSubmitting })
     onSubmit(dataToSubmit);
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -143,4 +147,20 @@ export default function CentroCustoForm({ centroCusto, onSubmit, isSubmitting })
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Receipt className="w-5 h-5 text-blue-600" />
+            {centroCusto ? 'Editar Centro de Custo' : 'Novo Centro de Custo'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

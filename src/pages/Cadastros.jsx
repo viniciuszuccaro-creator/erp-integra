@@ -811,10 +811,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setRepresentanteSelecionado(null);
-                            setRepresentanteFormOpen(true);
-                          }}
+                          onClick={() => openWindow(RepresentanteForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Representante', 'representantes')
+                          }, {
+                            title: '💼 Novo Representante',
+                            width: 800,
+                            height: 550
+                          })}
                           className="bg-teal-600 hover:bg-teal-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -846,10 +850,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setContatoB2BSelecionado(null);
-                            setContatoB2BFormOpen(true);
-                          }}
+                          onClick={() => openWindow(ContatoB2BForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('ContatoB2B', 'contatos-b2b')
+                          }, {
+                            title: '📞 Novo Contato B2B',
+                            width: 800,
+                            height: 600
+                          })}
                           className="bg-violet-600 hover:bg-violet-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1203,10 +1211,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setServicoSelecionado(null);
-                            setServicoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(ServicoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Servico', 'servicos')
+                          }, {
+                            title: '✨ Novo Serviço',
+                            width: 800,
+                            height: 600
+                          })}
                           className="bg-blue-600 hover:bg-blue-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1530,10 +1542,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">📦 Tipos de Frete ({tiposFrete.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setTipoFreteSelecionado(null);
-                            setTipoFreteFormOpen(true);
-                          }}
+                          onClick={() => openWindow(TipoFreteForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('TipoFrete', 'tipos-frete')
+                          }, {
+                            title: '📦 Novo Tipo de Frete',
+                            width: 800,
+                            height: 550
+                          })}
                           className="bg-green-600 hover:bg-green-700"
                           disabled={!hasPermission('expedicao', 'criar')}
                         >
@@ -1549,10 +1565,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setTipoFreteSelecionado(tipo);
-                              setTipoFreteFormOpen(true);
-                            }}
+                            onClick={() => openWindow(TipoFreteForm, {
+                              tipo,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('TipoFrete', 'tipos-frete')
+                            }, {
+                              title: `📦 Editar: ${tipo.nome}`,
+                              width: 800,
+                              height: 550
+                            })}
                             disabled={!hasPermission('expedicao', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-green-600" />
@@ -1586,10 +1607,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">🏢 Empresas ({empresas.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setEmpresaSelecionada(null);
-                            setEmpresaFormOpen(true);
-                          }}
+                          onClick={() => openWindow(EmpresaForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Empresa', 'empresas')
+                          }, {
+                            title: '🏢 Nova Empresa',
+                            width: 1000,
+                            height: 700
+                          })}
                           className="bg-indigo-600 hover:bg-indigo-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1608,10 +1633,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setEmpresaSelecionada(empresa);
-                              setEmpresaFormOpen(true);
-                            }}
+                            onClick={() => openWindow(EmpresaForm, {
+                              empresa,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Empresa', 'empresas')
+                            }, {
+                              title: `🏢 Editar: ${empresa.nome_fantasia || empresa.razao_social}`,
+                              width: 1000,
+                              height: 700
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-indigo-600" />
@@ -1628,10 +1658,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">🏗️ Grupos Empresariais ({grupos.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setGrupoSelecionado(null);
-                            setGrupoEmpresarialFormOpen(true);
-                          }}
+                          onClick={() => openWindow(GrupoEmpresarialForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('GrupoEmpresarial', 'grupos')
+                          }, {
+                            title: '🏗️ Novo Grupo Empresarial',
+                            width: 900,
+                            height: 650
+                          })}
                           className="bg-purple-600 hover:bg-purple-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1647,10 +1681,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setGrupoSelecionado(grupo);
-                              setGrupoEmpresarialFormOpen(true);
-                            }}
+                            onClick={() => openWindow(GrupoEmpresarialForm, {
+                              grupo,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('GrupoEmpresarial', 'grupos')
+                            }, {
+                              title: `🏗️ Editar: ${grupo.nome_do_grupo || 'Grupo'}`,
+                              width: 900,
+                              height: 650
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-purple-600" />
@@ -1667,10 +1706,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">👥 Usuários ({usuarios.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setUsuarioSelecionado(null);
-                            setUsuarioFormOpen(true);
-                          }}
+                          onClick={() => openWindow(UsuarioForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('User', 'usuarios')
+                          }, {
+                            title: '👥 Convidar Usuário',
+                            width: 800,
+                            height: 600
+                          })}
                           className="bg-blue-600 hover:bg-blue-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1689,10 +1732,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setUsuarioSelecionado(usuario);
-                              setUsuarioFormOpen(true);
-                            }}
+                            onClick={() => openWindow(UsuarioForm, {
+                              usuario,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('User', 'usuarios')
+                            }, {
+                              title: `👥 Editar: ${usuario.full_name}`,
+                              width: 800,
+                              height: 600
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-blue-600" />
@@ -1859,10 +1907,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setPerfilSelecionado(null);
-                            setPerfilAcessoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(PerfilAcessoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('PerfilAcesso', 'perfis-acesso')
+                          }, {
+                            title: '🔒 Novo Perfil de Acesso',
+                            width: 1000,
+                            height: 700
+                          })}
                           className="bg-red-600 hover:bg-red-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1883,10 +1935,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setPerfilSelecionado(perfil);
-                              setPerfilAcessoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(PerfilAcessoForm, {
+                              perfil,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('PerfilAcesso', 'perfis-acesso')
+                            }, {
+                              title: `🔒 Editar: ${perfil.nome_perfil}`,
+                              width: 1000,
+                              height: 700
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-red-600" />
@@ -1920,10 +1977,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setEventoSelecionado(null);
-                            setEventoNotificacaoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(EventoNotificacaoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('EventoNotificacao', 'eventos-notificacao')
+                          }, {
+                            title: '🔔 Novo Evento de Notificação',
+                            width: 1000,
+                            height: 700
+                          })}
                           className="bg-cyan-600 hover:bg-cyan-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1942,10 +2003,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setEventoSelecionado(evento);
-                              setEventoNotificacaoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(EventoNotificacaoForm, {
+                              evento,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('EventoNotificacao', 'eventos-notificacao')
+                            }, {
+                              title: `🔔 Editar: ${evento.nome_evento}`,
+                              width: 1000,
+                              height: 700
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-cyan-600" />
@@ -1962,10 +2028,14 @@ export default function Cadastros() {
                         <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setConfigSelecionada(null);
-                            setConfigIntegracaoFormOpen(true);
-                          }}
+                          onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
+                          }, {
+                            title: '🔗 Nova Configuração de Integração',
+                            width: 1100,
+                            height: 750
+                          })}
                           className="bg-purple-600 hover:bg-purple-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -1986,10 +2056,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setConfigSelecionada(config);
-                              setConfigIntegracaoFormOpen(true);
-                            }}
+                            onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
+                              config,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
+                            }, {
+                              title: `🔗 Editar: ${config.marketplace}`,
+                              width: 1100,
+                              height: 750
+                            })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
                             <Edit className="w-3 h-3 text-purple-600" />

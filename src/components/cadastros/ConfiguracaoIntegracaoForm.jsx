@@ -12,10 +12,11 @@ import { Link2, CheckCircle2, AlertTriangle, Loader2, FileText, CreditCard, Mess
 import { toast } from "sonner";
 
 /**
- * Formulário de Configuração de Integrações V16.1
+ * Formulário de Configuração de Integrações V21.1.2
  * Hub de controle para todas as APIs externas
+ * WINDOW MODE READY
  */
-export default function ConfiguracaoIntegracaoForm({ config, onSubmit, isSubmitting }) {
+export default function ConfiguracaoIntegracaoForm({ config, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(config || {
     nfe_provedor: 'eNotas',
     nfe_api_key: '',
@@ -91,7 +92,7 @@ export default function ConfiguracaoIntegracaoForm({ config, onSubmit, isSubmitt
     );
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Tabs defaultValue="nfe" className="space-y-4">
         <TabsList className="grid grid-cols-6 w-full">
@@ -503,4 +504,20 @@ export default function ConfiguracaoIntegracaoForm({ config, onSubmit, isSubmitt
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Link2 className="w-5 h-5 text-blue-600" />
+            {config ? 'Editar Configuração de Integração' : 'Nova Configuração de Integração'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }
