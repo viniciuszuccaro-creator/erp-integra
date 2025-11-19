@@ -38,44 +38,52 @@ export default function WindowModal({ window, children }) {
         zIndex: window.zIndex,
       };
 
-  // Iniciar drag
+  // Iniciar drag - MELHORADO
   const handleMouseDown = (e) => {
     if (window.isMaximized || e.target.closest('.window-controls')) return;
     
+    e.preventDefault();
+    e.stopPropagation();
+    
     setIsDragging(true);
     setDragStart({
-      x: e.clientX - window.x,
-      y: e.clientY - window.y,
+      x: e.clientX - (window.x || 0),
+      y: e.clientY - (window.y || 0),
     });
     bringToFront(window.id);
   };
 
-  // Iniciar resize
+  // Iniciar resize - MELHORADO
   const handleResizeMouseDown = (e) => {
     if (window.isMaximized) return;
     
+    e.preventDefault();
     e.stopPropagation();
+    
     setIsResizing(true);
     setResizeStart({
       x: e.clientX,
       y: e.clientY,
-      width: window.width,
-      height: window.height,
+      width: window.width || 800,
+      height: window.height || 600,
     });
+    bringToFront(window.id);
   };
 
-  // Movimento do mouse
+  // Movimento do mouse - CORRIGIDO PARA USAR WINDOW GLOBAL
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (isDragging) {
-        const newX = Math.max(0, Math.min(e.clientX - dragStart.x, window.innerWidth - 300));
-        const newY = Math.max(0, Math.min(e.clientY - dragStart.y, window.innerHeight - 100));
+        e.preventDefault();
+        const newX = Math.max(0, Math.min(e.clientX - dragStart.x, globalThis.window.innerWidth - 300));
+        const newY = Math.max(0, Math.min(e.clientY - dragStart.y, globalThis.window.innerHeight - 100));
         updateWindow(window.id, { x: newX, y: newY });
       } else if (isResizing) {
+        e.preventDefault();
         const deltaX = e.clientX - resizeStart.x;
         const deltaY = e.clientY - resizeStart.y;
-        const newWidth = Math.max(400, Math.min(resizeStart.width + deltaX, window.innerWidth - window.x));
-        const newHeight = Math.max(300, Math.min(resizeStart.height + deltaY, window.innerHeight - window.y));
+        const newWidth = Math.max(400, Math.min(resizeStart.width + deltaX, globalThis.window.innerWidth - window.x));
+        const newHeight = Math.max(300, Math.min(resizeStart.height + deltaY, globalThis.window.innerHeight - window.y));
         updateWindow(window.id, { width: newWidth, height: newHeight });
       }
     };
@@ -86,14 +94,14 @@ export default function WindowModal({ window, children }) {
     };
 
     if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      globalThis.window.addEventListener('mousemove', handleMouseMove);
+      globalThis.window.addEventListener('mouseup', handleMouseUp);
       return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
+        globalThis.window.removeEventListener('mousemove', handleMouseMove);
+        globalThis.window.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, dragStart, resizeStart, window, updateWindow]);
+  }, [isDragging, isResizing, dragStart, resizeStart, window.id, window.x, window.y, updateWindow]);
 
   return (
     <motion.div
@@ -103,8 +111,10 @@ export default function WindowModal({ window, children }) {
       transition={{ duration: 0.2, ease: "easeOut" }}
       ref={windowRef}
       style={windowStyle}
-      className={`bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden transition-all duration-200 ${
-        isDragging ? 'cursor-move shadow-blue-500/50' : ''
+      className={`bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden ${
+        isDragging ? 'cursor-move shadow-blue-500/50 transition-none' : 'transition-all duration-200'
+      } ${
+        isResizing ? 'cursor-se-resize' : ''
       } ${
         window.id === window.id && !window.isMinimized
           ? 'border-blue-500 ring-2 ring-blue-200'
@@ -112,12 +122,13 @@ export default function WindowModal({ window, children }) {
       }`}
       onClick={() => bringToFront(window.id)}
     >
-      {/* Header */}
+      {/* Header - CURSOR MOVE VISÍVEL */}
       <div
-        className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 flex items-center justify-between cursor-move select-none"
+        className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 flex items-center justify-between cursor-move select-none active:cursor-grabbing"
         onMouseDown={handleMouseDown}
+        style={{ touchAction: 'none', userSelect: 'none' }}
       >
-        <h3 className="font-semibold text-sm truncate flex-1">{window.title}</h3>
+        <h3 className="font-semibold text-sm truncate flex-1 pointer-events-none">{window.title}</h3>
         <div className="window-controls flex items-center gap-1">
           <button
             onClick={() => minimizeWindow(window.id)}
@@ -152,15 +163,18 @@ export default function WindowModal({ window, children }) {
         {children}
       </div>
 
-      {/* Resize handle */}
+      {/* Resize handle - MELHORADO */}
       {!window.isMaximized && (
         <div
-          className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize hover:bg-blue-100 transition-colors rounded-tl-lg group"
+          className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize hover:bg-blue-200 transition-colors z-50 group"
           onMouseDown={handleResizeMouseDown}
           title="Arrastar para redimensionar"
+          style={{ pointerEvents: 'auto' }}
         >
-          <div className="w-full h-full flex items-end justify-end p-1">
-            <div className="w-3 h-3 border-r-2 border-b-2 border-slate-400 group-hover:border-blue-600 transition-colors" />
+          <div className="w-full h-full flex items-end justify-end p-0.5">
+            <div className="w-4 h-4 border-r-3 border-b-3 border-blue-500 group-hover:border-blue-700 transition-colors rounded-tl-sm" 
+                 style={{ borderRightWidth: '3px', borderBottomWidth: '3px' }} 
+            />
           </div>
         </div>
       )}
