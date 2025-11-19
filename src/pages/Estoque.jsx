@@ -32,9 +32,7 @@ import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import usePermissions from "@/components/lib/usePermissions";
-import VisualizacaoInteligente from "../components/estoque/VisualizacaoInteligente";
 import IAReposicao from "../components/estoque/IAReposicao";
-import ProdutosTab from "../components/estoque/ProdutosTab";
 
 export default function Estoque() {
   const [activeTab, setActiveTab] = useState("produtos");
