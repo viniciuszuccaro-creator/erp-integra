@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,14 +51,15 @@ const base44 = {
 export default function FormularioEntrega({
   formData,
   setFormData,
-  onSubmit, // This prop now triggers the mutation logic internally
-  onCancel, // This prop acts as the 'onClose' in the mutation success handlers
+  onSubmit,
+  onCancel,
   clientes = [],
   pedidos = [],
   empresasDoGrupo = [],
   estaNoGrupo = false,
   isEditing = false,
-  isLoading = false // Original loading prop, combined with mutation loading states
+  isLoading = false,
+  windowMode = false
 }) {
 
   const queryClient = useQueryClient();
@@ -184,8 +184,8 @@ export default function FormularioEntrega({
 
   const isSubmitting = isLoading || createMutation.isPending || updateMutation.isPending;
 
-  return (
-    <form onSubmit={handleSubmitForm} className="space-y-6">
+  const content = (
+    <form onSubmit={handleSubmitForm} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       {/* Empresa (se no grupo) */}
       {estaNoGrupo && (
         <div className="p-4 bg-blue-50 border border-blue-200 rounded">
@@ -572,4 +572,10 @@ export default function FormularioEntrega({
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return content;
 }

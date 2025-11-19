@@ -28,7 +28,7 @@ export default function StatusFase1() {
                   <Badge className="bg-green-600 text-white shadow-lg">✅ 100% COMPLETA</Badge>
                 </div>
                 <p className="text-sm text-green-700 mt-1">
-                  Sistema de janelas global operacional • 7 componentes • 4 formulários • 12 features
+                  TODO O SISTEMA • 7 componentes • 11 formulários • 10 módulos • 15 features
                 </p>
               </div>
             </div>
@@ -45,16 +45,16 @@ export default function StatusFase1() {
               <div className="text-xs text-green-700">Componentes</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-900">4</div>
+              <div className="text-2xl font-bold text-green-900">11</div>
               <div className="text-xs text-green-700">Formulários</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-900">12</div>
-              <div className="text-xs text-green-700">Features</div>
+              <div className="text-2xl font-bold text-green-900">10</div>
+              <div className="text-xs text-green-700">Módulos</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-900">~850</div>
-              <div className="text-xs text-green-700">Linhas</div>
+              <div className="text-2xl font-bold text-green-900">15</div>
+              <div className="text-xs text-green-700">Features</div>
             </div>
           </div>
 

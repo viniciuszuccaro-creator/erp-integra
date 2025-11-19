@@ -34,10 +34,12 @@ import RateioMultiempresa from "../components/financeiro/RateioMultiempresa";
 import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
 import ReguaCobrancaIA from "../components/financeiro/ReguaCobrancaIA";
 import usePermissions from "@/components/lib/usePermissions";
+import { useWindow } from "@/components/lib/useWindow";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const { openWindow } = useWindow();
   const [conciliacaoDialogOpen, setConciliacaoDialogOpen] = useState(false);
   const [relatorioPeriodo, setRelatorioPeriodo] = useState({
     dataInicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],

@@ -103,16 +103,10 @@ export default function AcoesRapidasGlobal() {
       cor: 'text-emerald-600'
     },
     {
-      label: 'Novo Título a Pagar',
-      icon: DollarSign,
-      action: () => navigate(createPageUrl('Financeiro') + '?tab=contas-pagar&action=novo'),
-      cor: 'text-red-600'
-    },
-    {
-      label: 'Novo Título a Receber',
-      icon: DollarSign,
-      action: () => navigate(createPageUrl('Financeiro') + '?tab=contas-receber&action=novo'),
-      cor: 'text-green-600'
+      label: 'Nova Entrega',
+      icon: Package,
+      action: () => navigate(createPageUrl('Expedicao')),
+      cor: 'text-orange-600'
     },
     {
       label: 'Nova NF-e',

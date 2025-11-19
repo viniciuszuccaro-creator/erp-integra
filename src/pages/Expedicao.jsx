@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -41,8 +40,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-// Removed BuscaCEP from here as its usage is moved to FormularioEntrega
 import ComprovanteDigital from "../components/expedicao/ComprovanteDigital";
+import { useWindow } from "@/components/lib/useWindow";
 import RomaneioForm from "../components/expedicao/RomaneioForm";
 import RoteirizacaoMapa from "../components/expedicao/RoteirizacaoMapa";
 import DashboardLogistico from "../components/expedicao/DashboardLogistico";
@@ -63,6 +62,7 @@ import MapaTempoReal from '../components/expedicao/MapaTempoReal';
 export default function Expedicao() {
   const [activeTab, setActiveTab] = useState("entregas");
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const { openWindow } = useWindow();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
@@ -496,51 +496,42 @@ export default function Expedicao() {
             )}
 
             <Button
-              onClick={() => setRomaneioDialogOpen(true)}
+              onClick={() => openWindow(RomaneioForm, {
+                empresaId: empresaAtual?.id,
+                windowMode: true
+              }, {
+                title: '📋 Gerar Romaneio',
+                width: 1200,
+                height: 700
+              })}
               className="bg-purple-600 hover:bg-purple-700"
             >
               <FileText className="w-4 h-4 mr-2" />
               Gerar Romaneio
             </Button>
 
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
-              setIsDialogOpen(open);
-              if (!open) {
-                setEditingEntrega(null);
-                resetForm();
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Entrega
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>{editingEntrega ? 'Editar Entrega' : 'Nova Entrega'}</DialogTitle>
-                </DialogHeader>
-                
-                <FormularioEntrega
-                  formData={formData}
-                  setFormData={setFormData}
-                  onSubmit={handleSubmit}
-                  onCancel={() => {
-                    setIsDialogOpen(false);
-                    setEditingEntrega(null);
-                    resetForm();
-                  }}
-                  clientes={clientes}
-                  pedidos={pedidos}
-                  empresasDoGrupo={empresasDoGrupo}
-                  estaNoGrupo={estaNoGrupo}
-                  isEditing={!!editingEntrega}
-                  isLoading={createMutation.isPending || updateMutation.isPending}
-                  onSelectCliente={handleClienteChange}
-                  onSelectPedido={handlePedidoChange}
-                />
-              </DialogContent>
-            </Dialog>
+            <Button 
+              onClick={() => openWindow(FormularioEntrega, {
+                formData,
+                setFormData,
+                onSubmit: handleSubmit,
+                onCancel: () => {},
+                clientes,
+                pedidos,
+                empresasDoGrupo,
+                estaNoGrupo,
+                isEditing: false,
+                windowMode: true
+              }, {
+                title: '🚚 Nova Entrega',
+                width: 1100,
+                height: 650
+              })}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova Entrega
+            </Button>
           </div>
         </div>
 
@@ -799,12 +790,27 @@ export default function Expedicao() {
                                 </Button>
 
                                 <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEdit(entrega)}
-                                  title="Editar"
+                                 variant="ghost"
+                                 size="icon"
+                                 onClick={() => openWindow(FormularioEntrega, {
+                                   formData: entrega,
+                                   setFormData,
+                                   onSubmit: handleSubmit,
+                                   onCancel: () => {},
+                                   clientes,
+                                   pedidos,
+                                   empresasDoGrupo,
+                                   estaNoGrupo,
+                                   isEditing: true,
+                                   windowMode: true
+                                 }, {
+                                   title: `✏️ Editar Entrega: ${entrega.numero_pedido}`,
+                                   width: 1100,
+                                   height: 650
+                                 })}
+                                 title="Editar"
                                 >
-                                  <Edit className="w-4 h-4" />
+                                 <Edit className="w-4 h-4" />
                                 </Button>
 
                                 {entrega.status === "Entregue" && (
@@ -1290,12 +1296,7 @@ export default function Expedicao() {
           />
         )}
 
-        {/* NOVO: Dialog Romaneio */}
-        <RomaneioForm
-          isOpen={romaneioDialogOpen}
-          onClose={() => setRomaneioDialogOpen(false)}
-          empresaId={empresaAtual?.id}
-        />
+
 
         {/* NOVO: Modal Assinatura Digital de Entrega */}
         {assinaturaModal && (

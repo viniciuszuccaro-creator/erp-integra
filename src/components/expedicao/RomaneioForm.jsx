@@ -16,7 +16,7 @@ import { FileText, Truck, CheckCircle, MapPin } from "lucide-react";
 /**
  * Formulário para Geração de Romaneio
  */
-export default function RomaneioForm({ isOpen, onClose, empresaId }) {
+export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -134,17 +134,18 @@ export default function RomaneioForm({ isOpen, onClose, empresaId }) {
 
   const entregasSelecionadas = entregas.filter(e => formData.entregas_selecionadas.includes(e.id));
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+  const content = (
+    <div className={windowMode ? "w-full h-full flex flex-col bg-white" : ""}>
+      {windowMode && (
+        <div className="flex-shrink-0 p-6 border-b">
+          <h2 className="text-2xl font-bold flex items-center gap-2">
             <FileText className="w-6 h-6 text-purple-600" />
             Gerar Romaneio de Entrega
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={(e) => { e.preventDefault(); gerarRomaneioMutation.mutate(); }} className="space-y-6">
+          </h2>
+        </div>
+      )}
+      
+      <form onSubmit={(e) => { e.preventDefault(); gerarRomaneioMutation.mutate(); }} className={`space-y-6 ${windowMode ? 'flex-1 overflow-auto p-6' : ''}`}>
           {/* Dados do Motorista */}
           <Card>
             <CardHeader className="bg-blue-50 border-b">
@@ -371,6 +372,25 @@ export default function RomaneioForm({ isOpen, onClose, empresaId }) {
             </Button>
           </div>
         </form>
+      </div>
+    );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        {!windowMode && (
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-6 h-6 text-purple-600" />
+              Gerar Romaneio de Entrega
+            </DialogTitle>
+          </DialogHeader>
+        )}
+        {content}
       </DialogContent>
     </Dialog>
   );

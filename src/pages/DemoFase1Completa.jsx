@@ -405,7 +405,7 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">4</div>
+            <div className="text-4xl font-bold text-blue-900 mb-2">11</div>
             <p className="text-sm text-blue-700">Formulários Adaptados</p>
           </CardContent>
         </Card>
@@ -419,7 +419,7 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-orange-900 mb-2">~850</div>
+            <div className="text-4xl font-bold text-orange-900 mb-2">~1.2K</div>
             <p className="text-sm text-orange-700">Linhas de Código</p>
           </CardContent>
         </Card>
