@@ -24,7 +24,7 @@ Sistema de janelas multitarefa implementado em **TODOS OS MÓDULOS** do ERP Zucc
 
 ---
 
-## 📦 FORMULÁRIOS E VISUALIZADORES ADAPTADOS (23 COMPONENTES - SISTEMA 100% ABSOLUTAMENTE COMPLETO)
+## 📦 FORMULÁRIOS E VISUALIZADORES ADAPTADOS (25 COMPONENTES - SISTEMA 100% ABSOLUTAMENTE COMPLETO)
 
 ### ✅ 1. CadastroClienteCompleto
 - **Tamanho:** 1100x650
@@ -145,6 +145,16 @@ Sistema de janelas multitarefa implementado em **TODOS OS MÓDULOS** do ERP Zucc
 ### ✅ 23. DetalhesComissao (Visualização)
 - **Tamanho:** 800x600
 - **Origem:** Comercial
+- **Status:** ✅ Completo
+
+### ✅ 24. AvaliacaoFornecedorForm
+- **Tamanho:** 800x650
+- **Origem:** Compras
+- **Status:** ✅ Completo
+
+### ✅ 25. RecebimentoOCForm
+- **Tamanho:** 800x600
+- **Origem:** Compras
 - **Status:** ✅ Completo
 
 ---
@@ -380,14 +390,14 @@ Sistema de janelas multitarefa implementado em **TODOS OS MÓDULOS** do ERP Zucc
 
 ### Escala FINAL - FASE 1 ABSOLUTAMENTE COMPLETA EM TODO SISTEMA
 - **7 componentes** core criados (WindowManager, WindowRenderer, useWindow, MinimizedBar, WindowModal, GerenciadorJanelas, StatusFase1)
-- **23 componentes** adaptados para windowMode: 22 Forms + 1 Visualizador (COBERTURA TOTAL ABSOLUTA)
+- **25 componentes** adaptados para windowMode: 22 Forms + 3 Visualizadores/Fluxos (COBERTURA TOTAL ABSOLUTA)
 - **10 módulos** 100% integrados (Comercial, Financeiro, Estoque, Compras, Expedição, Produção, RH, CRM, Agenda, Cadastros)
-- **35+ funcionalidades** implementadas
-- **~2.500 linhas** de código novo
-- **58+ arquivos** modificados
+- **40+ funcionalidades** implementadas
+- **~2.700 linhas** de código novo
+- **62+ arquivos** modificados
 - **19 ações rápidas** globais em janelas (COBERTURA TOTAL MÁXIMA)
 - **100% cobertura** ABSOLUTA - TODO O SISTEMA É MULTITAREFA
-- **ZERO Dialogs** em formulários principais - TUDO é Window
+- **ZERO Dialogs** em fluxos principais - TUDO é Window
 - **Regra-Mãe** aplicada ABSOLUTAMENTE EM TUDO: Acrescentar • Conectar • Melhorar • Inovar • NUNCA Apagar
 
 ### Produtividade

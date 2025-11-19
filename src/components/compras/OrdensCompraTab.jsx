@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import OrdemCompraForm from "./OrdemCompraForm";
+import AvaliacaoFornecedorForm from "./AvaliacaoFornecedorForm";
+import RecebimentoOCForm from "./RecebimentoOCForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
@@ -364,13 +366,22 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
   };
 
   const handleReceberClick = (oc) => {
-    setOcSelecionada(oc);
-    setRecebimentoFormData({
-      data_entrega_real: new Date().toISOString().split('T')[0],
-      nota_fiscal_entrada: "",
-      observacoes: ""
+    openWindow(RecebimentoOCForm, {
+      ordemCompra: oc,
+      windowMode: true,
+      onSubmit: async (dados) => {
+        try {
+          await receberMutation.mutateAsync({ id: oc.id, oc, dados });
+          sonnerToast.success("✅ Recebimento registrado!");
+        } catch (error) {
+          sonnerToast.error("Erro ao registrar recebimento");
+        }
+      }
+    }, {
+      title: `📦 Receber: ${oc.numero_oc}`,
+      width: 800,
+      height: 600
     });
-    setIsRecebimentoDialogOpen(true);
   };
 
   const filteredOCs = ordensCompra.filter(oc =>
@@ -634,10 +645,22 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => {
-                            setOcSelecionada(oc);
-                            setIsAvaliacaoDialogOpen(true);
-                          }}
+                          onClick={() => openWindow(AvaliacaoFornecedorForm, {
+                            ordemCompra: oc,
+                            windowMode: true,
+                            onSubmit: async (avaliacao) => {
+                              try {
+                                await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao });
+                                sonnerToast.success("⭐ Avaliação registrada!");
+                              } catch (error) {
+                                sonnerToast.error("Erro ao avaliar fornecedor");
+                              }
+                            }
+                          }, {
+                            title: `⭐ Avaliar: ${oc.fornecedor_nome}`,
+                            width: 800,
+                            height: 650
+                          })}
                           className="text-amber-600"
                         >
                           <Star className="w-4 h-4" />
@@ -658,189 +681,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
         )}
       </Card>
 
-      {/* Dialog de Recebimento */}
-      <Dialog open={isRecebimentoDialogOpen} onOpenChange={setIsRecebimentoDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Registrar Recebimento</DialogTitle>
-          </DialogHeader>
-          {ocSelecionada && (
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              receberMutation.mutate({ 
-                id: ocSelecionada.id, 
-                oc: ocSelecionada, 
-                dados: recebimentoFormData 
-              });
-            }} className="space-y-4">
-              <div className="p-4 bg-slate-50 rounded">
-                <p className="font-semibold">{ocSelecionada.numero_oc}</p>
-                <p className="text-sm text-slate-600">{ocSelecionada.fornecedor_nome}</p>
-                <p className="text-sm">Valor: R$ {ocSelecionada.valor_total?.toFixed(2)}</p>
-              </div>
-
-              <div>
-                <Label htmlFor="data_entrega_real">Data de Recebimento *</Label>
-                <Input
-                  id="data_entrega_real"
-                  type="date"
-                  value={recebimentoFormData.data_entrega_real}
-                  onChange={(e) => setRecebimentoFormData({...recebimentoFormData, data_entrega_real: e.target.value})}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="nota_fiscal_entrada">Nota Fiscal de Entrada</Label>
-                <Input
-                  id="nota_fiscal_entrada"
-                  value={recebimentoFormData.nota_fiscal_entrada}
-                  onChange={(e) => setRecebimentoFormData({...recebimentoFormData, nota_fiscal_entrada: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="observacoes_recebimento">Observações</Label>
-                <Textarea
-                  id="observacoes_recebimento"
-                  value={recebimentoFormData.observacoes}
-                  onChange={(e) => setRecebimentoFormData({...recebimentoFormData, observacoes: e.target.value})}
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsRecebimentoDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit" disabled={receberMutation.isPending} className="bg-green-600">
-                  {receberMutation.isPending ? 'Processando...' : 'Confirmar Recebimento'}
-                </Button>
-              </div>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog de Avaliação */}
-      <Dialog open={isAvaliacaoDialogOpen} onOpenChange={setIsAvaliacaoDialogOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Avaliar Fornecedor</DialogTitle>
-          </DialogHeader>
-          {ocSelecionada && (
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              avaliarFornecedorMutation.mutate({ 
-                oc: ocSelecionada, 
-                avaliacao: avaliacaoFormData 
-              });
-            }} className="space-y-4">
-              <div className="p-4 bg-slate-50 rounded">
-                <p className="font-semibold">{ocSelecionada.fornecedor_nome}</p>
-                <p className="text-sm text-slate-600">OC: {ocSelecionada.numero_oc}</p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label>Qualidade do Produto</Label>
-                  <div className="flex gap-1">
-                    {[1,2,3,4,5].map(star => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setAvaliacaoFormData({...avaliacaoFormData, qualidade: star})}
-                      >
-                        <Star 
-                          className={`w-6 h-6 ${star <= avaliacaoFormData.qualidade ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label>Cumprimento de Prazo</Label>
-                  <div className="flex gap-1">
-                    {[1,2,3,4,5].map(star => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setAvaliacaoFormData({...avaliacaoFormData, prazo: star})}
-                      >
-                        <Star 
-                          className={`w-6 h-6 ${star <= avaliacaoFormData.prazo ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label>Preço Competitivo</Label>
-                  <div className="flex gap-1">
-                    {[1,2,3,4,5].map(star => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setAvaliacaoFormData({...avaliacaoFormData, preco: star})}
-                      >
-                        <Star 
-                          className={`w-6 h-6 ${star <= avaliacaoFormData.preco ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Label>Atendimento</Label>
-                  <div className="flex gap-1">
-                    {[1,2,3,4,5].map(star => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setAvaliacaoFormData({...avaliacaoFormData, atendimento: star})}
-                      >
-                        <Star 
-                          className={`w-6 h-6 ${star <= avaliacaoFormData.atendimento ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="comentario">Comentários</Label>
-                <Textarea
-                  id="comentario"
-                  value={avaliacaoFormData.comentario}
-                  onChange={(e) => setAvaliacaoFormData({...avaliacaoFormData, comentario: e.target.value})}
-                  rows={3}
-                  placeholder="Comentários sobre a compra..."
-                />
-              </div>
-
-              <div className="p-4 bg-blue-50 rounded text-center">
-                <p className="text-sm text-slate-600">Nota Média</p>
-                <p className="text-3xl font-bold text-blue-600">
-                  {((avaliacaoFormData.qualidade + avaliacaoFormData.prazo + avaliacaoFormData.preco + avaliacaoFormData.atendimento) / 4).toFixed(1)}
-                </p>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsAvaliacaoDialogOpen(false)}>
-                  Pular
-                </Button>
-                <Button type="submit" disabled={avaliarFornecedorMutation.isPending} className="bg-amber-600">
-                  {avaliarFornecedorMutation.isPending ? 'Salvando...' : 'Salvar Avaliação'}
-                </Button>
-              </div>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* DIALOGS REMOVIDOS - Agora usam Windows */}
     </div>
   );
 }
