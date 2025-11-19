@@ -11,6 +11,10 @@ import BuscaCEP from "@/components/comercial/BuscaCEP";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
+/**
+ * V21.1.2 - SUB-DIALOG MANTIDO (usado dentro de forms maiores)
+ * Dialogs internos são permitidos quando fazem parte de um fluxo maior
+ */
 export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange }) {
   const [dialogAberto, setDialogAberto] = useState(false);
   const [enderecoEditando, setEnderecoEditando] = useState(null);

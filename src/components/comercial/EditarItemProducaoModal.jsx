@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Calculator } from "lucide-react";
 
-export default function EditarItemProducaoModal({ open, onClose, item, onSave }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function EditarItemProducaoModal({ open, onClose, item, onSave, windowMode = false }) {
   const [formData, setFormData] = useState(item || {});
 
   React.useEffect(() => {
@@ -63,14 +67,8 @@ export default function EditarItemProducaoModal({ open, onClose, item, onSave })
     onClose();
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Editar Item de Produção</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
+  const content = (
+    <div className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
           {/* Identificação */}
           <div className="grid grid-cols-3 gap-4">
             <div>
@@ -377,6 +375,15 @@ export default function EditarItemProducaoModal({ open, onClose, item, onSave })
             </Button>
           </div>
         </div>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar Item de Produção</DialogTitle>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );

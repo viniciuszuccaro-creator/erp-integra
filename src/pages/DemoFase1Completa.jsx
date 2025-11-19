@@ -312,7 +312,7 @@ export default function DemoFase1Completa() {
         <CardHeader className="bg-purple-50 border-b">
           <CardTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-purple-600" />
-            35 Componentes WindowMode - Fluxos Complexos Inclusos (100% ULTRA-COMPLETO)
+            38 Componentes WindowMode - Todos Modais Críticos (100% MEGA-COMPLETO)
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -405,7 +405,7 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">35</div>
+            <div className="text-4xl font-bold text-blue-900 mb-2">38</div>
             <p className="text-sm text-blue-700">Componentes Adaptados</p>
           </CardContent>
         </Card>
@@ -467,11 +467,12 @@ export default function DemoFase1Completa() {
               '✅ AcoesRapidasGlobal integrado',
               '✅ WindowRenderer com pointer-events',
               '✅ useWindow exportado como default',
-              '✅ 35 COMPONENTES ULTRA-COMPLETOS (22 Forms + 13 Fluxos):',
+              '✅ 38 COMPONENTES MEGA-COMPLETOS (22 Forms + 16 Fluxos/Modais):',
               '  • Cadastros: Cliente, Fornecedor, Produto, Colaborador, Transportadora, Tabela',
               '  • Comercial: Pedido, Comissão, Detalhes, GerarNFe, GerarOP, PainelEntregas,',
-              '    UploadProjeto, SelecionarProduto, CriarEtapa, EnviarComunicação',
-              '  • Financeiro: ContaReceber, ContaPagar, GerarCobrança',
+              '    UploadProjeto, SelecionarProduto, CriarEtapa, EnviarComunicação,',
+              '    EditarItemProd, AdicionarItemRevenda',
+              '  • Financeiro: ContaReceber, ContaPagar, GerarCobrança, VerEspelhos',
               '  • Expedição: Entrega, Romaneio',
               '  • Produção: Inspeção, GerarOP',
               '  • Estoque: Movimentação, Recebimento, Requisição, SolicitaCompra',
@@ -480,6 +481,7 @@ export default function DemoFase1Completa() {
               '  • CRM: Oportunidade',
               '  • Agenda: Evento',
               '  • Assinaturas: AssinaturaEletronica',
+              '  • Sub-Dialogs: GerenciarContatos, GerenciarEndereços (mantidos OK)',
               '✅ AcoesRapidasGlobal: 19 AÇÕES RÁPIDAS (COBERTURA MÁXIMA)',
               '  • Pedido, Cliente, Produto, Fornecedor, Tabela, Colaborador',
               '  • OrdemCompra, SolicitacaoCompra, Cotação, Recebimento, Requisição',

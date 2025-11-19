@@ -8,6 +8,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Phone, Mail, Plus, Edit, Trash2, Check, MessageCircle } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+/**
+ * V21.1.2 - SUB-DIALOG MANTIDO (usado dentro de forms maiores)
+ * Dialogs internos são permitidos quando fazem parte de um fluxo maior
+ */
 export default function GerenciarContatosClienteForm({ contatos = [], onChange }) {
   const [dialogAberto, setDialogAberto] = useState(false);
   const [contatoEditando, setContatoEditando] = useState(null);

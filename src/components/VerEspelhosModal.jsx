@@ -7,11 +7,12 @@ import { CheckCircle2, Clock, AlertCircle, Building2, Calendar, User } from "luc
 import { format } from "date-fns";
 
 /**
- * Modal para visualizar espelhos de um documento de GRUPO
+ * V21.1.2 - Modal para visualizar espelhos de um documento de GRUPO
  * Mostra como o documento foi distribuído para as empresas
  * e o status de cada título gerado
+ * WINDOW MODE READY
  */
-export default function VerEspelhosModal({ open, onClose, documento, tipo = "ContaPagar" }) {
+export default function VerEspelhosModal({ open, onClose, documento, tipo = "ContaPagar", windowMode = false }) {
   if (!documento || !documento.distribuicao_realizada) {
     return null;
   }
@@ -52,17 +53,16 @@ export default function VerEspelhosModal({ open, onClose, documento, tipo = "Con
     return 'bg-orange-100 text-orange-700 border-orange-200';
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-blue-600" />
-            Distribuição para Empresas
-          </DialogTitle>
-        </DialogHeader>
+  const content = (
+    <div className={`space-y-4 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+      {!windowMode && (
+        <div className="flex items-center gap-2 mb-4">
+          <Building2 className="w-5 h-5 text-blue-600" />
+          <h2 className="text-xl font-bold">Distribuição para Empresas</h2>
+        </div>
+      )}
 
-        {/* RESUMO DO DOCUMENTO DE GRUPO */}
+      {/* RESUMO DO DOCUMENTO DE GRUPO */}
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="p-4">
             <div className="space-y-2">
@@ -202,17 +202,31 @@ export default function VerEspelhosModal({ open, onClose, documento, tipo = "Con
           </Card>
         )}
 
-        {/* AÇÕES */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
-            Fechar
+      {/* AÇÕES */}
+      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+        {!todosPagos && (
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            Baixar no Grupo
           </Button>
-          {!todosPagos && (
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              Baixar no Grupo
-            </Button>
-          )}
-        </div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-blue-600" />
+            Distribuição para Empresas
+          </DialogTitle>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );

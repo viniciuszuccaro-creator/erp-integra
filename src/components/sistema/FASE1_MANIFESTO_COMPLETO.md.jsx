@@ -25,8 +25,9 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 |-----------|------------|--------|
 | **Componentes Core** | 7 | ✅ 100% |
 | **Formulários Adaptados** | 22 | ✅ 100% |
-| **Modais/Views/Fluxos Window-Ready** | 13 | ✅ 100% |
-| **Total Componentes** | 35 | ✅ 100% |
+| **Modais/Views/Fluxos Window-Ready** | 16 | ✅ 100% |
+| **Total Componentes** | 38 | ✅ 100% |
+| **Sub-Dialogs Internos** | 2 | ✅ Permitidos |
 | **Ações Rápidas Globais** | 19 | ✅ 100% |
 | **Módulos Integrados** | 10 | ✅ 100% |
 | **Arquivos Modificados** | 58+ | ✅ 100% |
@@ -92,7 +93,7 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 #### Agenda (1)
 22. ✅ EventoForm (900x600)
 
-### 3. Modais e Fluxos Window-Ready (13)
+### 3. Modais e Fluxos Window-Ready (16)
 23. ✅ DetalhesComissao (800x600)
 24. ✅ AvaliacaoFornecedorForm (800x650)
 25. ✅ RecebimentoOCForm (800x600)
@@ -101,6 +102,20 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 28. ✅ PainelEntregasPedido (900x650)
 29. ✅ GerarCobrancaModal (800x600)
 30. ✅ SolicitarCompraRapidoModal (800x700)
+31. ✅ EnviarComunicacaoForm (1000x750)
+32. ✅ AssinaturaEletronicaForm (1000x800)
+33. ✅ UploadProjetoForm (1000x750)
+34. ✅ SelecionarProdutoForm (1200x700)
+35. ✅ CriarEtapaEntregaForm (1000x700)
+36. ✅ EditarItemProducaoModal (1100x750)
+37. ✅ AdicionarItemRevendaModal (1200x800)
+38. ✅ VerEspelhosModal (900x650)
+
+### 4. Sub-Dialogs Internos Permitidos (2)
+- GerenciarContatosClienteForm (usado dentro de CadastroClienteCompleto)
+- GerenciarEnderecosClienteForm (usado dentro de CadastroClienteCompleto)
+
+**Justificativa:** Sub-dialogs que fazem parte de formulários maiores são mantidos para melhor UX, pois abrem ações pontuais dentro de um contexto já estabelecido.
 
 ---
 

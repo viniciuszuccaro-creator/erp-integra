@@ -23,6 +23,9 @@ import {
 import { calcularPrecoItem } from "./CalculadorPrecoItem";
 import Top10ProdutosCliente from "./Top10ProdutosCliente";
 
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
 export default function AdicionarItemRevendaModal({ 
   isOpen, 
   onClose, 
@@ -30,7 +33,8 @@ export default function AdicionarItemRevendaModal({
   cliente,
   tabelaPreco,
   tabelaPrecoItens = [],
-  margemMinimaSistema = 10
+  margemMinimaSistema = 10,
+  windowMode = false
 }) {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [quantidade, setQuantidade] = useState(1);
@@ -128,17 +132,8 @@ export default function AdicionarItemRevendaModal({
     setMostrarSugestoes(false);
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { resetForm(); onClose(); } }}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="w-5 h-5 text-blue-600" />
-            Adicionar Item de Revenda
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
+  const content = (
+    <div className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
           {cliente && mostrarSugestoes && !produtoSelecionado && (
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4">
@@ -448,26 +443,44 @@ export default function AdicionarItemRevendaModal({
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => { resetForm(); onClose(); }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleAdicionarItem}
-                  disabled={!produtoSelecionado || quantidade <= 0 || (calculo?.margem_violada && !justificativaDesconto.trim())}
-                  className={calculo?.margem_violada ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-600 hover:bg-blue-700"}
-                >
-                  {calculo?.margem_violada ? "Adicionar (Aguardando Aprovação)" : "Adicionar Item"}
-                </Button>
-              </div>
+      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+        {!windowMode && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => { resetForm(); onClose(); }}
+          >
+            Cancelar
+          </Button>
+        )}
+        <Button
+          type="button"
+          onClick={handleAdicionarItem}
+          disabled={!produtoSelecionado || quantidade <= 0 || (calculo?.margem_violada && !justificativaDesconto.trim())}
+          className={calculo?.margem_violada ? "bg-orange-600 hover:bg-orange-700" : "bg-blue-600 hover:bg-blue-700"}
+        >
+          {calculo?.margem_violada ? "Adicionar (Aguardando Aprovação)" : "Adicionar Item"}
+        </Button>
+      </div>
             </>
           )}
-        </div>
+    </div>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) { resetForm(); onClose(); } }}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Package className="w-5 h-5 text-blue-600" />
+            Adicionar Item de Revenda
+          </DialogTitle>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );
