@@ -1,252 +1,158 @@
-import React, { useEffect, useRef } from 'react';
-import { X, Minus, Maximize2, Minimize2, Pin, PinOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import React, { useRef, useState, useEffect } from 'react';
+import { X, Minus, Maximize2, Minimize2 } from 'lucide-react';
+import { useWindowManager } from './WindowManager';
 
 /**
- * V21.1.2-R2 - Componente de Janela/Modal Aprimorado
- * ✅ Highlighting visual de janela ativa
- * ✅ Drag melhorado com cursor feedback
- * ✅ Foco automático ao clicar
+ * WINDOW MODAL V21.0
+ * Janela Responsiva Individual com Controles
+ * w-full e h-full responsivo, redimensionável, com barra de rolagem automática
  */
-export default function WindowModal({ 
-  window, 
-  isActive,
-  onClose, 
-  onMinimize, 
-  onMaximize, 
-  onRestore,
-  onTogglePin,
-  onBringToFront,
-  children 
-}) {
-  const dragRef = useRef(null);
-  const isDragging = useRef(false);
-  const dragOffset = useRef({ x: 0, y: 0 });
 
+export default function WindowModal({ window, children }) {
+  const { closeWindow, minimizeWindow, toggleMaximize, bringToFront, updateWindow } = useWindowManager();
+  const windowRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+
+  // Estilo da janela
+  const windowStyle = window.isMaximized
+    ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: window.zIndex,
+      }
+    : {
+        position: 'fixed',
+        top: window.y,
+        left: window.x,
+        width: window.width,
+        height: window.height,
+        zIndex: window.zIndex,
+      };
+
+  // Iniciar drag
+  const handleMouseDown = (e) => {
+    if (window.isMaximized || e.target.closest('.window-controls')) return;
+    
+    setIsDragging(true);
+    setDragStart({
+      x: e.clientX - window.x,
+      y: e.clientY - window.y,
+    });
+    bringToFront(window.id);
+  };
+
+  // Iniciar resize
+  const handleResizeMouseDown = (e) => {
+    if (window.isMaximized) return;
+    
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: window.width,
+      height: window.height,
+    });
+  };
+
+  // Movimento do mouse
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (!isDragging.current || window.state === 'maximized') return;
-      
-      const element = dragRef.current;
-      if (!element) return;
-
-      element.style.left = `${e.clientX - dragOffset.current.x}px`;
-      element.style.top = `${e.clientY - dragOffset.current.y}px`;
+      if (isDragging) {
+        const newX = Math.max(0, Math.min(e.clientX - dragStart.x, window.innerWidth - 300));
+        const newY = Math.max(0, Math.min(e.clientY - dragStart.y, window.innerHeight - 100));
+        updateWindow(window.id, { x: newX, y: newY });
+      } else if (isResizing) {
+        const deltaX = e.clientX - resizeStart.x;
+        const deltaY = e.clientY - resizeStart.y;
+        const newWidth = Math.max(400, Math.min(resizeStart.width + deltaX, window.innerWidth - window.x));
+        const newHeight = Math.max(300, Math.min(resizeStart.height + deltaY, window.innerHeight - window.y));
+        updateWindow(window.id, { width: newWidth, height: newHeight });
+      }
     };
 
     const handleMouseUp = () => {
-      isDragging.current = false;
-      document.body.style.cursor = 'default';
-      document.body.style.userSelect = '';
+      setIsDragging(false);
+      setIsResizing(false);
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [window.state]);
-
-  const handleMouseDown = (e) => {
-    if (window.state === 'maximized') return;
-    
-    isDragging.current = true;
-    document.body.style.cursor = 'move';
-    document.body.style.userSelect = 'none';
-    
-    const rect = dragRef.current.getBoundingClientRect();
-    dragOffset.current = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    };
-
-    onBringToFront();
-  };
-
-  // Trazer para frente ao clicar em qualquer parte da janela
-  const handleWindowClick = (e) => {
-    if (!isActive) {
-      onBringToFront();
+    if (isDragging || isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
     }
-  };
-
-  if (window.state === 'minimized') {
-    return null;
-  }
-
-  const isMaximized = window.state === 'maximized';
+  }, [isDragging, isResizing, dragStart, resizeStart, window, updateWindow]);
 
   return (
     <div
-      ref={dragRef}
-      className={cn(
-        "fixed bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden transition-all duration-200",
-        isMaximized ? "inset-4" : "max-w-[90vw] max-h-[95vh]",
-        // V21.1.2-R2: Border visual para janela ativa
-        isActive 
-          ? window.pinned 
-            ? "border-4 border-blue-500 ring-2 ring-blue-300" 
-            : "border-4 border-purple-500 ring-2 ring-purple-300"
-          : window.pinned
-            ? "border-2 border-blue-300"
-            : "border-2 border-slate-300",
-        // Sombra mais intensa na janela ativa
-        isActive ? "shadow-2xl" : "shadow-lg"
-      )}
-      style={{
-        zIndex: window.zIndex,
-        left: isMaximized ? undefined : '5%',
-        top: isMaximized ? undefined : '5%',
-        width: isMaximized ? undefined : '90vw',
-        height: isMaximized ? undefined : '90vh'
-      }}
-      onClick={handleWindowClick}
+      ref={windowRef}
+      style={windowStyle}
+      className={`bg-white rounded-lg shadow-2xl border-2 border-slate-300 flex flex-col overflow-hidden ${
+        isDragging ? 'cursor-move' : ''
+      }`}
+      onClick={() => bringToFront(window.id)}
     >
       {/* Header */}
-      <div 
-        className={cn(
-          "flex items-center justify-between px-4 py-3 border-b cursor-move transition-colors",
-          isActive
-            ? window.pinned 
-              ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
-              : "bg-gradient-to-r from-purple-500 to-purple-600 text-white"
-            : window.pinned
-              ? "bg-blue-50"
-              : "bg-slate-50"
-        )}
+      <div
+        className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 flex items-center justify-between cursor-move select-none"
         onMouseDown={handleMouseDown}
       >
-        <div className="flex items-center gap-3">
-          {window.icon && (
-            <window.icon className={cn(
-              "w-5 h-5",
-              isActive ? "text-white" : "text-slate-700"
-            )} />
-          )}
-          <div>
-            <h3 className={cn(
-              "font-semibold",
-              isActive ? "text-white" : "text-slate-900"
-            )}>
-              {window.title}
-            </h3>
-            {window.subtitle && (
-              <p className={cn(
-                "text-xs",
-                isActive ? "text-white/80" : "text-slate-500"
-              )}>
-                {window.subtitle}
-              </p>
-            )}
-          </div>
-          {window.badge && (
-            <Badge className={cn(
-              "ml-2",
-              isActive ? "bg-white/20 text-white" : ""
-            )}>
-              {window.badge}
-            </Badge>
-          )}
-          {window.pinned && (
-            <Badge className={cn(
-              "ml-2",
-              isActive ? "bg-white/20 text-white" : "bg-blue-600 text-white"
-            )}>
-              Fixado
-            </Badge>
-          )}
-          {isActive && !window.pinned && (
-            <Badge className="ml-2 bg-white/20 text-white animate-pulse">
-              Ativa
-            </Badge>
-          )}
-        </div>
-
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onTogglePin();
-            }}
-            className={cn(
-              "h-8 w-8",
-              isActive ? "hover:bg-white/20 text-white" : ""
-            )}
-            title={window.pinned ? "Desfixar" : "Fixar"}
-          >
-            {window.pinned ? (
-              <PinOff className="w-4 h-4" />
-            ) : (
-              <Pin className="w-4 h-4" />
-            )}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onMinimize();
-            }}
-            className={cn(
-              "h-8 w-8",
-              isActive ? "hover:bg-white/20 text-white" : ""
-            )}
+        <h3 className="font-semibold text-sm truncate flex-1">{window.title}</h3>
+        <div className="window-controls flex items-center gap-1">
+          <button
+            onClick={() => minimizeWindow(window.id)}
+            className="p-1.5 hover:bg-blue-800 rounded transition-colors"
             title="Minimizar"
           >
             <Minus className="w-4 h-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              isMaximized ? onRestore() : onMaximize();
-            }}
-            className={cn(
-              "h-8 w-8",
-              isActive ? "hover:bg-white/20 text-white" : ""
-            )}
-            title={isMaximized ? "Restaurar" : "Maximizar"}
+          </button>
+          <button
+            onClick={() => toggleMaximize(window.id)}
+            className="p-1.5 hover:bg-blue-800 rounded transition-colors"
+            title={window.isMaximized ? 'Restaurar' : 'Maximizar'}
           >
-            {isMaximized ? (
+            {window.isMaximized ? (
               <Minimize2 className="w-4 h-4" />
             ) : (
               <Maximize2 className="w-4 h-4" />
             )}
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-            className={cn(
-              "h-8 w-8",
-              isActive 
-                ? "hover:bg-red-500 text-white" 
-                : "hover:bg-red-100 hover:text-red-600"
-            )}
+          </button>
+          <button
+            onClick={() => closeWindow(window.id)}
+            className="p-1.5 hover:bg-red-600 rounded transition-colors"
             title="Fechar"
           >
             <X className="w-4 h-4" />
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      {/* Conteúdo com barra de rolagem */}
+      <div className="flex-1 overflow-auto bg-white">
         {children}
       </div>
+
+      {/* Resize handle */}
+      {!window.isMaximized && (
+        <div
+          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
+          onMouseDown={handleResizeMouseDown}
+          style={{
+            background: 'linear-gradient(135deg, transparent 50%, #64748b 50%)',
+          }}
+        />
+      )}
     </div>
   );
 }
