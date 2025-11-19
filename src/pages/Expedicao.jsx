@@ -59,7 +59,6 @@ import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTranspo
 import { useRealtimeEntregas } from '@/components/lib/useRealtimeData';
 import MapaTempoReal from '../components/expedicao/MapaTempoReal';
 import DetalhesEntregaView from "../components/expedicao/DetalhesEntregaView";
-import SeparacaoConferencia from "../components/expedicao/SeparacaoConferencia";
 
 export default function Expedicao() {
   const [activeTab, setActiveTab] = useState("entregas");
