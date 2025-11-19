@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { X, Minus, Maximize2, Minimize2 } from 'lucide-react';
 import { useWindowManager } from './WindowManager';
+import { motion } from 'framer-motion';
 
 /**
  * WINDOW MODAL V21.0
@@ -96,14 +97,18 @@ export default function WindowModal({ window, children }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.15 }}
+      initial={{ opacity: 0, scale: 0.95, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: 20 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       ref={windowRef}
       style={windowStyle}
-      className={`bg-white rounded-lg shadow-2xl border-2 border-slate-300 flex flex-col overflow-hidden ${
-        isDragging ? 'cursor-move' : ''
+      className={`bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden transition-all duration-200 ${
+        isDragging ? 'cursor-move shadow-blue-500/50' : ''
+      } ${
+        window.id === window.id && !window.isMinimized
+          ? 'border-blue-500 ring-2 ring-blue-200'
+          : 'border-slate-300'
       }`}
       onClick={() => bringToFront(window.id)}
     >
@@ -150,13 +155,15 @@ export default function WindowModal({ window, children }) {
       {/* Resize handle */}
       {!window.isMaximized && (
         <div
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
+          className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize hover:bg-blue-100 transition-colors rounded-tl-lg group"
           onMouseDown={handleResizeMouseDown}
-          style={{
-            background: 'linear-gradient(135deg, transparent 50%, #64748b 50%)',
-          }}
-        />
+          title="Arrastar para redimensionar"
+        >
+          <div className="w-full h-full flex items-end justify-end p-1">
+            <div className="w-3 h-3 border-r-2 border-b-2 border-slate-400 group-hover:border-blue-600 transition-colors" />
+          </div>
+        </div>
       )}
-    </div>
+    </motion.div>
   );
 }

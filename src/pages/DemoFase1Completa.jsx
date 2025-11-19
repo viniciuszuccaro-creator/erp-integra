@@ -423,7 +423,7 @@ export default function DemoFase1Completa() {
         <CardContent className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
-              '✅ WindowManager implementado e testado',
+              '✅ WindowManager context provider',
               '✅ useWindow hook criado e exportado',
               '✅ WindowModal com controles funcionais',
               '✅ WindowRenderer renderizando janelas',
