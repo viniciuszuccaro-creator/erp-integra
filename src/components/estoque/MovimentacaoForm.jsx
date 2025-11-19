@@ -1,0 +1,183 @@
+import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Save, ArrowDown, ArrowUp } from "lucide-react";
+
+/**
+ * V21.1.2: Movimentação Form - Adaptado para Window Mode
+ */
+export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = false }) {
+  const [formData, setFormData] = useState(movimentacao || {
+    tipo_movimentacao: '',
+    produto_id: '',
+    produto_nome: '',
+    quantidade: 0,
+    unidade_medida: '',
+    data_movimentacao: new Date().toISOString().split('T')[0],
+    documento_referencia: '',
+    observacoes: '',
+    responsavel: ''
+  });
+
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list(),
+  });
+
+  const handleProdutoChange = (produtoId) => {
+    const produto = produtos.find(p => p.id === produtoId);
+    if (produto) {
+      setFormData({
+        ...formData,
+        produto_id: produtoId,
+        produto_nome: produto.descricao,
+        unidade_medida: produto.unidade_medida
+      });
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const content = (
+    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <h3 className="font-bold text-lg flex items-center gap-2">
+            <ArrowDown className="w-5 h-5 text-indigo-600" />
+            Registrar Movimentação
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Tipo de Movimentação *</Label>
+              <Select
+                value={formData.tipo_movimentacao}
+                onValueChange={(v) => setFormData({ ...formData, tipo_movimentacao: v })}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Entrada">
+                    <div className="flex items-center gap-2">
+                      <ArrowDown className="w-4 h-4 text-green-600" />
+                      Entrada
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Saída">
+                    <div className="flex items-center gap-2">
+                      <ArrowUp className="w-4 h-4 text-red-600" />
+                      Saída
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Ajuste">Ajuste</SelectItem>
+                  <SelectItem value="Inventário">Inventário</SelectItem>
+                  <SelectItem value="Devolução">Devolução</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Produto *</Label>
+              <Select
+                value={formData.produto_id}
+                onValueChange={handleProdutoChange}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {produtos.filter(p => p.status === 'Ativo').map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.codigo ? `${p.codigo} - ` : ''}{p.descricao}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Quantidade *</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.quantidade}
+                  onChange={(e) => setFormData({ ...formData, quantidade: parseFloat(e.target.value) || 0 })}
+                  required
+                  className="flex-1"
+                />
+                {formData.unidade_medida && (
+                  <span className="bg-slate-100 px-3 py-2 rounded border text-sm">
+                    {formData.unidade_medida}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <Label>Data *</Label>
+              <Input
+                type="date"
+                value={formData.data_movimentacao}
+                onChange={(e) => setFormData({ ...formData, data_movimentacao: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <Label>Nº Documento</Label>
+              <Input
+                value={formData.documento_referencia}
+                onChange={(e) => setFormData({ ...formData, documento_referencia: e.target.value })}
+                placeholder="NF, OC, OP..."
+              />
+            </div>
+
+            <div>
+              <Label>Responsável</Label>
+              <Input
+                value={formData.responsavel}
+                onChange={(e) => setFormData({ ...formData, responsavel: e.target.value })}
+                placeholder="Nome"
+              />
+            </div>
+
+            <div className="col-span-2">
+              <Label>Observações</Label>
+              <Textarea
+                value={formData.observacoes}
+                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                rows={3}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+        <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
+          <Save className="w-4 h-4 mr-2" />
+          Registrar Movimentação
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return content;
+}

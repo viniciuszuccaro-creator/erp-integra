@@ -34,6 +34,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizacaoInteligente from "../components/estoque/VisualizacaoInteligente";
 import IAReposicao from "../components/estoque/IAReposicao";
+import ProdutosTab from "../components/estoque/ProdutosTab";
 
 export default function Estoque() {
   const [activeTab, setActiveTab] = useState("produtos");
@@ -415,20 +416,7 @@ export default function Estoque() {
         </TabsList>
 
         <TabsContent value="produtos">
-          <div className="space-y-4">
-            
-            
-            <div className="grid gap-4">
-              {produtosFiltrados.map(produto => (
-                <VisualizacaoInteligente
-                  key={produto.id}
-                  produto={produto}
-                  pedidos={pedidos}
-                  ops={ops}
-                />
-              ))}
-            </div>
-          </div>
+          <ProdutosTab produtos={produtosFiltrados} isLoading={false} />
         </TabsContent>
 
         

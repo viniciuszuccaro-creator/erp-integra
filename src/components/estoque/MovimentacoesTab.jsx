@@ -11,10 +11,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import MovimentacaoForm from "./MovimentacaoForm";
+import { useWindow } from "@/components/lib/useWindow";
+import { toast } from "sonner";
 
 export default function MovimentacoesTab({ movimentacoes, produtos }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { openWindow } = useWindow();
   const [novaMovimentacao, setNovaMovimentacao] = useState({
     tipo_movimentacao: "",
     produto_id: "",
@@ -145,12 +149,36 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
             className="pl-10"
           />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Button 
+          className="bg-indigo-600 hover:bg-indigo-700"
+          onClick={() => openWindow(MovimentacaoForm, {
+            windowMode: true,
+            onSubmit: async (data) => {
+              try {
+                const user = await base44.auth.me();
+                await createMutation.mutateAsync({
+                  ...data,
+                  responsavel: data.responsavel || user?.full_name || 'Sistema'
+                });
+                toast.success("✅ Movimentação registrada!");
+              } catch (error) {
+                toast.error("Erro ao registrar movimentação");
+              }
+            }
+          }, {
+            title: '📦 Nova Movimentação',
+            width: 900,
+            height: 600
+          })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Movimentação
+        </Button>
+        
+        {/* BACKUP: Dialog removido */}
+        <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Movimentação
-            </Button>
+            <Button className="hidden">Removido</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
