@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   FileText, Plus, Trash2, AlertCircle, CheckCircle2, 
-  Building2, Package, DollarSign, Truck, Calculator
+  Building2, Package, DollarSign, Truck, Calculator, Clock
 } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
