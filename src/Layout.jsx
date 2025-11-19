@@ -208,7 +208,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div>
                 <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">V21.1.2 • 25 Comps • ZERO Dialogs</p>
+                <p className="text-xs text-slate-500">V21.1.2 • 30 Comps • ALL Windows</p>
               </div>
             </div>
           </SidebarHeader>

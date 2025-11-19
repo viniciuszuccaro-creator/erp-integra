@@ -317,7 +317,14 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            onClick={() => setEntregasModal(pedido)}
+                            onClick={() => openWindow(PainelEntregasPedido, {
+                              pedidoId: pedido.id,
+                              windowMode: true
+                            }, {
+                              title: `🚚 Entregas: ${pedido.numero_pedido}`,
+                              width: 900,
+                              height: 650
+                            })}
                             title="Ver Entregas"
                           >
                             <Truck className="w-4 h-4 text-purple-600" />
@@ -356,13 +363,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
         />
       )}
 
-      {entregasModal && (
-        <PainelEntregasPedido
-          pedido={entregasModal}
-          isOpen={!!entregasModal}
-          onClose={() => setEntregasModal(null)}
-        />
-      )}
+      {/* entregasModal REMOVIDO - Agora usa Window */}
     </div>
   );
 }

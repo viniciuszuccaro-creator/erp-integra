@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,10 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 // In a real application, you might have: import { useAuth } from "@/hooks/useAuth";
 const useAuth = () => ({ user: { full_name: "Sistema", id: "system-user" } }); // Mock for demonstration if useAuth is not provided in context
 
-export default function GerarOPModal({ isOpen, onClose, pedido }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function GerarOPModal({ isOpen, onClose, pedido, windowMode = false }) {
   const { toast } = useToast();
   const [step, setStep] = useState(1); // 1=Seleção, 2=Configuração, 3=Processando, 4=Concluído
   const [gerando, setGerando] = useState(false);
@@ -417,9 +419,8 @@ export default function GerarOPModal({ isOpen, onClose, pedido }) {
 
   if (!pedido) return null;
 
-  return (
-    <Dialog open={isOpen} onOpenChange={fechar}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+  const content = (
+    <div className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Factory className="w-5 h-5 text-amber-600" />
@@ -760,6 +761,28 @@ export default function GerarOPModal({ isOpen, onClose, pedido }) {
             </div>
           </div>
         )}
+    </div>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={fechar}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Factory className="w-5 h-5 text-amber-600" />
+            Gerar Ordem de Produção Automática
+            {step > 1 && (
+              <Badge className="ml-2">
+                {step === 2 ? "Configuração" : step === 3 ? "Processando" : "Concluído"}
+              </Badge>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );

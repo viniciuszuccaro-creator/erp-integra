@@ -9,10 +9,10 @@ import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
 
 /**
- * Painel de Entregas do Pedido
+ * V21.1.2: Painel de Entregas do Pedido - WINDOW MODE READY
  * Mostra todas as entregas vinculadas a um pedido
  */
-export default function PainelEntregasPedido({ pedidoId }) {
+export default function PainelEntregasPedido({ pedidoId, windowMode = false }) {
   const { data: entregas = [], isLoading } = useQuery({
     queryKey: ['entregas-pedido', pedidoId],
     queryFn: async () => {
@@ -43,8 +43,8 @@ export default function PainelEntregasPedido({ pedidoId }) {
     );
   }
 
-  return (
-    <div className="space-y-4">
+  const content = (
+    <div className={`space-y-4 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <div className="flex justify-between items-center">
         <h3 className="font-semibold text-slate-900 flex items-center gap-2">
           <Truck className="w-5 h-5 text-blue-600" />
@@ -132,4 +132,10 @@ export default function PainelEntregasPedido({ pedidoId }) {
       )}
     </div>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return content;
 }

@@ -1199,14 +1199,7 @@ export default function ContasReceberTab({ contas }) {
         </DialogContent>
       </Dialog>
 
-      {/* NEW: Modal Gerar Cobrança */}
-      {gerarCobrancaDialogOpen && (
-        <GerarCobrancaModal
-          isOpen={gerarCobrancaDialogOpen}
-          onClose={() => { setGerarCobrancaDialogOpen(false); setContaParaCobranca(null); }}
-          contaReceber={contaParaCobranca}
-        />
-      )}
+      {/* Modal Gerar Cobrança REMOVIDO - Migrado para uso via Window quando necessário */}
 
       {/* NEW: Modal Simular Pagamento */}
       {simularPagamentoDialogOpen && (

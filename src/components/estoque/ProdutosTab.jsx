@@ -13,6 +13,7 @@ import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2,
 import { useToast } from "@/components/ui/use-toast";
 import SearchInput from "@/components/ui/SearchInput";
 import SolicitarCompraRapidoModal from "../compras/SolicitarCompraRapidoModal";
+import { toast as sonnerToast } from "sonner";
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
 import { useWindow } from "@/components/lib/useWindow";
 
@@ -377,7 +378,15 @@ export default function ProdutosTab({ produtos, isLoading }) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => setSolicitacaoModal(produto)}
+                              onClick={() => openWindow(SolicitarCompraRapidoModal, {
+                                produto,
+                                windowMode: true,
+                                onClose: () => {}
+                              }, {
+                                title: `🛒 Solicitar: ${produto.descricao}`,
+                                width: 800,
+                                height: 700
+                              })}
                               className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                               title="Solicitar Compra"
                             >
@@ -425,14 +434,7 @@ export default function ProdutosTab({ produtos, isLoading }) {
         </CardContent>
       </Card>
 
-      {/* MODAL SOLICITAR COMPRA RÁPIDO */}
-      {solicitacaoModal && (
-        <SolicitarCompraRapidoModal
-          produto={solicitacaoModal}
-          isOpen={!!solicitacaoModal}
-          onClose={() => setSolicitacaoModal(null)}
-        />
-      )}
+      {/* MODAL REMOVIDO - Agora usa Window */}
     </div>
   );
 }

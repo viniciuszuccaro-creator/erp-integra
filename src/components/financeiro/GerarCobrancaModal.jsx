@@ -11,7 +11,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { CreditCard, QrCode, Copy, CheckCircle, AlertCircle, Send } from "lucide-react";
 import { mockGerarBoleto, mockGerarPix, avisoModoSimulacao } from "@/components/integracoes/MockIntegracoes";
 
-export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function GerarCobrancaModal({ isOpen, onClose, contaReceber, windowMode = false }) {
   const [gerando, setGerando] = useState(false);
   const [cobrancaGerada, setCobrancaGerada] = useState(null);
   const [tipoCobranca, setTipoCobranca] = useState("boleto");
@@ -87,14 +90,11 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
 
   const aviso = avisoModoSimulacao();
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Gerar Cobrança - {contaReceber?.cliente}</DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-4">
+  const content = (
+    <div className={`space-y-4 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+      {!windowMode && (
+        <h2 className="text-xl font-bold mb-4">Gerar Cobrança - {contaReceber?.cliente}</h2>
+      )}
           <Alert className="border-amber-300 bg-amber-50">
             <AlertCircle className="h-5 w-5 text-amber-600" />
             <AlertDescription>
@@ -270,7 +270,20 @@ export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
               </div>
             </>
           )}
-        </div>
+    </div>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Gerar Cobrança - {contaReceber?.cliente}</DialogTitle>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );

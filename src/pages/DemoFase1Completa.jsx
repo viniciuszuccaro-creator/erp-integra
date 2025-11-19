@@ -312,7 +312,7 @@ export default function DemoFase1Completa() {
         <CardHeader className="bg-purple-50 border-b">
           <CardTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-purple-600" />
-            25 Componentes Adaptados para WindowMode - ZERO Dialogs (100% COMPLETO)
+            30 Componentes WindowMode - Modais Avançados Inclusos (100% COMPLETO)
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -405,7 +405,7 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">25</div>
+            <div className="text-4xl font-bold text-blue-900 mb-2">30</div>
             <p className="text-sm text-blue-700">Componentes Adaptados</p>
           </CardContent>
         </Card>
@@ -467,14 +467,14 @@ export default function DemoFase1Completa() {
               '✅ AcoesRapidasGlobal integrado',
               '✅ WindowRenderer com pointer-events',
               '✅ useWindow exportado como default',
-              '✅ 25 COMPONENTES COMPLETOS (22 Forms + 3 Views/Fluxos - ZERO DIALOGS):',
+              '✅ 30 COMPONENTES COMPLETOS (22 Forms + 8 Modals/Views):',
               '  • Cadastros: Cliente, Fornecedor, Produto, Colaborador, Transportadora, Tabela',
-              '  • Comercial: Pedido (1400x800), Comissão, DetalhesComissão',
-              '  • Financeiro: ContaReceber, ContaPagar',
+              '  • Comercial: Pedido, Comissão, DetalhesComissão, GerarNFe, GerarOP, PainelEntregas',
+              '  • Financeiro: ContaReceber, ContaPagar, GerarCobrança',
               '  • Expedição: Entrega, Romaneio',
-              '  • Produção: Inspeção',
-              '  • Estoque: Movimentação, Recebimento, Requisição',
-              '  • Compras: OrdemCompra, SolicitacaoCompra, Cotação, AvaliaçãoFornec, RecebOC',
+              '  • Produção: Inspeção, GerarOP (completo)',
+              '  • Estoque: Movimentação, Recebimento, Requisição, SolicitaCompraRápido',
+              '  • Compras: OrdemCompra, Solicitação, Cotação, AvaliaçãoFornec, RecebOC',
               '  • RH: Ponto',
               '  • CRM: Oportunidade',
               '  • Agenda: Evento',

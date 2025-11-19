@@ -9,10 +9,11 @@ import { Receipt, FileText, Layers, CheckCircle, AlertTriangle } from 'lucide-re
 import { toast } from 'sonner';
 
 /**
- * V21.1 - Modal de Emissão de NF-e com Escolha de Escopo
+ * V21.1.2 - Modal/Window de Emissão de NF-e com Escolha de Escopo
  * Permite: Pedido Inteiro OU Etapa Específica
+ * WINDOW MODE READY
  */
-export default function GerarNFeModal({ open, onClose, pedidoData, onEmitir }) {
+export default function GerarNFeModal({ open, onClose, pedidoData, onEmitir, windowMode = false }) {
   const [escopo, setEscopo] = useState('pedido_inteiro'); // ou 'etapa_especifica'
   const [etapaSelecionada, setEtapaSelecionada] = useState(null);
 
@@ -49,17 +50,16 @@ export default function GerarNFeModal({ open, onClose, pedidoData, onEmitir }) {
 
   const etapaEscolhida = etapas.find(e => e.id === etapaSelecionada);
 
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Receipt className="w-6 h-6 text-purple-600" />
-            Emitir NF-e - Escolha o Escopo
-          </DialogTitle>
-        </DialogHeader>
+  const content = (
+    <div className={`space-y-4 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+      {!windowMode && (
+        <div className="flex items-center gap-2 mb-4">
+          <Receipt className="w-6 h-6 text-purple-600" />
+          <h2 className="text-xl font-bold">Emitir NF-e - Escolha o Escopo</h2>
+        </div>
+      )}
 
-        <div className="flex-1 overflow-y-auto space-y-4 px-1">
+      <div className="space-y-4">
           <RadioGroup value={escopo} onValueChange={setEscopo}>
             {/* Opção 1: Pedido Inteiro */}
             <div className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
@@ -206,20 +206,41 @@ export default function GerarNFeModal({ open, onClose, pedidoData, onEmitir }) {
               </AlertDescription>
             </Alert>
           )}
-        </div>
+      </div>
 
-        <div className="flex-shrink-0 flex justify-end gap-3 pt-4 border-t">
+      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+        {!windowMode && (
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button 
-            onClick={handleEmitir}
-            className="bg-purple-600 hover:bg-purple-700"
-            disabled={escopo === 'etapa_especifica' && !etapaSelecionada}
-          >
-            <Receipt className="w-4 h-4 mr-2" />
-            Gerar NF-e
-          </Button>
+        )}
+        <Button 
+          onClick={handleEmitir}
+          className="bg-purple-600 hover:bg-purple-700"
+          disabled={escopo === 'etapa_especifica' && !etapaSelecionada}
+        >
+          <Receipt className="w-4 h-4 mr-2" />
+          Gerar NF-e
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Receipt className="w-6 h-6 text-purple-600" />
+            Emitir NF-e - Escolha o Escopo
+          </DialogTitle>
+        </DialogHeader>
+        <div className="flex-1 overflow-y-auto px-1">
+          {content}
         </div>
       </DialogContent>
     </Dialog>

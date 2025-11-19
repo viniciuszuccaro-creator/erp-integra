@@ -13,7 +13,10 @@ import { AlertTriangle, ShoppingCart, Package, TrendingUp, Calendar } from "luci
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
-export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { empresaAtual } = useContextoVisual();
@@ -61,17 +64,14 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose })
     createMutation.mutate(formData);
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5 text-orange-600" />
-            Solicitar Compra - Estoque Baixo
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
+  const content = (
+    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+      {!windowMode && (
+        <div className="flex items-center gap-2 mb-4">
+          <ShoppingCart className="w-5 h-5 text-orange-600" />
+          <h2 className="text-xl font-bold">Solicitar Compra - Estoque Baixo</h2>
+        </div>
+      )}
           {/* ALERTA DE ESTOQUE */}
           <Card className="border-red-300 bg-red-50">
             <CardContent className="p-4">
@@ -214,21 +214,39 @@ export default function SolicitarCompraRapidoModal({ produto, isOpen, onClose })
             </Card>
           )}
 
-          {/* BOTÕES */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={createMutation.isPending}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              <ShoppingCart className="w-4 h-4 mr-2" />
-              {createMutation.isPending ? 'Criando...' : 'Criar Solicitação'}
-            </Button>
-          </div>
-        </form>
+      {/* BOTÕES */}
+      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+        {!windowMode && (
+          <Button type="button" variant="outline" onClick={onClose}>
+            Cancelar
+          </Button>
+        )}
+        <Button 
+          type="submit" 
+          disabled={createMutation.isPending}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          <ShoppingCart className="w-4 h-4 mr-2" />
+          {createMutation.isPending ? 'Criando...' : 'Criar Solicitação'}
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5 text-orange-600" />
+            Solicitar Compra - Estoque Baixo
+          </DialogTitle>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );
