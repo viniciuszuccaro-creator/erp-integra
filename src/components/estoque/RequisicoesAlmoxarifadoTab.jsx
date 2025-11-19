@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { openWindow } = useWindow();
   const [formData, setFormData] = useState({
     numero_requisicao: `REQ-ALM-${Date.now()}`,
     data_requisicao: new Date().toISOString().split('T')[0],

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -22,10 +21,14 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import SolicitacaoCompraForm from "./SolicitacaoCompraForm";
+import { useWindow } from "@/components/lib/useWindow";
+import { toast as sonnerToast } from "sonner";
 
 export default function SolicitacoesCompraTab({ solicitacoes }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editando, setEditando] = useState(null);
+  const { openWindow } = useWindow();
   const [formData, setFormData] = useState({
     numero_solicitacao: `SC-${Date.now()}`,
     data_solicitacao: new Date().toISOString().split('T')[0],
@@ -307,12 +310,32 @@ Retorne JSON com:
               </>
             )}
           </Button>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Button
+            className="bg-blue-600 hover:bg-blue-700"
+            onClick={() => openWindow(SolicitacaoCompraForm, {
+              windowMode: true,
+              onSubmit: async (data) => {
+                try {
+                  await createMutation.mutateAsync(data);
+                  sonnerToast.success("✅ Solicitação criada!");
+                } catch (error) {
+                  sonnerToast.error("Erro ao criar solicitação");
+                }
+              }
+            }, {
+              title: '🛒 Nova Solicitação de Compra',
+              width: 900,
+              height: 650
+            })}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Solicitação
+          </Button>
+
+          {/* BACKUP: Dialog removido */}
+          <Dialog open={false}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Solicitação
-              </Button>
+              <Button className="hidden">Removido</Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>

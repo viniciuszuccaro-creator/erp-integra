@@ -1,0 +1,191 @@
+import React, { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Save, PackageMinus } from "lucide-react";
+
+/**
+ * V21.1.2: Requisição Almoxarifado Form - Adaptado para Window Mode
+ */
+export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windowMode = false }) {
+  const [formData, setFormData] = useState(requisicao || {
+    numero_requisicao: `REQ-ALM-${Date.now()}`,
+    produto_id: '',
+    produto_descricao: '',
+    quantidade: 1,
+    unidade_medida: '',
+    setor_solicitante: '',
+    solicitante: '',
+    data_requisicao: new Date().toISOString().split('T')[0],
+    finalidade: '',
+    centro_custo: '',
+    observacoes: ''
+  });
+
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list(),
+  });
+
+  const handleProdutoChange = (produtoId) => {
+    const produto = produtos.find(p => p.id === produtoId);
+    if (produto) {
+      setFormData({
+        ...formData,
+        produto_id: produtoId,
+        produto_descricao: produto.descricao,
+        unidade_medida: produto.unidade_medida
+      });
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
+
+  const content = (
+    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <h3 className="font-bold text-lg flex items-center gap-2">
+            <PackageMinus className="w-5 h-5 text-orange-600" />
+            Requisição de Almoxarifado
+          </h3>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Nº Requisição</Label>
+              <Input
+                value={formData.numero_requisicao}
+                readOnly
+                className="bg-slate-50"
+              />
+            </div>
+
+            <div>
+              <Label>Data *</Label>
+              <Input
+                type="date"
+                value={formData.data_requisicao}
+                onChange={(e) => setFormData({ ...formData, data_requisicao: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="col-span-2">
+              <Label>Produto *</Label>
+              <Select
+                value={formData.produto_id}
+                onValueChange={handleProdutoChange}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {produtos.filter(p => p.status === 'Ativo' && (p.estoque_disponivel || p.estoque_atual) > 0).map(p => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.codigo ? `${p.codigo} - ` : ''}{p.descricao} ({p.estoque_disponivel || p.estoque_atual} {p.unidade_medida})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Quantidade *</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.quantidade}
+                  onChange={(e) => setFormData({ ...formData, quantidade: parseFloat(e.target.value) || 0 })}
+                  required
+                  className="flex-1"
+                />
+                <span className="bg-slate-100 px-3 py-2 rounded border text-sm">
+                  {formData.unidade_medida}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <Label>Setor Solicitante *</Label>
+              <Select
+                value={formData.setor_solicitante}
+                onValueChange={(v) => setFormData({ ...formData, setor_solicitante: v })}
+                required
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Produção">Produção</SelectItem>
+                  <SelectItem value="Manutenção">Manutenção</SelectItem>
+                  <SelectItem value="Administrativo">Administrativo</SelectItem>
+                  <SelectItem value="Comercial">Comercial</SelectItem>
+                  <SelectItem value="Logística">Logística</SelectItem>
+                  <SelectItem value="Outros">Outros</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Solicitante</Label>
+              <Input
+                value={formData.solicitante}
+                onChange={(e) => setFormData({ ...formData, solicitante: e.target.value })}
+                placeholder="Nome"
+              />
+            </div>
+
+            <div>
+              <Label>Centro de Custo</Label>
+              <Input
+                value={formData.centro_custo}
+                onChange={(e) => setFormData({ ...formData, centro_custo: e.target.value })}
+              />
+            </div>
+
+            <div className="col-span-2">
+              <Label>Finalidade *</Label>
+              <Textarea
+                value={formData.finalidade}
+                onChange={(e) => setFormData({ ...formData, finalidade: e.target.value })}
+                placeholder="Para que será utilizado..."
+                required
+                rows={2}
+              />
+            </div>
+
+            <div className="col-span-2">
+              <Label>Observações</Label>
+              <Textarea
+                value={formData.observacoes}
+                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                rows={2}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+        <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
+          <Save className="w-4 h-4 mr-2" />
+          Registrar Requisição
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return content;
+}
