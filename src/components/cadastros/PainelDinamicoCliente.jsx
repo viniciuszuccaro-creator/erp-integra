@@ -80,7 +80,7 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
               <User className="w-6 h-6 text-blue-600" />
               {cliente.nome || cliente.razao_social}
             </h2>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Badge className={
                   cliente.status === 'Ativo' ? 'bg-green-100 text-green-700' :
                   cliente.status === 'Prospect' ? 'bg-blue-100 text-blue-700' :
@@ -92,22 +92,22 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
                 {cliente.tipo && (
                   <Badge variant="outline">{cliente.tipo}</Badge>
                 )}
-                {cliente.cpf && <span className="text-sm text-slate-600">CPF: {cliente.cpf}</span>}
-                {cliente.cnpj && <span className="text-sm text-slate-600">CNPJ: {cliente.cnpj}</span>}
-              </div>
+              {cliente.cpf && <span className="text-sm text-slate-600">CPF: {cliente.cpf}</span>}
+              {cliente.cnpj && <span className="text-sm text-slate-600">CNPJ: {cliente.cnpj}</span>}
             </div>
-            
-            <Button 
-              onClick={handleEditarCadastro}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Editar no Cadastro Geral
-            </Button>
           </div>
+            
+          <Button 
+            onClick={handleEditarCadastro}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Edit className="w-4 h-4 mr-2" />
+            Editar no Cadastro Geral
+          </Button>
         </div>
+      </div>
 
-        <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-3 gap-6 p-6">
             {/* COLUNA 1: Informações Principais */}
             <div className="space-y-4">
@@ -443,8 +443,7 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
                     <p className="text-xs text-slate-500 text-center py-4">Nenhum pedido</p>
                   )}
                 </CardContent>
-              </Card>
-            </div>
+            </Card>
           </div>
         </div>
       </div>
