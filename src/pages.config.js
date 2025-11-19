@@ -27,6 +27,7 @@ import ValidadorFase1 from './pages/ValidadorFase1';
 import LimparDados from './pages/LimparDados';
 import DemoMultitarefas from './pages/DemoMultitarefas';
 import Cadastros from './pages/Cadastros';
+import DemoFase1Completa from './pages/DemoFase1Completa';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +61,7 @@ export const PAGES = {
     "LimparDados": LimparDados,
     "DemoMultitarefas": DemoMultitarefas,
     "Cadastros": Cadastros,
+    "DemoFase1Completa": DemoFase1Completa,
 }
 
 export const pagesConfig = {

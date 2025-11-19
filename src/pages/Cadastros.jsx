@@ -104,15 +104,7 @@ export default function Cadastros() {
   const [acordeonAberto, setAcordeonAberto] = useState([]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
 
-  // Estados para todos os formulários
-  const [cadastroCompletoAberto, setCadastroCompletoAberto] = useState(false);
-  const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  const [fornecedorSelecionado, setFornecedorSelecionado] = useState(null);
-  const [cadastroFornecedorAberto, setCadastroFornecedorAberto] = useState(false);
-  const [tabelaPrecoFormOpen, setTabelaPrecoFormOpen] = useState(false);
-  const [tabelaSelecionadaEditar, setTabelaSelecionadaEditar] = useState(null);
-  const [produtoFormOpen, setProdutoFormOpen] = useState(false);
-  const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+  // Estados para formulários em Dialog (secundários)
   const [setorAtividadeFormOpen, setSetorAtividadeFormOpen] = useState(false);
   const [setorSelecionado, setSetorSelecionado] = useState(null);
   const [transportadoraFormOpen, setTransportadoraFormOpen] = useState(false);
@@ -1952,33 +1944,8 @@ export default function Cadastros() {
         </TabsContent>
       </Tabs>
 
-      {/* ==================== DIALOGS - TODOS OS FORMULÁRIOS ==================== */}
-
-      {/* CLIENTES */}
-      <CadastroClienteCompleto
-        cliente={clienteSelecionado}
-        isOpen={cadastroCompletoAberto}
-        onClose={() => {
-          setCadastroCompletoAberto(false);
-          setClienteSelecionado(null);
-        }}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['clientes'] });
-        }}
-      />
-
-      {/* FORNECEDORES */}
-      <CadastroFornecedorCompleto
-        fornecedor={fornecedorSelecionado}
-        isOpen={cadastroFornecedorAberto}
-        onClose={() => {
-          setCadastroFornecedorAberto(false);
-          setFornecedorSelecionado(null);
-        }}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
-        }}
-      />
+      {/* ==================== DIALOGS - FORMULÁRIOS SECUNDÁRIOS ==================== */}
+      {/* NOTA: Clientes, Fornecedores, Produtos e Tabelas agora abrem em JANELAS (windowMode) */}
 
       {/* TRANSPORTADORAS */}
       <Dialog open={transportadoraFormOpen} onOpenChange={setTransportadoraFormOpen}>
@@ -2076,24 +2043,7 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* PRODUTOS */}
-      <Dialog open={produtoFormOpen} onOpenChange={setProdutoFormOpen}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{produtoSelecionado ? 'Editar' : 'Novo'} Produto</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
-            <ProdutoFormV22_Completo
-              produto={produtoSelecionado}
-              onSubmit={() => {
-                setProdutoFormOpen(false);
-                setProdutoSelecionado(null);
-                queryClient.invalidateQueries({ queryKey: ['produtos'] });
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+
 
       {/* SETORES DE ATIVIDADE */}
       <Dialog open={setorAtividadeFormOpen} onOpenChange={setSetorAtividadeFormOpen}>
@@ -2167,24 +2117,7 @@ export default function Cadastros() {
         </DialogContent>
       </Dialog>
 
-      {/* TABELAS DE PREÇO */}
-      <Dialog open={tabelaPrecoFormOpen} onOpenChange={setTabelaPrecoFormOpen}>
-        <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>{tabelaSelecionadaEditar ? 'Editar' : 'Nova'} Tabela de Preço</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
-            <TabelaPrecoFormCompleto
-              tabela={tabelaSelecionadaEditar}
-              onSubmit={() => {
-                setTabelaPrecoFormOpen(false);
-                setTabelaSelecionadaEditar(null);
-                queryClient.invalidateQueries({ queryKey: ['tabelas-preco'] });
-              }}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+
 
       {/* SERVIÇOS */}
       <Dialog open={servicoFormOpen} onOpenChange={setServicoFormOpen}>
