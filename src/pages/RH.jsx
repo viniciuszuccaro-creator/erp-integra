@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -43,6 +42,7 @@ import GameficacaoProducao from "@/components/rh/GameficacaoProducao"; // New im
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
+  const { openWindow } = useWindow();
   const [search, setSearch] = useState("");
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const [showFeriasDialog, setShowFeriasDialog] = useState(false);

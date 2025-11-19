@@ -12,11 +12,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
+import OrdemCompraForm from "./OrdemCompraForm";
+import { useWindow } from "@/components/lib/useWindow";
+import { toast as sonnerToast } from "sonner";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOC, setEditingOC] = useState(null);
+  const { openWindow } = useWindow();
   const [isAvaliacaoDialogOpen, setIsAvaliacaoDialogOpen] = useState(false);
   const [ocSelecionada, setOcSelecionada] = useState(null);
   const [isRecebimentoDialogOpen, setIsRecebimentoDialogOpen] = useState(false);
@@ -397,15 +401,31 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
           />
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) resetForm();
-        }}>
+        <Button
+          onClick={() => openWindow(OrdemCompraForm, {
+            windowMode: true,
+            onSubmit: async (data) => {
+              try {
+                await createMutation.mutateAsync(data);
+                sonnerToast.success("✅ Ordem de Compra criada!");
+              } catch (error) {
+                sonnerToast.error("Erro ao criar OC");
+              }
+            }
+          }, {
+            title: '🛒 Nova Ordem de Compra',
+            width: 1100,
+            height: 700
+          })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Ordem de Compra
+        </Button>
+
+        {/* BACKUP: Dialog removido */}
+        <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Ordem de Compra
-            </Button>
+            <Button className="hidden">Removido</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>

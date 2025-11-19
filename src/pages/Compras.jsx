@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { useWindow } from "@/components/lib/useWindow";
+import OrdemCompraForm from "../components/compras/OrdemCompraForm";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Users, ShoppingCart, Building2, FileText, TrendingUp, Upload } from "lucide-react";
@@ -13,6 +16,7 @@ import usePermissions from "@/components/lib/usePermissions";
 
 export default function Compras() {
   const [activeTab, setActiveTab] = useState("fornecedores");
+  const { openWindow } = useWindow();
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
 
   const { data: fornecedores = [], isLoading: loadingFornecedores } = useQuery({

@@ -11,9 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import PontoForm from "./PontoForm";
+import { useWindow } from "@/components/lib/useWindow";
+import { toast } from "sonner";
 
 export default function PontoTab({ pontos, colaboradores }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { openWindow } = useWindow();
   const [formData, setFormData] = useState({
     colaborador_id: "",
     colaborador_nome: "",
@@ -146,12 +150,32 @@ export default function PontoTab({ pontos, colaboradores }) {
           </Card>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Button 
+          className="bg-pink-600 hover:bg-pink-700"
+          onClick={() => openWindow(PontoForm, {
+            windowMode: true,
+            onSubmit: async (data) => {
+              try {
+                await createMutation.mutateAsync(data);
+                toast.success("✅ Ponto registrado!");
+              } catch (error) {
+                toast.error("Erro ao registrar ponto");
+              }
+            }
+          }, {
+            title: '🕐 Registrar Ponto',
+            width: 900,
+            height: 650
+          })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Registrar Ponto
+        </Button>
+
+        {/* BACKUP: Dialog removido */}
+        <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="bg-pink-600 hover:bg-pink-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Registrar Ponto
-            </Button>
+            <Button className="hidden">Removido</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
