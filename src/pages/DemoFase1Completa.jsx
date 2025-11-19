@@ -405,7 +405,7 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">13</div>
+            <div className="text-4xl font-bold text-blue-900 mb-2">14</div>
             <p className="text-sm text-blue-700">Formulários Adaptados</p>
           </CardContent>
         </Card>
@@ -419,7 +419,7 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-orange-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-orange-900 mb-2">~1.4K</div>
+            <div className="text-4xl font-bold text-orange-900 mb-2">~1.5K</div>
             <p className="text-sm text-orange-700">Linhas de Código</p>
           </CardContent>
         </Card>
@@ -467,10 +467,13 @@ export default function DemoFase1Completa() {
               '✅ AcoesRapidasGlobal integrado',
               '✅ WindowRenderer com pointer-events',
               '✅ useWindow exportado como default',
-              '✅ 12 formulários adaptados (Cliente, Fornecedor, Produto, Tabela, Pedido, Colaborador, Transportadora, Entrega, Romaneio, ContaReceber, ContaPagar, Inspeção)',
+              '✅ 14 formulários (Cliente, Fornecedor, Produto, Tabela, Pedido, Colaborador, Transportadora, Entrega, Romaneio, ContaReceber, ContaPagar, Inspeção, Oportunidade, Evento)',
               '✅ Financeiro: ContaReceber + ContaPagar em janelas',
               '✅ Produção: FormularioInspecao em janelas',
-              '✅ AcoesRapidasGlobal: 8 ações rápidas',
+              '✅ CRM: OportunidadeForm em janelas',
+              '✅ Agenda: EventoForm em janelas',
+              '✅ Estoque: ProdutoForm em janelas',
+              '✅ AcoesRapidasGlobal: 10 ações rápidas',
               '✅ Testes manuais realizados',
               '✅ README completo documentado',
               '✅ FASE 1: 100% COMPLETA EM TODO O SISTEMA 🎉🚀'

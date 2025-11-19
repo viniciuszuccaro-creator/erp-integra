@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -31,10 +30,12 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
-import { Switch } from "@/components/ui/switch"; // Import Switch if it's intended to be used, though it's not in the current outline JSX. Keeping it as it was in outline imports.
+import { Switch } from "@/components/ui/switch";
+import EventoForm from "@/components/agenda/EventoForm";
+import { useWindow } from "@/components/lib/useWindow";
 
 export default function Agenda() {
-  const [visualizacao, setVisualizacao] = useState("mes"); // mes, semana, dia
+  const [visualizacao, setVisualizacao] = useState("mes");
   const [dataAtual, setDataAtual] = useState(new Date());
   const [eventoDialogOpen, setEventoDialogOpen] = useState(false);
   const [editingEvento, setEditingEvento] = useState(null);
@@ -44,6 +45,7 @@ export default function Agenda() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
 
   const [eventoForm, setEventoForm] = useState({
     titulo: "",
@@ -901,15 +903,41 @@ export default function Agenda() {
                 </Button>
               </div>
 
-              <Dialog open={eventoDialogOpen} onOpenChange={(open) => {
-                setEventoDialogOpen(open);
-                if (!open) resetForm();
-              }}>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => openWindow(EventoForm, {
+                  windowMode: true,
+                  onSubmit: async (data) => {
+                    try {
+                      const dataInicio = `${data.data_inicio}T${data.hora_inicio || '00:00'}:00`;
+                      const dataFim = `${data.data_fim}T${data.hora_fim || '23:59'}:00`;
+                      await base44.entities.Evento.create({
+                        ...data,
+                        data_inicio: dataInicio,
+                        data_fim: dataFim,
+                        responsavel: user?.full_name || 'Usuário',
+                        responsavel_id: user?.id
+                      });
+                      queryClient.invalidateQueries({ queryKey: ['eventos'] });
+                      toast({ title: "✅ Evento criado!" });
+                    } catch (error) {
+                      toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                    }
+                  }
+                }, {
+                  title: '📅 Novo Evento',
+                  width: 1000,
+                  height: 650
+                })}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Evento
+              </Button>
+              
+              {/* BACKUP: Dialog removido */}
+              <Dialog open={false}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Novo Evento
-                  </Button>
+                  <Button className="hidden">Removido</Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
@@ -1326,7 +1354,32 @@ export default function Agenda() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleEdit(visualizandoEvento)}
+                    onClick={() => {
+                      setVisualizandoEvento(null);
+                      openWindow(EventoForm, {
+                        evento: visualizandoEvento,
+                        windowMode: true,
+                        onSubmit: async (data) => {
+                          try {
+                            const dataInicio = `${data.data_inicio}T${data.hora_inicio || '00:00'}:00`;
+                            const dataFim = `${data.data_fim}T${data.hora_fim || '23:59'}:00`;
+                            await base44.entities.Evento.update(visualizandoEvento.id, {
+                              ...data,
+                              data_inicio: dataInicio,
+                              data_fim: dataFim
+                            });
+                            queryClient.invalidateQueries({ queryKey: ['eventos'] });
+                            toast({ title: "✅ Evento atualizado!" });
+                          } catch (error) {
+                            toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                          }
+                        }
+                      }, {
+                        title: `✏️ Editar: ${visualizandoEvento.titulo}`,
+                        width: 1000,
+                        height: 650
+                      });
+                    }}
                   >
                     <Edit className="w-4 h-4 mr-1" />
                     Editar

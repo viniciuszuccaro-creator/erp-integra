@@ -23,6 +23,7 @@ import ContaReceberForm from '@/components/financeiro/ContaReceberForm';
 import ContaPagarForm from '@/components/financeiro/ContaPagarForm';
 import FormularioEntrega from '@/components/expedicao/FormularioEntrega';
 import OportunidadeForm from '@/components/crm/OportunidadeForm';
+import EventoForm from '@/components/agenda/EventoForm';
 import { toast } from 'sonner';
 
 /**
@@ -169,6 +170,35 @@ export default function AcoesRapidasGlobal() {
         height: 650
       }),
       cor: 'text-purple-600'
+    },
+    {
+      label: 'Novo Evento/Compromisso',
+      icon: DollarSign,
+      action: () => openWindow(EventoForm, {
+        windowMode: true,
+        onSubmit: async (data) => {
+          try {
+            const dataInicio = `${data.data_inicio}T${data.hora_inicio || '00:00'}:00`;
+            const dataFim = `${data.data_fim}T${data.hora_fim || '23:59'}:00`;
+            const user = await base44.auth.me();
+            await base44.entities.Evento.create({
+              ...data,
+              data_inicio: dataInicio,
+              data_fim: dataFim,
+              responsavel: user?.full_name || 'Usuário',
+              responsavel_id: user?.id
+            });
+            toast.success("✅ Evento criado!");
+          } catch (error) {
+            toast.error("Erro ao criar evento");
+          }
+        }
+      }, {
+        title: '📅 Novo Evento',
+        width: 1000,
+        height: 650
+      }),
+      cor: 'text-blue-600'
     },
     {
       label: 'Nova NF-e',
