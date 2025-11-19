@@ -15,6 +15,7 @@ import { useWindow } from '@/components/lib/useWindow';
 import CadastroClienteCompleto from '@/components/cadastros/CadastroClienteCompleto';
 import CadastroFornecedorCompleto from '@/components/cadastros/CadastroFornecedorCompleto';
 import ProdutoFormV22_Completo from '@/components/cadastros/ProdutoFormV22_Completo';
+import TabelaPrecoFormCompleto from '@/components/cadastros/TabelaPrecoFormCompleto';
 
 /**
  * Ações Rápidas Globais - Botão + Novo
