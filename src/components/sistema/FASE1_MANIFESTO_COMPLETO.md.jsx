@@ -25,9 +25,10 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 |-----------|------------|--------|
 | **Componentes Core** | 7 | ✅ 100% |
 | **Formulários Adaptados** | 22 | ✅ 100% |
-| **Modais/Views/Fluxos Window-Ready** | 16 | ✅ 100% |
-| **Total Componentes** | 38 | ✅ 100% |
-| **Sub-Dialogs Internos** | 2 | ✅ Permitidos |
+| **Modais/Views/Fluxos Window-Ready** | 17 | ✅ 100% |
+| **Total Componentes Window** | 39 | ✅ 100% |
+| **Detalhes INLINE (não-modais)** | 3 | ✅ OK |
+| **Sub-Dialogs Internos** | ~5 | ✅ OK |
 | **Ações Rápidas Globais** | 19 | ✅ 100% |
 | **Módulos Integrados** | 10 | ✅ 100% |
 | **Arquivos Modificados** | 58+ | ✅ 100% |
@@ -93,7 +94,7 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 #### Agenda (1)
 22. ✅ EventoForm (900x600)
 
-### 3. Modais e Fluxos Window-Ready (16)
+### 3. Modais e Fluxos Window-Ready (17)
 23. ✅ DetalhesComissao (800x600)
 24. ✅ AvaliacaoFornecedorForm (800x650)
 25. ✅ RecebimentoOCForm (800x600)
@@ -110,12 +111,21 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 36. ✅ EditarItemProducaoModal (1100x750)
 37. ✅ AdicionarItemRevendaModal (1200x800)
 38. ✅ VerEspelhosModal (900x650)
+39. ✅ SimularPagamentoModal (600x500)
 
-### 4. Sub-Dialogs Internos Permitidos (2)
-- GerenciarContatosClienteForm (usado dentro de CadastroClienteCompleto)
-- GerenciarEnderecosClienteForm (usado dentro de CadastroClienteCompleto)
+### 4. Detalhes INLINE - Não são Modais (3)
+- DetalhesCadastro (expansão inline em tabelas)
+- DetalhesFornecedor (expansão inline)
+- DetalhesColaborador (expansão inline)
 
-**Justificativa:** Sub-dialogs que fazem parte de formulários maiores são mantidos para melhor UX, pois abrem ações pontuais dentro de um contexto já estabelecido.
+**Justificativa:** Estes componentes não são modais/windows - são expansões inline que aparecem dentro das próprias tabelas, como um accordion. NÃO PRECISAM ser convertidos.
+
+### 5. Sub-Dialogs Internos Permitidos (~5)
+- GerenciarContatosClienteForm (dentro de CadastroClienteCompleto)
+- GerenciarEnderecosClienteForm (dentro de CadastroClienteCompleto)
+- Sub-dialogs de documentos (dentro de DetalhesFornecedor/Colaborador)
+
+**Justificativa:** Sub-dialogs que fazem parte de formulários maiores são mantidos para melhor UX e são ações pontuais secundárias dentro de um contexto maior já estabelecido.
 
 ---
 

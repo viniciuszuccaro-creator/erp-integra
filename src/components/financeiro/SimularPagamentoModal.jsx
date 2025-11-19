@@ -9,10 +9,11 @@ import { CheckCircle, Zap } from "lucide-react";
 import { mockSimularPagamento } from "@/components/integracoes/MockIntegracoes";
 
 /**
+ * V21.1.2 - WINDOW MODE READY
  * Modal para simular recebimento de pagamento via webhook
  * (em produção, isso viria automaticamente do gateway)
  */
-export default function SimularPagamentoModal({ isOpen, onClose, contaReceber }) {
+export default function SimularPagamentoModal({ isOpen, onClose, contaReceber, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -60,14 +61,13 @@ export default function SimularPagamentoModal({ isOpen, onClose, contaReceber })
     }
   });
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Simular Recebimento de Pagamento</DialogTitle>
-        </DialogHeader>
+  const content = (
+    <div className={`space-y-4 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+      {!windowMode && (
+        <h2 className="text-xl font-bold mb-4">Simular Recebimento de Pagamento</h2>
+      )}
 
-        <Alert className="border-blue-300 bg-blue-50">
+      <Alert className="border-blue-300 bg-blue-50">
           <Zap className="h-5 w-5 text-blue-600" />
           <AlertDescription>
             <strong>Modo Simulação</strong><br />
@@ -93,28 +93,44 @@ export default function SimularPagamentoModal({ isOpen, onClose, contaReceber })
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
+      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+        {!windowMode && (
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button
-            onClick={() => simularPagamentoMutation.mutate()}
-            disabled={simularPagamentoMutation.isPending}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            {simularPagamentoMutation.isPending ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Processando...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Confirmar Pagamento (Mock)
-              </>
-            )}
-          </Button>
-        </div>
+        )}
+        <Button
+          onClick={() => simularPagamentoMutation.mutate()}
+          disabled={simularPagamentoMutation.isPending}
+          className="bg-green-600 hover:bg-green-700"
+        >
+          {simularPagamentoMutation.isPending ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              Processando...
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Confirmar Pagamento (Mock)
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Simular Recebimento de Pagamento</DialogTitle>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );

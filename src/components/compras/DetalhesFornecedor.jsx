@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +27,11 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
 
+/**
+ * V21.1.2 - DETALHES INLINE (não é modal, é expansão inline)
+ * Componente usado INLINE nas tabelas - NÃO PRECISA ser Window
+ * SUB-DIALOGS internos mantidos para adicionar documentos (UX)
+ */
 export default function DetalhesFornecedor({ fornecedor, onClose }) {
   const [activeTab, setActiveTab] = useState("historico");
   const [showDocumentoDialog, setShowDocumentoDialog] = useState(false);

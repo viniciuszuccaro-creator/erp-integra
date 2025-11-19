@@ -24,6 +24,10 @@ import {
 } from "lucide-react";
 import TimelineCliente, { ResumoHistorico } from "../cliente/TimelineCliente";
 
+/**
+ * V21.1.2 - DETALHES INLINE (não é modal, é expansão inline)
+ * Componente usado INLINE nas tabelas - NÃO PRECISA ser Window
+ */
 export default function DetalhesCadastro({ tipo, registro, onClose, onUpdate }) {
   const [activeTab, setActiveTab] = useState("historico");
 
