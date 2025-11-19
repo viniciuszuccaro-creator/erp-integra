@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -12,51 +11,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useWindow } from "@/components/lib/useWindow";
+import SolicitacaoCompraForm from "@/components/compras/SolicitacaoCompraForm";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function SolicitacoesTab({ solicitacoes, produtos }) {
+  const { openWindow } = useWindow();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [novaSolicitacao, setNovaSolicitacao] = useState({
-    produto_id: "",
-    produto_nome: "",
-    quantidade: "",
-    unidade_medida: "",
-    data_necessidade: "",
-    motivo: "",
-    prioridade: "Normal",
-    solicitante: "",
-    centro_custo: "",
-    status: "Pendente"
-  });
 
   const queryClient = useQueryClient();
-
-  const resetForm = () => {
-    setNovaSolicitacao({
-      produto_id: "",
-      produto_nome: "",
-      quantidade: "",
-      unidade_medida: "",
-      data_necessidade: "",
-      motivo: "",
-      prioridade: "Normal",
-      solicitante: "",
-      centro_custo: "",
-      status: "Pendente"
-    });
-  };
-
-  const createMutation = useMutation({
-    mutationFn: async (data) => {
-      const novaSolicitacao = await base44.entities.SolicitacaoCompra.create(data);
-      return novaSolicitacao;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['solicitacoes'] });
-      setIsDialogOpen(false);
-      resetForm();
-    },
-  });
 
   const aprovarSolicitacaoMutation = useMutation({
     mutationFn: async ({ solicitacao, aprovador }) => {
@@ -82,28 +46,6 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
       queryClient.invalidateQueries({ queryKey: ['solicitacoes'] });
     },
   });
-
-  const handleProdutoChange = (produtoId) => {
-    const produto = produtos.find(p => p.id === produtoId);
-    if (produto) {
-      setNovaSolicitacao({
-        ...novaSolicitacao,
-        produto_id: produtoId,
-        produto_nome: produto.descricao,
-        unidade_medida: produto.unidade_medida
-      });
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const user = await base44.auth.me();
-    
-    createMutation.mutate({
-      ...novaSolicitacao,
-      solicitante: user?.full_name || 'Sistema'
-    });
-  };
 
   const handleAprovar = async (solicitacao) => {
     const user = await base44.auth.me();
@@ -158,117 +100,32 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
             className="pl-9"
           />
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Solicitação
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Nova Solicitação de Compra</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Label htmlFor="produto">Produto *</Label>
-                  <Select
-                    value={novaSolicitacao.produto_id}
-                    onValueChange={handleProdutoChange}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um produto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {produtos.filter(p => p.status === 'Ativo').map((produto) => (
-                        <SelectItem key={produto.id} value={produto.id}>
-                          {produto.codigo ? `${produto.codigo} - ` : ''}{produto.descricao}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="quantidade">Quantidade *</Label>
-                  <Input
-                    id="quantidade"
-                    type="number"
-                    step="0.01"
-                    value={novaSolicitacao.quantidade}
-                    onChange={(e) => setNovaSolicitacao({ ...novaSolicitacao, quantidade: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="unidade_medida">Unidade</Label>
-                  <Input
-                    id="unidade_medida"
-                    value={novaSolicitacao.unidade_medida}
-                    readOnly
-                    className="bg-slate-50"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="prioridade">Prioridade</Label>
-                  <Select
-                    value={novaSolicitacao.prioridade}
-                    onValueChange={(value) => setNovaSolicitacao({ ...novaSolicitacao, prioridade: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Baixa">Baixa</SelectItem>
-                      <SelectItem value="Normal">Normal</SelectItem>
-                      <SelectItem value="Alta">Alta</SelectItem>
-                      <SelectItem value="Urgente">Urgente</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="data_necessidade">Data Necessidade</Label>
-                  <Input
-                    id="data_necessidade"
-                    type="date"
-                    value={novaSolicitacao.data_necessidade}
-                    onChange={(e) => setNovaSolicitacao({ ...novaSolicitacao, data_necessidade: e.target.value })}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label htmlFor="motivo">Motivo da Solicitação</Label>
-                  <Textarea
-                    id="motivo"
-                    value={novaSolicitacao.motivo}
-                    onChange={(e) => setNovaSolicitacao({ ...novaSolicitacao, motivo: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label htmlFor="centro_custo">Centro de Custo</Label>
-                  <Input
-                    id="centro_custo"
-                    value={novaSolicitacao.centro_custo}
-                    onChange={(e) => setNovaSolicitacao({ ...novaSolicitacao, centro_custo: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4">
-                <Button type="submit" disabled={createMutation.isPending} className="bg-indigo-600 hover:bg-indigo-700">
-                  {createMutation.isPending ? 'Salvando...' : 'Enviar Solicitação'}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button 
+          className="bg-indigo-600 hover:bg-indigo-700"
+          onClick={() => openWindow(SolicitacaoCompraForm, {
+            windowMode: true,
+            onSubmit: async (data) => {
+              try {
+                const user = await base44.auth.me();
+                await base44.entities.SolicitacaoCompra.create({
+                  ...data,
+                  solicitante: user?.full_name || 'Sistema'
+                });
+                queryClient.invalidateQueries({ queryKey: ['solicitacoes'] });
+                toast({ title: "✅ Solicitação enviada!" });
+              } catch (error) {
+                toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+              }
+            }
+          }, {
+            title: '🛒 Nova Solicitação de Compra',
+            width: 900,
+            height: 650
+          })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Solicitação
+        </Button>
       </div>
 
       <Card className="border-0 shadow-md">
