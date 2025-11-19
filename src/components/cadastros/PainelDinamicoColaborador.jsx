@@ -103,8 +103,8 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
       </div>
 
       <div className="grid grid-cols-3 gap-6">
-          {/* Coluna 1: Dados Principais */}
-          <div className="space-y-4">
+        {/* Coluna 1: Dados Principais */}
+        <div className="space-y-4">
             <h3 className="font-semibold text-slate-900 flex items-center gap-2">
               <Briefcase className="w-4 h-4" />
               Dados do Colaborador
@@ -191,10 +191,10 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
                 <Badge variant="outline" className="mt-1">{colaborador.centro_custo_nome}</Badge>
               </div>
             )}
-          </div>
+            </div>
 
-          {/* Coluna 2: Histórico Profissional */}
-          <div className="space-y-4">
+            {/* Coluna 2: Histórico Profissional */}
+            <div className="space-y-4">
             <h3 className="font-semibold text-slate-900 flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               Histórico Profissional
@@ -278,8 +278,8 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
             </Tabs>
           </div>
 
-          {/* Coluna 3: Ponto e Férias */}
-          <div className="space-y-4">
+        {/* Coluna 3: Ponto e Férias */}
+        <div className="space-y-4">
             <Tabs defaultValue="ponto" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="ponto">Ponto</TabsTrigger>
@@ -374,7 +374,6 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
               </TabsContent>
             </Tabs>
           </div>
-        </div>
       </div>
     </>
   );
