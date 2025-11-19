@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -31,7 +30,10 @@ import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineC
 import Top10ProdutosCliente from "@/components/comercial/Top10ProdutosCliente";
 import { Link } from "react-router-dom";
 
-export default function PainelDinamicoCliente({ cliente, isOpen, onClose }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function PainelDinamicoCliente({ cliente, isOpen, onClose, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("enderecos");
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
@@ -69,16 +71,15 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose }) {
     .filter(p => p.status !== 'Cancelado')
     .reduce((sum, p) => sum + (p.valor_total || 0), 0);
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[1180px] h-[620px] p-0 overflow-hidden flex flex-col">
-        <DialogHeader className="border-b pb-4 px-6 pt-6 flex-shrink-0 bg-gradient-to-r from-blue-50 to-slate-50">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                <User className="w-6 h-6 text-blue-600" />
-                {cliente.nome || cliente.razao_social}
-              </DialogTitle>
+  const content = (
+    <div className={`flex flex-col ${windowMode ? 'w-full h-full bg-white' : ''}`}>
+      <div className={`border-b pb-4 px-6 pt-6 flex-shrink-0 ${windowMode ? '' : 'bg-gradient-to-r from-blue-50 to-slate-50'}`}>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <User className="w-6 h-6 text-blue-600" />
+              {cliente.nome || cliente.razao_social}
+            </h2>
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Badge className={
                   cliente.status === 'Ativo' ? 'bg-green-100 text-green-700' :
@@ -104,7 +105,7 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose }) {
               Editar no Cadastro Geral
             </Button>
           </div>
-        </DialogHeader>
+        </div>
 
         <div className="flex-1 overflow-y-auto">
           <div className="grid grid-cols-3 gap-6 p-6">
@@ -446,6 +447,18 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose }) {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-[1180px] h-[620px] p-0 overflow-hidden flex flex-col">
+        {content}
       </DialogContent>
     </Dialog>
   );

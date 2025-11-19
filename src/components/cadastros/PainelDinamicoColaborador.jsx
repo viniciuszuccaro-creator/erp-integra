@@ -22,7 +22,10 @@ import { createPageUrl } from "@/utils";
 import usePermissions from "@/components/lib/usePermissions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose, windowMode = false }) {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
 
@@ -58,19 +61,18 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
     ? Math.floor((new Date(colaborador.dias_ferias_vencimento) - new Date()) / (1000 * 60 * 60 * 24))
     : 0;
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[1180px] max-h-[620px] overflow-y-auto">
-        <DialogHeader className="border-b pb-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <UserCircle className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-2xl">
-                  {colaborador.nome_completo}
-                </DialogTitle>
+  const content = (
+    <div className={`${windowMode ? 'w-full h-full overflow-auto bg-white p-6' : ''}`}>
+      <div className="border-b pb-4 mb-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+              <UserCircle className="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">
+                {colaborador.nome_completo}
+              </h2>
                 <div className="flex items-center gap-3 mt-2">
                   <Badge className={
                     colaborador.status === 'Ativo' ? 'bg-green-100 text-green-700' :
@@ -98,9 +100,9 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
               </Button>
             )}
           </div>
-        </DialogHeader>
+        </div>
 
-        <div className="grid grid-cols-3 gap-6 mt-6">
+        <div className="grid grid-cols-3 gap-6">
           {/* Coluna 1: Dados Principais */}
           <div className="space-y-4">
             <h3 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -373,6 +375,18 @@ export default function PainelDinamicoColaborador({ colaborador, isOpen, onClose
             </Tabs>
           </div>
         </div>
+      </div>
+    </div>
+  );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-[1180px] max-h-[620px] overflow-y-auto">
+        {content}
       </DialogContent>
     </Dialog>
   );

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,7 +20,10 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import usePermissions from "@/components/lib/usePermissions";
 
-export default function PainelDinamicoTransportadora({ transportadora, isOpen, onClose }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function PainelDinamicoTransportadora({ transportadora, isOpen, onClose, windowMode = false }) {
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
 
@@ -52,19 +54,18 @@ export default function PainelDinamicoTransportadora({ transportadora, isOpen, o
     ? ((entregasRealizadas / entregas.length) * 100).toFixed(1) 
     : 0;
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[1180px] max-h-[620px] overflow-y-auto">
-        <DialogHeader className="border-b pb-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <Truck className="w-6 h-6 text-orange-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-2xl">
-                  {transportadora.razao_social || transportadora.nome_fantasia}
-                </DialogTitle>
+  const content = (
+    <div className={`${windowMode ? 'w-full h-full overflow-auto bg-white p-6' : ''}`}>
+      <div className="border-b pb-4 mb-6">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+              <Truck className="w-6 h-6 text-orange-600" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold">
+                {transportadora.razao_social || transportadora.nome_fantasia}
+              </h2>
                 <div className="flex items-center gap-3 mt-2">
                   <Badge className={
                     transportadora.status === 'Ativo' ? 'bg-green-100 text-green-700' :
@@ -89,9 +90,9 @@ export default function PainelDinamicoTransportadora({ transportadora, isOpen, o
               </Button>
             )}
           </div>
-        </DialogHeader>
+        </div>
 
-        <div className="grid grid-cols-3 gap-6 mt-6">
+        <div className="grid grid-cols-3 gap-6">
           {/* Coluna 1: Dados Principais */}
           <div className="space-y-4">
             <h3 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -317,6 +318,18 @@ export default function PainelDinamicoTransportadora({ transportadora, isOpen, o
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-[1180px] max-h-[620px] overflow-y-auto">
+        {content}
       </DialogContent>
     </Dialog>
   );

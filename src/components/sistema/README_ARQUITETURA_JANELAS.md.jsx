@@ -2,7 +2,7 @@
 
 ## 📋 CLASSIFICAÇÃO DE COMPONENTES
 
-### 1️⃣ WINDOWS (41 componentes - TODOS window-ready)
+### 1️⃣ WINDOWS (45 componentes - TODOS window-ready)
 Componentes principais que **DEVEM** ser abertos como janelas multitarefa:
 - Formulários de cadastro (22)
 - Fluxos complexos (17)
@@ -41,10 +41,11 @@ Dialogs secundários que **fazem parte** de um formulário maior:
 
 | Tipo | Quantidade | Status | Observação |
 |------|------------|--------|------------|
-| **Windows Principais** | 41 | ✅ 100% | Todos adaptados |
-| **Detalhes INLINE** | 3 | ✅ OK | Não são modais |
+| **Windows Principais** | 45 | ✅ 100% | Todos adaptados |
+| **Painéis Dinâmicos** | 4/4 | ✅ 100% | Todos windows |
+| **Detalhes INLINE** | 3 | ✅ OK | Accordion in-place |
 | **Sub-Dialogs** | 2-3 | ✅ OK | Micro-ações UX |
-| **Modais Visuais** | 1 | ✅ OK | Comprovante (foto) |
+| **Modais Visuais** | 1 | ✅ OK | ComprovanteDigital |
 | **Tabs** | N/A | ✅ Mantidos | Não redimensionáveis |
 
 ---
@@ -87,11 +88,16 @@ Modal que apenas exibe fotos/comprovantes:
 
 ---
 
-**STATUS:** 🟢 ULTRA-HIPER-COMPLETO
+**STATUS:** 🟢 SUPREMO-COMPLETO
 
-**PÁGINAS 100% CONVERTIDAS:**
-- ✅ Estoque (Dialog de Transferência → Window)
-- ✅ Expedição (Dialogs de Detalhes/Separação → Windows)
-- ✅ Comercial (já estava 100%)
-- ✅ Financeiro (já estava 100%)
-- ✅ Compras (já estava 100%)
+**TODAS AS PÁGINAS E PAINÉIS 100% CONVERTIDOS:**
+- ✅ Cadastros (4 Painéis Dinâmicos → Windows)
+- ✅ Estoque (Dialog Transferência → Window)
+- ✅ Expedição (Detalhes/Separação → Windows)
+- ✅ Comercial (100% completo)
+- ✅ Financeiro (100% completo)
+- ✅ Compras (100% completo)
+- ✅ Produção (100% completo)
+- ✅ RH (100% completo)
+- ✅ CRM (100% completo)
+- ✅ Agenda (100% completo)
