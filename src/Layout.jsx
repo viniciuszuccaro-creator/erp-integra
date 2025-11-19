@@ -46,6 +46,9 @@ import { UserProvider, useUser } from "@/components/lib/UserContext";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
+import { WindowProvider } from "@/components/lib/WindowManager";
+import WindowRenderer from "@/components/lib/WindowRenderer";
+import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -341,15 +344,21 @@ function LayoutContent({ children, currentPageName }) {
           open={pesquisaOpen} 
           onOpenChange={setPesquisaOpen} 
         />
-      </div>
-    </SidebarProvider>
-  );
-}
+
+        {/* Sistema de Janelas Multitarefa V21.0 */}
+        <WindowRenderer />
+        <MinimizedWindowsBar />
+        </div>
+        </SidebarProvider>
+        );
+        }
 
 export default function Layout({ children, currentPageName }) {
   return (
     <UserProvider>
-      <LayoutContent children={children} currentPageName={currentPageName} />
+      <WindowProvider>
+        <LayoutContent children={children} currentPageName={currentPageName} />
+      </WindowProvider>
     </UserProvider>
   );
 }
