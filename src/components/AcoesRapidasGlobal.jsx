@@ -11,11 +11,15 @@ import {
 import { Plus, ShoppingCart, Users, Package, DollarSign, FileText, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 import { useWindow } from '@/components/lib/useWindow';
 import CadastroClienteCompleto from '@/components/cadastros/CadastroClienteCompleto';
 import CadastroFornecedorCompleto from '@/components/cadastros/CadastroFornecedorCompleto';
 import ProdutoFormV22_Completo from '@/components/cadastros/ProdutoFormV22_Completo';
 import TabelaPrecoFormCompleto from '@/components/cadastros/TabelaPrecoFormCompleto';
+import PedidoFormCompleto from '@/components/comercial/PedidoFormCompleto';
+import { toast } from 'sonner';
 
 /**
  * Ações Rápidas Globais - Botão + Novo
@@ -26,11 +30,36 @@ export default function AcoesRapidasGlobal() {
   const navigate = useNavigate();
   const { openWindow } = useWindow();
 
+  const { data: clientes = [] } = useQuery({
+    queryKey: ['clientes'],
+    queryFn: () => base44.entities.Cliente.list(),
+  });
+
   const acoes = [
     {
       label: 'Novo Pedido',
       icon: ShoppingCart,
-      action: () => navigate(createPageUrl('Comercial') + '?action=novo-pedido'),
+      action: () => openWindow(
+        PedidoFormCompleto,
+        { 
+          clientes,
+          windowMode: true,
+          onSubmit: async (formData) => {
+            try {
+              await base44.entities.Pedido.create(formData);
+              toast.success("✅ Pedido criado com sucesso!");
+            } catch (error) {
+              toast.error("Erro ao salvar pedido");
+            }
+          },
+          onCancel: () => {}
+        },
+        {
+          title: '🛒 Novo Pedido',
+          width: 1400,
+          height: 800
+        }
+      ),
       cor: 'text-blue-600'
     },
     {
@@ -78,6 +107,12 @@ export default function AcoesRapidasGlobal() {
       icon: DollarSign,
       action: () => navigate(createPageUrl('Financeiro') + '?tab=contas-pagar&action=novo'),
       cor: 'text-red-600'
+    },
+    {
+      label: 'Novo Título a Receber',
+      icon: DollarSign,
+      action: () => navigate(createPageUrl('Financeiro') + '?tab=contas-receber&action=novo'),
+      cor: 'text-green-600'
     },
     {
       label: 'Nova NF-e',

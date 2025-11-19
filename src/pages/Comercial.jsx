@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -25,6 +24,7 @@ import { toast } from "sonner";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
+import { useWindow } from "@/components/lib/useWindow";
 
 /**
  * Módulo Comercial - V12.0 COMPLETO
@@ -35,11 +35,8 @@ export default function Comercial() {
   const [painelClienteAberto, setPainelClienteAberto] = useState(false);
   const [clienteParaPainel, setClienteParaPainel] = useState(null);
 
-  // V21.1.2-R1: States for the PedidoFormCompleto dialog
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingPedido, setEditingPedido] = useState(null);
-
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const { openWindow } = useWindow();
 
   const { data: clientes = [], isLoading: loadingClientes } = useQuery({
     queryKey: ['clientes'],
@@ -101,35 +98,56 @@ export default function Comercial() {
     // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
 
-  // Handlers for PedidoFormCompleto
+  // V21.1.2: Handlers usando sistema de janelas
   const handleCreateNewPedido = () => {
-    setEditingPedido(null); // For new order, no existing pedido
-    setIsFormOpen(true);
+    openWindow(
+      PedidoFormCompleto,
+      { 
+        clientes,
+        windowMode: true,
+        onSubmit: async (formData) => {
+          try {
+            await base44.entities.Pedido.create(formData);
+            toast.success("✅ Pedido criado com sucesso!");
+            pedidosQuery.refetch();
+          } catch (error) {
+            toast.error("Erro ao salvar pedido: " + error.message);
+          }
+        },
+        onCancel: () => {}
+      },
+      {
+        title: '🛒 Novo Pedido',
+        width: 1400,
+        height: 800
+      }
+    );
   };
 
   const handleEditPedido = (pedido) => {
-    setEditingPedido(pedido);
-    setIsFormOpen(true);
-  };
-
-  const handleFormSubmit = async (formData) => {
-    try {
-      if (formData.id) {
-        // Update existing pedido
-        await base44.entities.Pedido.update(formData.id, formData);
-        toast.success("Pedido atualizado com sucesso!");
-      } else {
-        // Create new pedido
-        await base44.entities.Pedido.create(formData);
-        toast.success("Pedido criado com sucesso!");
+    openWindow(
+      PedidoFormCompleto,
+      { 
+        pedido,
+        clientes,
+        windowMode: true,
+        onSubmit: async (formData) => {
+          try {
+            await base44.entities.Pedido.update(formData.id, formData);
+            toast.success("✅ Pedido atualizado com sucesso!");
+            pedidosQuery.refetch();
+          } catch (error) {
+            toast.error("Erro ao salvar pedido: " + error.message);
+          }
+        },
+        onCancel: () => {}
+      },
+      {
+        title: `📝 Editar Pedido ${pedido.numero_pedido}`,
+        width: 1400,
+        height: 800
       }
-      setIsFormOpen(false);
-      setEditingPedido(null);
-      pedidosQuery.refetch(); // Refetch pedidos data after submission
-    } catch (error) {
-      toast.error("Erro ao salvar pedido: " + error.message);
-      console.error("Erro ao salvar pedido:", error);
-    }
+    );
   };
 
 
@@ -343,26 +361,6 @@ export default function Comercial() {
           setClienteParaPainel(null);
         }}
       />
-
-      {/* V21.1.2-R1: MODAL COM TAMANHO FIXO GRANDE - MULTI-INSTÂNCIA */}
-      <Dialog open={isFormOpen} onOpenChange={(open) => {
-        if (!open) {
-          setIsFormOpen(false);
-          setEditingPedido(null);
-        }
-      }}>
-        <DialogContent className="max-w-[90vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
-          <PedidoFormCompleto
-            pedido={editingPedido}
-            clientes={clientes}
-            onSubmit={handleFormSubmit}
-            onCancel={() => {
-              setIsFormOpen(false);
-              setEditingPedido(null);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

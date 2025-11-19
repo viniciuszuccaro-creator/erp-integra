@@ -687,10 +687,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setTransportadoraSelecionada(null);
-                            setTransportadoraFormOpen(true);
-                          }}
+                          onClick={() => openWindow(TransportadoraForm, { 
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Transportadora', 'transportadoras')
+                          }, {
+                            title: '🚛 Nova Transportadora',
+                            width: 1100,
+                            height: 650
+                          })}
                           className="bg-orange-600 hover:bg-orange-700"
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
@@ -713,10 +717,15 @@ export default function Cadastros() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                setTransportadoraSelecionada(transp);
-                                setTransportadoraFormOpen(true);
-                              }}
+                              onClick={() => openWindow(TransportadoraForm, {
+                                transportadora: transp,
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('Transportadora', 'transportadoras')
+                              }, {
+                                title: `🚛 Editar: ${transp.razao_social || transp.nome_fantasia}`,
+                                width: 1100,
+                                height: 650
+                              })}
                               disabled={!hasPermission('cadastros', 'editar')}
                             >
                               <Edit className="w-4 h-4 text-orange-600" />
@@ -740,10 +749,14 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => {
-                            setColaboradorSelecionado(null);
-                            setColaboradorFormOpen(true);
-                          }}
+                          onClick={() => openWindow(ColaboradorForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('Colaborador', 'colaboradores')
+                          }, {
+                            title: '👤 Novo Colaborador',
+                            width: 1100,
+                            height: 650
+                          })}
                           className="bg-pink-600 hover:bg-pink-700"
                           disabled={!hasPermission('rh', 'criar')}
                         >
@@ -766,10 +779,15 @@ export default function Cadastros() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                setColaboradorSelecionado(colab);
-                                setColaboradorFormOpen(true);
-                              }}
+                              onClick={() => openWindow(ColaboradorForm, {
+                                colaborador: colab,
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('Colaborador', 'colaboradores')
+                              }, {
+                                title: `👤 Editar: ${colab.nome_completo}`,
+                                width: 1100,
+                                height: 650
+                              })}
                               disabled={!hasPermission('rh', 'editar')}
                             >
                               <Edit className="w-4 h-4 text-pink-600" />

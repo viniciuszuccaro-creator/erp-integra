@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,7 +41,7 @@ import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
  * 
  * REGRA-MÃE: NUNCA APAGAR - APENAS ACRESCENTAR
  */
-export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel }) {
+export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowMode = false }) {
   const [activeTab, setActiveTab] = useState('identificacao');
   const [formData, setFormData] = useState(() => ({
     tipo: 'Pedido',
@@ -249,8 +248,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     );
   }
 
-  return (
-    <div className="h-full flex flex-col">
+  const content = (
+    <div className="w-full h-full flex flex-col bg-white">
       {/* Header - FIXO */}
       <div className="flex-shrink-0 p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50">
         <div className="flex items-center justify-between mb-4">
@@ -500,4 +499,10 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
       </div>
     </div>
   );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return content;
 }
