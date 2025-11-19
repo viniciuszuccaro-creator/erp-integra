@@ -11,8 +11,12 @@ import { Plus, Edit, Trash2, Package, TrendingUp, Calendar } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast";
 import SearchInput from "@/components/ui/SearchInput";
 import usePermissions from "@/components/lib/usePermissions";
+import { DollarSign } from "lucide-react";
 
-export default function TabelaPrecoItensModal({ tabela, isOpen, onClose }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function TabelaPrecoItensModal({ tabela, isOpen, onClose, windowMode = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingItem, setEditingItem] = useState(null);
   const [showItemForm, setShowItemForm] = useState(false);
@@ -131,11 +135,10 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose }) {
 
   const podeEditar = hasPermission('comercial', 'editar_tabela_preco');
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[1180px] max-h-[620px] overflow-hidden flex flex-col">
-        <DialogHeader className="border-b pb-4 flex-shrink-0">
-          <div className="flex items-start justify-between">
+  const content = (
+    <div className={`${windowMode ? 'w-full h-full overflow-hidden flex flex-col bg-white' : ''}`}>
+      <div className={`${windowMode ? 'border-b pb-4 px-6 pt-6' : ''} flex-shrink-0`}>
+        <div className="flex items-start justify-between">
             <div>
               <DialogTitle className="text-2xl flex items-center gap-2">
                 <DollarSign className="w-6 h-6 text-green-600" />
@@ -177,9 +180,9 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose }) {
               </Button>
             )}
           </div>
-        </DialogHeader>
+        </div>
 
-        <div className="flex-1 overflow-y-auto p-6">
+      <div className={`flex-1 overflow-y-auto ${windowMode ? 'px-6 pb-6' : 'p-6'}`}>
           {showItemForm ? (
             <form onSubmit={handleSubmitItem} className="space-y-4 bg-slate-50 p-6 rounded-lg">
               <h3 className="font-semibold text-lg mb-4">
@@ -419,6 +422,17 @@ export default function TabelaPrecoItensModal({ tabela, isOpen, onClose }) {
             </>
           )}
         </div>
+      </div>
+  );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-[1180px] max-h-[620px] overflow-hidden flex flex-col">
+        {content}
       </DialogContent>
     </Dialog>
   );

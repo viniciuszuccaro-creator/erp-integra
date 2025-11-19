@@ -5,21 +5,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Users, MapPin, Phone, DollarSign } from "lucide-react";
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 
-export default function ClientesVinculadosModal({ tabela, clientes, isOpen, onClose }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function ClientesVinculadosModal({ tabela, clientes, isOpen, onClose, windowMode = false }) {
   if (!tabela) return null;
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[620px] overflow-y-auto">
-        <DialogHeader className="border-b pb-4">
-          <DialogTitle className="text-xl flex items-center gap-2">
+  const content = (
+    <div className={windowMode ? 'w-full h-full overflow-auto bg-white p-6' : ''}>
+      {!windowMode && (
+        <div className="border-b pb-4 mb-4">
+          <h2 className="text-xl font-bold flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-600" />
             Clientes Vinculados - {tabela.nome}
-          </DialogTitle>
-          <p className="text-sm text-slate-600">
+          </h2>
+          <p className="text-sm text-slate-600 mt-1">
             {clientes.length} cliente(s) utilizando esta tabela de preço
           </p>
-        </DialogHeader>
+        </div>
+      )}
 
         {clientes.length > 0 ? (
           <Table>
@@ -84,6 +88,26 @@ export default function ClientesVinculadosModal({ tabela, clientes, isOpen, onCl
             </p>
           </div>
         )}
+    </div>
+  );
+
+  if (windowMode) {
+    return content;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[620px] overflow-y-auto">
+        <DialogHeader className="border-b pb-4">
+          <DialogTitle className="text-xl flex items-center gap-2">
+            <Users className="w-5 h-5 text-blue-600" />
+            Clientes Vinculados - {tabela.nome}
+          </DialogTitle>
+          <p className="text-sm text-slate-600">
+            {clientes.length} cliente(s) utilizando esta tabela de preço
+          </p>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   );

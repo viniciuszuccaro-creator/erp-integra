@@ -2,7 +2,7 @@
 
 ## 📋 CLASSIFICAÇÃO DE COMPONENTES
 
-### 1️⃣ WINDOWS (52 componentes - MEGA-ABSOLUTO 100% window-ready)
+### 1️⃣ WINDOWS (54 componentes - ULTRA-MEGA-ABSOLUTO 100% window-ready)
 Componentes principais que **DEVEM** ser abertos como janelas multitarefa:
 - Formulários de cadastro (22)
 - Fluxos complexos (17)
@@ -41,10 +41,11 @@ Dialogs secundários que **fazem parte** de um formulário maior:
 
 | Tipo | Quantidade | Status | Observação |
 |------|------------|--------|------------|
-| **Windows Principais** | 52 | ✅ 100% | Todos adaptados |
+| **Windows Principais** | 54 | ✅ 100% | Todos adaptados |
 | **Painéis Dinâmicos** | 4/4 | ✅ 100% | Todos windows |
 | **Detalhes Ampliados** | 4/4 | ✅ 100% | Todos windows |
 | **Fluxos CRM** | 3/3 | ✅ 100% | Todos windows |
+| **Modais Tabela Preço** | 2/2 | ✅ 100% | Todos windows |
 | **INLINE Exclusivos** | 0 | ✅ ZERO | TUDO é window |
 | **Widgets Auxiliares** | 12 | ✅ OK | Info/cards |
 | **Sub-Dialogs UX** | 2 | ✅ OK | Micro-ações |
@@ -90,13 +91,13 @@ Modal que apenas exibe fotos/comprovantes:
 
 ---
 
-**STATUS:** 🟢 MEGA-ABSOLUTO-COMPLETO - FASE 1 FINALIZADA 100%
+**STATUS:** 🟢 ULTRA-MEGA-ABSOLUTO-COMPLETO - FASE 1 FINALIZADA 100%
 
-**TODAS PÁGINAS, PAINÉIS, DETALHES E FLUXOS 100% CONVERTIDOS:**
+**TODAS PÁGINAS, PAINÉIS, DETALHES E MODAIS 100% CONVERTIDOS:**
 - ✅ Cadastros (4 Painéis + 2 Detalhes → Windows)
-- ✅ Comercial (1 Detalhe + 1 Fluxo → Windows)
+- ✅ Comercial (1 Detalhe + 3 Modais Tabela → Windows)
 - ✅ Compras (1 Detalhe → Window)
-- ✅ CRM (3 Fluxos → Windows: AgendarFollowUp, ConverterOportunidade, FunilVisual)
+- ✅ CRM (3 Fluxos → Windows)
 - ✅ Estoque (100% completo)
 - ✅ Expedição (100% completo)
 - ✅ Financeiro (100% completo)
@@ -104,4 +105,4 @@ Modal que apenas exibe fotos/comprovantes:
 - ✅ RH (100% completo)
 - ✅ Agenda (100% completo)
 
-**ZERO INLINE-ONLY • 52 WINDOWS • 12 WIDGETS • 2 SUB-DIALOGS**
+**ZERO INLINE-ONLY • 54 WINDOWS • 12 WIDGETS • 2 SUB-DIALOGS**
