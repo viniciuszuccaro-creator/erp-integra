@@ -6,6 +6,10 @@ import { Progress } from "@/components/ui/progress";
 import { Gift, Star, DollarSign, TrendingUp, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+/**
+ * V21.1.2 - SUB-DIALOG MANTIDO
+ * Widget auxiliar com dialog interno - OK para UX rápida
+ */
 export default function ProgramaFidelidadeWidget({ 
   cliente, 
   valorPedidoAtual = 0,

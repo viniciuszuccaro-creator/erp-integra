@@ -8,6 +8,10 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useToast } from "@/components/ui/use-toast";
 
+/**
+ * V21.1.2 - SUB-DIALOG MANTIDO
+ * Widget auxiliar com dialog interno - OK para UX rápida
+ */
 export default function CopiarUltimoPedido({ clienteId, onCopiar }) {
   const { toast } = useToast();
 
