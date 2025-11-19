@@ -53,8 +53,8 @@ export default function StatusFase1() {
               <div className="text-xs text-green-700">% Sistema</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-900">15</div>
-              <div className="text-xs text-green-700">Features</div>
+              <div className="text-2xl font-bold text-green-900">17</div>
+              <div className="text-xs text-green-700">Ações</div>
             </div>
           </div>
 
