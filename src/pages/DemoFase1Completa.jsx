@@ -29,6 +29,7 @@ import TabelaPrecoFormCompleto from "@/components/cadastros/TabelaPrecoFormCompl
 import { useWindowManager } from "@/components/lib/WindowManager";
 import GerenciadorJanelas from "@/components/sistema/GerenciadorJanelas";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
+import StatusFase1 from "@/components/sistema/StatusFase1";
 
 /**
  * 🏆 DEMO FASE 1: SISTEMA DE MULTITAREFAS - 100% COMPLETA
@@ -155,6 +156,9 @@ export default function DemoFase1Completa() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* STATUS WIDGET */}
+      <StatusFase1 />
+
       {/* HEADER */}
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-3">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -647,6 +646,9 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo">
+          {/* STATUS FASE 1 */}
+          <StatusFase1 />
+
           {/* KPIs Principais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statsCards.map((stat, index) => (
