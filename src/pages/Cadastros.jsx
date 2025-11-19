@@ -580,7 +580,7 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => openWindow(CadastroClienteCompleto, {}, {
+                          onClick={() => openWindow(CadastroClienteCompleto, { windowMode: true }, {
                             title: 'Novo Cliente',
                             width: 1100,
                             height: 650
@@ -609,7 +609,7 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openWindow(CadastroClienteCompleto, { cliente }, {
+                            onClick={() => openWindow(CadastroClienteCompleto, { cliente, windowMode: true }, {
                               title: `Editar Cliente: ${cliente.nome || cliente.razao_social}`,
                               width: 1100,
                               height: 650
@@ -636,7 +636,7 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => openWindow(CadastroFornecedorCompleto, {}, {
+                          onClick={() => openWindow(CadastroFornecedorCompleto, { windowMode: true }, {
                             title: 'Novo Fornecedor',
                             width: 1100,
                             height: 650
@@ -664,7 +664,7 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openWindow(CadastroFornecedorCompleto, { fornecedor }, {
+                            onClick={() => openWindow(CadastroFornecedorCompleto, { fornecedor, windowMode: true }, {
                               title: `Editar Fornecedor: ${fornecedor.nome}`,
                               width: 1100,
                               height: 650
@@ -884,7 +884,7 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => openWindow(ProdutoFormV22_Completo, {}, {
+                          onClick={() => openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
                             title: 'Novo Produto',
                             width: 1200,
                             height: 700
@@ -927,7 +927,7 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openWindow(ProdutoFormV22_Completo, { produto }, {
+                            onClick={() => openWindow(ProdutoFormV22_Completo, { produto, windowMode: true }, {
                               title: `Editar Produto: ${produto.descricao}`,
                               width: 1200,
                               height: 700
@@ -1100,7 +1100,7 @@ export default function Cadastros() {
                         </CardTitle>
                         <Button
                           size="sm"
-                          onClick={() => openWindow(TabelaPrecoFormCompleto, {}, {
+                          onClick={() => openWindow(TabelaPrecoFormCompleto, { windowMode: true }, {
                             title: 'Nova Tabela de Preço',
                             width: 1200,
                             height: 700
@@ -1122,7 +1122,7 @@ export default function Cadastros() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => openWindow(TabelaPrecoFormCompleto, { tabela }, {
+                                onClick={() => openWindow(TabelaPrecoFormCompleto, { tabela, windowMode: true }, {
                                   title: `Editar Tabela: ${tabela.nome}`,
                                   width: 1200,
                                   height: 700
