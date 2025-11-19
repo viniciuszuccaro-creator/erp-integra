@@ -42,6 +42,8 @@ import OportunidadeForm from "../components/crm/OportunidadeForm";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
+import InteracaoForm from "../components/crm/InteracaoForm";
+import CampanhaForm from "../components/crm/CampanhaForm";
 
 export default function CRMPage() {
   const [activeTab, setActiveTab] = useState("funil");
@@ -945,12 +947,41 @@ export default function CRMPage() {
             <CardHeader className="border-b bg-slate-50">
               <div className="flex justify-between items-center">
                 <CardTitle>Histórico de Interações</CardTitle>
-                <Dialog open={isInteractionDialogOpen} onOpenChange={setIsInteractionDialogOpen}>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => openWindow(InteracaoForm, {
+                    windowMode: true,
+                    onSubmit: async (data) => {
+                      try {
+                        await base44.entities.Interacao.create(data);
+                        const relatedOpp = oportunidades.find(o => o.cliente_nome === data.cliente_nome);
+                        if (relatedOpp) {
+                          await base44.entities.Oportunidade.update(relatedOpp.id, {
+                            ...relatedOpp,
+                            quantidade_interacoes: (relatedOpp.quantidade_interacoes || 0) + 1,
+                            dias_sem_contato: 0,
+                            data_ultima_interacao: new Date().toISOString().split('T')[0]
+                          });
+                        }
+                        queryClient.invalidateQueries({ queryKey: ['interacoes'] });
+                        queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+                        toast({ title: "✅ Interação registrada!" });
+                      } catch (error) {
+                        toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                      }
+                    }
+                  }, {
+                    title: '📞 Nova Interação',
+                    width: 900,
+                    height: 650
+                  })}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Registrar Interação
+                </Button>
+                <Dialog open={false}>
                   <DialogTrigger asChild>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Registrar Interação
-                    </Button>
+                    <Button className="hidden">Removido</Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>
@@ -1146,12 +1177,35 @@ export default function CRMPage() {
             <CardHeader className="border-b bg-slate-50">
               <div className="flex justify-between items-center">
                 <CardTitle>Campanhas de Marketing</CardTitle>
-                <Dialog open={isCampanhaDialogOpen} onOpenChange={setIsCampanhaDialogOpen}>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => openWindow(CampanhaForm, {
+                    windowMode: true,
+                    onSubmit: async (data) => {
+                      try {
+                        const dataWithValues = {
+                          ...data,
+                          orcamento: parseFloat(data.orcamento) || 0
+                        };
+                        await base44.entities.Campanha.create(dataWithValues);
+                        queryClient.invalidateQueries({ queryKey: ['campanhas'] });
+                        toast({ title: "✅ Campanha criada!" });
+                      } catch (error) {
+                        toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                      }
+                    }
+                  }, {
+                    title: '📧 Nova Campanha',
+                    width: 1000,
+                    height: 650
+                  })}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nova Campanha
+                </Button>
+                <Dialog open={false}>
                   <DialogTrigger asChild>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Nova Campanha
-                    </Button>
+                    <Button className="hidden">Removido</Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl">
                     <DialogHeader>

@@ -405,7 +405,7 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">62</div>
+            <div className="text-4xl font-bold text-blue-900 mb-2">65</div>
             <p className="text-sm text-blue-700">Windows Ready</p>
           </CardContent>
         </Card>

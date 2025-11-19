@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import AssinaturaEletronicaModal from "@/components/AssinaturaEletronicaModal";
 import { useToast } from "@/components/ui/use-toast";
+import { useWindow } from "@/components/lib/useWindow";
+import ContratoForm from "@/components/contratos/ContratoForm";
 import {
   FileText,
   Plus,
@@ -47,6 +48,7 @@ export default function ContratosPage() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
 
   const [formData, setFormData] = useState({
     numero_contrato: "",
@@ -624,18 +626,46 @@ export default function ContratosPage() {
           <p className="text-slate-600 mt-1">Contratos inteligentes com alertas, assinatura eletrônica e cobrança automática</p>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            setEditingContrato(null);
-            resetForm();
-          }
-        }}>
+        <Button 
+          className="bg-emerald-600 hover:bg-emerald-700"
+          onClick={() => openWindow(ContratoForm, {
+            windowMode: true,
+            clientes,
+            fornecedores,
+            onSubmit: async (data) => {
+              try {
+                const dataProximoReajuste = new Date(data.data_inicio);
+                dataProximoReajuste.setFullYear(dataProximoReajuste.getFullYear() + 1);
+                const proximaCobranca = new Date(data.data_inicio);
+                proximaCobranca.setMonth(proximaCobranca.getMonth() + 1);
+                proximaCobranca.setDate(data.dia_vencimento || 1);
+                await base44.entities.Contrato.create({
+                  ...data,
+                  data_proximo_reajuste: dataProximoReajuste.toISOString().split('T')[0],
+                  proxima_cobranca: proximaCobranca.toISOString().split('T')[0],
+                  historico_renovacoes: [],
+                  alertas_enviados: [],
+                  contas_geradas_ids: []
+                });
+                queryClient.invalidateQueries({ queryKey: ['contratos'] });
+                toast({ title: "✅ Contrato criado!" });
+              } catch (error) {
+                toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+              }
+            }
+          }, {
+            title: '📄 Novo Contrato',
+            width: 1100,
+            height: 700
+          })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Contrato
+        </Button>
+
+        <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="bg-emerald-600 hover:bg-emerald-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Contrato
-            </Button>
+            <Button className="hidden">Removido</Button>
           </DialogTrigger>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -1075,7 +1105,30 @@ export default function ContratosPage() {
                           <Button variant="ghost" size="icon" onClick={() => setViewingContrato(contrato)} title="Ver detalhes">
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(contrato)} title="Editar">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => openWindow(ContratoForm, {
+                              contrato,
+                              windowMode: true,
+                              clientes,
+                              fornecedores,
+                              onSubmit: async (data) => {
+                                try {
+                                  await base44.entities.Contrato.update(contrato.id, data);
+                                  queryClient.invalidateQueries({ queryKey: ['contratos'] });
+                                  toast({ title: "✅ Contrato atualizado!" });
+                                } catch (error) {
+                                  toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                                }
+                              }
+                            }, {
+                              title: `✏️ Editar: ${contrato.numero_contrato}`,
+                              width: 1100,
+                              height: 700
+                            })}
+                            title="Editar"
+                          >
                             <Edit className="w-4 h-4" />
                           </Button>
                           {podeAssinar(contrato) && (
