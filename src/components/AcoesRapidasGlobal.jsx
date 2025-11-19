@@ -35,7 +35,7 @@ export default function AcoesRapidasGlobal() {
     {
       label: 'Novo Cliente',
       icon: Users,
-      action: () => openWindow(CadastroClienteCompleto, {}, {
+      action: () => openWindow(CadastroClienteCompleto, { windowMode: true }, {
         title: 'Novo Cliente',
         width: 1100,
         height: 650
@@ -45,7 +45,7 @@ export default function AcoesRapidasGlobal() {
     {
       label: 'Novo Produto',
       icon: Package,
-      action: () => openWindow(ProdutoFormV22_Completo, {}, {
+      action: () => openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
         title: 'Novo Produto',
         width: 1200,
         height: 700
@@ -55,7 +55,7 @@ export default function AcoesRapidasGlobal() {
     {
       label: 'Novo Fornecedor',
       icon: Truck,
-      action: () => openWindow(CadastroFornecedorCompleto, {}, {
+      action: () => openWindow(CadastroFornecedorCompleto, { windowMode: true }, {
         title: 'Novo Fornecedor',
         width: 1100,
         height: 650
