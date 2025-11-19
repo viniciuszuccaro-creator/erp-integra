@@ -37,7 +37,7 @@ export default function AcoesRapidasGlobal() {
       label: 'Novo Cliente',
       icon: Users,
       action: () => openWindow(CadastroClienteCompleto, { windowMode: true }, {
-        title: 'Novo Cliente',
+        title: '🧑 Novo Cliente',
         width: 1100,
         height: 650
       }),
@@ -47,7 +47,7 @@ export default function AcoesRapidasGlobal() {
       label: 'Novo Produto',
       icon: Package,
       action: () => openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
-        title: 'Novo Produto',
+        title: '📦 Novo Produto',
         width: 1200,
         height: 700
       }),
@@ -57,11 +57,21 @@ export default function AcoesRapidasGlobal() {
       label: 'Novo Fornecedor',
       icon: Truck,
       action: () => openWindow(CadastroFornecedorCompleto, { windowMode: true }, {
-        title: 'Novo Fornecedor',
+        title: '🏢 Novo Fornecedor',
         width: 1100,
         height: 650
       }),
       cor: 'text-cyan-600'
+    },
+    {
+      label: 'Nova Tabela de Preço',
+      icon: DollarSign,
+      action: () => openWindow(TabelaPrecoFormCompleto, { windowMode: true }, {
+        title: '💰 Nova Tabela',
+        width: 1200,
+        height: 700
+      }),
+      cor: 'text-emerald-600'
     },
     {
       label: 'Novo Título a Pagar',

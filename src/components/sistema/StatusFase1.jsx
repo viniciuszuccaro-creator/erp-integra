@@ -19,16 +19,16 @@ export default function StatusFase1() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center animate-pulse">
                 <CheckCircle2 className="w-7 h-7 text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-bold text-green-900">FASE 1: MULTITAREFA</h3>
-                  <Badge className="bg-green-600 text-white">100% COMPLETA</Badge>
+                  <Badge className="bg-green-600 text-white shadow-lg">✅ 100% COMPLETA</Badge>
                 </div>
                 <p className="text-sm text-green-700 mt-1">
-                  Sistema de janelas global operacional • 7 componentes • 4 formulários • 4 atalhos
+                  Sistema de janelas global operacional • 7 componentes • 4 formulários • 12 features
                 </p>
               </div>
             </div>
@@ -49,11 +49,11 @@ export default function StatusFase1() {
               <div className="text-xs text-green-700">Formulários</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-900">4</div>
-              <div className="text-xs text-green-700">Atalhos</div>
+              <div className="text-2xl font-bold text-green-900">12</div>
+              <div className="text-xs text-green-700">Features</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-900">1.2K</div>
+              <div className="text-2xl font-bold text-green-900">~850</div>
               <div className="text-xs text-green-700">Linhas</div>
             </div>
           </div>
