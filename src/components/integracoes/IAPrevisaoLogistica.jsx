@@ -7,7 +7,10 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Sparkles, TrendingUp, MapPin, Clock, AlertTriangle, CheckCircle, Zap } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function IAPrevisaoLogistica() {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function IAPrevisaoLogistica({ windowMode = false }) {
   const [analisando, setAnalisando] = useState(false);
   const [previsao, setPrevisao] = useState(null);
 
@@ -123,7 +126,7 @@ export default function IAPrevisaoLogistica() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
