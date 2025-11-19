@@ -10,9 +10,9 @@ import { useToast } from "@/components/ui/use-toast";
 
 /**
  * Teste de Integração Google Maps API
- * V12.0 - Botão corrigido
+ * V21.1.2 - WINDOW MODE READY
  */
-export default function TesteGoogleMaps({ configuracao }) {
+export default function TesteGoogleMaps({ configuracao, windowMode = false }) {
   const [testando, setTestando] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [enderecoTeste, setEnderecoTeste] = useState("Av. Paulista, 1000 - São Paulo, SP");
@@ -89,7 +89,7 @@ export default function TesteGoogleMaps({ configuracao }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

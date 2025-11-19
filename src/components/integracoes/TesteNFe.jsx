@@ -11,9 +11,9 @@ import { useToast } from "@/components/ui/use-toast";
 
 /**
  * Teste de Emissão de NF-e
- * V12.0 - Botão corrigido
+ * V21.1.2 - WINDOW MODE READY
  */
-export default function TesteNFe({ configuracao }) {
+export default function TesteNFe({ configuracao, windowMode = false }) {
   const [testando, setTestando] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [pedidoTeste, setPedidoTeste] = useState("");
@@ -65,7 +65,7 @@ export default function TesteNFe({ configuracao }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

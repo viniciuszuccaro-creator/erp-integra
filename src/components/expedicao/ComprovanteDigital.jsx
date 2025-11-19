@@ -9,7 +9,10 @@ import { useToast } from "@/components/ui/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
-export default function ComprovanteDigital({ entrega, isOpen, onClose }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function ComprovanteDigital({ entrega, isOpen, onClose, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -138,17 +141,8 @@ export default function ComprovanteDigital({ entrega, isOpen, onClose }) {
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            Confirmar Entrega - Comprovante Digital
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
+  const formContent = (
+    <form onSubmit={handleSubmit} className="space-y-6">
           {/* Info da Entrega */}
           <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-900">
@@ -292,6 +286,32 @@ export default function ComprovanteDigital({ entrega, isOpen, onClose }) {
             </Button>
           </div>
         </form>
+  );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            Confirmar Entrega - Comprovante Digital
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            Confirmar Entrega - Comprovante Digital
+          </DialogTitle>
+        </DialogHeader>
+        {formContent}
       </DialogContent>
     </Dialog>
   );

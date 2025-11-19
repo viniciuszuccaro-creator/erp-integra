@@ -8,7 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { MessageCircle, Send, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function TesteWhatsApp({ configuracao }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function TesteWhatsApp({ configuracao, windowMode = false }) {
   const [testando, setTestando] = useState(false);
   const [telefone, setTelefone] = useState("");
   const [mensagem, setMensagem] = useState("Olá! Esta é uma mensagem de teste do sistema ERP Integra.");
@@ -64,7 +67,7 @@ export default function TesteWhatsApp({ configuracao }) {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

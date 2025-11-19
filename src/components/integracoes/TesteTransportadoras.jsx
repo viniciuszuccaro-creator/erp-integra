@@ -10,9 +10,9 @@ import { useToast } from "@/components/ui/use-toast";
 
 /**
  * Teste de Cálculo de Frete com Transportadoras
- * V12.0 - Botão corrigido
+ * V21.1.2 - WINDOW MODE READY
  */
-export default function TesteTransportadoras({ configuracao }) {
+export default function TesteTransportadoras({ configuracao, windowMode = false }) {
   const [testando, setTestando] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [cepOrigem, setCepOrigem] = useState("01310-100");
@@ -94,7 +94,7 @@ export default function TesteTransportadoras({ configuracao }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

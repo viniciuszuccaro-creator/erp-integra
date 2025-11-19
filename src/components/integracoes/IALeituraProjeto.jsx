@@ -26,10 +26,10 @@ import {
 } from "lucide-react";
 
 /**
- * IA de Leitura de Projeto - V12.0
- * Preparado para integração REAL com Azure OpenAI
+ * IA de Leitura de Projeto
+ * V21.1.2 - WINDOW MODE READY - Preparado para integração REAL com Azure OpenAI
  */
-export default function IALeituraProjeto({ configuracao }) {
+export default function IALeituraProjeto({ configuracao, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [arquivo, setArquivo] = useState(null);
@@ -258,7 +258,7 @@ Forneça as dimensões em milímetros (mm) e espaçamento de estribos em centím
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
       <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

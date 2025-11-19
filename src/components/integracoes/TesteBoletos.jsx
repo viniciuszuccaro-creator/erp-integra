@@ -10,9 +10,9 @@ import { useToast } from "@/components/ui/use-toast";
 
 /**
  * Teste de Geração de Boletos e PIX
- * V12.0 - Botão corrigido
+ * V21.1.2 - WINDOW MODE READY
  */
-export default function TesteBoletos({ configuracao }) {
+export default function TesteBoletos({ configuracao, windowMode = false }) {
   const [testando, setTestando] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [valorTeste, setValorTeste] = useState("150.00");
@@ -90,7 +90,7 @@ export default function TesteBoletos({ configuracao }) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6 bg-white' : ''}`}>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
