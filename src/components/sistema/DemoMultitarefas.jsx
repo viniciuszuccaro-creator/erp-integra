@@ -12,56 +12,62 @@ import {
   Layers
 } from 'lucide-react';
 import { useWindow } from '@/components/lib/useWindow';
+import CadastroClienteCompleto from '@/components/cadastros/CadastroClienteCompleto';
+import CadastroFornecedorCompleto from '@/components/cadastros/CadastroFornecedorCompleto';
+import ProdutoFormV22_Completo from '@/components/cadastros/ProdutoFormV22_Completo';
+import TabelaPrecoFormCompleto from '@/components/cadastros/TabelaPrecoFormCompleto';
 
 /**
  * V21.1.2 - DEMO do Sistema de Multitarefas
  * Demonstra como abrir múltiplas janelas simultaneamente
  */
 export default function DemoMultitarefas() {
-  const { 
-    openProductWindow, 
-    openPedidoWindow, 
-    openClienteWindow,
-    openTabelaPrecoWindow,
-    openNFeWindow,
-    openFornecedorWindow
-  } = useWindow();
+  const { openWindow } = useWindow();
 
   const demos = [
     {
       title: 'Abrir Produto',
       icon: Package,
       color: 'blue',
-      action: openProductWindow,
+      action: () => openWindow(ProdutoFormV22_Completo, {}, { 
+        title: 'Novo Produto',
+        width: 1200,
+        height: 700
+      }),
       description: 'Cadastro de produto com IA'
-    },
-    {
-      title: 'Abrir Pedido',
-      icon: ShoppingCart,
-      color: 'green',
-      action: openPedidoWindow,
-      description: '9 abas multi-instância'
     },
     {
       title: 'Abrir Cliente',
       icon: Users,
       color: 'purple',
-      action: openClienteWindow,
+      action: () => openWindow(CadastroClienteCompleto, {}, {
+        title: 'Novo Cliente',
+        width: 1100,
+        height: 650
+      }),
       description: 'Cadastro completo de cliente'
+    },
+    {
+      title: 'Abrir Fornecedor',
+      icon: Package,
+      color: 'cyan',
+      action: () => openWindow(CadastroFornecedorCompleto, {}, {
+        title: 'Novo Fornecedor',
+        width: 1100,
+        height: 650
+      }),
+      description: 'Cadastro de fornecedor'
     },
     {
       title: 'Abrir Tabela Preço',
       icon: DollarSign,
       color: 'yellow',
-      action: openTabelaPrecoWindow,
+      action: () => openWindow(TabelaPrecoFormCompleto, {}, {
+        title: 'Nova Tabela de Preço',
+        width: 1200,
+        height: 700
+      }),
       description: 'Gerenciamento de preços'
-    },
-    {
-      title: 'Abrir NF-e',
-      icon: FileText,
-      color: 'red',
-      action: openNFeWindow,
-      description: 'Emissão de nota fiscal'
     }
   ];
 

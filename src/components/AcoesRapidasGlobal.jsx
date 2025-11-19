@@ -11,13 +11,19 @@ import {
 import { Plus, ShoppingCart, Users, Package, DollarSign, FileText, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useWindow } from '@/components/lib/useWindow';
+import CadastroClienteCompleto from '@/components/cadastros/CadastroClienteCompleto';
+import CadastroFornecedorCompleto from '@/components/cadastros/CadastroFornecedorCompleto';
+import ProdutoFormV22_Completo from '@/components/cadastros/ProdutoFormV22_Completo';
 
 /**
  * Ações Rápidas Globais - Botão + Novo
  * Acesso rápido às ações mais comuns do sistema
+ * V21.0: Integrado com Sistema de Janelas Multitarefa
  */
 export default function AcoesRapidasGlobal() {
   const navigate = useNavigate();
+  const { openWindow } = useWindow();
 
   const acoes = [
     {
@@ -29,26 +35,38 @@ export default function AcoesRapidasGlobal() {
     {
       label: 'Novo Cliente',
       icon: Users,
-      action: () => navigate(createPageUrl('Cadastros') + '?tab=clientes&action=novo'),
+      action: () => openWindow(CadastroClienteCompleto, {}, {
+        title: 'Novo Cliente',
+        width: 1100,
+        height: 650
+      }),
       cor: 'text-green-600'
     },
     {
-      label: 'Nova OP',
+      label: 'Novo Produto',
       icon: Package,
-      action: () => navigate(createPageUrl('Producao') + '?action=nova-op'),
-      cor: 'text-orange-600'
+      action: () => openWindow(ProdutoFormV22_Completo, {}, {
+        title: 'Novo Produto',
+        width: 1200,
+        height: 700
+      }),
+      cor: 'text-purple-600'
+    },
+    {
+      label: 'Novo Fornecedor',
+      icon: Truck,
+      action: () => openWindow(CadastroFornecedorCompleto, {}, {
+        title: 'Novo Fornecedor',
+        width: 1100,
+        height: 650
+      }),
+      cor: 'text-cyan-600'
     },
     {
       label: 'Novo Título a Pagar',
       icon: DollarSign,
       action: () => navigate(createPageUrl('Financeiro') + '?tab=contas-pagar&action=novo'),
       cor: 'text-red-600'
-    },
-    {
-      label: 'Nova Entrega',
-      icon: Truck,
-      action: () => navigate(createPageUrl('Expedicao') + '?action=nova-entrega'),
-      cor: 'text-purple-600'
     },
     {
       label: 'Nova NF-e',
