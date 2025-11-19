@@ -11,6 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import RequisicaoAlmoxarifadoForm from "./RequisicaoAlmoxarifadoForm";
+import { useWindow } from "@/components/lib/useWindow";
+import { toast } from "sonner";
 
 export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -138,14 +141,37 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Button
+          className="bg-orange-600 hover:bg-orange-700"
+          onClick={() => openWindow(RequisicaoAlmoxarifadoForm, {
+            windowMode: true,
+            onSubmit: async (data) => {
+              try {
+                const user = await base44.auth.me();
+                await createMutation.mutateAsync({
+                  ...data,
+                  solicitante: data.solicitante || user?.full_name || 'Sistema'
+                });
+                toast.success("✅ Requisição registrada!");
+              } catch (error) {
+                toast.error("Erro ao criar requisição");
+              }
+            }
+          }, {
+            title: '📋 Nova Requisição Almoxarifado',
+            width: 900,
+            height: 650
+          })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Requisição
+        </Button>
+
+        <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Requisição
-            </Button>
+            <Button className="hidden">Removido</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto hidden">
             <DialogHeader>
               <DialogTitle>Requisição de Almoxarifado</DialogTitle>
             </DialogHeader>

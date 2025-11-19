@@ -11,11 +11,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import RecebimentoForm from "./RecebimentoForm";
+import { useWindow } from "@/components/lib/useWindow";
+import { toast } from "sonner";
 
 export default function RecebimentoTab({ recebimentos, ordensCompra, produtos }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingRecebimento, setViewingRecebimento] = useState(null);
+  const { openWindow } = useWindow();
   const [formData, setFormData] = useState({
     numero_recebimento: `REC-${Date.now()}`,
     ordem_compra_id: "",
@@ -171,14 +175,37 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
           />
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Button
+          className="bg-green-600 hover:bg-green-700"
+          onClick={() => openWindow(RecebimentoForm, {
+            windowMode: true,
+            onSubmit: async (data) => {
+              try {
+                const user = await base44.auth.me();
+                await createMutation.mutateAsync({
+                  ...data,
+                  conferente: data.conferente || user?.full_name || 'Sistema'
+                });
+                toast.success("✅ Recebimento registrado!");
+              } catch (error) {
+                toast.error("Erro ao registrar recebimento");
+              }
+            }
+          }, {
+            title: '📦 Novo Recebimento',
+            width: 1000,
+            height: 700
+          })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Registrar Recebimento
+        </Button>
+
+        <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="bg-green-600 hover:bg-green-700">
-              <Plus className="w-4 h-4 mr-2" />
-              Registrar Recebimento
-            </Button>
+            <Button className="hidden">Removido</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto hidden">
             <DialogHeader>
               <DialogTitle>Registrar Recebimento de Produtos</DialogTitle>
             </DialogHeader>
