@@ -12,7 +12,7 @@ export default function WindowRenderer() {
   const { windows } = useWindowManager();
 
   return (
-    <>
+    <AnimatePresence>
       {windows.map(window => {
         if (window.isMinimized) return null;
         
