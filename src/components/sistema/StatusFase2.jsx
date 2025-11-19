@@ -38,20 +38,32 @@ export default function StatusFase2() {
           </div>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            {estruturantes.map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <div 
-                  key={idx}
-                  className={`bg-${item.color}-100 border-2 border-${item.color}-300 rounded-lg p-3 text-center`}
-                >
-                  <Icon className={`w-8 h-8 text-${item.color}-600 mx-auto mb-2`} />
-                  <p className="text-xs font-semibold text-slate-700">{item.nome}</p>
-                  <CheckCircle2 className="w-4 h-4 text-green-600 mx-auto mt-1" />
-                </div>
-              );
-            })}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+            <div className="bg-indigo-100 border-2 border-indigo-300 rounded-lg p-3 text-center">
+              <Factory className="w-8 h-8 text-indigo-600 mx-auto mb-2" />
+              <p className="text-xs font-semibold text-slate-700">Setores Atividade</p>
+              <CheckCircle2 className="w-4 h-4 text-green-600 mx-auto mt-1" />
+            </div>
+            <div className="bg-cyan-100 border-2 border-cyan-300 rounded-lg p-3 text-center">
+              <Package className="w-8 h-8 text-cyan-600 mx-auto mb-2" />
+              <p className="text-xs font-semibold text-slate-700">Grupos Produto</p>
+              <CheckCircle2 className="w-4 h-4 text-green-600 mx-auto mt-1" />
+            </div>
+            <div className="bg-amber-100 border-2 border-amber-300 rounded-lg p-3 text-center">
+              <Award className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+              <p className="text-xs font-semibold text-slate-700">Marcas</p>
+              <CheckCircle2 className="w-4 h-4 text-green-600 mx-auto mt-1" />
+            </div>
+            <div className="bg-purple-100 border-2 border-purple-300 rounded-lg p-3 text-center">
+              <Warehouse className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+              <p className="text-xs font-semibold text-slate-700">Locais Estoque</p>
+              <CheckCircle2 className="w-4 h-4 text-green-600 mx-auto mt-1" />
+            </div>
+            <div className="bg-red-100 border-2 border-red-300 rounded-lg p-3 text-center">
+              <Scale className="w-8 h-8 text-red-600 mx-auto mb-2" />
+              <p className="text-xs font-semibold text-slate-700">Tabelas Fiscais</p>
+              <CheckCircle2 className="w-4 h-4 text-green-600 mx-auto mt-1" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">

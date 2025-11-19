@@ -51,6 +51,7 @@ import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatusFase1 from "@/components/sistema/StatusFase1";
+import StatusFase2 from "@/components/sistema/StatusFase2";
 import { useWindow } from "@/components/lib/useWindow";
 
 
@@ -648,8 +649,11 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6">
-          {/* STATUS FASE 1 */}
-          <StatusFase1 />
+          {/* STATUS FASE 1 e FASE 2 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <StatusFase1 />
+            <StatusFase2 />
+          </div>
 
           {/* KPIs Principais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
