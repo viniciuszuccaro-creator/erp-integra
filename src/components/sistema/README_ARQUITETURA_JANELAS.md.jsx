@@ -2,7 +2,7 @@
 
 ## 📋 CLASSIFICAÇÃO DE COMPONENTES
 
-### 1️⃣ WINDOWS (65 componentes - SUPREMO-MÁXIMO-HIPER-ULTRA-MEGA-ABSOLUTO 100% window-ready)
+### 1️⃣ WINDOWS (75 componentes - INFINITO-SUPREMO-MÁXIMO-HIPER-ULTRA-MEGA-ABSOLUTO 100% window-ready)
 Componentes principais que **DEVEM** ser abertos como janelas multitarefa:
 - Formulários de cadastro (22)
 - Fluxos complexos (17)
@@ -41,11 +41,12 @@ Dialogs secundários que **fazem parte** de um formulário maior:
 
 | Tipo | Quantidade | Status | Observação |
 |------|------------|--------|------------|
-| **Windows Principais** | 65 | ✅ 100% | Todos adaptados |
+| **Windows Principais** | 75 | ✅ 100% | Todos adaptados |
 | **Painéis Dinâmicos** | 4/4 | ✅ 100% | Todos windows |
 | **Detalhes Ampliados** | 4/4 | ✅ 100% | Todos windows |
 | **Fluxos CRM/Comercial** | 5/5 | ✅ 100% | Todos windows |
 | **Forms CRM/Contratos** | 3/3 | ✅ 100% | Todos windows |
+| **Forms Cadastros Auxiliares** | 10/10 | ✅ 100% | Todos windows |
 | **Modais Tabela Preço** | 2/2 | ✅ 100% | Todos windows |
 | **Testes IA/Integrações** | 8/8 | ✅ 100% | Todos windows |
 | **INLINE Exclusivos** | 0 | ✅ ZERO | TUDO é window |

@@ -4,12 +4,15 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertTriangle, Upload } from "lucide-react";
+import { Loader2, AlertTriangle, Upload, UserCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
 
-export default function MotoristaForm({ motorista, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function MotoristaForm({ motorista, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(motorista || {
     nome_completo: '',
     cpf: '',
@@ -42,7 +45,7 @@ export default function MotoristaForm({ motorista, onSubmit, isSubmitting }) {
     onSubmit(formData);
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label>Nome Completo *</Label>
@@ -152,4 +155,20 @@ export default function MotoristaForm({ motorista, onSubmit, isSubmitting }) {
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <UserCircle className="w-5 h-5 text-blue-600" />
+            {motorista ? 'Editar Motorista' : 'Novo Motorista'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

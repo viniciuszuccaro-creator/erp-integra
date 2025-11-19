@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2 } from "lucide-react";
+import { Loader2, Factory } from "lucide-react";
 
-export default function SetorAtividadeForm({ setor, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function SetorAtividadeForm({ setor, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(setor || {
     nome: '',
     descricao: '',
@@ -22,8 +25,8 @@ export default function SetorAtividadeForm({ setor, onSubmit, isSubmitting }) {
     onSubmit(formData);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6 p-6">
+  const formContent = (
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <Label>Nome do Setor *</Label>
         <Input
@@ -95,4 +98,20 @@ export default function SetorAtividadeForm({ setor, onSubmit, isSubmitting }) {
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Factory className="w-5 h-5 text-blue-600" />
+            {setor ? 'Editar Setor de Atividade' : 'Novo Setor de Atividade'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }

@@ -24,10 +24,10 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 | Categoria | Quantidade | Status |
 |-----------|------------|--------|
 | **Componentes Core** | 7 | ✅ 100% |
-| **Formulários Adaptados** | 25 | ✅ 100% |
+| **Formulários Cadastros** | 35 | ✅ 100% |
 | **Painéis/Views/Detalhes/Fluxos** | 32 | ✅ 100% |
 | **Testes Integrações IA** | 8 | ✅ 100% |
-| **Total Componentes Window** | 65 | ✅ 100% |
+| **Total Componentes Window** | 75 | ✅ 100% |
 | **INLINE Exclusivos** | 0 | ✅ ZERO |
 | **Widgets Auxiliares** | 12 | ✅ OK |
 | **Sub-Dialogs Micro-ações** | 2 | ✅ OK |
@@ -141,6 +141,16 @@ A Fase 1 do ERP Zuccaro V21.0 foi **COMPLETAMENTE FINALIZADA** com sucesso absol
 63. ✅ InteracaoForm (900x650)
 64. ✅ CampanhaForm (1000x650)
 65. ✅ ContratoForm (1100x700)
+66. ✅ DepartamentoForm (700x500)
+67. ✅ CargoForm (800x600)
+68. ✅ TurnoForm (800x550)
+69. ✅ BancoForm (900x650)
+70. ✅ FormaPagamentoForm (800x600)
+71. ✅ VeiculoForm (900x600)
+72. ✅ MotoristaForm (800x600)
+73. ✅ GrupoProdutoForm (800x550)
+74. ✅ MarcaForm (800x550)
+75. ✅ SetorAtividadeForm (800x550)
 
 ### 4. Detalhes INLINE - Não são Modais (3)
 - DetalhesCadastro (expansão inline em tabelas)

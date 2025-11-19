@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
+import { Loader2, Briefcase } from "lucide-react";
 
-export default function CargoForm({ cargo, onSubmit, isSubmitting }) {
+/**
+ * V21.1.2 - WINDOW MODE READY
+ */
+export default function CargoForm({ cargo, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(cargo || {
     nome_cargo: '',
     descricao: '',
@@ -26,7 +29,7 @@ export default function CargoForm({ cargo, onSubmit, isSubmitting }) {
     onSubmit(formData);
   };
 
-  return (
+  const formContent = (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label>Nome do Cargo *</Label>
@@ -97,4 +100,20 @@ export default function CargoForm({ cargo, onSubmit, isSubmitting }) {
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="mb-4 pb-4 border-b">
+          <h2 className="text-xl font-bold flex items-center gap-2">
+            <Briefcase className="w-5 h-5 text-blue-600" />
+            {cargo ? 'Editar Cargo' : 'Novo Cargo'}
+          </h2>
+        </div>
+        {formContent}
+      </div>
+    );
+  }
+
+  return formContent;
 }
