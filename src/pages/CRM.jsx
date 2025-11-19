@@ -38,8 +38,10 @@ import AgendarFollowUp from "../components/crm/AgendarFollowUp";
 import ConverterOportunidade from "../components/crm/ConverterOportunidade";
 import IALeadsPriorizacao from "../components/crm/IALeadsPriorizacao";
 import IAChurnDetection from "../components/crm/IAChurnDetection";
+import OportunidadeForm from "../components/crm/OportunidadeForm";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { useWindow } from "@/components/lib/useWindow";
 
 export default function CRMPage() {
   const [activeTab, setActiveTab] = useState("funil");
@@ -55,6 +57,7 @@ export default function CRMPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { openWindow } = useWindow();
 
   const [oppForm, setOppForm] = useState({
     titulo: "",
@@ -600,12 +603,42 @@ export default function CRMPage() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold">Funil de Vendas - Drag & Drop</h2>
-              <Dialog open={isOppDialogOpen} onOpenChange={setIsOppDialogOpen}>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => openWindow(OportunidadeForm, {
+                  windowMode: true,
+                  onSubmit: async (data) => {
+                    try {
+                      const score = calcularScore(data);
+                      const temperatura = calcularTemperatura(data);
+                      await base44.entities.Oportunidade.create({
+                        ...data,
+                        score,
+                        temperatura,
+                        quantidade_interacoes: 0,
+                        dias_sem_contato: 0,
+                        data_ultima_interacao: new Date().toISOString().split('T')[0]
+                      });
+                      queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+                      toast({ title: "✅ Oportunidade criada!" });
+                    } catch (error) {
+                      toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                    }
+                  }
+                }, {
+                  title: '🎯 Nova Oportunidade',
+                  width: 1000,
+                  height: 650
+                })}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Oportunidade
+              </Button>
+              
+              {/* BACKUP: Dialog removido */}
+              <Dialog open={false}>
                 <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nova Oportunidade
-                  </Button>
+                  <Button className="hidden">Removido</Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
@@ -848,11 +881,25 @@ export default function CRMPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => {
-                              setEditingOpp(opp);
-                              setOppForm(opp);
-                              setIsOppDialogOpen(true);
-                            }}
+                            onClick={() => openWindow(OportunidadeForm, {
+                              oportunidade: opp,
+                              windowMode: true,
+                              onSubmit: async (data) => {
+                                try {
+                                  const score = calcularScore(data);
+                                  const temperatura = calcularTemperatura(data);
+                                  await base44.entities.Oportunidade.update(opp.id, { ...data, score, temperatura });
+                                  queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
+                                  toast({ title: "✅ Oportunidade atualizada!" });
+                                } catch (error) {
+                                  toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                                }
+                              }
+                            }, {
+                              title: `✏️ Editar: ${opp.titulo}`,
+                              width: 1000,
+                              height: 650
+                            })}
                             title="Editar"
                           >
                             <Edit className="w-4 h-4" />

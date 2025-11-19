@@ -20,51 +20,22 @@ import NotificacoesAutomaticas from '../sistema/NotificacoesAutomaticas';
 import ExportButton from '../ExportButton';
 import { exportarPedidosExcel } from '../lib/exportacaoExcel';
 import { ImprimirPedido } from '@/components/lib/impressao';
+import { useWindow } from '@/components/lib/useWindow';
 
-export default function PedidosTab({ pedidos, clientes, isLoading, empresas = [] }) {
+export default function PedidosTab({ pedidos, clientes, isLoading, empresas = [], onCreatePedido, onEditPedido }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [origemFilter, setOrigemFilter] = useState("todos");
   const [escopoFilter, setEscopoFilter] = useState("esta-empresa");
-  const [pedidoDialogOpen, setPedidoDialogOpen] = useState(false);
-  const [editingPedido, setEditingPedido] = useState(null);
   const [nfeModal, setNfeModal] = useState(null);
   const [opModal, setOpModal] = useState(null);
   const [entregasModal, setEntregasModal] = useState(null);
   
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
+  const { openWindow } = useWindow();
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Pedido.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      setPedidoDialogOpen(false);
-      setEditingPedido(null);
-      toast.success("✅ Pedido criado com sucesso!");
-    },
-  });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Pedido.update(id, data),
-    onSuccess: async (result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      setPedidoDialogOpen(false);
-      setEditingPedido(null);
-      toast.success("✅ Pedido atualizado!");
-
-      const pedidoAtualizado = await base44.entities.Pedido.get(variables.id);
-      
-      if (variables.data.status === 'Aprovado' && pedidoAtualizado.status === 'Aprovado') {
-        await NotificacoesAutomaticas.notificarPedidoAprovado(pedidoAtualizado);
-      }
-    },
-  });
-
-  const handleEdit = (pedido) => {
-    setEditingPedido(pedido);
-    setPedidoDialogOpen(true);
-  };
 
   const handleImprimirPedido = (pedido) => {
     ImprimirPedido({ 
@@ -168,10 +139,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
             ]}
           />
           <Button 
-            onClick={() => {
-              setEditingPedido(null);
-              setPedidoDialogOpen(true);
-            }}
+            onClick={onCreatePedido}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -317,7 +285,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            onClick={() => handleEdit(pedido)}
+                            onClick={() => onEditPedido(pedido)}
                             title="Editar Pedido"
                           >
                             <Edit2 className="w-4 h-4 text-blue-600" />
@@ -371,26 +339,6 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas = []
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={pedidoDialogOpen} onOpenChange={setPedidoDialogOpen}>
-        <DialogContent className="max-w-[90vw] max-h-[95vh] p-0 overflow-hidden">
-          <PedidoFormCompleto
-            pedido={editingPedido}
-            clientes={clientes}
-            onSubmit={(data) => {
-              if (editingPedido) {
-                updateMutation.mutate({ id: editingPedido.id, data });
-              } else {
-                createMutation.mutate(data);
-              }
-            }}
-            onCancel={() => {
-              setPedidoDialogOpen(false);
-              setEditingPedido(null);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
 
       {nfeModal && (
         <GerarNFeModal

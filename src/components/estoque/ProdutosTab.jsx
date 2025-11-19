@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +13,8 @@ import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2,
 import { useToast } from "@/components/ui/use-toast";
 import SearchInput from "@/components/ui/SearchInput";
 import SolicitarCompraRapidoModal from "../compras/SolicitarCompraRapidoModal";
+import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
+import { useWindow } from "@/components/lib/useWindow";
 
 export default function ProdutosTab({ produtos, isLoading }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,6 +22,7 @@ export default function ProdutosTab({ produtos, isLoading }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduto, setEditingProduto] = useState(null);
   const [solicitacaoModal, setSolicitacaoModal] = useState(null);
+  const { openWindow } = useWindow();
   const [formData, setFormData] = useState({
     codigo: "",
     descricao: "",
@@ -139,17 +141,33 @@ export default function ProdutosTab({ produtos, isLoading }) {
 
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Produtos</h2>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) {
-            resetForm();
-          }
-        }}>
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700" 
+          onClick={() => openWindow(ProdutoFormV22_Completo, {
+            windowMode: true,
+            onSubmit: async (data) => {
+              try {
+                await base44.entities.Produto.create(data);
+                queryClient.invalidateQueries({ queryKey: ['produtos'] });
+                toast({ title: "✅ Produto criado!" });
+              } catch (error) {
+                toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+              }
+            }
+          }, {
+            title: '📦 Novo Produto',
+            width: 1200,
+            height: 700
+          })}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Produto
+        </Button>
+        
+        {/* BACKUP: Dialog removido */}
+        <Dialog open={false}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleNovoProduto}>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Produto
-            </Button>
+            <Button className="hidden">Removido</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -366,7 +384,27 @@ export default function ProdutosTab({ produtos, isLoading }) {
                               <ShoppingCart className="w-4 h-4" />
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" onClick={() => handleEdit(produto)}>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => openWindow(ProdutoFormV22_Completo, {
+                              produto,
+                              windowMode: true,
+                              onSubmit: async (data) => {
+                                try {
+                                  await base44.entities.Produto.update(produto.id, data);
+                                  queryClient.invalidateQueries({ queryKey: ['produtos'] });
+                                  toast({ title: "✅ Produto atualizado!" });
+                                } catch (error) {
+                                  toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                                }
+                              }
+                            }, {
+                              title: `✏️ Editar: ${produto.descricao}`,
+                              width: 1200,
+                              height: 700
+                            })}
+                          >
                             <Edit2 className="w-4 h-4" />
                           </Button>
                         </div>

@@ -22,6 +22,7 @@ import PedidoFormCompleto from '@/components/comercial/PedidoFormCompleto';
 import ContaReceberForm from '@/components/financeiro/ContaReceberForm';
 import ContaPagarForm from '@/components/financeiro/ContaPagarForm';
 import FormularioEntrega from '@/components/expedicao/FormularioEntrega';
+import OportunidadeForm from '@/components/crm/OportunidadeForm';
 import { toast } from 'sonner';
 
 /**
@@ -146,10 +147,28 @@ export default function AcoesRapidasGlobal() {
       cor: 'text-red-600'
     },
     {
-      label: 'Nova Entrega',
-      icon: Truck,
-      action: () => navigate(createPageUrl('Expedicao')),
-      cor: 'text-orange-600'
+      label: 'Nova Oportunidade CRM',
+      icon: Users,
+      action: () => openWindow(OportunidadeForm, {
+        windowMode: true,
+        onSubmit: async (data) => {
+          try {
+            await base44.entities.Oportunidade.create({
+              ...data,
+              quantidade_interacoes: 0,
+              dias_sem_contato: 0
+            });
+            toast.success("✅ Oportunidade criada!");
+          } catch (error) {
+            toast.error("Erro ao criar oportunidade");
+          }
+        }
+      }, {
+        title: '🎯 Nova Oportunidade',
+        width: 1000,
+        height: 650
+      }),
+      cor: 'text-purple-600'
     },
     {
       label: 'Nova NF-e',
