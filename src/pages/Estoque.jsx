@@ -29,16 +29,17 @@ import ControleLotesValidade from "../components/estoque/ControleLotesValidade";
 import RelatoriosEstoque from "../components/estoque/RelatoriosEstoque";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import usePermissions from "@/components/lib/usePermissions";
 import IAReposicao from "../components/estoque/IAReposicao";
+import { useWindow } from "@/components/lib/useWindow";
+import TransferenciaEntreEmpresasForm from "../components/estoque/TransferenciaEntreEmpresasForm";
 
 export default function Estoque() {
   const [activeTab, setActiveTab] = useState("produtos");
   const [visaoConsolidada, setVisaoConsolidada] = useState(false);
-  const [transferenciaOpen, setTransferenciaOpen] = useState(false);
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const { openWindow } = useWindow();
 
   const {
     contexto,
@@ -153,100 +154,21 @@ export default function Estoque() {
           </p>
         </div>
         {estaNoGrupo && (
-          <div className="flex items-center gap-3">
-            
-            <Dialog open={transferenciaOpen} onOpenChange={setTransferenciaOpen}>
-              <DialogTrigger asChild>
-                
-                 <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center">
-                  <ArrowLeftRight className="w-4 h-4 mr-2" />
-                  Transferir entre Empresas
-                </button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Transferência entre Empresas</DialogTitle>
-                </DialogHeader>
-                <form className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Empresa Origem *</label>
-                      <select className="w-full p-2 border rounded mt-1">
-                        <option value="">Selecione...</option>
-                        {empresasDoGrupo.map(emp => (
-                          <option key={emp.id} value={emp.id}>
-                            {emp.nome_fantasia || emp.razao_social}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Empresa Destino *</label>
-                      <select className="w-full p-2 border rounded mt-1">
-                        <option value="">Selecione...</option>
-                        {empresasDoGrupo.map(emp => (
-                          <option key={emp.id} value={emp.id}>
-                            {emp.nome_fantasia || emp.razao_social}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="text-sm font-medium">Produto *</label>
-                      <select className="w-full p-2 border rounded mt-1">
-                        <option value="">Selecione...</option>
-                        {produtos.filter(p => p.status === 'Ativo').map(prod => (
-                          <option key={prod.id} value={prod.id}>
-                            {prod.codigo ? `${prod.codigo} - ` : ''}{prod.descricao}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Quantidade *</label>
-                      <input type="number" step="0.01" className="w-full p-2 border rounded mt-1" />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Unidade</label>
-                      <input type="text" className="w-full p-2 border rounded mt-1 bg-slate-50" readOnly />
-                    </div>
-                    <div className="col-span-2">
-                      <label className="text-sm font-medium">Motivo *</label>
-                      <select className="w-full p-2 border rounded mt-1">
-                        <option value="reequilibrio">Reequilíbrio de Estoque</option>
-                        <option value="producao">Suprimento para Produção</option>
-                        <option value="emprestimo">Empréstimo Temporário</option>
-                        <option value="devolucao">Devolução de Empréstimo</option>
-                        <option value="outros">Outros</option>
-                      </select>
-                    </div>
-                    <div className="col-span-2">
-                      <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded">
-                        <input type="checkbox" id="gerar-financeiro" />
-                        <label htmlFor="gerar-financeiro" className="text-sm">
-                          Gerar financeiro interno (transferência cobra da empresa destino)
-                        </label>
-                      </div>
-                    </div>
-                    <div className="col-span-2">
-                      <label className="text-sm font-medium">Observações</label>
-                      <textarea className="w-full p-2 border rounded mt-1" rows={3}></textarea>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-3 pt-4 border-t">
-                    
-                    <button type="button" onClick={() => setTransferenciaOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                      Cancelar
-                    </button>
-                    <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-md inline-flex items-center">
-                      Confirmar Transferência
-                    </button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </div>
+          <Button
+            onClick={() => openWindow(TransferenciaEntreEmpresasForm, {
+              empresasDoGrupo,
+              produtos,
+              windowMode: true
+            }, {
+              title: '↔️ Transferência Entre Empresas',
+              width: 900,
+              height: 600
+            })}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            <ArrowLeftRight className="w-4 h-4 mr-2" />
+            Transferir entre Empresas
+          </Button>
         )}
       </div>
 

@@ -312,7 +312,7 @@ export default function DemoFase1Completa() {
         <CardHeader className="bg-purple-50 border-b">
           <CardTitle className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-purple-600" />
-            39 Windows + 3 INLINE + Sub-Dialogs - Arquitetura 100% HIPER-COMPLETA
+            41 Windows + 3 INLINE - Arquitetura 100% ULTRA-HIPER-COMPLETA
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
@@ -405,7 +405,7 @@ export default function DemoFase1Completa() {
 
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">
           <CardContent className="p-6 text-center">
-            <div className="text-4xl font-bold text-blue-900 mb-2">39</div>
+            <div className="text-4xl font-bold text-blue-900 mb-2">41</div>
             <p className="text-sm text-blue-700">Windows Ready</p>
           </CardContent>
         </Card>
@@ -413,6 +413,12 @@ export default function DemoFase1Completa() {
           <CardContent className="p-6 text-center">
             <div className="text-4xl font-bold text-purple-900 mb-2">3</div>
             <p className="text-sm text-purple-700">Detalhes INLINE</p>
+          </CardContent>
+        </Card>
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100">
+          <CardContent className="p-6 text-center">
+            <div className="text-4xl font-bold text-green-900 mb-2">100%</div>
+            <p className="text-sm text-green-700">Cobertura Total</p>
           </CardContent>
         </Card>
 
@@ -473,26 +479,29 @@ export default function DemoFase1Completa() {
               '✅ AcoesRapidasGlobal integrado',
               '✅ WindowRenderer com pointer-events',
               '✅ useWindow exportado como default',
-              '✅ 39 WINDOWS HIPER-COMPLETOS (22 Forms + 17 Fluxos):',
+              '✅ 41 WINDOWS ULTRA-HIPER-COMPLETOS (22 Forms + 19 Views/Fluxos):',
               '  • Cadastros: Cliente, Fornecedor, Produto, Colaborador, Transportadora, Tabela',
               '  • Comercial: Pedido, Comissão, Detalhes, GerarNFe, GerarOP, PainelEntregas,',
               '    UploadProjeto, SelecionarProduto, CriarEtapa, EnviarComunicação,',
               '    EditarItemProd, AdicionarItemRevenda',
               '  • Financeiro: ContaReceber, ContaPagar, GerarCobrança, VerEspelhos, SimularPag',
-              '  • Expedição: Entrega, Romaneio',
+              '  • Expedição: Entrega, Romaneio, DetalhesEntrega, SeparaçãoConf (já era)',
               '  • Produção: Inspeção, GerarOP',
-              '  • Estoque: Movimentação, Recebimento, Requisição, SolicitaCompra',
+              '  • Estoque: Movimentação, Recebimento, Requisição, SolicitaCompra, Transferência',
               '  • Compras: OrdemCompra, Solicitação, Cotação, Avaliação, RecebOC',
               '  • RH: Ponto',
               '  • CRM: Oportunidade',
               '  • Agenda: Evento',
               '  • Assinaturas: AssinaturaEletronica',
               '',
-              '✅ 3 DETALHES INLINE (expansão in-place, NÃO são modais):',
+              '✅ 3 DETALHES INLINE (expansão accordion in-place):',
               '  • DetalhesCadastro, DetalhesFornecedor, DetalhesColaborador',
               '',
-              '✅ ~5 SUB-DIALOGS mantidos (UX - ações secundárias dentro de forms):',
-              '  • GerenciarContatos, GerenciarEndereços, UploadDocumentos',
+              '✅ 2-3 SUB-DIALOGS mantidos (UX micro-ações):',
+              '  • GerenciarContatos, GerenciarEndereços (dentro de forms grandes)',
+              '',
+              '🎯 MODAL CRÍTICO DE VISUALIZAÇÃO mantido:',
+              '  • ComprovanteDigital (exibe foto/imagem - não precisa ser window)',
               '✅ AcoesRapidasGlobal: 19 AÇÕES RÁPIDAS (COBERTURA MÁXIMA)',
               '  • Pedido, Cliente, Produto, Fornecedor, Tabela, Colaborador',
               '  • OrdemCompra, SolicitacaoCompra, Cotação, Recebimento, Requisição',

@@ -2,7 +2,7 @@
 
 ## 📋 CLASSIFICAÇÃO DE COMPONENTES
 
-### 1️⃣ WINDOWS (39 componentes - TODOS window-ready)
+### 1️⃣ WINDOWS (41 componentes - TODOS window-ready)
 Componentes principais que **DEVEM** ser abertos como janelas multitarefa:
 - Formulários de cadastro (22)
 - Fluxos complexos (17)
@@ -41,10 +41,11 @@ Dialogs secundários que **fazem parte** de um formulário maior:
 
 | Tipo | Quantidade | Status | Observação |
 |------|------------|--------|------------|
-| **Windows Principais** | 39 | ✅ 100% | Todos adaptados |
+| **Windows Principais** | 41 | ✅ 100% | Todos adaptados |
 | **Detalhes INLINE** | 3 | ✅ OK | Não são modais |
-| **Sub-Dialogs** | ~5 | ✅ OK | UX secundária |
-| **Tabs** | N/A | ✅ Mantidos | Não redimensionáveis (regra) |
+| **Sub-Dialogs** | 2-3 | ✅ OK | Micro-ações UX |
+| **Modais Visuais** | 1 | ✅ OK | Comprovante (foto) |
+| **Tabs** | N/A | ✅ Mantidos | Não redimensionáveis |
 
 ---
 
@@ -77,4 +78,20 @@ A Fase 1 está **ABSOLUTAMENTE COMPLETA** com:
 - ✅ Sistema 100% multitarefa
 - ✅ Regra-Mãe aplicada em tudo
 
-**STATUS:** 🟢 HIPER-COMPLETO
+### 6️⃣ MODAIS VISUAIS (1 componente - Visualização de imagem)
+Modal que apenas exibe fotos/comprovantes:
+- `ComprovanteDigital` (exibe foto de comprovante de entrega)
+
+**Característica:** Apenas visualização de imagem, não precisa ser window.
+**Status:** ✅ Mantido como modal simples.
+
+---
+
+**STATUS:** 🟢 ULTRA-HIPER-COMPLETO
+
+**PÁGINAS 100% CONVERTIDAS:**
+- ✅ Estoque (Dialog de Transferência → Window)
+- ✅ Expedição (Dialogs de Detalhes/Separação → Windows)
+- ✅ Comercial (já estava 100%)
+- ✅ Financeiro (já estava 100%)
+- ✅ Compras (já estava 100%)

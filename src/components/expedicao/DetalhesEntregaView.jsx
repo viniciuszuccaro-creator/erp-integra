@@ -1,0 +1,293 @@
+import React from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { Truck, Building2, Pen } from "lucide-react";
+import { toast } from "sonner";
+import EnvioMensagemAutomatica from "./EnvioMensagemAutomatica";
+import AssinaturaDigitalEntrega from "./AssinaturaDigitalEntrega";
+
+/**
+ * V21.1.2 - WINDOW MODE READY
+ * Visualização detalhada de uma entrega com timeline e notificações
+ */
+export default function DetalhesEntregaView({ 
+  entrega, 
+  estaNoGrupo, 
+  obterNomeEmpresa,
+  statusColors,
+  onStatusChange,
+  windowMode = false
+}) {
+  const queryClient = useQueryClient();
+  const [showAssinatura, setShowAssinatura] = React.useState(false);
+
+  const confirmarEntregaAssinaturaMutation = useMutation({
+    mutationFn: async (dadosAssinatura) => {
+      return await base44.entities.Entrega.update(entrega.id, {
+        status: "Entregue",
+        data_entrega: new Date().toISOString(),
+        comprovante_entrega: {
+          assinatura_digital: dadosAssinatura.assinatura_base64,
+          nome_recebedor: dadosAssinatura.nome_recebedor,
+          documento_recebedor: dadosAssinatura.documento_recebedor,
+          data_hora_recebimento: dadosAssinatura.data_hora_assinatura,
+          latitude_entrega: dadosAssinatura.latitude || null,
+          longitude_entrega: dadosAssinatura.longitude || null
+        },
+        historico_status: [
+          ...(entrega.historico_status || []),
+          {
+            status: "Entregue",
+            data_hora: new Date().toISOString(),
+            usuario: "Sistema",
+            observacao: `Entrega confirmada com assinatura digital. Recebido por: ${dadosAssinatura.nome_recebedor}`
+          }
+        ]
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['entregas'] });
+      setShowAssinatura(false);
+      toast.success("✅ Entrega confirmada com assinatura!");
+    }
+  });
+
+  const content = (
+    <div className={`${windowMode ? 'p-6 h-full overflow-auto' : 'space-y-4'}`}>
+      {!windowMode && (
+        <div className="flex items-center gap-2 mb-4">
+          <Truck className="w-5 h-5 text-blue-600" />
+          <h2 className="text-xl font-bold">Detalhes da Entrega - {entrega?.numero_pedido || 'Sem Pedido'}</h2>
+        </div>
+      )}
+
+      <Tabs defaultValue="info" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="info">Informações</TabsTrigger>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
+          <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="info" className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-slate-600">Cliente</Label>
+              <p className="font-semibold">{entrega.cliente_nome}</p>
+            </div>
+            <div>
+              <Label className="text-slate-600">Status</Label>
+              <Badge className={statusColors[entrega.status]}>
+                {entrega.status}
+              </Badge>
+            </div>
+          </div>
+
+          {estaNoGrupo && (
+            <div>
+              <Label className="text-slate-600">Empresa Responsável</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <Building2 className="w-5 h-5 text-purple-600" />
+                <span className="font-semibold">{obterNomeEmpresa(entrega.empresa_id)}</span>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <Label className="text-slate-600">Endereço de Entrega</Label>
+            <p className="text-sm">
+              {entrega.endereco_entrega_completo?.logradouro}, {entrega.endereco_entrega_completo?.numero}
+              {entrega.endereco_entrega_completo?.complemento && ` - ${entrega.endereco_entrega_completo?.complemento}`}
+              <br/>
+              {entrega.endereco_entrega_completo?.bairro} - {entrega.endereco_entrega_completo?.cidade}/{entrega.endereco_entrega_completo?.estado}
+              <br/>
+              CEP: {entrega.endereco_entrega_completo?.cep}
+            </p>
+          </div>
+
+          <div>
+            <Label className="text-slate-600">Contato para Entrega</Label>
+            <p className="text-sm">
+              <strong>{entrega.contato_entrega?.nome || '-'}</strong>
+              <br/>
+              📞 {entrega.contato_entrega?.whatsapp || entrega.contato_entrega?.telefone || '-'}
+              {entrega.contato_entrega?.instrucoes_especiais && (
+                <>
+                  <br/>
+                  <span className="italic text-slate-500">
+                    Instruções: {entrega.contato_entrega.instrucoes_especiais}
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label className="text-slate-600">Transportadora</Label>
+              <p className="font-medium">{entrega.transportadora || 'Frota Própria'}</p>
+            </div>
+            <div>
+              <Label className="text-slate-600">Motorista</Label>
+              <p className="font-medium">{entrega.motorista || '-'}</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <Label className="text-slate-600">Volumes</Label>
+              <p className="font-medium">{entrega.volumes || 0}</p>
+            </div>
+            <div>
+              <Label className="text-slate-600">Peso</Label>
+              <p className="font-medium">{entrega.peso_total_kg || 0} kg</p>
+            </div>
+            <div>
+              <Label className="text-slate-600">Prioridade</Label>
+              <Badge variant="outline">{entrega.prioridade || 'Normal'}</Badge>
+            </div>
+          </div>
+
+          {entrega.observacoes && (
+            <div>
+              <Label className="text-slate-600">Observações</Label>
+              <p className="text-sm p-3 bg-slate-50 rounded">{entrega.observacoes}</p>
+            </div>
+          )}
+
+          {!showAssinatura ? (
+            <div className="flex flex-wrap gap-2 pt-4 border-t">
+              <Button
+                onClick={() => onStatusChange(entrega, "Em Separação")}
+                disabled={entrega.status !== "Aguardando Separação"}
+                size="sm"
+                variant="outline"
+              >
+                Iniciar Separação
+              </Button>
+              <Button
+                onClick={() => onStatusChange(entrega, "Pronto para Expedir")}
+                disabled={entrega.status !== "Em Separação"}
+                size="sm"
+                className="bg-indigo-600 hover:bg-indigo-700"
+              >
+                Pronto para Expedir
+              </Button>
+              <Button
+                onClick={() => onStatusChange(entrega, "Saiu para Entrega")}
+                disabled={entrega.status !== "Pronto para Expedir"}
+                size="sm"
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                Saiu para Entrega
+              </Button>
+              <Button
+                onClick={() => setShowAssinatura(true)}
+                disabled={!["Saiu para Entrega", "Em Trânsito"].includes(entrega.status)}
+                size="sm"
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Confirmar Entrega
+              </Button>
+              <Button
+                onClick={() => onStatusChange(entrega, "Entrega Frustrada")}
+                disabled={["Entregue", "Cancelado", "Aguardando Separação"].includes(entrega.status)}
+                size="sm"
+                variant="destructive"
+              >
+                Marcar como Frustrada
+              </Button>
+            </div>
+          ) : (
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Pen className="w-5 h-5 text-green-600" />
+                  <h3 className="font-bold text-green-900">Assinatura Digital de Recebimento</h3>
+                </div>
+                <AssinaturaDigitalEntrega
+                  onAssinaturaConcluida={(dados) => confirmarEntregaAssinaturaMutation.mutate(dados)}
+                  isLoading={confirmarEntregaAssinaturaMutation.isPending}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAssinatura(false)}
+                  className="mt-3"
+                >
+                  Cancelar Assinatura
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="timeline" className="space-y-3 mt-4">
+          {entrega.historico_status?.length > 0 ? (
+            <div className="space-y-3">
+              {entrega.historico_status
+                .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora))
+                .map((h, idx) => (
+                <div key={idx} className="flex gap-3 items-start p-3 bg-slate-50 rounded">
+                  <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
+                  <div className="flex-1">
+                    <div className="flex justify-between">
+                      <p className="font-semibold text-slate-900">{h.status}</p>
+                      <span className="text-xs text-slate-500">
+                        {new Date(h.data_hora).toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                    {h.observacao && <p className="text-sm text-slate-600 mt-1">{h.observacao}</p>}
+                    <p className="text-xs text-slate-500 mt-1">Por: {h.usuario}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-slate-500 py-8">Nenhum histórico disponível</p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="notificacoes" className="space-y-3 mt-4">
+          {entrega.notificacoes_enviadas?.length > 0 ? (
+            <div className="space-y-3">
+              {entrega.notificacoes_enviadas
+                .sort((a, b) => new Date(b.data_envio) - new Date(a.data_envio))
+                .map((n, idx) => (
+                <div key={idx} className="p-3 bg-blue-50 rounded border border-blue-200">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold text-blue-900">{n.tipo} via {n.canal}</p>
+                      <p className="text-sm text-blue-700 mt-1">{n.mensagem}</p>
+                      <p className="text-xs text-blue-600 mt-1">Para: {n.destinatario}</p>
+                    </div>
+                    <span className="text-xs text-blue-600">
+                      {new Date(n.data_envio).toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-slate-500 py-8">Nenhuma notificação enviada</p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="whatsapp" className="mt-4">
+          <EnvioMensagemAutomatica entrega={entrega} tipo="saida_entrega" />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return content;
+}

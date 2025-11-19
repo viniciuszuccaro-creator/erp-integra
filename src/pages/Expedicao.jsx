@@ -58,6 +58,8 @@ import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTransportadora";
 import { useRealtimeEntregas } from '@/components/lib/useRealtimeData';
 import MapaTempoReal from '../components/expedicao/MapaTempoReal';
+import DetalhesEntregaView from "../components/expedicao/DetalhesEntregaView";
+import SeparacaoConferencia from "../components/expedicao/SeparacaoConferencia";
 
 export default function Expedicao() {
   const [activeTab, setActiveTab] = useState("entregas");
@@ -66,17 +68,8 @@ export default function Expedicao() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingEntrega, setEditingEntrega] = useState(null);
-  const [viewingEntrega, setViewingEntrega] = useState(null);
   const [comprovanteModal, setComprovanteModal] = useState(null);
-  const [romaneioDialogOpen, setRomaneioDialogOpen] = useState(false);
-  const [assinaturaModal, setAssinaturaModal] = useState(null);
-  const [separacaoDialogOpen, setSeparacaoDialogOpen] = useState(false);
-  const [pedidoParaSeparacao, setPedidoParaSeparacao] = useState(null);
-  const [seletorEnderecoOpen, setSeletorEnderecoOpen] = useState(false);
-  const [clienteParaEndereco, setClienteParaEndereco] = useState(null);
-  const [entregaSelecionada, setEntregaSelecionada] = useState(null); // Added for MapaTempoReal
+  const [entregaSelecionada, setEntregaSelecionada] = useState(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -780,10 +773,18 @@ export default function Expedicao() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => {
-                                    setViewingEntrega(entrega);
-                                    setEntregaSelecionada(entrega); // Set for map
-                                  }}
+                                  onClick={() => openWindow(DetalhesEntregaView, {
+                                    entrega,
+                                    estaNoGrupo,
+                                    obterNomeEmpresa,
+                                    statusColors,
+                                    onStatusChange: handleMudarStatus,
+                                    windowMode: true
+                                  }, {
+                                    title: `🚚 Detalhes: ${entrega.numero_pedido}`,
+                                    width: 1000,
+                                    height: 700
+                                  })}
                                   title="Ver detalhes"
                                 >
                                   <Eye className="w-4 h-4" />
@@ -889,10 +890,16 @@ export default function Expedicao() {
                           <TableCell>
                             <Button
                               size="sm"
-                              onClick={() => {
-                                setPedidoParaSeparacao(p);
-                                setSeparacaoDialogOpen(true);
-                              }}
+                              onClick={() => openWindow(SeparacaoConferencia, {
+                                pedido: p,
+                                empresaId: empresaAtual?.id,
+                                onClose: () => {},
+                                windowMode: true
+                              }, {
+                                title: `📦 Separar Pedido ${p.numero_pedido}`,
+                                width: 1200,
+                                height: 750
+                              })}
                             >
                               Separar
                             </Button>
@@ -1073,290 +1080,13 @@ export default function Expedicao() {
           </TabsContent>
         </Tabs>
 
-        {/* Dialog de Visualização com Timeline */}
-        <Dialog open={!!viewingEntrega} onOpenChange={(open) => {
-          setViewingEntrega(null);
-          if (!open) { // Only clear selected entrega for map if dialog is closing
-            setEntregaSelecionada(null);
-          }
-        }}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Truck className="w-5 h-5" />
-                Detalhes da Entrega - {viewingEntrega?.numero_pedido || 'Sem Pedido'}
-              </DialogTitle>
-            </DialogHeader>
-            {viewingEntrega && (
-              <Tabs defaultValue="info" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="info">Informações</TabsTrigger>
-                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                  <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
-                  <TabsTrigger value="whatsapp">WhatsApp</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="info" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-slate-600">Cliente</Label>
-                      <p className="font-semibold">{viewingEntrega.cliente_nome}</p>
-                    </div>
-                    <div>
-                      <Label className="text-slate-600">Status</Label>
-                      <Badge className={statusColors[viewingEntrega.status]}>
-                        {viewingEntrega.status}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {estaNoGrupo && (
-                    <div>
-                      <Label className="text-slate-600">Empresa Responsável</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Building2 className="w-5 h-5 text-purple-600" />
-                        <span className="font-semibold">{obterNomeEmpresa(viewingEntrega.empresa_id)}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <Label className="text-slate-600">Endereço de Entrega</Label>
-                    <p className="text-sm">
-                      {viewingEntrega.endereco_entrega_completo?.logradouro}, {viewingEntrega.endereco_entrega_completo?.numero}
-                      {viewingEntrega.endereco_entrega_completo?.complemento && ` - ${viewingEntrega.endereco_entrega_completo?.complemento}`}
-                      <br/>
-                      {viewingEntrega.endereco_entrega_completo?.bairro} - {viewingEntrega.endereco_entrega_completo?.cidade}/{viewingEntrega.endereco_entrega_completo?.estado}
-                      <br/>
-                      CEP: {viewingEntrega.endereco_entrega_completo?.cep}
-                    </p>
-                  </div>
-
-                  <div>
-                    <Label className="text-slate-600">Contato para Entrega</Label>
-                    <p className="text-sm">
-                      <strong>{viewingEntrega.contato_entrega?.nome || '-'}</strong>
-                      <br/>
-                      📞 {viewingEntrega.contato_entrega?.whatsapp || viewingEntrega.contato_entrega?.telefone || '-'}
-                      {viewingEntrega.contato_entrega?.instrucoes_especiais && (
-                        <>
-                          <br/>
-                          <span className="italic text-slate-500">
-                            Instruções: {viewingEntrega.contato_entrega.instrucoes_especiais}
-                          </span>
-                        </>
-                      )}
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-slate-600">Transportadora</Label>
-                      <p className="font-medium">{viewingEntrega.transportadora || 'Frota Própria'}</p>
-                    </div>
-                    <div>
-                      <Label className="text-slate-600">Motorista</Label>
-                      <p className="font-medium">{viewingEntrega.motorista || '-'}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label className="text-slate-600">Volumes</Label>
-                      <p className="font-medium">{viewingEntrega.volumes || 0}</p>
-                    </div>
-                    <div>
-                      <Label className="text-slate-600">Peso</Label>
-                      <p className="font-medium">{viewingEntrega.peso_total_kg || 0} kg</p>
-                    </div>
-                    <div>
-                      <Label className="text-slate-600">Prioridade</Label>
-                      <Badge variant="outline">{viewingEntrega.prioridade || 'Normal'}</Badge>
-                    </div>
-                  </div>
-
-                  {viewingEntrega.observacoes && (
-                    <div>
-                      <Label className="text-slate-600">Observações</Label>
-                      <p className="text-sm p-3 bg-slate-50 rounded">{viewingEntrega.observacoes}</p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap gap-2 pt-4 border-t">
-                    <Button
-                      onClick={() => handleMudarStatus(viewingEntrega, "Em Separação")}
-                      disabled={viewingEntrega.status !== "Aguardando Separação" || updateMutation.isPending}
-                      size="sm"
-                      variant="outline"
-                    >
-                      Iniciar Separação
-                    </Button>
-                    <Button
-                      onClick={() => handleMudarStatus(viewingEntrega, "Pronto para Expedir")}
-                      disabled={viewingEntrega.status !== "Em Separação" || updateMutation.isPending}
-                      size="sm"
-                      className="bg-indigo-600 hover:bg-indigo-700"
-                    >
-                      Pronto para Expedir
-                    </Button>
-                    <Button
-                      onClick={() => handleMudarStatus(viewingEntrega, "Saiu para Entrega")}
-                      disabled={viewingEntrega.status !== "Pronto para Expedir" || updateMutation.isPending}
-                      size="sm"
-                      className="bg-orange-600 hover:bg-orange-700"
-                    >
-                      Saiu para Entrega
-                    </Button>
-                    {/* Changed: "Confirmar Entrega" now opens signature modal */}
-                    <Button
-                      onClick={() => setAssinaturaModal(viewingEntrega)}
-                      disabled={!["Saiu para Entrega", "Em Trânsito"].includes(viewingEntrega.status) || confirmarEntregaAssinaturaMutation.isPending}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      Confirmar Entrega
-                    </Button>
-                    <Button
-                      onClick={() => handleMudarStatus(viewingEntrega, "Entrega Frustrada")}
-                      disabled={["Entregue", "Cancelado", "Aguardando Separação"].includes(viewingEntrega.status) || updateMutation.isPending}
-                      size="sm"
-                      variant="destructive"
-                    >
-                      Marcar como Frustrada
-                    </Button>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="timeline" className="space-y-3">
-                  {viewingEntrega.historico_status?.length > 0 ? (
-                    <div className="space-y-3">
-                      {viewingEntrega.historico_status
-                        .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora))
-                        .map((h, idx) => (
-                        <div key={idx} className="flex gap-3 items-start p-3 bg-slate-50 rounded">
-                          <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                          <div className="flex-1">
-                            <div className="flex justify-between">
-                              <p className="font-semibold text-slate-900">{h.status}</p>
-                              <span className="text-xs text-slate-500">
-                                {new Date(h.data_hora).toLocaleString('pt-BR')}
-                              </span>
-                            </div>
-                            {h.observacao && <p className="text-sm text-slate-600 mt-1">{h.observacao}</p>}
-                            <p className="text-xs text-slate-500 mt-1">Por: {h.usuario}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center text-slate-500 py-8">Nenhum histórico disponível</p>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="notificacoes" className="space-y-3">
-                  {viewingEntrega.notificacoes_enviadas?.length > 0 ? (
-                    <div className="space-y-3">
-                      {viewingEntrega.notificacoes_enviadas
-                        .sort((a, b) => new Date(b.data_envio) - new Date(a.data_envio))
-                        .map((n, idx) => (
-                        <div key={idx} className="p-3 bg-blue-50 rounded border border-blue-200">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-semibold text-blue-900">{n.tipo} via {n.canal}</p>
-                              <p className="text-sm text-blue-700 mt-1">{n.mensagem}</p>
-                              <p className="text-xs text-blue-600 mt-1">Para: {n.destinatario}</p>
-                            </div>
-                            <span className="text-xs text-blue-600">
-                              {new Date(n.data_envio).toLocaleString('pt-BR')}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-center text-slate-500 py-8">Nenhuma notificação enviada</p>
-                  )}
-                </TabsContent>
-
-                {/* NOVA ABA: WhatsApp */}
-                <TabsContent value="whatsapp" className="space-y-3">
-                  <EnvioMensagemAutomatica entrega={viewingEntrega} tipo="saida_entrega" />
-                </TabsContent>
-              </Tabs>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Modal de Comprovante */}
+        {/* Modal de Comprovante - mantido por ser visualização de imagem */}
         {comprovanteModal && (
           <ComprovanteDigital
             entrega={comprovanteModal}
             isOpen={!!comprovanteModal}
             onClose={() => setComprovanteModal(null)}
           />
-        )}
-
-
-
-        {/* NOVO: Modal Assinatura Digital de Entrega */}
-        {assinaturaModal && (
-          <Dialog open={!!assinaturaModal} onOpenChange={() => setAssinaturaModal(null)}>
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Pen className="w-5 h-5 text-green-600" />
-                  Confirmar Entrega - {assinaturaModal.cliente_nome}
-                </DialogTitle>
-              </DialogHeader>
-              <AssinaturaDigitalEntrega
-                onAssinaturaConcluida={(dados) => {
-                  confirmarEntregaAssinaturaMutation.mutate({
-                    entregaId: assinaturaModal.id,
-                    dadosAssinatura: dados
-                  });
-                }}
-                isLoading={confirmarEntregaAssinaturaMutation.isPending}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
-
-        {/* NOVO: Dialog Separação */}
-        {pedidoParaSeparacao && (
-          <Dialog open={separacaoDialogOpen} onOpenChange={setSeparacaoDialogOpen}>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Separação e Conferência - Pedido {pedidoParaSeparacao.numero_pedido}</DialogTitle>
-              </DialogHeader>
-              <SeparacaoConferencia
-                pedido={pedidoParaSeparacao}
-                empresaId={empresaAtual?.id}
-                onClose={() => setSeparacaoDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
-        )}
-
-        {/* Dialog Seletor de Endereço */}
-        {clienteParaEndereco && (
-          <Dialog open={seletorEnderecoOpen} onOpenChange={setSeletorEnderecoOpen}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Selecionar Endereço de Entrega</DialogTitle>
-              </DialogHeader>
-              <SeletorEnderecoEntrega
-                cliente={clienteParaEndereco}
-                onEnderecoSelecionado={(endereco, salvou) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    endereco_entrega_completo: endereco
-                  }));
-                  setSeletorEnderecoOpen(false);
-                  setClienteParaEndereco(null);
-                }}
-              />
-            </DialogContent>
-          </Dialog>
         )}
       </div>
     </div>

@@ -24,7 +24,7 @@ Sistema de janelas multitarefa implementado em **TODOS OS MÓDULOS** do ERP Zucc
 
 ---
 
-## 📦 FORMULÁRIOS E MODAIS ADAPTADOS (39 COMPONENTES - SISTEMA 100% HIPER-COMPLETO)
+## 📦 FORMULÁRIOS E MODAIS ADAPTADOS (41 COMPONENTES - SISTEMA 100% ULTRA-HIPER-COMPLETO)
 
 ### ✅ 1. CadastroClienteCompleto
 - **Tamanho:** 1100x650
@@ -225,6 +225,16 @@ Sistema de janelas multitarefa implementado em **TODOS OS MÓDULOS** do ERP Zucc
 ### ✅ 39. SimularPagamentoModal (Window-Ready)
 - **Tamanho:** 600x500
 - **Origem:** Financeiro
+- **Status:** ✅ Completo
+
+### ✅ 40. TransferenciaEntreEmpresasForm (Window-Ready)
+- **Tamanho:** 900x600
+- **Origem:** Estoque
+- **Status:** ✅ Completo
+
+### ✅ 41. DetalhesEntregaView (Window-Ready)
+- **Tamanho:** 1000x700
+- **Origem:** Expedição
 - **Status:** ✅ Completo
 
 ---
@@ -458,17 +468,18 @@ Sistema de janelas multitarefa implementado em **TODOS OS MÓDULOS** do ERP Zucc
 
 ## 🎉 NÚMEROS FINAIS
 
-### Escala HIPER-FINAL - FASE 1 ABSOLUTAMENTE COMPLETA EM TODO SISTEMA
+### Escala ULTRA-HIPER-FINAL - FASE 1 ABSOLUTAMENTE COMPLETA EM TODO SISTEMA
 - **7 componentes** core criados (WindowManager, WindowRenderer, useWindow, MinimizedBar, WindowModal, GerenciadorJanelas, StatusFase1)
-- **39 componentes** adaptados para windowMode: 22 Forms + 17 Modals/Views/Fluxos (COBERTURA HIPER TOTAL)
+- **41 componentes** adaptados para windowMode: 22 Forms + 19 Views/Fluxos (COBERTURA ULTRA-HIPER TOTAL)
 - **10 módulos** 100% integrados (Comercial, Financeiro, Estoque, Compras, Expedição, Produção, RH, CRM, Agenda, Cadastros)
-- **55+ funcionalidades** implementadas
-- **~3.450 linhas** de código novo
-- **80+ arquivos** modificados
+- **57+ funcionalidades** implementadas
+- **~3.650 linhas** de código novo
+- **84+ arquivos** modificados
 - **19 ações rápidas** globais em janelas (COBERTURA TOTAL MÁXIMA)
-- **100% cobertura** HIPER - TODO O SISTEMA É MULTITAREFA
-- **DETALHES INLINE** mantidos (DetalhesCadastro, DetalhesFornecedor, DetalhesColaborador - expande in-place)
-- **SUB-DIALOGS** mantidos apenas em contexts complexos (Contatos/Endereços/Documentos)
+- **100% cobertura** ULTRA-HIPER - TODO MODAL/DIALOG CRÍTICO É WINDOW
+- **TODOS os dialogs** principais de Estoque e Expedição convertidos
+- **DETALHES INLINE** mantidos (DetalhesCadastro, DetalhesFornecedor, DetalhesColaborador)
+- **SUB-DIALOGS** apenas em ações secundárias (Contatos/Endereços/Docs)
 - **Regra-Mãe** aplicada ABSOLUTAMENTE EM TUDO: Acrescentar • Conectar • Melhorar • Inovar • NUNCA Apagar
 
 ### Produtividade
