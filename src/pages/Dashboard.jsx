@@ -51,6 +51,7 @@ import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatusFase1 from "@/components/sistema/StatusFase1";
+import { useWindow } from "@/components/lib/useWindow";
 
 
 export default function Dashboard() {

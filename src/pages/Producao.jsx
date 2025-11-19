@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -41,6 +40,7 @@ import FormularioInspecao from "../components/qualidade/FormularioInspecao";
 import RelatorioQualidade from "../components/qualidade/RelatorioQualidade";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { concluirOPCompleto } from "../components/lib/useFluxoPedido";
+import { useWindow } from "@/components/lib/useWindow";
 
 import ConfiguracaoProducao from "../components/producao/ConfiguracaoProducao";
 import DocumentosProducao from "../components/producao/DocumentosProducao";
@@ -405,17 +405,24 @@ export default function Producao() {
                                     </Button>
                                   )}
                                   {op.percentual_conclusao === 100 && op.status !== "Expedida" && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => {
-                                        setOpSelecionada(op);
-                                        setInspecaoDialogOpen(true);
-                                      }}
-                                      title="Realizar Inspeção de Qualidade"
-                                    >
-                                      <CheckCircle className="w-4 h-4 text-purple-600" />
-                                    </Button>
+                                   <Button
+                                     variant="ghost"
+                                     size="icon"
+                                     onClick={() => openWindow(FormularioInspecao, {
+                                       op,
+                                       windowMode: true,
+                                       onConcluido: () => {
+                                         queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
+                                       }
+                                     }, {
+                                       title: `🔍 Inspeção: ${op.numero_op}`,
+                                       width: 1000,
+                                       height: 650
+                                     })}
+                                     title="Realizar Inspeção de Qualidade"
+                                   >
+                                     <CheckCircle className="w-4 h-4 text-purple-600" />
+                                   </Button>
                                   )}
                                   {op.percentual_conclusao === 100 && op.status !== "Expedida" && (
                                     <Button
@@ -529,24 +536,7 @@ export default function Producao() {
 
         </Tabs>
 
-        {/* Dialog Inspeção */}
-        <Dialog open={inspecaoDialogOpen} onOpenChange={setInspecaoDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Inspeção de Qualidade: {opSelecionada?.numero_op}</DialogTitle>
-            </DialogHeader>
-            {opSelecionada && (
-              <FormularioInspecao
-                op={opSelecionada}
-                item={null}
-                onConcluido={() => {
-                  setInspecaoDialogOpen(false);
-                  queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
-                }}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+
 
         {/* Dialog Detalhes */}
         <Dialog open={detalhesDialogOpen} onOpenChange={setDetalhesDialogOpen}>

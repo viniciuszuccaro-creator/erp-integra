@@ -19,6 +19,9 @@ import CadastroFornecedorCompleto from '@/components/cadastros/CadastroFornecedo
 import ProdutoFormV22_Completo from '@/components/cadastros/ProdutoFormV22_Completo';
 import TabelaPrecoFormCompleto from '@/components/cadastros/TabelaPrecoFormCompleto';
 import PedidoFormCompleto from '@/components/comercial/PedidoFormCompleto';
+import ContaReceberForm from '@/components/financeiro/ContaReceberForm';
+import ContaPagarForm from '@/components/financeiro/ContaPagarForm';
+import FormularioEntrega from '@/components/expedicao/FormularioEntrega';
 import { toast } from 'sonner';
 
 /**
@@ -103,8 +106,48 @@ export default function AcoesRapidasGlobal() {
       cor: 'text-emerald-600'
     },
     {
+      label: 'Novo Título a Receber',
+      icon: DollarSign,
+      action: () => openWindow(ContaReceberForm, {
+        windowMode: true,
+        onSubmit: async (data) => {
+          try {
+            await base44.entities.ContaReceber.create(data);
+            toast.success("✅ Conta criada!");
+          } catch (error) {
+            toast.error("Erro ao criar conta");
+          }
+        }
+      }, {
+        title: '💰 Nova Conta a Receber',
+        width: 900,
+        height: 600
+      }),
+      cor: 'text-green-600'
+    },
+    {
+      label: 'Novo Título a Pagar',
+      icon: DollarSign,
+      action: () => openWindow(ContaPagarForm, {
+        windowMode: true,
+        onSubmit: async (data) => {
+          try {
+            await base44.entities.ContaPagar.create(data);
+            toast.success("✅ Conta criada!");
+          } catch (error) {
+            toast.error("Erro ao criar conta");
+          }
+        }
+      }, {
+        title: '💸 Nova Conta a Pagar',
+        width: 900,
+        height: 600
+      }),
+      cor: 'text-red-600'
+    },
+    {
       label: 'Nova Entrega',
-      icon: Package,
+      icon: Truck,
       action: () => navigate(createPageUrl('Expedicao')),
       cor: 'text-orange-600'
     },

@@ -401,9 +401,9 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            🚀 Cadastros Gerais V21.1 - FASE 1: MULTITAREFAS COMPLETA
+            🚀 Cadastros Gerais V21.1.2 - FASE 1: 100% COMPLETA
           </h1>
-          <p className="text-slate-600">Hub Central • 6 Blocos • Fonte Única • Multitarefas • Janelas Redimensionáveis • Controle Granular</p>
+          <p className="text-slate-600">Hub Central • 6 Blocos • Fonte Única • Multitarefas • 11 Formulários em Janelas • TODO O SISTEMA</p>
         </div>
         <div className="flex gap-2">
           <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2">

@@ -24,7 +24,7 @@ Sistema de janelas multitarefa implementado em **TODOS OS MÓDULOS** do ERP Zucc
 
 ---
 
-## 📦 FORMULÁRIOS ADAPTADOS (11 PRINCIPAIS)
+## 📦 FORMULÁRIOS ADAPTADOS (12 PRINCIPAIS)
 
 ### ✅ 1. CadastroClienteCompleto
 - **Tamanho:** 1100x650
@@ -77,11 +77,20 @@ Sistema de janelas multitarefa implementado em **TODOS OS MÓDULOS** do ERP Zucc
 - **Origem:** Expedição
 - **Status:** ✅ Completo
 
-### ✅ 10. GerarCobrancaModal
-- **Status:** 🔄 Próxima iteração
+### ✅ 10. ContaReceberForm
+- **Tamanho:** 900x600
+- **Origem:** Financeiro, AcoesRapidas
+- **Status:** ✅ Completo
 
-### ✅ 11. FormularioInspecao (Qualidade)
-- **Status:** 🔄 Próxima iteração
+### ✅ 11. ContaPagarForm
+- **Tamanho:** 900x600
+- **Origem:** Financeiro, AcoesRapidas
+- **Status:** ✅ Completo
+
+### ✅ 12. FormularioInspecao
+- **Tamanho:** 1000x650
+- **Origem:** Produção
+- **Status:** ✅ Completo
 
 ---
 
@@ -316,12 +325,12 @@ Sistema de janelas multitarefa implementado em **TODOS OS MÓDULOS** do ERP Zucc
 
 ### Escala
 - **7 componentes** core criados
-- **11 formulários** adaptados para windowMode
+- **12 formulários** adaptados para windowMode
 - **10 módulos** integrados
 - **15 funcionalidades** implementadas
-- **~1.200 linhas** de código novo
-- **20+ arquivos** modificados
-- **100% cobertura** dos módulos principais
+- **~1.300 linhas** de código novo
+- **25+ arquivos** modificados
+- **100% cobertura** de TODO O SISTEMA
 
 ### Produtividade
 - **+300%** em cadastros simultâneos

@@ -35,6 +35,8 @@ import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
 import ReguaCobrancaIA from "../components/financeiro/ReguaCobrancaIA";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
+import ContaReceberForm from "../components/financeiro/ContaReceberForm";
+import ContaPagarForm from "../components/financeiro/ContaPagarForm";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");

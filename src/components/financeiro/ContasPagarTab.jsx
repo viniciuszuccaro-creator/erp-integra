@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -18,11 +17,14 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
+import ContaPagarForm from "./ContaPagarForm";
+import { useWindow } from "@/components/lib/useWindow";
 
 export default function ContasPagarTab({ contas }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
+  const { openWindow } = useWindow();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -220,21 +222,36 @@ export default function ContasPagarTab({ contas }) {
               </SelectContent>
             </Select>
             
-            <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                setIsDialogOpen(open);
-                if (!open) resetForm(); // Reset form when dialog closes
-            }}>
-              <DialogTrigger asChild>
-                <Button className="bg-red-600 hover:bg-red-700" onClick={resetForm}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Conta
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px]">
+            <Button 
+              className="bg-red-600 hover:bg-red-700" 
+              onClick={() => openWindow(ContaPagarForm, {
+                windowMode: true,
+                onSubmit: async (data) => {
+                  try {
+                    await base44.entities.ContaPagar.create(data);
+                    queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
+                    toast({ title: "✅ Conta criada!" });
+                  } catch (error) {
+                    toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                  }
+                }
+              }, {
+                title: '💸 Nova Conta a Pagar',
+                width: 900,
+                height: 600
+              })}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Conta
+            </Button>
+            
+            {/* BACKUP: Dialog removido */}
+            <Dialog open={false}>
+              <DialogContent className="hidden">
                 <DialogHeader>
-                  <DialogTitle>{editingConta ? "Editar Conta a Pagar" : "Nova Conta a Pagar"}</DialogTitle>
+                  <DialogTitle>Removido</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form className="hidden">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label>Descrição *</Label>
@@ -384,7 +401,23 @@ export default function ContasPagarTab({ contas }) {
                           <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleEdit(conta)}
+                              onClick={() => openWindow(ContaPagarForm, {
+                                conta,
+                                windowMode: true,
+                                onSubmit: async (data) => {
+                                  try {
+                                    await base44.entities.ContaPagar.update(conta.id, data);
+                                    queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
+                                    toast({ title: "✅ Conta atualizada!" });
+                                  } catch (error) {
+                                    toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                                  }
+                                }
+                              }, {
+                                title: `✏️ Editar: ${conta.fornecedor}`,
+                                width: 900,
+                                height: 600
+                              })}
                               title="Editar Conta"
                           >
                               <Edit2 className="w-4 h-4 text-gray-500" />

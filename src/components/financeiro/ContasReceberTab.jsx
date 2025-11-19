@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -38,11 +37,14 @@ import {
 } from "lucide-react";
 import GerarCobrancaModal from "./GerarCobrancaModal";
 import SimularPagamentoModal from "./SimularPagamentoModal";
+import ContaReceberForm from "./ContaReceberForm";
+import { useWindow } from "@/components/lib/useWindow";
 
 export default function ContasReceberTab({ contas }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
+  const { openWindow } = useWindow();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas"); // Changed from "todos" to "todas"
@@ -660,18 +662,34 @@ export default function ContasReceberTab({ contas }) {
             )}
 
             <ProtectedAction permission="financeiro_receber_criar">
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button onClick={() => { resetForm(); setIsDialogOpen(true); }}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Adicionar Conta
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px]">
-                  <DialogHeader>
-                    <DialogTitle>{editingConta ? "Editar Conta a Receber" : "Nova Conta a Receber"}</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-4">
+              <Button onClick={() => openWindow(ContaReceberForm, {
+                windowMode: true,
+                onSubmit: async (data) => {
+                  try {
+                    await base44.entities.ContaReceber.create(data);
+                    queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+                    toast({ title: "✅ Conta criada!" });
+                  } catch (error) {
+                    toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                  }
+                }
+              }, {
+                title: '💰 Nova Conta a Receber',
+                width: 900,
+                height: 600
+              })}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Conta
+              </Button>
+            </ProtectedAction>
+            
+            {/* BACKUP: Dialog removido, agora usa janelas */}
+            <Dialog open={false}>
+              <DialogContent className="hidden">
+                <DialogHeader>
+                  <DialogTitle>Removido - Usa Janelas</DialogTitle>
+                </DialogHeader>
+                <form className="hidden">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="descricao">Descrição *</Label>
@@ -822,7 +840,6 @@ export default function ContasReceberTab({ contas }) {
                   </form>
                 </DialogContent>
               </Dialog>
-            </ProtectedAction>
           </div>
         </CardContent>
       </Card>
@@ -1032,7 +1049,23 @@ export default function ContasReceberTab({ contas }) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleEdit(conta)}
+                              onClick={() => openWindow(ContaReceberForm, {
+                                conta,
+                                windowMode: true,
+                                onSubmit: async (data) => {
+                                  try {
+                                    await base44.entities.ContaReceber.update(conta.id, data);
+                                    queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+                                    toast({ title: "✅ Conta atualizada!" });
+                                  } catch (error) {
+                                    toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                                  }
+                                }
+                              }, {
+                                title: `✏️ Editar: ${conta.cliente}`,
+                                width: 900,
+                                height: 600
+                              })}
                               className="justify-start h-7 px-2"
                               title="Editar Conta"
                             >
