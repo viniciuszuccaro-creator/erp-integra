@@ -7,11 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useEffect, useState } from 'react';
 
-// Desabilitar qualquer tentativa de WebSocket
-if (typeof window !== 'undefined') {
-  window.WebSocket = undefined;
-}
-
 /**
  * Hook principal de tempo real
  * @param {string} queryKey - Chave da query
