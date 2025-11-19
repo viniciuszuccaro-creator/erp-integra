@@ -20,7 +20,7 @@ import { toast } from "sonner";
  * ✅ IA PriceBrain 3.0 com análise de mercado
  * ✅ Histórico de alterações
  */
-export default function TabelaPrecoFormCompleto({ tabela, onSubmit }) {
+export default function TabelaPrecoFormCompleto({ tabela, onSubmit, windowMode = false }) {
   const queryClient = useQueryClient();
   const [salvando, setSalvando] = useState(false);
   const [user, setUser] = useState(null);
@@ -405,8 +405,8 @@ RETORNE:
     return !itensTabela.some(i => i.produto_id === p.id);
   });
 
-  return (
-    <div className="space-y-4 h-full flex flex-col">
+  const content = (
+    <div className={`space-y-4 flex flex-col ${windowMode ? 'h-full p-6' : ''}`}>
       <Alert className="border-purple-300 bg-purple-50">
         <Sparkles className="w-4 h-4 text-purple-600" />
         <AlertDescription className="text-sm text-purple-900">
@@ -972,4 +972,10 @@ RETORNE:
       </div>
     </div>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white overflow-auto">{content}</div>;
+  }
+
+  return content;
 }

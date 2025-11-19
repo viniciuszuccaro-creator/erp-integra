@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +28,7 @@ import HistoricoProduto from "./HistoricoProduto";
  * ✅ Aba 5: Histórico (se edição)
  * ✅ Modo Manual vs IA
  */
-export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmitting }) {
+export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmitting, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [user, setUser] = useState(null);
   
@@ -378,8 +377,8 @@ Caso contrário, sugira:
     onSubmit(dadosSubmit);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-h-[75vh] overflow-auto p-6">
+  const content = (
+    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
       {/* TOGGLE MODO MANUAL */}
       <Alert className="border-blue-300 bg-blue-50">
         <AlertDescription>
@@ -983,4 +982,10 @@ Caso contrário, sugira:
       </div>
     </form>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full bg-white">{content}</div>;
+  }
+
+  return content;
 }

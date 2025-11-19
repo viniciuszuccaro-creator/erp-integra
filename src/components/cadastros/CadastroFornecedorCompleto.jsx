@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
-export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose, onSuccess }) {
+export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose, onSuccess, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("dados-gerais");
   
   const { toast } = useToast();
@@ -136,16 +137,15 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
     }
   }, [fornecedor]);
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[1180px] h-[620px] overflow-hidden flex flex-col p-0">
-        <DialogHeader className="border-b pb-4 px-6 pt-6 flex-shrink-0">
-          <div className="flex items-start justify-between">
-            <div>
-              <DialogTitle className="text-2xl flex items-center gap-2">
-                <Building2 className="w-6 h-6 text-cyan-600" />
-                {fornecedor?.id ? 'Editar Fornecedor' : 'Novo Fornecedor'}
-              </DialogTitle>
+  const content = (
+    <>
+      <div className="border-b pb-4 px-6 pt-6 flex-shrink-0 bg-white sticky top-0 z-10">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-cyan-600" />
+              {fornecedor?.id ? 'Editar Fornecedor' : 'Novo Fornecedor'}
+            </h2>
               {fornecedor?.id && (
                 <div className="flex items-center gap-2 mt-2">
                   <Badge className={
@@ -159,19 +159,19 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
               )}
             </div>
             
-            <Button 
-              onClick={handleSave} 
-              disabled={saveMutation.isPending}
-              className="bg-cyan-600 hover:bg-cyan-700"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              {saveMutation.isPending ? 'Salvando...' : 'Salvar Fornecedor'}
-            </Button>
-          </div>
-        </DialogHeader>
+          <Button 
+            onClick={handleSave} 
+            disabled={saveMutation.isPending}
+            className="bg-cyan-600 hover:bg-cyan-700"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {saveMutation.isPending ? 'Salvando...' : 'Salvar Fornecedor'}
+          </Button>
+        </div>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="grid w-full grid-cols-3 flex-shrink-0 px-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="grid w-full grid-cols-3 flex-shrink-0 px-6 bg-slate-50">
             <TabsTrigger value="dados-gerais" className="text-xs">
               <Building2 className="w-3 h-3 mr-1" />
               Dados Gerais
@@ -186,7 +186,8 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <ScrollArea className="flex-1">
+          <div className="px-6 pb-6">
             <TabsContent value="dados-gerais" className="space-y-4 m-0 mt-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
@@ -553,7 +554,19 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
               )}
             </TabsContent>
           </div>
-        </Tabs>
+        </ScrollArea>
+      </Tabs>
+    </>
+  );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-white">{content}</div>;
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
+        {content}
       </DialogContent>
     </Dialog>
   );
