@@ -13,6 +13,7 @@ import {
   CheckCircle2 
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * V21.0 FASE 1: GERENCIADOR VISUAL DE JANELAS
@@ -67,89 +68,95 @@ export default function GerenciadorJanelas() {
         </div>
       </CardHeader>
       <CardContent className="p-4 space-y-3">
-        {windows.map((window) => {
-          const isActive = window.id === activeWindowId;
-          
-          return (
-            <div
-              key={window.id}
-              className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
-                isActive 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-slate-200 bg-white hover:bg-slate-50'
-              }`}
-            >
-              <div className="flex items-center gap-3 flex-1">
-                {isActive && <Eye className="w-4 h-4 text-blue-600" />}
-                <div className="flex-1">
-                  <p className="font-semibold text-sm text-slate-900">{window.title}</p>
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-xs text-slate-500">
-                      {window.width}×{window.height}
-                    </span>
-                    {window.isMinimized && (
-                      <Badge variant="outline" className="text-xs">Minimizada</Badge>
-                    )}
-                    {window.isMaximized && (
-                      <Badge variant="outline" className="text-xs">Maximizada</Badge>
-                    )}
-                    <span className="text-xs text-slate-400">z-index: {window.zIndex}</span>
+        <AnimatePresence>
+          {windows.map((window) => {
+            const isActive = window.id === activeWindowId;
+            
+            return (
+              <motion.div
+                key={window.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
+                  isActive 
+                    ? 'border-blue-500 bg-blue-50 shadow-lg' 
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  {isActive && <Eye className="w-4 h-4 text-blue-600" />}
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-slate-900">{window.title}</p>
+                    <div className="flex gap-2 mt-1">
+                      <span className="text-xs text-slate-500">
+                        {window.width}×{window.height}
+                      </span>
+                      {window.isMinimized && (
+                        <Badge variant="outline" className="text-xs">Minimizada</Badge>
+                      )}
+                      {window.isMaximized && (
+                        <Badge variant="outline" className="text-xs">Maximizada</Badge>
+                      )}
+                      <span className="text-xs text-slate-400">z-index: {window.zIndex}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex gap-1">
-                {window.isMinimized ? (
+                <div className="flex gap-1">
+                  {window.isMinimized ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => restoreWindow(window.id)}
+                      title="Restaurar"
+                    >
+                      <Maximize2 className="w-4 h-4 text-green-600" />
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => minimizeWindow(window.id)}
+                      title="Minimizar"
+                    >
+                      <Minimize2 className="w-4 h-4 text-orange-600" />
+                    </Button>
+                  )}
+                  
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => restoreWindow(window.id)}
-                    title="Restaurar"
+                    onClick={() => toggleMaximize(window.id)}
+                    title={window.isMaximized ? 'Restaurar' : 'Maximizar'}
                   >
-                    <Maximize2 className="w-4 h-4 text-green-600" />
+                    <Maximize2 className="w-4 h-4 text-blue-600" />
                   </Button>
-                ) : (
+
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => minimizeWindow(window.id)}
-                    title="Minimizar"
+                    onClick={() => bringToFront(window.id)}
+                    title="Trazer para frente"
+                    disabled={isActive}
                   >
-                    <Minimize2 className="w-4 h-4 text-orange-600" />
+                    <Eye className="w-4 h-4 text-purple-600" />
                   </Button>
-                )}
-                
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => toggleMaximize(window.id)}
-                  title={window.isMaximized ? 'Restaurar' : 'Maximizar'}
-                >
-                  <Maximize2 className="w-4 h-4 text-blue-600" />
-                </Button>
 
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => bringToFront(window.id)}
-                  title="Trazer para frente"
-                  disabled={isActive}
-                >
-                  <Eye className="w-4 h-4 text-purple-600" />
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => closeWindow(window.id)}
-                  title="Fechar"
-                >
-                  <X className="w-4 h-4 text-red-600" />
-                </Button>
-              </div>
-            </div>
-          );
-        })}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => closeWindow(window.id)}
+                    title="Fechar"
+                  >
+                    <X className="w-4 h-4 text-red-600" />
+                  </Button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
 
         <Alert className="border-green-300 bg-green-50 mt-4">
           <CheckCircle2 className="w-4 h-4 text-green-600" />
