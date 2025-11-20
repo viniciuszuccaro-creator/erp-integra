@@ -386,6 +386,7 @@ export default function Cadastros() {
   const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
   const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kitsProduto.length + unidadesMedida.length;
   const totalBloco3Adicional = segmentosCliente.length + condicoesComerciais.length + contasBancarias.length;
+  const totalBloco3ComMoedas = totalBloco3 + (rotasPadrao?.length || 0);
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + tabelasFiscais.length + contasBancarias.length;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
