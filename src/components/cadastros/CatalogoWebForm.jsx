@@ -1,147 +1,109 @@
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Loader2, Globe, Sparkles } from "lucide-react";
-import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Globe } from 'lucide-react';
 
-export default function CatalogoWebForm({ catalogoItem, onSubmit, isSubmitting }) {
-  const [formData, setFormData] = useState(catalogoItem || {
+export default function CatalogoWebForm({ catalogo, onSubmit, windowMode = false }) {
+  const [formData, setFormData] = useState(catalogo || {
+    nome_catalogo: '',
+    descricao: '',
     produto_id: '',
-    slug_site: '',
-    titulo_seo: '',
-    descricao_curta: '',
-    descricao_longa_html: '',
-    categoria_site: 'Ferragens',
-    exibir_no_site: false,
-    exibir_no_marketplace: false,
-    sincronizacao_automatica_ativa: false,
-    destaque: false
+    exibir_site: true,
+    exibir_marketplace: false,
+    ordem_exibicao: 1,
+    ativo: true
   });
-
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
-  });
-
-  const gerarDescricaoIA = async () => {
-    const produtoSelecionado = produtos.find(p => p.id === formData.produto_id);
-    if (!produtoSelecionado) return;
-
-    const descricao = await base44.integrations.Core.InvokeLLM({
-      prompt: `Crie uma descrição de produto otimizada para e-commerce e SEO para: "${produtoSelecionado.descricao}".
-      
-Retorne:
-- titulo_seo: título otimizado para buscas (60 caracteres)
-- descricao_curta: descrição para cards (150 caracteres)
-- descricao_longa_html: HTML completo com benefícios e especificações técnicas`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          titulo_seo: { type: "string" },
-          descricao_curta: { type: "string" },
-          descricao_longa_html: { type: "string" }
-        }
-      }
-    });
-
-    setFormData({
-      ...formData,
-      titulo_seo: descricao.titulo_seo,
-      descricao_curta: descricao.descricao_curta,
-      descricao_longa_html: descricao.descricao_longa_html,
-      descricao_gerada_ia: true
-    });
-  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.produto_id || !formData.slug_site) {
-      alert('Preencha os campos obrigatórios');
-      return;
-    }
     onSubmit(formData);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+  const content = (
+    <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <div>
-        <Label>Produto *</Label>
-        <Select value={formData.produto_id} onValueChange={(v) => setFormData({...formData, produto_id: v})}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione o produto" />
-          </SelectTrigger>
-          <SelectContent>
-            {produtos.map(p => (
-              <SelectItem key={p.id} value={p.id}>{p.descricao}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label>Slug do Site (URL) *</Label>
+        <Label>Nome do Catálogo *</Label>
         <Input
-          value={formData.slug_site}
-          onChange={(e) => setFormData({...formData, slug_site: e.target.value.toLowerCase().replace(/\s/g, '-')})}
-          placeholder="vergalhao-8mm-ca50"
+          value={formData.nome_catalogo}
+          onChange={(e) => setFormData({ ...formData, nome_catalogo: e.target.value })}
+          required
         />
       </div>
 
       <div>
-        <div className="flex justify-between items-center mb-2">
-          <Label>Descrição para SEO</Label>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={gerarDescricaoIA}
-            disabled={!formData.produto_id}
-          >
-            <Sparkles className="w-3 h-3 mr-2" />
-            Gerar com IA
-          </Button>
-        </div>
+        <Label>Descrição</Label>
         <Textarea
-          value={formData.descricao_longa_html}
-          onChange={(e) => setFormData({...formData, descricao_longa_html: e.target.value})}
-          rows={4}
-          placeholder="Descrição completa do produto..."
+          value={formData.descricao}
+          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+          rows={3}
         />
       </div>
 
-      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-        <div>
+      <div>
+        <Label>ID do Produto</Label>
+        <Input
+          value={formData.produto_id}
+          onChange={(e) => setFormData({ ...formData, produto_id: e.target.value })}
+          placeholder="ID do produto associado"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center justify-between p-3 border rounded">
           <Label>Exibir no Site</Label>
-          <p className="text-xs text-slate-500">Visível no e-commerce</p>
+          <Switch
+            checked={formData.exibir_site}
+            onCheckedChange={(v) => setFormData({ ...formData, exibir_site: v })}
+          />
         </div>
-        <Switch
-          checked={formData.exibir_no_site}
-          onCheckedChange={(v) => setFormData({...formData, exibir_no_site: v})}
+        <div className="flex items-center justify-between p-3 border rounded">
+          <Label>Exibir no Marketplace</Label>
+          <Switch
+            checked={formData.exibir_marketplace}
+            onCheckedChange={(v) => setFormData({ ...formData, exibir_marketplace: v })}
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label>Ordem de Exibição</Label>
+        <Input
+          type="number"
+          value={formData.ordem_exibicao}
+          onChange={(e) => setFormData({ ...formData, ordem_exibicao: parseInt(e.target.value) })}
         />
       </div>
 
-      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-        <div>
-          <Label>Sincronizar com Marketplace</Label>
-          <p className="text-xs text-slate-500">Mercado Livre, Shopee, etc</p>
-        </div>
+      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+        <Label className="font-semibold">Catálogo Ativo</Label>
         <Switch
-          checked={formData.exibir_no_marketplace}
-          onCheckedChange={(v) => setFormData({...formData, exibir_no_marketplace: v})}
+          checked={formData.ativo}
+          onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {catalogoItem ? 'Atualizar' : 'Criar Item'}
-        </Button>
-      </div>
+      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
+        {catalogo ? 'Atualizar' : 'Criar Catálogo Web'}
+      </Button>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
+          <Globe className="w-6 h-6 text-blue-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {catalogo ? 'Editar Catálogo' : 'Novo Catálogo Web'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto">{content}</div>
+      </div>
+    );
+  }
+
+  return content;
 }

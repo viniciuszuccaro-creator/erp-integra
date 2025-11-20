@@ -1,82 +1,59 @@
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Loader2, Plus, X } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { Box, Plus, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
-export default function KitProdutoForm({ kit, onSubmit, isSubmitting }) {
+export default function KitProdutoForm({ kit, onSubmit, windowMode = false }) {
   const [formData, setFormData] = useState(kit || {
     nome_kit: '',
-    descricao: '',
     codigo_kit: '',
-    tipo_kit: 'Armadura',
+    descricao: '',
     itens_kit: [],
     preco_kit: 0,
-    desconto_kit_percentual: 0,
+    aplicar_desconto_kit: false,
+    percentual_desconto: 0,
     ativo: true
   });
 
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
-  });
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit(formData);
+  };
 
   const adicionarItem = () => {
     setFormData({
       ...formData,
-      itens_kit: [
-        ...(formData.itens_kit || []),
-        { produto_id: '', descricao_produto: '', quantidade: 1, obrigatorio: true }
-      ]
+      itens_kit: [...formData.itens_kit, { produto_id: '', quantidade: 1 }]
     });
   };
 
-  const removerItem = (idx) => {
+  const removerItem = (index) => {
     setFormData({
       ...formData,
-      itens_kit: formData.itens_kit.filter((_, i) => i !== idx)
+      itens_kit: formData.itens_kit.filter((_, i) => i !== index)
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.nome_kit || (formData.itens_kit || []).length === 0) {
-      alert('Preencha o nome e adicione pelo menos 1 item');
-      return;
-    }
-    onSubmit(formData);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label>Nome do Kit *</Label>
-        <Input
-          value={formData.nome_kit}
-          onChange={(e) => setFormData({...formData, nome_kit: e.target.value})}
-          placeholder="Ex: Kit Armadura Coluna 20x40"
-        />
-      </div>
-
+  const content = (
+    <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Nome do Kit *</Label>
+          <Input
+            value={formData.nome_kit}
+            onChange={(e) => setFormData({ ...formData, nome_kit: e.target.value })}
+            required
+          />
+        </div>
         <div>
           <Label>Código</Label>
           <Input
             value={formData.codigo_kit}
-            onChange={(e) => setFormData({...formData, codigo_kit: e.target.value})}
-          />
-        </div>
-        <div>
-          <Label>Tipo</Label>
-          <Input
-            value={formData.tipo_kit}
-            onChange={(e) => setFormData({...formData, tipo_kit: e.target.value})}
-            placeholder="Armadura, Cerca, Estrutura..."
+            onChange={(e) => setFormData({ ...formData, codigo_kit: e.target.value })}
           />
         </div>
       </div>
@@ -85,57 +62,49 @@ export default function KitProdutoForm({ kit, onSubmit, isSubmitting }) {
         <Label>Descrição</Label>
         <Textarea
           value={formData.descricao}
-          onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
           rows={2}
         />
       </div>
 
       <div>
-        <div className="flex justify-between items-center mb-3">
-          <Label>Itens do Kit ({(formData.itens_kit || []).length})</Label>
+        <div className="flex items-center justify-between mb-2">
+          <Label>Itens do Kit</Label>
           <Button type="button" size="sm" onClick={adicionarItem}>
-            <Plus className="w-3 h-3 mr-1" />
+            <Plus className="w-4 h-4 mr-1" />
             Adicionar Item
           </Button>
         </div>
-        
-        <div className="space-y-2 max-h-60 overflow-y-auto">
-          {(formData.itens_kit || []).map((item, idx) => (
-            <Card key={idx} className="border">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    className="w-20"
-                    value={item.quantidade}
-                    onChange={(e) => {
-                      const itens = [...formData.itens_kit];
-                      itens[idx].quantidade = parseInt(e.target.value);
-                      setFormData({...formData, itens_kit: itens});
-                    }}
-                    placeholder="Qtd"
-                  />
-                  <Input
-                    className="flex-1"
-                    value={item.descricao_produto}
-                    onChange={(e) => {
-                      const itens = [...formData.itens_kit];
-                      itens[idx].descricao_produto = e.target.value;
-                      setFormData({...formData, itens_kit: itens});
-                    }}
-                    placeholder="Descrição do produto"
-                  />
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => removerItem(idx)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+        <div className="space-y-2">
+          {formData.itens_kit.map((item, idx) => (
+            <div key={idx} className="flex gap-2 items-end">
+              <div className="flex-1">
+                <Input
+                  placeholder="ID do Produto"
+                  value={item.produto_id}
+                  onChange={(e) => {
+                    const novosItens = [...formData.itens_kit];
+                    novosItens[idx].produto_id = e.target.value;
+                    setFormData({ ...formData, itens_kit: novosItens });
+                  }}
+                />
+              </div>
+              <div className="w-24">
+                <Input
+                  type="number"
+                  placeholder="Qtd"
+                  value={item.quantidade}
+                  onChange={(e) => {
+                    const novosItens = [...formData.itens_kit];
+                    novosItens[idx].quantidade = parseFloat(e.target.value);
+                    setFormData({ ...formData, itens_kit: novosItens });
+                  }}
+                />
+              </div>
+              <Button type="button" size="sm" variant="ghost" onClick={() => removerItem(idx)}>
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </Button>
+            </div>
           ))}
         </div>
       </div>
@@ -147,26 +116,57 @@ export default function KitProdutoForm({ kit, onSubmit, isSubmitting }) {
             type="number"
             step="0.01"
             value={formData.preco_kit}
-            onChange={(e) => setFormData({...formData, preco_kit: parseFloat(e.target.value)})}
+            onChange={(e) => setFormData({ ...formData, preco_kit: parseFloat(e.target.value) })}
           />
         </div>
-        <div>
-          <Label>Desconto vs Individual (%)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={formData.desconto_kit_percentual}
-            onChange={(e) => setFormData({...formData, desconto_kit_percentual: parseFloat(e.target.value)})}
+        <div className="flex items-center justify-between p-3 border rounded">
+          <Label>Aplicar Desconto</Label>
+          <Switch
+            checked={formData.aplicar_desconto_kit}
+            onCheckedChange={(v) => setFormData({ ...formData, aplicar_desconto_kit: v })}
           />
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {kit ? 'Atualizar' : 'Criar Kit'}
-        </Button>
+      {formData.aplicar_desconto_kit && (
+        <div>
+          <Label>Desconto (%)</Label>
+          <Input
+            type="number"
+            step="0.01"
+            value={formData.percentual_desconto}
+            onChange={(e) => setFormData({ ...formData, percentual_desconto: parseFloat(e.target.value) })}
+          />
+        </div>
+      )}
+
+      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+        <Label className="font-semibold">Kit Ativo</Label>
+        <Switch
+          checked={formData.ativo}
+          onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
+        />
       </div>
+
+      <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
+        {kit ? 'Atualizar Kit' : 'Criar Kit de Produtos'}
+      </Button>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-purple-50 to-purple-100">
+          <Box className="w-6 h-6 text-purple-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {kit ? 'Editar Kit' : 'Novo Kit de Produtos'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto">{content}</div>
+      </div>
+    );
+  }
+
+  return content;
 }
