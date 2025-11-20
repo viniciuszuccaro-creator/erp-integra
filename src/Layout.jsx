@@ -50,7 +50,6 @@ import { WindowProvider } from "@/components/lib/WindowManager";
 import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
-import ForceReloadV21_2_6 from "@/components/sistema/FORCE_RELOAD_V21_2_6";
 import UltraCacheKillerV21_3 from "@/components/sistema/ULTRA_CACHE_KILLER_V21_3";
 
 const navigationItems = [
