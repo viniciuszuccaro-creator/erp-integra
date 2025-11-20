@@ -139,6 +139,11 @@ export default function ValidadorFase3() {
     queryFn: () => base44.entities.JobAgendado.list()
   });
 
+  const { data: apis = [] } = useQuery({
+    queryKey: ['apisExternas'],
+    queryFn: () => base44.entities.ApiExterna.list()
+  });
+
   // Validações
   const validacoes = [
     // BLOCO 3.1
