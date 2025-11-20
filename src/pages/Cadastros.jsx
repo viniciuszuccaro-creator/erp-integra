@@ -2504,7 +2504,7 @@ export default function Cadastros() {
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">⚡ APIs Externas ({apisExternas.length})</CardTitle>
+                        <CardTitle className="text-base">⚡ APIs Externas ({apisExternas?.length || 0})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(ApiExternaForm, {
