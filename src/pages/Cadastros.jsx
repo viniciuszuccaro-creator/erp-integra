@@ -1956,7 +1956,7 @@ export default function Cadastros() {
                       {motoristas.map(motorista => (
                         <div key={motorista.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
-                            <p className="font-semibold text-sm">{motorista.nome}</p>
+                            <p className="font-semibold text-sm">{motorista.nome_completo || motorista.nome}</p>
                             <span className="text-xs text-slate-500">CNH: {motorista.cnh_numero}</span>
                           </div>
                           <Button
