@@ -89,6 +89,15 @@ import WebhookForm from "../components/cadastros/WebhookForm";
 import JobAgendadoForm from "../components/cadastros/JobAgendadoForm";
 import PlanoContasFormCompleto from "../components/cadastros/PlanoContasFormCompleto";
 import CentroResultadoFormCompleto from "../components/cadastros/CentroResultadoFormCompleto";
+import SegmentoClienteForm from "../components/cadastros/SegmentoClienteForm";
+import CondicaoComercialFormCompleto from "../components/cadastros/CondicaoComercialFormCompleto";
+import UnidadeMedidaForm from "../components/cadastros/UnidadeMedidaForm";
+import KitProdutoFormCompleto from "../components/cadastros/KitProdutoFormCompleto";
+import MoedaIndiceFormCompleto from "../components/cadastros/MoedaIndiceFormCompleto";
+import ContaBancariaEmpresaForm from "../components/cadastros/ContaBancariaEmpresaForm";
+import ChatbotIntentForm from "../components/cadastros/ChatbotIntentForm";
+import ChatbotCanalForm from "../components/cadastros/ChatbotCanalForm";
+import RotaPadraoFormCompleto from "../components/cadastros/RotaPadraoFormCompleto";
 
 /**
 /**
@@ -257,6 +266,41 @@ export default function Cadastros() {
     queryFn: () => base44.entities.CondicaoComercial.list(),
   });
 
+  const { data: segmentosCliente = [] } = useQuery({
+    queryKey: ['segmentos-cliente'],
+    queryFn: () => base44.entities.SegmentoCliente.list(),
+  });
+
+  const { data: unidadesMedida = [] } = useQuery({
+    queryKey: ['unidades-medida'],
+    queryFn: () => base44.entities.UnidadeMedida.list(),
+  });
+
+  const { data: kitsP roduto = [] } = useQuery({
+    queryKey: ['kits-produto'],
+    queryFn: () => base44.entities.KitProduto.list(),
+  });
+
+  const { data: contasBancarias = [] } = useQuery({
+    queryKey: ['contas-bancarias'],
+    queryFn: () => base44.entities.ContaBancariaEmpresa.list(),
+  });
+
+  const { data: chatbotIntents = [] } = useQuery({
+    queryKey: ['chatbot-intents'],
+    queryFn: () => base44.entities.ChatbotIntent.list(),
+  });
+
+  const { data: chatbotCanais = [] } = useQuery({
+    queryKey: ['chatbot-canais'],
+    queryFn: () => base44.entities.ChatbotCanal.list(),
+  });
+
+  const { data: rotasPadrao = [] } = useQuery({
+    queryKey: ['rotas-padrao'],
+    queryFn: () => base44.entities.RotaPadrao.list(),
+  });
+
   // QUERIES - BLOCO 4: LOGÍSTICA
   const { data: veiculos = [] } = useQuery({
     queryKey: ['veiculos'],
@@ -333,15 +377,17 @@ export default function Cadastros() {
 
   // Cálculo de totais por bloco
   const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
-  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length;
-  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
+  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kitsProduto.length + unidadesMedida.length;
+  const totalBloco3Adicional = segmentosCliente.length + condicoesComerciais.length + contasBancarias.length;
+  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + tabelasFiscais.length + contasBancarias.length;
   
   const planoContasFiltrados = filtrarPorBusca(planoContas, ['codigo_conta', 'nome_conta']);
   const centrosResultadoFiltrados = filtrarPorBusca(centrosResultado, ['nome', 'codigo']);
   const tiposDespesaFiltrados = filtrarPorBusca(tiposDespesa, ['nome', 'codigo']);
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + apisExternas.length + webhooks.length + jobsAgendados.length;
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + apisExternas.length + webhooks.length + jobsAgendados.length + chatbotIntents.length + chatbotCanais.length;
+  const totalBloco4Adicional = rotasPadrao.length;
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
