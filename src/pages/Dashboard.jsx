@@ -52,6 +52,7 @@ import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatusFase1 from "@/components/sistema/StatusFase1";
 import StatusFase2 from "@/components/sistema/StatusFase2";
+import StatusFase3 from "@/components/sistema/StatusFase3";
 import { useWindow } from "@/components/lib/useWindow";
 
 
@@ -649,10 +650,11 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6">
-          {/* STATUS FASE 1 e FASE 2 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* STATUS FASE 1, FASE 2 e FASE 3 */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <StatusFase1 />
             <StatusFase2 />
+            <StatusFase3 />
           </div>
 
           {/* KPIs Principais */}
