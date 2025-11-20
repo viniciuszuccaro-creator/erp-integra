@@ -660,7 +660,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Users className="w-5 h-5 text-blue-600" />
-                          Clientes ({clientesFiltrados.length})
+                          Clientes ({clientesFiltrados?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -716,7 +716,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Building2 className="w-5 h-5 text-cyan-600" />
-                          Fornecedores ({fornecedoresFiltrados.length})
+                          Fornecedores ({fornecedoresFiltrados?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -771,7 +771,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Truck className="w-5 h-5 text-orange-600" />
-                          Transportadoras ({transportadorasFiltradas.length})
+                          Transportadoras ({transportadorasFiltradas?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -833,7 +833,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <User className="w-5 h-5 text-pink-600" />
-                          Colaboradores ({colaboradoresFiltrados.length})
+                          Colaboradores ({colaboradoresFiltrados?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -895,7 +895,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Briefcase className="w-5 h-5 text-teal-600" />
-                          Representantes ({representantes.length})
+                          Representantes ({representantes?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -934,7 +934,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <MessageCircle className="w-5 h-5 text-violet-600" />
-                          Contatos B2B ({contatosB2B.length})
+                          Contatos B2B ({contatosB2B?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -990,7 +990,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Package className="w-5 h-5 text-purple-600" />
-                          Produtos ({produtosFiltrados.length})
+                          Produtos ({produtosFiltrados?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1060,7 +1060,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Factory className="w-5 h-5 text-indigo-600" />
-                          Setores de Atividade ({setoresAtividade.length})
+                          Setores de Atividade ({setoresAtividade?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1119,7 +1119,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Boxes className="w-5 h-5 text-cyan-600" />
-                          Grupos/Linhas ({gruposProduto.length})
+                          Grupos/Linhas ({gruposProduto?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1176,7 +1176,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Award className="w-5 h-5 text-orange-600" />
-                          Marcas ({marcas.length})
+                          Marcas ({marcas?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1233,7 +1233,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <TrendingUp className="w-5 h-5 text-green-600" />
-                          Tabelas de Preço ({tabelasPreco.length})
+                          Tabelas de Preço ({tabelasPreco?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1295,7 +1295,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Sparkles className="w-5 h-5 text-blue-600" />
-                          Serviços ({servicos.length})
+                          Serviços ({servicos?.length || 0})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1332,7 +1332,7 @@ export default function Cadastros() {
                   <Card className="border-teal-200">
                     <CardHeader className="bg-teal-50 border-b border-teal-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📏 Unidades de Medida ({unidadesMedida.length})</CardTitle>
+                        <CardTitle className="text-base">📏 Unidades de Medida ({unidadesMedida?.length || 0})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(UnidadeMedidaForm, {
@@ -1365,7 +1365,7 @@ export default function Cadastros() {
                   <Card className="border-pink-200">
                     <CardHeader className="bg-pink-50 border-b border-pink-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📦 Kits ({kitsProduto.length})</CardTitle>
+                        <CardTitle className="text-base">📦 Kits ({kitsProduto?.length || 0})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(KitProdutoFormCompleto, {
@@ -2605,7 +2605,7 @@ export default function Cadastros() {
                   <Card className="border-cyan-200">
                     <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
+                        <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao?.length || 0})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(EventoNotificacaoForm, {
@@ -2722,7 +2722,7 @@ export default function Cadastros() {
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
+                        <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao?.length || 0})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
