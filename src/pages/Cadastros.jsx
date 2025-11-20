@@ -2524,13 +2524,13 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {apisExternas?.map(api => (
-                        <div key={api.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{api.nome_integracao}</p>
-                          <div className="flex gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">{api.tipo_integracao}</Badge>
-                          </div>
-                        </div>
+                      {(apisExternas || []).map(api => (
+                       <div key={api.id} className="p-2 border-b hover:bg-slate-50">
+                         <p className="font-semibold text-sm">{api.nome_integracao}</p>
+                         <div className="flex gap-2 mt-1">
+                           <Badge variant="outline" className="text-xs">{api.tipo_integracao}</Badge>
+                         </div>
+                       </div>
                       ))}
                       {(!apisExternas || apisExternas.length === 0) && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhuma API externa cadastrada</p>
