@@ -1,113 +1,158 @@
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { DollarSign } from 'lucide-react';
 
-export default function CondicaoComercialForm({ condicao, onSubmit, isSubmitting }) {
+export default function CondicaoComercialForm({ condicao, onSubmit, windowMode = false }) {
   const [formData, setFormData] = useState(condicao || {
     nome_condicao: '',
-    descricao: '',
-    prazo_pagamento_dias: 0,
-    percentual_desconto: 0,
+    tipo_condicao: 'Pagamento',
+    forma_pagamento: 'À Vista',
+    numero_parcelas: 1,
+    intervalo_parcelas_dias: 30,
+    desconto_percentual: 0,
     tipo_frete: 'CIF',
-    permite_parcelamento: false,
-    maximo_parcelas: 1,
     ativo: true
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.nome_condicao) {
-      alert('Preencha o nome da condição');
-      return;
-    }
     onSubmit(formData);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+  const content = (
+    <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <div>
         <Label>Nome da Condição *</Label>
         <Input
           value={formData.nome_condicao}
-          onChange={(e) => setFormData({...formData, nome_condicao: e.target.value})}
-          placeholder="Ex: Atacado 30 dias, Varejo à vista"
-        />
-      </div>
-
-      <div>
-        <Label>Descrição</Label>
-        <Input
-          value={formData.descricao}
-          onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+          onChange={(e) => setFormData({ ...formData, nome_condicao: e.target.value })}
+          required
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label>Prazo Pagamento (dias)</Label>
-          <Input
-            type="number"
-            value={formData.prazo_pagamento_dias}
-            onChange={(e) => setFormData({...formData, prazo_pagamento_dias: parseInt(e.target.value)})}
-          />
+          <Label>Tipo de Condição</Label>
+          <Select value={formData.tipo_condicao} onValueChange={(v) => setFormData({ ...formData, tipo_condicao: v })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Pagamento">Pagamento</SelectItem>
+              <SelectItem value="Desconto">Desconto</SelectItem>
+              <SelectItem value="Frete">Frete</SelectItem>
+              <SelectItem value="Prazo Entrega">Prazo Entrega</SelectItem>
+              <SelectItem value="Comissão">Comissão</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+
         <div>
-          <Label>Desconto Padrão (%)</Label>
+          <Label>Forma de Pagamento</Label>
+          <Select value={formData.forma_pagamento} onValueChange={(v) => setFormData({ ...formData, forma_pagamento: v })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="À Vista">À Vista</SelectItem>
+              <SelectItem value="Parcelado">Parcelado</SelectItem>
+              <SelectItem value="Boleto">Boleto</SelectItem>
+              <SelectItem value="PIX">PIX</SelectItem>
+              <SelectItem value="Cartão">Cartão</SelectItem>
+              <SelectItem value="Depósito">Depósito</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {formData.forma_pagamento === 'Parcelado' && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>Número de Parcelas</Label>
+            <Input
+              type="number"
+              value={formData.numero_parcelas}
+              onChange={(e) => setFormData({ ...formData, numero_parcelas: parseInt(e.target.value) })}
+              min="1"
+            />
+          </div>
+          <div>
+            <Label>Intervalo entre Parcelas (dias)</Label>
+            <Input
+              type="number"
+              value={formData.intervalo_parcelas_dias}
+              onChange={(e) => setFormData({ ...formData, intervalo_parcelas_dias: parseInt(e.target.value) })}
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Desconto (%)</Label>
           <Input
             type="number"
             step="0.01"
-            value={formData.percentual_desconto}
-            onChange={(e) => setFormData({...formData, percentual_desconto: parseFloat(e.target.value)})}
+            value={formData.desconto_percentual}
+            onChange={(e) => setFormData({ ...formData, desconto_percentual: parseFloat(e.target.value) })}
           />
+        </div>
+        <div>
+          <Label>Tipo de Frete</Label>
+          <Select value={formData.tipo_frete} onValueChange={(v) => setFormData({ ...formData, tipo_frete: v })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="CIF">CIF</SelectItem>
+              <SelectItem value="FOB">FOB</SelectItem>
+              <SelectItem value="Retira">Retira</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div>
-        <Label>Tipo de Frete</Label>
-        <Select value={formData.tipo_frete} onValueChange={(v) => setFormData({...formData, tipo_frete: v})}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="CIF">CIF - Empresa paga</SelectItem>
-            <SelectItem value="FOB">FOB - Cliente paga</SelectItem>
-            <SelectItem value="Retirada">Retirada</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-        <div>
-          <Label>Permite Parcelamento</Label>
-          <p className="text-xs text-slate-500">Habilita parcelamento de pagamento</p>
-        </div>
-        <Switch
-          checked={formData.permite_parcelamento}
-          onCheckedChange={(v) => setFormData({...formData, permite_parcelamento: v})}
+        <Label>Descrição</Label>
+        <Textarea
+          value={formData.descricao || ''}
+          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+          rows={2}
         />
       </div>
 
-      {formData.permite_parcelamento && (
-        <div>
-          <Label>Máximo de Parcelas</Label>
-          <Input
-            type="number"
-            value={formData.maximo_parcelas}
-            onChange={(e) => setFormData({...formData, maximo_parcelas: parseInt(e.target.value)})}
-          />
-        </div>
-      )}
-
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {condicao ? 'Atualizar' : 'Criar Condição'}
-        </Button>
+      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+        <Label className="font-semibold">Condição Ativa</Label>
+        <Switch
+          checked={formData.ativo}
+          onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
+        />
       </div>
+
+      <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+        {condicao ? 'Atualizar Condição' : 'Criar Condição Comercial'}
+      </Button>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-green-50 to-green-100">
+          <DollarSign className="w-6 h-6 text-green-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {condicao ? 'Editar Condição' : 'Nova Condição Comercial'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto">{content}</div>
+      </div>
+    );
+  }
+
+  return content;
 }

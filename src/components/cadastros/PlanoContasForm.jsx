@@ -1,89 +1,75 @@
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { FileText } from 'lucide-react';
 
-export default function PlanoContasForm({ conta, onSubmit, isSubmitting }) {
+export default function PlanoContasForm({ conta, onSubmit, windowMode = false }) {
   const [formData, setFormData] = useState(conta || {
     codigo_conta: '',
-    descricao_conta: '',
-    tipo: 'Despesa',
+    nome_conta: '',
+    tipo_conta: 'Despesa',
     natureza: 'Devedora',
-    nivel: 1,
-    aceita_lancamento: true,
-    visivel_dre: true,
-    status: 'Ativa'
-  });
-
-  const { data: contas = [] } = useQuery({
-    queryKey: ['plano-contas'],
-    queryFn: () => base44.entities.PlanoDeContas.list(),
+    eh_analitica: true,
+    eh_sintetica: false,
+    nivel_hierarquico: 1,
+    aceita_lancamento_manual: true,
+    usa_em_sped: false,
+    usa_apenas_gerencial: false,
+    ativo: true
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.codigo_conta || !formData.descricao_conta) {
-      alert('Preencha os campos obrigatórios');
-      return;
-    }
     onSubmit(formData);
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+  const content = (
+    <form onSubmit={handleSubmit} className="space-y-4 p-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Código da Conta *</Label>
           <Input
             value={formData.codigo_conta}
-            onChange={(e) => setFormData({...formData, codigo_conta: e.target.value})}
-            placeholder="Ex: 1.1.01.001"
+            onChange={(e) => setFormData({ ...formData, codigo_conta: e.target.value })}
+            placeholder="1.1.1.01"
+            required
           />
         </div>
         <div>
-          <Label>Nível</Label>
+          <Label>Nome da Conta *</Label>
           <Input
-            type="number"
-            value={formData.nivel}
-            onChange={(e) => setFormData({...formData, nivel: parseInt(e.target.value)})}
+            value={formData.nome_conta}
+            onChange={(e) => setFormData({ ...formData, nome_conta: e.target.value })}
+            placeholder="Caixa Geral"
+            required
           />
         </div>
       </div>
 
-      <div>
-        <Label>Descrição *</Label>
-        <Input
-          value={formData.descricao_conta}
-          onChange={(e) => setFormData({...formData, descricao_conta: e.target.value})}
-          placeholder="Ex: Receita de Vendas, Despesas Administrativas"
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
-          <Label>Tipo *</Label>
-          <Select value={formData.tipo} onValueChange={(v) => setFormData({...formData, tipo: v})}>
+          <Label>Tipo de Conta *</Label>
+          <Select value={formData.tipo_conta} onValueChange={(v) => setFormData({ ...formData, tipo_conta: v })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Ativo">Ativo</SelectItem>
-              <SelectItem value="Passivo">Passivo</SelectItem>
               <SelectItem value="Receita">Receita</SelectItem>
               <SelectItem value="Despesa">Despesa</SelectItem>
-              <SelectItem value="Custo">Custo</SelectItem>
+              <SelectItem value="Ativo">Ativo</SelectItem>
+              <SelectItem value="Passivo">Passivo</SelectItem>
               <SelectItem value="Patrimônio Líquido">Patrimônio Líquido</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
         <div>
-          <Label>Natureza *</Label>
-          <Select value={formData.natureza} onValueChange={(v) => setFormData({...formData, natureza: v})}>
+          <Label>Natureza</Label>
+          <Select value={formData.natureza} onValueChange={(v) => setFormData({ ...formData, natureza: v })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -93,39 +79,95 @@ export default function PlanoContasForm({ conta, onSubmit, isSubmitting }) {
             </SelectContent>
           </Select>
         </div>
+
+        <div>
+          <Label>Nível Hierárquico</Label>
+          <Input
+            type="number"
+            value={formData.nivel_hierarquico}
+            onChange={(e) => setFormData({ ...formData, nivel_hierarquico: parseInt(e.target.value) })}
+            min="1"
+          />
+        </div>
       </div>
 
       <div>
-        <Label>Conta Superior (Hierarquia)</Label>
-        <Select value={formData.conta_superior_id} onValueChange={(v) => setFormData({...formData, conta_superior_id: v})}>
-          <SelectTrigger>
-            <SelectValue placeholder="Selecione (opcional)" />
-          </SelectTrigger>
-          <SelectContent>
-            {contas.map(c => (
-              <SelectItem key={c.id} value={c.id}>{c.codigo_conta} - {c.descricao_conta}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
-        <div>
-          <Label>Aceita Lançamentos</Label>
-          <p className="text-xs text-slate-500">Contas sintéticas = false</p>
-        </div>
-        <Switch
-          checked={formData.aceita_lancamento}
-          onCheckedChange={(v) => setFormData({...formData, aceita_lancamento: v})}
+        <Label>Descrição</Label>
+        <Textarea
+          value={formData.descricao || ''}
+          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+          rows={2}
         />
       </div>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {conta ? 'Atualizar' : 'Criar Conta'}
-        </Button>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center justify-between p-3 border rounded">
+          <Label>Conta Analítica (aceita lançamentos)</Label>
+          <Switch
+            checked={formData.eh_analitica}
+            onCheckedChange={(v) => setFormData({ ...formData, eh_analitica: v })}
+          />
+        </div>
+        <div className="flex items-center justify-between p-3 border rounded">
+          <Label>Conta Sintética (totalizadora)</Label>
+          <Switch
+            checked={formData.eh_sintetica}
+            onCheckedChange={(v) => setFormData({ ...formData, eh_sintetica: v })}
+          />
+        </div>
       </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="flex items-center justify-between p-3 border rounded">
+          <Label>Lançamento Manual</Label>
+          <Switch
+            checked={formData.aceita_lancamento_manual}
+            onCheckedChange={(v) => setFormData({ ...formData, aceita_lancamento_manual: v })}
+          />
+        </div>
+        <div className="flex items-center justify-between p-3 border rounded">
+          <Label>Usa em SPED</Label>
+          <Switch
+            checked={formData.usa_em_sped}
+            onCheckedChange={(v) => setFormData({ ...formData, usa_em_sped: v })}
+          />
+        </div>
+        <div className="flex items-center justify-between p-3 border rounded">
+          <Label>Apenas Gerencial</Label>
+          <Switch
+            checked={formData.usa_apenas_gerencial}
+            onCheckedChange={(v) => setFormData({ ...formData, usa_apenas_gerencial: v })}
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+        <Label className="font-semibold">Conta Ativa</Label>
+        <Switch
+          checked={formData.ativo}
+          onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
+        />
+      </div>
+
+      <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+        {conta ? 'Atualizar Conta' : 'Criar Conta'}
+      </Button>
     </form>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-green-50 to-green-100">
+          <FileText className="w-6 h-6 text-green-600" />
+          <h2 className="text-lg font-bold text-slate-900">
+            {conta ? 'Editar Conta Contábil' : 'Nova Conta Contábil'}
+          </h2>
+        </div>
+        <div className="flex-1 overflow-auto">{content}</div>
+      </div>
+    );
+  }
+
+  return content;
 }
