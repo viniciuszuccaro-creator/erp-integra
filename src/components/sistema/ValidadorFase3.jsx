@@ -119,11 +119,6 @@ export default function ValidadorFase3() {
     queryFn: () => base44.entities.RotaPadrao.list()
   });
 
-  const { data: apis = [] } = useQuery({
-    queryKey: ['apisExternas'],
-    queryFn: () => base44.entities.ApiExterna.list()
-  });
-
   const { data: webhooks = [] } = useQuery({
     queryKey: ['webhooks'],
     queryFn: () => base44.entities.Webhook.list()

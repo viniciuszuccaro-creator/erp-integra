@@ -649,7 +649,7 @@ export default function Dashboard() {
           <DashboardTempoReal empresaId={empresaAtual?.id} />
         </TabsContent>
 
-        <TabsContent value="resumo" className="space-y-6">
+        <TabsContent value="resumo" className="space-y-6 mt-6">
           {/* STATUS FASE 1, FASE 2 e FASE 3 */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <StatusFase1 />

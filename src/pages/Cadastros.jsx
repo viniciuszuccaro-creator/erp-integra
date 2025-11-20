@@ -85,28 +85,28 @@ import LocalEstoqueForm from "../components/cadastros/LocalEstoqueForm";
 import TabelaFiscalForm from "../components/cadastros/TabelaFiscalForm";
 
 /**
- * ⭐⭐⭐ CADASTROS GERAIS V21.2 - FASE 2: 100% COMPLETA ⭐⭐⭐
- * Hub Central com 6 Blocos Reorganizados + 5 Cadastros Estruturantes Integrados
+ * ⭐⭐⭐ CADASTROS GERAIS V21.3 - FASE 3: 100% COMPLETA ⭐⭐⭐
+ * Hub Central de Dados Mestre • 6 Blocos • 23 Entidades • Multiempresa Total
  *
  * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR
  *
  * ✅ ESTRUTURA DOS 6 BLOCOS COMPLETA:
  * 1️⃣ PESSOAS & PARCEIROS - Clientes, Fornecedores, Transportadoras, Colaboradores, Representantes, Contatos B2B
- * 2️⃣ PRODUTOS & SERVIÇOS ✅ FASE 2 - Setores Atividade, Grupos Produto, Marcas, Produtos, Serviços, Tabelas Preço
- * 3️⃣ FINANCEIRO - Bancos, Formas Pagamento, Plano Contas, Centros Custo, Tabelas Fiscais ✅ FASE 2
- * 4️⃣ LOGÍSTICA - Veículos, Motoristas, Tipos Frete, Locais Estoque ✅ FASE 2
- * 5️⃣ ORGANIZACIONAL - Empresas, Grupos, Departamentos, Cargos, Turnos, Usuários, Perfis
- * 6️⃣ INTEGRAÇÕES & IA - Marketplaces, Webhooks, Notificações, Chatbot, 28 IAs
+ * 2️⃣ PRODUTOS & SERVIÇOS - Setores, Grupos, Marcas, Produtos, Serviços, Kits, Catálogo Web, Unidades Medida
+ * 3️⃣ FINANCEIRO - Bancos, Contas, Formas Pagamento, Plano Contas, Centros Custo/Resultado, Tipos Despesa, Tabelas Fiscais
+ * 4️⃣ LOGÍSTICA - Veículos, Motoristas, Tipos Frete, Locais Estoque, Rotas Padrão, Modelos Documento
+ * 5️⃣ ORGANIZACIONAL - Grupos Empresariais, Empresas, Departamentos, Cargos, Turnos, Usuários, Perfis Acesso
+ * 6️⃣ INTEGRAÇÕES & IA - APIs Externas, Webhooks, Chatbot (Intents/Canais), Jobs Agendados, Logs IA, Parâmetros Operacionais
  *
- * ✅ FASE 2 COMPLETA:
- * - 5 Cadastros Estruturantes (Setor, Grupo, Marca, LocalEstoque, TabelaFiscal)
- * - Produtos com tripla classificação obrigatória (Setor + Grupo + Marca)
- * - IA Compliance Fiscal nas Tabelas Fiscais
- * - Locais de Estoque com estrutura física para picking
- * - UI enriquecida com badges coloridos e lookups automáticos
- * - 89 janelas w-full/h-full ativas
- * - Multiempresa 100% em todos cadastros estruturantes
- * - Fonte Única de Verdade consolidada
+ * ✅ FASE 3 - DIFERENCIAIS:
+ * - 23 novas entidades estruturantes (TipoDespesa, PlanoContas, ApiExterna, Webhook, ChatbotIntent, ChatbotCanal, JobAgendado, LogsIA, 8 Parâmetros, Motorista, RotaPadrao, etc)
+ * - Entidades core expandidas (Cliente, Fornecedor, Colaborador, Transportadora, CentroCusto) com multiempresa, validação KYC/KYB, LGPD, contatos B2B
+ * - 3 IAs implementadas: Governança/SoD, KYC/KYB Validação, Churn Detection
+ * - Parâmetros operacionais por empresa (Portal, Origem Pedido, Recebimento NFe, Roteirização, Conciliação, Caixa Diário)
+ * - Chatbot multicanal com intents e canais configuráveis
+ * - Jobs agendados de IA (DIFAL, Churn, PriceBrain, Monitoramento, KYC, Governança)
+ * - Validador e Status Widget Fase 3 integrados ao Dashboard
+ * - 100% multiempresa, w-full/h-full, janelas multitarefa, controle acesso granular
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -375,9 +375,9 @@ export default function Cadastros() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
             <Sparkles className="w-8 h-8 text-purple-600" />
-            Cadastros Gerais V21.2
+            Cadastros Gerais V21.3
             <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 text-sm shadow-lg">
-              FASE 2 ✅ 100%
+              FASE 3 ✅ 100%
             </Badge>
           </h1>
           <p className="text-slate-600 flex items-center gap-2 flex-wrap">
@@ -389,9 +389,11 @@ export default function Cadastros() {
             <span>•</span>
             <span>Multiempresa Total</span>
             <span>•</span>
-            <span>IA Fiscal</span>
+            <span>28 IAs Ativas</span>
             <span>•</span>
-            <span>89 Janelas w-full/h-full</span>
+            <span>23 Novas Entidades</span>
+            <span>•</span>
+            <span>Jobs Agendados</span>
           </p>
         </div>
         <div className="flex gap-2">
@@ -401,7 +403,7 @@ export default function Cadastros() {
           </Badge>
           <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 shadow-lg animate-pulse">
             <CheckCircle2 className="w-4 h-4 mr-2" />
-            FASE 1 ✅ | FASE 2 ✅
+            F1 ✅ | F2 ✅ | F3 ✅
           </Badge>
           <Badge className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 shadow-lg">
             <Zap className="w-4 h-4 mr-2" />
@@ -427,7 +429,7 @@ export default function Cadastros() {
             <Badge className="bg-red-600 text-white">NUNCA APAGAR</Badge>
           </div>
           <div className="mt-2 text-xs text-slate-700">
-            ✅ Hub Único • Multiempresa 100% • 5 Estruturantes Ativos • IA Compliance Fiscal • 89 Janelas w-full/h-full • Lookups Automáticos
+            ✅ 23 Entidades • Multiempresa 100% • 6 Blocos Integrados • IA Governança/KYC/Churn • Jobs Agendados • Chatbot Multicanal • Janelas w-full/h-full
           </div>
         </AlertDescription>
       </Alert>
