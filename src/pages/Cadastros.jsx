@@ -383,15 +383,12 @@ export default function Cadastros() {
   };
 
   // Cálculo de totais por bloco
-  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
-  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kitsProduto.length + unidadesMedida.length;
-  const totalBloco3Adicional = segmentosCliente.length + condicoesComerciais.length + contasBancarias.length;
-  const totalBloco3ComMoedas = totalBloco3 + (rotasPadrao?.length || 0);
-  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + tabelasFiscais.length + contasBancarias.length;
-  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
-  const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + (apisExternas?.length || 0) + (webhooks?.length || 0) + (jobsAgendados?.length || 0) + (chatbotIntents?.length || 0) + (chatbotCanais?.length || 0);
-  const totalBloco4Adicional = rotasPadrao.length;
+  const totalBloco1 = (clientes?.length || 0) + (fornecedores?.length || 0) + (transportadoras?.length || 0) + (colaboradores?.length || 0) + (representantes?.length || 0) + (contatosB2B?.length || 0);
+  const totalBloco2 = (produtos?.length || 0) + (servicos?.length || 0) + (setoresAtividade?.length || 0) + (gruposProduto?.length || 0) + (marcas?.length || 0) + (tabelasPreco?.length || 0) + (catalogoWeb?.length || 0) + (kitsProduto?.length || 0) + (unidadesMedida?.length || 0);
+  const totalBloco3 = (bancos?.length || 0) + (formasPagamento?.length || 0) + (planoContas?.length || 0) + (centrosCusto?.length || 0) + (centrosResultado?.length || 0) + (tiposDespesa?.length || 0) + (moedasIndices?.length || 0) + (tabelasFiscais?.length || 0) + (contasBancarias?.length || 0);
+  const totalBloco4 = (veiculos?.length || 0) + (motoristas?.length || 0) + (tiposFrete?.length || 0) + (locaisEstoque?.length || 0) + (rotasPadrao?.length || 0);
+  const totalBloco5 = (empresas?.length || 0) + (grupos?.length || 0) + (departamentos?.length || 0) + (cargos?.length || 0) + (turnos?.length || 0) + (usuarios?.length || 0) + (perfisAcesso?.length || 0);
+  const totalBloco6 = (eventosNotificacao?.length || 0) + (configsIntegracao?.length || 0) + (apisExternas?.length || 0) + (webhooks?.length || 0) + (jobsAgendados?.length || 0) + (chatbotIntents?.length || 0) + (chatbotCanais?.length || 0);
 
   const planoContasFiltrados = filtrarPorBusca(planoContas, ['codigo_conta', 'nome_conta']);
   const centrosResultadoFiltrados = filtrarPorBusca(centrosResultado, ['nome', 'codigo']);
