@@ -249,6 +249,42 @@ export default function Cadastros() {
     queryFn: () => base44.entities.CondicaoComercial.list(),
   });
 
+  // FASE 3: Queries adicionais
+  const { data: segmentosCliente = [] } = useQuery({
+    queryKey: ['segmentos-cliente'],
+    queryFn: () => base44.entities.SegmentoCliente.list(),
+  });
+
+  const { data: unidadesMedida = [] } = useQuery({
+    queryKey: ['unidades-medida'],
+    queryFn: () => base44.entities.UnidadeMedida.list(),
+  });
+
+  const { data: webhooks = [] } = useQuery({
+    queryKey: ['webhooks'],
+    queryFn: () => base44.entities.Webhook.list(),
+  });
+
+  const { data: rotasPadrao = [] } = useQuery({
+    queryKey: ['rotas-padrao'],
+    queryFn: () => base44.entities.RotaPadrao.list(),
+  });
+
+  const { data: modelosDocumento = [] } = useQuery({
+    queryKey: ['modelos-documento'],
+    queryFn: () => base44.entities.ModeloDocumento.list(),
+  });
+
+  const { data: apisExternas = [] } = useQuery({
+    queryKey: ['apis-externas'],
+    queryFn: () => base44.entities.ApiExterna.list(),
+  });
+
+  const { data: jobsAgendados = [] } = useQuery({
+    queryKey: ['jobs-agendados'],
+    queryFn: () => base44.entities.JobAgendado.list(),
+  });
+
   // QUERIES - BLOCO 4: LOGÍSTICA
   const { data: veiculos = [] } = useQuery({
     queryKey: ['veiculos'],
