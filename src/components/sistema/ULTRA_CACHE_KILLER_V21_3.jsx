@@ -1,56 +1,54 @@
 import { useEffect } from 'react';
 
 /**
- * 🔥 ULTRA CACHE KILLER V21.3
- * FORÇA LIMPEZA ABSOLUTA E RELOAD AUTOMÁTICO
+ * 🔥🔥🔥 ULTRA CACHE KILLER V21.3 FINAL - ABSOLUTO 🔥🔥🔥
+ * LIMPEZA TOTAL + RELOAD AGRESSIVO
  */
 export default function UltraCacheKillerV21_3() {
   useEffect(() => {
-    const executarLimpezaTotal = async () => {
-      console.log('🔥🔥🔥 ULTRA CACHE KILLER ATIVADO - V21.3');
+    const FORCE_VERSION = 'V21.3.2_ABSOLUTE_FINAL';
+    const currentVersion = localStorage.getItem('erp_absolute_version');
+    
+    if (currentVersion !== FORCE_VERSION) {
+      console.log('🔥🔥🔥 ULTRA CACHE KILLER V21.3.2 ATIVADO - LIMPEZA ABSOLUTA!');
       
-      // 1. Limpar TODOS os storages
-      try { localStorage.clear(); } catch(e) { console.log('localStorage clear error:', e); }
-      try { sessionStorage.clear(); } catch(e) { console.log('sessionStorage clear error:', e); }
+      // 1. LIMPAR TUDO
+      try { localStorage.clear(); } catch(e) {}
+      try { sessionStorage.clear(); } catch(e) {}
       
-      // 2. Limpar TODOS os caches do navegador
+      // 2. LIMPAR TODOS OS CACHES
       if ('caches' in window) {
-        try {
-          const cacheNames = await caches.keys();
-          await Promise.all(cacheNames.map(name => caches.delete(name)));
-          console.log('✅ Todos os caches limpos:', cacheNames.length);
-        } catch(e) { console.log('caches error:', e); }
+        caches.keys().then(names => {
+          Promise.all(names.map(name => caches.delete(name))).then(() => {
+            console.log('✅ Caches deletados:', names.length);
+          });
+        });
       }
       
-      // 3. Desregistrar TODOS os service workers
+      // 3. DESREGISTRAR SERVICE WORKERS
       if ('serviceWorker' in navigator) {
-        try {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.map(reg => reg.unregister()));
-          console.log('✅ Service Workers removidos:', registrations.length);
-        } catch(e) { console.log('service worker error:', e); }
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(reg => reg.unregister());
+        });
       }
       
-      // 4. Limpar cookies relacionados ao app
+      // 4. LIMPAR COOKIES
       document.cookie.split(";").forEach(c => {
         document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
       });
       
-      // 5. Marcar versão V21.3
-      localStorage.setItem('erp_zuccaro_version', 'V21.3_ULTRA_CLEAN');
-      localStorage.setItem('cache_limpo_em', new Date().toISOString());
+      // 5. MARCAR VERSÃO
+      localStorage.setItem('erp_absolute_version', FORCE_VERSION);
       
-      // 6. Forçar reload HARD
-      console.log('🔄 Recarregando aplicação...');
+      // 6. RELOAD HARD COM TIMESTAMP
+      console.log('🔄 FORÇANDO RELOAD ABSOLUTO...');
       setTimeout(() => {
-        window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now();
-      }, 300);
-    };
-    
-    // Verificar se já rodou
-    const jaRodou = localStorage.getItem('erp_zuccaro_version');
-    if (jaRodou !== 'V21.3_ULTRA_CLEAN') {
-      executarLimpezaTotal();
+        // Adiciona timestamp único para forçar bypass de QUALQUER cache
+        const url = new URL(window.location.href);
+        url.searchParams.set('v', Date.now());
+        url.searchParams.set('nocache', '1');
+        window.location.href = url.toString();
+      }, 100);
     }
   }, []);
 
