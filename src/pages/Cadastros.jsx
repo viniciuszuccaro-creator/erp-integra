@@ -276,7 +276,7 @@ export default function Cadastros() {
     queryFn: () => base44.entities.UnidadeMedida.list(),
   });
 
-  const { data: kitsP roduto = [] } = useQuery({
+  const { data: kitsProduto = [] } = useQuery({
     queryKey: ['kits-produto'],
     queryFn: () => base44.entities.KitProduto.list(),
   });
