@@ -205,10 +205,7 @@ export default function Cadastros() {
     queryFn: () => base44.entities.CatalogoWeb.list(),
   });
 
-  const { data: kits = [] } = useQuery({
-    queryKey: ['kits-produto'],
-    queryFn: () => base44.entities.KitProduto.list(),
-  });
+
 
   // QUERIES - BLOCO 3: FINANCEIRO
   const { data: bancos = [] } = useQuery({
