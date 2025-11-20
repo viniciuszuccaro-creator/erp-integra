@@ -265,6 +265,16 @@ export default function Cadastros() {
     queryFn: () => base44.entities.TipoFrete.list(),
   });
 
+  const { data: chatbotIntents = [] } = useQuery({
+    queryKey: ['chatbotIntents'],
+    queryFn: () => base44.entities.ChatbotIntent.list(),
+  });
+
+  const { data: chatbotCanais = [] } = useQuery({
+    queryKey: ['chatbotCanais'],
+    queryFn: () => base44.entities.ChatbotCanal.list(),
+  });
+
   // QUERIES - BLOCO 5: ORGANIZACIONAL
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
@@ -323,54 +333,13 @@ export default function Cadastros() {
     queryFn: () => base44.entities.TabelaFiscal.list(),
   });
 
-  const { data: segmentosCliente = [] } = useQuery({
-    queryKey: ['segmentos-cliente'],
-    queryFn: () => base44.entities.SegmentoCliente.list(),
-  });
-
-  const { data: unidadesMedida = [] } = useQuery({
-    queryKey: ['unidades-medida'],
-    queryFn: () => base44.entities.UnidadeMedida.list(),
-  });
-
-  const { data: moedasIndices = [] } = useQuery({
-    queryKey: ['moedas-indices'],
-    queryFn: () => base44.entities.MoedaIndice.list(),
-  });
-
-  const { data: webhooks = [] } = useQuery({
-    queryKey: ['webhooks'],
-    queryFn: () => base44.entities.Webhook.list(),
-  });
-
-  const { data: rotasPadrao = [] } = useQuery({
-    queryKey: ['rotas-padrao'],
-    queryFn: () => base44.entities.RotaPadrao.list(),
-  });
-
-  const { data: modelosDocumento = [] } = useQuery({
-    queryKey: ['modelos-documento'],
-    queryFn: () => base44.entities.ModeloDocumento.list(),
-  });
-
-  const { data: apisExternas = [] } = useQuery({
-    queryKey: ['apis-externas'],
-    queryFn: () => base44.entities.ApiExterna.list(),
-  });
-
-  const { data: jobsAgendados = [] } = useQuery({
-    queryKey: ['jobs-agendados'],
-    queryFn: () => base44.entities.JobAgendado.list(),
-  });
-
   // Cálculo de totais por bloco
   const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
-  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length;
-  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
+  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length;
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
-  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
+  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + apisExternas.length + jobsAgendados.length;
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + (webhooks?.length || 0) + (chatbotIntents?.length || 0) + (chatbotCanais?.length || 0) + (apisExternas?.length || 0) + (jobsAgendados?.length || 0);
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
