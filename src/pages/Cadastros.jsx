@@ -2542,7 +2542,7 @@ export default function Cadastros() {
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🔗 Webhooks ({webhooks.length})</CardTitle>
+                        <CardTitle className="text-base">🔗 Webhooks ({webhooks?.length || 0})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(WebhookForm, {
@@ -2562,7 +2562,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {webhooks.map(wh => (
+                      {(webhooks || []).map(wh => (
                         <div key={wh.id} className="p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm">{wh.nome_webhook}</p>
                           <Badge variant="outline" className="text-xs mt-1">{wh.evento_gatilho}</Badge>
@@ -2575,7 +2575,7 @@ export default function Cadastros() {
                   <Card className="border-orange-200">
                     <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">⏰ Jobs IA ({jobsAgendados.length})</CardTitle>
+                        <CardTitle className="text-base">⏰ Jobs IA ({jobsAgendados?.length || 0})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(JobAgendadoForm, {
@@ -2595,7 +2595,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {jobsAgendados.map(job => (
+                      {(jobsAgendados || []).map(job => (
                         <div key={job.id} className="p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm">{job.nome_job}</p>
                           <Badge variant="outline" className="text-xs mt-1">{job.tipo_job}</Badge>
@@ -2659,7 +2659,7 @@ export default function Cadastros() {
                   <Card className="border-green-200">
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">💬 Chatbot Intents ({chatbotIntents.length})</CardTitle>
+                        <CardTitle className="text-base">💬 Chatbot Intents ({chatbotIntents?.length || 0})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(ChatbotIntentForm, {
@@ -2679,7 +2679,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {chatbotIntents.map(int => (
+                      {(chatbotIntents || []).map(int => (
                         <div key={int.id} className="p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm">{int.nome_intent}</p>
                           <span className="text-xs text-slate-500">{int.descricao}</span>
@@ -2692,7 +2692,7 @@ export default function Cadastros() {
                   <Card className="border-indigo-200">
                     <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📱 Chatbot Canais ({chatbotCanais.length})</CardTitle>
+                        <CardTitle className="text-base">📱 Chatbot Canais ({chatbotCanais?.length || 0})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(ChatbotCanalForm, {
@@ -2712,7 +2712,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {chatbotCanais.map(ch => (
+                      {(chatbotCanais || []).map(ch => (
                         <div key={ch.id} className="p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm">{ch.nome_canal}</p>
                           <span className="text-xs text-slate-500">{ch.tipo_canal}</span>
