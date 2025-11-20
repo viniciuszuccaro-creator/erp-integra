@@ -2628,7 +2628,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {eventosNotificacao.map(evento => (
+                      {(eventosNotificacao || []).map(evento => (
                         <div key={evento.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{evento.nome_evento}</p>
@@ -2745,7 +2745,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {configsIntegracao.map(config => (
+                      {(configsIntegracao || []).map(config => (
                         <div key={config.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{config.marketplace}</p>
