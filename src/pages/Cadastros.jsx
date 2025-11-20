@@ -334,12 +334,12 @@ export default function Cadastros() {
   });
 
   // Cálculo de totais por bloco
-  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
-  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length;
+  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length;
+  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
-  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
+  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + (webhooks?.length || 0) + (chatbotIntents?.length || 0) + (chatbotCanais?.length || 0) + (apisExternas?.length || 0) + (jobsAgendados?.length || 0);
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + apisExternas.length + jobsAgendados.length;
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
