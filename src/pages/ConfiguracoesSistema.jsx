@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import ForceCacheClear from "@/components/sistema/ForceCacheClear";
 
 export default function ConfiguracoesSistema() {
   const [activeTab, setActiveTab] = useState("ia");
@@ -26,6 +27,8 @@ export default function ConfiguracoesSistema() {
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Configurações do Sistema</h1>
         <p className="text-slate-600">Gerenciamento de acessos, auditoria, integrações e controles</p>
       </div>
+
+      <ForceCacheClear />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
