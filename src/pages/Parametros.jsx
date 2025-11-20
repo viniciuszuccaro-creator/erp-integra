@@ -22,6 +22,7 @@ import { useWindow } from '@/components/lib/useWindow';
 import TipoDespesaForm from '../components/cadastros/TipoDespesaForm';
 import ApiExternaForm from '../components/cadastros/ApiExternaForm';
 import JobAgendadoForm from '../components/cadastros/JobAgendadoForm';
+import WebhookForm from '../components/cadastros/WebhookForm';
 import { useToast } from '@/components/ui/use-toast';
 import usePermissions from '../components/lib/usePermissions';
 
@@ -364,7 +365,18 @@ export default function Parametros() {
               <CardHeader className="bg-slate-50 border-b">
                 <div className="flex items-center justify-between">
                   <CardTitle>Webhooks</CardTitle>
-                  <Button size="sm" className="bg-purple-600">
+                  <Button
+                    size="sm"
+                    onClick={() => openWindow(WebhookForm, {
+                      windowMode: true,
+                      onSubmit: handleSubmitGenerico('Webhook', 'webhooks')
+                    }, {
+                      title: '🔗 Novo Webhook',
+                      width: 800,
+                      height: 600
+                    })}
+                    className="bg-purple-600"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Novo Webhook
                   </Button>
@@ -372,9 +384,26 @@ export default function Parametros() {
               </CardHeader>
               <CardContent className="p-4 max-h-96 overflow-y-auto">
                 {webhooks.map(webhook => (
-                  <div key={webhook.id} className="p-3 border-b hover:bg-slate-50">
-                    <p className="font-semibold text-sm">{webhook.nome_webhook}</p>
-                    <Badge variant="outline" className="text-xs mt-1">{webhook.evento_gatilho}</Badge>
+                  <div key={webhook.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{webhook.nome_webhook}</p>
+                      <Badge variant="outline" className="text-xs mt-1">{webhook.evento_gatilho}</Badge>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => openWindow(WebhookForm, {
+                        webhook,
+                        windowMode: true,
+                        onSubmit: handleSubmitGenerico('Webhook', 'webhooks')
+                      }, {
+                        title: `🔗 Editar: ${webhook.nome_webhook}`,
+                        width: 800,
+                        height: 600
+                      })}
+                    >
+                      <Edit className="w-4 h-4 text-purple-600" />
+                    </Button>
                   </div>
                 ))}
               </CardContent>

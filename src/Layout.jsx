@@ -73,6 +73,7 @@ const navigationItems = [
   { title: "⚙️ Parâmetros Avançados", url: createPageUrl("Parametros"), icon: Settings, group: "sistema", adminOnly: true },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
+  { title: "🧠 Monitor de IAs", url: createPageUrl("MonitorIAs"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🧪 Teste Golden Thread", url: createPageUrl("TesteGoldenThread"), icon: Rocket, group: "sistema", adminOnly: true },
   { title: "✅ Validador Fase 1", url: createPageUrl("ValidadorFase1"), icon: CheckCircle, group: "sistema", adminOnly: true },
   { title: "✅ Validador Fase 2", url: createPageUrl("ValidadorFase2"), icon: CheckCircle, group: "sistema", adminOnly: true },
