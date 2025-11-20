@@ -1967,7 +1967,7 @@ export default function Cadastros() {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('Motorista', 'motoristas')
                             }, {
-                              title: `👤 Editar: ${motorista.nome}`,
+                              title: `👤 Editar: ${motorista.nome_completo || motorista.nome}`,
                               width: 800,
                               height: 600
                             })}
