@@ -373,8 +373,8 @@ export default function Cadastros() {
   });
 
   // Filtrar itens pelo termo de busca
-  const filtrarPorBusca = (lista, campos) => {
-    if (!searchTerm) return lista;
+  const filtrarPorBusca = (lista = [], campos) => {
+    if (!searchTerm || !lista) return lista || [];
     return lista.filter(item =>
       campos.some(campo =>
         item[campo]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
