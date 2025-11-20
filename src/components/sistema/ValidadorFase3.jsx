@@ -119,7 +119,7 @@ export default function ValidadorFase3() {
     queryFn: () => base44.entities.RotaPadrao.list()
   });
 
-  const { data: apisExternas = [] } = useQuery({
+  const { data: apis = [] } = useQuery({
     queryKey: ['apisExternas'],
     queryFn: () => base44.entities.ApiExterna.list()
   });
@@ -139,7 +139,7 @@ export default function ValidadorFase3() {
     queryFn: () => base44.entities.ChatbotCanal.list()
   });
 
-  const { data: jobsAgendados = [] } = useQuery({
+  const { data: jobs = [] } = useQuery({
     queryKey: ['jobsAgendados'],
     queryFn: () => base44.entities.JobAgendado.list()
   });
@@ -244,8 +244,8 @@ export default function ValidadorFase3() {
     {
       bloco: '3.6',
       item: 'ApiExterna e Webhooks',
-      valido: apisExternas.length >= 0 && webhooks.length >= 0,
-      detalhes: `${apisExternas.length} APIs + ${webhooks.length} webhooks`
+      valido: apis.length >= 0 && webhooks.length >= 0,
+      detalhes: `${apis.length} APIs + ${webhooks.length} webhooks`
     },
     {
       bloco: '3.6',
@@ -256,8 +256,8 @@ export default function ValidadorFase3() {
     {
       bloco: '3.6',
       item: 'Jobs Agendados de IA',
-      valido: jobsAgendados.length >= 0,
-      detalhes: `${jobsAgendados.length} job(s) configurado(s)`
+      valido: jobs.length >= 0,
+      detalhes: `${jobs.length} job(s) configurado(s)`
     }
   ];
 

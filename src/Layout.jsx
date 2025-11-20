@@ -70,7 +70,6 @@ const navigationItems = [
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
   { title: "Integrações", url: createPageUrl("Integracoes"), icon: Link2, group: "sistema" },
   { title: "Configurações do Sistema", url: createPageUrl("ConfiguracoesSistema"), icon: Settings, group: "sistema" },
-  { title: "⚙️ Parâmetros Avançados", url: createPageUrl("Parametros"), icon: Settings, group: "sistema", adminOnly: true },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🧪 Teste Golden Thread", url: createPageUrl("TesteGoldenThread"), icon: Rocket, group: "sistema", adminOnly: true },

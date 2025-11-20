@@ -31,6 +31,16 @@ export default function StatusFase3() {
     queryFn: () => base44.entities.CatalogoWeb.list()
   });
 
+  const { data: apis = [] } = useQuery({
+    queryKey: ['apisExternas'],
+    queryFn: () => base44.entities.ApiExterna.list()
+  });
+
+  const { data: jobs = [] } = useQuery({
+    queryKey: ['jobsAgendados'],
+    queryFn: () => base44.entities.JobAgendado.list()
+  });
+
   const { data: logsIA = [] } = useQuery({
     queryKey: ['logsIA'],
     queryFn: () => base44.entities.LogsIA.list('-created_date', 10)
