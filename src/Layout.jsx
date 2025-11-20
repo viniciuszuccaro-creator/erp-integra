@@ -50,6 +50,7 @@ import { WindowProvider } from "@/components/lib/WindowManager";
 import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
+import ForceReloadV21_2_6 from "@/components/sistema/FORCE_RELOAD_V21_2_6";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -201,6 +202,7 @@ function LayoutContent({ children, currentPageName }) {
 
   return (
     <SidebarProvider>
+      <ForceReloadV21_2_6 />
       {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
       
       <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
@@ -212,7 +214,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div>
                 <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">V21.2.5 • ERRO CORRIGIDO ✅</p>
+                <p className="text-xs text-slate-500">V21.2.6 • RELOAD FORÇADO 🔥</p>
               </div>
             </div>
           </SidebarHeader>
