@@ -375,20 +375,6 @@ export default function Cadastros() {
     queryFn: () => base44.entities.TabelaFiscal.list(),
   });
 
-  // Cálculo de totais por bloco
-  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
-  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kitsProduto.length + unidadesMedida.length;
-  const totalBloco3Adicional = segmentosCliente.length + condicoesComerciais.length + contasBancarias.length;
-  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + tabelasFiscais.length + contasBancarias.length;
-  
-  const planoContasFiltrados = filtrarPorBusca(planoContas, ['codigo_conta', 'nome_conta']);
-  const centrosResultadoFiltrados = filtrarPorBusca(centrosResultado, ['nome', 'codigo']);
-  const tiposDespesaFiltrados = filtrarPorBusca(tiposDespesa, ['nome', 'codigo']);
-  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
-  const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + apisExternas.length + webhooks.length + jobsAgendados.length + chatbotIntents.length + chatbotCanais.length;
-  const totalBloco4Adicional = rotasPadrao.length;
-
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
     if (!searchTerm) return lista;
@@ -399,6 +385,19 @@ export default function Cadastros() {
     );
   };
 
+  // Cálculo de totais por bloco
+  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
+  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kitsProduto.length + unidadesMedida.length;
+  const totalBloco3Adicional = segmentosCliente.length + condicoesComerciais.length + contasBancarias.length;
+  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + tabelasFiscais.length + contasBancarias.length;
+  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
+  const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + apisExternas.length + webhooks.length + jobsAgendados.length + chatbotIntents.length + chatbotCanais.length;
+  const totalBloco4Adicional = rotasPadrao.length;
+
+  const planoContasFiltrados = filtrarPorBusca(planoContas, ['codigo_conta', 'nome_conta']);
+  const centrosResultadoFiltrados = filtrarPorBusca(centrosResultado, ['nome', 'codigo']);
+  const tiposDespesaFiltrados = filtrarPorBusca(tiposDespesa, ['nome', 'codigo']);
   const clientesFiltrados = filtrarPorBusca(clientes, ['nome', 'razao_social', 'cnpj', 'cpf']);
   const fornecedoresFiltrados = filtrarPorBusca(fornecedores, ['nome', 'razao_social', 'cnpj']);
   const produtosFiltrados = filtrarPorBusca(produtos, ['descricao', 'codigo']);
