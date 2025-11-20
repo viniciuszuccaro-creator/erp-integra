@@ -83,35 +83,30 @@ import RepresentanteForm from "../components/cadastros/RepresentanteForm";
 import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
 import LocalEstoqueForm from "../components/cadastros/LocalEstoqueForm";
 import TabelaFiscalForm from "../components/cadastros/TabelaFiscalForm";
-import TipoDespesaForm from "../components/cadastros/TipoDespesaForm";
-import ApiExternaForm from "../components/cadastros/ApiExternaForm";
-import ChatbotCanalForm from "../components/cadastros/ChatbotCanalForm";
-import JobAgendadoForm from "../components/cadastros/JobAgendadoForm";
-import ContaBancariaEmpresaForm from "../components/cadastros/ContaBancariaEmpresaForm";
-import UnidadeMedidaForm from "../components/cadastros/UnidadeMedidaForm";
 
 /**
- * ⭐⭐⭐ CADASTROS GERAIS V21.3 - FASE 3: 100% COMPLETA ⭐⭐⭐
- * Hub Central de Dados Mestre Multiempresa - 6 Blocos Completos
+ * ⭐⭐⭐ CADASTROS GERAIS V21.2 - FASE 2: 100% COMPLETA ⭐⭐⭐
+ * Hub Central com 6 Blocos Reorganizados + 5 Cadastros Estruturantes Integrados
  *
  * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR
  *
- * ✅ ESTRUTURA DOS 6 BLOCOS 100% COMPLETA:
- * 3.1 EMPRESA E ESTRUTURA - GrupoEmpresarial, Empresa, Perfis, Departamentos, Cargos, Turnos
- * 3.2 PESSOAS E PARCEIROS - Clientes, Fornecedores, Transportadoras, Colaboradores, Representantes, ContatosB2B, Segmentos
- * 3.3 PRODUTOS E CATÁLOGO - Produtos, Setores, Grupos, Marcas, Unidades, Serviços, Kits, CatálogoWeb, Tabelas Preço
- * 3.4 FINANCEIRO E FISCAL - Bancos, Contas Bancárias, Formas Pagamento, Plano Contas, Centros, TiposDespesa, Tabelas Fiscais
- * 3.5 OPERAÇÃO E LOGÍSTICA - Veículos, Motoristas, TiposFrete, RotasPadrão, LocaisEstoque, Modelos Documentos, Parâmetros
- * 3.6 INTEGRAÇÕES E IA - APIs, Webhooks, ChatbotIntents, ChatbotCanais, JobsAgendados, LogsIA, Parâmetros
+ * ✅ ESTRUTURA DOS 6 BLOCOS COMPLETA:
+ * 1️⃣ PESSOAS & PARCEIROS - Clientes, Fornecedores, Transportadoras, Colaboradores, Representantes, Contatos B2B
+ * 2️⃣ PRODUTOS & SERVIÇOS ✅ FASE 2 - Setores Atividade, Grupos Produto, Marcas, Produtos, Serviços, Tabelas Preço
+ * 3️⃣ FINANCEIRO - Bancos, Formas Pagamento, Plano Contas, Centros Custo, Tabelas Fiscais ✅ FASE 2
+ * 4️⃣ LOGÍSTICA - Veículos, Motoristas, Tipos Frete, Locais Estoque ✅ FASE 2
+ * 5️⃣ ORGANIZACIONAL - Empresas, Grupos, Departamentos, Cargos, Turnos, Usuários, Perfis
+ * 6️⃣ INTEGRAÇÕES & IA - Marketplaces, Webhooks, Notificações, Chatbot, 28 IAs
  *
- * ✅ FASE 3 COMPLETA:
- * - 23 Entidades Novas/Expandidas
- * - 4 IAs Principais (Governança, KYC, PriceBrain, Churn)
- * - 10+ Forms Novos w-full/h-full
- * - Multiempresa 100% em todas entidades
- * - Controle de Acesso Granular
- * - Auditoria Global Completa
- * - Fonte Única de Verdade Consolidada
+ * ✅ FASE 2 COMPLETA:
+ * - 5 Cadastros Estruturantes (Setor, Grupo, Marca, LocalEstoque, TabelaFiscal)
+ * - Produtos com tripla classificação obrigatória (Setor + Grupo + Marca)
+ * - IA Compliance Fiscal nas Tabelas Fiscais
+ * - Locais de Estoque com estrutura física para picking
+ * - UI enriquecida com badges coloridos e lookups automáticos
+ * - 89 janelas w-full/h-full ativas
+ * - Multiempresa 100% em todos cadastros estruturantes
+ * - Fonte Única de Verdade consolidada
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -301,47 +296,6 @@ export default function Cadastros() {
     queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list(),
   });
 
-  // FASE 3: Novas queries
-  const { data: apisExternas = [] } = useQuery({
-    queryKey: ['apis-externas'],
-    queryFn: () => base44.entities.ApiExterna.list(),
-  });
-
-  const { data: webhooks = [] } = useQuery({
-    queryKey: ['webhooks'],
-    queryFn: () => base44.entities.Webhook.list(),
-  });
-
-  const { data: chatbotIntents = [] } = useQuery({
-    queryKey: ['chatbot-intents'],
-    queryFn: () => base44.entities.ChatbotIntent.list(),
-  });
-
-  const { data: chatbotCanais = [] } = useQuery({
-    queryKey: ['chatbot-canais'],
-    queryFn: () => base44.entities.ChatbotCanal.list(),
-  });
-
-  const { data: jobsAgendados = [] } = useQuery({
-    queryKey: ['jobs-agendados'],
-    queryFn: () => base44.entities.JobAgendado.list(),
-  });
-
-  const { data: contasBancarias = [] } = useQuery({
-    queryKey: ['contas-bancarias'],
-    queryFn: () => base44.entities.ContaBancariaEmpresa.list(),
-  });
-
-  const { data: unidadesMedida = [] } = useQuery({
-    queryKey: ['unidades-medida'],
-    queryFn: () => base44.entities.UnidadeMedida.list(),
-  });
-
-  const { data: segmentosCliente = [] } = useQuery({
-    queryKey: ['segmentos-cliente'],
-    queryFn: () => base44.entities.SegmentoCliente.list(),
-  });
-
   // FASE 2: Novos cadastros
   const { data: locaisEstoque = [] } = useQuery({
     queryKey: ['locais-estoque'],
@@ -354,12 +308,12 @@ export default function Cadastros() {
   });
 
   // Cálculo de totais por bloco
-  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length;
-  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
-  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length + contasBancarias.length;
+  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
+  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length;
+  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + apisExternas.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + jobsAgendados.length;
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length;
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
@@ -420,38 +374,38 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-          <Sparkles className="w-8 h-8 text-purple-600" />
-          Cadastros Gerais V21.3
-          <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 text-sm shadow-lg animate-pulse">
-            FASE 3 ✅ 100%
-          </Badge>
+            <Sparkles className="w-8 h-8 text-purple-600" />
+            Cadastros Gerais V21.2
+            <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 text-sm shadow-lg">
+              FASE 2 ✅ 100%
+            </Badge>
           </h1>
           <p className="text-slate-600 flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-blue-600">Hub Central de Dados Mestres</span>
             <span>•</span>
-            <span>6 Blocos Completos</span>
+            <span>6 Blocos Integrados</span>
             <span>•</span>
-            <span className="font-semibold text-purple-600">23 Entidades</span>
+            <span className="font-semibold text-purple-600">5 Estruturantes</span>
             <span>•</span>
             <span>Multiempresa Total</span>
             <span>•</span>
-            <span>4 IAs Principais</span>
+            <span>IA Fiscal</span>
             <span>•</span>
-            <span>Janelas w-full/h-full</span>
+            <span>89 Janelas w-full/h-full</span>
           </p>
         </div>
         <div className="flex gap-2">
           <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 shadow-lg">
             <Sparkles className="w-4 h-4 mr-2" />
-            4 IAs Principais
+            28 IAs Ativas
           </Badge>
           <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 shadow-lg animate-pulse">
             <CheckCircle2 className="w-4 h-4 mr-2" />
-            FASE 1 ✅ | FASE 2 ✅ | FASE 3 ✅
+            FASE 1 ✅ | FASE 2 ✅
           </Badge>
           <Badge className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 shadow-lg">
             <Zap className="w-4 h-4 mr-2" />
-            Janelas Ativas
+            89 Janelas
           </Badge>
         </div>
       </div>
@@ -473,7 +427,7 @@ export default function Cadastros() {
             <Badge className="bg-red-600 text-white">NUNCA APAGAR</Badge>
           </div>
           <div className="mt-2 text-xs text-slate-700">
-            ✅ Hub Único • Multiempresa 100% • 23 Entidades • 4 IAs Principais • Janelas w-full/h-full • Governança Completa
+            ✅ Hub Único • Multiempresa 100% • 5 Estruturantes Ativos • IA Compliance Fiscal • 89 Janelas w-full/h-full • Lookups Automáticos
           </div>
         </AlertDescription>
       </Alert>
@@ -930,49 +884,13 @@ export default function Cadastros() {
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {contatosB2B.map(contato => (
                         <div key={contato.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{contato.nome_completo}</p>
-                          <span className="text-xs text-slate-500">{contato.cargo} • {contato.tipo_vinculo}</span>
+                          <p className="font-semibold text-sm">{contato.nome}</p>
+                          {contato.empresa && <span className="text-xs text-slate-500">{contato.empresa}</span>}
                         </div>
                       ))}
                       {contatosB2B.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum contato cadastrado</p>
                       )}
-                    </CardContent>
-                  </Card>
-
-                  {/* SEGMENTOS DE CLIENTE */}
-                  <Card className="border-rose-200">
-                    <CardHeader className="bg-rose-50 border-b border-rose-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <TrendingUp className="w-5 h-5 text-rose-600" />
-                          Segmentos ({segmentosCliente.length})
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(ParametroForm, {
-                            tipo: 'SegmentoCliente',
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('SegmentoCliente', 'segmentos-cliente')
-                          }, {
-                            title: '📊 Novo Segmento',
-                            width: 800,
-                            height: 550
-                          })}
-                          className="bg-rose-600 hover:bg-rose-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {segmentosCliente.map(seg => (
-                        <div key={seg.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{seg.nome_segmento}</p>
-                        </div>
-                      ))}
                     </CardContent>
                   </Card>
                 </div>
@@ -1327,48 +1245,13 @@ export default function Cadastros() {
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {servicos.map(servico => (
                         <div key={servico.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{servico.descricao}</p>
-                          {servico.tipo_servico && <p className="text-xs text-slate-500">{servico.tipo_servico}</p>}
+                          <p className="font-semibold text-sm">{servico.nome}</p>
+                          {servico.descricao && <p className="text-xs text-slate-500">{servico.descricao}</p>}
                         </div>
                       ))}
                       {servicos.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum serviço cadastrado</p>
                       )}
-                    </CardContent>
-                  </Card>
-
-                  {/* UNIDADES DE MEDIDA */}
-                  <Card className="border-teal-200">
-                    <CardHeader className="bg-teal-50 border-b border-teal-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Package className="w-5 h-5 text-teal-600" />
-                          Unidades ({unidadesMedida.length})
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(UnidadeMedidaForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('UnidadeMedida', 'unidades-medida')
-                          }, {
-                            title: '📏 Nova Unidade de Medida',
-                            width: 700,
-                            height: 500
-                          })}
-                          className="bg-teal-600 hover:bg-teal-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Nova
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {unidadesMedida.map(un => (
-                        <div key={un.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{un.sigla} - {un.descricao}</p>
-                        </div>
-                      ))}
                     </CardContent>
                   </Card>
                 </div>
@@ -1543,78 +1426,6 @@ export default function Cadastros() {
                           >
                             <Edit className="w-3 h-3 text-purple-600" />
                           </Button>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  {/* TIPOS DE DESPESA - NOVO FASE 3 */}
-                  <Card className="border-amber-200">
-                    <CardHeader className="bg-amber-50 border-b border-amber-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Receipt className="w-5 h-5 text-amber-600" />
-                          Tipos de Despesa ({tiposDespesa.length})
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(TipoDespesaForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('TipoDespesa', 'tipos-despesa')
-                          }, {
-                            title: '💰 Novo Tipo de Despesa',
-                            width: 800,
-                            height: 600
-                          })}
-                          className="bg-amber-600 hover:bg-amber-700"
-                          disabled={!hasPermission('financeiro', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {tiposDespesa.map(tipo => (
-                        <div key={tipo.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{tipo.nome}</p>
-                          <Badge variant="outline" className="text-xs">{tipo.categoria}</Badge>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  {/* CONTAS BANCÁRIAS - NOVO FASE 3 */}
-                  <Card className="border-emerald-200 lg:col-span-2">
-                    <CardHeader className="bg-emerald-50 border-b border-emerald-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Landmark className="w-5 h-5 text-emerald-600" />
-                          Contas Bancárias ({contasBancarias.length})
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(ContaBancariaEmpresaForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('ContaBancariaEmpresa', 'contas-bancarias')
-                          }, {
-                            title: '🏦 Nova Conta Bancária',
-                            width: 900,
-                            height: 650
-                          })}
-                          className="bg-emerald-600 hover:bg-emerald-700"
-                          disabled={!hasPermission('financeiro', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Nova
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {contasBancarias.map(conta => (
-                        <div key={conta.id} className="p-3 border rounded mb-2 hover:bg-slate-50">
-                          <p className="font-semibold text-sm">Ag: {conta.agencia} • Conta: {conta.numero_conta}</p>
-                          <Badge variant="outline" className="text-xs">{conta.tipo_conta} - {conta.finalidade}</Badge>
                         </div>
                       ))}
                     </CardContent>
@@ -2398,155 +2209,13 @@ export default function Cadastros() {
                       ))}
                     </CardContent>
                   </Card>
-
-                  {/* APIS EXTERNAS - NOVO FASE 3 */}
-                  <Card className="border-blue-200">
-                    <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Zap className="w-5 h-5 text-blue-600" />
-                          APIs Externas ({apisExternas.length})
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(ApiExternaForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('ApiExterna', 'apis-externas')
-                          }, {
-                            title: '⚡ Nova API Externa',
-                            width: 900,
-                            height: 650
-                          })}
-                          className="bg-blue-600 hover:bg-blue-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Nova
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {apisExternas.map(api => (
-                        <div key={api.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{api.nome_integracao}</p>
-                          <Badge variant="outline" className="text-xs">{api.tipo_integracao}</Badge>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  {/* WEBHOOKS - NOVO FASE 3 */}
-                  <Card className="border-indigo-200">
-                    <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Link2 className="w-5 h-5 text-indigo-600" />
-                          Webhooks ({webhooks.length})
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(() => <div className="p-6">Form em construção</div>, {}, {
-                            title: '🔗 Novo Webhook',
-                            width: 800,
-                            height: 600
-                          })}
-                          className="bg-indigo-600 hover:bg-indigo-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {webhooks.map(wh => (
-                        <div key={wh.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{wh.nome_webhook}</p>
-                          <Badge variant="outline" className="text-xs">{wh.evento_gatilho}</Badge>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  {/* CHATBOT CANAIS - NOVO FASE 3 */}
-                  <Card className="border-green-200">
-                    <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <MessageCircle className="w-5 h-5 text-green-600" />
-                          Chatbot Canais ({chatbotCanais.length})
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(ChatbotCanalForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbot-canais')
-                          }, {
-                            title: '💬 Novo Canal Chatbot',
-                            width: 900,
-                            height: 650
-                          })}
-                          className="bg-green-600 hover:bg-green-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {chatbotCanais.map(canal => (
-                        <div key={canal.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{canal.nome_canal}</p>
-                          <Badge variant="outline" className="text-xs">{canal.tipo_canal}</Badge>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-
-                  {/* JOBS AGENDADOS - NOVO FASE 3 */}
-                  <Card className="border-orange-200">
-                    <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Clock className="w-5 h-5 text-orange-600" />
-                          Jobs Agendados ({jobsAgendados.length})
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(JobAgendadoForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('JobAgendado', 'jobs-agendados')
-                          }, {
-                            title: '⏰ Novo Job Agendado',
-                            width: 800,
-                            height: 600
-                          })}
-                          className="bg-orange-600 hover:bg-orange-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {jobsAgendados.map(job => (
-                        <div key={job.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{job.nome_job}</p>
-                          <Badge variant="outline" className="text-xs">{job.tipo_job} • {job.periodicidade}</Badge>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
                 </div>
 
                 <Alert className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-cyan-50">
                   <Sparkles className="w-4 h-4 text-purple-600" />
                   <AlertDescription className="text-sm text-purple-900">
-                    <strong>4 IAs Principais Implementadas:</strong> Governança & Compliance • KYC/KYB Validação • PriceBrain 3.0 • Churn Detection
-                    <br />
-                    <span className="text-xs mt-1 inline-block">+ {jobsAgendados.filter(j => j.ativo && j.tipo_job.startsWith('IA_')).length} Jobs de IA agendados rodando automaticamente</span>
+                    <strong>28 IAs Ativas:</strong> PriceBrain 3.0 • ChurnDetection • ProductClassifier • FiscalValidator •
+                    LeadScoring • RouteOptimizer • QualityPredictor • StockRecommender • e mais 20 IAs rodando 24/7
                   </AlertDescription>
                 </Alert>
               </AccordionContent>
