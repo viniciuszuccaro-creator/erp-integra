@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Factory, Package, Award, Warehouse, Scale, TrendingUp, CheckCircle2, AlertCircle, ChevronRight } from "lucide-react";
+import { Factory, Package, Award, Warehouse, Scale, TrendingUp, CheckCircle2, AlertCircle, ChevronRight, Stars } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
@@ -136,7 +136,7 @@ export default function DashboardEstruturantes() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
-            <Sparkles className="w-7 h-7 text-purple-600" />
+            <Stars className="w-7 h-7 text-purple-600" />
             Dashboard de Cadastros Estruturantes
           </h2>
           <p className="text-sm text-slate-600 mt-1">
@@ -300,7 +300,7 @@ export default function DashboardEstruturantes() {
       <Card className="border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-purple-50">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-blue-600" />
+            <Stars className="w-5 h-5 text-blue-600" />
             Próximos Passos - Fase 3
           </CardTitle>
         </CardHeader>
