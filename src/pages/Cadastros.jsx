@@ -205,7 +205,10 @@ export default function Cadastros() {
     queryFn: () => base44.entities.CatalogoWeb.list(),
   });
 
-
+  const { data: kits = [] } = useQuery({
+    queryKey: ['kits-produto'],
+    queryFn: () => base44.entities.KitProduto.list(),
+  });
 
   // QUERIES - BLOCO 3: FINANCEIRO
   const { data: bancos = [] } = useQuery({
@@ -372,9 +375,23 @@ export default function Cadastros() {
     queryFn: () => base44.entities.TabelaFiscal.list(),
   });
 
+  // Cálculo de totais por bloco
+  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length;
+  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kitsProduto.length + unidadesMedida.length;
+  const totalBloco3Adicional = segmentosCliente.length + condicoesComerciais.length + contasBancarias.length;
+  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + tabelasFiscais.length + contasBancarias.length;
+  
+  const planoContasFiltrados = filtrarPorBusca(planoContas, ['codigo_conta', 'nome_conta']);
+  const centrosResultadoFiltrados = filtrarPorBusca(centrosResultado, ['nome', 'codigo']);
+  const tiposDespesaFiltrados = filtrarPorBusca(tiposDespesa, ['nome', 'codigo']);
+  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
+  const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + apisExternas.length + webhooks.length + jobsAgendados.length + chatbotIntents.length + chatbotCanais.length;
+  const totalBloco4Adicional = rotasPadrao.length;
+
   // Filtrar itens pelo termo de busca
-  const filtrarPorBusca = (lista = [], campos) => {
-    if (!searchTerm || !lista) return lista || [];
+  const filtrarPorBusca = (lista, campos) => {
+    if (!searchTerm) return lista;
     return lista.filter(item =>
       campos.some(campo =>
         item[campo]?.toString().toLowerCase().includes(searchTerm.toLowerCase())
@@ -382,17 +399,6 @@ export default function Cadastros() {
     );
   };
 
-  // Cálculo de totais por bloco
-  const totalBloco1 = (clientes?.length || 0) + (fornecedores?.length || 0) + (transportadoras?.length || 0) + (colaboradores?.length || 0) + (representantes?.length || 0) + (contatosB2B?.length || 0);
-  const totalBloco2 = (produtos?.length || 0) + (servicos?.length || 0) + (setoresAtividade?.length || 0) + (gruposProduto?.length || 0) + (marcas?.length || 0) + (tabelasPreco?.length || 0) + (catalogoWeb?.length || 0) + (kitsProduto?.length || 0) + (unidadesMedida?.length || 0);
-  const totalBloco3 = (bancos?.length || 0) + (formasPagamento?.length || 0) + (planoContas?.length || 0) + (centrosCusto?.length || 0) + (centrosResultado?.length || 0) + (tiposDespesa?.length || 0) + (moedasIndices?.length || 0) + (tabelasFiscais?.length || 0) + (contasBancarias?.length || 0);
-  const totalBloco4 = (veiculos?.length || 0) + (motoristas?.length || 0) + (tiposFrete?.length || 0) + (locaisEstoque?.length || 0) + (rotasPadrao?.length || 0);
-  const totalBloco5 = (empresas?.length || 0) + (grupos?.length || 0) + (departamentos?.length || 0) + (cargos?.length || 0) + (turnos?.length || 0) + (usuarios?.length || 0) + (perfisAcesso?.length || 0);
-  const totalBloco6 = (eventosNotificacao?.length || 0) + (configsIntegracao?.length || 0) + (apisExternas?.length || 0) + (webhooks?.length || 0) + (jobsAgendados?.length || 0) + (chatbotIntents?.length || 0) + (chatbotCanais?.length || 0);
-
-  const planoContasFiltrados = filtrarPorBusca(planoContas, ['codigo_conta', 'nome_conta']);
-  const centrosResultadoFiltrados = filtrarPorBusca(centrosResultado, ['nome', 'codigo']);
-  const tiposDespesaFiltrados = filtrarPorBusca(tiposDespesa, ['nome', 'codigo']);
   const clientesFiltrados = filtrarPorBusca(clientes, ['nome', 'razao_social', 'cnpj', 'cpf']);
   const fornecedoresFiltrados = filtrarPorBusca(fornecedores, ['nome', 'razao_social', 'cnpj']);
   const produtosFiltrados = filtrarPorBusca(produtos, ['descricao', 'codigo']);
@@ -660,7 +666,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Users className="w-5 h-5 text-blue-600" />
-                          Clientes ({clientesFiltrados?.length || 0})
+                          Clientes ({clientesFiltrados.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -716,7 +722,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Building2 className="w-5 h-5 text-cyan-600" />
-                          Fornecedores ({fornecedoresFiltrados?.length || 0})
+                          Fornecedores ({fornecedoresFiltrados.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -771,7 +777,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Truck className="w-5 h-5 text-orange-600" />
-                          Transportadoras ({transportadorasFiltradas?.length || 0})
+                          Transportadoras ({transportadorasFiltradas.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -833,7 +839,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <User className="w-5 h-5 text-pink-600" />
-                          Colaboradores ({colaboradoresFiltrados?.length || 0})
+                          Colaboradores ({colaboradoresFiltrados.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -895,7 +901,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Briefcase className="w-5 h-5 text-teal-600" />
-                          Representantes ({representantes?.length || 0})
+                          Representantes ({representantes.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -934,7 +940,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <MessageCircle className="w-5 h-5 text-violet-600" />
-                          Contatos B2B ({contatosB2B?.length || 0})
+                          Contatos B2B ({contatosB2B.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -990,7 +996,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Package className="w-5 h-5 text-purple-600" />
-                          Produtos ({produtosFiltrados?.length || 0})
+                          Produtos ({produtosFiltrados.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1060,7 +1066,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Factory className="w-5 h-5 text-indigo-600" />
-                          Setores de Atividade ({setoresAtividade?.length || 0})
+                          Setores de Atividade ({setoresAtividade.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1119,7 +1125,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Boxes className="w-5 h-5 text-cyan-600" />
-                          Grupos/Linhas ({gruposProduto?.length || 0})
+                          Grupos/Linhas ({gruposProduto.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1176,7 +1182,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Award className="w-5 h-5 text-orange-600" />
-                          Marcas ({marcas?.length || 0})
+                          Marcas ({marcas.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1233,7 +1239,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <TrendingUp className="w-5 h-5 text-green-600" />
-                          Tabelas de Preço ({tabelasPreco?.length || 0})
+                          Tabelas de Preço ({tabelasPreco.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1295,7 +1301,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Sparkles className="w-5 h-5 text-blue-600" />
-                          Serviços ({servicos?.length || 0})
+                          Serviços ({servicos.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1332,7 +1338,7 @@ export default function Cadastros() {
                   <Card className="border-teal-200">
                     <CardHeader className="bg-teal-50 border-b border-teal-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📏 Unidades de Medida ({unidadesMedida?.length || 0})</CardTitle>
+                        <CardTitle className="text-base">📏 Unidades de Medida ({unidadesMedida.length})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(UnidadeMedidaForm, {
@@ -1365,7 +1371,7 @@ export default function Cadastros() {
                   <Card className="border-pink-200">
                     <CardHeader className="bg-pink-50 border-b border-pink-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📦 Kits ({kitsProduto?.length || 0})</CardTitle>
+                        <CardTitle className="text-base">📦 Kits ({kitsProduto.length})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(KitProdutoFormCompleto, {
@@ -1954,7 +1960,7 @@ export default function Cadastros() {
                       {motoristas.map(motorista => (
                         <div key={motorista.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
-                            <p className="font-semibold text-sm">{motorista.nome_completo || motorista.nome}</p>
+                            <p className="font-semibold text-sm">{motorista.nome}</p>
                             <span className="text-xs text-slate-500">CNH: {motorista.cnh_numero}</span>
                           </div>
                           <Button
@@ -1965,7 +1971,7 @@ export default function Cadastros() {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('Motorista', 'motoristas')
                             }, {
-                              title: `👤 Editar: ${motorista.nome_completo || motorista.nome}`,
+                              title: `👤 Editar: ${motorista.nome}`,
                               width: 800,
                               height: 600
                             })}
@@ -2501,7 +2507,7 @@ export default function Cadastros() {
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">⚡ APIs Externas ({apisExternas?.length || 0})</CardTitle>
+                        <CardTitle className="text-base">⚡ APIs Externas ({apisExternas.length})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(ApiExternaForm, {
@@ -2521,17 +2527,14 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {(apisExternas || []).map(api => (
-                       <div key={api.id} className="p-2 border-b hover:bg-slate-50">
-                         <p className="font-semibold text-sm">{api.nome_integracao}</p>
-                         <div className="flex gap-2 mt-1">
-                           <Badge variant="outline" className="text-xs">{api.tipo_integracao}</Badge>
-                         </div>
-                       </div>
+                      {apisExternas.map(api => (
+                        <div key={api.id} className="p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{api.nome_integracao}</p>
+                          <div className="flex gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">{api.tipo_integracao}</Badge>
+                          </div>
+                        </div>
                       ))}
-                      {(!apisExternas || apisExternas.length === 0) && (
-                        <p className="text-center text-slate-500 py-8 text-sm">Nenhuma API externa cadastrada</p>
-                      )}
                     </CardContent>
                   </Card>
 
@@ -2539,7 +2542,7 @@ export default function Cadastros() {
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🔗 Webhooks ({webhooks?.length || 0})</CardTitle>
+                        <CardTitle className="text-base">🔗 Webhooks ({webhooks.length})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(WebhookForm, {
@@ -2559,7 +2562,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {(webhooks || []).map(wh => (
+                      {webhooks.map(wh => (
                         <div key={wh.id} className="p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm">{wh.nome_webhook}</p>
                           <Badge variant="outline" className="text-xs mt-1">{wh.evento_gatilho}</Badge>
@@ -2572,7 +2575,7 @@ export default function Cadastros() {
                   <Card className="border-orange-200">
                     <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">⏰ Jobs IA ({jobsAgendados?.length || 0})</CardTitle>
+                        <CardTitle className="text-base">⏰ Jobs IA ({jobsAgendados.length})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(JobAgendadoForm, {
@@ -2592,7 +2595,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {(jobsAgendados || []).map(job => (
+                      {jobsAgendados.map(job => (
                         <div key={job.id} className="p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm">{job.nome_job}</p>
                           <Badge variant="outline" className="text-xs mt-1">{job.tipo_job}</Badge>
@@ -2605,7 +2608,7 @@ export default function Cadastros() {
                   <Card className="border-cyan-200">
                     <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao?.length || 0})</CardTitle>
+                        <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(EventoNotificacaoForm, {
@@ -2625,7 +2628,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {(eventosNotificacao || []).map(evento => (
+                      {eventosNotificacao.map(evento => (
                         <div key={evento.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{evento.nome_evento}</p>
@@ -2656,7 +2659,7 @@ export default function Cadastros() {
                   <Card className="border-green-200">
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">💬 Chatbot Intents ({chatbotIntents?.length || 0})</CardTitle>
+                        <CardTitle className="text-base">💬 Chatbot Intents ({chatbotIntents.length})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(ChatbotIntentForm, {
@@ -2676,7 +2679,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {(chatbotIntents || []).map(int => (
+                      {chatbotIntents.map(int => (
                         <div key={int.id} className="p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm">{int.nome_intent}</p>
                           <span className="text-xs text-slate-500">{int.descricao}</span>
@@ -2689,7 +2692,7 @@ export default function Cadastros() {
                   <Card className="border-indigo-200">
                     <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📱 Chatbot Canais ({chatbotCanais?.length || 0})</CardTitle>
+                        <CardTitle className="text-base">📱 Chatbot Canais ({chatbotCanais.length})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(ChatbotCanalForm, {
@@ -2709,7 +2712,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {(chatbotCanais || []).map(ch => (
+                      {chatbotCanais.map(ch => (
                         <div key={ch.id} className="p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm">{ch.nome_canal}</p>
                           <span className="text-xs text-slate-500">{ch.tipo_canal}</span>
@@ -2722,7 +2725,7 @@ export default function Cadastros() {
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao?.length || 0})</CardTitle>
+                        <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
@@ -2742,7 +2745,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {(configsIntegracao || []).map(config => (
+                      {configsIntegracao.map(config => (
                         <div key={config.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{config.marketplace}</p>
