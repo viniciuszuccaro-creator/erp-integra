@@ -25,7 +25,7 @@ import {
   Landmark,
   Factory,
   Boxes,
-  Sparkles,
+  Stars,
   ChevronRight,
   Cpu,
   Shield,
@@ -374,7 +374,7 @@ export default function Cadastros() {
       <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-            <Sparkles className="w-8 h-8 text-purple-600" />
+            <Stars className="w-8 h-8 text-purple-600" />
             Cadastros Gerais V21.3
             <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 text-sm shadow-lg">
               FASE 3 ✅ 100%
@@ -398,7 +398,7 @@ export default function Cadastros() {
         </div>
         <div className="flex gap-2">
           <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 shadow-lg">
-            <Sparkles className="w-4 h-4 mr-2" />
+            <Stars className="w-4 h-4 mr-2" />
             28 IAs Ativas
           </Badge>
           <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 shadow-lg animate-pulse">
@@ -414,7 +414,7 @@ export default function Cadastros() {
 
       {/* ALERT DE REGRA-MÃE */}
       <Alert className="border-purple-400 bg-gradient-to-r from-purple-50 via-blue-50 to-cyan-50 shadow-lg">
-        <Sparkles className="w-5 h-5 text-purple-600 animate-pulse" />
+        <Stars className="w-5 h-5 text-purple-600 animate-pulse" />
         <AlertDescription className="text-sm text-purple-900">
           <div className="flex items-center gap-2 flex-wrap">
             <strong className="text-base">REGRA-MÃE V21.2:</strong>
@@ -445,7 +445,7 @@ export default function Cadastros() {
             Cadastros
           </TabsTrigger>
           <TabsTrigger value="estruturantes">
-            <Sparkles className="w-4 h-4 mr-2" />
+            <Stars className="w-4 h-4 mr-2" />
             Estruturantes
           </TabsTrigger>
           <TabsTrigger value="fonte-unica">
@@ -1223,7 +1223,7 @@ export default function Cadastros() {
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
-                          <Sparkles className="w-5 h-5 text-blue-600" />
+                          <Stars className="w-5 h-5 text-blue-600" />
                           Serviços ({servicos.length})
                         </CardTitle>
                         <Button
@@ -2214,7 +2214,7 @@ export default function Cadastros() {
                 </div>
 
                 <Alert className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-cyan-50">
-                  <Sparkles className="w-4 h-4 text-purple-600" />
+                  <Stars className="w-4 h-4 text-purple-600" />
                   <AlertDescription className="text-sm text-purple-900">
                     <strong>28 IAs Ativas:</strong> PriceBrain 3.0 • ChurnDetection • ProductClassifier • FiscalValidator •
                     LeadScoring • RouteOptimizer • QualityPredictor • StockRecommender • e mais 20 IAs rodando 24/7
