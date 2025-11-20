@@ -212,7 +212,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div>
                 <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">V21.2.3 • FASE 2 ✅ 100% • 90W</p>
+                <p className="text-xs text-slate-500">V21.2.4 • CACHE FIX 🔥</p>
               </div>
             </div>
           </SidebarHeader>
