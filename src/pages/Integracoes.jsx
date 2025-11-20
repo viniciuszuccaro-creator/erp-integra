@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -57,11 +58,6 @@ export default function Integracoes() {
     },
   });
 
-  const { data: apisExternas = [] } = useQuery({
-    queryKey: ['apis-externas'],
-    queryFn: () => base44.entities.ApiExterna.list(),
-  });
-
   const statusIntegracoes = {
     nfe: configuracao?.integracao_nfe?.ativa || false,
     boletos: configuracao?.integracao_boletos?.ativa || false,
@@ -72,9 +68,8 @@ export default function Integracoes() {
     marketplaces: false
   };
 
-  const integracoesAtivasAPIs = apisExternas.filter(api => api.ativo).length;
-  const totalAtivas = Object.values(statusIntegracoes).filter(Boolean).length + integracoesAtivasAPIs;
-  const totalDisponiveis = 7 + apisExternas.length;
+  const totalAtivas = Object.values(statusIntegracoes).filter(Boolean).length;
+  const totalDisponiveis = 7;
 
   return (
     <div className="p-6 lg:p-8 space-y-6">

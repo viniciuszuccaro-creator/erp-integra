@@ -50,7 +50,6 @@ import { WindowProvider } from "@/components/lib/WindowManager";
 import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
-import UltraCacheKillerV21_3 from "@/components/sistema/ULTRA_CACHE_KILLER_V21_3";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -202,7 +201,6 @@ function LayoutContent({ children, currentPageName }) {
 
   return (
     <SidebarProvider>
-      <UltraCacheKillerV21_3 />
       {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
       
       <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
@@ -214,7 +212,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div>
                 <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">V21.3 • ULTRA KILLER 💥</p>
+                <p className="text-xs text-slate-500">V21.2.2 • FASE 2 ✅ 100% • 89W</p>
               </div>
             </div>
           </SidebarHeader>
