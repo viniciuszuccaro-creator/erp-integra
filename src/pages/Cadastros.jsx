@@ -1333,6 +1333,138 @@ export default function Cadastros() {
                       )}
                     </CardContent>
                   </Card>
+
+                  {/* UNIDADES DE MEDIDA */}
+                  <Card className="border-teal-200">
+                    <CardHeader className="bg-teal-50 border-b border-teal-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">📏 Unidades de Medida ({unidadesMedida.length})</CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(UnidadeMedidaForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('UnidadeMedida', 'unidades-medida')
+                          }, {
+                            title: '📏 Nova Unidade de Medida',
+                            width: 800,
+                            height: 650
+                          })}
+                          className="bg-teal-600 hover:bg-teal-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {unidadesMedida.map(un => (
+                        <div key={un.id} className="p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{un.sigla} - {un.nome_completo}</p>
+                          <span className="text-xs text-slate-500">{un.tipo_grandeza}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* KITS DE PRODUTO */}
+                  <Card className="border-pink-200">
+                    <CardHeader className="bg-pink-50 border-b border-pink-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">📦 Kits ({kitsProduto.length})</CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(KitProdutoFormCompleto, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('KitProduto', 'kits-produto')
+                          }, {
+                            title: '📦 Novo Kit de Produto',
+                            width: 900,
+                            height: 700
+                          })}
+                          className="bg-pink-600 hover:bg-pink-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {kitsProduto.map(kit => (
+                        <div key={kit.id} className="p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{kit.nome_kit}</p>
+                          <span className="text-xs text-slate-500">{kit.tipo_kit}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* SEGMENTOS DE CLIENTE */}
+                  <Card className="border-indigo-200">
+                    <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🎯 Segmentos ({segmentosCliente.length})</CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(SegmentoClienteForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('SegmentoCliente', 'segmentos-cliente')
+                          }, {
+                            title: '🎯 Novo Segmento de Cliente',
+                            width: 800,
+                            height: 550
+                          })}
+                          className="bg-indigo-600 hover:bg-indigo-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {segmentosCliente.map(seg => (
+                        <div key={seg.id} className="p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{seg.nome_segmento}</p>
+                          <span className="text-xs text-slate-500">{seg.tipo_segmento}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* CONDIÇÕES COMERCIAIS */}
+                  <Card className="border-amber-200">
+                    <CardHeader className="bg-amber-50 border-b border-amber-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">💼 Condições Comerciais ({condicoesComerciais.length})</CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(CondicaoComercialFormCompleto, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('CondicaoComercial', 'condicoes-comerciais')
+                          }, {
+                            title: '💼 Nova Condição Comercial',
+                            width: 900,
+                            height: 700
+                          })}
+                          className="bg-amber-600 hover:bg-amber-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {condicoesComerciais.map(cond => (
+                        <div key={cond.id} className="p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{cond.nome_condicao}</p>
+                          <span className="text-xs text-slate-500">{cond.tipo_condicao}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -1847,6 +1979,39 @@ export default function Cadastros() {
                           >
                             <Edit className="w-3 h-3 text-blue-600" />
                           </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* ROTAS PADRÃO */}
+                  <Card className="border-cyan-200">
+                    <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🗺️ Rotas Padrão ({rotasPadrao.length})</CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(RotaPadraoFormCompleto, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('RotaPadrao', 'rotas-padrao')
+                          }, {
+                            title: '🗺️ Nova Rota Padrão',
+                            width: 900,
+                            height: 650
+                          })}
+                          className="bg-cyan-600 hover:bg-cyan-700"
+                          disabled={!hasPermission('expedicao', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {rotasPadrao.map(rota => (
+                        <div key={rota.id} className="p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{rota.nome_rota}</p>
+                          <span className="text-xs text-slate-500">{rota.tipo_rota}</span>
                         </div>
                       ))}
                     </CardContent>
@@ -2485,6 +2650,72 @@ export default function Cadastros() {
                           >
                             <Edit className="w-3 h-3 text-cyan-600" />
                           </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* CHATBOT - INTENTS */}
+                  <Card className="border-green-200">
+                    <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">💬 Chatbot Intents ({chatbotIntents.length})</CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(ChatbotIntentForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('ChatbotIntent', 'chatbot-intents')
+                          }, {
+                            title: '💬 Nova Intent do Chatbot',
+                            width: 900,
+                            height: 700
+                          })}
+                          className="bg-green-600 hover:bg-green-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {chatbotIntents.map(int => (
+                        <div key={int.id} className="p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{int.nome_intent}</p>
+                          <span className="text-xs text-slate-500">{int.descricao}</span>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* CHATBOT - CANAIS */}
+                  <Card className="border-indigo-200">
+                    <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">📱 Chatbot Canais ({chatbotCanais.length})</CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(ChatbotCanalForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbot-canais')
+                          }, {
+                            title: '📱 Novo Canal do Chatbot',
+                            width: 900,
+                            height: 700
+                          })}
+                          className="bg-indigo-600 hover:bg-indigo-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {chatbotCanais.map(ch => (
+                        <div key={ch.id} className="p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{ch.nome_canal}</p>
+                          <span className="text-xs text-slate-500">{ch.tipo_canal}</span>
                         </div>
                       ))}
                     </CardContent>
