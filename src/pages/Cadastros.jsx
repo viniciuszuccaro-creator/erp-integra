@@ -389,7 +389,7 @@ export default function Cadastros() {
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + tabelasFiscais.length + contasBancarias.length;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + apisExternas.length + webhooks.length + jobsAgendados.length + chatbotIntents.length + chatbotCanais.length;
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + (apisExternas?.length || 0) + (webhooks?.length || 0) + (jobsAgendados?.length || 0) + (chatbotIntents?.length || 0) + (chatbotCanais?.length || 0);
   const totalBloco4Adicional = rotasPadrao.length;
 
   const planoContasFiltrados = filtrarPorBusca(planoContas, ['codigo_conta', 'nome_conta']);
@@ -2531,7 +2531,7 @@ export default function Cadastros() {
                           </div>
                         </div>
                       ))}
-                      {apisExternas.length === 0 && (
+                      {(!apisExternas || apisExternas.length === 0) && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhuma API externa cadastrada</p>
                       )}
                     </CardContent>
