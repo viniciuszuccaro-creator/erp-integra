@@ -650,11 +650,12 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
-          {/* STATUS FASE 1, FASE 2 e FASE 3 */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* STATUS FASE 1, FASE 2, FASE 3 e ETAPA 4 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <StatusFase1 />
             <StatusFase2 />
             <StatusFase3 />
+            <StatusWidgetEtapa4 />
           </div>
 
           {/* KPIs Principais */}
