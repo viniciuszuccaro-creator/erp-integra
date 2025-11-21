@@ -10,6 +10,7 @@ import { Link2, Save } from "lucide-react";
 
 export default function ConfiguracaoIntegracaoForm({ config, onSubmit, isSubmitting, windowMode = false }) {
   const [formData, setFormData] = useState(config || {
+    marketplace: "",
     nome_integracao: "",
     tipo_integracao: "API REST",
     descricao: "",
@@ -24,8 +25,8 @@ export default function ConfiguracaoIntegracaoForm({ config, onSubmit, isSubmitt
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.nome_integracao) {
-      alert('Nome da integração é obrigatório');
+    if (!formData.marketplace && !formData.nome_integracao) {
+      alert('Nome da integração ou marketplace é obrigatório');
       return;
     }
     await onSubmit(formData);
@@ -43,29 +44,38 @@ export default function ConfiguracaoIntegracaoForm({ config, onSubmit, isSubmitt
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>Nome da Integração *</Label>
+              <Label>Marketplace *</Label>
               <Input
-                value={formData.nome_integracao}
-                onChange={(e) => setFormData({ ...formData, nome_integracao: e.target.value })}
-                placeholder="Ex: NFe API Homologação"
+                value={formData.marketplace}
+                onChange={(e) => setFormData({ ...formData, marketplace: e.target.value })}
+                placeholder="Ex: Mercado Livre, Amazon, Magalu"
               />
             </div>
             <div>
-              <Label>Tipo de Integração</Label>
-              <Select value={formData.tipo_integracao} onValueChange={(val) => setFormData({ ...formData, tipo_integracao: val })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="API REST">API REST</SelectItem>
-                  <SelectItem value="SOAP">SOAP</SelectItem>
-                  <SelectItem value="GraphQL">GraphQL</SelectItem>
-                  <SelectItem value="Webhook">Webhook</SelectItem>
-                  <SelectItem value="FTP">FTP</SelectItem>
-                  <SelectItem value="Outro">Outro</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Nome da Integração</Label>
+              <Input
+                value={formData.nome_integracao}
+                onChange={(e) => setFormData({ ...formData, nome_integracao: e.target.value })}
+                placeholder="Ex: ML Produção"
+              />
             </div>
+          </div>
+
+          <div>
+            <Label>Tipo de Integração</Label>
+            <Select value={formData.tipo_integracao} onValueChange={(val) => setFormData({ ...formData, tipo_integracao: val })}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="API REST">API REST</SelectItem>
+                <SelectItem value="SOAP">SOAP</SelectItem>
+                <SelectItem value="GraphQL">GraphQL</SelectItem>
+                <SelectItem value="Webhook">Webhook</SelectItem>
+                <SelectItem value="FTP">FTP</SelectItem>
+                <SelectItem value="Outro">Outro</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
