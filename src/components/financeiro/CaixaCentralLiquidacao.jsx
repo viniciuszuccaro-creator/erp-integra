@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DollarSign,
   TrendingUp,
@@ -23,24 +24,28 @@ import {
   Landmark,
   Search,
   Filter,
+  Send,
+  ArrowRight
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 /**
- * 💰 CAIXA CENTRAL - LIQUIDAÇÃO V21.4 ETAPA 4
+ * 💰 CAIXA CENTRAL - LIQUIDAÇÃO V21.4 ETAPA 4 COMPLETA
  * Central unificada de liquidação de títulos e pagamentos omnichannel
  * 
  * FUNCIONALIDADES:
- * - Liquidação de Contas a Receber
- * - Liquidação de Contas a Pagar
- * - Processamento de Pagamentos Omnichannel
- * - Consolidação de Ordens de Liquidação
- * - Gestão de caixa unificada
- * - Multiempresa com visão consolidada
+ * ✅ Liquidação de Contas a Receber
+ * ✅ Liquidação de Contas a Pagar
+ * ✅ Processamento de Pagamentos Omnichannel
+ * ✅ Consolidação de Ordens de Liquidação
+ * ✅ Envio de Títulos para Caixa (Receber/Pagar)
+ * ✅ Gestão de caixa unificada
+ * ✅ Multiempresa com visão consolidada
  */
 function CaixaCentralLiquidacao({ windowMode = false }) {
-  const [abaAtiva, setAbaAtiva] = useState("ordens-pendentes");
+  const [abaAtiva, setAbaAtiva] = useState("liquidar-receber");
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [filtroOrigem, setFiltroOrigem] = useState("todos");
   const [busca, setBusca] = useState("");
@@ -48,6 +53,8 @@ function CaixaCentralLiquidacao({ windowMode = false }) {
   const [ordemSelecionada, setOrdemSelecionada] = useState(null);
   const [formaPagamento, setFormaPagamento] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [titulosSelecionadosReceber, setTitulosSelecionadosReceber] = useState([]);
+  const [titulosSelecionadosPagar, setTitulosSelecionadosPagar] = useState([]);
   
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -84,13 +91,66 @@ function CaixaCentralLiquidacao({ windowMode = false }) {
   });
 
   // MUTATIONS
+  const enviarParaCaixaMutation = useMutation({
+    mutationFn: async ({ titulos, tipo }) => {
+      const ordens = await Promise.all(titulos.map(async (titulo) => {
+        return await base44.entities.CaixaOrdemLiquidacao.create({
+          tipo_operacao: tipo === 'receber' ? 'Recebimento' : 'Pagamento',
+          origem: tipo === 'receber' ? 'Contas a Receber' : 'Contas a Pagar',
+          valor_total: titulo.valor,
+          forma_pagamento_pretendida: tipo === 'receber' ? 'PIX' : 'Transferência',
+          status: 'Pendente',
+          titulos_vinculados: [{
+            titulo_id: titulo.id,
+            numero_titulo: titulo.numero_documento || titulo.descricao,
+            cliente_fornecedor_nome: tipo === 'receber' ? titulo.cliente : titulo.fornecedor,
+            valor_titulo: titulo.valor,
+            data_vencimento: titulo.data_vencimento
+          }]
+        });
+      }));
+      return ordens;
+    },
+    onSuccess: (ordens) => {
+      queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
+      toast({ title: `✅ ${ordens.length} título(s) enviado(s) para Caixa!` });
+      setTitulosSelecionadosReceber([]);
+      setTitulosSelecionadosPagar([]);
+    }
+  });
+
   const liquidarOrdemMutation = useMutation({
     mutationFn: async ({ ordemId, dados }) => {
+      const ordem = ordensLiquidacao.find(o => o.id === ordemId);
+      
+      // Baixar os títulos vinculados
+      if (ordem.titulos_vinculados && ordem.titulos_vinculados.length > 0) {
+        for (const titulo of ordem.titulos_vinculados) {
+          if (ordem.tipo_operacao === 'Recebimento') {
+            await base44.entities.ContaReceber.update(titulo.titulo_id, {
+              status: 'Recebido',
+              data_recebimento: new Date().toISOString(),
+              valor_recebido: titulo.valor_titulo,
+              forma_recebimento: dados.forma_pagamento
+            });
+          } else if (ordem.tipo_operacao === 'Pagamento') {
+            await base44.entities.ContaPagar.update(titulo.titulo_id, {
+              status: 'Pago',
+              data_pagamento: new Date().toISOString(),
+              valor_pago: titulo.valor_titulo,
+              forma_pagamento: dados.forma_pagamento
+            });
+          }
+        }
+      }
+
+      // Atualizar ordem de liquidação
       await base44.entities.CaixaOrdemLiquidacao.update(ordemId, {
         status: "Liquidado",
         usuario_liquidacao_id: user?.id,
         data_liquidacao: new Date().toISOString(),
-        ...dados
+        forma_pagamento_pretendida: dados.forma_pagamento,
+        observacoes: dados.observacoes
       });
     },
     onSuccess: () => {
@@ -132,6 +192,10 @@ function CaixaCentralLiquidacao({ windowMode = false }) {
   const ordensLiquidadas = ordensFiltradas.filter(o => o.status === "Liquidado");
   const ordensCanceladas = ordensFiltradas.filter(o => o.status === "Cancelado");
 
+  // Títulos pendentes de liquidação
+  const contasReceberPendentes = contasReceber.filter(c => c.status === 'Pendente' || c.status === 'Atrasado');
+  const contasPagarPendentes = contasPagar.filter(c => c.status === 'Pendente' || c.status === 'Aprovado');
+
   // TOTAIS
   const totalPendente = ordensPendentes.reduce((sum, o) => sum + (o.valor_total || 0), 0);
   const totalLiquidado = ordensLiquidadas.reduce((sum, o) => sum + (o.valor_total || 0), 0);
@@ -151,10 +215,23 @@ function CaixaCentralLiquidacao({ windowMode = false }) {
     liquidarOrdemMutation.mutate({
       ordemId: ordemSelecionada.id,
       dados: {
-        forma_pagamento_pretendida: formaPagamento,
+        forma_pagamento: formaPagamento,
         observacoes: observacoes
       }
     });
+  };
+
+  const enviarSelecionadosParaCaixa = (tipo) => {
+    const titulos = tipo === 'receber' 
+      ? contasReceber.filter(c => titulosSelecionadosReceber.includes(c.id))
+      : contasPagar.filter(c => titulosSelecionadosPagar.includes(c.id));
+
+    if (titulos.length === 0) {
+      toast({ title: "⚠️ Selecione pelo menos um título", variant: "destructive" });
+      return;
+    }
+
+    enviarParaCaixaMutation.mutate({ titulos, tipo });
   };
 
   const containerClass = windowMode 
@@ -291,10 +368,18 @@ function CaixaCentralLiquidacao({ windowMode = false }) {
 
       {/* TABS */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-        <TabsList className="bg-white border shadow-sm">
+        <TabsList className="bg-white border shadow-sm grid grid-cols-5">
+          <TabsTrigger value="liquidar-receber" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Liquidar Receber
+          </TabsTrigger>
+          <TabsTrigger value="liquidar-pagar" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <TrendingDown className="w-4 h-4 mr-2" />
+            Liquidar Pagar
+          </TabsTrigger>
           <TabsTrigger value="ordens-pendentes" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
             <Clock className="w-4 h-4 mr-2" />
-            Pendentes ({ordensPendentes.length})
+            Ordens ({ordensPendentes.length})
           </TabsTrigger>
           <TabsTrigger value="ordens-liquidadas" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -305,6 +390,198 @@ function CaixaCentralLiquidacao({ windowMode = false }) {
             Canceladas ({ordensCanceladas.length})
           </TabsTrigger>
         </TabsList>
+
+        {/* ABA: LIQUIDAR CONTAS A RECEBER */}
+        <TabsContent value="liquidar-receber" className="mt-6 space-y-4">
+          <Alert className="border-green-300 bg-green-50">
+            <AlertDescription className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-green-900">💰 Liquidação de Contas a Receber</p>
+                <p className="text-xs text-green-700">Selecione os títulos e envie para o Caixa ou liquide diretamente</p>
+              </div>
+              {titulosSelecionadosReceber.length > 0 && (
+                <Button
+                  onClick={() => enviarSelecionadosParaCaixa('receber')}
+                  disabled={enviarParaCaixaMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Enviar {titulosSelecionadosReceber.length} para Caixa
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+
+          <Card className="border-0 shadow-md">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={titulosSelecionadosReceber.length === contasReceberPendentes.length && contasReceberPendentes.length > 0}
+                        onCheckedChange={(checked) => {
+                          setTitulosSelecionadosReceber(checked ? contasReceberPendentes.map(c => c.id) : []);
+                        }}
+                      />
+                    </TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contasReceberPendentes.map(conta => (
+                    <TableRow key={conta.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={titulosSelecionadosReceber.includes(conta.id)}
+                          onCheckedChange={() => {
+                            setTitulosSelecionadosReceber(prev =>
+                              prev.includes(conta.id)
+                                ? prev.filter(id => id !== conta.id)
+                                : [...prev, conta.id]
+                            );
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{conta.cliente}</TableCell>
+                      <TableCell className="max-w-xs truncate">{conta.descricao}</TableCell>
+                      <TableCell className="text-sm">
+                        {new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        R$ {(conta.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={conta.status === 'Atrasado' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}>
+                          {conta.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => enviarParaCaixaMutation.mutate({ titulos: [conta], tipo: 'receber' })}
+                          disabled={enviarParaCaixaMutation.isPending}
+                        >
+                          <ArrowRight className="w-4 h-4 mr-1" />
+                          Enviar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {contasReceberPendentes.length === 0 && (
+                <div className="text-center py-12 text-slate-500">
+                  <CheckCircle2 className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>Nenhuma conta a receber pendente</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ABA: LIQUIDAR CONTAS A PAGAR */}
+        <TabsContent value="liquidar-pagar" className="mt-6 space-y-4">
+          <Alert className="border-red-300 bg-red-50">
+            <AlertDescription className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-red-900">💸 Liquidação de Contas a Pagar</p>
+                <p className="text-xs text-red-700">Selecione os títulos e envie para o Caixa ou liquide diretamente</p>
+              </div>
+              {titulosSelecionadosPagar.length > 0 && (
+                <Button
+                  onClick={() => enviarSelecionadosParaCaixa('pagar')}
+                  disabled={enviarParaCaixaMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <Send className="w-4 h-4 mr-2" />
+                  Enviar {titulosSelecionadosPagar.length} para Caixa
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+
+          <Card className="border-0 shadow-md">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={titulosSelecionadosPagar.length === contasPagarPendentes.length && contasPagarPendentes.length > 0}
+                        onCheckedChange={(checked) => {
+                          setTitulosSelecionadosPagar(checked ? contasPagarPendentes.map(c => c.id) : []);
+                        }}
+                      />
+                    </TableHead>
+                    <TableHead>Fornecedor</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {contasPagarPendentes.map(conta => (
+                    <TableRow key={conta.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={titulosSelecionadosPagar.includes(conta.id)}
+                          onCheckedChange={() => {
+                            setTitulosSelecionadosPagar(prev =>
+                              prev.includes(conta.id)
+                                ? prev.filter(id => id !== conta.id)
+                                : [...prev, conta.id]
+                            );
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">{conta.fornecedor}</TableCell>
+                      <TableCell className="max-w-xs truncate">{conta.descricao}</TableCell>
+                      <TableCell className="text-sm">
+                        {new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        R$ {(conta.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={conta.status === 'Pendente' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}>
+                          {conta.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => enviarParaCaixaMutation.mutate({ titulos: [conta], tipo: 'pagar' })}
+                          disabled={enviarParaCaixaMutation.isPending}
+                        >
+                          <ArrowRight className="w-4 h-4 mr-1" />
+                          Enviar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {contasPagarPendentes.length === 0 && (
+                <div className="text-center py-12 text-slate-500">
+                  <CheckCircle2 className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>Nenhuma conta a pagar pendente</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* ABA: ORDENS PENDENTES */}
         <TabsContent value="ordens-pendentes" className="mt-6">
@@ -563,6 +840,8 @@ function CaixaCentralLiquidacao({ windowMode = false }) {
                       <SelectItem value="Boleto">📄 Boleto</SelectItem>
                       <SelectItem value="Transferência">🏦 Transferência</SelectItem>
                       <SelectItem value="Cheque">📝 Cheque</SelectItem>
+                      <SelectItem value="TED">🏦 TED</SelectItem>
+                      <SelectItem value="DOC">🏦 DOC</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
