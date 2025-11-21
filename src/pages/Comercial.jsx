@@ -322,7 +322,34 @@ export default function Comercial() {
         {/* Removed TabelasPrecoTab TabsContent */}
 
         <TabsContent value="comissoes">
-          <ComissoesTab comissoes={comissoes} pedidos={pedidos} />
+          <div className="space-y-4">
+            <Alert className="border-purple-300 bg-purple-50">
+              <AlertDescription className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-purple-900">💰 Gestão de Comissões</p>
+                  <p className="text-xs text-purple-700">Calcule, aprove e pague comissões de vendas - Sistema automático com cálculo na liquidação</p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => openWindow(ComissoesTab, { 
+                    comissoes, 
+                    pedidos, 
+                    empresas,
+                    windowMode: true 
+                  }, {
+                    title: '💰 Comissões - Multitarefa',
+                    width: 1400,
+                    height: 800
+                  })}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  Abrir em Janela
+                </Button>
+              </AlertDescription>
+            </Alert>
+            <ComissoesTab comissoes={comissoes} pedidos={pedidos} empresas={empresas} />
+          </div>
         </TabsContent>
 
         <TabsContent value="notas">
