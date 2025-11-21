@@ -38,7 +38,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
-export default function CaixaDiarioTab() {
+export default function CaixaDiarioTab({ windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState("caixa-dia");
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().split('T')[0]);
   const [movimentoDialog, setMovimentoDialog] = useState(false);
@@ -55,6 +55,22 @@ export default function CaixaDiarioTab() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { empresaAtual } = useContextoVisual();
+
+  // ETAPA 4: Query de comissões para cálculo automático
+  const { data: comissoes = [] } = useQuery({
+    queryKey: ['comissoes'],
+    queryFn: () => base44.entities.Comissao.list(),
+  });
+
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ['pedidos'],
+    queryFn: () => base44.entities.Pedido.list(),
+  });
+
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
 
   const [formMovimento, setFormMovimento] = useState({
     tipo: 'entrada',
@@ -278,15 +294,62 @@ export default function CaixaDiarioTab() {
     mutationFn: async ({ ordemId, dados }) => {
       const ordem = ordensLiquidacao.find(o => o.id === ordemId);
       
+      // ETAPA 4: Criar movimento de caixa
+      const caixaMov = await base44.entities.CaixaMovimento.create({
+        empresa_id: ordem.empresa_id,
+        group_id: ordem.group_id,
+        data_movimento: new Date().toISOString(),
+        tipo_movimento: ordem.tipo_operacao === 'Recebimento' ? 'Entrada' : 'Saída',
+        origem: 'Liquidação Título',
+        forma_pagamento: dados.forma_pagamento,
+        valor: ordem.valor_total,
+        descricao: `Liquidação: ${ordem.origem}`,
+        ordem_liquidacao_id: ordemId,
+        usuario_operador_id: user?.id,
+        usuario_operador_nome: user?.full_name,
+        caixa_aberto: true,
+        observacoes: dados.observacoes
+      });
+      
+      // Baixar títulos e calcular comissões se for recebimento de venda
       if (ordem.titulos_vinculados && ordem.titulos_vinculados.length > 0) {
         for (const titulo of ordem.titulos_vinculados) {
           if (ordem.tipo_operacao === 'Recebimento') {
-            await base44.entities.ContaReceber.update(titulo.titulo_id, {
+            const contaReceber = await base44.entities.ContaReceber.update(titulo.titulo_id, {
               status: 'Recebido',
               data_recebimento: new Date().toISOString(),
               valor_recebido: titulo.valor_titulo,
               forma_recebimento: dados.forma_pagamento
             });
+
+            // ETAPA 4: Calcular comissão automática se tiver pedido vinculado
+            const cr = contasReceber.find(c => c.id === titulo.titulo_id);
+            if (cr?.pedido_id) {
+              const pedido = pedidos.find(p => p.id === cr.pedido_id);
+              if (pedido && pedido.vendedor_id && pedido.vendedor) {
+                // Verificar se já não tem comissão criada
+                const jaTemComissao = comissoes.some(c => c.pedido_id === pedido.id);
+                
+                if (!jaTemComissao) {
+                  const percentualComissao = 3; // pode vir de configuração ou tabela
+                  const valorComissao = titulo.valor_titulo * (percentualComissao / 100);
+                  
+                  await base44.entities.Comissao.create({
+                    vendedor: pedido.vendedor,
+                    vendedor_id: pedido.vendedor_id,
+                    pedido_id: pedido.id,
+                    numero_pedido: pedido.numero_pedido,
+                    cliente: pedido.cliente_nome,
+                    data_venda: pedido.data_pedido,
+                    valor_venda: titulo.valor_titulo,
+                    percentual_comissao: percentualComissao,
+                    valor_comissao: valorComissao,
+                    status: 'Pendente',
+                    observacoes: `Gerada automaticamente na liquidação do caixa`
+                  });
+                }
+              }
+            }
           } else if (ordem.tipo_operacao === 'Pagamento') {
             await base44.entities.ContaPagar.update(titulo.titulo_id, {
               status: 'Pago',
@@ -301,18 +364,28 @@ export default function CaixaDiarioTab() {
       await base44.entities.CaixaOrdemLiquidacao.update(ordemId, {
         status: "Liquidado",
         data_liquidacao: new Date().toISOString(),
+        usuario_liquidacao_id: user?.id,
+        caixa_movimento_id: caixaMov.id,
         forma_pagamento_pretendida: dados.forma_pagamento,
         observacoes: dados.observacoes
       });
+
+      return { comissoesGeradas: ordem.titulos_vinculados?.length || 0 };
     },
-    onSuccess: () => {
+    onSuccess: ({ comissoesGeradas }) => {
       queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
       queryClient.invalidateQueries({ queryKey: ['movimentos-caixa'] });
-      toast({ title: "✅ Liquidação realizada!" });
+      queryClient.invalidateQueries({ queryKey: ['comissoes'] });
+      toast({ 
+        title: "✅ Liquidação realizada!",
+        description: comissoesGeradas > 0 ? `Comissões calculadas automaticamente` : undefined
+      });
       setLiquidacaoDialogOpen(false);
       setOrdemSelecionada(null);
+      setFormaPagamentoLiquidacao("");
+      setObservacoesLiquidacao("");
     }
   });
 
@@ -356,8 +429,17 @@ export default function CaixaDiarioTab() {
     });
   };
 
+  const containerClass = windowMode 
+    ? "w-full h-full flex flex-col overflow-hidden bg-white" 
+    : "space-y-6";
+
+  const contentClass = windowMode
+    ? "flex-1 overflow-auto p-6"
+    : "";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={contentClass}>
       {/* TABS PRINCIPAL */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="space-y-6">
         <TabsList className="bg-white border shadow-sm">
@@ -1340,6 +1422,7 @@ export default function CaixaDiarioTab() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

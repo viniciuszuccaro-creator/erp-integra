@@ -33,6 +33,7 @@ import ConfiguracaoCobranca from "../components/financeiro/ConfiguracaoCobranca"
 import RelatorioFinanceiro from "../components/financeiro/RelatorioFinanceiro";
 import RateioMultiempresa from "../components/financeiro/RateioMultiempresa";
 import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
+import { useWindow } from "@/components/lib/useWindow";
 import ReguaCobrancaIA from "../components/financeiro/ReguaCobrancaIA";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
