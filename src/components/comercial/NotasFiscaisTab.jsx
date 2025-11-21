@@ -439,54 +439,52 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(nota)}
-                          title="Editar/Ver Detalhes"
+                          onClick={() => setViewingDetails(nota)}
+                          title="Ver Detalhes"
+                          className="h-8 px-2"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3 h-3 mr-1" />
+                          <span className="text-xs">Ver</span>
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          title="Baixar XML/DANFE"
-                        >
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        {nota.status === "Autorizada" && (
-                          <ProtectedAction
-                            permission="nfe_cancelar"
-                            fallback={<Button variant="ghost" size="sm" disabled className="text-gray-400" title="Sem permissão para cancelar"><XCircle className="w-4 h-4" /></Button>}
+                        
+                        {nota.danfe_url && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => window.open(nota.danfe_url, '_blank')}
+                            title="Baixar DANFE"
+                            className="h-8 px-2 text-blue-600"
                           >
+                            <Download className="w-3 h-3 mr-1" />
+                            <span className="text-xs">PDF</span>
+                          </Button>
+                        )}
+
+                        {nota.status === "Pendente" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            title="Enviar NF-e"
+                            className="h-8 px-2 text-green-600"
+                          >
+                            <Send className="w-3 h-3 mr-1" />
+                            <span className="text-xs">Enviar</span>
+                          </Button>
+                        )}
+
+                        {nota.status === "Autorizada" && (
+                          <ProtectedAction permission="nfe_cancelar">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => handleCancelarNFe(nota)}
-                              className="text-red-600"
+                              className="h-8 px-2 text-red-600"
                               title="Cancelar NF-e"
                             >
-                              <XCircle className="w-4 h-4" />
+                              <XCircle className="w-3 h-3 mr-1" />
+                              <span className="text-xs">Cancelar</span>
                             </Button>
                           </ProtectedAction>
-                        )}
-                        {/* Example of new icons, not directly used in original logic but added to imports */}
-                        {nota.status === "Pendente" && (
-                          <Button variant="ghost" size="sm" title="Enviar NF-e">
-                            <Send className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {nota.status === "Autorizada" && (
-                          <Button variant="ghost" size="sm" title="NF-e Autorizada">
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
-                          </Button>
-                        )}
-                        {nota.status === "Erro" && (
-                          <Button variant="ghost" size="sm" title="Erro na NF-e">
-                            <AlertCircle className="w-4 h-4 text-red-600" />
-                          </Button>
-                        )}
-                        {nota.status === "Pendente" && (
-                          <Button variant="ghost" size="sm" title="Processando">
-                            <Clock className="w-4 h-4 text-blue-600" />
-                          </Button>
                         )}
                       </div>
                     </TableCell>
@@ -498,12 +496,68 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
         </CardContent>
       </Card>
 
-      {viewingDetails && ( // Changed from nfeModal to viewingDetails
-        <GerarNFeModal // Assuming GerarNFeModal can be reused for viewing details or another similar modal will be added.
-          isOpen={!!viewingDetails}
-          onClose={() => setViewingDetails(null)}
-          pedido={viewingDetails} // Pass the selected NF or related data
-        />
+      {viewingDetails && (
+        <Dialog open={!!viewingDetails} onOpenChange={() => setViewingDetails(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>📄 Detalhes NF-e {viewingDetails.numero}/{viewingDetails.serie}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-xs text-slate-600">Cliente/Fornecedor</Label>
+                  <p className="font-semibold">{viewingDetails.cliente_fornecedor}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-600">Status</Label>
+                  <Badge className={
+                    viewingDetails.status === 'Autorizada' ? 'bg-green-600' :
+                    viewingDetails.status === 'Cancelada' ? 'bg-red-600' : 'bg-yellow-600'
+                  }>
+                    {viewingDetails.status}
+                  </Badge>
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-600">Chave de Acesso</Label>
+                  <p className="font-mono text-xs">{viewingDetails.chave_acesso || '-'}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-600">Protocolo</Label>
+                  <p className="font-mono text-xs">{viewingDetails.protocolo_autorizacao || '-'}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-600">Valor Produtos</Label>
+                  <p className="text-lg font-bold text-green-600">
+                    R$ {viewingDetails.valor_produtos?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-600">Valor Total</Label>
+                  <p className="text-lg font-bold text-blue-600">
+                    R$ {viewingDetails.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+              {viewingDetails.observacoes && (
+                <div>
+                  <Label className="text-xs text-slate-600">Observações</Label>
+                  <p className="text-sm p-3 bg-slate-50 rounded">{viewingDetails.observacoes}</p>
+                </div>
+              )}
+              <div className="flex gap-2 pt-4">
+                {viewingDetails.danfe_url && (
+                  <Button onClick={() => window.open(viewingDetails.danfe_url, '_blank')}>
+                    <Download className="w-4 h-4 mr-2" />
+                    Baixar DANFE
+                  </Button>
+                )}
+                <Button variant="outline" onClick={() => setViewingDetails(null)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
