@@ -123,6 +123,23 @@ function CaixaCentralLiquidacao({ windowMode = false }) {
     mutationFn: async ({ ordemId, dados }) => {
       const ordem = ordensLiquidacao.find(o => o.id === ordemId);
       
+      // ETAPA 4: Criar movimento de caixa
+      const caixaMovimento = await base44.entities.CaixaMovimento.create({
+        empresa_id: ordem.empresa_id,
+        group_id: ordem.group_id,
+        data_movimento: new Date().toISOString(),
+        tipo_movimento: ordem.tipo_operacao === 'Recebimento' ? 'Entrada' : 'Saída',
+        origem: 'Liquidação Título',
+        forma_pagamento: dados.forma_pagamento,
+        valor: ordem.valor_total,
+        descricao: `Liquidação: ${ordem.origem} - ${ordem.titulos_vinculados?.length || 0} título(s)`,
+        ordem_liquidacao_id: ordemId,
+        usuario_operador_id: user?.id,
+        usuario_operador_nome: user?.full_name,
+        caixa_aberto: true,
+        observacoes: dados.observacoes
+      });
+      
       // Baixar os títulos vinculados
       if (ordem.titulos_vinculados && ordem.titulos_vinculados.length > 0) {
         for (const titulo of ordem.titulos_vinculados) {
@@ -150,16 +167,25 @@ function CaixaCentralLiquidacao({ windowMode = false }) {
         usuario_liquidacao_id: user?.id,
         data_liquidacao: new Date().toISOString(),
         forma_pagamento_pretendida: dados.forma_pagamento,
+        caixa_movimento_id: caixaMovimento.id,
         observacoes: dados.observacoes
       });
+
+      return { caixaMovimento, ordem };
     },
-    onSuccess: () => {
+    onSuccess: ({ caixaMovimento }) => {
       queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
-      toast({ title: "✅ Liquidação realizada com sucesso!" });
+      queryClient.invalidateQueries({ queryKey: ['movimentos-caixa'] });
+      toast({ 
+        title: "✅ Liquidação realizada com sucesso!",
+        description: `Movimento de caixa registrado: R$ ${(caixaMovimento.valor || 0).toFixed(2)}`
+      });
       setLiquidacaoDialogOpen(false);
       setOrdemSelecionada(null);
+      setFormaPagamento("");
+      setObservacoes("");
     },
     onError: (error) => {
       toast({ title: "❌ Erro ao liquidar", description: error.message, variant: "destructive" });
