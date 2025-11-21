@@ -41,6 +41,7 @@ import CaixaCentralLiquidacao from "../components/financeiro/CaixaCentralLiquida
 import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
+import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -316,6 +317,9 @@ export default function Financeiro() {
 
       {/* STATUS WIDGET ETAPA 4 */}
       <StatusWidgetEtapa4 />
+
+      {/* DASHBOARD UNIFICADO ETAPA 4 */}
+      <DashboardFinanceiroUnificado empresaId={empresaAtual?.id} />
 
       {/* NOVO: Régua de Cobrança IA */}
       <ReguaCobrancaIA empresaId={empresaAtual?.id} />

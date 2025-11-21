@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import GerarCobrancaModal from "./GerarCobrancaModal";
 import SimularPagamentoModal from "./SimularPagamentoModal";
+import GerarLinkPagamentoModal from "./GerarLinkPagamentoModal";
 import ContaReceberForm from "./ContaReceberForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -56,8 +57,10 @@ export default function ContasReceberTab({ contas }) {
   const [selectedConta, setSelectedConta] = useState(null);
   const [gerarCobrancaDialogOpen, setGerarCobrancaDialogOpen] = useState(false);
   const [simularPagamentoDialogOpen, setSimularPagamentoDialogOpen] = useState(false);
+  const [gerarLinkDialogOpen, setGerarLinkDialogOpen] = useState(false);
   const [contaParaCobranca, setContaParaCobranca] = useState(null);
   const [contaParaSimulacao, setContaParaSimulacao] = useState(null);
+  const [contaParaLink, setContaParaLink] = useState(null);
 
   const [formData, setFormData] = useState({
     descricao: "",
@@ -835,21 +838,38 @@ export default function ContasReceberTab({ contas }) {
                           {conta.status === "Pendente" && (
                             <>
                               {!conta.status_cobranca && temConfig && (
-                                <ProtectedAction permission="financeiro_receber_gerar_cobranca">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setContaParaCobranca(conta);
-                                      setGerarCobrancaDialogOpen(true);
-                                    }}
-                                    title="Gerar Cobrança"
-                                    className="justify-start h-7 px-2 text-xs"
-                                  >
-                                    <CreditCard className="w-3 h-3 mr-1" />
-                                    Gerar Cobrança
-                                  </Button>
-                                </ProtectedAction>
+                                <>
+                                  <ProtectedAction permission="financeiro_receber_gerar_cobranca">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setContaParaCobranca(conta);
+                                        setGerarCobrancaDialogOpen(true);
+                                      }}
+                                      title="Gerar Cobrança"
+                                      className="justify-start h-7 px-2 text-xs"
+                                    >
+                                      <CreditCard className="w-3 h-3 mr-1" />
+                                      Gerar Cobrança
+                                    </Button>
+                                  </ProtectedAction>
+                                  <ProtectedAction permission="financeiro_receber_gerar_cobranca">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setContaParaLink(conta);
+                                        setGerarLinkDialogOpen(true);
+                                      }}
+                                      title="Gerar Link Pagamento"
+                                      className="justify-start h-7 px-2 text-xs text-purple-600"
+                                    >
+                                      <Wallet className="w-3 h-3 mr-1" />
+                                      Link Pgto
+                                    </Button>
+                                  </ProtectedAction>
+                                </>
                               )}
 
                               {conta.boleto_url && (
@@ -1080,6 +1100,14 @@ export default function ContasReceberTab({ contas }) {
           isOpen={gerarCobrancaDialogOpen}
           onClose={() => { setGerarCobrancaDialogOpen(false); setContaParaCobranca(null); }}
           contaReceber={contaParaCobranca}
+        />
+      )}
+
+      {gerarLinkDialogOpen && (
+        <GerarLinkPagamentoModal
+          isOpen={gerarLinkDialogOpen}
+          onClose={() => { setGerarLinkDialogOpen(false); setContaParaLink(null); }}
+          contaReceber={contaParaLink}
         />
       )}
 
