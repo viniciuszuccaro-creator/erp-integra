@@ -33,7 +33,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
 
-export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
+export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe, windowMode = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [tipoFilter, setTipoFilter] = useState("todas");
@@ -189,8 +189,18 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const totalAutorizada = notasFiscais.filter(n => n.status === "Autorizada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
   const totalCancelada = notasFiscais.filter(n => n.status === "Cancelada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
 
+  const containerClass = windowMode 
+    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-slate-50" 
+    : "space-y-6";
+
+  const contentClass = windowMode
+    ? "flex-1 overflow-auto p-4 lg:p-6"
+    : "";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={contentClass}>
+      <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-0 shadow-md">
           <CardContent className="p-6">
@@ -575,6 +585,8 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
           </DialogContent>
         </Dialog>
       )}
+      </div>
+      </div>
     </div>
   );
 }
