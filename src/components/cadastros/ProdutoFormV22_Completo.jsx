@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Loader2, Sparkles, Package, Upload, Calculator, 
   CheckCircle2, AlertTriangle, FileText, Globe, 
-  TrendingUp, ArrowRightLeft, ShoppingCart, Image
+  TrendingUp, ArrowRightLeft, ShoppingCart, Image, Warehouse
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -21,14 +21,14 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import HistoricoProduto from "./HistoricoProduto";
 
 /**
- * V21.2 FASE 2 - CADASTRO COMPLETO DE PRODUTOS
+ * V21.4 ETAPA 2/3 COMPLETA - CADASTRO COMPLETO DE PRODUTOS
  * ✅ Aba 1: Dados Gerais + TRIPLA CLASSIFICAÇÃO (Setor + Grupo + Marca)
  * ✅ Aba 2: Conversões (unidades, fatores)
  * ✅ Aba 3: Dimensões & Peso (frete/e-commerce)
  * ✅ Aba 4: E-Commerce & IA
- * ✅ Aba 5: Histórico (se edição)
- * ✅ Lookups automáticos dos estruturantes
- * ✅ Herança de NCM do grupo
+ * ✅ Aba 5: Fiscal e Contábil (NOVO)
+ * ✅ Aba 6: Estoque Avançado (NOVO)
+ * ✅ Aba 7: Histórico (se edição)
  */
 export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmitting, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
@@ -41,7 +41,6 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmittin
         setUser(currentUser);
       } catch (error) {
         console.error("Failed to load current user:", error);
-        // Optionally handle error, e.g., redirect to login or show a message
       }
     };
     loadUser();
@@ -63,13 +62,34 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmittin
         peso_bruto_kg: produto.peso_bruto_kg || 0,
         altura_cm: produto.altura_cm || 0,
         largura_cm: produto.largura_cm || 0,
-        comprimento_cm: produto.comprimento_cm || 0
+        comprimento_cm: produto.comprimento_cm || 0,
+        tributacao: produto.tributacao || {
+          icms_cst: '',
+          icms_aliquota: 0,
+          pis_cst: '',
+          pis_aliquota: 0,
+          cofins_cst: '',
+          cofins_aliquota: 0,
+          ipi_cst: '',
+          ipi_aliquota: 0
+        },
+        origem_mercadoria: produto.origem_mercadoria || '0 - Nacional',
+        regime_tributario_produto: produto.regime_tributario_produto || 'Simples Nacional',
+        cfop_padrao_compra: produto.cfop_padrao_compra || '',
+        cfop_padrao_venda: produto.cfop_padrao_venda || '',
+        conta_contabil_id: produto.conta_contabil_id || '',
+        controla_lote: produto.controla_lote || false,
+        controla_validade: produto.controla_validade || false,
+        prazo_validade_dias: produto.prazo_validade_dias || 0,
+        localizacao: produto.localizacao || '',
+        almoxarifado_id: produto.almoxarifado_id || ''
       };
     }
     
     return {
       descricao: '',
       codigo: '',
+      codigo_barras: '',
       tipo_item: 'Revenda',
       grupo: 'Outros',
       eh_bitola: false,
@@ -89,7 +109,10 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmittin
       foto_produto_url: '',
       custo_aquisicao: 0,
       preco_venda: 0,
+      margem_minima_percentual: 10,
       estoque_minimo: 0,
+      estoque_maximo: 0,
+      ponto_reposicao: 0,
       ncm: '',
       cest: '',
       unidade_medida: '',
@@ -100,7 +123,27 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmittin
       largura_cm: 0,
       comprimento_cm: 0,
       exibir_no_site: false,
-      exibir_no_marketplace: false
+      exibir_no_marketplace: false,
+      origem_mercadoria: '0 - Nacional',
+      regime_tributario_produto: 'Simples Nacional',
+      tributacao: {
+        icms_cst: '',
+        icms_aliquota: 0,
+        pis_cst: '',
+        pis_aliquota: 0,
+        cofins_cst: '',
+        cofins_aliquota: 0,
+        ipi_cst: '',
+        ipi_aliquota: 0
+      },
+      cfop_padrao_compra: '',
+      cfop_padrao_venda: '',
+      conta_contabil_id: '',
+      controla_lote: false,
+      controla_validade: false,
+      prazo_validade_dias: 0,
+      localizacao: '',
+      almoxarifado_id: ''
     };
   });
 
@@ -127,6 +170,16 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmittin
   const { data: marcas = [] } = useQuery({
     queryKey: ['marcas'],
     queryFn: () => base44.entities.Marca.list(),
+  });
+
+  const { data: locaisEstoque = [] } = useQuery({
+    queryKey: ['locais-estoque'],
+    queryFn: () => base44.entities.LocalEstoque.list(),
+  });
+
+  const { data: planoContas = [] } = useQuery({
+    queryKey: ['plano-contas'],
+    queryFn: () => base44.entities.PlanoDeContas.list(),
   });
 
   useEffect(() => {
@@ -397,22 +450,36 @@ Caso contrário, sugira:
 
     if (!formData.unidades_secundarias || formData.unidades_secundarias.length === 0) {
       toast.error('Selecione pelo menos 1 unidade de venda/compra');
+      setAbaAtiva('conversoes');
       return;
     }
 
     if (formData.eh_bitola && formData.peso_teorico_kg_m === 0) {
       toast.error('Bitolas precisam ter peso teórico preenchido');
+      setAbaAtiva('dados-gerais');
       return;
     }
 
     const dadosSubmit = {
       ...formData,
       unidade_medida: formData.unidade_principal || 'KG',
-      empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1'
+      empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1',
+      tributacao: {
+        icms_cst: formData.tributacao.icms_cst || '',
+        icms_aliquota: formData.tributacao.icms_aliquota || 0,
+        pis_cst: formData.tributacao.pis_cst || '',
+        pis_aliquota: formData.tributacao.pis_aliquota || 0,
+        cofins_cst: formData.tributacao.cofins_cst || '',
+        cofins_aliquota: formData.tributacao.cofins_aliquota || 0,
+        ipi_cst: formData.tributacao.ipi_cst || '',
+        ipi_aliquota: formData.tributacao.ipi_aliquota || 0
+      }
     };
 
     onSubmit(dadosSubmit);
   };
+
+  const totalAbas = produto ? 7 : 6;
 
   const content = (
     <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
@@ -437,26 +504,34 @@ Caso contrário, sugira:
 
       {/* ABAS DO FORMULÁRIO */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-        <TabsList className="grid grid-cols-5 w-full bg-slate-100">
+        <TabsList className={`grid grid-cols-${totalAbas} w-full bg-slate-100`}>
           <TabsTrigger value="dados-gerais">
-            <Package className="w-4 h-4 mr-2" />
+            <Package className="w-4 h-4 mr-1" />
             Dados Gerais
           </TabsTrigger>
           <TabsTrigger value="conversoes">
-            <Calculator className="w-4 h-4 mr-2" />
+            <Calculator className="w-4 h-4 mr-1" />
             Conversões
           </TabsTrigger>
           <TabsTrigger value="dimensoes">
-            <Package className="w-4 h-4 mr-2" />
+            <Package className="w-4 h-4 mr-1" />
             Peso/Dim
           </TabsTrigger>
           <TabsTrigger value="ecommerce">
-            <Globe className="w-4 h-4 mr-2" />
+            <Globe className="w-4 h-4 mr-1" />
             E-Commerce
+          </TabsTrigger>
+          <TabsTrigger value="fiscal-contabil">
+            <FileText className="w-4 h-4 mr-1" />
+            Fiscal
+          </TabsTrigger>
+          <TabsTrigger value="estoque-avancado">
+            <Warehouse className="w-4 h-4 mr-1" />
+            Estoque
           </TabsTrigger>
           {produto && (
             <TabsTrigger value="historico">
-              <TrendingUp className="w-4 h-4 mr-2" />
+              <TrendingUp className="w-4 h-4 mr-1" />
               Histórico
             </TabsTrigger>
           )}
@@ -625,13 +700,22 @@ Caso contrário, sugira:
                 </Alert>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label>Código/SKU</Label>
                   <Input
                     value={formData.codigo}
                     onChange={(e) => setFormData(prev => ({...prev, codigo: e.target.value}))}
                     placeholder="SKU-001"
+                  />
+                </div>
+
+                <div>
+                  <Label>Código de Barras</Label>
+                  <Input
+                    value={formData.codigo_barras}
+                    onChange={(e) => setFormData(prev => ({...prev, codigo_barras: e.target.value}))}
+                    placeholder="7891234567890"
                   />
                 </div>
 
@@ -645,6 +729,8 @@ Caso contrário, sugira:
                       <SelectItem value="Revenda">Revenda</SelectItem>
                       <SelectItem value="Matéria-Prima Produção">Matéria-Prima Produção</SelectItem>
                       <SelectItem value="Produto Acabado">Produto Acabado</SelectItem>
+                      <SelectItem value="Consumo Interno">Consumo Interno</SelectItem>
+                      <SelectItem value="Serviço">Serviço</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -818,68 +904,35 @@ Caso contrário, sugira:
                     className="bg-white"
                   />
                 </div>
+
+                <div>
+                  <Label>Margem Mínima (%)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.margem_minima_percentual}
+                    onChange={(e) => setFormData(prev => ({...prev, margem_minima_percentual: parseFloat(e.target.value) || 0}))}
+                  />
+                  <p className="text-xs text-slate-500 mt-1">Usada na aprovação de descontos</p>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* FISCAL */}
+          {/* STATUS */}
           <Card>
-            <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="w-5 h-5 text-purple-600" />
-                Configuração Fiscal
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4 items-end">
-                <div>
-                  <Label>NCM (Código Fiscal)</Label>
-                  <Input
-                    value={formData.ncm || ""}
-                    onChange={(e) => setFormData(prev => ({ ...prev, ncm: e.target.value }))}
-                    placeholder="00000000"
-                    maxLength={8}
-                  />
-                  {sugestoesIA.ncm_info && (
-                    <p className="text-xs text-blue-600 mt-1">ℹ️ {sugestoesIA.ncm_info}</p>
-                  )}
-                </div>
-
-                <div>
-                  <BotaoBuscaAutomatica
-                    tipo="ncm"
-                    valor={formData.ncm}
-                    onDadosEncontrados={handleDadosNCM}
-                    disabled={!formData.ncm || formData.ncm.length !== 8}
-                  >
-                    Buscar NCM
-                  </BotaoBuscaAutomatica>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>CEST</Label>
-                  <Input
-                    value={formData.cest || ""}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cest: e.target.value }))}
-                    placeholder="00.000.00"
-                  />
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({...prev, status: v}))}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Ativo">Ativo</SelectItem>
-                      <SelectItem value="Inativo">Inativo</SelectItem>
-                      <SelectItem value="Descontinuado">Descontinuado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            <CardContent className="p-4">
+              <Label>Status</Label>
+              <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({...prev, status: v}))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Inativo">Inativo</SelectItem>
+                  <SelectItem value="Descontinuado">Descontinuado</SelectItem>
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1113,7 +1166,304 @@ Caso contrário, sugira:
           )}
         </TabsContent>
 
-        {/* ABA 5: HISTÓRICO */}
+        {/* ABA 5: FISCAL E CONTÁBIL */}
+        <TabsContent value="fiscal-contabil" className="space-y-6">
+          <Card className="border-purple-200 bg-purple-50">
+            <CardHeader className="bg-purple-100 border-b border-purple-200 pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="w-5 h-5 text-purple-600" />
+                Configuração Fiscal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Origem da Mercadoria</Label>
+                  <Select value={formData.origem_mercadoria} onValueChange={(v) => setFormData(prev => ({...prev, origem_mercadoria: v}))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0 - Nacional">0 - Nacional</SelectItem>
+                      <SelectItem value="1 - Estrangeira Importação Direta">1 - Estrangeira Importação Direta</SelectItem>
+                      <SelectItem value="2 - Estrangeira Mercado Interno">2 - Estrangeira Mercado Interno</SelectItem>
+                      <SelectItem value="3 - Nacional com Conteúdo Importado >40%">3 - Nacional com Conteúdo Importado {'>'}40%</SelectItem>
+                      <SelectItem value="4 - Nacional por Proc. Prod. Básico">4 - Nacional por Proc. Prod. Básico</SelectItem>
+                      <SelectItem value="5 - Nacional com Conteúdo Importado <=40%">5 - Nacional com Conteúdo Importado {'<'}=40%</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Regime Tributário do Produto</Label>
+                  <Select value={formData.regime_tributario_produto} onValueChange={(v) => setFormData(prev => ({...prev, regime_tributario_produto: v}))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
+                      <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
+                      <SelectItem value="Lucro Real">Lucro Real</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 items-end">
+                <div>
+                  <Label>NCM (Código Fiscal)</Label>
+                  <Input
+                    value={formData.ncm || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, ncm: e.target.value }))}
+                    placeholder="00000000"
+                    maxLength={8}
+                  />
+                  {sugestoesIA.ncm_info && (
+                    <p className="text-xs text-blue-600 mt-1">ℹ️ {sugestoesIA.ncm_info}</p>
+                  )}
+                </div>
+
+                <div>
+                  <BotaoBuscaAutomatica
+                    tipo="ncm"
+                    valor={formData.ncm}
+                    onDadosEncontrados={handleDadosNCM}
+                    disabled={!formData.ncm || formData.ncm.length !== 8}
+                  >
+                    Buscar NCM
+                  </BotaoBuscaAutomatica>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>CEST</Label>
+                  <Input
+                    value={formData.cest || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cest: e.target.value }))}
+                    placeholder="00.000.00"
+                  />
+                </div>
+                <div>
+                  <Label>CFOP Padrão Venda</Label>
+                  <Input
+                    value={formData.cfop_padrao_venda || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cfop_padrao_venda: e.target.value }))}
+                    placeholder="5102"
+                  />
+                </div>
+                <div>
+                  <Label>CFOP Padrão Compra</Label>
+                  <Input
+                    value={formData.cfop_padrao_compra || ""}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cfop_padrao_compra: e.target.value }))}
+                    placeholder="1102"
+                  />
+                </div>
+              </div>
+
+              <h4 className="font-bold text-slate-800 mt-6 mb-3 pt-4 border-t">Detalhes da Tributação</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <Label>ICMS CST</Label>
+                  <Input 
+                    value={formData.tributacao?.icms_cst || ''} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, icms_cst: e.target.value } }))} 
+                    placeholder="00"
+                  />
+                </div>
+                <div>
+                  <Label>ICMS Alíquota (%)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={formData.tributacao?.icms_aliquota || 0} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, icms_aliquota: parseFloat(e.target.value) || 0 } }))} 
+                  />
+                </div>
+                <div>
+                  <Label>PIS CST</Label>
+                  <Input 
+                    value={formData.tributacao?.pis_cst || ''} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, pis_cst: e.target.value } }))} 
+                    placeholder="01"
+                  />
+                </div>
+                <div>
+                  <Label>PIS Alíquota (%)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={formData.tributacao?.pis_aliquota || 0} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, pis_aliquota: parseFloat(e.target.value) || 0 } }))} 
+                  />
+                </div>
+                <div>
+                  <Label>COFINS CST</Label>
+                  <Input 
+                    value={formData.tributacao?.cofins_cst || ''} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, cofins_cst: e.target.value } }))} 
+                    placeholder="01"
+                  />
+                </div>
+                <div>
+                  <Label>COFINS Alíquota (%)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={formData.tributacao?.cofins_aliquota || 0} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, cofins_aliquota: parseFloat(e.target.value) || 0 } }))} 
+                  />
+                </div>
+                <div>
+                  <Label>IPI CST</Label>
+                  <Input 
+                    value={formData.tributacao?.ipi_cst || ''} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, ipi_cst: e.target.value } }))} 
+                    placeholder="50"
+                  />
+                </div>
+                <div>
+                  <Label>IPI Alíquota (%)</Label>
+                  <Input 
+                    type="number" 
+                    step="0.01" 
+                    value={formData.tributacao?.ipi_aliquota || 0} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, tributacao: { ...prev.tributacao, ipi_aliquota: parseFloat(e.target.value) || 0 } }))} 
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200">
+            <CardHeader className="bg-slate-50 border-b pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FileText className="w-5 h-5 text-slate-600" />
+                Contabilização
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4">
+              <div>
+                <Label>Conta Contábil</Label>
+                <Select value={formData.conta_contabil_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, conta_contabil_id: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a conta contábil..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {planoContas.filter(c => c.tipo === 'Receita' || c.tipo === 'Despesa').map(conta => (
+                      <SelectItem key={conta.id} value={conta.id}>
+                        {conta.codigo} - {conta.descricao}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ABA 6: ESTOQUE AVANÇADO */}
+        <TabsContent value="estoque-avancado" className="space-y-6">
+          <Card className="border-orange-200 bg-orange-50">
+            <CardHeader className="bg-orange-100 border-b border-orange-200 pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Warehouse className="w-5 h-5 text-orange-600" />
+                Controle de Estoque Avançado
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-4">
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+                <div>
+                  <Label className="font-semibold">Controla Lote</Label>
+                  <p className="text-xs text-slate-500">Rastreamento por número de lote</p>
+                </div>
+                <Switch
+                  checked={formData.controla_lote}
+                  onCheckedChange={(val) => setFormData(prev => ({...prev, controla_lote: val}))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+                <div>
+                  <Label className="font-semibold">Controla Validade</Label>
+                  <p className="text-xs text-slate-500">Rastreamento de data de validade</p>
+                </div>
+                <Switch
+                  checked={formData.controla_validade}
+                  onCheckedChange={(val) => setFormData(prev => ({...prev, controla_validade: val}))}
+                />
+              </div>
+
+              {formData.controla_validade && (
+                <div>
+                  <Label>Prazo Validade Padrão (dias)</Label>
+                  <Input
+                    type="number"
+                    value={formData.prazo_validade_dias}
+                    onChange={(e) => setFormData(prev => ({...prev, prazo_validade_dias: parseInt(e.target.value) || 0}))}
+                    placeholder="Ex: 365"
+                  />
+                </div>
+              )}
+
+              <h4 className="font-bold text-slate-800 mt-6 mb-3 pt-4 border-t">Parâmetros de Estoque</h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Estoque Mínimo</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.estoque_minimo}
+                    onChange={(e) => setFormData(prev => ({...prev, estoque_minimo: parseFloat(e.target.value) || 0}))}
+                  />
+                </div>
+                <div>
+                  <Label>Estoque Máximo</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.estoque_maximo}
+                    onChange={(e) => setFormData(prev => ({...prev, estoque_maximo: parseFloat(e.target.value) || 0}))}
+                  />
+                </div>
+                <div>
+                  <Label>Ponto de Reposição</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.ponto_reposicao}
+                    onChange={(e) => setFormData(prev => ({...prev, ponto_reposicao: parseFloat(e.target.value) || 0}))}
+                  />
+                </div>
+              </div>
+
+              <h4 className="font-bold text-slate-800 mt-6 mb-3 pt-4 border-t">Localização Física</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Almoxarifado/Local</Label>
+                  <Select value={formData.almoxarifado_id || ''} onValueChange={(v) => setFormData(prev => ({ ...prev, almoxarifado_id: v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o local..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locaisEstoque.map(local => (
+                        <SelectItem key={local.id} value={local.id}>
+                          {local.nome} - {local.tipo_local}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Localização (Corredor/Prateleira)</Label>
+                  <Input
+                    value={formData.localizacao || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, localizacao: e.target.value }))}
+                    placeholder="Ex: A-12-03"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ABA 7: HISTÓRICO */}
         {produto && (
           <TabsContent value="historico">
             <HistoricoProduto produtoId={produto.id} produto={produto} />
