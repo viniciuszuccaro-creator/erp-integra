@@ -27,6 +27,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
 import NotaFiscalFormCompleto from "../components/comercial/NotaFiscalFormCompleto";
 import { useWindow } from "@/components/lib/useWindow";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 /**
  * Módulo Comercial - V12.0 COMPLETO
