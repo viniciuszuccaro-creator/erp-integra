@@ -20,13 +20,13 @@ export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, w
     observacoes: ""
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.nome_job) {
       alert('Nome do job é obrigatório');
       return;
     }
-    onSubmit(formData);
+    await onSubmit(formData);
   };
 
   const form = (

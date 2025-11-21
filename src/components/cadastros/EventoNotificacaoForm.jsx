@@ -20,13 +20,13 @@ export default function EventoNotificacaoForm({ evento, onSubmit, isSubmitting, 
     ativo: true
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.nome_evento) {
       alert('Nome do evento é obrigatório');
       return;
     }
-    onSubmit(formData);
+    await onSubmit(formData);
   };
 
   const form = (

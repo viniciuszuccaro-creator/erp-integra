@@ -21,13 +21,13 @@ export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting,
     observacoes: ""
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.nome_canal) {
       alert('Nome do canal é obrigatório');
       return;
     }
-    onSubmit(formData);
+    await onSubmit(formData);
   };
 
   const form = (
