@@ -30,6 +30,7 @@ import Cadastros from './pages/Cadastros';
 import DemoFase1Completa from './pages/DemoFase1Completa';
 import ValidadorFase2 from './pages/ValidadorFase2';
 import ValidadorFase3 from './pages/ValidadorFase3';
+import FinanceiroEtapa4 from './pages/FinanceiroEtapa4';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +67,7 @@ export const PAGES = {
     "DemoFase1Completa": DemoFase1Completa,
     "ValidadorFase2": ValidadorFase2,
     "ValidadorFase3": ValidadorFase3,
+    "FinanceiroEtapa4": FinanceiroEtapa4,
 }
 
 export const pagesConfig = {
