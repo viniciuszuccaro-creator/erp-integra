@@ -1,290 +1,309 @@
 import React, { useState } from "react";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
-import { CreditCard, QrCode, Copy, CheckCircle, AlertCircle, Send } from "lucide-react";
-import { mockGerarBoleto, mockGerarPix, avisoModoSimulacao } from "@/components/integracoes/MockIntegracoes";
+import { Badge } from "@/components/ui/badge";
+import { CreditCard, QrCode, Link2, CheckCircle2, Copy, X } from "lucide-react";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import GeradorLinkPagamento from "./GeradorLinkPagamento";
 
 /**
- * V21.1.2 - WINDOW MODE READY
+ * ETAPA 4 - Modal Gerar Cobrança
+ * Gera Boleto, PIX ou Link de Pagamento
  */
-export default function GerarCobrancaModal({ isOpen, onClose, contaReceber, windowMode = false }) {
+export default function GerarCobrancaModal({ isOpen, onClose, contaReceber }) {
+  const queryClient = useQueryClient();
+  const [tipoCobranca, setTipoCobranca] = useState('pix');
   const [gerando, setGerando] = useState(false);
   const [cobrancaGerada, setCobrancaGerada] = useState(null);
-  const [tipoCobranca, setTipoCobranca] = useState("boleto");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const gerarCobrancaMutation = useMutation({
+  const { data: configsCobranca = [] } = useQuery({
+    queryKey: ['configs-cobranca'],
+    queryFn: () => base44.entities.ConfiguracaoCobrancaEmpresa.list(),
+  });
+
+  const config = configsCobranca.find(c => c.empresa_id === contaReceber?.empresa_id);
+
+  const gerarBoletoMutation = useMutation({
     mutationFn: async () => {
       setGerando(true);
 
-      let resultado;
+      const payload = {
+        customer: contaReceber.cliente,
+        value: contaReceber.valor,
+        dueDate: contaReceber.data_vencimento,
+        description: contaReceber.descricao,
+        billingType: "BOLETO",
+        fine: { value: config?.multa_pos_vencimento_percent || 2 },
+        interest: { value: config?.juros_ao_dia_percent || 0.033 }
+      };
 
-      if (tipoCobranca === "boleto") {
-        resultado = await mockGerarBoleto({
-          conta_receber_id: contaReceber.id,
-          cliente: contaReceber.cliente,
-          valor: contaReceber.valor,
-          vencimento: contaReceber.data_vencimento
-        });
-      } else {
-        resultado = await mockGerarPix({
-          conta_receber_id: contaReceber.id,
-          cliente: contaReceber.cliente,
-          valor: contaReceber.valor,
-          vencimento: contaReceber.data_vencimento
-        });
-      }
+      const retornoMock = {
+        id: `bol_${Date.now()}`,
+        status: "PENDING",
+        invoiceUrl: `https://boleto.simulado.com/${contaReceber.id}`,
+        bankSlipUrl: `https://boleto.simulado.com/pdf/${contaReceber.id}`,
+        identificationField: "34191.09008 12345.678901 12345.678901 1 99990000012345",
+        nossoNumero: String(Date.now()).substring(0, 10)
+      };
 
-      // Atualizar conta a receber
-      await base44.entities.ContaReceber.update(contaReceber.id, {
-        forma_cobranca: tipoCobranca === "boleto" ? "Boleto" : "PIX",
-        status_cobranca: "gerada_simulada",
-        id_cobranca_externa: resultado.boleto_id || resultado.pix_id,
-        linha_digitavel: resultado.linha_digitavel,
-        pix_copia_cola: resultado.pix_copia_cola,
-        pix_qrcode: resultado.qrcode_url || resultado.qrcode_base64,
-        url_boleto_pdf: resultado.url_boleto,
-        data_envio_cobranca: new Date().toISOString(),
-        provedor_pagamento: "Mock/Simulação"
-      });
-
-      // Registrar log
       await base44.entities.LogCobranca.create({
+        group_id: contaReceber.group_id,
         empresa_id: contaReceber.empresa_id,
         conta_receber_id: contaReceber.id,
-        tipo_operacao: tipoCobranca === "boleto" ? "gerar_boleto" : "gerar_pix",
-        provedor: "Mock/Simulação",
+        tipo_operacao: "gerar_boleto",
+        provedor: config?.provedor_cobranca || "Asaas",
         data_hora: new Date().toISOString(),
+        payload_enviado: payload,
+        retorno_recebido: retornoMock,
         status_operacao: "simulado",
-        retorno_recebido: resultado,
-        linha_digitavel: resultado.linha_digitavel,
-        pix_copia_cola: resultado.pix_copia_cola,
-        url_boleto: resultado.url_boleto,
-        usuario_nome: "Sistema"
+        mensagem: "Boleto gerado em modo simulação"
       });
 
-      setCobrancaGerada(resultado);
-      return resultado;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
-      toast({
-        title: `✅ ${tipoCobranca === "boleto" ? "Boleto" : "PIX"} Gerado (Simulação)`,
-        description: "Cobrança criada com sucesso"
+      await base44.entities.ContaReceber.update(contaReceber.id, {
+        forma_cobranca: "Boleto",
+        id_cobranca_externa: retornoMock.id,
+        boleto_id_integracao: retornoMock.id,
+        linha_digitavel: retornoMock.identificationField,
+        url_boleto_pdf: retornoMock.bankSlipUrl,
+        status_cobranca: "gerada_simulada",
+        provedor_pagamento: config?.provedor_cobranca || "Asaas"
       });
+
+      setGerando(false);
+      return retornoMock;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['contasReceber']);
+      setCobrancaGerada({ tipo: 'boleto', dados: data });
+      toast.success("✅ Boleto gerado!");
     }
   });
 
-  const copiarPix = () => {
-    navigator.clipboard.writeText(cobrancaGerada.pix_copia_cola);
-    toast({ title: "✅ Código PIX copiado!" });
-  };
+  const gerarPixMutation = useMutation({
+    mutationFn: async () => {
+      setGerando(true);
 
-  const aviso = avisoModoSimulacao();
+      const pixCopiaCola = `00020126580014br.gov.bcb.pix0136${contaReceber.id}52040000530398654${contaReceber.valor.toFixed(2)}5802BR6009SAO PAULO`;
+      const qrCodeBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
-  const content = (
-    <div className={`space-y-4 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
-      {!windowMode && (
-        <h2 className="text-xl font-bold mb-4">Gerar Cobrança - {contaReceber?.cliente}</h2>
-      )}
-          <Alert className="border-amber-300 bg-amber-50">
-            <AlertCircle className="h-5 w-5 text-amber-600" />
-            <AlertDescription>
-              <strong>{aviso.titulo}</strong><br />
-              {aviso.mensagem}
-            </AlertDescription>
-          </Alert>
+      const retornoMock = {
+        id: `pix_${Date.now()}`,
+        status: "PENDING",
+        encodedImage: qrCodeBase64,
+        payload: pixCopiaCola,
+        expirationDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      await base44.entities.LogCobranca.create({
+        group_id: contaReceber.group_id,
+        empresa_id: contaReceber.empresa_id,
+        conta_receber_id: contaReceber.id,
+        tipo_operacao: "gerar_pix",
+        provedor: config?.provedor_cobranca || "Asaas",
+        data_hora: new Date().toISOString(),
+        retorno_recebido: retornoMock,
+        status_operacao: "simulado",
+        mensagem: "PIX gerado em modo simulação"
+      });
+
+      await base44.entities.ContaReceber.update(contaReceber.id, {
+        forma_cobranca: "PIX",
+        id_cobranca_externa: retornoMock.id,
+        pix_id_integracao: retornoMock.id,
+        pix_qrcode: qrCodeBase64,
+        pix_copia_cola: pixCopiaCola,
+        status_cobranca: "gerada_simulada",
+        provedor_pagamento: config?.provedor_cobranca || "Asaas"
+      });
+
+      setGerando(false);
+      return retornoMock;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['contasReceber']);
+      setCobrancaGerada({ tipo: 'pix', dados: data });
+      toast.success("✅ PIX gerado!");
+    }
+  });
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b sticky top-0 z-10">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-blue-600" />
+              Gerar Cobrança
+            </CardTitle>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
+          {/* INFO CONTA */}
+          <Card className="bg-slate-50">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-xs text-slate-600">Cliente</Label>
+                  <p className="font-semibold">{contaReceber?.cliente}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-600">Vencimento</Label>
+                  <p className="font-semibold">
+                    {new Date(contaReceber?.data_vencimento).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-xs text-slate-600">Valor</Label>
+                  <p className="text-xl font-bold text-green-600">
+                    R$ {(contaReceber?.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {!cobrancaGerada ? (
             <>
-              <div className="p-4 bg-slate-50 rounded">
-                <div className="flex justify-between mb-2">
-                  <span className="text-slate-600">Valor:</span>
-                  <span className="font-bold text-2xl">
-                    R$ {contaReceber?.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Vencimento:</span>
-                  <span className="font-semibold">
-                    {new Date(contaReceber?.data_vencimento).toLocaleDateString('pt-BR')}
-                  </span>
-                </div>
-              </div>
-
               <Tabs value={tipoCobranca} onValueChange={setTipoCobranca}>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="boleto">
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Boleto
-                  </TabsTrigger>
-                  <TabsTrigger value="pix">
+                <TabsList className="grid grid-cols-3 w-full">
+                  <TabsTrigger value="pix" disabled={!config?.habilitar_pix}>
                     <QrCode className="w-4 h-4 mr-2" />
                     PIX
                   </TabsTrigger>
+                  <TabsTrigger value="boleto" disabled={!config?.habilitar_boleto}>
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Boleto
+                  </TabsTrigger>
+                  <TabsTrigger value="link">
+                    <Link2 className="w-4 h-4 mr-2" />
+                    Link
+                  </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="boleto" className="mt-4">
-                  <div className="p-4 bg-blue-50 rounded text-sm text-blue-900">
-                    <p><strong>✓</strong> Boleto bancário registrado</p>
-                    <p><strong>✓</strong> Válido em qualquer banco ou lotérica</p>
-                    <p><strong>✓</strong> Código de barras incluso</p>
-                  </div>
+                <TabsContent value="pix" className="space-y-4">
+                  <Alert className="border-green-300 bg-green-50">
+                    <AlertDescription>
+                      <strong>PIX Instantâneo</strong> - Pagamento em tempo real com QR Code
+                    </AlertDescription>
+                  </Alert>
+                  <Button
+                    onClick={() => gerarPixMutation.mutate()}
+                    disabled={gerando}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    {gerando ? "Gerando..." : "Gerar PIX"}
+                  </Button>
                 </TabsContent>
 
-                <TabsContent value="pix" className="mt-4">
-                  <div className="p-4 bg-green-50 rounded text-sm text-green-900">
-                    <p><strong>✓</strong> Pagamento instantâneo</p>
-                    <p><strong>✓</strong> Válido por 24 horas</p>
-                    <p><strong>✓</strong> QR Code + Copia e Cola</p>
-                  </div>
+                <TabsContent value="boleto" className="space-y-4">
+                  <Alert className="border-orange-300 bg-orange-50">
+                    <AlertDescription>
+                      <strong>Boleto Bancário</strong> - Prazo conforme vencimento
+                    </AlertDescription>
+                  </Alert>
+                  <Button
+                    onClick={() => gerarBoletoMutation.mutate()}
+                    disabled={gerando}
+                    className="w-full bg-orange-600 hover:bg-orange-700"
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    {gerando ? "Gerando..." : "Gerar Boleto"}
+                  </Button>
+                </TabsContent>
+
+                <TabsContent value="link" className="space-y-4">
+                  <GeradorLinkPagamento titulo={contaReceber} onClose={onClose} />
                 </TabsContent>
               </Tabs>
-
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button variant="outline" onClick={onClose}>
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={() => gerarCobrancaMutation.mutate()}
-                  disabled={gerando}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {gerando ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Gerando...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-2" />
-                      Gerar {tipoCobranca === "boleto" ? "Boleto" : "PIX"}
-                    </>
-                  )}
-                </Button>
-              </div>
             </>
           ) : (
-            <>
-              {/* Cobrança Gerada */}
-              {tipoCobranca === "boleto" ? (
-                <div className="bg-blue-50 border border-blue-200 rounded p-6 space-y-4">
-                  <div className="flex items-center gap-2 text-blue-900 font-semibold mb-3">
-                    <CheckCircle className="w-6 h-6" />
-                    Boleto Gerado com Sucesso!
-                  </div>
+            <div className="space-y-4">
+              <Alert className="border-green-400 bg-green-50">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <AlertDescription>
+                  <strong>{cobrancaGerada.tipo === 'pix' ? 'PIX' : 'Boleto'} gerado com sucesso!</strong>
+                </AlertDescription>
+              </Alert>
 
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">Nosso Número:</span>
-                      <span className="font-semibold">{cobrancaGerada.nosso_numero}</span>
+              {cobrancaGerada.tipo === 'pix' && (
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="bg-white border rounded p-3">
+                      <Label className="text-xs text-slate-600 mb-2 block">PIX Copia e Cola</Label>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-xs bg-slate-50 p-2 rounded overflow-x-auto">
+                          {cobrancaGerada.dados.payload}
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(cobrancaGerada.dados.payload);
+                            toast.success("PIX copiado!");
+                          }}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">Valor:</span>
-                      <span className="font-bold text-lg">
-                        R$ {cobrancaGerada.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-blue-700">Vencimento:</span>
-                      <span className="font-semibold">
-                        {new Date(cobrancaGerada.vencimento).toLocaleDateString('pt-BR')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label className="text-blue-800">Linha Digitável</Label>
-                    <div className="bg-white p-3 rounded border border-blue-300 mt-2">
-                      <p className="font-mono text-xs break-all">{cobrancaGerada.linha_digitavel}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Download className="w-4 h-4 mr-1" />
-                      Baixar PDF
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1" onClick={() => {
-                      navigator.clipboard.writeText(cobrancaGerada.linha_digitavel);
-                      toast({ title: "✅ Linha digitável copiada!" });
-                    }}>
-                      <Copy className="w-4 h-4 mr-1" />
-                      Copiar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-green-50 border border-green-200 rounded p-6 space-y-4">
-                  <div className="flex items-center gap-2 text-green-900 font-semibold mb-3">
-                    <CheckCircle className="w-6 h-6" />
-                    PIX Gerado com Sucesso!
-                  </div>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-green-700">Valor:</span>
-                      <span className="font-bold text-lg">
-                        R$ {cobrancaGerada.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-green-700">Válido por:</span>
-                      <span className="font-semibold">{cobrancaGerada.validade_horas}h</span>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-4 rounded border border-green-300 text-center">
-                    <div className="w-48 h-48 bg-slate-200 mx-auto rounded flex items-center justify-center mb-3">
-                      <QrCode className="w-24 h-24 text-slate-400" />
-                    </div>
-                    <p className="text-xs text-green-700">QR Code PIX (Simulado)</p>
-                  </div>
-
-                  <div>
-                    <Label className="text-green-800">PIX Copia e Cola</Label>
-                    <div className="bg-white p-3 rounded border border-green-300 mt-2">
-                      <p className="font-mono text-xs break-all">{cobrancaGerada.pix_copia_cola}</p>
-                    </div>
-                  </div>
-
-                  <Button size="sm" className="w-full" onClick={copiarPix}>
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copiar Código PIX
-                  </Button>
-                </div>
+                    <p className="text-xs text-slate-500 text-center">
+                      Válido até: {new Date(cobrancaGerada.dados.expirationDate).toLocaleString('pt-BR')}
+                    </p>
+                  </CardContent>
+                </Card>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button onClick={onClose} className="bg-green-600 hover:bg-green-700">
-                  Concluir
-                </Button>
-              </div>
-            </>
+              {cobrancaGerada.tipo === 'boleto' && (
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <div>
+                      <Label className="text-xs text-slate-600 mb-2 block">Linha Digitável</Label>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 text-xs bg-slate-50 p-2 rounded">
+                          {cobrancaGerada.dados.identificationField}
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(cobrancaGerada.dados.identificationField);
+                            toast.success("Linha digitável copiada!");
+                          }}
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => window.open(cobrancaGerada.dados.bankSlipUrl, '_blank')}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Ver Boleto PDF
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              <Button onClick={onClose} className="w-full">
+                Fechar
+              </Button>
+            </div>
           )}
+        </CardContent>
+      </Card>
     </div>
-  );
-
-  if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
-  }
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Gerar Cobrança - {contaReceber?.cliente}</DialogTitle>
-        </DialogHeader>
-        {content}
-      </DialogContent>
-    </Dialog>
   );
 }

@@ -179,6 +179,30 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
       return;
     }
 
+    // ETAPA 4: Validar aprovação de desconto
+    if (formData.desconto_geral_pedido_percentual > 0) {
+      // Calcular margem após desconto (simplificado)
+      const custoTotal = formData.valor_produtos * 0.7; // assumindo 30% de custo médio
+      const valorComDesconto = formData.valor_produtos * (1 - formData.desconto_geral_pedido_percentual / 100);
+      const margemAposDesconto = ((valorComDesconto - custoTotal) / custoTotal) * 100;
+      const margemMinima = 10; // pode vir de configuração
+
+      if (margemAposDesconto < margemMinima) {
+        // Exige aprovação
+        const dadosComAprovacao = {
+          ...formData,
+          status_aprovacao: 'pendente',
+          margem_minima_produto: margemMinima,
+          margem_aplicada_vendedor: margemAposDesconto,
+          desconto_solicitado_percentual: formData.desconto_geral_pedido_percentual,
+          status: 'Aguardando Aprovação'
+        };
+        onSubmit(dadosComAprovacao);
+        toast.info('⚠️ Pedido enviado para aprovação de desconto');
+        return;
+      }
+    }
+
     onSubmit(formData);
   };
 
