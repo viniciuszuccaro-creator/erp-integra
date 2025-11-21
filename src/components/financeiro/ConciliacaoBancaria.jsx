@@ -284,10 +284,18 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
     </div>
   );
 
+  const containerClass = windowMode 
+    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-blue-50" 
+    : "space-y-6";
+
+  const contentClass = windowMode
+    ? "flex-1 overflow-auto p-6"
+    : "";
+
   if (windowMode) {
     return (
-      <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex-1 overflow-auto p-6">
+      <div className={containerClass}>
+        <div className={contentClass}>
           {content}
         </div>
       </div>

@@ -22,7 +22,7 @@ import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
 import ContaPagarForm from "./ContaPagarForm";
 import { useWindow } from "@/components/lib/useWindow";
 
-export default function ContasPagarTab({ contas }) {
+export default function ContasPagarTab({ contas, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
@@ -232,8 +232,18 @@ export default function ContasPagarTab({ contas }) {
     .filter(c => contasSelecionadas.includes(c.id))
     .reduce((sum, c) => sum + (c.valor || 0), 0);
 
+  const containerClass = windowMode 
+    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-slate-50" 
+    : "space-y-4";
+
+  const contentClass = windowMode
+    ? "flex-1 overflow-auto p-4"
+    : "";
+
   return (
-    <div className="space-y-4">
+    <div className={containerClass}>
+      <div className={contentClass}>
+      <div className="space-y-4">
       {/* ETAPA 4: ALERTA DE ENVIO PARA CAIXA */}
       {contasSelecionadas.length > 0 && (
         <Alert className="border-red-300 bg-red-50">
@@ -513,6 +523,8 @@ export default function ContasPagarTab({ contas }) {
           </form>
         </DialogContent>
       </Dialog>
+      </div>
+      </div>
     </div>
   );
 }
