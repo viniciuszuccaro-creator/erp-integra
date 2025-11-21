@@ -30,6 +30,11 @@ export default function Compras() {
     queryFn: () => base44.entities.SolicitacaoCompra.list('-data_solicitacao'),
   });
 
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
+  });
+
   const totalCompras = ordensCompra
     .filter(o => o.status !== 'Cancelada')
     .reduce((sum, o) => sum + (o.valor_total || 0), 0);
@@ -127,7 +132,7 @@ export default function Compras() {
         </TabsContent>
 
         <TabsContent value="ordens">
-          <OrdensCompraTab ordensCompra={ordensCompra} fornecedores={fornecedores} isLoading={loadingOrdens} />
+          <OrdensCompraTab ordensCompra={ordensCompra} fornecedores={fornecedores} empresas={empresas} isLoading={loadingOrdens} />
         </TabsContent>
       </Tabs>
     </div>
