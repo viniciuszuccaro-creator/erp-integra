@@ -30,6 +30,7 @@ import DemoFase1Completa from './pages/DemoFase1Completa';
 import ValidadorFase2 from './pages/ValidadorFase2';
 import ValidadorFase3 from './pages/ValidadorFase3';
 import ValidadorEtapa4 from './pages/ValidadorEtapa4';
+import ValidadorFinalEtapas234 from './pages/ValidadorFinalEtapas234';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +67,7 @@ export const PAGES = {
     "ValidadorFase2": ValidadorFase2,
     "ValidadorFase3": ValidadorFase3,
     "ValidadorEtapa4": ValidadorEtapa4,
+    "ValidadorFinalEtapas234": ValidadorFinalEtapas234,
 }
 
 export const pagesConfig = {
