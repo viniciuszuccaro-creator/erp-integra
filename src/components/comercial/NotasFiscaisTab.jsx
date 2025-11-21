@@ -22,14 +22,16 @@ import {
   AlertCircle,
   Clock,
   X,
-  XCircle, // Keep XCircle as it's used for cancellation
-  Edit
-} from "lucide-react"; // Updated lucide-react imports
+  XCircle,
+  Edit,
+  Printer
+} from "lucide-react";
 import GerarNFeModal from "./GerarNFeModal";
-import useContextoVisual from "@/components/lib/useContextoVisual"; // Changed from named to default import
+import useContextoVisual from "@/components/lib/useContextoVisual";
 import { mockCancelarNFe } from "@/components/integracoes/MockIntegracoes";
-import usePermissions from "@/components/lib/usePermissions"; // Changed import path for usePermissions
-import { ProtectedAction } from "@/components/ProtectedAction"; // Added ProtectedAction
+import usePermissions from "@/components/lib/usePermissions";
+import { ProtectedAction } from "@/components/ProtectedAction";
+import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
 
 export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
   const [searchTerm, setSearchTerm] = useState("");
