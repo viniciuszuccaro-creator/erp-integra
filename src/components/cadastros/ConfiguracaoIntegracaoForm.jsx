@@ -22,13 +22,13 @@ export default function ConfiguracaoIntegracaoForm({ config, onSubmit, isSubmitt
     observacoes: ""
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.nome_integracao) {
       alert('Nome da integração é obrigatório');
       return;
     }
-    onSubmit(formData);
+    await onSubmit(formData);
   };
 
   const form = (
