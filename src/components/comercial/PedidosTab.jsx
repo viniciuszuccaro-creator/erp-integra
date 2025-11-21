@@ -351,6 +351,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
           )}
         </CardContent>
       </Card>
+      </div>
+      </div>
     </div>
   );
 }
