@@ -210,26 +210,106 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex flex-wrap gap-1">
                         <Button 
                           variant="ghost" 
-                          size="icon" 
+                          size="sm" 
                           onClick={() => onEditPedido(pedido)}
-                          title="Editar"
+                          title="Editar Pedido"
+                          className="h-8 px-2"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3 h-3 mr-1" />
+                          <span className="text-xs">Editar</span>
                         </Button>
+                        
+                        {pedido.status === "Aprovado" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              toast({ title: "🚀 Gerando NF-e..." });
+                            }}
+                            title="Gerar NF-e"
+                            className="h-8 px-2 text-green-600"
+                          >
+                            <FileText className="w-3 h-3 mr-1" />
+                            <span className="text-xs">NF-e</span>
+                          </Button>
+                        )}
+
+                        {pedido.status === "Faturado" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              toast({ title: "📦 Criando entrega..." });
+                            }}
+                            title="Criar Entrega"
+                            className="h-8 px-2 text-blue-600"
+                          >
+                            <Truck className="w-3 h-3 mr-1" />
+                            <span className="text-xs">Entrega</span>
+                          </Button>
+                        )}
+
+                        {(pedido.tipo_pedido === "Produção Sob Medida" || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== "Cancelado" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              toast({ title: "🏭 Criando OP..." });
+                            }}
+                            title="Gerar Ordem de Produção"
+                            className="h-8 px-2 text-purple-600"
+                          >
+                            <Factory className="w-3 h-3 mr-1" />
+                            <span className="text-xs">OP</span>
+                          </Button>
+                        )}
+
                         <Button 
                           variant="ghost" 
-                          size="icon" 
+                          size="sm"
+                          onClick={() => {
+                            // Visualização
+                          }}
+                          title="Visualizar"
+                          className="h-8 px-2"
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          <span className="text-xs">Ver</span>
+                        </Button>
+
+                        {pedido.status_aprovacao === "pendente" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => openWindow(AprovacaoDescontosManager, { windowMode: true }, {
+                              title: '🔐 Aprovação de Descontos',
+                              width: 1200,
+                              height: 700
+                            })}
+                            title="Aprovar Desconto"
+                            className="h-8 px-2 text-orange-600 animate-pulse"
+                          >
+                            <ShieldCheck className="w-3 h-3 mr-1" />
+                            <span className="text-xs">Aprovar</span>
+                          </Button>
+                        )}
+                        
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
                           onClick={() => {
                             if (confirm("Excluir pedido?")) {
                               deleteMutation.mutate(pedido.id);
                             }
                           }}
                           title="Excluir"
+                          className="h-8 px-2 text-red-600"
                         >
-                          <Trash2 className="w-4 h-4 text-red-600" />
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          <span className="text-xs">Excluir</span>
                         </Button>
                       </div>
                     </TableCell>
