@@ -34,7 +34,6 @@ import RelatorioFinanceiro from "../components/financeiro/RelatorioFinanceiro";
 import RateioMultiempresa from "../components/financeiro/RateioMultiempresa";
 import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
 import { useWindow } from "@/components/lib/useWindow";
-import { Building2 } from "lucide-react";
 import ReguaCobrancaIA from "../components/financeiro/ReguaCobrancaIA";
 import usePermissions from "@/components/lib/usePermissions";
 import ContaReceberForm from "../components/financeiro/ContaReceberForm";
@@ -45,9 +44,6 @@ import AprovacaoDescontosManager from "../components/comercial/AprovacaoDesconto
 import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import ContasReceberTab from "../components/financeiro/ContasReceberTab";
-import ContasPagarTab from "../components/financeiro/ContasPagarTab";
-import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
