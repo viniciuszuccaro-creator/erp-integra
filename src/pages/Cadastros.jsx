@@ -957,6 +957,45 @@ export default function Cadastros() {
                       )}
                     </CardContent>
                   </Card>
+
+                  {/* SEGMENTOS CLIENTE - FASE 3 */}
+                  <Card className="border-indigo-200">
+                    <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <TrendingUp className="w-5 h-5 text-indigo-600" />
+                          Segmentos Cliente ({segmentosCliente.length})
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(SegmentoClienteForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('SegmentoCliente', 'segmentos-cliente')
+                          }, {
+                            title: '🎯 Novo Segmento',
+                            width: 800,
+                            height: 600
+                          })}
+                          className="bg-indigo-600 hover:bg-indigo-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {segmentosCliente.map(seg => (
+                        <div key={seg.id} className="p-3 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{seg.nome_segmento}</p>
+                          {seg.descricao && <p className="text-xs text-slate-500">{seg.descricao}</p>}
+                        </div>
+                      ))}
+                      {segmentosCliente.length === 0 && (
+                        <p className="text-center text-slate-500 py-8 text-sm">Nenhum segmento cadastrado</p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -1374,6 +1413,34 @@ export default function Cadastros() {
                       ))}
                     </CardContent>
                   </Card>
+
+                  {/* CATÁLOGO WEB - FASE 3 */}
+                  <Card className="border-pink-200">
+                    <CardHeader className="bg-pink-50 border-b border-pink-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🌐 Catálogo Web ({catalogoWeb.length})</CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(CatalogoWebForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('CatalogoWeb', 'catalogo-web')
+                          }, { title: '🌐 Novo Catálogo', width: 800, height: 550 })}
+                          className="bg-pink-600 hover:bg-pink-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {catalogoWeb.map(cat => (
+                        <div key={cat.id} className="p-3 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{cat.nome_catalogo}</p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
                   </div>
               </AccordionContent>
             </AccordionItem>
@@ -1642,6 +1709,30 @@ export default function Cadastros() {
                       {moedasIndices.map(m => (
                         <div key={m.id} className="p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm">{m.codigo} - {m.nome}</p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* CONDIÇÕES COMERCIAIS - FASE 3 */}
+                  <Card className="border-sky-200">
+                    <CardHeader className="bg-sky-50 border-b border-sky-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">🤝 Condições Comerciais ({condicoesComerciais.length})</CardTitle>
+                        <Button size="sm" onClick={() => openWindow(CondicaoComercialForm, {
+                          windowMode: true,
+                          onSubmit: handleSubmitGenerico('CondicaoComercial', 'condicoes-comerciais')
+                        }, { title: '🤝 Nova Condição', width: 800, height: 600 })}
+                          className="bg-sky-600 hover:bg-sky-700"
+                          disabled={!hasPermission('comercial', 'criar')}>
+                          <Plus className="w-4 h-4 mr-1" />Nova
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {condicoesComerciais.map(cc => (
+                        <div key={cc.id} className="p-2 border-b hover:bg-slate-50">
+                          <p className="font-semibold text-sm">{cc.nome}</p>
                         </div>
                       ))}
                     </CardContent>
