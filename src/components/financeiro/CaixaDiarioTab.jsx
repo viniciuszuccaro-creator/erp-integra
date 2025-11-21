@@ -37,7 +37,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
 export default function CaixaDiarioTab() {
-  const [abaAtiva, setAbaAtiva] = useState("movimentos-dia");
+  const [abaAtiva, setAbaAtiva] = useState("caixa-dia");
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().split('T')[0]);
   const [movimentoDialog, setMovimentoDialog] = useState(false);
   const [aberturaCaixaDialog, setAberturaCaixaDialog] = useState(false);
@@ -49,12 +49,10 @@ export default function CaixaDiarioTab() {
   const [observacoesLiquidacao, setObservacoesLiquidacao] = useState("");
   const [titulosSelecionadosReceber, setTitulosSelecionadosReceber] = useState([]);
   const [titulosSelecionadosPagar, setTitulosSelecionadosPagar] = useState([]);
-  const [filtroOrigem, setFiltroOrigem] = useState("todos");
-  const [buscaOrdens, setBuscaOrdens] = useState("");
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual, user } = useContextoVisual();
+  const { empresaAtual } = useContextoVisual();
 
   const [formMovimento, setFormMovimento] = useState({
     tipo: 'entrada',
@@ -331,23 +329,12 @@ export default function CaixaDiarioTab() {
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Wallet className="w-7 h-7 text-emerald-600" />
-            Caixa e Liquidação Integrados
-          </h2>
-          <p className="text-slate-600 text-sm">Movimentos do dia + Liquidação de títulos unificados</p>
-        </div>
-      </div>
-
       {/* TABS PRINCIPAL */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="space-y-6">
         <TabsList className="bg-white border shadow-sm">
-          <TabsTrigger value="movimentos-dia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger value="caixa-dia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Calendar className="w-4 h-4 mr-2" />
-            Movimentos do Dia
+            Caixa do Dia
           </TabsTrigger>
           <TabsTrigger value="liquidar-receber" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
@@ -367,8 +354,8 @@ export default function CaixaDiarioTab() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ABA: MOVIMENTOS DO DIA */}
-        <TabsContent value="movimentos-dia">
+        {/* ABA: CAIXA DO DIA */}
+        <TabsContent value="caixa-dia">
           <div className="space-y-6">
             {/* HEADER COM DATA E STATUS */}
             <div className="flex justify-between items-center">
