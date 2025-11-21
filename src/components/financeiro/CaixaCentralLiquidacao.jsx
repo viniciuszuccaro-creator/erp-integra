@@ -39,7 +39,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
  * - Gestão de caixa unificada
  * - Multiempresa com visão consolidada
  */
-export default function CaixaCentralLiquidacao({ windowMode = false }) {
+function CaixaCentralLiquidacao({ windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState("ordens-pendentes");
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [filtroOrigem, setFiltroOrigem] = useState("todos");
@@ -602,3 +602,5 @@ export default function CaixaCentralLiquidacao({ windowMode = false }) {
     </div>
   );
 }
+
+export default CaixaCentralLiquidacao;

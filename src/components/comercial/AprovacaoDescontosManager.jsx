@@ -31,7 +31,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
  * - Controle hierárquico
  * - Multiempresa
  */
-export default function AprovacaoDescontosManager({ windowMode = false }) {
+function AprovacaoDescontosManager({ windowMode = false }) {
   const [aprovacaoDialogOpen, setAprovacaoDialogOpen] = useState(false);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [comentariosAprovacao, setComentariosAprovacao] = useState("");
@@ -441,3 +441,5 @@ export default function AprovacaoDescontosManager({ windowMode = false }) {
     </div>
   );
 }
+
+export default AprovacaoDescontosManager;
