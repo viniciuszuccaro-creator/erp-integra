@@ -364,7 +364,19 @@ export default function Financeiro() {
         </TabsList>
 
         <TabsContent value="caixa-central">
-          <CaixaCentralLiquidacao windowMode={false} />
+          <div className="space-y-4">
+            <Button 
+              className="bg-emerald-600 hover:bg-emerald-700"
+              onClick={() => openWindow(CaixaCentralLiquidacao, { windowMode: true }, {
+                title: '💰 Caixa Central - Liquidação',
+                width: 1200,
+                height: 700
+              })}
+            >
+              <DollarSign className="w-4 h-4 mr-2" /> Abrir Caixa Central em Nova Janela
+            </Button>
+            <CaixaCentralLiquidacao windowMode={false} />
+          </div>
         </TabsContent>
 
         <TabsContent value="contas-receber">

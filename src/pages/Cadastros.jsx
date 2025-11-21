@@ -939,9 +939,27 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {representantes.map(rep => (
-                        <div key={rep.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{rep.nome}</p>
-                          {rep.email && <span className="text-xs text-slate-500">{rep.email}</span>}
+                        <div key={rep.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{rep.nome}</p>
+                            {rep.email && <span className="text-xs text-slate-500">{rep.email}</span>}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(RepresentanteForm, {
+                              representante: rep,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Representante', 'representantes')
+                            }, {
+                              title: `💼 Editar: ${rep.nome}`,
+                              width: 800,
+                              height: 550
+                            })}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-teal-600" />
+                          </Button>
                         </div>
                       ))}
                       {representantes.length === 0 && (
@@ -978,9 +996,27 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {contatosB2B.map(contato => (
-                        <div key={contato.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{contato.nome}</p>
-                          {contato.empresa && <span className="text-xs text-slate-500">{contato.empresa}</span>}
+                        <div key={contato.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{contato.nome}</p>
+                            {contato.empresa && <span className="text-xs text-slate-500">{contato.empresa}</span>}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(ContatoB2BForm, {
+                              contatoB2B: contato,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('ContatoB2B', 'contatos-b2b')
+                            }, {
+                              title: `📞 Editar: ${contato.nome}`,
+                              width: 800,
+                              height: 600
+                            })}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-violet-600" />
+                          </Button>
                         </div>
                       ))}
                       {contatosB2B.length === 0 && (
@@ -1017,9 +1053,27 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {segmentosCliente.map(seg => (
-                        <div key={seg.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{seg.nome_segmento}</p>
-                          {seg.descricao && <p className="text-xs text-slate-500">{seg.descricao}</p>}
+                        <div key={seg.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{seg.nome_segmento}</p>
+                            {seg.descricao && <p className="text-xs text-slate-500">{seg.descricao}</p>}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(SegmentoClienteForm, {
+                              segmentoCliente: seg,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('SegmentoCliente', 'segmentos-cliente')
+                            }, {
+                              title: `🎯 Editar: ${seg.nome_segmento}`,
+                              width: 800,
+                              height: 600
+                            })}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-indigo-600" />
+                          </Button>
                         </div>
                       ))}
                       {segmentosCliente.length === 0 && (
@@ -1378,9 +1432,27 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {servicos.map(servico => (
-                        <div key={servico.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{servico.nome}</p>
-                          {servico.descricao && <p className="text-xs text-slate-500">{servico.descricao}</p>}
+                        <div key={servico.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{servico.nome}</p>
+                            {servico.descricao && <p className="text-xs text-slate-500">{servico.descricao}</p>}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(ServicoForm, {
+                              servico,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('Servico', 'servicos')
+                            }, {
+                              title: `✨ Editar: ${servico.nome}`,
+                              width: 800,
+                              height: 600
+                            })}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-blue-600" />
+                          </Button>
                         </div>
                       ))}
                       {servicos.length === 0 && (
@@ -1410,8 +1482,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {kits.map(kit => (
-                        <div key={kit.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{kit.nome_kit}</p>
+                        <div key={kit.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{kit.nome_kit}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(KitProdutoForm, {
+                              kit,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('KitProduto', 'kits-produto')
+                            }, {
+                              title: `📦 Editar: ${kit.nome_kit}`,
+                              width: 900,
+                              height: 650
+                            })}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-purple-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1438,8 +1528,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {unidadesMedida.map(un => (
-                        <div key={un.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{un.sigla} - {un.nome}</p>
+                        <div key={un.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{un.sigla} - {un.nome}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(UnidadeMedidaForm, {
+                              unidadeMedida: un,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('UnidadeMedida', 'unidades-medida')
+                            }, {
+                              title: `📏 Editar: ${un.sigla} - ${un.nome}`,
+                              width: 700,
+                              height: 500
+                            })}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-teal-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1466,8 +1574,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {catalogoWeb.map(cat => (
-                        <div key={cat.id} className="p-3 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{cat.nome_catalogo}</p>
+                        <div key={cat.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{cat.nome_catalogo}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(CatalogoWebForm, {
+                              catalogoWeb: cat,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('CatalogoWeb', 'catalogo-web')
+                            }, {
+                              title: `🌐 Editar: ${cat.nome_catalogo}`,
+                              width: 800,
+                              height: 550
+                            })}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-pink-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1666,8 +1792,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {planoContas.map(conta => (
-                        <div key={conta.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{conta.codigo} - {conta.nome}</p>
+                        <div key={conta.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{conta.codigo} - {conta.nome}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(PlanoContasForm, {
+                              planoDeContas: conta,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('PlanoDeContas', 'plano-contas')
+                            }, {
+                              title: `📋 Editar: ${conta.codigo} - ${conta.nome}`,
+                              width: 800,
+                              height: 600
+                            })}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-indigo-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1690,8 +1834,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {centrosResultado.map(cr => (
-                        <div key={cr.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{cr.codigo} - {cr.nome}</p>
+                        <div key={cr.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{cr.codigo} - {cr.nome}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(CentroResultadoForm, {
+                              centroResultado: cr,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('CentroResultado', 'centros-resultado')
+                            }, {
+                              title: `🎯 Editar: ${cr.codigo} - ${cr.nome}`,
+                              width: 700,
+                              height: 500
+                            })}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-teal-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1714,8 +1876,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {tiposDespesa.map(td => (
-                        <div key={td.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{td.nome}</p>
+                        <div key={td.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{td.nome}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(TipoDespesaForm, {
+                              tipoDespesa: td,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('TipoDespesa', 'tipos-despesa')
+                            }, {
+                              title: `💳 Editar: ${td.nome}`,
+                              width: 700,
+                              height: 500
+                            })}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-rose-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1738,8 +1918,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {moedasIndices.map(m => (
-                        <div key={m.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{m.codigo} - {m.nome}</p>
+                        <div key={m.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{m.codigo} - {m.nome}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(MoedaIndiceForm, {
+                              moedaIndice: m,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('MoedaIndice', 'moedas-indices')
+                            }, {
+                              title: `💱 Editar: ${m.codigo} - ${m.nome}`,
+                              width: 700,
+                              height: 500
+                            })}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-emerald-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -1762,8 +1960,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {condicoesComerciais.map(cc => (
-                        <div key={cc.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{cc.nome}</p>
+                        <div key={cc.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{cc.nome}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(CondicaoComercialForm, {
+                              condicaoComercial: cc,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('CondicaoComercial', 'condicoes-comerciais')
+                            }, {
+                              title: `🤝 Editar: ${cc.nome}`,
+                              width: 800,
+                              height: 600
+                            })}
+                            disabled={!hasPermission('comercial', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-sky-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -2074,8 +2290,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {rotasPadrao.map(rota => (
-                        <div key={rota.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{rota.nome_rota}</p>
+                        <div key={rota.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{rota.nome_rota}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(RotaPadraoForm, {
+                              rotaPadrao: rota,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('RotaPadrao', 'rotas-padrao')
+                            }, {
+                              title: `🗺️ Editar: ${rota.nome_rota}`,
+                              width: 800,
+                              height: 550
+                            })}
+                            disabled={!hasPermission('expedicao', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-orange-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -2098,8 +2332,26 @@ export default function Cadastros() {
                     </CardHeader>
                     <CardContent className="p-4 max-h-60 overflow-y-auto">
                       {modelosDocumento.map(md => (
-                        <div key={md.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{md.nome_modelo}</p>
+                        <div key={md.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{md.nome_modelo}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(ModeloDocumentoForm, {
+                              modeloDocumento: md,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('ModeloDocumento', 'modelos-documento')
+                            }, {
+                              title: `📄 Editar: ${md.nome_modelo}`,
+                              width: 800,
+                              height: 600
+                            })}
+                            disabled={!hasPermission('expedicao', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-slate-600" />
+                          </Button>
                         </div>
                       ))}
                     </CardContent>
@@ -2660,8 +2912,26 @@ export default function Cadastros() {
                         </CardHeader>
                         <CardContent className="p-4 max-h-60 overflow-y-auto">
                           {webhooks.map(wh => (
-                            <div key={wh.id} className="p-2 border-b hover:bg-slate-50">
-                              <p className="font-semibold text-sm">{wh.nome_webhook}</p>
+                            <div key={wh.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">{wh.nome_webhook}</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWindow(WebhookForm, {
+                                  webhook: wh,
+                                  windowMode: true,
+                                  onSubmit: handleSubmitGenerico('Webhook', 'webhooks')
+                                }, {
+                                  title: `🔗 Editar: ${wh.nome_webhook}`,
+                                  width: 900,
+                                  height: 600
+                                })}
+                                disabled={!hasPermission('cadastros', 'editar')}
+                              >
+                                <Edit className="w-3 h-3 text-indigo-600" />
+                              </Button>
                             </div>
                           ))}
                         </CardContent>
@@ -2684,8 +2954,26 @@ export default function Cadastros() {
                         </CardHeader>
                         <CardContent className="p-4 max-h-60 overflow-y-auto">
                           {chatbotIntents.map(intent => (
-                            <div key={intent.id} className="p-2 border-b hover:bg-slate-50">
-                              <p className="font-semibold text-sm">{intent.nome_intent}</p>
+                            <div key={intent.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">{intent.nome_intent}</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWindow(ChatbotIntentForm, {
+                                  chatbotIntent: intent,
+                                  windowMode: true,
+                                  onSubmit: handleSubmitGenerico('ChatbotIntent', 'chatbotIntents')
+                                }, {
+                                  title: `💬 Editar: ${intent.nome_intent}`,
+                                  width: 900,
+                                  height: 650
+                                })}
+                                disabled={!hasPermission('cadastros', 'editar')}
+                              >
+                                <Edit className="w-3 h-3 text-purple-600" />
+                              </Button>
                             </div>
                           ))}
                         </CardContent>
@@ -2708,8 +2996,26 @@ export default function Cadastros() {
                         </CardHeader>
                         <CardContent className="p-4 max-h-60 overflow-y-auto">
                           {chatbotCanais.map(canal => (
-                            <div key={canal.id} className="p-2 border-b hover:bg-slate-50">
-                              <p className="font-semibold text-sm">{canal.nome_canal}</p>
+                            <div key={canal.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">{canal.nome_canal}</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWindow(ChatbotCanalForm, {
+                                  chatbotCanal: canal,
+                                  windowMode: true,
+                                  onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbotCanais')
+                                }, {
+                                  title: `📱 Editar: ${canal.nome_canal}`,
+                                  width: 800,
+                                  height: 550
+                                })}
+                                disabled={!hasPermission('cadastros', 'editar')}
+                              >
+                                <Edit className="w-3 h-3 text-green-600" />
+                              </Button>
                             </div>
                           ))}
                         </CardContent>
@@ -2732,8 +3038,26 @@ export default function Cadastros() {
                         </CardHeader>
                         <CardContent className="p-4 max-h-60 overflow-y-auto">
                           {apisExternas.map(api => (
-                            <div key={api.id} className="p-2 border-b hover:bg-slate-50">
-                              <p className="font-semibold text-sm">{api.nome_integracao}</p>
+                            <div key={api.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">{api.nome_integracao}</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWindow(ApiExternaForm, {
+                                  apiExterna: api,
+                                  windowMode: true,
+                                  onSubmit: handleSubmitGenerico('ApiExterna', 'apis-externas')
+                                }, {
+                                  title: `🔌 Editar: ${api.nome_integracao}`,
+                                  width: 900,
+                                  height: 700
+                                })}
+                                disabled={!hasPermission('cadastros', 'editar')}
+                              >
+                                <Edit className="w-3 h-3 text-blue-600" />
+                              </Button>
                             </div>
                           ))}
                         </CardContent>
@@ -2756,8 +3080,26 @@ export default function Cadastros() {
                         </CardHeader>
                         <CardContent className="p-4 max-h-60 overflow-y-auto">
                           {jobsAgendados.map(job => (
-                            <div key={job.id} className="p-2 border-b hover:bg-slate-50">
-                              <p className="font-semibold text-sm">{job.nome_job}</p>
+                            <div key={job.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">{job.nome_job}</p>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWindow(JobAgendadoForm, {
+                                  jobAgendado: job,
+                                  windowMode: true,
+                                  onSubmit: handleSubmitGenerico('JobAgendado', 'jobs-agendados')
+                                }, {
+                                  title: `⏰ Editar: ${job.nome_job}`,
+                                  width: 900,
+                                  height: 650
+                                })}
+                                disabled={!hasPermission('cadastros', 'editar')}
+                              >
+                                <Edit className="w-3 h-3 text-amber-600" />
+                              </Button>
                             </div>
                           ))}
                         </CardContent>
