@@ -80,6 +80,11 @@ export default function Financeiro() {
     queryFn: () => base44.entities.CentroCusto.list(),
   });
 
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
+  });
+
   const { data: rateios = [] } = useQuery({
     queryKey: ['rateios'],
     queryFn: () => base44.entities.RateioFinanceiro.list('-created_date'),
@@ -388,11 +393,11 @@ export default function Financeiro() {
         </TabsContent>
 
         <TabsContent value="contas-receber">
-          <ContasReceberTab contas={contasReceberComContexto} />
+          <ContasReceberTab contas={contasReceberComContexto} empresas={empresas} />
         </TabsContent>
 
         <TabsContent value="contas-pagar">
-          <ContasPagarTab contas={contasPagarComContexto} />
+          <ContasPagarTab contas={contasPagarComContexto} empresas={empresas} />
         </TabsContent>
 
         <TabsContent value="aprovacoes">
