@@ -42,6 +42,8 @@ import {
   FileText,
   Bell,
   Link2,
+  ShoppingCart,
+  MapPin,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -100,6 +102,16 @@ import PlanoContasForm from "../components/cadastros/PlanoContasForm";
 import TipoDespesaForm from "../components/cadastros/TipoDespesaForm";
 import ApiExternaForm from "../components/cadastros/ApiExternaForm";
 import JobAgendadoForm from "../components/cadastros/JobAgendadoForm";
+import StatusIntegracoes from '../components/integracoes/StatusIntegracoes';
+import ConfiguracaoNotificacoes from '../components/sistema/ConfiguracaoNotificacoes';
+import TesteNFe from "../components/integracoes/TesteNFe";
+import TesteBoletos from "../components/integracoes/TesteBoletos";
+import ConfigWhatsAppBusiness from '@/components/integracoes/ConfigWhatsAppBusiness';
+import TesteTransportadoras from "../components/integracoes/TesteTransportadoras";
+import TesteGoogleMaps from "../components/integracoes/TesteGoogleMaps";
+import IALeituraProjeto from "../components/integracoes/IALeituraProjeto";
+import SincronizacaoMarketplacesAtiva from '@/components/integracoes/SincronizacaoMarketplacesAtiva';
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * ⭐⭐⭐ CADASTROS GERAIS V21.3 - FASE 3: 100% COMPLETA ⭐⭐⭐
@@ -129,6 +141,8 @@ export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
   const [acordeonAberto, setAcordeonAberto] = useState([]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
+  const [abaIntegracoes, setAbaIntegracoes] = useState("gerenciamento");
+  const { empresaAtual } = useContextoVisual();
 
   // FASE 1 DEFINITIVO-100%: ZERO estados de dialog - TUDO é window
 
@@ -368,6 +382,14 @@ export default function Cadastros() {
   const { data: tabelasFiscais = [] } = useQuery({
     queryKey: ['tabelas-fiscais'],
     queryFn: () => base44.entities.TabelaFiscal.list(),
+  });
+
+  const { data: configuracao } = useQuery({
+    queryKey: ['configuracaoSistema'],
+    queryFn: async () => {
+      const configs = await base44.entities.ConfiguracaoSistema.list();
+      return configs[0] || null;
+    },
   });
 
   // Cálculo de totais por bloco
@@ -2464,231 +2486,325 @@ export default function Cadastros() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* EVENTOS DE NOTIFICAÇÃO */}
-                  <Card className="border-cyan-200">
-                    <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(EventoNotificacaoForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('EventoNotificacao', 'eventos-notificacao')
-                          }, {
-                            title: '🔔 Novo Evento de Notificação',
-                            width: 1000,
-                            height: 700
-                          })}
-                          className="bg-cyan-600 hover:bg-cyan-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {eventosNotificacao.map(evento => (
-                        <div key={evento.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                          <div className="flex-1">
-                            <p className="font-semibold text-sm">{evento.nome_evento}</p>
-                            <Badge variant="outline" className="text-xs">{evento.tipo_evento}</Badge>
+                {/* SUB-TABS INTEGRAÇÕES & IA - ETAPA 4 */}
+                <Tabs value={abaIntegracoes} onValueChange={setAbaIntegracoes}>
+                  <TabsList className="bg-slate-100 mb-6 flex-wrap h-auto">
+                    <TabsTrigger value="gerenciamento">
+                      <Database className="w-4 h-4 mr-2" />
+                      Gerenciamento
+                    </TabsTrigger>
+                    <TabsTrigger value="status">
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      Status
+                    </TabsTrigger>
+                    <TabsTrigger value="notificacoes">
+                      <Bell className="w-4 h-4 mr-2" />
+                      Notificações
+                    </TabsTrigger>
+                    <TabsTrigger value="nfe">
+                      <FileText className="w-4 h-4 mr-2" />
+                      NF-e
+                    </TabsTrigger>
+                    <TabsTrigger value="boletos">
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Boletos/PIX
+                    </TabsTrigger>
+                    <TabsTrigger value="whatsapp">
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      WhatsApp
+                    </TabsTrigger>
+                    <TabsTrigger value="transportadoras">
+                      <Truck className="w-4 h-4 mr-2" />
+                      Transportadoras
+                    </TabsTrigger>
+                    <TabsTrigger value="maps">
+                      <Globe className="w-4 h-4 mr-2" />
+                      Maps
+                    </TabsTrigger>
+                    <TabsTrigger value="ia">
+                      <Zap className="w-4 h-4 mr-2" />
+                      IA
+                    </TabsTrigger>
+                    <TabsTrigger value="marketplaces">
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Marketplaces
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* ABA: GERENCIAMENTO - CADASTROS BASE */}
+                  <TabsContent value="gerenciamento">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* EVENTOS DE NOTIFICAÇÃO */}
+                      <Card className="border-cyan-200">
+                        <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
+                            <Button
+                              size="sm"
+                              onClick={() => openWindow(EventoNotificacaoForm, {
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('EventoNotificacao', 'eventos-notificacao')
+                              }, {
+                                title: '🔔 Novo Evento de Notificação',
+                                width: 1000,
+                                height: 700
+                              })}
+                              className="bg-cyan-600 hover:bg-cyan-700"
+                              disabled={!hasPermission('cadastros', 'criar')}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Novo
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openWindow(EventoNotificacaoForm, {
-                              evento,
-                              windowMode: true,
-                              onSubmit: handleSubmitGenerico('EventoNotificacao', 'eventos-notificacao')
-                            }, {
-                              title: `🔔 Editar: ${evento.nome_evento}`,
-                              width: 1000,
-                              height: 700
-                            })}
-                            disabled={!hasPermission('cadastros', 'editar')}
-                          >
-                            <Edit className="w-3 h-3 text-cyan-600" />
-                          </Button>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                        </CardHeader>
+                        <CardContent className="p-4 max-h-60 overflow-y-auto">
+                          {eventosNotificacao.map(evento => (
+                            <div key={evento.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">{evento.nome_evento}</p>
+                                <Badge variant="outline" className="text-xs">{evento.tipo_evento}</Badge>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWindow(EventoNotificacaoForm, {
+                                  evento,
+                                  windowMode: true,
+                                  onSubmit: handleSubmitGenerico('EventoNotificacao', 'eventos-notificacao')
+                                }, {
+                                  title: `🔔 Editar: ${evento.nome_evento}`,
+                                  width: 1000,
+                                  height: 700
+                                })}
+                                disabled={!hasPermission('cadastros', 'editar')}
+                              >
+                                <Edit className="w-3 h-3 text-cyan-600" />
+                              </Button>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
 
-                  {/* CONFIGURAÇÕES DE INTEGRAÇÃO */}
-                  <Card className="border-purple-200">
-                    <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
-                          }, {
-                            title: '🔗 Nova Configuração de Integração',
-                            width: 1100,
-                            height: 750
-                          })}
-                          className="bg-purple-600 hover:bg-purple-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Nova
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {configsIntegracao.map(config => (
-                        <div key={config.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                          <div className="flex-1">
-                            <p className="font-semibold text-sm">{config.marketplace}</p>
-                            <Badge className={config.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                              {config.ativo ? 'Ativa' : 'Inativa'}
-                            </Badge>
+                      {/* CONFIGURAÇÕES DE INTEGRAÇÃO */}
+                      <Card className="border-purple-200">
+                        <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
+                            <Button
+                              size="sm"
+                              onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
+                              }, {
+                                title: '🔗 Nova Configuração de Integração',
+                                width: 1100,
+                                height: 750
+                              })}
+                              className="bg-purple-600 hover:bg-purple-700"
+                              disabled={!hasPermission('cadastros', 'criar')}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Nova
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
-                              config,
+                        </CardHeader>
+                        <CardContent className="p-4 max-h-60 overflow-y-auto">
+                          {configsIntegracao.map(config => (
+                            <div key={config.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">{config.marketplace}</p>
+                                <Badge className={config.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                                  {config.ativo ? 'Ativa' : 'Inativa'}
+                                </Badge>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
+                                  config,
+                                  windowMode: true,
+                                  onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
+                                }, {
+                                  title: `🔗 Editar: ${config.marketplace}`,
+                                  width: 1100,
+                                  height: 750
+                                })}
+                                disabled={!hasPermission('cadastros', 'editar')}
+                              >
+                                <Edit className="w-3 h-3 text-purple-600" />
+                              </Button>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+
+                      {/* WEBHOOKS */}
+                      <Card className="border-indigo-200">
+                        <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base">🔗 Webhooks ({webhooks.length})</CardTitle>
+                            <Button size="sm" onClick={() => openWindow(WebhookForm, {
                               windowMode: true,
-                              onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
-                            }, {
-                              title: `🔗 Editar: ${config.marketplace}`,
-                              width: 1100,
-                              height: 750
-                            })}
-                            disabled={!hasPermission('cadastros', 'editar')}
-                          >
-                            <Edit className="w-3 h-3 text-purple-600" />
-                          </Button>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                              onSubmit: handleSubmitGenerico('Webhook', 'webhooks')
+                            }, { title: '🔗 Novo Webhook', width: 900, height: 600 })}
+                              className="bg-indigo-600 hover:bg-indigo-700"
+                              disabled={!hasPermission('cadastros', 'criar')}>
+                              <Plus className="w-4 h-4 mr-1" />Novo
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4 max-h-60 overflow-y-auto">
+                          {webhooks.map(wh => (
+                            <div key={wh.id} className="p-2 border-b hover:bg-slate-50">
+                              <p className="font-semibold text-sm">{wh.nome_webhook}</p>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
 
-                  {/* WEBHOOKS */}
-                  <Card className="border-indigo-200">
-                    <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🔗 Webhooks ({webhooks.length})</CardTitle>
-                        <Button size="sm" onClick={() => openWindow(WebhookForm, {
-                          windowMode: true,
-                          onSubmit: handleSubmitGenerico('Webhook', 'webhooks')
-                        }, { title: '🔗 Novo Webhook', width: 900, height: 600 })}
-                          className="bg-indigo-600 hover:bg-indigo-700"
-                          disabled={!hasPermission('cadastros', 'criar')}>
-                          <Plus className="w-4 h-4 mr-1" />Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {webhooks.map(wh => (
-                        <div key={wh.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{wh.nome_webhook}</p>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                      {/* CHATBOT INTENTS */}
+                      <Card className="border-purple-200">
+                        <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base">💬 Intents ({chatbotIntents.length})</CardTitle>
+                            <Button size="sm" onClick={() => openWindow(ChatbotIntentForm, {
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('ChatbotIntent', 'chatbotIntents')
+                            }, { title: '💬 Nova Intent', width: 900, height: 650 })}
+                              className="bg-purple-600 hover:bg-purple-700"
+                              disabled={!hasPermission('cadastros', 'criar')}>
+                              <Plus className="w-4 h-4 mr-1" />Nova
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4 max-h-60 overflow-y-auto">
+                          {chatbotIntents.map(intent => (
+                            <div key={intent.id} className="p-2 border-b hover:bg-slate-50">
+                              <p className="font-semibold text-sm">{intent.nome_intent}</p>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
 
-                  {/* CHATBOT INTENTS */}
-                  <Card className="border-purple-200">
-                    <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">💬 Intents ({chatbotIntents.length})</CardTitle>
-                        <Button size="sm" onClick={() => openWindow(ChatbotIntentForm, {
-                          windowMode: true,
-                          onSubmit: handleSubmitGenerico('ChatbotIntent', 'chatbotIntents')
-                        }, { title: '💬 Nova Intent', width: 900, height: 650 })}
-                          className="bg-purple-600 hover:bg-purple-700"
-                          disabled={!hasPermission('cadastros', 'criar')}>
-                          <Plus className="w-4 h-4 mr-1" />Nova
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {chatbotIntents.map(intent => (
-                        <div key={intent.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{intent.nome_intent}</p>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                      {/* CHATBOT CANAIS */}
+                      <Card className="border-green-200">
+                        <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base">📱 Canais ({chatbotCanais.length})</CardTitle>
+                            <Button size="sm" onClick={() => openWindow(ChatbotCanalForm, {
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbotCanais')
+                            }, { title: '📱 Novo Canal', width: 800, height: 550 })}
+                              className="bg-green-600 hover:bg-green-700"
+                              disabled={!hasPermission('cadastros', 'criar')}>
+                              <Plus className="w-4 h-4 mr-1" />Novo
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4 max-h-60 overflow-y-auto">
+                          {chatbotCanais.map(canal => (
+                            <div key={canal.id} className="p-2 border-b hover:bg-slate-50">
+                              <p className="font-semibold text-sm">{canal.nome_canal}</p>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
 
-                  {/* CHATBOT CANAIS */}
-                  <Card className="border-green-200">
-                    <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📱 Canais ({chatbotCanais.length})</CardTitle>
-                        <Button size="sm" onClick={() => openWindow(ChatbotCanalForm, {
-                          windowMode: true,
-                          onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbotCanais')
-                        }, { title: '📱 Novo Canal', width: 800, height: 550 })}
-                          className="bg-green-600 hover:bg-green-700"
-                          disabled={!hasPermission('cadastros', 'criar')}>
-                          <Plus className="w-4 h-4 mr-1" />Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {chatbotCanais.map(canal => (
-                        <div key={canal.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{canal.nome_canal}</p>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                      {/* APIS EXTERNAS */}
+                      <Card className="border-blue-200">
+                        <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base">🔌 APIs ({apisExternas.length})</CardTitle>
+                            <Button size="sm" onClick={() => openWindow(ApiExternaForm, {
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('ApiExterna', 'apis-externas')
+                            }, { title: '🔌 Nova API', width: 900, height: 700 })}
+                              className="bg-blue-600 hover:bg-blue-700"
+                              disabled={!hasPermission('cadastros', 'criar')}>
+                              <Plus className="w-4 h-4 mr-1" />Nova
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4 max-h-60 overflow-y-auto">
+                          {apisExternas.map(api => (
+                            <div key={api.id} className="p-2 border-b hover:bg-slate-50">
+                              <p className="font-semibold text-sm">{api.nome_integracao}</p>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
 
-                  {/* APIS EXTERNAS */}
-                  <Card className="border-blue-200">
-                    <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🔌 APIs ({apisExternas.length})</CardTitle>
-                        <Button size="sm" onClick={() => openWindow(ApiExternaForm, {
-                          windowMode: true,
-                          onSubmit: handleSubmitGenerico('ApiExterna', 'apis-externas')
-                        }, { title: '🔌 Nova API', width: 900, height: 700 })}
-                          className="bg-blue-600 hover:bg-blue-700"
-                          disabled={!hasPermission('cadastros', 'criar')}>
-                          <Plus className="w-4 h-4 mr-1" />Nova
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {apisExternas.map(api => (
-                        <div key={api.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{api.nome_integracao}</p>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                      {/* JOBS AGENDADOS */}
+                      <Card className="border-amber-200">
+                        <CardHeader className="bg-amber-50 border-b border-amber-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base">⏰ Jobs IA ({jobsAgendados.length})</CardTitle>
+                            <Button size="sm" onClick={() => openWindow(JobAgendadoForm, {
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('JobAgendado', 'jobs-agendados')
+                            }, { title: '⏰ Novo Job', width: 900, height: 650 })}
+                              className="bg-amber-600 hover:bg-amber-700"
+                              disabled={!hasPermission('cadastros', 'criar')}>
+                              <Plus className="w-4 h-4 mr-1" />Novo
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4 max-h-60 overflow-y-auto">
+                          {jobsAgendados.map(job => (
+                            <div key={job.id} className="p-2 border-b hover:bg-slate-50">
+                              <p className="font-semibold text-sm">{job.nome_job}</p>
+                            </div>
+                          ))}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </TabsContent>
 
-                  {/* JOBS AGENDADOS */}
-                  <Card className="border-amber-200">
-                    <CardHeader className="bg-amber-50 border-b border-amber-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">⏰ Jobs IA ({jobsAgendados.length})</CardTitle>
-                        <Button size="sm" onClick={() => openWindow(JobAgendadoForm, {
-                          windowMode: true,
-                          onSubmit: handleSubmitGenerico('JobAgendado', 'jobs-agendados')
-                        }, { title: '⏰ Novo Job', width: 900, height: 650 })}
-                          className="bg-amber-600 hover:bg-amber-700"
-                          disabled={!hasPermission('cadastros', 'criar')}>
-                          <Plus className="w-4 h-4 mr-1" />Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {jobsAgendados.map(job => (
-                        <div key={job.id} className="p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm">{job.nome_job}</p>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                  </div>
+                  {/* ABA: STATUS INTEGRAÇÕES */}
+                  <TabsContent value="status">
+                    <StatusIntegracoes empresaId={empresaAtual?.id} />
+                  </TabsContent>
+
+                  {/* ABA: NOTIFICAÇÕES */}
+                  <TabsContent value="notificacoes">
+                    <ConfiguracaoNotificacoes empresaId={empresaAtual?.id} />
+                  </TabsContent>
+
+                  {/* ABA: NF-e */}
+                  <TabsContent value="nfe">
+                    <TesteNFe configuracao={configuracao} />
+                  </TabsContent>
+
+                  {/* ABA: BOLETOS/PIX */}
+                  <TabsContent value="boletos">
+                    <TesteBoletos configuracao={configuracao} />
+                  </TabsContent>
+
+                  {/* ABA: WHATSAPP */}
+                  <TabsContent value="whatsapp">
+                    <ConfigWhatsAppBusiness empresaId={empresaAtual?.id} />
+                  </TabsContent>
+
+                  {/* ABA: TRANSPORTADORAS */}
+                  <TabsContent value="transportadoras">
+                    <TesteTransportadoras configuracao={configuracao} />
+                  </TabsContent>
+
+                  {/* ABA: GOOGLE MAPS */}
+                  <TabsContent value="maps">
+                    <TesteGoogleMaps configuracao={configuracao} />
+                  </TabsContent>
+
+                  {/* ABA: IA E AUTOMAÇÕES */}
+                  <TabsContent value="ia">
+                    <IALeituraProjeto configuracao={configuracao} />
+                  </TabsContent>
+
+                  {/* ABA: MARKETPLACES */}
+                  <TabsContent value="marketplaces">
+                    <SincronizacaoMarketplacesAtiva />
+                  </TabsContent>
+                </Tabs>
 
                 <Alert className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-cyan-50">
                   <Stars className="w-4 h-4 text-purple-600" />

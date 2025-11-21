@@ -6,7 +6,6 @@ import Compras from './pages/Compras';
 import RH from './pages/RH';
 import Estoque from './pages/Estoque';
 import Acessos from './pages/Acessos';
-import Integracoes from './pages/Integracoes';
 import Fiscal from './pages/Fiscal';
 import CRM from './pages/CRM';
 import Agenda from './pages/Agenda';
@@ -42,7 +41,6 @@ export const PAGES = {
     "RH": RH,
     "Estoque": Estoque,
     "Acessos": Acessos,
-    "Integracoes": Integracoes,
     "Fiscal": Fiscal,
     "CRM": CRM,
     "Agenda": Agenda,

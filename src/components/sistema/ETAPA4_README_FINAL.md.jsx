@@ -30,24 +30,25 @@
 - ✅ **Componentes Importados** (CaixaCentralLiquidacao, ConciliacaoBancaria, AprovacaoDescontosManager)
 - ✅ **NADA APAGADO** - Todas funcionalidades originais preservadas
 
-### Módulo Integrações (`Integracoes.jsx`)
-**ANTES:** Tabs de testes (NF-e, Boletos, WhatsApp, Transportadoras, Maps)
+### Módulo Cadastros Gerais (`Cadastros.jsx`) - UNIFICAÇÃO TOTAL
+**ANTES:** Bloco 6 com cadastros base de integrações
 
-**DEPOIS (ETAPA 4):**
-- ✅ **Nova Aba "APIs"** - Gerenciamento de APIs Externas (apisExternas)
-- ✅ **Nova Aba "Webhooks"** - Configuração de Webhooks
-- ✅ **Nova Aba "Chatbot"** - Canais e Intents do Chatbot
-- ✅ **Nova Aba "Jobs IA"** - Jobs Agendados de IA
-- ✅ **Queries Adicionadas** (apisExternas, webhooks, chatbotCanais, chatbotIntents, jobsAgendados)
-- ✅ **Componentes Importados** (ApiExternaForm, WebhookForm, ChatbotCanalForm, ChatbotIntentForm, JobAgendadoForm)
-- ✅ **NADA APAGADO** - Tabs originais preservadas
-- ✅ **Eliminada Duplicação** - Integrações que estavam em Cadastros agora centralizadas aqui
-
-### Módulo Cadastros (`Cadastros.jsx`)
-**SEM ALTERAÇÕES** - Permanece como Hub de Dados Mestres
-- Mantém Bloco 6 (Integrações & IA) para configurações base
-- Integrações operacionais movidas para `Integracoes.jsx`
-- Zero duplicação, zero conflito
+**DEPOIS (ETAPA 4 - UNIFICAÇÃO):**
+- ✅ **Bloco 6 EXPANDIDO** com 10 sub-tabs internas:
+  - Gerenciamento (Cadastros base)
+  - Status (StatusIntegracoes)
+  - Notificações (ConfiguracaoNotificacoes)
+  - NF-e (TesteNFe)
+  - Boletos/PIX (TesteBoletos)
+  - WhatsApp (ConfigWhatsAppBusiness)
+  - Transportadoras (TesteTransportadoras)
+  - Maps (TesteGoogleMaps)
+  - IA (IALeituraProjeto)
+  - Marketplaces (SincronizacaoMarketplacesAtiva)
+- ✅ **TUDO CENTRALIZADO** em Cadastros Gerais
+- ✅ **Módulo Integracoes.jsx DELETADO** - zero redundância
+- ✅ **Menu LIMPO** - entrada "Integrações" removida
+- ✅ **Fonte Única de Verdade** - um único lugar para tudo
 
 ---
 
@@ -55,10 +56,13 @@
 
 ### Arquivos Removidos:
 - ✅ **FinanceiroEtapa4.jsx** - DELETADO (funcionalidades integradas em `Financeiro.jsx`)
+- ✅ **Integracoes.jsx** - DELETADO (funcionalidades integradas em `Cadastros.jsx` Bloco 6)
 
 ### Menu Limpo:
 - ✅ Removida entrada duplicada "💰 Financeiro ETAPA 4"
+- ✅ Removida entrada "Integrações" (agora em Cadastros → Bloco 6)
 - ✅ Menu enxuto e sem redundâncias
+- ✅ **TUDO CENTRALIZADO** em módulos principais
 
 ---
 
@@ -104,19 +108,25 @@ Financeiro.jsx (UNIFICADO)
 ```
 
 ```
-Integracoes.jsx (REORGANIZADO)
-├── Status (EXISTENTE)
-├── APIs Externas (NOVO) ⭐
-├── Webhooks (NOVO) ⭐
-├── Chatbot (NOVO) ⭐
-├── Jobs IA (NOVO) ⭐
-├── Notificações (EXISTENTE)
-├── NF-e (EXISTENTE)
-├── Boletos/PIX (EXISTENTE)
-├── WhatsApp (EXISTENTE)
-├── Transportadoras (EXISTENTE)
-├── Maps (EXISTENTE)
-└── Marketplaces (EXISTENTE)
+Cadastros.jsx → Bloco 6 (UNIFICADO) ⭐⭐⭐
+├── Gerenciamento (Cadastros base)
+│   ├── Eventos Notificação
+│   ├── Marketplaces
+│   ├── Webhooks
+│   ├── Chatbot Intents
+│   ├── Chatbot Canais
+│   ├── APIs Externas
+│   └── Jobs Agendados
+│
+├── Status (StatusIntegracoes)
+├── Notificações (ConfiguracaoNotificacoes)
+├── NF-e (TesteNFe)
+├── Boletos/PIX (TesteBoletos)
+├── WhatsApp (ConfigWhatsAppBusiness)
+├── Transportadoras (TesteTransportadoras)
+├── Maps (TesteGoogleMaps)
+├── IA (IALeituraProjeto)
+└── Marketplaces (SincronizacaoMarketplacesAtiva)
 ```
 
 ---
@@ -206,15 +216,16 @@ Todos os componentes:
 
 **Módulos Unificados:**
 - ❌ **DELETADO:** FinanceiroEtapa4.jsx
-- ✅ **MANTIDO:** Financeiro.jsx (integrado)
-- ✅ **REORGANIZADO:** Integracoes.jsx (consolidado)
-- ✅ **PRESERVADO:** Cadastros.jsx (inalterado)
+- ❌ **DELETADO:** Integracoes.jsx
+- ✅ **MANTIDO:** Financeiro.jsx (ETAPA 4 integrada)
+- ✅ **EXPANDIDO:** Cadastros.jsx → Bloco 6 com 10 sub-tabs (TUDO centralizado)
 
 **Resultado:**
-- Sistema mais limpo
+- Sistema ultra-limpo
 - Manutenção facilitada
 - Zero confusão para usuários
 - Navegação clara e lógica
+- **Fonte Única de Verdade** aplicada 100%
 
 ---
 
@@ -253,10 +264,11 @@ Todos os componentes:
 - [x] ConciliacaoBancaria
 
 ### Integração ✅
-- [x] Financeiro.jsx atualizado
-- [x] Integracoes.jsx reorganizado
-- [x] Layout.js limpo
-- [x] Menu sem duplicatas
+- [x] Financeiro.jsx atualizado (Caixa Central, Aprovações, Conciliação)
+- [x] Cadastros.jsx expandido (Bloco 6 com 10 sub-tabs)
+- [x] Integracoes.jsx DELETADO (tudo em Cadastros)
+- [x] Layout.js limpo (menu sem duplicatas)
+- [x] Unificação total aplicada
 
 ### Qualidade ✅
 - [x] Zero erros de build
