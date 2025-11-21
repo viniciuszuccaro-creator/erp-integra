@@ -76,6 +76,7 @@ export default function ContasPagarTab({ contas }) {
     mutationFn: async (titulos) => {
       const ordens = await Promise.all(titulos.map(async (titulo) => {
         return await base44.entities.CaixaOrdemLiquidacao.create({
+          empresa_id: titulo.empresa_id,
           tipo_operacao: 'Pagamento',
           origem: 'Contas a Pagar',
           valor_total: titulo.valor,
@@ -83,11 +84,12 @@ export default function ContasPagarTab({ contas }) {
           status: 'Pendente',
           titulos_vinculados: [{
             titulo_id: titulo.id,
+            tipo_titulo: 'ContaPagar',
             numero_titulo: titulo.numero_documento || titulo.descricao,
             cliente_fornecedor_nome: titulo.fornecedor,
-            valor_titulo: titulo.valor,
-            data_vencimento: titulo.data_vencimento
-          }]
+            valor_titulo: titulo.valor
+          }],
+          data_ordem: new Date().toISOString()
         });
       }));
       return ordens;

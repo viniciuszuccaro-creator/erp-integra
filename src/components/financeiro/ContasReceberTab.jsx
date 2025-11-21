@@ -114,6 +114,7 @@ export default function ContasReceberTab({ contas }) {
     mutationFn: async (titulos) => {
       const ordens = await Promise.all(titulos.map(async (titulo) => {
         return await base44.entities.CaixaOrdemLiquidacao.create({
+          empresa_id: titulo.empresa_id,
           tipo_operacao: 'Recebimento',
           origem: 'Contas a Receber',
           valor_total: titulo.valor,
@@ -121,11 +122,12 @@ export default function ContasReceberTab({ contas }) {
           status: 'Pendente',
           titulos_vinculados: [{
             titulo_id: titulo.id,
+            tipo_titulo: 'ContaReceber',
             numero_titulo: titulo.numero_documento || titulo.descricao,
             cliente_fornecedor_nome: titulo.cliente,
-            valor_titulo: titulo.valor,
-            data_vencimento: titulo.data_vencimento
-          }]
+            valor_titulo: titulo.valor
+          }],
+          data_ordem: new Date().toISOString()
         });
       }));
       return ordens;
@@ -1072,6 +1074,14 @@ export default function ContasReceberTab({ contas }) {
           </form>
         </DialogContent>
       </Dialog>
+
+      {gerarCobrancaDialogOpen && (
+        <GerarCobrancaModal
+          isOpen={gerarCobrancaDialogOpen}
+          onClose={() => { setGerarCobrancaDialogOpen(false); setContaParaCobranca(null); }}
+          contaReceber={contaParaCobranca}
+        />
+      )}
 
       {simularPagamentoDialogOpen && (
         <SimularPagamentoModal
