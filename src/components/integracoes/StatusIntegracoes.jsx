@@ -18,11 +18,96 @@ import {
 import integracaoNFe from '../lib/integracaoNFe';
 import integracaoBoletos from '../lib/integracaoBoletos';
 import integracaoWhatsApp from '../lib/integracaoWhatsApp';
+import { useWindow } from '../lib/useWindow';
+import ConfiguracaoNFeForm from '../cadastros/ConfiguracaoNFeForm';
+import ConfiguracaoBoletosForm from '../cadastros/ConfiguracaoBoletosForm';
+import ConfiguracaoWhatsAppForm from '../cadastros/ConfiguracaoWhatsAppForm';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
 
 /**
  * Painel de Status das Integrações Reais
  * Mostra status de NF-e, Boletos/PIX e WhatsApp
  */
+// Component helper para botões de configuração
+function IntegrationConfigButtons({ integracao }) {
+  const { openWindow } = useWindow();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleConfigurar = () => {
+    const entityMap = {
+      'nfe': { 
+        form: ConfiguracaoNFeForm, 
+        entity: 'ConfiguracaoNFe',
+        queryKey: 'configs-nfe',
+        title: '⚙️ Configurar NF-e'
+      },
+      'boleto': { 
+        form: ConfiguracaoBoletosForm, 
+        entity: 'ConfiguracaoBoletos',
+        queryKey: 'configs-boletos',
+        title: '⚙️ Configurar Boletos & PIX'
+      },
+      'whatsapp': { 
+        form: ConfiguracaoWhatsAppForm, 
+        entity: 'ConfiguracaoWhatsApp',
+        queryKey: 'configs-whatsapp',
+        title: '⚙️ Configurar WhatsApp Business'
+      }
+    };
+
+    const cfg = entityMap[integracao.id];
+    if (!cfg) return;
+
+    const handleSubmit = async (data) => {
+      try {
+        if (data.id) {
+          await base44.entities[cfg.entity].update(data.id, data);
+          toast({ title: `✅ ${cfg.entity} atualizado!` });
+        } else {
+          await base44.entities[cfg.entity].create(data);
+          toast({ title: `✅ ${cfg.entity} criado!` });
+        }
+        queryClient.invalidateQueries({ queryKey: [cfg.queryKey] });
+      } catch (error) {
+        toast({ title: `❌ Erro ao salvar`, description: error.message, variant: "destructive" });
+      }
+    };
+
+    openWindow(cfg.form, { 
+      windowMode: true,
+      onSubmit: handleSubmit
+    }, {
+      title: cfg.title,
+      width: 1000,
+      height: 700
+    });
+  };
+
+  return (
+    <div className="flex gap-2">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={integracao.onVerificar}
+        disabled={integracao.verificando}
+        className="flex-1"
+      >
+        {integracao.verificando ? 'Verificando...' : 'Verificar'}
+      </Button>
+      <Button
+        size="sm"
+        onClick={handleConfigurar}
+        className={`flex-1 bg-${integracao.cor}-600 hover:bg-${integracao.cor}-700`}
+      >
+        <Settings className="w-4 h-4 mr-1" />
+        Configurar
+      </Button>
+    </div>
+  );
+}
+
 export default function StatusIntegracoes({ empresaId }) {
   const [verificandoNFe, setVerificandoNFe] = React.useState(false);
   const [verificandoBoleto, setVerificandoBoleto] = React.useState(false);
@@ -204,24 +289,7 @@ export default function StatusIntegracoes({ empresaId }) {
                 </div>
 
                 {/* Botões */}
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={integracao.onVerificar}
-                    disabled={integracao.verificando}
-                    className="flex-1"
-                  >
-                    {integracao.verificando ? 'Verificando...' : 'Verificar'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    className={`flex-1 bg-${integracao.cor}-600 hover:bg-${integracao.cor}-700`}
-                  >
-                    <Settings className="w-4 h-4 mr-1" />
-                    Configurar
-                  </Button>
-                </div>
+                <IntegrationConfigButtons integracao={integracao} />
               </CardContent>
             </Card>
           );

@@ -1,0 +1,231 @@
+import React, { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DollarSign, Save } from "lucide-react";
+
+export default function ConfiguracaoBoletosForm({ config, onSubmit, isSubmitting, windowMode = false }) {
+  const [formData, setFormData] = useState(config || {
+    provedor: "Asaas",
+    api_url: "",
+    api_key: "",
+    wallet_id: "",
+    ambiente: "Sandbox",
+    gerar_boleto_automatico: false,
+    gerar_pix_automatico: true,
+    dias_vencimento_padrao: 3,
+    multa_percentual: 2,
+    juros_diario_percentual: 0.033,
+    desconto_antecipacao_percentual: 0,
+    enviar_email_cobranca: true,
+    enviar_whatsapp_cobranca: true,
+    webhook_url: "",
+    ativo: true,
+    observacoes: ""
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await onSubmit(formData);
+  };
+
+  const form = (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DollarSign className="w-5 h-5 text-green-600" />
+            Configuração Boletos & PIX
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Provedor *</Label>
+              <Select value={formData.provedor} onValueChange={(val) => setFormData({ ...formData, provedor: val })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Asaas">Asaas</SelectItem>
+                  <SelectItem value="Juno">Juno</SelectItem>
+                  <SelectItem value="Mercado Pago">Mercado Pago</SelectItem>
+                  <SelectItem value="PagSeguro">PagSeguro</SelectItem>
+                  <SelectItem value="Outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Ambiente</Label>
+              <Select value={formData.ambiente} onValueChange={(val) => setFormData({ ...formData, ambiente: val })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sandbox">Sandbox (Testes)</SelectItem>
+                  <SelectItem value="Produção">Produção</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label>URL da API</Label>
+            <Input
+              value={formData.api_url}
+              onChange={(e) => setFormData({ ...formData, api_url: e.target.value })}
+              placeholder="https://www.asaas.com/api/v3"
+            />
+          </div>
+
+          <div>
+            <Label>API Key *</Label>
+            <Input
+              type="password"
+              value={formData.api_key}
+              onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
+              placeholder="Insira a chave da API"
+            />
+          </div>
+
+          <div>
+            <Label>Wallet ID</Label>
+            <Input
+              value={formData.wallet_id}
+              onChange={(e) => setFormData({ ...formData, wallet_id: e.target.value })}
+              placeholder="ID da carteira (se aplicável)"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <Label>Dias Vencimento</Label>
+              <Input
+                type="number"
+                value={formData.dias_vencimento_padrao}
+                onChange={(e) => setFormData({ ...formData, dias_vencimento_padrao: parseInt(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label>Multa (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.multa_percentual}
+                onChange={(e) => setFormData({ ...formData, multa_percentual: parseFloat(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label>Juros/Dia (%)</Label>
+              <Input
+                type="number"
+                step="0.001"
+                value={formData.juros_diario_percentual}
+                onChange={(e) => setFormData({ ...formData, juros_diario_percentual: parseFloat(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label>Desc. Antec. (%)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.desconto_antecipacao_percentual}
+                onChange={(e) => setFormData({ ...formData, desconto_antecipacao_percentual: parseFloat(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Webhook URL</Label>
+            <Input
+              value={formData.webhook_url}
+              onChange={(e) => setFormData({ ...formData, webhook_url: e.target.value })}
+              placeholder="https://seusite.com/webhook/pagamentos"
+            />
+          </div>
+
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+              <Label>Gerar Boleto Automaticamente</Label>
+              <Switch
+                checked={formData.gerar_boleto_automatico}
+                onCheckedChange={(val) => setFormData({ ...formData, gerar_boleto_automatico: val })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+              <Label>Gerar PIX Automaticamente</Label>
+              <Switch
+                checked={formData.gerar_pix_automatico}
+                onCheckedChange={(val) => setFormData({ ...formData, gerar_pix_automatico: val })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+              <Label>Enviar Email com Cobrança</Label>
+              <Switch
+                checked={formData.enviar_email_cobranca}
+                onCheckedChange={(val) => setFormData({ ...formData, enviar_email_cobranca: val })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+              <Label>Enviar WhatsApp com Cobrança</Label>
+              <Switch
+                checked={formData.enviar_whatsapp_cobranca}
+                onCheckedChange={(val) => setFormData({ ...formData, enviar_whatsapp_cobranca: val })}
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+              <Label>Configuração Ativa</Label>
+              <Switch
+                checked={formData.ativo}
+                onCheckedChange={(val) => setFormData({ ...formData, ativo: val })}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label>Observações</Label>
+            <Textarea
+              value={formData.observacoes}
+              onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+              rows={2}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-3">
+        <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isSubmitting}>
+          <Save className="w-4 h-4 mr-2" />
+          {isSubmitting ? 'Salvando...' : config ? 'Atualizar' : 'Criar'}
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+            <DollarSign className="w-8 h-8 text-green-600" />
+            <h2 className="text-2xl font-bold text-slate-900">
+              {config ? 'Editar Configuração Boletos & PIX' : 'Nova Configuração Boletos & PIX'}
+            </h2>
+          </div>
+          {form}
+        </div>
+      </div>
+    );
+  }
+
+  return form;
+}
