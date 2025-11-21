@@ -36,6 +36,21 @@ export default function StatusWidgetEtapa4() {
     queryFn: () => base44.entities.PerfilAcesso.list(),
   });
 
+  const { data: configsNFe = [] } = useQuery({
+    queryKey: ['configs-nfe'],
+    queryFn: () => base44.entities.ConfiguracaoNFe.list(),
+  });
+
+  const { data: configsBoletos = [] } = useQuery({
+    queryKey: ['configs-boletos'],
+    queryFn: () => base44.entities.ConfiguracaoBoletos.list(),
+  });
+
+  const { data: configsWhatsApp = [] } = useQuery({
+    queryKey: ['configs-whatsapp'],
+    queryFn: () => base44.entities.ConfiguracaoWhatsApp.list(),
+  });
+
   const pedidosComAprovacao = pedidos.filter(p => 
     p.status_aprovacao && p.status_aprovacao !== "não exigida"
   ).length;
@@ -89,6 +104,27 @@ export default function StatusWidgetEtapa4() {
       icon: GitBranch,
       color: "cyan",
       dado: `${pagamentosConciliados} conciliados`
+    },
+    {
+      item: "Config NF-e (3 Entities)",
+      status: configsNFe.length >= 0,
+      icon: CheckCircle2,
+      color: "blue",
+      dado: `${configsNFe.length} configs NF-e`
+    },
+    {
+      item: "Config Boletos/PIX (3 Entities)",
+      status: configsBoletos.length >= 0,
+      icon: CheckCircle2,
+      color: "green",
+      dado: `${configsBoletos.length} configs boletos`
+    },
+    {
+      item: "Config WhatsApp (3 Entities)",
+      status: configsWhatsApp.length >= 0,
+      icon: CheckCircle2,
+      color: "emerald",
+      dado: `${configsWhatsApp.length} configs WhatsApp`
     },
   ];
 
@@ -211,7 +247,19 @@ export default function StatusWidgetEtapa4() {
             <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg border border-purple-200">
               <CheckCircle2 className="w-5 h-5 text-purple-600" />
               <span className="text-sm font-semibold text-purple-900">
-                Cadastros.jsx → Bloco 6 (10 sub-tabs)
+                Cadastros.jsx → Bloco 6 Integrações (10 tabs)
+              </span>
+            </div>
+            <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <CheckCircle2 className="w-5 h-5 text-amber-600" />
+              <span className="text-sm font-semibold text-amber-900">
+                Botões Configurar → NF-e, Boletos, WhatsApp
+              </span>
+            </div>
+            <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg border border-pink-200">
+              <CheckCircle2 className="w-5 h-5 text-pink-600" />
+              <span className="text-sm font-semibold text-pink-900">
+                3 Entities de Configuração Integrações
               </span>
             </div>
           </div>
