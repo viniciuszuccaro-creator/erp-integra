@@ -37,6 +37,9 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
 import ContaReceberForm from "../components/financeiro/ContaReceberForm";
 import ContaPagarForm from "../components/financeiro/ContaPagarForm";
+import CaixaCentralLiquidacao from "../components/financeiro/CaixaCentralLiquidacao";
+import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
+import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -90,6 +93,24 @@ export default function Financeiro() {
     queryFn: () => base44.entities.ConfiguracaoGatewayPagamento.list(),
   });
 
+  const { data: ordensLiquidacao = [] } = useQuery({
+    queryKey: ['caixa-ordens-liquidacao'],
+    queryFn: () => base44.entities.CaixaOrdemLiquidacao.list(),
+  });
+
+  const { data: pagamentosOmnichannel = [] } = useQuery({
+    queryKey: ['pagamentos-omnichannel'],
+    queryFn: () => base44.entities.PagamentoOmnichannel.list(),
+  });
+
+  const { data: pedidosPendentesAprovacao = [] } = useQuery({
+    queryKey: ['pedidos-pendentes-aprovacao'],
+    queryFn: async () => {
+      const pedidos = await base44.entities.Pedido.list();
+      return pedidos.filter(p => p.status_aprovacao === "pendente");
+    },
+  });
+
   const contasReceberFiltradas = filtrarPorContexto(contasReceber, 'empresa_id');
   const contasPagarFiltradas = filtrarPorContexto(contasPagar, 'empresa_id');
 
@@ -124,6 +145,10 @@ export default function Financeiro() {
     .filter(e => !e.conciliado)
     .reduce((sum, e) => sum + Math.abs(e.valor || 0), 0);
 
+  const ordensLiquidacaoPendentes = ordensLiquidacao.filter(o => o.status_ordem === "Pendente").length;
+  const pagamentosOmnichannelPendentes = pagamentosOmnichannel.filter(p => p.status_conferencia === "Pendente").length;
+  const totalPendentesAprovacao = pedidosPendentesAprovacao.length;
+
   if (loadingPermissions) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -136,20 +161,26 @@ export default function Financeiro() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Financeiro Multi-Empresa</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Financeiro Multi-Empresa • ETAPA 4</h1>
           <p className="text-slate-600">
             {estaNoGrupo
-              ? 'Visão consolidada de todas as empresas'
-              : `Gestão financeira - ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || ''}`
+              ? 'Visão consolidada • Caixa Central • Conciliação • Omnichannel • Aprovações'
+              : `Gestão financeira completa - ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || ''}`
             }
           </p>
         </div>
-        {estaNoGrupo && (
-          <Badge className="bg-blue-100 text-blue-700 px-4 py-2">
-            <Building2 className="w-4 h-4 mr-2" />
-            Visão Consolidada
+        <div className="flex gap-2">
+          {estaNoGrupo && (
+            <Badge className="bg-blue-100 text-blue-700 px-4 py-2">
+              <Building2 className="w-4 h-4 mr-2" />
+              Visão Consolidada
+            </Badge>
+          )}
+          <Badge className="bg-green-100 text-green-700 px-4 py-2">
+            <Sparkles className="w-4 h-4 mr-2" />
+            ETAPA 4
           </Badge>
-        )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -209,7 +240,7 @@ export default function Financeiro() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="border-0 shadow-md bg-blue-50 border-blue-200">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -254,6 +285,32 @@ export default function Financeiro() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="border-0 shadow-md bg-green-50 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-green-700">Caixa - Liquidações</p>
+                <p className="text-2xl font-bold text-green-900">{ordensLiquidacaoPendentes}</p>
+                <p className="text-xs text-green-600 mt-1">Ordens pendentes</p>
+              </div>
+              <DollarSign className="w-8 h-8 text-green-400" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md bg-red-50 border-red-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-red-700">Aprovações</p>
+                <p className="text-2xl font-bold text-red-900">{totalPendentesAprovacao}</p>
+                <p className="text-xs text-red-600 mt-1">Descontos pendentes</p>
+              </div>
+              <AlertCircle className="w-8 h-8 text-red-400" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* NOVO: Régua de Cobrança IA */}
@@ -261,9 +318,12 @@ export default function Financeiro() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
-          <TabsTrigger value="caixa" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+          <TabsTrigger value="caixa-central" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
             <DollarSign className="w-4 h-4 mr-2" />
-            Caixa Diário
+            Caixa Central
+            {ordensLiquidacaoPendentes > 0 && (
+              <Badge className="ml-2 bg-orange-500 text-white">{ordensLiquidacaoPendentes}</Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger value="contas-receber" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
@@ -273,9 +333,19 @@ export default function Financeiro() {
             <TrendingDown className="w-4 h-4 mr-2" />
             Contas a Pagar
           </TabsTrigger>
+          <TabsTrigger value="aprovacoes" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Aprovações
+            {totalPendentesAprovacao > 0 && (
+              <Badge className="ml-2 bg-red-500 text-white">{totalPendentesAprovacao}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="conciliacao" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
             Conciliação
+            {pagamentosOmnichannelPendentes > 0 && (
+              <Badge className="ml-2 bg-yellow-500 text-white">{pagamentosOmnichannelPendentes}</Badge>
+            )}
           </TabsTrigger>
           {estaNoGrupo && (
             <TabsTrigger value="rateios" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
@@ -289,8 +359,8 @@ export default function Financeiro() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="caixa">
-          <CaixaDiarioTab />
+        <TabsContent value="caixa-central">
+          <CaixaCentralLiquidacao windowMode={false} />
         </TabsContent>
 
         <TabsContent value="contas-receber">
@@ -301,118 +371,12 @@ export default function Financeiro() {
           <ContasPagarTab contas={contasPagarComContexto} />
         </TabsContent>
 
+        <TabsContent value="aprovacoes">
+          <AprovacaoDescontosManager windowMode={false} />
+        </TabsContent>
+
         <TabsContent value="conciliacao">
-          <div className="space-y-6">
-            {estaNoGrupo && (
-              <Card className="border-0 shadow-md">
-                <CardHeader className="bg-slate-50 border-b">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle>Conciliação Bancária Multi-Empresa</CardTitle>
-                      <p className="text-sm text-slate-600 mt-1">
-                        Importe extratos e vincule com títulos das empresas
-                      </p>
-                    </div>
-                    <Button variant="outline">
-                      <FileText className="w-4 h-4 mr-2" />
-                      Importar Extrato (OFX/CSV)
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <Card className="bg-blue-50 border-blue-200">
-                      <CardContent className="p-4">
-                        <p className="text-sm text-blue-700">Lançamentos Importados</p>
-                        <p className="text-3xl font-bold text-blue-900">{extratosBancarios.length}</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="bg-orange-50 border-orange-200">
-                      <CardContent className="p-4">
-                        <p className="text-sm text-orange-700">Não Conciliados</p>
-                        <p className="text-3xl font-bold text-orange-900">{extratosNaoConciliados}</p>
-                        <p className="text-xs text-orange-600 mt-1">
-                          R$ {valorNaoConciliado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-50">
-                          <TableHead>Data</TableHead>
-                          <TableHead>Banco/Conta</TableHead>
-                          <TableHead>Empresa</TableHead>
-                          <TableHead>Histórico</TableHead>
-                          <TableHead>Tipo</TableHead>
-                          <TableHead>Valor</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {extratosBancarios.slice(0, 20).map(extrato => (
-                          <TableRow key={extrato.id} className={extrato.conciliado ? 'bg-green-50' : ''}>
-                            <TableCell className="text-sm">
-                              {new Date(extrato.data_movimento).toLocaleDateString('pt-BR')}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {extrato.banco} - {extrato.conta}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-1">
-                                <Building2 className="w-3 h-3 text-purple-600" />
-                                <span className="text-xs">{extrato._empresa_label || '-'}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm max-w-xs truncate">
-                              {extrato.historico}
-                            </TableCell>
-                            <TableCell>
-                              <Badge className={extrato.tipo === 'credito' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                                {extrato.tipo === 'credito' ? 'Crédito' : 'Débito'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className={`font-semibold ${extrato.tipo === 'credito' ? 'text-green-600' : 'text-red-600'}`}>
-                              {extrato.tipo === 'credito' ? '+' : '-'} R$ {extrato.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </TableCell>
-                            <TableCell>
-                              {extrato.conciliado ? (
-                                <Badge className="bg-green-100 text-green-700">
-                                  <CheckCircle2 className="w-3 h-3 mr-1" />
-                                  Conciliado
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline">Pendente</Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              {!extrato.conciliado && (
-                                <Button variant="ghost" size="sm">
-                                  <Link2 className="w-4 h-4" />
-                                </Button>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-
-                  {extratosBancarios.length === 0 && (
-                    <div className="text-center py-12 text-slate-500">
-                      <GitBranch className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                      <p>Nenhum extrato importado</p>
-                      <p className="text-sm mt-2">Importe arquivos OFX ou CSV do seu banco</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-            <PainelConciliacao />
-          </div>
+          <ConciliacaoBancaria windowMode={false} />
         </TabsContent>
 
         {estaNoGrupo && (

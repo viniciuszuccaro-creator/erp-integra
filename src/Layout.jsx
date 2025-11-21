@@ -66,7 +66,6 @@ const navigationItems = [
   { title: "Produção e Manufatura", url: createPageUrl("Producao"), icon: Factory, group: "operacional" },
   { title: "📱 Apontamento Mobile", url: createPageUrl("ProducaoMobile"), icon: Factory, group: "operacional" },
   { title: "Financeiro e Contábil", url: createPageUrl("Financeiro"), icon: DollarSign, group: "administrativo" },
-  { title: "💰 Financeiro ETAPA 4", url: createPageUrl("FinanceiroEtapa4"), icon: Wallet, group: "administrativo" },
   { title: "Recursos Humanos", url: createPageUrl("RH"), icon: UserCircle, group: "administrativo" },
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
