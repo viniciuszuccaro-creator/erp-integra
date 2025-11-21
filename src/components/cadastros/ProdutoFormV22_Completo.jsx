@@ -479,7 +479,7 @@ Caso contrário, sugira:
     onSubmit(dadosSubmit);
   };
 
-  const totalAbas = produto ? 7 : 6;
+  const totalAbas = 7; // SEMPRE 7 abas - ETAPA 4 COMPLETA
 
   const content = (
     <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
@@ -502,9 +502,9 @@ Caso contrário, sugira:
         </AlertDescription>
       </Alert>
 
-      {/* ABAS DO FORMULÁRIO */}
+      {/* ABAS DO FORMULÁRIO - 7 ABAS ETAPA 4 */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-        <TabsList className={`grid grid-cols-${totalAbas} w-full bg-slate-100`}>
+        <TabsList className="grid grid-cols-7 w-full bg-slate-100">
           <TabsTrigger value="dados-gerais">
             <Package className="w-4 h-4 mr-1" />
             Dados Gerais
@@ -529,12 +529,10 @@ Caso contrário, sugira:
             <Warehouse className="w-4 h-4 mr-1" />
             Estoque
           </TabsTrigger>
-          {produto && (
-            <TabsTrigger value="historico">
-              <TrendingUp className="w-4 h-4 mr-1" />
-              Histórico
-            </TabsTrigger>
-          )}
+          <TabsTrigger value="historico">
+            <TrendingUp className="w-4 h-4 mr-1" />
+            Histórico
+          </TabsTrigger>
         </TabsList>
 
         {/* ABA 1: DADOS GERAIS */}
@@ -1464,11 +1462,18 @@ Caso contrário, sugira:
         </TabsContent>
 
         {/* ABA 7: HISTÓRICO */}
-        {produto && (
-          <TabsContent value="historico">
+        <TabsContent value="historico" className="space-y-6">
+          {produto ? (
             <HistoricoProduto produtoId={produto.id} produto={produto} />
-          </TabsContent>
-        )}
+          ) : (
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="p-12 text-center">
+                <TrendingUp className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+                <p className="text-slate-600">O histórico estará disponível após criar o produto</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* BOTÃO SUBMIT */}
