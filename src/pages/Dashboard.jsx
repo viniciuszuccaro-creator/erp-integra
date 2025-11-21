@@ -50,9 +50,10 @@ import PainelOperacoes3D from "../components/dashboard/PainelOperacoes3D";
 import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import StatusFase1 from "@/components/sistema/StatusFase1";
-import StatusFase2 from "@/components/sistema/StatusFase2";
-import StatusFase3 from "@/components/sistema/StatusFase3";
+import StatusFase1 from "../components/sistema/StatusFase1";
+import StatusFase2 from "../components/sistema/StatusFase2";
+import StatusFase3 from "../components/sistema/StatusFase3";
+import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
 import { useWindow } from "@/components/lib/useWindow";
 
 
