@@ -322,7 +322,7 @@ export default function CaixaDiarioTab({ windowMode = false }) {
               forma_recebimento: dados.forma_pagamento
             });
 
-            // ETAPA 4: Calcular comissão automática se tiver pedido vinculado
+            // ETAPA 4: Calcular comissão automática 3% se tiver pedido vinculado
             const cr = contasReceber.find(c => c.id === titulo.titulo_id);
             if (cr?.pedido_id) {
               const pedido = pedidos.find(p => p.id === cr.pedido_id);
@@ -331,7 +331,7 @@ export default function CaixaDiarioTab({ windowMode = false }) {
                 const jaTemComissao = comissoes.some(c => c.pedido_id === pedido.id);
                 
                 if (!jaTemComissao) {
-                  const percentualComissao = 3; // pode vir de configuração ou tabela
+                  const percentualComissao = 3; // 3% fixo conforme ETAPA 4
                   const valorComissao = titulo.valor_titulo * (percentualComissao / 100);
                   
                   await base44.entities.Comissao.create({
@@ -345,7 +345,7 @@ export default function CaixaDiarioTab({ windowMode = false }) {
                     percentual_comissao: percentualComissao,
                     valor_comissao: valorComissao,
                     status: 'Pendente',
-                    observacoes: `Gerada automaticamente na liquidação do caixa`
+                    observacoes: `Comissão 3% gerada automaticamente na liquidação do caixa (ETAPA 4)`
                   });
                 }
               }
@@ -430,11 +430,11 @@ export default function CaixaDiarioTab({ windowMode = false }) {
   };
 
   const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden bg-white" 
+    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-slate-50" 
     : "space-y-6";
 
   const contentClass = windowMode
-    ? "flex-1 overflow-auto p-6"
+    ? "flex-1 overflow-auto p-4 lg:p-6"
     : "";
 
   return (
