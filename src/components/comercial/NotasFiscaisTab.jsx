@@ -446,6 +446,20 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                           <Eye className="w-3 h-3 mr-1" />
                           <span className="text-xs">Ver</span>
                         </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            const empresa = empresas?.find(e => e.id === nota.empresa_id);
+                            ImprimirDANFESimplificado({ nfe: nota, empresa });
+                          }}
+                          title="Imprimir DANFE"
+                          className="h-8 px-2 text-slate-600"
+                        >
+                          <Printer className="w-3 h-3 mr-1" />
+                          <span className="text-xs">Imprimir</span>
+                        </Button>
                         
                         {nota.danfe_url && (
                           <Button

@@ -35,8 +35,10 @@ import {
   Building2,
   Zap,
   Send,
-  Wallet
+  Wallet,
+  Printer
 } from "lucide-react";
+import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
 import GerarCobrancaModal from "./GerarCobrancaModal";
 import SimularPagamentoModal from "./SimularPagamentoModal";
 import GerarLinkPagamentoModal from "./GerarLinkPagamentoModal";
@@ -44,7 +46,7 @@ import ContaReceberForm from "./ContaReceberForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function ContasReceberTab({ contas }) {
+export default function ContasReceberTab({ contas, empresas = [] }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
@@ -92,10 +94,12 @@ export default function ContasReceberTab({ contas }) {
     observacoes: ""
   });
 
-  const { data: empresas = [] } = useQuery({
+  const { data: empresasQuery = [] } = useQuery({
     queryKey: ['empresas'],
     queryFn: () => base44.entities.Empresa.list(),
   });
+
+  const empresasData = empresas.length > 0 ? empresas : empresasQuery;
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
@@ -766,7 +770,7 @@ export default function ContasReceberTab({ contas }) {
               </TableHeader>
               <TableBody>
                 {filteredContas.map((conta) => {
-                  const empresa = empresas.find(e => e.id === conta.empresa_id);
+                  const empresa = empresasData.find(e => e.id === conta.empresa_id);
                   const config = obterConfigEmpresa(conta.empresa_id);
                   const temConfig = config && config.ativo;
                   const vencida = (conta.status === "Pendente" || conta.status === "Atrasado") && new Date(conta.data_vencimento) < new Date();
@@ -822,6 +826,20 @@ export default function ContasReceberTab({ contas }) {
 
                       <TableCell>
                         <div className="flex flex-col gap-1 items-start">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const empresaData = empresasData.find(e => e.id === conta.empresa_id);
+                              ImprimirBoleto({ conta, empresa: empresaData, tipo: 'receber' });
+                            }}
+                            title="Imprimir Boleto/Recibo"
+                            className="justify-start h-7 px-2 text-slate-600"
+                          >
+                            <Printer className="w-3 h-3 mr-1" />
+                            <span className="text-xs">Imprimir</span>
+                          </Button>
+
                           <ProtectedAction permission="financeiro_receber_visualizar">
                             <Button
                               variant="ghost"

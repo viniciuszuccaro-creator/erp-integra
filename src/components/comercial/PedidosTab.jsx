@@ -19,8 +19,10 @@ import {
   ShieldCheck,
   AlertCircle,
   Clock,
-  XCircle
+  XCircle,
+  Printer
 } from "lucide-react";
+import { ImprimirPedido } from "@/components/lib/impressao";
 import { useToast } from "@/components/ui/use-toast";
 import StatusBadge from "../StatusBadge";
 import SearchInput from "../ui/SearchInput";
@@ -271,8 +273,20 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           variant="ghost" 
                           size="sm"
                           onClick={() => {
-                            // Visualização
+                            const empresa = empresas?.find(e => e.id === pedido.empresa_id);
+                            ImprimirPedido({ pedido, empresa });
                           }}
+                          title="Imprimir Pedido"
+                          className="h-8 px-2 text-slate-600"
+                        >
+                          <Printer className="w-3 h-3 mr-1" />
+                          <span className="text-xs">Imprimir</span>
+                        </Button>
+
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => onEditPedido(pedido)}
                           title="Visualizar"
                           className="h-8 px-2"
                         >

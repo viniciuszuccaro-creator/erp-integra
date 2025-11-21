@@ -15,13 +15,15 @@ import {
   TrendingUp,
   User,
   FileText,
-  CheckCircle2, // Replaces CheckCircle
+  CheckCircle2,
   Clock,
   XCircle,
   Edit,
   Trash2,
-  Calculator // Retained as it's used in the component logic
+  Calculator,
+  Printer
 } from "lucide-react";
+import { ImprimirComissao } from "@/components/lib/ImprimirComissao";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -31,7 +33,7 @@ import DetalhesComissao from "./DetalhesComissao";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
-export default function ComissoesTab({ comissoes, pedidos }) {
+export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
   const [periodoCalculo, setPeriodoCalculo] = useState("mes");
   const [searchTerm, setSearchTerm] = useState("");
   const [calculoDialogOpen, setCalculoDialogOpen] = useState(false);
@@ -433,6 +435,18 @@ export default function ComissoesTab({ comissoes, pedidos }) {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const empresa = empresas?.find(e => e.id === comissao.empresa_id);
+                          ImprimirComissao({ comissao, empresa, pedidos });
+                        }}
+                        title="Imprimir Comissão"
+                        className="text-slate-600"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

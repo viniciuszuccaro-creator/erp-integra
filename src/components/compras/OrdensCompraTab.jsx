@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, CheckCircle2, Send, Star } from "lucide-react";
+import { Plus, Search, Edit, CheckCircle2, Send, Star, Printer, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,8 +17,9 @@ import AvaliacaoFornecedorForm from "./AvaliacaoFornecedorForm";
 import RecebimentoOCForm from "./RecebimentoOCForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
+import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
 
-export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
+export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [] }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOC, setEditingOC] = useState(null);
@@ -602,7 +603,45 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores }) {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(oc)}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                          const empresa = empresas?.find(e => e.id === oc.empresa_id);
+                          const fornecedor = fornecedores?.find(f => f.id === oc.fornecedor_id);
+                          ImprimirOrdemCompra({ oc, empresa, fornecedor });
+                        }}
+                        title="Imprimir OC"
+                        className="text-slate-600"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </Button>
+
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => openWindow(OrdemCompraForm, {
+                          ordemCompra: oc,
+                          windowMode: true,
+                          onSubmit: async (data) => {
+                            try {
+                              await updateMutation.mutateAsync({ id: oc.id, data });
+                              sonnerToast.success("✅ OC atualizada!");
+                            } catch (error) {
+                              sonnerToast.error("Erro ao atualizar OC");
+                            }
+                          }
+                        }, {
+                          title: `👁️ Ver: ${oc.numero_oc}`,
+                          width: 1100,
+                          height: 700
+                        })}
+                        title="Ver Detalhes"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(oc)} title="Editar OC">
                         <Edit className="w-4 h-4" />
                       </Button>
 

@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, DollarSign, Building2, Shield, Plus, Edit2, CheckCircle2, AlertCircle, TrendingDown, Calendar, FileText, Eye, Send } from "lucide-react";
+import { CheckCircle, DollarSign, Building2, Shield, Plus, Edit2, CheckCircle2, AlertCircle, TrendingDown, Calendar, FileText, Eye, Send, Printer } from "lucide-react";
+import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
 import StatusBadge from "../StatusBadge";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -369,6 +370,19 @@ export default function ContasPagarTab({ contas }) {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1 justify-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const empresaData = empresas.find(e => e.id === conta.empresa_id);
+                              ImprimirBoleto({ conta, empresa: empresaData, tipo: 'pagar' });
+                            }}
+                            title="Imprimir Comprovante"
+                            className="text-slate-600"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </Button>
+
                           <Button
                               variant="ghost"
                               size="icon"
