@@ -33,12 +33,15 @@ import {
   Edit,
   QrCode,
   Building2,
-  Zap
+  Zap,
+  Send,
+  Wallet
 } from "lucide-react";
 import GerarCobrancaModal from "./GerarCobrancaModal";
 import SimularPagamentoModal from "./SimularPagamentoModal";
 import ContaReceberForm from "./ContaReceberForm";
 import { useWindow } from "@/components/lib/useWindow";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ContasReceberTab({ contas }) {
   const queryClient = useQueryClient();
@@ -47,10 +50,10 @@ export default function ContasReceberTab({ contas }) {
   const { openWindow } = useWindow();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("todas"); // Changed from "todos" to "todas"
-  const [isDialogOpen, setIsDialogOpen] = useState(false); // For Create/Edit dialog
-  const [editingConta, setEditingConta] = useState(null); // Used for Create/Edit dialog
-  const [selectedConta, setSelectedConta] = useState(null); // Not explicitly used in outline, but could be for view mode
+  const [statusFilter, setStatusFilter] = useState("todas");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingConta, setEditingConta] = useState(null);
+  const [selectedConta, setSelectedConta] = useState(null);
   const [gerarCobrancaDialogOpen, setGerarCobrancaDialogOpen] = useState(false);
   const [simularPagamentoDialogOpen, setSimularPagamentoDialogOpen] = useState(false);
   const [contaParaCobranca, setContaParaCobranca] = useState(null);
@@ -69,12 +72,12 @@ export default function ContasReceberTab({ contas }) {
     numero_documento: "",
     centro_custo: "",
     observacoes: "",
-    empresa_id: "" // Added back as it's required for a ContaReceber
+    empresa_id: ""
   });
 
   const [dialogBaixaOpen, setDialogBaixaOpen] = useState(false);
   const [contasSelecionadas, setContasSelecionadas] = useState([]);
-  const [contaAtual, setContaAtual] = useState(null); // Used for Baixa dialog
+  const [contaAtual, setContaAtual] = useState(null);
 
   const [dadosBaixa, setDadosBaixa] = useState({
     data_recebimento: new Date().toISOString().split('T')[0],
@@ -104,6 +107,34 @@ export default function ContasReceberTab({ contas }) {
   const { data: configsCobranca = [] } = useQuery({
     queryKey: ['configs-cobranca'],
     queryFn: () => base44.entities.ConfiguracaoCobrancaEmpresa.list(),
+  });
+
+  // ETAPA 4: Mutation para enviar títulos para o Caixa
+  const enviarParaCaixaMutation = useMutation({
+    mutationFn: async (titulos) => {
+      const ordens = await Promise.all(titulos.map(async (titulo) => {
+        return await base44.entities.CaixaOrdemLiquidacao.create({
+          tipo_operacao: 'Recebimento',
+          origem: 'Contas a Receber',
+          valor_total: titulo.valor,
+          forma_pagamento_pretendida: 'PIX',
+          status: 'Pendente',
+          titulos_vinculados: [{
+            titulo_id: titulo.id,
+            numero_titulo: titulo.numero_documento || titulo.descricao,
+            cliente_fornecedor_nome: titulo.cliente,
+            valor_titulo: titulo.valor,
+            data_vencimento: titulo.data_vencimento
+          }]
+        });
+      }));
+      return ordens;
+    },
+    onSuccess: (ordens) => {
+      queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
+      toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
+      setContasSelecionadas([]);
+    }
   });
 
   const createMutation = useMutation({
@@ -223,7 +254,7 @@ export default function ContasReceberTab({ contas }) {
             id: contaId,
             dados: {
               ...dados,
-              valor_recebido: conta.valor // Use the individual conta's value for each baixa
+              valor_recebido: conta.valor
             }
           });
         }
@@ -256,7 +287,6 @@ export default function ContasReceberTab({ contas }) {
         throw new Error("Boleto não habilitado para esta empresa");
       }
 
-      // MODO SIMULAÇÃO
       const payload = {
         customer: conta.cliente,
         value: conta.valor,
@@ -276,7 +306,6 @@ export default function ContasReceberTab({ contas }) {
         nossoNumero: String(Date.now()).substring(0, 10)
       };
 
-      // Log
       await base44.entities.LogCobranca.create({
         group_id: conta.group_id,
         empresa_id: conta.empresa_id,
@@ -294,7 +323,6 @@ export default function ContasReceberTab({ contas }) {
         usuario_nome: "Sistema"
       });
 
-      // Atualizar conta
       await base44.entities.ContaReceber.update(contaId, {
         forma_cobranca: "Boleto",
         id_cobranca_externa: retornoMock.id,
@@ -337,7 +365,6 @@ export default function ContasReceberTab({ contas }) {
         throw new Error("PIX não habilitado para esta empresa");
       }
 
-      // MODO SIMULAÇÃO
       const payload = {
         customer: conta.cliente,
         value: conta.valor,
@@ -358,7 +385,6 @@ export default function ContasReceberTab({ contas }) {
         expirationDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       };
 
-      // Log
       await base44.entities.LogCobranca.create({
         group_id: conta.group_id,
         empresa_id: conta.empresa_id,
@@ -376,7 +402,6 @@ export default function ContasReceberTab({ contas }) {
         usuario_nome: "Sistema"
       });
 
-      // Atualizar conta
       await base44.entities.ContaReceber.update(contaId, {
         forma_cobranca: "PIX",
         id_cobranca_externa: retornoMock.id,
@@ -414,7 +439,6 @@ export default function ContasReceberTab({ contas }) {
         .replace("{{vencimento}}", new Date(conta.data_vencimento).toLocaleDateString('pt-BR'))
         .replace("{{link}}", conta.url_boleto_pdf || "link-disponível");
 
-      // Log
       await base44.entities.LogCobranca.create({
         group_id: conta.group_id,
         empresa_id: conta.empresa_id,
@@ -477,7 +501,7 @@ export default function ContasReceberTab({ contas }) {
 
   const handleEdit = (conta) => {
     setEditingConta(conta);
-    setFormData({ ...conta }); // Spread to avoid direct mutation issues
+    setFormData({ ...conta });
     setIsDialogOpen(true);
   };
 
@@ -509,9 +533,6 @@ export default function ContasReceberTab({ contas }) {
       });
       return;
     }
-    // For multiple baixa, we just use the default dadosBaixa,
-    // and the mutation will apply the specific `conta.valor`
-    // If more granular control is needed, a dialog for multiple baixa would be necessary.
     baixarMultiplaMutation.mutate(dadosBaixa);
   };
 
@@ -529,11 +550,11 @@ export default function ContasReceberTab({ contas }) {
   };
 
   const filteredContas = contas
-    .filter(c => statusFilter === "todas" || c.status === statusFilter) // Changed from "todos"
+    .filter(c => statusFilter === "todas" || c.status === statusFilter)
     .filter(c =>
       c.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.numero_documento?.toLowerCase().includes(searchTerm.toLowerCase()) // Added numero_documento
+      c.numero_documento?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
   const totalSelecionado = contas
@@ -547,9 +568,9 @@ export default function ContasReceberTab({ contas }) {
   const statusColors = {
     'Pendente': 'bg-yellow-100 text-yellow-800 border-yellow-300',
     'Recebido': 'bg-green-100 text-green-800 border-green-300',
-    'Pago': 'bg-green-100 text-green-800 border-green-300', // Assuming 'Pago' is equivalent to 'Recebido' in some contexts
+    'Pago': 'bg-green-100 text-green-800 border-green-300',
     'Atrasado': 'bg-red-100 text-red-800 border-red-300',
-    'Vencido': 'bg-red-100 text-red-800 border-red-300', // Assuming 'Vencido' is equivalent to 'Atrasado' in some contexts
+    'Vencido': 'bg-red-100 text-red-800 border-red-300',
     'Cancelado': 'bg-gray-100 text-gray-800 border-gray-300',
     'Parcial': 'bg-blue-100 text-blue-800 border-blue-300'
   };
@@ -557,8 +578,8 @@ export default function ContasReceberTab({ contas }) {
   const totais = {
     total: filteredContas.reduce((sum, c) => sum + (c.valor || 0), 0),
     pendente: filteredContas.filter(c => c.status === 'Pendente').reduce((sum, c) => sum + (c.valor || 0), 0),
-    pago: filteredContas.filter(c => c.status === 'Recebido').reduce((sum, c) => sum + (c.valor || 0), 0), // Using 'Recebido' for 'pago' total
-    vencido: filteredContas.filter(c => c.status === 'Atrasado').reduce((sum, c) => sum + (c.valor || 0), 0) // Using 'Atrasado' for 'vencido' total
+    pago: filteredContas.filter(c => c.status === 'Recebido').reduce((sum, c) => sum + (c.valor || 0), 0),
+    vencido: filteredContas.filter(c => c.status === 'Atrasado').reduce((sum, c) => sum + (c.valor || 0), 0)
   };
 
   return (
@@ -618,6 +639,29 @@ export default function ContasReceberTab({ contas }) {
           </CardContent>
         </Card>
       </div>
+
+      {/* ETAPA 4: ALERTA DE ENVIO PARA CAIXA */}
+      {contasSelecionadas.length > 0 && (
+        <Alert className="border-emerald-300 bg-emerald-50">
+          <AlertDescription className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-emerald-900">💰 {contasSelecionadas.length} título(s) selecionado(s)</p>
+              <p className="text-xs text-emerald-700">Total: R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            </div>
+            <Button
+              onClick={() => {
+                const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
+                enviarParaCaixaMutation.mutate(titulos);
+              }}
+              disabled={enviarParaCaixaMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Enviar para Caixa
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Filtros */}
       <Card className="border-0 shadow-sm">
@@ -682,164 +726,6 @@ export default function ContasReceberTab({ contas }) {
                 Adicionar Conta
               </Button>
             </ProtectedAction>
-            
-            {/* BACKUP: Dialog removido, agora usa janelas */}
-            <Dialog open={false}>
-              <DialogContent className="hidden">
-                <DialogHeader>
-                  <DialogTitle>Removido - Usa Janelas</DialogTitle>
-                </DialogHeader>
-                <form className="hidden">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="descricao">Descrição *</Label>
-                        <Input
-                          id="descricao"
-                          value={formData.descricao}
-                          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="valor">Valor *</Label>
-                        <Input
-                          id="valor"
-                          type="number"
-                          step="0.01"
-                          value={formData.valor}
-                          onChange={(e) => setFormData({ ...formData, valor: parseFloat(e.target.value) })}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="cliente">Cliente *</Label>
-                      <Select
-                        value={formData.cliente_id}
-                        onValueChange={(value) => {
-                          const selectedCliente = clientes.find(c => c.id === value);
-                          setFormData({
-                            ...formData,
-                            cliente_id: value,
-                            cliente: selectedCliente ? selectedCliente.nome_fantasia || selectedCliente.razao_social : ""
-                          });
-                        }}
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um cliente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {clientes.map(cli => (
-                            <SelectItem key={cli.id} value={cli.id}>
-                              {cli.nome_fantasia || cli.razao_social}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="empresa_id">Empresa *</Label>
-                      <Select
-                        value={formData.empresa_id}
-                        onValueChange={(value) => setFormData({ ...formData, empresa_id: value })}
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma empresa" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {empresas.map(emp => (
-                            <SelectItem key={emp.id} value={emp.id}>
-                              {emp.nome_fantasia}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="data_emissao">Data de Emissão *</Label>
-                        <Input
-                          id="data_emissao"
-                          type="date"
-                          value={formData.data_emissao}
-                          onChange={(e) => setFormData({ ...formData, data_emissao: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="data_vencimento">Data de Vencimento *</Label>
-                        <Input
-                          id="data_vencimento"
-                          type="date"
-                          value={formData.data_vencimento}
-                          onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="status">Status *</Label>
-                      <Select
-                        value={formData.status}
-                        onValueChange={(value) => setFormData({ ...formData, status: value })}
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Pendente">Pendente</SelectItem>
-                          <SelectItem value="Recebido">Recebido</SelectItem>
-                          <SelectItem value="Cancelado">Cancelado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="forma_recebimento">Forma de Recebimento</Label>
-                      <Select
-                        value={formData.forma_recebimento}
-                        onValueChange={(value) => setFormData({ ...formData, forma_recebimento: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Boleto">Boleto</SelectItem>
-                          <SelectItem value="PIX">PIX</SelectItem>
-                          <SelectItem value="Transferência">Transferência</SelectItem>
-                          <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                          <SelectItem value="Cartão Crédito">Cartão Crédito</SelectItem>
-                          <SelectItem value="Cartão Débito">Cartão Débito</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label htmlFor="numero_documento">Número do Documento</Label>
-                      <Input
-                        id="numero_documento"
-                        value={formData.numero_documento}
-                        onChange={(e) => setFormData({ ...formData, numero_documento: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="observacoes">Observações</Label>
-                      <Textarea
-                        id="observacoes"
-                        value={formData.observacoes}
-                        onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                      />
-                    </div>
-                    <div className="flex justify-end gap-3">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                      <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                        {editingConta ? "Salvar Alterações" : "Criar Conta"}
-                      </Button>
-                    </div>
-                  </form>
-                </DialogContent>
-              </Dialog>
           </div>
         </CardContent>
       </Card>
@@ -935,7 +821,7 @@ export default function ContasReceberTab({ contas }) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleEdit(conta)} // Reusing handleEdit to show details
+                              onClick={() => handleEdit(conta)}
                               className="justify-start h-7 px-2"
                               title="Ver Detalhes"
                             >
@@ -1073,18 +959,6 @@ export default function ContasReceberTab({ contas }) {
                               <span className="text-xs">Editar</span>
                             </Button>
                           </ProtectedAction>
-                          <ProtectedAction permission="financeiro_receber_excluir">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(conta.id)}
-                              className="justify-start h-7 px-2"
-                              title="Excluir Conta"
-                            >
-                              <Trash2 className="w-3 h-3 mr-1 text-red-600" />
-                              <span className="text-xs">Excluir</span>
-                            </Button>
-                          </ProtectedAction>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1199,9 +1073,6 @@ export default function ContasReceberTab({ contas }) {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Gerar Cobrança REMOVIDO - Migrado para uso via Window quando necessário */}
-
-      {/* NEW: Modal Simular Pagamento */}
       {simularPagamentoDialogOpen && (
         <SimularPagamentoModal
           isOpen={simularPagamentoDialogOpen}

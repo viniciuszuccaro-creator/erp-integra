@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { CheckCircle, DollarSign, Building2, Shield, Plus, Edit2, CheckCircle2, AlertCircle, TrendingDown, Calendar, FileText, Eye } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle, DollarSign, Building2, Shield, Plus, Edit2, CheckCircle2, AlertCircle, TrendingDown, Calendar, FileText, Eye, Send } from "lucide-react";
 import StatusBadge from "../StatusBadge";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -70,6 +71,34 @@ export default function ContasPagarTab({ contas }) {
     queryFn: () => base44.entities.Fornecedor.list(),
   });
 
+  // ETAPA 4: Mutation para enviar títulos para o Caixa
+  const enviarParaCaixaMutation = useMutation({
+    mutationFn: async (titulos) => {
+      const ordens = await Promise.all(titulos.map(async (titulo) => {
+        return await base44.entities.CaixaOrdemLiquidacao.create({
+          tipo_operacao: 'Pagamento',
+          origem: 'Contas a Pagar',
+          valor_total: titulo.valor,
+          forma_pagamento_pretendida: 'Transferência',
+          status: 'Pendente',
+          titulos_vinculados: [{
+            titulo_id: titulo.id,
+            numero_titulo: titulo.numero_documento || titulo.descricao,
+            cliente_fornecedor_nome: titulo.fornecedor,
+            valor_titulo: titulo.valor,
+            data_vencimento: titulo.data_vencimento
+          }]
+        });
+      }));
+      return ordens;
+    },
+    onSuccess: (ordens) => {
+      queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
+      toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
+      setContasSelecionadas([]);
+    }
+  });
+
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
       return await base44.entities.ContaPagar.update(id, {
@@ -94,8 +123,8 @@ export default function ContasPagarTab({ contas }) {
   const aprovarPagamentoMutation = useMutation({
     mutationFn: async (contaId) => {
       return await base44.entities.ContaPagar.update(contaId, {
-        status: "Aprovado",
-        aprovador: "Usuário Admin",
+        status_pagamento: "Aprovado",
+        aprovado_por: "Usuário Admin",
         data_aprovacao: new Date().toISOString()
       });
     },
@@ -147,7 +176,6 @@ export default function ContasPagarTab({ contas }) {
     setEditingConta(conta);
     setFormData({ 
       ...conta,
-      // Ensure date formats are compatible with input type="date"
       data_emissao: conta.data_emissao ? new Date(conta.data_emissao).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
       data_vencimento: conta.data_vencimento ? new Date(conta.data_vencimento).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     });
@@ -197,8 +225,35 @@ export default function ContasPagarTab({ contas }) {
       c.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+  const totalSelecionado = contas
+    .filter(c => contasSelecionadas.includes(c.id))
+    .reduce((sum, c) => sum + (c.valor || 0), 0);
+
   return (
     <div className="space-y-4">
+      {/* ETAPA 4: ALERTA DE ENVIO PARA CAIXA */}
+      {contasSelecionadas.length > 0 && (
+        <Alert className="border-red-300 bg-red-50">
+          <AlertDescription className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-red-900">💸 {contasSelecionadas.length} título(s) selecionado(s)</p>
+              <p className="text-xs text-red-700">Total: R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            </div>
+            <Button
+              onClick={() => {
+                const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
+                enviarParaCaixaMutation.mutate(titulos);
+              }}
+              disabled={enviarParaCaixaMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Enviar para Caixa
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Filtros */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4">
@@ -244,106 +299,6 @@ export default function ContasPagarTab({ contas }) {
               <Plus className="w-4 h-4 mr-2" />
               Adicionar Conta
             </Button>
-            
-            {/* BACKUP: Dialog removido */}
-            <Dialog open={false}>
-              <DialogContent className="hidden">
-                <DialogHeader>
-                  <DialogTitle>Removido</DialogTitle>
-                </DialogHeader>
-                <form className="hidden">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Descrição *</Label>
-                      <Input
-                        value={formData.descricao}
-                        onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label>Valor *</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={formData.valor}
-                        onChange={(e) => setFormData({ ...formData, valor: parseFloat(e.target.value) })}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label>Fornecedor *</Label>
-                    <Select
-                      value={formData.fornecedor_id}
-                      onValueChange={(value) => {
-                        const forn = fornecedores.find(f => f.id === value);
-                        setFormData({
-                          ...formData,
-                          fornecedor_id: value,
-                          fornecedor: forn?.nome || ""
-                        });
-                      }}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o fornecedor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {fornecedores.map(f => (
-                          <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Empresa *</Label>
-                    <Select
-                      value={formData.empresa_id}
-                      onValueChange={(value) => setFormData({ ...formData, empresa_id: value })}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a empresa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {empresas.map(emp => (
-                          <SelectItem key={emp.id} value={emp.id}>{emp.nome_fantasia}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Data Emissão *</Label>
-                      <Input
-                        type="date"
-                        value={formData.data_emissao}
-                        onChange={(e) => setFormData({ ...formData, data_emissao: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label>Data Vencimento *</Label>
-                      <Input
-                        type="date"
-                        value={formData.data_vencimento}
-                        onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-3 pt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending} className="bg-red-600">
-                      {editingConta ? "Atualizar" : "Criar"} Conta
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
           </div>
         </CardContent>
       </Card>
@@ -355,7 +310,15 @@ export default function ContasPagarTab({ contas }) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
-                  <TableHead className="w-12"></TableHead>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={contasSelecionadas.length === contasFiltradas.filter(c => c.status === "Pendente" || c.status === "Aprovado").length}
+                      onCheckedChange={(checked) => {
+                        const pendentes = contasFiltradas.filter(c => c.status === "Pendente" || c.status === "Aprovado");
+                        setContasSelecionadas(checked ? pendentes.map(c => c.id) : []);
+                      }}
+                    />
+                  </TableHead>
                   <TableHead>Fornecedor</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Empresa</TableHead>
@@ -373,8 +336,14 @@ export default function ContasPagarTab({ contas }) {
                   return (
                     <TableRow key={conta.id} className={vencida ? 'bg-red-50' : ''}>
                       <TableCell>
+                        {(conta.status === "Pendente" || conta.status === "Aprovado") && (
+                          <Checkbox
+                            checked={contasSelecionadas.includes(conta.id)}
+                            onCheckedChange={() => toggleSelecao(conta.id)}
+                          />
+                        )}
                         {conta.e_replicado && (
-                          <Badge variant="outline" className="text-xs" title="Vindo de rateio do grupo">
+                          <Badge variant="outline" className="text-xs ml-1" title="Vindo de rateio do grupo">
                             📊
                           </Badge>
                         )}
