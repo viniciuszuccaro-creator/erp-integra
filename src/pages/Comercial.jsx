@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck } from "lucide-react";
 import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
-import ComissoesTab from "../components/comercial/ComissoesTab";
 import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
+import ComissoesTab from "../components/comercial/ComissoesTab";
 import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab"; // Keeping import as outline didn't specify removal
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
