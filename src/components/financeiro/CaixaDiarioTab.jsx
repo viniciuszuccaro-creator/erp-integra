@@ -69,39 +69,31 @@ export default function CaixaDiarioTab() {
 
   const [caixaAberto, setCaixaAberto] = useState(null);
 
-  // Buscar movimentos do caixa
+  // ETAPA 4: Buscar movimentos DIRETOS do CaixaMovimento
   const { data: movimentos = [] } = useQuery({
-    queryKey: ['movimentos-caixa', dataFiltro],
+    queryKey: ['movimentos-caixa', dataFiltro, empresaAtual?.id],
     queryFn: async () => {
-      // Buscar todos os movimentos financeiros do dia
-      const [receber, pagar] = await Promise.all([
-        base44.entities.ContaReceber.filter({ 
-          data_recebimento: dataFiltro,
-          forma_recebimento: { $in: ['Dinheiro', 'PIX'] }
-        }),
-        base44.entities.ContaPagar.filter({ 
-          data_pagamento: dataFiltro,
-          forma_pagamento: { $in: ['Dinheiro', 'PIX'] }
-        })
-      ]);
+      // Buscar movimentos de caixa da data selecionada
+      const movimentosCaixa = await base44.entities.CaixaMovimento.filter({
+        data_movimento: {
+          $gte: new Date(dataFiltro + 'T00:00:00').toISOString(),
+          $lt: new Date(dataFiltro + 'T23:59:59').toISOString()
+        },
+        empresa_id: empresaAtual?.id,
+        cancelado: false
+      });
 
-      const entradas = receber.map(r => ({
-        ...r,
-        tipo: 'entrada',
-        hora: new Date(r.data_recebimento).toLocaleTimeString('pt-BR'),
-        valor_movimento: r.valor_recebido || r.valor
-      }));
-
-      const saidas = pagar.map(p => ({
-        ...p,
-        tipo: 'saida',
-        hora: new Date(p.data_pagamento).toLocaleTimeString('pt-BR'),
-        valor_movimento: p.valor_pago || p.valor
-      }));
-
-      return [...entradas, ...saidas].sort((a, b) => 
-        new Date(a.created_date) - new Date(b.created_date)
-      );
+      return movimentosCaixa.map(m => ({
+        ...m,
+        tipo: m.tipo_movimento === 'Entrada' ? 'entrada' : 'saida',
+        hora: new Date(m.data_movimento).toLocaleTimeString('pt-BR'),
+        valor_movimento: m.valor,
+        descricao: m.descricao,
+        categoria: m.origem,
+        forma_recebimento: m.forma_pagamento,
+        forma_pagamento: m.forma_pagamento,
+        numero_documento: m.pedido_id || m.conta_receber_id || m.conta_pagar_id
+      })).sort((a, b) => new Date(a.data_movimento) - new Date(b.data_movimento));
     },
   });
 
@@ -154,52 +146,87 @@ export default function CaixaDiarioTab() {
     }
   };
 
-  const handleAdicionarMovimento = () => {
-    // Criar conta a receber ou pagar dependendo do tipo
+  const handleAdicionarMovimento = async () => {
+    // ETAPA 4: Criar movimento direto de caixa + conta receber/pagar
     const movimento = {
       descricao: formMovimento.descricao,
       valor: formMovimento.valor,
       observacoes: formMovimento.observacoes,
       categoria: formMovimento.categoria,
       empresa_id: empresaAtual?.id,
-      group_id: empresaAtual?.grupo_id
+      group_id: empresaAtual?.group_id
     };
 
-    if (formMovimento.tipo === 'entrada') {
-      base44.entities.ContaReceber.create({
-        ...movimento,
-        cliente: formMovimento.responsavel || 'Caixa',
-        data_emissao: dataFiltro,
-        data_vencimento: dataFiltro,
-        data_recebimento: dataFiltro,
-        forma_recebimento: formMovimento.forma_pagamento,
-        valor_recebido: formMovimento.valor,
-        status: 'Recebido',
-        origem_tipo: 'manual'
-      }).then(() => {
+    try {
+      if (formMovimento.tipo === 'entrada') {
+        // Criar movimento de caixa
+        const caixaMov = await base44.entities.CaixaMovimento.create({
+          empresa_id: empresaAtual?.id,
+          group_id: empresaAtual?.group_id,
+          data_movimento: new Date().toISOString(),
+          tipo_movimento: 'Entrada',
+          origem: formMovimento.categoria === 'Venda' ? 'Venda Direta' : 'Liquidação Título',
+          forma_pagamento: formMovimento.forma_pagamento,
+          valor: formMovimento.valor,
+          descricao: formMovimento.descricao,
+          cliente_nome: formMovimento.responsavel || 'Caixa',
+          caixa_aberto: true,
+          observacoes: formMovimento.observacoes
+        });
+
+        // Criar conta a receber
+        await base44.entities.ContaReceber.create({
+          ...movimento,
+          cliente: formMovimento.responsavel || 'Caixa',
+          data_emissao: dataFiltro,
+          data_vencimento: dataFiltro,
+          data_recebimento: dataFiltro,
+          forma_recebimento: formMovimento.forma_pagamento,
+          valor_recebido: formMovimento.valor,
+          status: 'Recebido',
+          origem_tipo: 'manual'
+        });
+
         queryClient.invalidateQueries({ queryKey: ['movimentos-caixa'] });
         queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
-        toast({ title: "✅ Entrada registrada!" });
-        setMovimentoDialog(false);
-        resetFormMovimento();
-      });
-    } else {
-      base44.entities.ContaPagar.create({
-        ...movimento,
-        fornecedor: formMovimento.responsavel || 'Caixa',
-        data_emissao: dataFiltro,
-        data_vencimento: dataFiltro,
-        data_pagamento: dataFiltro,
-        forma_pagamento: formMovimento.forma_pagamento,
-        valor_pago: formMovimento.valor,
-        status: 'Pago'
-      }).then(() => {
+        toast({ title: "✅ Entrada registrada no Caixa!" });
+      } else {
+        // Criar movimento de caixa
+        const caixaMov = await base44.entities.CaixaMovimento.create({
+          empresa_id: empresaAtual?.id,
+          group_id: empresaAtual?.group_id,
+          data_movimento: new Date().toISOString(),
+          tipo_movimento: 'Saída',
+          origem: formMovimento.categoria === 'Compra' ? 'Pagamento Título' : formMovimento.categoria,
+          forma_pagamento: formMovimento.forma_pagamento,
+          valor: formMovimento.valor,
+          descricao: formMovimento.descricao,
+          fornecedor_nome: formMovimento.responsavel || 'Caixa',
+          caixa_aberto: true,
+          observacoes: formMovimento.observacoes
+        });
+
+        // Criar conta a pagar
+        await base44.entities.ContaPagar.create({
+          ...movimento,
+          fornecedor: formMovimento.responsavel || 'Caixa',
+          data_emissao: dataFiltro,
+          data_vencimento: dataFiltro,
+          data_pagamento: dataFiltro,
+          forma_pagamento: formMovimento.forma_pagamento,
+          valor_pago: formMovimento.valor,
+          status: 'Pago'
+        });
+
         queryClient.invalidateQueries({ queryKey: ['movimentos-caixa'] });
         queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
-        toast({ title: "✅ Saída registrada!" });
-        setMovimentoDialog(false);
-        resetFormMovimento();
-      });
+        toast({ title: "✅ Saída registrada no Caixa!" });
+      }
+      
+      setMovimentoDialog(false);
+      resetFormMovimento();
+    } catch (error) {
+      toast({ title: "❌ Erro ao registrar movimento", description: error.message, variant: "destructive" });
     }
   };
 
