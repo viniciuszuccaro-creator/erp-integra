@@ -11,9 +11,9 @@ import {
   CheckCircle2,
   TrendingUp
 } from "lucide-react";
-import CaixaCentral from "@/components/financeiro/CaixaCentral";
+import CaixaCentralLiquidacao from "@/components/financeiro/CaixaCentralLiquidacao";
 import ConciliacaoBancaria from "@/components/financeiro/ConciliacaoBancaria";
-import AprovacaoDescontos from "@/components/comercial/AprovacaoDescontos";
+import AprovacaoDescontosManager from "@/components/comercial/AprovacaoDescontosManager";
 
 /**
  * ETAPA 4 - Página Central do Financeiro
@@ -113,7 +113,7 @@ export default function FinanceiroEtapa4() {
 
             <CardContent className="p-6">
               <TabsContent value="caixa" className="mt-0">
-                <CaixaCentral />
+                <CaixaCentralLiquidacao />
               </TabsContent>
 
               <TabsContent value="conciliacao" className="mt-0">
@@ -121,7 +121,7 @@ export default function FinanceiroEtapa4() {
               </TabsContent>
 
               <TabsContent value="aprovacoes" className="mt-0">
-                <AprovacaoDescontos />
+                <AprovacaoDescontosManager />
               </TabsContent>
             </CardContent>
           </Tabs>

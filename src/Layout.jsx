@@ -23,7 +23,8 @@ import {
   Search,
   Rocket,
   CheckCircle,
-  Trash2
+  Trash2,
+  Wallet
 } from "lucide-react";
 import {
   Sidebar,
