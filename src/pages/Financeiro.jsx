@@ -40,6 +40,7 @@ import ContaPagarForm from "../components/financeiro/ContaPagarForm";
 import CaixaCentralLiquidacao from "../components/financeiro/CaixaCentralLiquidacao";
 import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
+import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
