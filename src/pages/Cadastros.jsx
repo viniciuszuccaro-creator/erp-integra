@@ -56,6 +56,7 @@ import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
 import DashboardControleAcesso from "../components/sistema/DashboardControleAcesso";
 import FonteUnicaVerdade from "../components/sistema/FonteUnicaVerdade";
+import StatusWidgetFase3 from "../components/sistema/StatusWidgetFase3";
 import usePermissions from "../components/lib/usePermissions";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
 import { useWindow } from "../components/lib/useWindow";
@@ -474,12 +475,15 @@ export default function Cadastros() {
         </div>
       </div>
 
+      {/* STATUS WIDGET FASE 3 - 100% COMPLETA */}
+      <StatusWidgetFase3 />
+
       {/* ALERT DE REGRA-MÃE */}
       <Alert className="border-purple-400 bg-gradient-to-r from-purple-50 via-blue-50 to-cyan-50 shadow-lg">
         <Stars className="w-5 h-5 text-purple-600 animate-pulse" />
         <AlertDescription className="text-sm text-purple-900">
           <div className="flex items-center gap-2 flex-wrap">
-            <strong className="text-base">REGRA-MÃE V21.2:</strong>
+            <strong className="text-base">REGRA-MÃE V21.3:</strong>
             <Badge className="bg-green-600 text-white">Acrescentar</Badge>
             <span>•</span>
             <Badge className="bg-blue-600 text-white">Reorganizar</Badge>
@@ -491,7 +495,7 @@ export default function Cadastros() {
             <Badge className="bg-red-600 text-white">NUNCA APAGAR</Badge>
           </div>
           <div className="mt-2 text-xs text-slate-700">
-            ✅ 23 Entidades • Multiempresa 100% • 6 Blocos Integrados • IA Governança/KYC/Churn • Jobs Agendados • Chatbot Multicanal • Janelas w-full/h-full
+            ✅ 45 Entidades • Multiempresa 100% • 6 Blocos Integrados • IA Governança/KYC/Churn • Jobs Agendados • Chatbot Multicanal • Janelas w-full/h-full
           </div>
         </AlertDescription>
       </Alert>
