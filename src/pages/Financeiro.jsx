@@ -489,7 +489,32 @@ export default function Financeiro() {
         )}
 
         <TabsContent value="relatorios">
-          <RelatorioFinanceiro empresaId={empresaAtual?.id} />
+          <div className="space-y-4">
+            <Alert className="border-green-300 bg-green-50">
+              <AlertDescription className="flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-green-900">📊 Relatórios Financeiros</p>
+                  <p className="text-xs text-green-700">Análises detalhadas, formas de pagamento, efetividade e provisão</p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => openWindow(RelatorioFinanceiro, { 
+                    empresaId: empresaAtual?.id,
+                    windowMode: true 
+                  }, {
+                    title: '📊 Relatórios Financeiros - Multitarefa',
+                    width: 1600,
+                    height: 900
+                  })}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Abrir em Janela
+                </Button>
+              </AlertDescription>
+            </Alert>
+            <RelatorioFinanceiro empresaId={empresaAtual?.id} />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
