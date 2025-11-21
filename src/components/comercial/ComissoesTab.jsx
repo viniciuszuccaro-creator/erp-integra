@@ -25,13 +25,10 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useWindow } from "@/components/lib/useWindow";
-import ComissaoForm from "./ComissaoForm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
-import ComissaoForm from "./ComissaoForm";
 import DetalhesComissao from "./DetalhesComissao";
-import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
 export default function ComissoesTab({ comissoes, pedidos }) {
@@ -320,6 +317,19 @@ export default function ComissoesTab({ comissoes, pedidos }) {
                   className="pl-9 w-64"
                 />
               </div>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  <SelectItem value="Pendente">Pendente</SelectItem>
+                  <SelectItem value="Aprovada">Aprovada</SelectItem>
+                  <SelectItem value="Paga">Paga</SelectItem>
+                  <SelectItem value="Cancelada">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
 
               <Dialog open={calculoDialogOpen} onOpenChange={setCalculoDialogOpen}>
                 <DialogTrigger asChild>
