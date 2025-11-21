@@ -1,145 +1,151 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Clock } from 'lucide-react';
+import React, { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Clock, Save } from "lucide-react";
 
-export default function JobAgendadoForm({ job, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(job || {
-    nome_job: '',
-    tipo_job: 'IA_DIFAL',
-    periodicidade: 'Diário',
-    hora_execucao: '02:00',
-    ativo: true
+export default function JobAgendadoForm({ jobAgendado, onSubmit, isSubmitting, windowMode = false }) {
+  const [formData, setFormData] = useState(jobAgendado || {
+    nome_job: "",
+    tipo_job: "IA_Fiscal",
+    descricao: "",
+    frequencia: "Diária",
+    horario_execucao: "00:00",
+    parametros_execucao: {},
+    ativo: true,
+    observacoes: ""
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.nome_job) {
+      alert('Nome do job é obrigatório');
+      return;
+    }
     onSubmit(formData);
   };
 
-  const content = (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
-      <div>
-        <Label>Nome do Job *</Label>
-        <Input
-          value={formData.nome_job}
-          onChange={(e) => setFormData({ ...formData, nome_job: e.target.value })}
-          required
-        />
+  const form = (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-amber-600" />
+            Job Agendado de IA
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Nome do Job *</Label>
+              <Input
+                value={formData.nome_job}
+                onChange={(e) => setFormData({ ...formData, nome_job: e.target.value })}
+                placeholder="Ex: Validação Fiscal Diária"
+              />
+            </div>
+            <div>
+              <Label>Tipo de Job</Label>
+              <Select value={formData.tipo_job} onValueChange={(val) => setFormData({ ...formData, tipo_job: val })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="IA_Fiscal">IA Fiscal</SelectItem>
+                  <SelectItem value="IA_PriceBrain">IA PriceBrain</SelectItem>
+                  <SelectItem value="IA_Churn">IA Churn Detection</SelectItem>
+                  <SelectItem value="IA_KYC">IA KYC/Validação</SelectItem>
+                  <SelectItem value="IA_Governanca">IA Governança</SelectItem>
+                  <SelectItem value="IA_Logistica">IA Logística</SelectItem>
+                  <SelectItem value="IA_Recomendacao">IA Recomendação</SelectItem>
+                  <SelectItem value="Sincronizacao">Sincronização</SelectItem>
+                  <SelectItem value="Backup">Backup</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div>
+            <Label>Descrição</Label>
+            <Textarea
+              value={formData.descricao}
+              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+              rows={2}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Frequência</Label>
+              <Select value={formData.frequencia} onValueChange={(val) => setFormData({ ...formData, frequencia: val })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Horária">Horária</SelectItem>
+                  <SelectItem value="Diária">Diária</SelectItem>
+                  <SelectItem value="Semanal">Semanal</SelectItem>
+                  <SelectItem value="Mensal">Mensal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Horário de Execução</Label>
+              <Input
+                type="time"
+                value={formData.horario_execucao}
+                onChange={(e) => setFormData({ ...formData, horario_execucao: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+            <Label>Job Ativo</Label>
+            <Switch
+              checked={formData.ativo}
+              onCheckedChange={(val) => setFormData({ ...formData, ativo: val })}
+            />
+          </div>
+
+          <div>
+            <Label>Observações</Label>
+            <Textarea
+              value={formData.observacoes}
+              onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+              rows={2}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-3">
+        <Button type="submit" className="bg-amber-600 hover:bg-amber-700" disabled={isSubmitting}>
+          <Save className="w-4 h-4 mr-2" />
+          {isSubmitting ? 'Salvando...' : jobAgendado ? 'Atualizar' : 'Criar'}
+        </Button>
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Tipo de Job *</Label>
-          <Select value={formData.tipo_job} onValueChange={(v) => setFormData({ ...formData, tipo_job: v })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="IA_DIFAL">IA - Cálculo DIFAL</SelectItem>
-              <SelectItem value="IA_Churn">IA - Detecção Churn</SelectItem>
-              <SelectItem value="IA_PriceBrain">IA - Otimização Preços</SelectItem>
-              <SelectItem value="IA_KYC">IA - Validação KYC</SelectItem>
-              <SelectItem value="IA_Governanca">IA - Governança</SelectItem>
-              <SelectItem value="Roteirizacao_Automatica">Roteirização Automática</SelectItem>
-              <SelectItem value="Sincronizacao_Marketplace">Sync Marketplace</SelectItem>
-              <SelectItem value="Conciliacao_Bancaria">Conciliação Bancária</SelectItem>
-              <SelectItem value="Backup_Dados">Backup de Dados</SelectItem>
-              <SelectItem value="Regua_Cobranca">Régua de Cobrança</SelectItem>
-              <SelectItem value="Outro">Outro</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label>Periodicidade *</Label>
-          <Select value={formData.periodicidade} onValueChange={(v) => setFormData({ ...formData, periodicidade: v })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Minuto">A cada Minuto</SelectItem>
-              <SelectItem value="Hora">A cada Hora</SelectItem>
-              <SelectItem value="Diário">Diário</SelectItem>
-              <SelectItem value="Semanal">Semanal</SelectItem>
-              <SelectItem value="Mensal">Mensal</SelectItem>
-              <SelectItem value="Sob Demanda">Sob Demanda</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {formData.periodicidade === 'Diário' && (
-        <div>
-          <Label>Horário de Execução (HH:MM)</Label>
-          <Input
-            type="time"
-            value={formData.hora_execucao}
-            onChange={(e) => setFormData({ ...formData, hora_execucao: e.target.value })}
-          />
-        </div>
-      )}
-
-      {formData.periodicidade === 'Semanal' && (
-        <div>
-          <Label>Dia da Semana</Label>
-          <Select value={formData.dia_semana_execucao} onValueChange={(v) => setFormData({ ...formData, dia_semana_execucao: v })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Segunda">Segunda</SelectItem>
-              <SelectItem value="Terça">Terça</SelectItem>
-              <SelectItem value="Quarta">Quarta</SelectItem>
-              <SelectItem value="Quinta">Quinta</SelectItem>
-              <SelectItem value="Sexta">Sexta</SelectItem>
-              <SelectItem value="Sábado">Sábado</SelectItem>
-              <SelectItem value="Domingo">Domingo</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      <div>
-        <Label>Descrição</Label>
-        <Textarea
-          value={formData.descricao || ''}
-          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-          rows={2}
-        />
-      </div>
-
-      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
-        <Label className="font-semibold">Job Ativo</Label>
-        <Switch
-          checked={formData.ativo}
-          onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
-        />
-      </div>
-
-      <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-        {job ? 'Atualizar Job' : 'Criar Job Agendado'}
-      </Button>
     </form>
   );
 
   if (windowMode) {
     return (
-      <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
-          <Clock className="w-6 h-6 text-blue-600" />
-          <h2 className="text-lg font-bold text-slate-900">
-            {job ? 'Editar Job Agendado' : 'Novo Job Agendado'}
-          </h2>
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+            <Clock className="w-8 h-8 text-amber-600" />
+            <h2 className="text-2xl font-bold text-slate-900">
+              {jobAgendado ? 'Editar Job Agendado' : 'Novo Job Agendado'}
+            </h2>
+          </div>
+          {form}
         </div>
-        <div className="flex-1 overflow-auto">{content}</div>
       </div>
     );
   }
 
-  return content;
+  return form;
 }

@@ -1,108 +1,152 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { MessageCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Smartphone, Save } from "lucide-react";
 
-export default function ChatbotCanalForm({ canal, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(canal || {
-    nome_canal: '',
-    tipo_canal: 'WhatsApp',
+export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting, windowMode = false }) {
+  const [formData, setFormData] = useState(chatbotCanal || {
+    nome_canal: "",
+    tipo_canal: "WhatsApp",
+    whatsapp_numero: "",
+    whatsapp_token: "",
+    mensagem_boas_vindas: "",
+    mensagem_ausencia: "",
     transfere_para_humano: true,
-    ativo: true
+    ativo: true,
+    observacoes: ""
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.nome_canal) {
+      alert('Nome do canal é obrigatório');
+      return;
+    }
     onSubmit(formData);
   };
 
-  const content = (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Nome do Canal *</Label>
-          <Input
-            value={formData.nome_canal}
-            onChange={(e) => setFormData({ ...formData, nome_canal: e.target.value })}
-            required
-          />
-        </div>
-        <div>
-          <Label>Tipo de Canal *</Label>
-          <Select value={formData.tipo_canal} onValueChange={(v) => setFormData({ ...formData, tipo_canal: v })}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-              <SelectItem value="Site Widget">Site Widget</SelectItem>
-              <SelectItem value="Portal">Portal</SelectItem>
-              <SelectItem value="Telegram">Telegram</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+  const form = (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Smartphone className="w-5 h-5 text-green-600" />
+            Canal do Chatbot
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Nome do Canal *</Label>
+              <Input
+                value={formData.nome_canal}
+                onChange={(e) => setFormData({ ...formData, nome_canal: e.target.value })}
+                placeholder="Ex: WhatsApp Principal"
+              />
+            </div>
+            <div>
+              <Label>Tipo de Canal</Label>
+              <Select value={formData.tipo_canal} onValueChange={(val) => setFormData({ ...formData, tipo_canal: val })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                  <SelectItem value="Site Widget">Site Widget</SelectItem>
+                  <SelectItem value="Portal">Portal</SelectItem>
+                  <SelectItem value="App Mobile">App Mobile</SelectItem>
+                  <SelectItem value="Telegram">Telegram</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {formData.tipo_canal === "WhatsApp" && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Número WhatsApp</Label>
+                <Input
+                  value={formData.whatsapp_numero}
+                  onChange={(e) => setFormData({ ...formData, whatsapp_numero: e.target.value })}
+                  placeholder="+55 11 99999-9999"
+                />
+              </div>
+              <div>
+                <Label>Token API</Label>
+                <Input
+                  type="password"
+                  value={formData.whatsapp_token}
+                  onChange={(e) => setFormData({ ...formData, whatsapp_token: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <Label>Mensagem de Boas-Vindas</Label>
+            <Textarea
+              value={formData.mensagem_boas_vindas}
+              onChange={(e) => setFormData({ ...formData, mensagem_boas_vindas: e.target.value })}
+              rows={3}
+            />
+          </div>
+
+          <div>
+            <Label>Mensagem de Ausência</Label>
+            <Textarea
+              value={formData.mensagem_ausencia}
+              onChange={(e) => setFormData({ ...formData, mensagem_ausencia: e.target.value })}
+              rows={2}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+            <Label>Transfere para Humano</Label>
+            <Switch
+              checked={formData.transfere_para_humano}
+              onCheckedChange={(val) => setFormData({ ...formData, transfere_para_humano: val })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+            <Label>Canal Ativo</Label>
+            <Switch
+              checked={formData.ativo}
+              onCheckedChange={(val) => setFormData({ ...formData, ativo: val })}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-3">
+        <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isSubmitting}>
+          <Save className="w-4 h-4 mr-2" />
+          {isSubmitting ? 'Salvando...' : chatbotCanal ? 'Atualizar' : 'Criar'}
+        </Button>
       </div>
-
-      {formData.tipo_canal === 'WhatsApp' && (
-        <div>
-          <Label>Número do WhatsApp</Label>
-          <Input
-            value={formData.whatsapp_numero}
-            onChange={(e) => setFormData({ ...formData, whatsapp_numero: e.target.value })}
-            placeholder="+55 11 99999-9999"
-          />
-        </div>
-      )}
-
-      <div>
-        <Label>Observações</Label>
-        <Textarea
-          value={formData.observacoes}
-          onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-          rows={2}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center justify-between p-3 border rounded">
-          <Label>Transferir para Humano</Label>
-          <Switch
-            checked={formData.transfere_para_humano}
-            onCheckedChange={(v) => setFormData({ ...formData, transfere_para_humano: v })}
-          />
-        </div>
-        <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
-          <Label className="font-semibold">Canal Ativo</Label>
-          <Switch
-            checked={formData.ativo}
-            onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
-          />
-        </div>
-      </div>
-
-      <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-        {canal ? 'Atualizar' : 'Criar Canal'}
-      </Button>
     </form>
   );
 
   if (windowMode) {
     return (
-      <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-green-50 to-green-100">
-          <MessageCircle className="w-6 h-6 text-green-600" />
-          <h2 className="text-lg font-bold text-slate-900">
-            {canal ? 'Editar Canal' : 'Novo Canal de Chatbot'}
-          </h2>
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+            <Smartphone className="w-8 h-8 text-green-600" />
+            <h2 className="text-2xl font-bold text-slate-900">
+              {chatbotCanal ? 'Editar Canal' : 'Novo Canal'}
+            </h2>
+          </div>
+          {form}
         </div>
-        <div className="flex-1 overflow-auto">{content}</div>
       </div>
     );
   }
 
-  return content;
+  return form;
 }

@@ -1,37 +1,34 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { MessageSquare, Plus, Trash2 } from 'lucide-react';
+import React, { useState } from "react";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MessageCircle, Save, Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
-export default function ChatbotIntentForm({ intent, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(intent || {
-    nome_intent: '',
-    descricao: '',
+export default function ChatbotIntentForm({ chatbotIntent, onSubmit, isSubmitting, windowMode = false }) {
+  const [formData, setFormData] = useState(chatbotIntent || {
+    nome_intent: "",
+    descricao: "",
     frases_treinamento: [],
-    origem_dados: '',
+    origem_dados: "",
     exige_autenticacao: false,
-    resposta_template: '',
-    ativo: true
+    resposta_template: "",
+    ativo: true,
+    observacoes: ""
   });
 
-  const [novaFrase, setNovaFrase] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
+  const [novaFrase, setNovaFrase] = useState("");
 
   const adicionarFrase = () => {
     if (novaFrase.trim()) {
       setFormData({
         ...formData,
-        frases_treinamento: [...formData.frases_treinamento, novaFrase]
+        frases_treinamento: [...(formData.frases_treinamento || []), novaFrase.trim()]
       });
-      setNovaFrase('');
+      setNovaFrase("");
     }
   };
 
@@ -42,106 +39,133 @@ export default function ChatbotIntentForm({ intent, onSubmit, windowMode = false
     });
   };
 
-  const content = (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Nome da Intent *</Label>
-          <Input
-            value={formData.nome_intent}
-            onChange={(e) => setFormData({ ...formData, nome_intent: e.target.value })}
-            placeholder="2_via_boleto, status_pedido..."
-            required
-          />
-        </div>
-        <div>
-          <Label>Origem dos Dados</Label>
-          <Input
-            value={formData.origem_dados}
-            onChange={(e) => setFormData({ ...formData, origem_dados: e.target.value })}
-            placeholder="ContaReceber, Pedido, Cliente..."
-          />
-        </div>
-      </div>
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.nome_intent) {
+      alert('Nome da intent é obrigatório');
+      return;
+    }
+    onSubmit(formData);
+  };
 
-      <div>
-        <Label>Descrição</Label>
-        <Textarea
-          value={formData.descricao}
-          onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-          rows={2}
-        />
-      </div>
+  const form = (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="w-5 h-5 text-purple-600" />
+            Intent do Chatbot
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label>Nome da Intent *</Label>
+            <Input
+              value={formData.nome_intent}
+              onChange={(e) => setFormData({ ...formData, nome_intent: e.target.value })}
+              placeholder="Ex: consultar_pedido, 2via_boleto"
+            />
+          </div>
 
-      <div>
-        <Label>Frases de Treinamento</Label>
-        <div className="flex gap-2 mb-2">
-          <Input
-            value={novaFrase}
-            onChange={(e) => setNovaFrase(e.target.value)}
-            placeholder="Adicionar frase de exemplo..."
-          />
-          <Button type="button" onClick={adicionarFrase}>
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
-        <div className="space-y-1">
-          {formData.frases_treinamento.map((frase, idx) => (
-            <div key={idx} className="flex items-center gap-2 p-2 bg-slate-50 rounded">
-              <span className="flex-1 text-sm">{frase}</span>
-              <Button type="button" size="sm" variant="ghost" onClick={() => removerFrase(idx)}>
-                <Trash2 className="w-3 h-3 text-red-600" />
+          <div>
+            <Label>Descrição</Label>
+            <Textarea
+              value={formData.descricao}
+              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+              rows={2}
+            />
+          </div>
+
+          <div>
+            <Label>Origem dos Dados</Label>
+            <Input
+              value={formData.origem_dados}
+              onChange={(e) => setFormData({ ...formData, origem_dados: e.target.value })}
+              placeholder="Ex: Pedido, ContaReceber, Cliente"
+            />
+          </div>
+
+          <div>
+            <Label>Frases de Treinamento</Label>
+            <div className="flex gap-2 mb-2">
+              <Input
+                value={novaFrase}
+                onChange={(e) => setNovaFrase(e.target.value)}
+                placeholder="Ex: Quero consultar meu pedido"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), adicionarFrase())}
+              />
+              <Button type="button" onClick={adicionarFrase} size="sm">
+                <Plus className="w-4 h-4" />
               </Button>
             </div>
-          ))}
-        </div>
-      </div>
+            <div className="flex flex-wrap gap-2">
+              {(formData.frases_treinamento || []).map((frase, idx) => (
+                <Badge key={idx} className="bg-purple-100 text-purple-700">
+                  {frase}
+                  <button
+                    type="button"
+                    onClick={() => removerFrase(idx)}
+                    className="ml-2 hover:text-red-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          </div>
 
-      <div>
-        <Label>Template de Resposta</Label>
-        <Textarea
-          value={formData.resposta_template}
-          onChange={(e) => setFormData({ ...formData, resposta_template: e.target.value })}
-          rows={3}
-        />
-      </div>
+          <div>
+            <Label>Template de Resposta</Label>
+            <Textarea
+              value={formData.resposta_template}
+              onChange={(e) => setFormData({ ...formData, resposta_template: e.target.value })}
+              placeholder="Use {variavel} para campos dinâmicos"
+              rows={4}
+            />
+          </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center justify-between p-3 border rounded">
-          <Label>Exige Autenticação</Label>
-          <Switch
-            checked={formData.exige_autenticacao}
-            onCheckedChange={(v) => setFormData({ ...formData, exige_autenticacao: v })}
-          />
-        </div>
-        <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
-          <Label className="font-semibold">Intent Ativa</Label>
-          <Switch
-            checked={formData.ativo}
-            onCheckedChange={(v) => setFormData({ ...formData, ativo: v })}
-          />
-        </div>
-      </div>
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+            <Label>Exige Autenticação</Label>
+            <Switch
+              checked={formData.exige_autenticacao}
+              onCheckedChange={(val) => setFormData({ ...formData, exige_autenticacao: val })}
+            />
+          </div>
 
-      <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
-        {intent ? 'Atualizar' : 'Criar Intent'}
-      </Button>
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded">
+            <Label>Intent Ativa</Label>
+            <Switch
+              checked={formData.ativo}
+              onCheckedChange={(val) => setFormData({ ...formData, ativo: val })}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end gap-3">
+        <Button type="submit" className="bg-purple-600 hover:bg-purple-700" disabled={isSubmitting}>
+          <Save className="w-4 h-4 mr-2" />
+          {isSubmitting ? 'Salvando...' : chatbotIntent ? 'Atualizar' : 'Criar'}
+        </Button>
+      </div>
     </form>
   );
 
   if (windowMode) {
     return (
-      <div className="w-full h-full flex flex-col">
-        <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-purple-50 to-purple-100">
-          <MessageSquare className="w-6 h-6 text-purple-600" />
-          <h2 className="text-lg font-bold text-slate-900">
-            {intent ? 'Editar Intent' : 'Nova Intent de Chatbot'}
-          </h2>
+      <div className="w-full h-full overflow-auto bg-white p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b">
+            <MessageCircle className="w-8 h-8 text-purple-600" />
+            <h2 className="text-2xl font-bold text-slate-900">
+              {chatbotIntent ? 'Editar Intent' : 'Nova Intent'}
+            </h2>
+          </div>
+          {form}
         </div>
-        <div className="flex-1 overflow-auto">{content}</div>
       </div>
     );
   }
 
-  return content;
+  return form;
 }
