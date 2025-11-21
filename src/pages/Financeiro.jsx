@@ -314,6 +314,9 @@ export default function Financeiro() {
         </Card>
       </div>
 
+      {/* STATUS WIDGET ETAPA 4 */}
+      <StatusWidgetEtapa4 />
+
       {/* NOVO: Régua de Cobrança IA */}
       <ReguaCobrancaIA empresaId={empresaAtual?.id} />
 
