@@ -331,9 +331,9 @@ export default function Financeiro() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
-          <TabsTrigger value="caixa-central" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-            <DollarSign className="w-4 h-4 mr-2" />
-            Caixa Central
+          <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            <Wallet className="w-4 h-4 mr-2" />
+            Caixa e Liquidação
             {ordensLiquidacaoPendentes > 0 && (
               <Badge className="ml-2 bg-orange-500 text-white">{ordensLiquidacaoPendentes}</Badge>
             )}
@@ -366,30 +366,14 @@ export default function Financeiro() {
               Rateios
             </TabsTrigger>
           )}
-          <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <DollarSign className="w-4 h-4 mr-2" />
-            Caixa Diário
-          </TabsTrigger>
           <TabsTrigger value="relatorios" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white">
             <BarChart3 className="w-4 h-4 mr-2" />
             Relatórios
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="caixa-central">
-          <div className="space-y-4">
-            <Button 
-              className="bg-emerald-600 hover:bg-emerald-700"
-              onClick={() => openWindow(CaixaCentralLiquidacao, { windowMode: true }, {
-                title: '💰 Caixa Central - Liquidação',
-                width: 1200,
-                height: 700
-              })}
-            >
-              <DollarSign className="w-4 h-4 mr-2" /> Abrir Caixa Central em Nova Janela
-            </Button>
-            <CaixaCentralLiquidacao windowMode={false} />
-          </div>
+        <TabsContent value="caixa-diario">
+          <CaixaDiarioTab />
         </TabsContent>
 
         <TabsContent value="contas-receber">
@@ -402,10 +386,6 @@ export default function Financeiro() {
 
         <TabsContent value="aprovacoes">
           <AprovacaoDescontosManager windowMode={false} />
-        </TabsContent>
-
-        <TabsContent value="caixa-diario">
-          <CaixaDiarioTab />
         </TabsContent>
 
         <TabsContent value="conciliacao">
