@@ -111,6 +111,8 @@ import ParametroRecebimentoNFeForm from "../components/cadastros/ParametroRecebi
 import ParametroRoteirizacaoForm from "../components/cadastros/ParametroRoteirizacaoForm";
 import ParametroConciliacaoBancariaForm from "../components/cadastros/ParametroConciliacaoBancariaForm";
 import ParametroCaixaDiarioForm from "../components/cadastros/ParametroCaixaDiarioForm";
+import ConfiguracaoIntegracaoForm from "../components/cadastros/ConfiguracaoIntegracaoForm";
+import EventoNotificacaoForm from "../components/cadastros/EventoNotificacaoForm";
 import StatusIntegracoes from '../components/integracoes/StatusIntegracoes';
 import ConfiguracaoNotificacoes from '../components/sistema/ConfiguracaoNotificacoes';
 import TesteNFe from "../components/integracoes/TesteNFe";
