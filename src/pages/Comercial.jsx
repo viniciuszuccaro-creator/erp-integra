@@ -283,10 +283,17 @@ export default function Comercial() {
             <ShieldCheck className="w-4 h-4 mr-2" />
             Aprovação Descontos
             {pedidos.filter(p => p.status_aprovacao === "pendente").length > 0 && (
-              <Badge className="ml-2 bg-red-500 text-white">
+              <Badge className="ml-2 bg-red-500 text-white animate-pulse">
                 {pedidos.filter(p => p.status_aprovacao === "pendente").length}
               </Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger 
+            value="tabelas-preco" 
+            className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
+          >
+            <DollarSign className="w-4 h-4 mr-2" />
+            Tabelas de Preço
           </TabsTrigger>
         </TabsList>
 
@@ -396,6 +403,10 @@ export default function Comercial() {
         {/* ETAPA 4: Tab Aprovação de Descontos */}
         <TabsContent value="aprovacoes">
           <AprovacaoDescontosManager windowMode={false} />
+        </TabsContent>
+
+        <TabsContent value="tabelas-preco">
+          <TabelasPrecoTab tabelasPreco={tabelasPreco} />
         </TabsContent>
       </Tabs>
 
