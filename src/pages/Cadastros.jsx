@@ -44,6 +44,8 @@ import {
   Link2,
   ShoppingCart,
   MapPin,
+  Settings,
+  Wallet,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -103,6 +105,12 @@ import PlanoContasForm from "../components/cadastros/PlanoContasForm";
 import TipoDespesaForm from "../components/cadastros/TipoDespesaForm";
 import ApiExternaForm from "../components/cadastros/ApiExternaForm";
 import JobAgendadoForm from "../components/cadastros/JobAgendadoForm";
+import ParametroPortalClienteForm from "../components/cadastros/ParametroPortalClienteForm";
+import ParametroOrigemPedidoForm from "../components/cadastros/ParametroOrigemPedidoForm";
+import ParametroRecebimentoNFeForm from "../components/cadastros/ParametroRecebimentoNFeForm";
+import ParametroRoteirizacaoForm from "../components/cadastros/ParametroRoteirizacaoForm";
+import ParametroConciliacaoBancariaForm from "../components/cadastros/ParametroConciliacaoBancariaForm";
+import ParametroCaixaDiarioForm from "../components/cadastros/ParametroCaixaDiarioForm";
 import StatusIntegracoes from '../components/integracoes/StatusIntegracoes';
 import ConfiguracaoNotificacoes from '../components/sistema/ConfiguracaoNotificacoes';
 import TesteNFe from "../components/integracoes/TesteNFe";
@@ -301,6 +309,37 @@ export default function Cadastros() {
     queryFn: () => base44.entities.JobAgendado.list(),
   });
 
+  // PARÂMETROS OPERACIONAIS - FASE 3
+  const { data: parametrosPortal = [] } = useQuery({
+    queryKey: ['parametros-portal'],
+    queryFn: () => base44.entities.ParametroPortalCliente.list(),
+  });
+
+  const { data: parametrosOrigemPedido = [] } = useQuery({
+    queryKey: ['parametros-origem-pedido'],
+    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
+  });
+
+  const { data: parametrosRecebimentoNFe = [] } = useQuery({
+    queryKey: ['parametros-recebimento-nfe'],
+    queryFn: () => base44.entities.ParametroRecebimentoNFe.list(),
+  });
+
+  const { data: parametrosRoteirizacao = [] } = useQuery({
+    queryKey: ['parametros-roteirizacao'],
+    queryFn: () => base44.entities.ParametroRoteirizacao.list(),
+  });
+
+  const { data: parametrosConciliacao = [] } = useQuery({
+    queryKey: ['parametros-conciliacao'],
+    queryFn: () => base44.entities.ParametroConciliacaoBancaria.list(),
+  });
+
+  const { data: parametrosCaixa = [] } = useQuery({
+    queryKey: ['parametros-caixa'],
+    queryFn: () => base44.entities.ParametroCaixaDiario.list(),
+  });
+
   // QUERIES - BLOCO 4: LOGÍSTICA
   const { data: veiculos = [] } = useQuery({
     queryKey: ['veiculos'],
@@ -399,7 +438,7 @@ export default function Cadastros() {
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + apisExternas.length + jobsAgendados.length;
+  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + apisExternas.length + jobsAgendados.length + parametrosPortal.length + parametrosOrigemPedido.length + parametrosRecebimentoNFe.length + parametrosRoteirizacao.length + parametrosConciliacao.length + parametrosCaixa.length;
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {
@@ -3104,6 +3143,231 @@ export default function Cadastros() {
                           ))}
                         </CardContent>
                       </Card>
+                    </div>
+
+                    {/* SEÇÃO: PARÂMETROS OPERACIONAIS - FASE 3 */}
+                    <div className="mt-8">
+                      <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <Settings className="w-6 h-6 text-purple-600" />
+                        Parâmetros Operacionais por Empresa
+                      </h3>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {/* PARÂMETRO PORTAL CLIENTE */}
+                        <Card className="border-blue-200">
+                          <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-base">🌐 Portal Cliente ({parametrosPortal.length})</CardTitle>
+                              <Button size="sm" onClick={() => openWindow(ParametroPortalClienteForm, {
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('ParametroPortalCliente', 'parametros-portal')
+                              }, { title: '🌐 Novo Parâmetro Portal', width: 900, height: 650 })}
+                                className="bg-blue-600 hover:bg-blue-700"
+                                disabled={!hasPermission('cadastros', 'criar')}>
+                                <Plus className="w-4 h-4 mr-1" />Novo
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 max-h-60 overflow-y-auto">
+                            {parametrosPortal.map(p => (
+                              <div key={p.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm flex-1">Portal Config</p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(ParametroPortalClienteForm, {
+                                    parametro: p,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('ParametroPortalCliente', 'parametros-portal')
+                                  }, { title: '🌐 Editar Parâmetro Portal', width: 900, height: 650 })}
+                                  disabled={!hasPermission('cadastros', 'editar')}
+                                >
+                                  <Edit className="w-3 h-3 text-blue-600" />
+                                </Button>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+
+                        {/* PARÂMETRO ORIGEM PEDIDO */}
+                        <Card className="border-purple-200">
+                          <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-base">🛒 Origem Pedido ({parametrosOrigemPedido.length})</CardTitle>
+                              <Button size="sm" onClick={() => openWindow(ParametroOrigemPedidoForm, {
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('ParametroOrigemPedido', 'parametros-origem-pedido')
+                              }, { title: '🛒 Novo Parâmetro Origem', width: 800, height: 600 })}
+                                className="bg-purple-600 hover:bg-purple-700"
+                                disabled={!hasPermission('cadastros', 'criar')}>
+                                <Plus className="w-4 h-4 mr-1" />Novo
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 max-h-60 overflow-y-auto">
+                            {parametrosOrigemPedido.map(p => (
+                              <div key={p.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm flex-1">{p.origem}</p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(ParametroOrigemPedidoForm, {
+                                    parametro: p,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('ParametroOrigemPedido', 'parametros-origem-pedido')
+                                  }, { title: `🛒 Editar: ${p.origem}`, width: 800, height: 600 })}
+                                  disabled={!hasPermission('cadastros', 'editar')}
+                                >
+                                  <Edit className="w-3 h-3 text-purple-600" />
+                                </Button>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+
+                        {/* PARÂMETRO RECEBIMENTO NFE */}
+                        <Card className="border-green-200">
+                          <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-base">📄 Recebimento NF-e ({parametrosRecebimentoNFe.length})</CardTitle>
+                              <Button size="sm" onClick={() => openWindow(ParametroRecebimentoNFeForm, {
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('ParametroRecebimentoNFe', 'parametros-recebimento-nfe')
+                              }, { title: '📄 Novo Parâmetro NFe', width: 900, height: 650 })}
+                                className="bg-green-600 hover:bg-green-700"
+                                disabled={!hasPermission('cadastros', 'criar')}>
+                                <Plus className="w-4 h-4 mr-1" />Novo
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 max-h-60 overflow-y-auto">
+                            {parametrosRecebimentoNFe.map(p => (
+                              <div key={p.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm flex-1">NF-e Config</p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(ParametroRecebimentoNFeForm, {
+                                    parametro: p,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('ParametroRecebimentoNFe', 'parametros-recebimento-nfe')
+                                  }, { title: '📄 Editar Parâmetro NFe', width: 900, height: 650 })}
+                                  disabled={!hasPermission('cadastros', 'editar')}
+                                >
+                                  <Edit className="w-3 h-3 text-green-600" />
+                                </Button>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+
+                        {/* PARÂMETRO ROTEIRIZAÇÃO */}
+                        <Card className="border-orange-200">
+                          <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-base">🗺️ Roteirização ({parametrosRoteirizacao.length})</CardTitle>
+                              <Button size="sm" onClick={() => openWindow(ParametroRoteirizacaoForm, {
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('ParametroRoteirizacao', 'parametros-roteirizacao')
+                              }, { title: '🗺️ Novo Parâmetro Rotas', width: 800, height: 600 })}
+                                className="bg-orange-600 hover:bg-orange-700"
+                                disabled={!hasPermission('cadastros', 'criar')}>
+                                <Plus className="w-4 h-4 mr-1" />Novo
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 max-h-60 overflow-y-auto">
+                            {parametrosRoteirizacao.map(p => (
+                              <div key={p.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm flex-1">Roteirização Config</p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(ParametroRoteirizacaoForm, {
+                                    parametro: p,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('ParametroRoteirizacao', 'parametros-roteirizacao')
+                                  }, { title: '🗺️ Editar Parâmetro Rotas', width: 800, height: 600 })}
+                                  disabled={!hasPermission('cadastros', 'editar')}
+                                >
+                                  <Edit className="w-3 h-3 text-orange-600" />
+                                </Button>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+
+                        {/* PARÂMETRO CONCILIAÇÃO */}
+                        <Card className="border-cyan-200">
+                          <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-base">🏦 Conciliação ({parametrosConciliacao.length})</CardTitle>
+                              <Button size="sm" onClick={() => openWindow(ParametroConciliacaoBancariaForm, {
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('ParametroConciliacaoBancaria', 'parametros-conciliacao')
+                              }, { title: '🏦 Novo Parâmetro Conciliação', width: 900, height: 650 })}
+                                className="bg-cyan-600 hover:bg-cyan-700"
+                                disabled={!hasPermission('cadastros', 'criar')}>
+                                <Plus className="w-4 h-4 mr-1" />Novo
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 max-h-60 overflow-y-auto">
+                            {parametrosConciliacao.map(p => (
+                              <div key={p.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm flex-1">Conciliação Config</p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(ParametroConciliacaoBancariaForm, {
+                                    parametro: p,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('ParametroConciliacaoBancaria', 'parametros-conciliacao')
+                                  }, { title: '🏦 Editar Parâmetro Conciliação', width: 900, height: 650 })}
+                                  disabled={!hasPermission('cadastros', 'editar')}
+                                >
+                                  <Edit className="w-3 h-3 text-cyan-600" />
+                                </Button>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+
+                        {/* PARÂMETRO CAIXA DIÁRIO */}
+                        <Card className="border-emerald-200">
+                          <CardHeader className="bg-emerald-50 border-b border-emerald-200 pb-3">
+                            <div className="flex items-center justify-between">
+                              <CardTitle className="text-base">💰 Caixa Diário ({parametrosCaixa.length})</CardTitle>
+                              <Button size="sm" onClick={() => openWindow(ParametroCaixaDiarioForm, {
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('ParametroCaixaDiario', 'parametros-caixa')
+                              }, { title: '💰 Novo Parâmetro Caixa', width: 800, height: 600 })}
+                                className="bg-emerald-600 hover:bg-emerald-700"
+                                disabled={!hasPermission('cadastros', 'criar')}>
+                                <Plus className="w-4 h-4 mr-1" />Novo
+                              </Button>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="p-4 max-h-60 overflow-y-auto">
+                            {parametrosCaixa.map(p => (
+                              <div key={p.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm flex-1">Caixa Config</p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(ParametroCaixaDiarioForm, {
+                                    parametro: p,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('ParametroCaixaDiario', 'parametros-caixa')
+                                  }, { title: '💰 Editar Parâmetro Caixa', width: 800, height: 600 })}
+                                  disabled={!hasPermission('cadastros', 'editar')}
+                                >
+                                  <Edit className="w-3 h-3 text-emerald-600" />
+                                </Button>
+                              </div>
+                            ))}
+                          </CardContent>
+                        </Card>
+                      </div>
                     </div>
                   </TabsContent>
 
