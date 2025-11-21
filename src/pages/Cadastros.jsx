@@ -111,6 +111,12 @@ import ParametroRecebimentoNFeForm from "../components/cadastros/ParametroRecebi
 import ParametroRoteirizacaoForm from "../components/cadastros/ParametroRoteirizacaoForm";
 import ParametroConciliacaoBancariaForm from "../components/cadastros/ParametroConciliacaoBancariaForm";
 import ParametroCaixaDiarioForm from "../components/cadastros/ParametroCaixaDiarioForm";
+import ConfiguracaoIntegracaoFormComp from "../components/cadastros/ConfiguracaoIntegracaoForm";
+import EventoNotificacaoFormComp from "../components/cadastros/EventoNotificacaoForm";
+import ApiExternaFormComp from "../components/cadastros/ApiExternaForm";
+import JobAgendadoFormComp from "../components/cadastros/JobAgendadoForm";
+import ChatbotIntentFormComp from "../components/cadastros/ChatbotIntentForm";
+import ChatbotCanalFormComp from "../components/cadastros/ChatbotCanalForm";
 import StatusIntegracoes from '../components/integracoes/StatusIntegracoes';
 import ConfiguracaoNotificacoes from '../components/sistema/ConfiguracaoNotificacoes';
 import TesteNFe from "../components/integracoes/TesteNFe";
@@ -2837,7 +2843,7 @@ export default function Cadastros() {
                             <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
                             <Button
                               size="sm"
-                              onClick={() => openWindow(EventoNotificacaoForm, {
+                              onClick={() => openWindow(EventoNotificacaoFormComp, {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('EventoNotificacao', 'eventos-notificacao')
                               }, {
@@ -2863,7 +2869,7 @@ export default function Cadastros() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => openWindow(EventoNotificacaoForm, {
+                                onClick={() => openWindow(EventoNotificacaoFormComp, {
                                   evento,
                                   windowMode: true,
                                   onSubmit: handleSubmitGenerico('EventoNotificacao', 'eventos-notificacao')
@@ -2888,7 +2894,7 @@ export default function Cadastros() {
                             <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
                             <Button
                               size="sm"
-                              onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
+                              onClick={() => openWindow(ConfiguracaoIntegracaoFormComp, {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
                               }, {
@@ -2916,7 +2922,7 @@ export default function Cadastros() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
+                                onClick={() => openWindow(ConfiguracaoIntegracaoFormComp, {
                                   config,
                                   windowMode: true,
                                   onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
@@ -2981,7 +2987,7 @@ export default function Cadastros() {
                         <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-base">💬 Intents ({chatbotIntents.length})</CardTitle>
-                            <Button size="sm" onClick={() => openWindow(ChatbotIntentForm, {
+                            <Button size="sm" onClick={() => openWindow(ChatbotIntentFormComp, {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('ChatbotIntent', 'chatbotIntents')
                             }, { title: '💬 Nova Intent', width: 900, height: 650 })}
@@ -3000,7 +3006,7 @@ export default function Cadastros() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => openWindow(ChatbotIntentForm, {
+                                onClick={() => openWindow(ChatbotIntentFormComp, {
                                   chatbotIntent: intent,
                                   windowMode: true,
                                   onSubmit: handleSubmitGenerico('ChatbotIntent', 'chatbotIntents')
@@ -3023,7 +3029,7 @@ export default function Cadastros() {
                         <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-base">📱 Canais ({chatbotCanais.length})</CardTitle>
-                            <Button size="sm" onClick={() => openWindow(ChatbotCanalForm, {
+                            <Button size="sm" onClick={() => openWindow(ChatbotCanalFormComp, {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbotCanais')
                             }, { title: '📱 Novo Canal', width: 800, height: 550 })}
@@ -3042,7 +3048,7 @@ export default function Cadastros() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => openWindow(ChatbotCanalForm, {
+                                onClick={() => openWindow(ChatbotCanalFormComp, {
                                   chatbotCanal: canal,
                                   windowMode: true,
                                   onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbotCanais')
@@ -3065,7 +3071,7 @@ export default function Cadastros() {
                         <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-base">🔌 APIs ({apisExternas.length})</CardTitle>
-                            <Button size="sm" onClick={() => openWindow(ApiExternaForm, {
+                            <Button size="sm" onClick={() => openWindow(ApiExternaFormComp, {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('ApiExterna', 'apis-externas')
                             }, { title: '🔌 Nova API', width: 900, height: 700 })}
@@ -3084,7 +3090,7 @@ export default function Cadastros() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => openWindow(ApiExternaForm, {
+                                onClick={() => openWindow(ApiExternaFormComp, {
                                   apiExterna: api,
                                   windowMode: true,
                                   onSubmit: handleSubmitGenerico('ApiExterna', 'apis-externas')
@@ -3107,7 +3113,7 @@ export default function Cadastros() {
                         <CardHeader className="bg-amber-50 border-b border-amber-200 pb-3">
                           <div className="flex items-center justify-between">
                             <CardTitle className="text-base">⏰ Jobs IA ({jobsAgendados.length})</CardTitle>
-                            <Button size="sm" onClick={() => openWindow(JobAgendadoForm, {
+                            <Button size="sm" onClick={() => openWindow(JobAgendadoFormComp, {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('JobAgendado', 'jobs-agendados')
                             }, { title: '⏰ Novo Job', width: 900, height: 650 })}
@@ -3126,7 +3132,7 @@ export default function Cadastros() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => openWindow(JobAgendadoForm, {
+                                onClick={() => openWindow(JobAgendadoFormComp, {
                                   jobAgendado: job,
                                   windowMode: true,
                                   onSubmit: handleSubmitGenerico('JobAgendado', 'jobs-agendados')
