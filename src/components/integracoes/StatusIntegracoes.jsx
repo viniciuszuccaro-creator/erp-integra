@@ -34,7 +34,6 @@ function IntegrationConfigButtons({ integracao }) {
   const { openWindow } = useWindow();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleConfigurar = () => {
     const entityMap = {
@@ -62,28 +61,23 @@ function IntegrationConfigButtons({ integracao }) {
     if (!cfg) return;
 
     const handleSubmit = async (data) => {
-      setIsSubmitting(true);
       try {
         if (data.id) {
           await base44.entities[cfg.entity].update(data.id, data);
-          toast({ title: `✅ Configuração atualizada!` });
+          toast({ title: `✅ ${cfg.entity} atualizado!` });
         } else {
           await base44.entities[cfg.entity].create(data);
-          toast({ title: `✅ Configuração criada!` });
+          toast({ title: `✅ ${cfg.entity} criado!` });
         }
         queryClient.invalidateQueries({ queryKey: [cfg.queryKey] });
       } catch (error) {
         toast({ title: `❌ Erro ao salvar`, description: error.message, variant: "destructive" });
-      } finally {
-        setIsSubmitting(false);
       }
     };
 
     openWindow(cfg.form, { 
-      config: null,
       windowMode: true,
-      onSubmit: handleSubmit,
-      isSubmitting: isSubmitting
+      onSubmit: handleSubmit
     }, {
       title: cfg.title,
       width: 1000,
