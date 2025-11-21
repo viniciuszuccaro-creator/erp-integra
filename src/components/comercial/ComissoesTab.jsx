@@ -24,11 +24,11 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useWindow } from "@/components/lib/useWindow";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import DetalhesComissao from "./DetalhesComissao";
+import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
 export default function ComissoesTab({ comissoes, pedidos }) {
