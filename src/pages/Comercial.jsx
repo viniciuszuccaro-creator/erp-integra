@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus } from "lucide-react";
+import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck } from "lucide-react";
 import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
 import ComissoesTab from "../components/comercial/ComissoesTab";
@@ -13,6 +13,7 @@ import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
 import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab"; // Keeping import as outline didn't specify removal
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
+import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
@@ -275,6 +276,18 @@ export default function Comercial() {
               </Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger 
+            value="aprovacoes" 
+            className="data-[state=active]:bg-orange-600 data-[state=active]:text-white relative"
+          >
+            <ShieldCheck className="w-4 h-4 mr-2" />
+            Aprovação Descontos
+            {pedidos.filter(p => p.status_aprovacao === "pendente").length > 0 && (
+              <Badge className="ml-2 bg-red-500 text-white">
+                {pedidos.filter(p => p.status_aprovacao === "pendente").length}
+              </Badge>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="clientes">
@@ -378,6 +391,11 @@ export default function Comercial() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ETAPA 4: Tab Aprovação de Descontos */}
+        <TabsContent value="aprovacoes">
+          <AprovacaoDescontosManager windowMode={false} />
         </TabsContent>
       </Tabs>
 

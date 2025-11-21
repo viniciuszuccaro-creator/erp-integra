@@ -357,6 +357,10 @@ export default function Financeiro() {
               Rateios
             </TabsTrigger>
           )}
+          <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <DollarSign className="w-4 h-4 mr-2" />
+            Caixa Diário
+          </TabsTrigger>
           <TabsTrigger value="relatorios" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white">
             <BarChart3 className="w-4 h-4 mr-2" />
             Relatórios
@@ -389,6 +393,10 @@ export default function Financeiro() {
 
         <TabsContent value="aprovacoes">
           <AprovacaoDescontosManager windowMode={false} />
+        </TabsContent>
+
+        <TabsContent value="caixa-diario">
+          <CaixaDiarioTab />
         </TabsContent>
 
         <TabsContent value="conciliacao">
