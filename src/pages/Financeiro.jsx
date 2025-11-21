@@ -417,7 +417,31 @@ export default function Financeiro() {
 
         {estaNoGrupo && (
           <TabsContent value="rateios">
-            <div className="space-y-6">
+            <div className="space-y-4">
+              <Alert className="border-purple-300 bg-purple-50">
+                <AlertDescription className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-purple-900">🔀 Rateio Multi-Empresa</p>
+                    <p className="text-xs text-purple-700">Distribuição automática de despesas e receitas entre empresas do grupo</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => openWindow(RateioMultiempresa, { 
+                      empresas: empresasDoGrupo,
+                      grupoId: empresasDoGrupo[0]?.grupo_id,
+                      windowMode: true 
+                    }, {
+                      title: '🔀 Rateio Multi-Empresa - Multitarefa',
+                      width: 1400,
+                      height: 800
+                    })}
+                    className="bg-purple-600 hover:bg-purple-700"
+                  >
+                    <Split className="w-4 h-4 mr-2" />
+                    Abrir em Janela
+                  </Button>
+                </AlertDescription>
+              </Alert>
               <RateioMultiempresa
                 empresas={empresasDoGrupo}
                 grupoId={empresasDoGrupo[0]?.grupo_id}
