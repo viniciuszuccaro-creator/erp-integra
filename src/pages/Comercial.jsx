@@ -167,14 +167,7 @@ export default function Comercial() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">
-            <span className="flex items-center gap-3">
-              Comercial e Vendas V21.4 GOLD
-              <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 shadow-lg animate-pulse">
-                E2✅ E3✅ E4✅
-              </Badge>
-            </span>
-          </h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Comercial e Vendas</h1>
           <p className="text-slate-600">Gestão de clientes, pedidos, preços e vendas</p>
         </div>
         

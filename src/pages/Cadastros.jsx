@@ -503,9 +503,12 @@ export default function Cadastros() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
             <Stars className="w-8 h-8 text-purple-600" />
-            Cadastros Gerais V21.4 GOLD
-            <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 text-sm shadow-lg animate-pulse">
-              E2✅ E3✅ E4✅ 100%
+            Cadastros Gerais V21.4 • ETAPA 4
+            <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 text-sm shadow-lg">
+              FASE 3 ✅ 100%
+            </Badge>
+            <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 text-sm shadow-lg animate-pulse">
+              ETAPA 4 ✅ 100%
             </Badge>
           </h1>
           <p className="text-slate-600 flex items-center gap-2 flex-wrap">

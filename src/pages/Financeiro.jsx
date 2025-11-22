@@ -20,7 +20,6 @@ import {
   Link2,
   Sparkles,
   Wallet,
-  Badge as BadgeIcon,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -170,12 +169,7 @@ export default function Financeiro() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-            Financeiro Multi-Empresa V21.4 GOLD
-            <Badge className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-3 py-1 shadow-lg animate-pulse">
-              ETAPA 4 ✅ 100%
-            </Badge>
-          </h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Financeiro Multi-Empresa • ETAPA 4</h1>
           <p className="text-slate-600">
             {estaNoGrupo
               ? 'Visão consolidada • Caixa Central • Conciliação • Omnichannel • Aprovações'
