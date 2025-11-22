@@ -7,25 +7,40 @@
 
 ## 🎯 TOTALIZADOR GERAL
 
-**Total de Registros Criados:** 85+  
+**Total de Registros Criados:** 91+  
 **Entidades Populadas:** 37+  
-**Status:** ✅ ZERO ERROS - 100% VALIDADO
+**Status:** ✅ ZERO ERROS - 100% VALIDADO - REGRA-MÃE COMPLETA
 
 ---
 
-## 📦 ETAPA 2 - CADASTROS ESTRUTURANTES (27 registros)
+## 📦 ETAPA 2 - CADASTROS ESTRUTURANTES (29 registros)
 
-### ✅ Produtos com Tributação e Estoque Avançado (2 registros)
+### ✅ Produtos com Tributação e Estoque Avançado (4 registros)
 1. **Vergalhão CA-50 12,5mm** - Tributação Completa (ICMS 18%, PIS 0.65%, COFINS 3%, IPI 5%)
+   - ✅ **Snapshots Sincronizados**: Setor "Revenda", Grupo "Ferragens", Marca "Gerdau"
    - Controle de Lote: ✅ 2 lotes ativos
    - Localização Física: Corredor A, Rua 01, Prateleira 03
    - CFOP: 1102/5102, NCM: 7214.20.00
 
 2. **Parafuso Sextavado 1/2x2** - Tributação e Validade
+   - ✅ **Snapshots Sincronizados**: Setor "Revenda", Grupo "Fixação", Marca "Nacional"
    - Controle de Lote: ✅ 2 lotes ativos
    - Controle de Validade: ✅ 1825 dias
    - Localização Física: Corredor B, Rua 05, Prateleira 12
    - CFOP: 1102/5102, NCM: 7318.15.00
+
+3. **Chapa de Aço 1020 - 3mm** - Tributação Full (ICMS 18%, PIS 1.65%, COFINS 7.6%, IPI 10%)
+   - ✅ **Snapshots Sincronizados**: Setor "Revenda", Grupo "Aço e Metais", Marca "Gerdau"
+   - Controle de Lote: ✅ 2 lotes ativos
+   - Localização Física: Corredor C, Rua 10, Prateleira 05
+   - CFOP: 1102/5102, NCM: 7209.16.00
+
+4. **Eletrodo E6013 3,25mm** - Tributação Completa (ICMS 18%, PIS 1.65%, COFINS 7.6%, IPI 0%)
+   - ✅ **Snapshots Sincronizados**: Setor "Revenda", Grupo "Materiais Gerais", Marca "Nacional"
+   - Controle de Lote: ✅ 2 lotes ativos
+   - Controle de Validade: ✅ 730 dias
+   - Localização Física: Corredor D, Rua 02, Prateleira 08
+   - CFOP: 1102/5102, NCM: 8311.10.00
 
 ## 📦 ETAPA 2 - CADASTROS ESTRUTURANTES (25 registros base)
 
@@ -118,29 +133,39 @@
 
 ---
 
-## 💰 ETAPA 4 - FLUXO FINANCEIRO UNIFICADO (14 registros)
+## 💰 ETAPA 4 - FLUXO FINANCEIRO UNIFICADO (16 registros)
 
-### ✅ Perfis de Acesso com Permissões Etapa 4 (4 registros)
+### ✅ Perfis de Acesso com Permissões Etapa 4 (6 registros)
 1. **Gerente Financeiro** - Permissões completas financeiro + caixa
-   - Pode baixar títulos: ✅
-   - Pode estornar baixas: ✅
-   - Limite aprovação pagamento: R$ 50.000,00
-   - Acesso caixa: abrir, fechar, sangria, reforço
+   - ✅ Pode baixar títulos
+   - ✅ Pode estornar baixas
+   - ✅ Limite aprovação pagamento: R$ 50.000,00
+   - ✅ Acesso caixa: abrir, fechar, sangria, reforço
 
 2. **Gestor Comercial - Aprovador** - Aprovação de descontos
-   - Aprovar pedidos: ✅
-   - Aprovar orçamentos: ✅
-   - Visualiza todos pedidos (não apenas próprios)
+   - ✅ Aprovar pedidos
+   - ✅ Aprovar orçamentos
+   - ✅ Visualiza todos pedidos (não apenas próprios)
 
 3. **Operador de Caixa** - Operações básicas caixa
-   - Baixar contas a receber: ✅
-   - Abrir/fechar caixa: ✅
-   - Limite aprovação: R$ 0 (sem aprovação)
+   - ✅ Baixar contas a receber
+   - ✅ Abrir/fechar caixa
+   - ✅ Limite aprovação: R$ 0 (sem aprovação)
 
 4. **Diretor - Aprovador Máximo** - Aprovação ilimitada
-   - Limite aprovação pagamento: ILIMITADO
-   - Limite aprovação compra: ILIMITADO
-   - Todas permissões: ✅
+   - ✅ Limite aprovação pagamento: ILIMITADO
+   - ✅ Limite aprovação compra: ILIMITADO
+   - ✅ Todas permissões
+
+5. **Analista Financeiro** - Perfil operacional financeiro
+   - ✅ Baixar títulos a receber/pagar
+   - ✅ Consultar caixa e conciliação
+   - ✅ Limite aprovação: R$ 5.000,00
+
+6. **Supervisor Comercial** - Aprovação intermediária
+   - ✅ Aprovar pedidos e descontos até 15%
+   - ✅ Aprovar orçamentos
+   - ✅ Limite aprovação: R$ 15.000,00
 
 ### ✅ Pedidos com Aprovação Hierárquica (2 registros)
 1. **PED-2025-APROV-001** - Status: Aguardando Aprovação
@@ -225,9 +250,10 @@ Aprova/Nega → Notifica Vendedor → Libera Pedido
 
 ### ETAPA 2
 - [x] 5 Entidades estruturantes criadas
-- [x] 27 Registros de exemplo inseridos
-- [x] ✅ **Produtos com Tributação Completa** (ICMS+PIS+COFINS+IPI)
-- [x] ✅ **Produtos com Estoque Avançado** (Lote/Validade/Localização)
+- [x] 29 Registros de exemplo inseridos
+- [x] ✅ **4 Produtos com Tributação Completa** (ICMS+PIS+COFINS+IPI)
+- [x] ✅ **4 Produtos com Estoque Avançado** (Lote/Validade/Localização)
+- [x] ✅ **Snapshots Sincronizados** (setor_atividade_nome, grupo_produto_nome, marca_nome)
 - [x] Produto 7 abas sempre visíveis
 - [x] Tripla classificação obrigatória
 - [x] DashboardEstruturantes integrado
@@ -246,9 +272,9 @@ Aprova/Nega → Notifica Vendedor → Libera Pedido
 ### ETAPA 4
 - [x] CaixaMovimento entity criada
 - [x] 4 Movimentos de exemplo criados
-- [x] ✅ **Perfis com Permissões Financeiras** (4 perfis criados)
-- [x] ✅ **Perfis com Permissões de Aprovação** (Gestor + Diretor)
-- [x] ✅ **Perfis com Permissões Caixa** (Gerente + Operador + Diretor)
+- [x] ✅ **6 Perfis com Permissões Financeiras** (Gerente, Analista, Operador, Diretor)
+- [x] ✅ **4 Perfis com Permissões de Aprovação** (Gestor, Supervisor, Diretor, Gerente)
+- [x] ✅ **3 Perfis com Permissões Caixa** (Gerente + Operador + Diretor)
 - [x] ✅ **Pedidos com campos aprovação** (2 pedidos exemplo)
 - [x] ✅ **Aprovação Hierárquica Descontos** (1 pendente + 1 aprovado)
 - [x] ✅ **PerfilAcesso com permissões ETAPA 4** (100% completo)
