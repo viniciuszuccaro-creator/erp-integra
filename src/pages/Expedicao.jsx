@@ -469,7 +469,10 @@ export default function Expedicao() {
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
               <Truck className="w-8 h-8 text-blue-600" />
-              Expedição e Logística
+              Expedição e Logística V21.4 GOLD
+              <Badge className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-3 py-1 shadow-lg animate-pulse">
+                E2✅ E3✅ E4✅
+              </Badge>
             </h1>
             <p className="text-slate-600 mt-1">
               {estaNoGrupo
