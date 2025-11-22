@@ -54,6 +54,7 @@ import StatusFase1 from "../components/sistema/StatusFase1";
 import StatusFase2 from "../components/sistema/StatusFase2";
 import StatusFase3 from "../components/sistema/StatusFase3";
 import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
+import StatusFinal100 from "../components/sistema/STATUS_FINAL_100";
 import { useWindow } from "@/components/lib/useWindow";
 
 
