@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -468,10 +469,7 @@ export default function Expedicao() {
           <div>
             <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
               <Truck className="w-8 h-8 text-blue-600" />
-              Expedição e Logística V21.4 GOLD
-              <Badge className="bg-gradient-to-r from-orange-600 to-amber-600 text-white px-3 py-1 shadow-lg animate-pulse">
-                E2✅ E3✅ E4✅
-              </Badge>
+              Expedição e Logística
             </h1>
             <p className="text-slate-600 mt-1">
               {estaNoGrupo

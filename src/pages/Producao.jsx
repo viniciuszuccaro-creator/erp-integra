@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -137,10 +138,7 @@ export default function Producao() {
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
               <Factory className="w-8 h-8 text-blue-600" />
-              Produção e Manufatura V21.4 GOLD
-              <Badge className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-1 shadow-lg animate-pulse">
-                E2✅ E3✅ E4✅
-              </Badge>
+              Produção e Manufatura
             </h1>
             <p className="text-slate-600">
               {estaNoGrupo

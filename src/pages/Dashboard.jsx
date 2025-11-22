@@ -27,8 +27,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   LineChart,
   Line,
@@ -54,7 +54,6 @@ import StatusFase1 from "../components/sistema/StatusFase1";
 import StatusFase2 from "../components/sistema/StatusFase2";
 import StatusFase3 from "../components/sistema/StatusFase3";
 import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
-import BadgeCertificacaoFinal from "../components/sistema/BadgeCertificacaoFinal";
 import { useWindow } from "@/components/lib/useWindow";
 
 
@@ -598,19 +597,11 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      {/* 🏆 CERTIFICAÇÃO FINAL ETAPAS 2, 3 E 4 */}
-      <BadgeCertificacaoFinal variant="full" />
-
+    <div className="p-6 lg:p-8 space-y-6"> {/* Changed space-y-8 to space-y-6 */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-            Dashboard Executivo V21.4 GOLD
-            <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-3 py-1 shadow-lg animate-pulse">
-              GOLD EDITION
-            </Badge>
-          </h1>
-          <p className="text-slate-600">Visão geral e análises do negócio • 47 Entidades • 28 IAs • 94+ Janelas</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Executivo</h1>
+          <p className="text-slate-600">Visão geral das operações da empresa</p>
         </div>
         <div className="flex gap-3 items-center">
           {/* Removed visualizacao toggle buttons */}
