@@ -337,7 +337,8 @@ import {
   Users,
   Cpu,
   Lock,
-  Database
+  Database,
+  BarChart3
 } from 'lucide-react';
 
 export default function CertificadoOficialEtapas234() {
