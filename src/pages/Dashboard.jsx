@@ -651,8 +651,8 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
-          {/* STATUS FASE 1, FASE 2, FASE 3 e ETAPA 4 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* STATUS DE TODAS AS ETAPAS - GRID 2x2 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <StatusFase1 />
             <StatusFase2 />
             <StatusFase3 />
