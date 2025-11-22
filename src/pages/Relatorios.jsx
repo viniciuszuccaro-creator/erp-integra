@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -266,7 +265,12 @@ export default function Relatorios() {
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Relatórios e Análises</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+        Relatórios e Análises V21.4 GOLD
+        <Badge className="bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white px-3 py-1 shadow-lg animate-pulse">
+          E2✅ E3✅ E4✅
+        </Badge>
+      </h1>
         <p className="text-slate-600">Relatórios estratégicos, análises gerenciais e exportação de dados</p>
       </div>
 

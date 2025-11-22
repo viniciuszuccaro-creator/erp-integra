@@ -744,7 +744,12 @@ export default function Agenda() {
   return (
     <div className="p-6 lg:p-8 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Agenda e Calendário</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+        Agenda e Calendário V21.4 GOLD
+        <Badge className="bg-gradient-to-r from-violet-600 to-purple-600 text-white px-3 py-1 shadow-lg animate-pulse">
+          E2✅ E3✅ E4✅
+        </Badge>
+      </h1>
         <p className="text-slate-600">Gerencie compromissos, reuniões e lembretes com notificações automáticas</p>
       </div>
 

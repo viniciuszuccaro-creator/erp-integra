@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Users, ShoppingCart, Building2, FileText, TrendingUp, Upload } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import FornecedoresTab from "../components/compras/FornecedoresTab";
 import OrdensCompraTab from "../components/compras/OrdensCompraTab";
 import SolicitacoesCompraTab from "../components/compras/SolicitacoesCompraTab";
