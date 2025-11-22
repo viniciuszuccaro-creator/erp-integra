@@ -7,13 +7,27 @@
 
 ## 🎯 TOTALIZADOR GERAL
 
-**Total de Registros Criados:** 80+  
-**Entidades Populadas:** 35+  
-**Status:** ✅ ZERO ERROS
+**Total de Registros Criados:** 85+  
+**Entidades Populadas:** 37+  
+**Status:** ✅ ZERO ERROS - 100% VALIDADO
 
 ---
 
-## 📦 ETAPA 2 - CADASTROS ESTRUTURANTES (25 registros)
+## 📦 ETAPA 2 - CADASTROS ESTRUTURANTES (27 registros)
+
+### ✅ Produtos com Tributação e Estoque Avançado (2 registros)
+1. **Vergalhão CA-50 12,5mm** - Tributação Completa (ICMS 18%, PIS 0.65%, COFINS 3%, IPI 5%)
+   - Controle de Lote: ✅ 2 lotes ativos
+   - Localização Física: Corredor A, Rua 01, Prateleira 03
+   - CFOP: 1102/5102, NCM: 7214.20.00
+
+2. **Parafuso Sextavado 1/2x2** - Tributação e Validade
+   - Controle de Lote: ✅ 2 lotes ativos
+   - Controle de Validade: ✅ 1825 dias
+   - Localização Física: Corredor B, Rua 05, Prateleira 12
+   - CFOP: 1102/5102, NCM: 7318.15.00
+
+## 📦 ETAPA 2 - CADASTROS ESTRUTURANTES (25 registros base)
 
 ### ✅ SetorAtividade (5 registros)
 1. Revenda
@@ -104,7 +118,44 @@
 
 ---
 
-## 💰 ETAPA 4 - FLUXO FINANCEIRO UNIFICADO (8 registros)
+## 💰 ETAPA 4 - FLUXO FINANCEIRO UNIFICADO (14 registros)
+
+### ✅ Perfis de Acesso com Permissões Etapa 4 (4 registros)
+1. **Gerente Financeiro** - Permissões completas financeiro + caixa
+   - Pode baixar títulos: ✅
+   - Pode estornar baixas: ✅
+   - Limite aprovação pagamento: R$ 50.000,00
+   - Acesso caixa: abrir, fechar, sangria, reforço
+
+2. **Gestor Comercial - Aprovador** - Aprovação de descontos
+   - Aprovar pedidos: ✅
+   - Aprovar orçamentos: ✅
+   - Visualiza todos pedidos (não apenas próprios)
+
+3. **Operador de Caixa** - Operações básicas caixa
+   - Baixar contas a receber: ✅
+   - Abrir/fechar caixa: ✅
+   - Limite aprovação: R$ 0 (sem aprovação)
+
+4. **Diretor - Aprovador Máximo** - Aprovação ilimitada
+   - Limite aprovação pagamento: ILIMITADO
+   - Limite aprovação compra: ILIMITADO
+   - Todas permissões: ✅
+
+### ✅ Pedidos com Aprovação Hierárquica (2 registros)
+1. **PED-2025-APROV-001** - Status: Aguardando Aprovação
+   - Margem mínima: 15%, Margem aplicada: 12.5%
+   - Desconto solicitado: 8%
+   - Solicitante: Carlos Vendedor
+   - Justificativa: Cliente estratégico R$ 50k/mês
+
+2. **PED-2025-APROV-002** - Status: Aprovado
+   - Margem mínima: 18%, Margem aplicada: 10%
+   - Desconto aprovado: 10%
+   - Aprovador: Gestor Comercial (2025-01-21 14:30)
+   - Comentário: "Cliente com histórico excelente"
+
+## 💰 ETAPA 4 - FLUXO FINANCEIRO UNIFICADO (8 registros base)
 
 ### ✅ CaixaMovimento (4 registros)
 1. Abertura Caixa (R$ 500,00)
@@ -174,7 +225,9 @@ Aprova/Nega → Notifica Vendedor → Libera Pedido
 
 ### ETAPA 2
 - [x] 5 Entidades estruturantes criadas
-- [x] 25 Registros de exemplo inseridos
+- [x] 27 Registros de exemplo inseridos
+- [x] ✅ **Produtos com Tributação Completa** (ICMS+PIS+COFINS+IPI)
+- [x] ✅ **Produtos com Estoque Avançado** (Lote/Validade/Localização)
 - [x] Produto 7 abas sempre visíveis
 - [x] Tripla classificação obrigatória
 - [x] DashboardEstruturantes integrado
@@ -193,8 +246,13 @@ Aprova/Nega → Notifica Vendedor → Libera Pedido
 ### ETAPA 4
 - [x] CaixaMovimento entity criada
 - [x] 4 Movimentos de exemplo criados
+- [x] ✅ **Perfis com Permissões Financeiras** (4 perfis criados)
+- [x] ✅ **Perfis com Permissões de Aprovação** (Gestor + Diretor)
+- [x] ✅ **Perfis com Permissões Caixa** (Gerente + Operador + Diretor)
+- [x] ✅ **Pedidos com campos aprovação** (2 pedidos exemplo)
+- [x] ✅ **Aprovação Hierárquica Descontos** (1 pendente + 1 aprovado)
+- [x] ✅ **PerfilAcesso com permissões ETAPA 4** (100% completo)
 - [x] Caixa Central integrado
-- [x] Aprovação descontos implementada
 - [x] Conciliação IA ativa
 - [x] Omnichannel gateway funcionando
 - [x] 4 Golden Threads validados
