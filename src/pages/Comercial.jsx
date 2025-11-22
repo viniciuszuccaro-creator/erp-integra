@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck } from "lucide-react";
 import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
-import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
 import ComissoesTab from "../components/comercial/ComissoesTab";
+import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
 import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab"; // Keeping import as outline didn't specify removal
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
@@ -27,7 +27,6 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
 import NotaFiscalFormCompleto from "../components/comercial/NotaFiscalFormCompleto";
 import { useWindow } from "@/components/lib/useWindow";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 /**
  * Módulo Comercial - V12.0 COMPLETO
@@ -299,189 +298,60 @@ export default function Comercial() {
         </TabsList>
 
         <TabsContent value="clientes">
-          <div className="space-y-4">
-            <Alert className="border-blue-300 bg-blue-50">
-              <AlertDescription className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-blue-900">👥 Gestão de Clientes</p>
-                  <p className="text-xs text-blue-700">Cadastro centralizado com multiempresa e CRM integrado</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => openWindow(ClientesTab, { 
-                    clientes,
-                    windowMode: true 
-                  }, {
-                    title: '👥 Clientes - Multitarefa',
-                    width: 1600,
-                    height: 900
-                  })}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Abrir em Janela
-                </Button>
-              </AlertDescription>
-            </Alert>
-            <ClientesTab 
-              clientes={clientes} 
-              isLoading={loadingClientes} 
-              onViewCliente={(cliente) => {
-                setClienteParaPainel(cliente);
-                setPainelClienteAberto(true);
-              }}
-            />
-          </div>
+          <ClientesTab 
+            clientes={clientes} 
+            isLoading={loadingClientes} 
+            onViewCliente={(cliente) => {
+              setClienteParaPainel(cliente);
+              setPainelClienteAberto(true);
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="pedidos">
-          <div className="space-y-4">
-            <Alert className="border-purple-300 bg-purple-50">
-              <AlertDescription className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-purple-900">🛒 Gestão de Pedidos</p>
-                  <p className="text-xs text-purple-700">Wizard completo com aprovação hierárquica de descontos</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => openWindow(PedidosTab, { 
-                    pedidos,
-                    clientes,
-                    empresas,
-                    onCreatePedido: handleCreateNewPedido,
-                    onEditPedido: handleEditPedido,
-                    windowMode: true 
-                  }, {
-                    title: '🛒 Pedidos - Multitarefa',
-                    width: 1600,
-                    height: 900
-                  })}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Abrir em Janela
-                </Button>
-              </AlertDescription>
-            </Alert>
-            <PedidosTab 
-              pedidos={pedidos} 
-              clientes={clientes} 
-              isLoading={loadingPedidos} 
-              empresas={empresas}
-              onCreatePedido={handleCreateNewPedido}
-              onEditPedido={handleEditPedido}
-            />
-          </div>
+          <PedidosTab 
+            pedidos={pedidos} 
+            clientes={clientes} 
+            isLoading={loadingPedidos} 
+            empresas={empresas} // Added empresas prop for printing or other order details
+            onCreatePedido={handleCreateNewPedido} // Added prop to open new order form
+            onEditPedido={handleEditPedido} // Added prop to open edit order form
+          />
         </TabsContent>
 
         {/* Removed TabelasPrecoTab TabsContent */}
 
         <TabsContent value="comissoes">
-          <div className="space-y-4">
-            <Alert className="border-purple-300 bg-purple-50">
-              <AlertDescription className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-purple-900">💰 Gestão de Comissões</p>
-                  <p className="text-xs text-purple-700">Calcule, aprove e pague comissões de vendas - Sistema automático com cálculo na liquidação</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => openWindow(ComissoesTab, { 
-                    comissoes, 
-                    pedidos, 
-                    empresas,
-                    windowMode: true 
-                  }, {
-                    title: '💰 Comissões - Multitarefa',
-                    width: 1400,
-                    height: 800
-                  })}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  Abrir em Janela
-                </Button>
-              </AlertDescription>
-            </Alert>
-            <ComissoesTab comissoes={comissoes} pedidos={pedidos} empresas={empresas} />
-          </div>
+          <ComissoesTab comissoes={comissoes} pedidos={pedidos} />
         </TabsContent>
 
         <TabsContent value="notas">
-          <div className="space-y-4">
-            <Alert className="border-green-300 bg-green-50">
-              <AlertDescription className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-green-900">📄 Notas Fiscais Eletrônicas</p>
-                  <p className="text-xs text-green-700">Emissão, cancelamento e gestão completa de NF-e/NFC-e/NFS-e</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => openWindow(NotasFiscaisTab, { 
-                    notasFiscais,
-                    pedidos,
-                    clientes,
-                    onCreateNFe: () => openWindow(
-                      NotaFiscalFormCompleto,
-                      { 
-                        windowMode: true,
-                        onSubmit: async (formData) => {
-                          try {
-                            await base44.entities.NotaFiscal.create(formData);
-                            toast.success("✅ NF-e salva!");
-                            queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
-                          } catch (error) {
-                            toast.error("Erro: " + error.message);
-                          }
-                        },
-                        onCancel: () => {}
-                      },
-                      {
-                        title: '📄 Nova NF-e',
-                        width: 1200,
-                        height: 750
-                      }
-                    ),
-                    windowMode: true 
-                  }, {
-                    title: '📄 Notas Fiscais - Multitarefa',
-                    width: 1600,
-                    height: 900
-                  })}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Abrir em Janela
-                </Button>
-              </AlertDescription>
-            </Alert>
-            <NotasFiscaisTab 
-              notasFiscais={notasFiscais} 
-              pedidos={pedidos} 
-              clientes={clientes}
-              onCreateNFe={() => openWindow(
-                NotaFiscalFormCompleto,
-                { 
-                  windowMode: true,
-                  onSubmit: async (formData) => {
-                    try {
-                      await base44.entities.NotaFiscal.create(formData);
-                      toast.success("✅ NF-e salva com sucesso!");
-                      queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
-                    } catch (error) {
-                      toast.error("Erro ao salvar NF-e: " + error.message);
-                    }
-                  },
-                  onCancel: () => {}
+          <NotasFiscaisTab 
+            notasFiscais={notasFiscais} 
+            pedidos={pedidos} 
+            clientes={clientes}
+            onCreateNFe={() => openWindow(
+              NotaFiscalFormCompleto,
+              { 
+                windowMode: true,
+                onSubmit: async (formData) => {
+                  try {
+                    await base44.entities.NotaFiscal.create(formData);
+                    toast.success("✅ NF-e salva com sucesso!");
+                    queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
+                  } catch (error) {
+                    toast.error("Erro ao salvar NF-e: " + error.message);
+                  }
                 },
-                {
-                  title: '📄 Nova NF-e',
-                  width: 1200,
-                  height: 750
-                }
-              )}
-            />
-          </div>
+                onCancel: () => {}
+              },
+              {
+                title: '📄 Nova NF-e',
+                width: 1200,
+                height: 750
+              }
+            )}
+          />
         </TabsContent>
 
         {/* NOVO: Conteúdo Tab Vendas Externas */}
@@ -532,59 +402,11 @@ export default function Comercial() {
 
         {/* ETAPA 4: Tab Aprovação de Descontos */}
         <TabsContent value="aprovacoes">
-          <div className="space-y-4">
-            <Alert className="border-orange-300 bg-orange-50">
-              <AlertDescription className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-orange-900">🔐 Aprovação de Descontos</p>
-                  <p className="text-xs text-orange-700">Controle hierárquico de aprovações com análise de margem</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => openWindow(AprovacaoDescontosManager, { 
-                    windowMode: true 
-                  }, {
-                    title: '🔐 Aprovação de Descontos - Multitarefa',
-                    width: 1400,
-                    height: 800
-                  })}
-                  className="bg-orange-600 hover:bg-orange-700"
-                >
-                  <ShieldCheck className="w-4 h-4 mr-2" />
-                  Abrir em Janela
-                </Button>
-              </AlertDescription>
-            </Alert>
-            <AprovacaoDescontosManager windowMode={false} />
-          </div>
+          <AprovacaoDescontosManager windowMode={false} />
         </TabsContent>
 
         <TabsContent value="tabelas-preco">
-          <div className="space-y-4">
-            <Alert className="border-indigo-300 bg-indigo-50">
-              <AlertDescription className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-indigo-900">💰 Tabelas de Preço</p>
-                  <p className="text-xs text-indigo-700">Gestão centralizada no módulo de Cadastros Gerais</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => openWindow(TabelasPrecoTab, { 
-                    windowMode: true 
-                  }, {
-                    title: '💰 Tabelas de Preço - Multitarefa',
-                    width: 1200,
-                    height: 700
-                  })}
-                  className="bg-indigo-600 hover:bg-indigo-700"
-                >
-                  <DollarSign className="w-4 h-4 mr-2" />
-                  Abrir em Janela
-                </Button>
-              </AlertDescription>
-            </Alert>
-            <TabelasPrecoTab />
-          </div>
+          <TabelasPrecoTab tabelasPreco={tabelasPreco} />
         </TabsContent>
       </Tabs>
 

@@ -123,17 +123,11 @@ function AprovacaoDescontosManager({ windowMode = false }) {
   };
 
   const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-orange-50" 
+    ? "w-full h-full overflow-auto p-6" 
     : "space-y-6";
-
-  const contentClass = windowMode
-    ? "flex-1 overflow-auto p-4 lg:p-6"
-    : "";
 
   return (
     <div className={containerClass}>
-      <div className={contentClass}>
-      <div className="space-y-6">
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -444,8 +438,6 @@ function AprovacaoDescontosManager({ windowMode = false }) {
           )}
         </DialogContent>
       </Dialog>
-      </div>
-      </div>
     </div>
   );
 }

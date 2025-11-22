@@ -9,19 +9,9 @@ import { Link } from 'react-router-dom';
  * V21.1.2 - TAB DE TABELAS DE PREÇO NO COMERCIAL
  * Apenas visualização - gerenciamento completo está em Cadastros
  */
-export default function TabelasPrecoTab({ windowMode = false }) {
-  const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-blue-50" 
-    : "space-y-6";
-
-  const contentClass = windowMode
-    ? "flex-1 overflow-auto p-4 lg:p-6"
-    : "";
-
+export default function TabelasPrecoTab() {
   return (
-    <div className={containerClass}>
-      <div className={contentClass}>
-      <div className="space-y-6">
+    <div className="space-y-6">
       <Alert className="border-blue-200 bg-blue-50">
         <DollarSign className="w-5 h-5 text-blue-600" />
         <AlertDescription>
@@ -49,8 +39,6 @@ export default function TabelasPrecoTab({ windowMode = false }) {
           Para criar, editar ou configurar tabelas de preço, acesse:<br />
           <strong>Cadastros Gerais → Produtos e Serviços → Tabelas de Preço</strong>
         </p>
-      </div>
-      </div>
       </div>
     </div>
   );

@@ -33,7 +33,7 @@ import DetalhesComissao from "./DetalhesComissao";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
-export default function ComissoesTab({ comissoes, pedidos, empresas = [], windowMode = false }) {
+export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
   const [periodoCalculo, setPeriodoCalculo] = useState("mes");
   const [searchTerm, setSearchTerm] = useState("");
   const [calculoDialogOpen, setCalculoDialogOpen] = useState(false);
@@ -251,18 +251,8 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [], window
     'Cancelada': 'bg-red-100 text-red-700'
   };
 
-  const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-slate-50" 
-    : "space-y-6";
-
-  const contentClass = windowMode
-    ? "flex-1 overflow-auto p-4 lg:p-6"
-    : "";
-
   return (
-    <div className={containerClass}>
-      <div className={contentClass}>
-      <div className="space-y-6">
+    <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-0 shadow-md">
@@ -571,8 +561,6 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [], window
       </Card>
 
       {/* Dialog de Visualização REMOVIDO - Agora usa Window */}
-      </div>
-      </div>
     </div>
   );
 }

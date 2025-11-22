@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-export default function ClientesTab({ clientes, windowMode = false }) {
+export default function ClientesTab({ clientes }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
 
@@ -32,18 +32,8 @@ export default function ClientesTab({ clientes, windowMode = false }) {
     return empresa?.nome_fantasia || empresa?.razao_social || '-';
   };
 
-  const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-blue-50" 
-    : "space-y-6";
-
-  const contentClass = windowMode
-    ? "flex-1 overflow-auto p-4 lg:p-6"
-    : "";
-
   return (
-    <div className={containerClass}>
-      <div className={contentClass}>
-      <div className="space-y-6">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Clientes</h2>
         <Link to={createPageUrl('Cadastros') + '?tab=clientes'}>
@@ -170,8 +160,6 @@ export default function ClientesTab({ clientes, windowMode = false }) {
           )}
         </CardContent>
       </Card>
-      </div>
-      </div>
     </div>
   );
 }

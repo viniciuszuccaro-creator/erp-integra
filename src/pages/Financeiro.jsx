@@ -33,9 +33,9 @@ import ConfiguracaoCobranca from "../components/financeiro/ConfiguracaoCobranca"
 import RelatorioFinanceiro from "../components/financeiro/RelatorioFinanceiro";
 import RateioMultiempresa from "../components/financeiro/RateioMultiempresa";
 import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
-import { useWindow } from "@/components/lib/useWindow";
 import ReguaCobrancaIA from "../components/financeiro/ReguaCobrancaIA";
 import usePermissions from "@/components/lib/usePermissions";
+import { useWindow } from "@/components/lib/useWindow";
 import ContaReceberForm from "../components/financeiro/ContaReceberForm";
 import ContaPagarForm from "../components/financeiro/ContaPagarForm";
 import CaixaCentralLiquidacao from "../components/financeiro/CaixaCentralLiquidacao";
@@ -43,7 +43,6 @@ import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -374,28 +373,7 @@ export default function Financeiro() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="caixa-diario" className="space-y-4">
-          <Alert className="border-green-300 bg-green-50">
-            <TrendingUp className="w-4 h-4 text-green-600" />
-            <AlertDescription className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold text-green-900">💰 Caixa e Liquidação</p>
-                <p className="text-xs text-green-700">Controle de caixa diário + Central de liquidação unificada + Comissões automáticas</p>
-              </div>
-              <Button
-                size="sm"
-                onClick={() => openWindow(CaixaDiarioTab, { windowMode: true }, {
-                  title: '💰 Caixa Diário - Multitarefa',
-                  width: 1400,
-                  height: 800
-                })}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Wallet className="w-4 h-4 mr-2" />
-                Abrir em Janela
-              </Button>
-            </AlertDescription>
-          </Alert>
+        <TabsContent value="caixa-diario">
           <CaixaDiarioTab />
         </TabsContent>
 
@@ -417,31 +395,7 @@ export default function Financeiro() {
 
         {estaNoGrupo && (
           <TabsContent value="rateios">
-            <div className="space-y-4">
-              <Alert className="border-purple-300 bg-purple-50">
-                <AlertDescription className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-purple-900">🔀 Rateio Multi-Empresa</p>
-                    <p className="text-xs text-purple-700">Distribuição automática de despesas e receitas entre empresas do grupo</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => openWindow(RateioMultiempresa, { 
-                      empresas: empresasDoGrupo,
-                      grupoId: empresasDoGrupo[0]?.grupo_id,
-                      windowMode: true 
-                    }, {
-                      title: '🔀 Rateio Multi-Empresa - Multitarefa',
-                      width: 1400,
-                      height: 800
-                    })}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    <Split className="w-4 h-4 mr-2" />
-                    Abrir em Janela
-                  </Button>
-                </AlertDescription>
-              </Alert>
+            <div className="space-y-6">
               <RateioMultiempresa
                 empresas={empresasDoGrupo}
                 grupoId={empresasDoGrupo[0]?.grupo_id}
@@ -513,32 +467,7 @@ export default function Financeiro() {
         )}
 
         <TabsContent value="relatorios">
-          <div className="space-y-4">
-            <Alert className="border-green-300 bg-green-50">
-              <AlertDescription className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-green-900">📊 Relatórios Financeiros</p>
-                  <p className="text-xs text-green-700">Análises detalhadas, formas de pagamento, efetividade e provisão</p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={() => openWindow(RelatorioFinanceiro, { 
-                    empresaId: empresaAtual?.id,
-                    windowMode: true 
-                  }, {
-                    title: '📊 Relatórios Financeiros - Multitarefa',
-                    width: 1600,
-                    height: 900
-                  })}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <BarChart3 className="w-4 h-4 mr-2" />
-                  Abrir em Janela
-                </Button>
-              </AlertDescription>
-            </Alert>
-            <RelatorioFinanceiro empresaId={empresaAtual?.id} />
-          </div>
+          <RelatorioFinanceiro empresaId={empresaAtual?.id} />
         </TabsContent>
       </Tabs>
     </div>

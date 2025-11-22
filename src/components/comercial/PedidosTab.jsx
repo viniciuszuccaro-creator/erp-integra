@@ -30,7 +30,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
 import AprovacaoDescontosManager from "./AprovacaoDescontosManager";
 
-export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, windowMode = false }) {
+export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const { toast } = useToast();
@@ -57,18 +57,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const pedidosAprovados = pedidos.filter(p => p.status_aprovacao === "aprovado");
   const pedidosNegados = pedidos.filter(p => p.status_aprovacao === "negado");
 
-  const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-blue-50" 
-    : "space-y-6";
-
-  const contentClass = windowMode
-    ? "flex-1 overflow-auto p-4 lg:p-6"
-    : "";
-
   return (
-    <div className={containerClass}>
-      <div className={contentClass}>
-      <div className="space-y-6">
+    <div className="space-y-6">
       {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Alert className="border-orange-300 bg-orange-50">
@@ -351,8 +341,6 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
           )}
         </CardContent>
       </Card>
-      </div>
-      </div>
     </div>
   );
 }

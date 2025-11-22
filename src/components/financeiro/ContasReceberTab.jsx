@@ -46,7 +46,7 @@ import ContaReceberForm from "./ContaReceberForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
+export default function ContasReceberTab({ contas, empresas = [] }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
@@ -591,18 +591,8 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
     vencido: filteredContas.filter(c => c.status === 'Atrasado').reduce((sum, c) => sum + (c.valor || 0), 0)
   };
 
-  const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-slate-50" 
-    : "space-y-6";
-
-  const contentClass = windowMode
-    ? "flex-1 overflow-auto p-4"
-    : "";
-
   return (
-    <div className={containerClass}>
-      <div className={contentClass}>
-      <div className="space-y-6">
+    <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -1146,8 +1136,6 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           contaReceber={contaParaSimulacao}
         />
       )}
-      </div>
-      </div>
     </div>
   );
 }

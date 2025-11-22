@@ -29,7 +29,7 @@ import { TrendingUp, TrendingDown, DollarSign, CreditCard, Download, Filter } fr
 /**
  * Relatórios Financeiros Avançados
  */
-export default function RelatorioFinanceiro({ empresaId, windowMode = false }) {
+export default function RelatorioFinanceiro({ empresaId }) {
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
   const [filtroCliente, setFiltroCliente] = useState("todos");
@@ -108,18 +108,8 @@ export default function RelatorioFinanceiro({ empresaId, windowMode = false }) {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
-  const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-white to-green-50" 
-    : "space-y-6";
-
-  const contentClass = windowMode
-    ? "flex-1 overflow-auto p-4 lg:p-6"
-    : "";
-
   return (
-    <div className={containerClass}>
-      <div className={contentClass}>
-      <div className="space-y-6">
+    <div className="space-y-6">
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
@@ -341,8 +331,6 @@ export default function RelatorioFinanceiro({ empresaId, windowMode = false }) {
           </Card>
         </TabsContent>
       </Tabs>
-      </div>
-      </div>
     </div>
   );
 }
