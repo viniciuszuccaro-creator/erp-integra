@@ -33,7 +33,6 @@ import ValidadorEtapa4 from './pages/ValidadorEtapa4';
 import ValidadorFinalEtapas234 from './pages/ValidadorFinalEtapas234';
 import CertificacaoFinal from './pages/CertificacaoFinal';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
-import Integracoes from './pages/Integracoes';
 import __Layout from './Layout.jsx';
 
 
@@ -73,7 +72,6 @@ export const PAGES = {
     "ValidadorFinalEtapas234": ValidadorFinalEtapas234,
     "CertificacaoFinal": CertificacaoFinal,
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
-    "Integracoes": Integracoes,
 }
 
 export const pagesConfig = {
