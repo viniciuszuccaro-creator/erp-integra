@@ -43,6 +43,7 @@ import FeriasForm from "@/components/rh/FeriasForm";
 import { useWindow } from "@/components/lib/useWindow";
 import MonitoramentoRHInteligente from "@/components/rh/MonitoramentoRHInteligente";
 import PontoEletronicoBiometrico from "@/components/rh/PontoEletronicoBiometrico";
+import DashboardRHRealtime from "../components/rh/DashboardRHRealtime";
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
@@ -194,10 +195,11 @@ export default function RH() {
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-6 mb-6">
+              <TabsList className="grid w-full grid-cols-7 mb-6">
                 <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
                 <TabsTrigger value="ponto">Ponto</TabsTrigger>
                 <TabsTrigger value="ponto-biometrico">🔒 Ponto Biométrico</TabsTrigger>
+                <TabsTrigger value="dashboard-realtime">📊 Dashboard</TabsTrigger>
                 <TabsTrigger value="ferias">Férias</TabsTrigger>
                 <TabsTrigger value="gamificacao">🏆 Rankings</TabsTrigger>
                 <TabsTrigger value="monitoramento-ia">🤖 Monitoramento IA</TabsTrigger>
@@ -306,6 +308,10 @@ export default function RH() {
                     <PontoEletronicoBiometrico />
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="dashboard-realtime">
+                <DashboardRHRealtime empresaId={user?.empresa_padrao_id} />
               </TabsContent>
 
               <TabsContent value="ferias" className="space-y-4">

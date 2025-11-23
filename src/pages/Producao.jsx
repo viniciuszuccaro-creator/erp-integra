@@ -51,6 +51,7 @@ import KanbanProducao from "../components/producao/KanbanProducao"; // Existing 
 import DashboardRefugoIA from "../components/producao/DashboardRefugoIA";
 import DigitalTwin3D from "../components/producao/DigitalTwin3D";
 import IADiagnosticoEquipamentos from "../components/producao/IADiagnosticoEquipamentos";
+import DashboardProducaoRealtime from "../components/producao/DashboardProducaoRealtime";
 
 export default function Producao() {
   const [activeTab, setActiveTab] = useState("kanban"); // ALTERADO: default agora é kanban
@@ -245,6 +246,10 @@ export default function Producao() {
             <TabsTrigger value="documentos" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <FileText className="w-4 h-4 mr-2" />
               Documentos
+            </TabsTrigger>
+            <TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+              <Activity className="w-4 h-4 mr-2" />
+              Dashboard Realtime
             </TabsTrigger>
             <TabsTrigger value="relatorios" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
@@ -525,6 +530,10 @@ export default function Producao() {
           {/* NEW: Added TabsContent for documentos */}
           <TabsContent value="documentos">
             <DocumentosProducao />
+          </TabsContent>
+
+          <TabsContent value="dashboard-realtime">
+            <DashboardProducaoRealtime empresaId={empresaAtual?.id} />
           </TabsContent>
 
           <TabsContent value="relatorios">

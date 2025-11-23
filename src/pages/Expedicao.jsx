@@ -62,6 +62,7 @@ import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTranspo
 import { useRealtimeEntregas } from '@/components/lib/useRealtimeData';
 import MapaTempoReal from '../components/expedicao/MapaTempoReal';
 import DetalhesEntregaView from "../components/expedicao/DetalhesEntregaView";
+import DashboardEntregasRealtime from "../components/expedicao/DashboardEntregasRealtime";
 
 export default function Expedicao() {
   const [activeTab, setActiveTab] = useState("entregas");
@@ -556,6 +557,10 @@ export default function Expedicao() {
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
               Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+              <Activity className="w-4 h-4 mr-2" />
+              Realtime
             </TabsTrigger>
             <TabsTrigger value="relatorios" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <FileText className="w-4 h-4 mr-2" />
@@ -1077,6 +1082,11 @@ export default function Expedicao() {
           {/* NOVA ABA: DASHBOARD */}
           <TabsContent value="dashboard">
             <DashboardLogistico entregas={entregasFiltradas} />
+          </TabsContent>
+
+          {/* NOVA ABA: DASHBOARD REALTIME */}
+          <TabsContent value="dashboard-realtime">
+            <DashboardEntregasRealtime empresaId={empresaAtual?.id} />
           </TabsContent>
 
           {/* Added: NEW TAB: RELATÓRIOS */}
