@@ -159,6 +159,14 @@
 - ✅ Badges de funcionalidades
 - ✅ Visível apenas para admins
 
+#### 19. **FAQ e Ajuda** (`components/portal/FAQAjuda.jsx`)
+- ✅ Perguntas frequentes por categoria
+- ✅ Busca inteligente
+- ✅ Accordion expansível com animações
+- ✅ Contatos de suporte
+- ✅ 5 categorias completas
+- ✅ w-full responsivo
+
 ---
 
 ## 🎨 DESIGN E UX
@@ -351,8 +359,8 @@
 **PORTAL 100% FUNCIONAL E PRONTO PARA PRODUÇÃO**
 
 ### Números Finais
-- ✅ **13 ABAS FUNCIONAIS** organizadas
-- ✅ **18 COMPONENTES ROBUSTOS** integrados
+- ✅ **14 ABAS FUNCIONAIS** organizadas
+- ✅ **19 COMPONENTES ROBUSTOS** integrados
 - ✅ **Tempo Real** em 8 funcionalidades
 - ✅ **IA Integrada** em 5 módulos
 - ✅ **100% Mobile-Responsive** (w-full h-full)

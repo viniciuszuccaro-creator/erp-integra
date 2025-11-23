@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Home, ShoppingCart, FileText, Upload, DollarSign, LogOut, Package, Calendar, Download, LayoutDashboard, CheckCircle2, AlertTriangle, User, LogIn, ShoppingBag, Truck, MapPin, Navigation, MessageCircle, MessageSquare, Send, Target, TrendingUp, Settings } from "lucide-react";
+import { Home, ShoppingCart, FileText, Upload, DollarSign, LogOut, Package, Calendar, Download, LayoutDashboard, CheckCircle2, AlertTriangle, User, LogIn, ShoppingBag, Truck, MapPin, Navigation, MessageCircle, MessageSquare, Send, Target, TrendingUp, Settings, HelpCircle } from "lucide-react";
 import DashboardClienteInterativo from "@/components/portal/DashboardClienteInterativo";
 import ChatVendedor from "@/components/portal/ChatVendedor";
 import ChamadosCliente from "@/components/portal/ChamadosCliente";
@@ -25,6 +25,7 @@ import StatusWidgetPortal from "@/components/portal/StatusWidgetPortal";
 import ConfiguracoesPortal from "@/components/portal/ConfiguracoesPortal";
 import HistoricoComprasCliente from "@/components/portal/HistoricoComprasCliente";
 import ExportarDadosPortal from "@/components/portal/ExportarDadosPortal";
+import FAQAjuda from "@/components/portal/FAQAjuda";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
@@ -442,6 +443,10 @@ export default function PortalCliente() {
                 <Settings className="w-4 h-4" />
                 <span className="hidden sm:inline">Configurações</span>
               </TabsTrigger>
+              <TabsTrigger value="ajuda" className="flex items-center gap-2 whitespace-nowrap">
+                <HelpCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Ajuda</span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -691,6 +696,11 @@ export default function PortalCliente() {
               <ConfiguracoesPortal />
               <ExportarDadosPortal clienteId={cliente?.id} />
             </div>
+          </TabsContent>
+
+          {/* FAQ e Ajuda */}
+          <TabsContent value="ajuda">
+            <FAQAjuda />
           </TabsContent>
         </Tabs>
       </div>
