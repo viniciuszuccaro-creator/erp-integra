@@ -106,6 +106,36 @@ export default function CalcularComissoesForm({ onSubmit, onCancel, pedidos = []
       </h2>
       
       <div className="flex-1 space-y-4 overflow-y-auto">
+        {/* INFORMAÇÕES GERAIS DO SISTEMA */}
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <CardContent className="p-4 space-y-3">
+            <h4 className="font-bold text-blue-900 flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Dados Disponíveis no Sistema
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white p-3 rounded-lg border border-blue-100">
+                <span className="text-xs text-slate-500 block mb-1">Total de Pedidos</span>
+                <span className="font-bold text-2xl text-blue-600">{pedidos?.length || 0}</span>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-green-100">
+                <span className="text-xs text-slate-500 block mb-1">Pedidos Aprovados/Faturados</span>
+                <span className="font-bold text-2xl text-green-600">{pedidosDisponiveis.length}</span>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-purple-100">
+                <span className="text-xs text-slate-500 block mb-1">Vendedores Ativos</span>
+                <span className="font-bold text-2xl text-purple-600">{vendedoresUnicos.length}</span>
+              </div>
+              <div className="bg-white p-3 rounded-lg border border-orange-100">
+                <span className="text-xs text-slate-500 block mb-1">Total em Vendas</span>
+                <span className="font-bold text-xl text-orange-600">
+                  R$ {(totalVendasDisponiveis / 1000).toFixed(1)}k
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div>
           <Label htmlFor="periodo">Período</Label>
           <Select value={periodo} onValueChange={setPeriodo}>
@@ -146,6 +176,7 @@ export default function CalcularComissoesForm({ onSubmit, onCancel, pedidos = []
 
         <Card className="bg-slate-50 border-slate-200">
           <CardContent className="p-4 space-y-3">
+            <h4 className="font-semibold text-slate-900">📊 Estimativa de Cálculo:</h4>
             <div className="flex justify-between items-center">
               <span className="text-sm text-slate-600">Pedidos Disponíveis:</span>
               <span className="font-bold text-lg text-blue-600">{pedidosDisponiveis.length}</span>
@@ -162,7 +193,7 @@ export default function CalcularComissoesForm({ onSubmit, onCancel, pedidos = []
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-slate-600">Comissões Estimadas (5%):</span>
-              <span className="font-bold text-lg text-orange-600">
+              <span className="font-bold text-xl text-orange-600">
                 R$ {(totalVendasDisponiveis * 0.05).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </span>
             </div>
