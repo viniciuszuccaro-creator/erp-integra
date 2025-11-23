@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useWindow } from "@/components/lib/useWindow";
 
 /**
  * 🔐 APROVAÇÃO DE DESCONTOS MANAGER V21.4 ETAPA 4
@@ -39,6 +40,7 @@ function AprovacaoDescontosManager({ windowMode = false }) {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { openWindow } = useWindow();
 
   // QUERIES
   const { data: pedidos = [] } = useQuery({
@@ -238,7 +240,143 @@ function AprovacaoDescontosManager({ windowMode = false }) {
                     <TableCell>
                       <Button
                         size="sm"
-                        onClick={() => handleAbrirAprovacao(pedido)}
+                        onClick={() => {
+                          const AnalisePedidoAprovacao = ({ pedido: pedidoProp, onAprovar, onNegar, windowMode = false }) => {
+                            const [comentarios, setComentarios] = React.useState("");
+                            const [descontoAprovado, setDescontoAprovado] = React.useState(pedidoProp.desconto_solicitado_percentual || 0);
+                            
+                            const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "p-6";
+                            
+                            return (
+                              <div className={containerClass}>
+                                <div className="space-y-4">
+                                  <Card className="bg-slate-50">
+                                    <CardContent className="p-4">
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <Label className="text-xs text-slate-600">Pedido</Label>
+                                          <p className="font-semibold text-lg">{pedidoProp.numero_pedido}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-xs text-slate-600">Cliente</Label>
+                                          <p className="font-semibold">{pedidoProp.cliente_nome}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-xs text-slate-600">Valor Total</Label>
+                                          <p className="text-xl font-bold text-green-600">
+                                            R$ {(pedidoProp.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-xs text-slate-600">Vendedor</Label>
+                                          <p className="font-semibold">{pedidoProp.vendedor || '-'}</p>
+                                        </div>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+
+                                  <Card className="border-orange-200 bg-orange-50">
+                                    <CardContent className="p-4">
+                                      <div className="grid grid-cols-3 gap-4">
+                                        <div>
+                                          <Label className="text-xs text-orange-700">Margem Mínima</Label>
+                                          <p className="text-2xl font-bold text-orange-900">
+                                            {pedidoProp.margem_minima_produto || 0}%
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-xs text-orange-700">Desconto Solicitado</Label>
+                                          <p className="text-2xl font-bold text-orange-600">
+                                            {pedidoProp.desconto_solicitado_percentual || 0}%
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-xs text-orange-700">Margem Após Desconto</Label>
+                                          <p className={`text-2xl font-bold ${
+                                            (pedidoProp.margem_aplicada_vendedor || 0) < 5 ? 'text-red-600' :
+                                            (pedidoProp.margem_aplicada_vendedor || 0) < 10 ? 'text-yellow-600' :
+                                            'text-green-600'
+                                          }`}>
+                                            {(pedidoProp.margem_aplicada_vendedor || 0).toFixed(2)}%
+                                          </p>
+                                        </div>
+                                      </div>
+
+                                      {(pedidoProp.margem_aplicada_vendedor || 0) < 5 && (
+                                        <div className="mt-4 p-3 bg-red-100 border border-red-300 rounded-lg">
+                                          <div className="flex items-center gap-2 text-red-800">
+                                            <AlertCircle className="w-5 h-5" />
+                                            <span className="font-semibold">Atenção: Margem abaixo de 5% - Risco Alto</span>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </CardContent>
+                                  </Card>
+
+                                  <div>
+                                    <Label>Comentários da Aprovação/Negação</Label>
+                                    <Textarea
+                                      value={comentarios}
+                                      onChange={(e) => setComentarios(e.target.value)}
+                                      placeholder="Informe o motivo da decisão..."
+                                      rows={4}
+                                    />
+                                  </div>
+
+                                  <div className="flex justify-end gap-3">
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => onNegar(comentarios)}
+                                      className="border-red-300 text-red-600 hover:bg-red-50"
+                                    >
+                                      <XCircle className="w-4 h-4 mr-2" />
+                                      Negar Desconto
+                                    </Button>
+                                    <Button
+                                      className="bg-green-600 hover:bg-green-700"
+                                      onClick={() => onAprovar(descontoAprovado, comentarios)}
+                                    >
+                                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                                      Aprovar Desconto
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          };
+
+                          openWindow(
+                            AnalisePedidoAprovacao,
+                            {
+                              pedido,
+                              onAprovar: (descontoAprovado, comentarios) => {
+                                aprovarPedidoMutation.mutate({
+                                  pedidoId: pedido.id,
+                                  dados: {
+                                    desconto_aprovado_percentual: descontoAprovado,
+                                    comentarios_aprovacao: comentarios
+                                  }
+                                });
+                              },
+                              onNegar: (comentarios) => {
+                                if (!comentarios.trim()) {
+                                  toast({ title: "⚠️ Informe o motivo da negação", variant: "destructive" });
+                                  return;
+                                }
+                                negarPedidoMutation.mutate({
+                                  pedidoId: pedido.id,
+                                  comentarios
+                                });
+                              },
+                              windowMode: true
+                            },
+                            {
+                              title: `🔐 Análise: ${pedido.numero_pedido}`,
+                              width: 800,
+                              height: 600
+                            }
+                          );
+                        }}
                         className="bg-orange-600 hover:bg-orange-700"
                       >
                         <ShieldCheck className="w-4 h-4 mr-1" />

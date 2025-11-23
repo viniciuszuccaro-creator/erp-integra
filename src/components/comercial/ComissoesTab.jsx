@@ -258,10 +258,11 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
               <Button 
                 className="bg-purple-600 hover:bg-purple-700"
                 onClick={() => {
+                  const CalcularComissoesForm = require('./CalcularComissoesForm').default;
                   openWindow(
-                    "CalcularComissoesForm",
+                    CalcularComissoesForm,
                     { 
-                      pedidos: pedidos,
+                      pedidos: pedidos || [],
                       onSubmit: () => {
                         queryClient.invalidateQueries({ queryKey: ['comissoes'] });
                       },
