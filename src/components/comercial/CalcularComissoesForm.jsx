@@ -98,6 +98,25 @@ export default function CalcularComissoesForm({ onSubmit, onCancel, pedidos = []
   const vendedoresUnicos = [...new Set(pedidosDisponiveis.map(p => p.vendedor).filter(Boolean))];
   const totalVendasDisponiveis = pedidosDisponiveis.reduce((sum, p) => sum + (p.valor_total || 0), 0);
 
+  // Breakdown por vendedor
+  const breakdownVendedores = vendedoresUnicos.map(vendedor => {
+    const pedidosVendedor = pedidosDisponiveis.filter(p => p.vendedor === vendedor);
+    const totalVendas = pedidosVendedor.reduce((sum, p) => sum + (p.valor_total || 0), 0);
+    const comissao = totalVendas * 0.05;
+    return {
+      vendedor,
+      qtdPedidos: pedidosVendedor.length,
+      totalVendas,
+      comissao
+    };
+  }).sort((a, b) => b.totalVendas - a.totalVendas);
+
+  // Status dos pedidos
+  const statusCount = pedidosDisponiveis.reduce((acc, p) => {
+    acc[p.status] = (acc[p.status] || 0) + 1;
+    return acc;
+  }, {});
+
   return (
     <div className="p-6 space-y-6 w-full h-full flex flex-col">
       <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -212,16 +231,88 @@ export default function CalcularComissoesForm({ onSubmit, onCancel, pedidos = []
           </CardContent>
         </Card>
 
-        {vendedoresUnicos.length > 0 && (
-          <Card className="bg-purple-50 border-purple-200">
+        {/* BREAKDOWN POR VENDEDOR */}
+        {breakdownVendedores.length > 0 && (
+          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 border-purple-200">
             <CardContent className="p-4">
-              <h4 className="font-semibold mb-2 text-purple-900">Vendedores que receberão comissões:</h4>
-              <div className="flex flex-wrap gap-2">
-                {vendedoresUnicos.map((v, idx) => (
-                  <Badge key={idx} className="bg-purple-100 text-purple-700 px-3 py-1">
-                    {v}
-                  </Badge>
+              <h4 className="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                👥 Breakdown por Vendedor
+              </h4>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {breakdownVendedores.map((v, idx) => (
+                  <div key={idx} className="bg-white p-3 rounded-lg border border-purple-100 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold text-slate-900">{v.vendedor}</span>
+                      <Badge className="bg-purple-600">{v.qtdPedidos} pedidos</Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-slate-500">Total Vendas:</span>
+                        <span className="font-bold text-green-600 ml-2">
+                          R$ {v.totalVendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Comissão:</span>
+                        <span className="font-bold text-orange-600 ml-2">
+                          R$ {v.comissao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* STATUS DOS PEDIDOS */}
+        {Object.keys(statusCount).length > 0 && (
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+            <CardContent className="p-4">
+              <h4 className="font-bold text-green-900 mb-3 flex items-center gap-2">
+                📋 Status dos Pedidos Incluídos
+              </h4>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(statusCount).map(([status, count]) => (
+                  <div key={status} className="bg-white p-2 rounded-lg border border-green-100 text-center">
+                    <div className="text-2xl font-bold text-green-600">{count}</div>
+                    <div className="text-xs text-slate-500">{status}</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* PEDIDOS INCLUÍDOS */}
+        {pedidosDisponiveis.length > 0 && (
+          <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200">
+            <CardContent className="p-4">
+              <h4 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+                📦 Últimos Pedidos a Serem Calculados
+              </h4>
+              <div className="space-y-1 max-h-48 overflow-y-auto text-xs">
+                {pedidosDisponiveis.slice(0, 10).map((p, idx) => (
+                  <div key={idx} className="bg-white p-2 rounded border border-blue-100 flex justify-between items-center">
+                    <div className="flex gap-2 items-center">
+                      <span className="font-mono font-semibold text-blue-600">#{p.numero_pedido}</span>
+                      <span className="text-slate-600">{p.cliente_nome}</span>
+                      <Badge variant="outline" className="text-xs">{p.status}</Badge>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-slate-500">{p.vendedor}</span>
+                      <span className="font-bold text-green-600">
+                        R$ {(p.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {pedidosDisponiveis.length > 10 && (
+                  <div className="text-center text-slate-500 pt-2">
+                    ... e mais {pedidosDisponiveis.length - 10} pedidos
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
