@@ -22,7 +22,7 @@ export default function ValidadorEtapas24Final() {
     queryFn: () => base44.entities.Pedido.list(),
   });
 
-  // ETAPA 2 - Validações
+  // ETAPA 2 - Validações (conta TODOS os produtos válidos)
   const produtosComTributacao = produtos.filter(p => 
     p.tributacao?.icms_aliquota !== undefined &&
     p.tributacao?.pis_aliquota !== undefined &&
@@ -31,21 +31,26 @@ export default function ValidadorEtapas24Final() {
   );
 
   const produtosComSnapshots = produtos.filter(p =>
+    p.tributacao?.icms_aliquota !== undefined &&
+    p.tributacao?.pis_aliquota !== undefined &&
+    p.tributacao?.cofins_aliquota !== undefined &&
+    p.tributacao?.ipi_aliquota !== undefined &&
     p.setor_atividade_nome &&
     p.grupo_produto_nome &&
     p.marca_nome
   );
 
-  // ETAPA 4 - Validações
+  // ETAPA 4 - Validações (conta TODOS os perfis válidos)
   const perfisFinanceiros = perfis.filter(p =>
-    p.permissoes?.financeiro?.contas_receber ||
-    p.permissoes?.financeiro?.contas_pagar ||
-    p.permissoes?.financeiro?.caixa_diario
+    (p.permissoes?.financeiro?.contas_receber?.length > 0 ||
+     p.permissoes?.financeiro?.contas_pagar?.length > 0 ||
+     p.permissoes?.financeiro?.caixa_diario?.length > 0)
   );
 
   const perfisAprovacao = perfis.filter(p =>
-    p.permissoes?.comercial?.pedidos?.includes('aprovar') ||
-    p.permissoes?.financeiro?.limite_aprovacao_pagamento > 0
+    (p.permissoes?.comercial?.pedidos?.includes('aprovar') ||
+     (p.permissoes?.financeiro?.limite_aprovacao_pagamento !== undefined &&
+      p.permissoes?.financeiro?.limite_aprovacao_pagamento > 0))
   );
 
   const pedidosComAprovacao = pedidos.filter(p =>
