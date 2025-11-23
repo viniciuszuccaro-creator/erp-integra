@@ -322,7 +322,7 @@ export default function Comercial() {
         {/* Removed TabelasPrecoTab TabsContent */}
 
         <TabsContent value="comissoes">
-          <ComissoesTab comissoes={comissoes} pedidos={pedidos} />
+          <ComissoesTab comissoes={comissoes} pedidos={pedidos} empresas={empresas} />
         </TabsContent>
 
         <TabsContent value="notas">
