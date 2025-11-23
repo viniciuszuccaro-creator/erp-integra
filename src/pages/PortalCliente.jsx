@@ -50,6 +50,7 @@ import { AnimatePresence } from "framer-motion";
  * ✅ Analytics (3 Gráficos Recharts + Métricas Relacionamento)
  * ✅ Histórico Compras (Top 10 + ABC + Fidelidade + Cashback)
  * ✅ Configurações (Notificações + Canal + LGPD + Exportação CSV)
+ * ✅ FAQ e Ajuda (Busca Inteligente + Accordion + Contatos)
  * 
  * TECNOLOGIAS:
  * ✅ Chatbot IA Contextual (InvokeLLM + Dados Cliente)
