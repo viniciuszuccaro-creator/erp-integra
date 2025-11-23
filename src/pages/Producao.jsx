@@ -32,9 +32,11 @@ import {
   Edit,
   TrendingUp,
   Activity,
-  LayoutGrid // Added from outline
+  LayoutGrid,
+  Zap
 } from "lucide-react";
 import ApontamentoProducao from "@/components/producao/ApontamentoProducao";
+import ApontamentoProducaoAvancado from "@/components/producao/ApontamentoProducaoAvancado";
 import ControleRefugo from "@/components/producao/ControleRefugo";
 import RelatoriosProducao from "@/components/producao/RelatoriosProducao";
 import FormularioInspecao from "../components/qualidade/FormularioInspecao";
@@ -60,6 +62,7 @@ export default function Producao() {
 
   // NEW: States for the new apontamento tab
   const [opSelecionadaApontamento, setOpSelecionadaApontamento] = useState(null);
+  const [apontamentoAvancadoAberto, setApontamentoAvancadoAberto] = useState(false);
 
   // REMOVED: NOVO: Estado para visualização Kanban - now using a dedicated tab
   // const [visualizacao, setVisualizacao] = useState('lista'); // 'lista' ou 'kanban'
@@ -386,19 +389,32 @@ export default function Producao() {
                                     <Eye className="w-4 h-4" />
                                   </Button>
                                   {op.status !== "Finalizada" && op.status !== "Expedida" && (
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => {
-                                        setOpSelecionada(op);
-                                        // NEW: Instead of dialog, switch to the tab
-                                        setOpSelecionadaApontamento(op);
-                                        setActiveTab("apontamento");
-                                      }}
-                                      title="Apontar"
-                                    >
-                                      <Clock className="w-4 h-4 text-blue-600" />
-                                    </Button>
+                                    <>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                          setOpSelecionada(op);
+                                          setOpSelecionadaApontamento(op);
+                                          setActiveTab("apontamento");
+                                        }}
+                                        title="Apontar"
+                                      >
+                                        <Clock className="w-4 h-4 text-blue-600" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => {
+                                          setOpSelecionadaApontamento(op);
+                                          setApontamentoAvancadoAberto(true);
+                                        }}
+                                        title="Apontamento Avançado (IA)"
+                                        className="text-purple-600"
+                                      >
+                                        <Zap className="w-4 h-4" />
+                                      </Button>
+                                    </>
                                   )}
                                   {op.percentual_conclusao === 100 && op.status !== "Expedida" && (
                                    <Button
@@ -533,6 +549,25 @@ export default function Producao() {
         </Tabs>
 
 
+
+        {/* Dialog Apontamento Avançado */}
+        <Dialog open={apontamentoAvancadoAberto} onOpenChange={setApontamentoAvancadoAberto}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden">
+            <DialogHeader>
+              <DialogTitle>⚡ Apontamento Avançado com IA</DialogTitle>
+            </DialogHeader>
+            {opSelecionadaApontamento && (
+              <ApontamentoProducaoAvancado
+                opId={opSelecionadaApontamento.id}
+                opNumero={opSelecionadaApontamento.numero_op}
+                onClose={() => {
+                  setApontamentoAvancadoAberto(false);
+                  queryClient.invalidateQueries(['ordens-producao']);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Dialog Detalhes */}
         <Dialog open={detalhesDialogOpen} onOpenChange={setDetalhesDialogOpen}>

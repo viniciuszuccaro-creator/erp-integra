@@ -40,6 +40,7 @@ import IALeadsPriorizacao from "../components/crm/IALeadsPriorizacao";
 import IAChurnDetection from "../components/crm/IAChurnDetection";
 import OportunidadeForm from "../components/crm/OportunidadeForm";
 import FunilComercialInteligente from "@/components/crm/FunilComercialInteligente";
+import FunilVendasAvancado from "@/components/crm/FunilVendasAvancado";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
@@ -611,6 +612,23 @@ export default function CRMPage() {
 
         <TabsContent value="funil">
           <div className="space-y-4">
+            <Card>
+              <CardHeader className="bg-purple-50 border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
+                  Funil de Vendas Avançado com IA
+                </CardTitle>
+                <CardDescription>
+                  Drag-and-drop entre etapas • Scoring automático • Análise de temperatura • Gamificação
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <FunilVendasAvancado />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="space-y-4 mt-6">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold">Funil de Vendas - Drag & Drop</h2>
               <Button 

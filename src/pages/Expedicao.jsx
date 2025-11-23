@@ -31,7 +31,8 @@ import {
   Building2,
   Phone,
   Mail,
-  Pen
+  Pen,
+  Scan
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -48,6 +49,7 @@ import DashboardLogistico from "../components/expedicao/DashboardLogistico";
 import RelatoriosLogistica from "../components/expedicao/RelatoriosLogistica";
 import AssinaturaDigitalEntrega from "../components/expedicao/AssinaturaDigitalEntrega";
 import SeparacaoConferencia from "../components/expedicao/SeparacaoConferencia";
+import SeparacaoConferenciaIA from "@/components/expedicao/SeparacaoConferenciaIA";
 import RoteirizacaoInteligente from "@/components/expedicao/RoteirizacaoInteligente";
 import SeletorEnderecoEntrega from "../components/expedicao/SeletorEnderecoEntrega";
 import EnvioMensagemAutomatica from "../components/expedicao/EnvioMensagemAutomatica";
@@ -856,68 +858,73 @@ export default function Expedicao() {
           <TabsContent value="separacao" className="space-y-6">
             <Card className="border-0 shadow-md">
               <CardHeader className="bg-slate-50 border-b">
-                <CardTitle>Pedidos Aguardando Separação</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Scan className="w-5 h-5 text-purple-600" />
+                  Separação Inteligente com IA
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead>Pedido</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      {estaNoGrupo && <TableHead>Empresa</TableHead>}
-                      <TableHead>Itens</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pedidos
-                      .filter(p => p.status === "Aprovado" || p.status === "Em Produção")
-                      .slice(0, 20)
-                      .map(p => (
-                        <TableRow key={p.id}>
-                          <TableCell className="font-medium">{p.numero_pedido}</TableCell>
-                          <TableCell>{p.cliente_nome}</TableCell>
-                          {estaNoGrupo && (
-                            <TableCell>
-                              <Building2 className="w-4 h-4 inline mr-1" />
-                              {obterNomeEmpresa(p.empresa_id)}
-                            </TableCell>
-                          )}
-                          <TableCell>
-                            <Badge variant="outline">
-                              {(p.itens_revenda?.length || 0) + (p.itens_producao?.length || 0)} itens
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{new Date(p.data_pedido).toLocaleDateString('pt-BR')}</TableCell>
-                          <TableCell>
-                            <Button
-                              size="sm"
-                              onClick={() => openWindow(SeparacaoConferencia, {
-                                pedido: p,
-                                empresaId: empresaAtual?.id,
-                                onClose: () => {},
-                                windowMode: true
-                              }, {
-                                title: `📦 Separar Pedido ${p.numero_pedido}`,
-                                width: 1200,
-                                height: 750
-                              })}
-                            >
-                              Separar
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                  </TableBody>
-                </Table>
-
-                {pedidos.filter(p => p.status === "Aprovado" || p.status === "Em Produção").length === 0 && (
-                  <div className="text-center py-12 text-slate-500">
-                    <Package className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                    <p>Nenhum pedido aguardando separação</p>
-                  </div>
-                )}
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {pedidos.filter(p => p.status === "Aprovado" || p.status === "Em Produção" || p.status === "Faturado").length === 0 ? (
+                    <div className="text-center py-12 text-slate-500">
+                      <Package className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                      <p>Nenhum pedido pronto para separação</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-4">
+                      {pedidos
+                        .filter(p => p.status === "Aprovado" || p.status === "Em Produção" || p.status === "Faturado")
+                        .slice(0, 10)
+                        .map(p => (
+                          <div key={p.id} className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                            <div className="flex-1">
+                              <div className="font-semibold text-lg">Pedido: {p.numero_pedido}</div>
+                              <div className="text-sm text-slate-600 mt-1">{p.cliente_nome}</div>
+                              <div className="flex items-center gap-4 mt-2 text-xs text-slate-500">
+                                <span>📦 {(p.itens_revenda?.length || 0) + (p.itens_producao?.length || 0)} itens</span>
+                                <span>⚖️ {p.peso_total_kg?.toFixed(2) || 0} kg</span>
+                                <span>📅 {new Date(p.data_pedido).toLocaleDateString('pt-BR')}</span>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => openWindow(SeparacaoConferencia, {
+                                  pedido: p,
+                                  empresaId: empresaAtual?.id,
+                                  onClose: () => {},
+                                  windowMode: true
+                                }, {
+                                  title: `📦 Separar: ${p.numero_pedido}`,
+                                  width: 1200,
+                                  height: 750
+                                })}
+                                variant="outline"
+                              >
+                                <Package className="w-4 h-4 mr-2" />
+                                Separar
+                              </Button>
+                              <Button
+                                onClick={() => openWindow(SeparacaoConferenciaIA, {
+                                  pedidoId: p.id,
+                                  onClose: () => {
+                                    queryClient.invalidateQueries(['pedidos']);
+                                  }
+                                }, {
+                                  title: `🤖 Separação IA: ${p.numero_pedido}`,
+                                  width: 1400,
+                                  height: 850
+                                })}
+                                className="bg-purple-600 hover:bg-purple-700"
+                              >
+                                <Scan className="w-4 h-4 mr-2" />
+                                Separação IA
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

@@ -42,6 +42,7 @@ import GameficacaoProducao from "@/components/rh/GameficacaoProducao";
 import FeriasForm from "@/components/rh/FeriasForm";
 import { useWindow } from "@/components/lib/useWindow";
 import MonitoramentoRHInteligente from "@/components/rh/MonitoramentoRHInteligente";
+import PontoEletronicoBiometrico from "@/components/rh/PontoEletronicoBiometrico";
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
@@ -193,9 +194,10 @@ export default function RH() {
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsList className="grid w-full grid-cols-6 mb-6">
                 <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
                 <TabsTrigger value="ponto">Ponto</TabsTrigger>
+                <TabsTrigger value="ponto-biometrico">🔒 Ponto Biométrico</TabsTrigger>
                 <TabsTrigger value="ferias">Férias</TabsTrigger>
                 <TabsTrigger value="gamificacao">🏆 Rankings</TabsTrigger>
                 <TabsTrigger value="monitoramento-ia">🤖 Monitoramento IA</TabsTrigger>
@@ -287,6 +289,23 @@ export default function RH() {
                   colaboradores={colaboradores}
                   canApprove={isAdmin}
                 />
+              </TabsContent>
+
+              <TabsContent value="ponto-biometrico">
+                <Card>
+                  <CardHeader className="bg-indigo-50 border-b">
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-indigo-600" />
+                      Ponto Eletrônico Biométrico
+                    </CardTitle>
+                    <CardDescription>
+                      Sistema avançado com reconhecimento facial, biometria digital, GPS e validação por IA
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <PontoEletronicoBiometrico />
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="ferias" className="space-y-4">
