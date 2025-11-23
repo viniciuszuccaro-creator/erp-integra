@@ -34,12 +34,9 @@ import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
 export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
-  const [periodoCalculo, setPeriodoCalculo] = useState("mes");
   const [searchTerm, setSearchTerm] = useState("");
-  const [calculoDialogOpen, setCalculoDialogOpen] = useState(false);
   const [visualizandoComissao, setVisualizandoComissao] = useState(null);
   const [statusFilter, setStatusFilter] = useState("todas");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
   const [formData, setFormData] = useState({
     vendedor: "",
@@ -58,82 +55,7 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
 
-  const calcularComissoesMutation = useMutation({
-    mutationFn: async (periodo) => {
-      // Filtrar pedidos por período
-      const hoje = new Date();
-      let dataInicio = new Date();
 
-      if (periodo === 'mes') {
-        dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-      } else if (periodo === 'trimestre') {
-        const trimestre = Math.floor(hoje.getMonth() / 3);
-        dataInicio = new Date(hoje.getFullYear(), trimestre * 3, 1);
-      } else if (periodo === 'ano') {
-        dataInicio = new Date(hoje.getFullYear(), 0, 1);
-      }
-
-      // Buscar pedidos aprovados no período
-      const pedidosPeriodo = pedidos.filter(p => {
-        if (p.status !== 'Aprovado' && p.status !== 'Faturado' && p.status !== 'Enviado') return false;
-        const dataPedido = new Date(p.data_pedido);
-        return dataPedido >= dataInicio && dataPedido <= hoje;
-      });
-
-      // Agrupar por vendedor
-      const comissoesPorVendedor = {};
-      pedidosPeriodo.forEach(pedido => {
-        const vendedor = pedido.vendedor || 'Sem Vendedor';
-        if (!comissoesPorVendedor[vendedor]) {
-          comissoesPorVendedor[vendedor] = {
-            vendedor,
-            vendedor_id: pedido.vendedor_id,
-            pedidos: [],
-            total_vendas: 0,
-            total_comissao: 0
-          };
-        }
-        comissoesPorVendedor[vendedor].pedidos.push(pedido);
-        comissoesPorVendedor[vendedor].total_vendas += pedido.valor_total || 0;
-      });
-
-      // Calcular comissões (5% padrão)
-      const novasComissoes = [];
-      for (const vendedor in comissoesPorVendedor) {
-        const dados = comissoesPorVendedor[vendedor];
-        const percentual = 5; // 5% de comissão padrão
-        const valorComissao = dados.total_vendas * (percentual / 100);
-
-        // Criar uma comissão por vendedor
-        await base44.entities.Comissao.create({
-          vendedor: dados.vendedor,
-          vendedor_id: dados.vendedor_id,
-          pedido_id: dados.pedidos[0]?.id,
-          numero_pedido: `Período: ${periodo}`,
-          cliente: `${dados.pedidos.length} vendas`,
-          data_venda: new Date().toISOString().split('T')[0],
-          valor_venda: dados.total_vendas,
-          percentual_comissao: percentual,
-          valor_comissao: valorComissao,
-          status: 'Pendente',
-          observacoes: `Comissão calculada automaticamente para ${dados.pedidos.length} vendas no período: ${periodo}`
-        });
-
-        novasComissoes.push({
-          vendedor: dados.vendedor,
-          valor: valorComissao,
-          vendas: dados.pedidos.length
-        });
-      }
-
-      return { comissoes: novasComissoes, periodo };
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['comissoes'] });
-      setCalculoDialogOpen(false);
-      alert(`Comissões calculadas com sucesso!\n\n${data.comissoes.length} vendedores processados no período: ${data.periodo}`);
-    },
-  });
 
   const aprovarComissaoMutation = useMutation({
     mutationFn: ({ id, aprovador }) => base44.entities.Comissao.update(id, {
@@ -333,61 +255,29 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
                 </SelectContent>
               </Select>
 
-              <Dialog open={calculoDialogOpen} onOpenChange={setCalculoDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-purple-600 hover:bg-purple-700">
-                    <Calculator className="w-4 h-4 mr-2" />
-                    Calcular Comissões
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Calcular Comissões Automaticamente</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="periodo">Período de Cálculo</Label>
-                      <Select value={periodoCalculo} onValueChange={setPeriodoCalculo}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="mes">Mês Atual</SelectItem>
-                          <SelectItem value="trimestre">Trimestre Atual</SelectItem>
-                          <SelectItem value="ano">Ano Atual</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <h4 className="font-semibold mb-2 text-blue-900">O sistema irá:</h4>
-                      <ul className="text-sm text-blue-700 space-y-1">
-                        <li>• Buscar todos os pedidos aprovados no período</li>
-                        <li>• Agrupar por vendedor</li>
-                        <li>• Calcular comissão de 5% sobre o total</li>
-                        <li>• Criar registros pendentes de aprovação</li>
-                      </ul>
-                    </div>
-
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-sm text-green-800">
-                        <strong>Percentual de comissão:</strong> 5% sobre o valor total das vendas
-                      </p>
-                    </div>
-
-                    <div className="flex justify-end gap-3 pt-4">
-                      <Button
-                        onClick={() => calcularComissoesMutation.mutate(periodoCalculo)}
-                        disabled={calcularComissoesMutation.isPending}
-                        className="bg-purple-600 hover:bg-purple-700"
-                      >
-                        <Calculator className="w-4 h-4 mr-2" />
-                        {calcularComissoesMutation.isPending ? 'Calculando...' : 'Calcular Agora'}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <Button 
+                className="bg-purple-600 hover:bg-purple-700"
+                onClick={() => {
+                  openWindow(
+                    CalcularComissoesForm,
+                    { 
+                      pedidos: pedidos,
+                      onSubmit: () => {
+                        queryClient.invalidateQueries({ queryKey: ['comissoes'] });
+                      },
+                      onCancel: () => {}
+                    },
+                    {
+                      title: '📊 Calcular Comissões',
+                      width: 900,
+                      height: 700
+                    }
+                  );
+                }}
+              >
+                <Calculator className="w-4 h-4 mr-2" />
+                Calcular Comissões
+              </Button>
             </div>
           </div>
         </CardHeader>
