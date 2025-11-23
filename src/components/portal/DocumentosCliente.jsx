@@ -15,7 +15,14 @@ export default function DocumentosCliente() {
     queryKey: ['minhas-nfes'],
     queryFn: async () => {
       const user = await base44.auth.me();
-      return await base44.entities.NotaFiscal.filter({ cliente_nome: user.full_name }, '-data_emissao', 100);
+      const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
+      const cliente = clientes[0];
+      
+      if (!cliente) return [];
+      
+      return await base44.entities.NotaFiscal.filter({ 
+        cliente_fornecedor_id: cliente.id 
+      }, '-data_emissao', 100);
     },
   });
 
@@ -23,7 +30,15 @@ export default function DocumentosCliente() {
     queryKey: ['meus-boletos'],
     queryFn: async () => {
       const user = await base44.auth.me();
-      return await base44.entities.ContaReceber.filter({ cliente: user.full_name }, '-data_vencimento', 100);
+      const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
+      const cliente = clientes[0];
+      
+      if (!cliente) return [];
+      
+      return await base44.entities.ContaReceber.filter({ 
+        cliente_id: cliente.id,
+        visivel_no_portal: true 
+      }, '-data_vencimento', 100);
     },
   });
 

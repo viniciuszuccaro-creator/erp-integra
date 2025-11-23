@@ -18,7 +18,15 @@ export default function PedidosCliente() {
     queryKey: ['meus-pedidos'],
     queryFn: async () => {
       const user = await base44.auth.me();
-      return await base44.entities.Pedido.filter({ cliente_email: user.email }, '-data_pedido', 50);
+      const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
+      const cliente = clientes[0];
+      
+      if (!cliente) return [];
+      
+      return await base44.entities.Pedido.filter({ 
+        cliente_id: cliente.id,
+        pode_ver_no_portal: true 
+      }, '-data_pedido', 50);
     },
   });
 
@@ -26,7 +34,12 @@ export default function PedidosCliente() {
     queryKey: ['minhas-entregas'],
     queryFn: async () => {
       const user = await base44.auth.me();
-      return await base44.entities.Entrega.filter({ cliente_nome: user.full_name }, '-data_previsao', 50);
+      const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
+      const cliente = clientes[0];
+      
+      if (!cliente) return [];
+      
+      return await base44.entities.Entrega.filter({ cliente_id: cliente.id }, '-data_previsao', 50);
     },
   });
 

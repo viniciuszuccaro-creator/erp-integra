@@ -11,8 +11,20 @@ export default function MinhasOportunidades() {
     queryKey: ['minhas-oportunidades'],
     queryFn: async () => {
       const user = await base44.auth.me();
+      const clientes = await base44.entities.Cliente.filter({ portal_usuario_id: user.id });
+      const cliente = clientes[0];
+      
+      if (!cliente) {
+        // Buscar por email como fallback
+        return await base44.entities.Oportunidade.filter(
+          { cliente_email: user.email },
+          '-data_abertura',
+          50
+        );
+      }
+      
       return await base44.entities.Oportunidade.filter(
-        { cliente_email: user.email },
+        { cliente_id: cliente.id },
         '-data_abertura',
         50
       );

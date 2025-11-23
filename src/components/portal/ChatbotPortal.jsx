@@ -31,22 +31,46 @@ export default function ChatbotPortal({ onClose, isMinimized, onToggleMinimize }
       const user = await base44.auth.me();
       
       // Contexto do cliente
-      const context = `Você é um assistente virtual de atendimento ao cliente. 
+      // Buscar informações do cliente para contexto
+      const [pedidos, boletos] = await Promise.all([
+        base44.entities.Pedido.filter({ cliente_email: user.email }, '-data_pedido', 5),
+        base44.entities.ContaReceber.filter({ cliente: user.full_name }, '-data_vencimento', 5),
+      ]);
+
+      const pedidosContext = pedidos.length > 0 
+        ? `Últimos pedidos: ${pedidos.map(p => `${p.numero_pedido} (${p.status})`).join(', ')}`
+        : 'Nenhum pedido recente';
+
+      const boletosContext = boletos.length > 0
+        ? `Boletos: ${boletos.filter(b => b.status === 'Pendente').length} pendente(s)`
+        : 'Nenhum boleto pendente';
+
+      const context = `Você é um assistente virtual de atendimento ao cliente da empresa ERP Zuccaro. 
 Cliente: ${user.full_name} (${user.email})
-Data: ${new Date().toLocaleDateString('pt-BR')}
+Data: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}
 
-Responda de forma educada, profissional e objetiva. 
-Se o cliente perguntar sobre:
-- Pedidos: informe que ele pode consultar na aba "Meus Pedidos"
-- Notas fiscais: informe que ele pode consultar e fazer download na aba "Documentos"
-- Boletos: informe que ele pode visualizar e pagar na aba "Documentos" > "Boletos & PIX"
-- Orçamentos: informe que ele pode solicitar na aba "Solicitar Orçamento"
-- Rastreamento: informe que ele pode acompanhar em tempo real na aba "Meus Pedidos"
+CONTEXTO DO CLIENTE:
+${pedidosContext}
+${boletosContext}
 
-Seja sempre prestativo e se não souber algo, peça para entrar em contato com a equipe pelo telefone ou WhatsApp.`;
+INSTRUÇÕES:
+- Responda de forma educada, profissional, objetiva e em português brasileiro
+- Use emojis quando apropriado para tornar a conversa mais amigável
+- Se o cliente perguntar sobre PEDIDOS: informe que pode consultar na aba "Meus Pedidos" e dê um resumo se houver pedidos recentes
+- Se perguntar sobre RASTREAMENTO: informe que pode acompanhar em tempo real na aba "Rastreamento" com GPS e QR Code
+- Se perguntar sobre DOCUMENTOS/NOTAS FISCAIS: informe que pode consultar e fazer download na aba "Docs & Boletos"
+- Se perguntar sobre BOLETOS/PIX: informe que pode visualizar, copiar PIX e fazer download na aba "Docs & Boletos"
+- Se perguntar sobre SOLICITAR ORÇAMENTO: informe que pode fazer isso na aba "Solicitar Orçamento" com upload de arquivos
+- Se perguntar sobre OPORTUNIDADES: informe que pode acompanhar o funil de vendas na aba "Oportunidades"
+- Se perguntar sobre SUPORTE: informe que pode abrir chamados na aba "Suporte"
+- Se perguntar sobre CHAT COM VENDEDOR: informe que há um chat dedicado na aba "Chat Vendedor"
+- Para dúvidas técnicas ou que você não sabe responder: sugira contato com a equipe comercial
+- Seja sempre prestativo e proativo
+
+IMPORTANTE: Responda de forma conversacional e natural, como um atendente humano faria.`;
 
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `${context}\n\nCliente: ${message}\n\nAssistente:`,
+        prompt: `${context}\n\n${message}`,
       });
 
       return result;

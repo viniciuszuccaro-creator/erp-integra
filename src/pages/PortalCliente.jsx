@@ -18,6 +18,8 @@ import DocumentosCliente from "@/components/portal/DocumentosCliente";
 import SolicitarOrcamento from "@/components/portal/SolicitarOrcamento";
 import MinhasOportunidades from "@/components/portal/MinhasOportunidades";
 import ChatbotPortal from "@/components/portal/ChatbotPortal";
+import RastreamentoRealtime from "@/components/portal/RastreamentoRealtime";
+import NotificacoesPortal from "@/components/portal/NotificacoesPortal";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
@@ -319,6 +321,7 @@ export default function PortalCliente() {
               <p className="text-sm text-slate-600">{cliente?.nome_fantasia || cliente?.razao_social || user?.full_name}</p>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <NotificacoesPortal />
               <Button
                 onClick={() => setChatOpen(!chatOpen)}
                 className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -344,48 +347,57 @@ export default function PortalCliente() {
       {/* Conteúdo Principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-5 md:grid-cols-9 bg-white shadow-sm overflow-x-auto">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <LayoutDashboard className="w-4 h-4" />
-              <span className="hidden lg:inline">Dashboard</span>
-            </TabsTrigger>
-            <TabsTrigger value="meus-pedidos" className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              <span className="hidden lg:inline">Meus Pedidos</span>
-            </TabsTrigger>
-            <TabsTrigger value="documentos-novos" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              <span className="hidden lg:inline">Documentos</span>
-            </TabsTrigger>
-            <TabsTrigger value="solicitar-orcamento" className="flex items-center gap-2">
-              <Send className="w-4 h-4" />
-              <span className="hidden lg:inline">Solicitar</span>
-            </TabsTrigger>
-            <TabsTrigger value="minhas-oportunidades" className="flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              <span className="hidden lg:inline">Oportunidades</span>
-            </TabsTrigger>
-            <TabsTrigger value="orcamentos" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              <span className="hidden lg:inline">Orçamentos</span>
-              {orcamentos.length > 0 && (
-                <Badge className="ml-1 sm:ml-2 bg-orange-600 text-white text-xs">{orcamentos.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="pedidos" className="flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden lg:inline">Histórico</span>
-            </TabsTrigger>
-            <TabsTrigger value="projetos" className="flex items-center gap-2">
-              <Upload className="w-4 h-4" />
-              <span className="hidden lg:inline">Enviar</span>
-            </TabsTrigger>
-            <TabsTrigger value="chat" className="flex items-center gap-2">
-              <MessageCircle className="w-4 h-4" />
-              <span className="hidden lg:inline">Chat</span>
-              <div className="ml-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto">
+            <TabsList className="inline-flex w-auto min-w-full bg-white shadow-sm p-1">
+              <TabsTrigger value="dashboard" className="flex items-center gap-2 whitespace-nowrap">
+                <LayoutDashboard className="w-4 h-4" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </TabsTrigger>
+              <TabsTrigger value="meus-pedidos" className="flex items-center gap-2 whitespace-nowrap">
+                <Package className="w-4 h-4" />
+                <span className="hidden sm:inline">Meus Pedidos</span>
+              </TabsTrigger>
+              <TabsTrigger value="rastreamento" className="flex items-center gap-2 whitespace-nowrap">
+                <Truck className="w-4 h-4" />
+                <span className="hidden sm:inline">Rastreamento</span>
+              </TabsTrigger>
+              <TabsTrigger value="documentos-novos" className="flex items-center gap-2 whitespace-nowrap">
+                <FileText className="w-4 h-4" />
+                <span className="hidden sm:inline">Docs & Boletos</span>
+              </TabsTrigger>
+              <TabsTrigger value="solicitar-orcamento" className="flex items-center gap-2 whitespace-nowrap">
+                <Send className="w-4 h-4" />
+                <span className="hidden sm:inline">Solicitar Orçamento</span>
+              </TabsTrigger>
+              <TabsTrigger value="minhas-oportunidades" className="flex items-center gap-2 whitespace-nowrap">
+                <Target className="w-4 h-4" />
+                <span className="hidden sm:inline">Oportunidades</span>
+              </TabsTrigger>
+              <TabsTrigger value="orcamentos" className="flex items-center gap-2 whitespace-nowrap">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Aprovar Orçamentos</span>
+                {orcamentos.length > 0 && (
+                  <Badge className="ml-1 sm:ml-2 bg-orange-600 text-white text-xs animate-pulse">{orcamentos.length}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="projetos" className="flex items-center gap-2 whitespace-nowrap">
+                <Upload className="w-4 h-4" />
+                <span className="hidden sm:inline">Enviar Projeto</span>
+              </TabsTrigger>
+              <TabsTrigger value="chat" className="flex items-center gap-2 whitespace-nowrap">
+                <MessageCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Chat Vendedor</span>
+                <div className="ml-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              </TabsTrigger>
+              <TabsTrigger value="chamados" className="flex items-center gap-2 whitespace-nowrap">
+                <MessageSquare className="w-4 h-4" />
+                <span className="hidden sm:inline">Suporte</span>
+                {chamadosAbertos.length > 0 && (
+                  <Badge className="ml-1 sm:ml-2 bg-blue-600 text-white text-xs">{chamadosAbertos.length}</Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Dashboard Interativo */}
           <TabsContent value="dashboard">
@@ -412,12 +424,136 @@ export default function PortalCliente() {
             <MinhasOportunidades />
           </TabsContent>
 
+          {/* Rastreamento em Tempo Real - Componente Dedicado */}
+          <TabsContent value="rastreamento">
+            <RastreamentoRealtime />
+          </TabsContent>
+
+          {/* Tab antiga de entregas - REMOVIDA (agora usa rastreamento) */}
+          <TabsContent value="entregas-old">
+            <Card>
+              <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <CardTitle className="flex items-center gap-2">
+                  <Truck className="w-5 h-5" />
+                  Rastreamento de Entregas em Tempo Real
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {entregasEmAndamento
+                    .filter(e => e.status !== 'Entregue' && e.status !== 'Cancelado')
+                    .map(entrega => (
+                      <Card key={entrega.id} className="border-2 border-blue-300 hover:shadow-xl transition-all">
+                        <CardContent className="p-6">
+                          <div className="flex flex-col sm:flex-row items-start justify-between gap-4 mb-4">
+                            <div className="flex items-start gap-4">
+                              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <Truck className="w-7 h-7 text-white" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-lg">Pedido {entrega.numero_pedido}</p>
+                                <p className="text-sm text-slate-600 flex items-center gap-2 mt-1">
+                                  <MapPin className="w-4 h-4" />
+                                  {entrega.endereco_entrega_completo?.cidade} - {entrega.endereco_entrega_completo?.estado}
+                                </p>
+                                {entrega.motorista && (
+                                  <p className="text-sm text-slate-600 mt-1">
+                                    Motorista: {entrega.motorista} | Placa: {entrega.placa}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <Badge className={getStatusColor(entrega.status)} className="text-sm px-3 py-1">
+                              {entrega.status}
+                            </Badge>
+                          </div>
+
+                          {entrega.data_previsao && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                              <div className="flex items-center gap-3">
+                                <Calendar className="w-5 h-5 text-blue-600" />
+                                <div>
+                                  <p className="text-sm font-medium text-blue-900">Previsão de Entrega</p>
+                                  <p className="text-lg font-bold text-blue-700">
+                                    {format(new Date(entrega.data_previsao), 'dd/MM/yyyy')}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {entrega.qr_code && (
+                            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-4 mb-4">
+                              <p className="text-sm font-medium text-purple-900 mb-2">QR Code de Rastreamento</p>
+                              <p className="font-mono text-sm bg-white px-3 py-2 rounded border inline-block">
+                                {entrega.qr_code}
+                              </p>
+                            </div>
+                          )}
+
+                          {entrega.codigo_rastreamento && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                              <p className="text-sm font-medium text-green-900 mb-2">Código Transportadora</p>
+                              <p className="font-mono font-bold text-green-700">{entrega.codigo_rastreamento}</p>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {entrega.link_rastreamento && (
+                              <Button
+                                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                onClick={() => window.open(entrega.link_rastreamento, '_blank')}
+                              >
+                                <Navigation className="w-4 h-4 mr-2" />
+                                Rastrear em Tempo Real
+                              </Button>
+                            )}
+                            {entrega.link_publico_rastreamento && (
+                              <Button
+                                variant="outline"
+                                className="w-full"
+                                onClick={() => window.open(entrega.link_publico_rastreamento, '_blank')}
+                              >
+                                <MapPin className="w-4 h-4 mr-2" />
+                                Compartilhar Rastreio
+                              </Button>
+                            )}
+                          </div>
+
+                          {entrega.endereco_entrega_completo && (
+                            <div className="mt-4 pt-4 border-t">
+                              <p className="text-xs text-slate-500 mb-2">Endereço de Entrega</p>
+                              <p className="text-sm font-medium">
+                                {entrega.endereco_entrega_completo.logradouro}, {entrega.endereco_entrega_completo.numero}
+                              </p>
+                              <p className="text-sm text-slate-600">
+                                {entrega.endereco_entrega_completo.bairro} - {entrega.endereco_entrega_completo.cidade}/{entrega.endereco_entrega_completo.estado}
+                              </p>
+                              <p className="text-sm text-slate-600">CEP: {entrega.endereco_entrega_completo.cep}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+
+                  {entregasEmAndamento.filter(e => e.status !== 'Entregue' && e.status !== 'Cancelado').length === 0 && (
+                    <div className="text-center py-16 text-slate-500">
+                      <Truck className="w-20 h-20 mx-auto mb-4 opacity-20" />
+                      <p className="text-lg font-medium">Nenhuma entrega em andamento</p>
+                      <p className="text-sm mt-2">Suas entregas concluídas estão disponíveis na aba "Docs & Boletos"</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Aprovação com Assinatura */}
           <TabsContent value="orcamentos">
             <AprovacaoComAssinatura clienteId={cliente?.id} />
           </TabsContent>
 
-          {/* Histórico de Pedidos */}
+          {/* Histórico de Pedidos - REMOVIDO (substituído por meus-pedidos) */}
           <TabsContent value="pedidos">
             <Card className="border-0 shadow-md">
               <CardHeader className="bg-slate-50 border-b">
@@ -486,6 +622,11 @@ export default function PortalCliente() {
           {/* Chat com Vendedor */}
           <TabsContent value="chat">
             <ChatVendedor clienteId={cliente?.id} />
+          </TabsContent>
+
+          {/* Chamados e Suporte */}
+          <TabsContent value="chamados">
+            <ChamadosCliente clienteId={cliente?.id} />
           </TabsContent>
         </Tabs>
       </div>
