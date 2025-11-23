@@ -32,7 +32,8 @@ import {
   Phone,
   Mail,
   Pen,
-  Scan
+  Scan,
+  Activity
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -63,6 +64,7 @@ import { useRealtimeEntregas } from '@/components/lib/useRealtimeData';
 import MapaTempoReal from '../components/expedicao/MapaTempoReal';
 import DetalhesEntregaView from "../components/expedicao/DetalhesEntregaView";
 import DashboardEntregasRealtime from "../components/expedicao/DashboardEntregasRealtime";
+import StatusWidgetEtapas512 from "../components/sistema/StatusWidgetEtapas512";
 
 export default function Expedicao() {
   const [activeTab, setActiveTab] = useState("entregas");
@@ -530,6 +532,9 @@ export default function Expedicao() {
             </Button>
           </div>
         </div>
+
+        {/* STATUS WIDGET ETAPAS 5-12 */}
+        <StatusWidgetEtapas512 />
 
         {/* NOVA: Tabs para organizar */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

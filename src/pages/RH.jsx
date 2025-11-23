@@ -24,10 +24,12 @@ import {
   FileText,
   Mail,
   Phone,
-  ExternalLink
+  ExternalLink,
+  Activity
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +46,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import MonitoramentoRHInteligente from "@/components/rh/MonitoramentoRHInteligente";
 import PontoEletronicoBiometrico from "@/components/rh/PontoEletronicoBiometrico";
 import DashboardRHRealtime from "../components/rh/DashboardRHRealtime";
+import StatusWidgetEtapas512 from "../components/sistema/StatusWidgetEtapas512";
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
@@ -133,6 +136,9 @@ export default function RH() {
             <p className="text-slate-600 mt-1">Gestão de colaboradores, ponto e benefícios</p>
           </div>
         </div>
+
+        {/* STATUS WIDGET ETAPAS 5-12 */}
+        <StatusWidgetEtapas512 />
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border-0 shadow-md">

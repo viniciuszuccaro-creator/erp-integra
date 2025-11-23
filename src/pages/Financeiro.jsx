@@ -44,6 +44,7 @@ import AprovacaoDescontosManager from "../components/comercial/AprovacaoDesconto
 import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
 import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
+import StatusWidgetEtapas512 from "../components/sistema/StatusWidgetEtapas512";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -324,6 +325,9 @@ export default function Financeiro() {
 
       {/* STATUS WIDGET ETAPA 4 */}
       <StatusWidgetEtapa4 />
+
+      {/* STATUS WIDGET ETAPAS 5-12 */}
+      <StatusWidgetEtapas512 />
 
       {/* DASHBOARD UNIFICADO ETAPA 4 */}
       <DashboardFinanceiroUnificado empresaId={empresaAtual?.id} />

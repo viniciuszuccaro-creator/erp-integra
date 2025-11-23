@@ -79,6 +79,7 @@ const navigationItems = [
   { title: "✅ Validador Fase 3", url: createPageUrl("ValidadorFase3"), icon: CheckCircle, group: "sistema", adminOnly: true },
   { title: "✅ Validador Etapa 4", url: createPageUrl("ValidadorEtapa4"), icon: Wallet, group: "sistema", adminOnly: true },
   { title: "✅ Validador Final 2+3+4", url: createPageUrl("ValidadorFinalEtapas234"), icon: CheckCircle, group: "sistema", adminOnly: true },
+  { title: "✅ Validador Etapas 5-12", url: createPageUrl("ValidadorEtapas512"), icon: Rocket, group: "sistema", adminOnly: true },
   { title: "🏆 Certificação Final", url: createPageUrl("CertificacaoFinal"), icon: Award, group: "sistema", adminOnly: true },
   { title: "🏆 Demo Fase 1 Completa", url: createPageUrl("DemoFase1Completa"), icon: Rocket, group: "sistema", adminOnly: true },
   { title: "🗑️ Limpar Dados Teste", url: createPageUrl("LimparDados"), icon: Trash2, group: "sistema", adminOnly: true },
