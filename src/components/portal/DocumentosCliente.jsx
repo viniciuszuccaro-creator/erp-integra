@@ -8,6 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Download, Search, CreditCard, Eye, Calendar } from 'lucide-react';
 
+/**
+ * V21.5 - Documentos & Boletos COMPLETO
+ * ✅ NFes com XML/DANFE download
+ * ✅ Boletos com PIX copia-cola
+ * ✅ Links de pagamento
+ * ✅ Alertas de vencimento
+ * ✅ w-full h-full
+ */
 export default function DocumentosCliente() {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -87,7 +95,7 @@ export default function DocumentosCliente() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full">
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -112,11 +120,11 @@ export default function DocumentosCliente() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="nfes" className="space-y-4 mt-6">
+        <TabsContent value="nfes" className="space-y-4 mt-6 w-full">
           {loadingNFe ? (
             <p>Carregando notas fiscais...</p>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-4 w-full">
               {filteredNFes.map((nfe) => (
                 <Card key={nfe.id} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
@@ -181,11 +189,11 @@ export default function DocumentosCliente() {
           )}
         </TabsContent>
 
-        <TabsContent value="boletos" className="space-y-4 mt-6">
+        <TabsContent value="boletos" className="space-y-4 mt-6 w-full">
           {loadingBoletos ? (
             <p>Carregando boletos...</p>
           ) : (
-            <div className="grid gap-4">
+            <div className="grid gap-4 w-full">
               {filteredBoletos.map((conta) => {
                 const isVencido = new Date(conta.data_vencimento) < new Date() && conta.status === 'Pendente';
                 const diasAtraso = isVencido ? Math.floor((new Date() - new Date(conta.data_vencimento)) / (1000 * 60 * 60 * 24)) : 0;

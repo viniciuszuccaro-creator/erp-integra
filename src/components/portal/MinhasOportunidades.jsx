@@ -6,6 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Target, TrendingUp, Clock, DollarSign, Flame, Snowflake, ThermometerSun } from 'lucide-react';
 
+/**
+ * V21.5 - Minhas Oportunidades COMPLETO
+ * ✅ Funil visual completo
+ * ✅ KPIs de pipeline
+ * ✅ Score e temperatura IA
+ * ✅ Barra de progresso por etapa
+ * ✅ w-full h-full responsivo
+ */
 export default function MinhasOportunidades() {
   const { data: oportunidades = [], isLoading } = useQuery({
     queryKey: ['minhas-oportunidades'],
@@ -90,7 +98,7 @@ export default function MinhasOportunidades() {
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full">
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -147,7 +155,7 @@ export default function MinhasOportunidades() {
       </div>
 
       {/* Lista de Oportunidades */}
-      <div className="grid gap-4">
+      <div className="grid gap-4 w-full">
         {oportunidades.map((oportunidade) => {
           const progress = getEtapaProgress(oportunidade.etapa);
 

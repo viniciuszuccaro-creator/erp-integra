@@ -9,6 +9,14 @@ import { Label } from '@/components/ui/label';
 import { FileUp, Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
+/**
+ * V21.5 - Solicitar Orçamento COMPLETO
+ * ✅ Upload múltiplo de arquivos
+ * ✅ Validação de formatos
+ * ✅ Criação automática de oportunidade
+ * ✅ Feedback visual de sucesso
+ * ✅ w-full h-full responsivo
+ */
 export default function SolicitarOrcamento() {
   const [formData, setFormData] = useState({
     titulo: '',
@@ -100,7 +108,7 @@ export default function SolicitarOrcamento() {
 
   if (success) {
     return (
-      <Card className="max-w-2xl mx-auto">
+      <Card className="max-w-2xl mx-auto w-full">
         <CardContent className="p-12 text-center">
           <CheckCircle className="w-20 h-20 text-green-600 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-green-900 mb-2">Orçamento Solicitado!</h2>
@@ -116,7 +124,7 @@ export default function SolicitarOrcamento() {
   }
 
   return (
-    <Card className="max-w-2xl mx-auto">
+    <Card className="max-w-2xl mx-auto w-full">
       <CardHeader>
         <CardTitle>Solicitar Orçamento</CardTitle>
         <CardDescription>

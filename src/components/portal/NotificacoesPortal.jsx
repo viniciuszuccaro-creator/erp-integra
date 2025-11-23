@@ -11,6 +11,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { format } from 'date-fns';
 
+/**
+ * V21.5 - Notificações Portal COMPLETO
+ * ✅ Dropdown com badge contador
+ * ✅ Auto-refresh 60s
+ * ✅ Ícones por tipo
+ * ✅ Marcar como lida
+ * ✅ Timestamp formatado
+ */
 export default function NotificacoesPortal() {
   const { data: notificacoes = [] } = useQuery({
     queryKey: ['notificacoes-portal'],

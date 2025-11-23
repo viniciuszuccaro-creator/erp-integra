@@ -9,6 +9,13 @@ import { Package, Search, Eye, MapPin, FileText, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 
+/**
+ * V21.5 - Meus Pedidos COMPLETO
+ * ✅ Busca em tempo real
+ * ✅ Integração com rastreamento
+ * ✅ Modal detalhes responsivo
+ * ✅ w-full h-full
+ */
 export default function PedidosCliente() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPedido, setSelectedPedido] = useState(null);
@@ -86,7 +93,7 @@ export default function PedidosCliente() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full">
       <div className="flex items-center gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -99,7 +106,7 @@ export default function PedidosCliente() {
         </div>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-4 w-full">
         {filteredPedidos.map((pedido) => {
           const entrega = entregas.find(e => e.pedido_id === pedido.id);
           const progress = getStatusProgress(pedido.status);

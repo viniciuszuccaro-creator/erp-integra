@@ -20,6 +20,8 @@ import MinhasOportunidades from "@/components/portal/MinhasOportunidades";
 import ChatbotPortal from "@/components/portal/ChatbotPortal";
 import RastreamentoRealtime from "@/components/portal/RastreamentoRealtime";
 import NotificacoesPortal from "@/components/portal/NotificacoesPortal";
+import AnalyticsPortalCliente from "@/components/portal/AnalyticsPortalCliente";
+import StatusWidgetPortal from "@/components/portal/StatusWidgetPortal";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
@@ -345,8 +347,15 @@ export default function PortalCliente() {
       </div>
 
       {/* Conteúdo Principal */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full">
+        {/* Status Widget do Portal */}
+        {user?.role === 'admin' && (
+          <div className="mb-6">
+            <StatusWidgetPortal />
+          </div>
+        )}
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full">
           <div className="overflow-x-auto">
             <TabsList className="inline-flex w-auto min-w-full bg-white shadow-sm p-1">
               <TabsTrigger value="dashboard" className="flex items-center gap-2 whitespace-nowrap">
@@ -395,6 +404,10 @@ export default function PortalCliente() {
                 {chamadosAbertos.length > 0 && (
                   <Badge className="ml-1 sm:ml-2 bg-blue-600 text-white text-xs">{chamadosAbertos.length}</Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex items-center gap-2 whitespace-nowrap">
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:inline">Analytics</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -616,7 +629,7 @@ export default function PortalCliente() {
           </TabsContent>
 
           <TabsContent value="projetos">
-            <UploadProjetos clienteId={cliente?.id} />
+            <UploadProjetos clienteId={cliente?.id} clienteNome={cliente?.nome || cliente?.razao_social} />
           </TabsContent>
 
           {/* Chat com Vendedor */}
@@ -626,7 +639,12 @@ export default function PortalCliente() {
 
           {/* Chamados e Suporte */}
           <TabsContent value="chamados">
-            <ChamadosCliente clienteId={cliente?.id} />
+            <ChamadosCliente clienteId={cliente?.id} clienteNome={cliente?.nome || cliente?.razao_social} />
+          </TabsContent>
+
+          {/* Analytics e Relatórios */}
+          <TabsContent value="analytics">
+            <AnalyticsPortalCliente clienteId={cliente?.id} />
           </TabsContent>
         </Tabs>
       </div>

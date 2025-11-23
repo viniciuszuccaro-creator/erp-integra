@@ -7,6 +7,15 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Truck, Navigation, Calendar, Clock, Package, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 
+/**
+ * V21.5 - Rastreamento em Tempo Real COMPLETO
+ * ✅ Auto-refresh 30s
+ * ✅ GPS e QR Code
+ * ✅ Barra de progresso visual
+ * ✅ Links públicos compartilháveis
+ * ✅ Endereço completo
+ * ✅ w-full h-full responsivo
+ */
 export default function RastreamentoRealtime() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -51,7 +60,7 @@ export default function RastreamentoRealtime() {
   }, [refetch]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full">
       {/* Header com Atualização em Tempo Real */}
       <Card className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0">
         <CardContent className="p-6">
@@ -76,7 +85,7 @@ export default function RastreamentoRealtime() {
       </Card>
 
       {/* Entregas em Andamento */}
-      <div className="grid gap-6">
+      <div className="grid gap-6 w-full">
         {entregas.map((entrega) => {
           const statusDetail = statusInfo[entrega.status] || { 
             color: 'bg-gray-100 text-gray-800', 

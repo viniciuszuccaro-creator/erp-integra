@@ -7,11 +7,19 @@ import { Input } from '@/components/ui/input';
 import { Send, Bot, User, X, Minimize2, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+/**
+ * V21.5 - Chatbot IA COMPLETO
+ * ✅ IA contextual com dados do cliente
+ * ✅ Respostas em tempo real
+ * ✅ Interface moderna com bubbles
+ * ✅ Auto-scroll e minimização
+ * ✅ Conhecimento completo do sistema
+ */
 export default function ChatbotPortal({ onClose, isMinimized, onToggleMinimize }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Olá! Sou seu assistente virtual. Como posso ajudá-lo hoje? Você pode perguntar sobre pedidos, notas fiscais, boletos, ou solicitar informações.',
+      content: 'Olá! 👋 Sou seu assistente virtual inteligente. Posso ajudá-lo com pedidos, rastreamento, boletos, orçamentos e muito mais. Como posso ajudar?',
       timestamp: new Date(),
     },
   ]);
@@ -127,9 +135,9 @@ IMPORTANTE: Responda de forma conversacional e natural, como um atendente humano
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.8, y: 20 }}
-      className="fixed bottom-4 right-4 w-96 h-[600px] z-50 shadow-2xl"
+      className="fixed bottom-4 right-4 w-full max-w-md h-[600px] z-50 shadow-2xl mx-4"
     >
-      <Card className="h-full flex flex-col">
+      <Card className="h-full w-full flex flex-col">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
