@@ -33,6 +33,13 @@ import ValidadorEtapa4 from './pages/ValidadorEtapa4';
 import ValidadorFinalEtapas234 from './pages/ValidadorFinalEtapas234';
 import CertificacaoFinal from './pages/CertificacaoFinal';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
+import ProducaoKanban from './pages/ProducaoKanban';
+import LogisticaRomaneios from './pages/LogisticaRomaneios';
+import CRMFunil from './pages/CRMFunil';
+import Integracoes from './pages/Integracoes';
+import DashboardBI from './pages/DashboardBI';
+import RHProdutividade from './pages/RHProdutividade';
+import FiscalMotor from './pages/FiscalMotor';
 import __Layout from './Layout.jsx';
 
 
@@ -72,6 +79,13 @@ export const PAGES = {
     "ValidadorFinalEtapas234": ValidadorFinalEtapas234,
     "CertificacaoFinal": CertificacaoFinal,
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
+    "ProducaoKanban": ProducaoKanban,
+    "LogisticaRomaneios": LogisticaRomaneios,
+    "CRMFunil": CRMFunil,
+    "Integracoes": Integracoes,
+    "DashboardBI": DashboardBI,
+    "RHProdutividade": RHProdutividade,
+    "FiscalMotor": FiscalMotor,
 }
 
 export const pagesConfig = {
