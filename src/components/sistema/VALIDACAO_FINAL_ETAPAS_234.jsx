@@ -352,7 +352,7 @@ export default function ValidacaoFinalEtapas234() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-lg font-semibold">Progresso Geral</span>
-            <Badge className={progressoGeral === 100 ? 'bg-green-600' : 'bg-orange-600'} className="text-lg px-4 py-2">
+            <Badge className={`text-lg px-4 py-2 ${progressoGeral === 100 ? 'bg-green-600' : 'bg-orange-600'}`}>
               {itemsOk} / {totalItems}
             </Badge>
           </div>
