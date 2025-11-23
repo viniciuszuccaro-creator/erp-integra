@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import KanbanProducaoInteligente from "@/components/producao/KanbanProducaoInteligente";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -260,14 +261,9 @@ export default function Producao() {
             </TabsTrigger>
           </TabsList>
 
-          {/* NOVA: Tab Kanban */}
+          {/* NOVA: Tab Kanban Inteligente */}
           <TabsContent value="kanban">
-            <KanbanProducao
-              onViewOP={(op) => {
-                setOpSelecionada(op);
-                setDetalhesDialogOpen(true); // Changed to open details dialog, as 'ops' tab does not directly show single OP view anymore.
-              }}
-            />
+            <KanbanProducaoInteligente />
           </TabsContent>
 
           <TabsContent value="ops" className="space-y-4">

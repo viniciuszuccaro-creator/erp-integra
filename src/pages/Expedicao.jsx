@@ -48,6 +48,7 @@ import DashboardLogistico from "../components/expedicao/DashboardLogistico";
 import RelatoriosLogistica from "../components/expedicao/RelatoriosLogistica";
 import AssinaturaDigitalEntrega from "../components/expedicao/AssinaturaDigitalEntrega";
 import SeparacaoConferencia from "../components/expedicao/SeparacaoConferencia";
+import RoteirizacaoInteligente from "@/components/expedicao/RoteirizacaoInteligente";
 import SeletorEnderecoEntrega from "../components/expedicao/SeletorEnderecoEntrega";
 import EnvioMensagemAutomatica from "../components/expedicao/EnvioMensagemAutomatica";
 import ConfigWhatsApp from "../components/expedicao/ConfigWhatsApp";
@@ -546,6 +547,9 @@ export default function Expedicao() {
             <TabsTrigger value="rotas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Route className="w-4 h-4 mr-2" />
               Rotas ({rotasFiltradas.length})
+            </TabsTrigger>
+            <TabsTrigger value="roteirizacao-ia" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+              🤖 Roteirização IA
             </TabsTrigger>
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
@@ -1071,6 +1075,11 @@ export default function Expedicao() {
           {/* Added: NEW TAB: RELATÓRIOS */}
           <TabsContent value="relatorios">
             <RelatoriosLogistica empresaId={empresaAtual?.id} />
+          </TabsContent>
+
+          {/* NOVA ABA: ROTEIRIZAÇÃO IA */}
+          <TabsContent value="roteirizacao-ia">
+            <RoteirizacaoInteligente />
           </TabsContent>
 
           {/* Added: NEW TAB: CONFIG WHATSAPP */}

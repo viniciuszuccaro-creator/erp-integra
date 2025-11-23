@@ -49,6 +49,7 @@ import {
 import PainelOperacoes3D from "../components/dashboard/PainelOperacoes3D";
 import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
+import DashboardOperacionalBI from "@/components/dashboard/DashboardOperacionalBI";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatusFase1 from "../components/sistema/StatusFase1";
 import StatusFase2 from "../components/sistema/StatusFase2";
@@ -645,10 +646,17 @@ export default function Dashboard() {
             <BarChart3 className="w-4 h-4 mr-2" />
             Resumo Geral
           </TabsTrigger>
+          <TabsTrigger value="bi-operacional" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            🤖 BI Operacional
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="tempo-real">
           <DashboardTempoReal empresaId={empresaAtual?.id} />
+        </TabsContent>
+
+        <TabsContent value="bi-operacional">
+          <DashboardOperacionalBI />
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">

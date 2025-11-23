@@ -41,6 +41,7 @@ import { createPageUrl } from "@/utils";
 import GameficacaoProducao from "@/components/rh/GameficacaoProducao";
 import FeriasForm from "@/components/rh/FeriasForm";
 import { useWindow } from "@/components/lib/useWindow";
+import MonitoramentoRHInteligente from "@/components/rh/MonitoramentoRHInteligente";
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
@@ -192,12 +193,12 @@ export default function RH() {
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4 mb-6">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
                 <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
                 <TabsTrigger value="ponto">Ponto</TabsTrigger>
                 <TabsTrigger value="ferias">Férias</TabsTrigger>
-                {/* NOVA: Tab Gamificação */}
                 <TabsTrigger value="gamificacao">🏆 Rankings</TabsTrigger>
+                <TabsTrigger value="monitoramento-ia">🤖 Monitoramento IA</TabsTrigger>
               </TabsList>
 
               <TabsContent value="colaboradores" className="space-y-4">
@@ -365,6 +366,11 @@ export default function RH() {
               {/* NOVA: Tab Gamificação */}
               <TabsContent value="gamificacao">
                 <GameficacaoProducao empresaId={user?.empresa_padrao_id} />
+              </TabsContent>
+
+              {/* NOVA: Tab Monitoramento IA */}
+              <TabsContent value="monitoramento-ia">
+                <MonitoramentoRHInteligente />
               </TabsContent>
             </Tabs>
           </CardContent>

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -32,6 +31,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ConfigFiscalAutomatica from "../components/fiscal/ConfigFiscalAutomatica";
 import PlanoDeContasTree from "../components/fiscal/PlanoDeContasTree";
 import RelatorioDRE from "../components/fiscal/RelatorioDRE";
+import MotorFiscalInteligente from "@/components/fiscal/MotorFiscalInteligente";
 import ExportacaoSPED from "../components/fiscal/ExportacaoSPED";
 import ImportarXMLNFe from '../components/fiscal/ImportarXMLNFe'; // New Import
 import HistoricoImportacoesXML from '../components/fiscal/HistoricoImportacoesXML'; // New Import
@@ -258,6 +258,9 @@ export default function FiscalPage() {
             <FileText className="w-4 h-4 mr-2" />
             Notas Fiscais
           </TabsTrigger>
+          <TabsTrigger value="motor-ia" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            🤖 Motor Fiscal IA
+          </TabsTrigger>
           <TabsTrigger value="config" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Settings className="w-4 h-4 mr-2" />
             Configuração
@@ -279,6 +282,10 @@ export default function FiscalPage() {
             Importar XML NF-e
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="motor-ia">
+          <MotorFiscalInteligente />
+        </TabsContent>
 
         <TabsContent value="notas" className="space-y-4">
           <Card className="border-0 shadow-sm">

@@ -39,6 +39,7 @@ import ConverterOportunidade from "../components/crm/ConverterOportunidade";
 import IALeadsPriorizacao from "../components/crm/IALeadsPriorizacao";
 import IAChurnDetection from "../components/crm/IAChurnDetection";
 import OportunidadeForm from "../components/crm/OportunidadeForm";
+import FunilComercialInteligente from "@/components/crm/FunilComercialInteligente";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
@@ -576,6 +577,9 @@ export default function CRMPage() {
             <TrendingUp className="w-4 h-4 mr-2" />
             Funil Visual
           </TabsTrigger>
+          <TabsTrigger value="funil-ia" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            🤖 Funil IA
+          </TabsTrigger>
           <TabsTrigger value="oportunidades" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Target className="w-4 h-4 mr-2" />
             Oportunidades
@@ -600,6 +604,10 @@ export default function CRMPage() {
             IA Churn
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="funil-ia">
+          <FunilComercialInteligente />
+        </TabsContent>
 
         <TabsContent value="funil">
           <div className="space-y-4">
