@@ -257,8 +257,8 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
 
               <Button 
                 className="bg-purple-600 hover:bg-purple-700"
-                onClick={() => {
-                  const CalcularComissoesForm = require('./CalcularComissoesForm').default;
+                onClick={async () => {
+                  const { default: CalcularComissoesForm } = await import('./CalcularComissoesForm');
                   openWindow(
                     CalcularComissoesForm,
                     { 
