@@ -193,7 +193,7 @@ export default function PedidosCliente() {
 
       {/* Dialog de Detalhes */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto w-full">
           <DialogHeader>
             <DialogTitle>Detalhes do Pedido {selectedPedido?.numero_pedido}</DialogTitle>
           </DialogHeader>
