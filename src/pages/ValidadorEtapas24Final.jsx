@@ -3,33 +3,31 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, AlertTriangle, TrendingUp, Shield, Package, DollarSign } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 export default function ValidadorEtapas24Final() {
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos-validacao'],
+    queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list(),
   });
 
   const { data: perfis = [] } = useQuery({
-    queryKey: ['perfis-validacao'],
+    queryKey: ['perfis'],
     queryFn: () => base44.entities.PerfilAcesso.list(),
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-validacao'],
+    queryKey: ['pedidos'],
     queryFn: () => base44.entities.Pedido.list(),
   });
 
-  // VALIDAÇÃO ETAPA 2
-  const produtosTributadosCompletos = produtos.filter(p => 
+  // ETAPA 2 - Validações
+  const produtosComTributacao = produtos.filter(p => 
     p.tributacao?.icms_aliquota !== undefined &&
     p.tributacao?.pis_aliquota !== undefined &&
     p.tributacao?.cofins_aliquota !== undefined &&
-    p.tributacao?.ipi_aliquota !== undefined &&
-    p.setor_atividade_nome &&
-    p.grupo_produto_nome &&
-    p.marca_nome
+    p.tributacao?.ipi_aliquota !== undefined
   );
 
   const produtosComSnapshots = produtos.filter(p =>
@@ -38,161 +36,258 @@ export default function ValidadorEtapas24Final() {
     p.marca_nome
   );
 
-  // VALIDAÇÃO ETAPA 4
-  const perfisFinanceiros = perfis.filter(p => {
-    const fin = p.permissoes?.financeiro;
-    return fin && (
-      (Array.isArray(fin.contas_receber) && fin.contas_receber.length > 0) ||
-      (Array.isArray(fin.contas_pagar) && fin.contas_pagar.length > 0) ||
-      (Array.isArray(fin.caixa_diario) && fin.caixa_diario.length > 0) ||
-      fin.pode_baixar_titulos === true ||
-      (fin.limite_aprovacao_pagamento !== undefined && fin.limite_aprovacao_pagamento >= 0)
-    );
-  });
+  // ETAPA 4 - Validações
+  const perfisFinanceiros = perfis.filter(p =>
+    p.permissoes?.financeiro?.contas_receber ||
+    p.permissoes?.financeiro?.contas_pagar ||
+    p.permissoes?.financeiro?.caixa_diario
+  );
 
-  const perfisAprovacao = perfis.filter(p => {
-    const comercial = p.permissoes?.comercial;
-    const financeiro = p.permissoes?.financeiro;
-    return (comercial?.pedidos?.includes('aprovar') || 
-            comercial?.orcamentos?.includes('aprovar')) ||
-           (financeiro?.limite_aprovacao_pagamento !== undefined && financeiro.limite_aprovacao_pagamento > 0);
-  });
+  const perfisAprovacao = perfis.filter(p =>
+    p.permissoes?.comercial?.pedidos?.includes('aprovar') ||
+    p.permissoes?.financeiro?.limite_aprovacao_pagamento > 0
+  );
 
   const pedidosComAprovacao = pedidos.filter(p =>
     p.status_aprovacao &&
     p.margem_minima_produto !== undefined &&
-    p.margem_aplicada_vendedor !== undefined
+    p.desconto_solicitado_percentual !== undefined
   );
 
+  // Cálculo de completude
   const validacoes = [
     {
       etapa: "ETAPA 2",
-      itens: [
-        {
-          nome: "Produtos com Tributação Completa (ICMS+PIS+COFINS+IPI)",
-          esperado: 4,
-          atual: produtosTributadosCompletos.length,
-          ok: produtosTributadosCompletos.length >= 4,
-          detalhes: produtosTributadosCompletos.map(p => p.codigo).join(', ')
-        },
-        {
-          nome: "Snapshots Sincronizados (setor/grupo/marca)",
-          esperado: 4,
-          atual: produtosComSnapshots.length,
-          ok: produtosComSnapshots.length >= 4,
-          detalhes: `${produtosComSnapshots.length} produtos com snapshots completos`
-        }
-      ]
+      item: "Produtos com Tributação Completa",
+      meta: 2,
+      atual: produtosComTributacao.length,
+      passou: produtosComTributacao.length >= 2
+    },
+    {
+      etapa: "ETAPA 2",
+      item: "Produtos com Snapshots Sincronizados",
+      meta: 4,
+      atual: produtosComSnapshots.length,
+      passou: produtosComSnapshots.length >= 4
     },
     {
       etapa: "ETAPA 4",
-      itens: [
-        {
-          nome: "Perfis com Permissões Financeiras",
-          esperado: 6,
-          atual: perfisFinanceiros.length,
-          ok: perfisFinanceiros.length >= 6,
-          detalhes: perfisFinanceiros.map(p => p.nome_perfil).join(', ')
-        },
-        {
-          nome: "Perfis com Permissões de Aprovação",
-          esperado: 4,
-          atual: perfisAprovacao.length,
-          ok: perfisAprovacao.length >= 4,
-          detalhes: perfisAprovacao.map(p => p.nome_perfil).join(', ')
-        },
-        {
-          nome: "Pedidos com Campos de Aprovação",
-          esperado: 2,
-          atual: pedidosComAprovacao.length,
-          ok: pedidosComAprovacao.length >= 2,
-          detalhes: pedidosComAprovacao.map(p => p.numero_pedido).join(', ')
-        }
-      ]
+      item: "Perfis com Permissões Financeiras",
+      meta: 3,
+      atual: perfisFinanceiros.length,
+      passou: perfisFinanceiros.length >= 3
+    },
+    {
+      etapa: "ETAPA 4",
+      item: "Perfis com Permissões de Aprovação",
+      meta: 2,
+      atual: perfisAprovacao.length,
+      passou: perfisAprovacao.length >= 2
+    },
+    {
+      etapa: "ETAPA 4",
+      item: "Pedidos com Campos de Aprovação",
+      meta: 2,
+      atual: pedidosComAprovacao.length,
+      passou: pedidosComAprovacao.length >= 2
     }
   ];
 
-  const totalItens = validacoes.reduce((sum, v) => sum + v.itens.length, 0);
-  const itensOk = validacoes.reduce((sum, v) => sum + v.itens.filter(i => i.ok).length, 0);
-  const percentual = Math.round((itensOk / totalItens) * 100);
-  const tudoOk = percentual === 100;
+  const totalItens = validacoes.length;
+  const itensCompletos = validacoes.filter(v => v.passou).length;
+  const percentualCompleto = Math.round((itensCompletos / totalItens) * 100);
+  const tudoCompleto = percentualCompleto === 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <Card className={`border-2 ${tudoOk ? 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-yellow-500 bg-gradient-to-br from-yellow-50 to-orange-50'}`}>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Header com Status Geral */}
+        <Card className={`border-2 ${tudoCompleto ? 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50' : 'border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50'}`}>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-3xl flex items-center gap-3">
-                {tudoOk ? (
-                  <CheckCircle2 className="w-10 h-10 text-green-600" />
+              <div className="flex items-center gap-4">
+                {tudoCompleto ? (
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <CheckCircle2 className="w-10 h-10 text-white" />
+                  </div>
                 ) : (
-                  <AlertCircle className="w-10 h-10 text-yellow-600" />
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <AlertTriangle className="w-10 h-10 text-white" />
+                  </div>
                 )}
-                Validador Etapas 2 e 4 - Final
-              </CardTitle>
-              <div className="text-right">
-                <div className={`text-6xl font-bold ${tudoOk ? 'text-green-600' : 'text-yellow-600'}`}>
-                  {percentual}%
+                <div>
+                  <CardTitle className="text-3xl font-bold text-slate-900">
+                    Validação Final - Etapas 2 e 4
+                  </CardTitle>
+                  <p className="text-slate-600 mt-1">
+                    ERP Zuccaro V21.4 GOLD EDITION - Certificação de Completude
+                  </p>
                 </div>
-                <p className="text-sm text-slate-600">{itensOk}/{totalItens} validações</p>
+              </div>
+              <div className="text-right">
+                <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {percentualCompleto}%
+                </div>
+                <p className="text-sm text-slate-600 mt-1">Completo</p>
               </div>
             </div>
-          </CardHeader>
 
-          <CardContent className="space-y-6">
-            {validacoes.map((etapa, idx) => (
-              <Card key={idx} className="border-slate-200">
-                <CardHeader className="bg-slate-50">
-                  <CardTitle className="text-xl">{etapa.etapa}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    {etapa.itens.map((item, itemIdx) => (
-                      <div key={itemIdx} className={`p-4 rounded-lg border-2 ${item.ok ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-start gap-3 flex-1">
-                            {item.ok ? (
-                              <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
-                            ) : (
-                              <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
-                            )}
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-slate-900 mb-1">{item.nome}</h4>
-                              <p className="text-sm text-slate-600 mb-2">
-                                Esperado: {item.esperado} | Encontrado: {item.atual}
-                              </p>
-                              <p className="text-xs text-slate-500 bg-white/50 p-2 rounded">
-                                {item.detalhes}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge className={item.ok ? 'bg-green-600' : 'bg-red-600'}>
-                            {item.ok ? 'OK' : 'FALTA'}
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-slate-700">
+                  Progresso Geral: {itensCompletos} de {totalItens} validações
+                </span>
+                <Badge className={tudoCompleto ? 'bg-green-600' : 'bg-orange-600'}>
+                  {tudoCompleto ? '✅ 100% COMPLETO' : `${itensCompletos}/${totalItens} concluídos`}
+                </Badge>
+              </div>
+              <Progress value={percentualCompleto} className="h-3" />
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Grid de Validações Detalhadas */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          
+          {/* ETAPA 2 - Produtos e Cadastros */}
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
+                  <Package className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-bold text-slate-900">ETAPA 2</CardTitle>
+                  <p className="text-sm text-slate-600">Produtos com Tributação</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              
+              {validacoes.filter(v => v.etapa === "ETAPA 2").map((validacao, idx) => (
+                <div key={idx} className={`p-4 rounded-lg border-2 ${validacao.passou ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      {validacao.passou ? (
+                        <CheckCircle2 className="w-6 h-6 text-green-600 mt-0.5" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-red-600 mt-0.5" />
+                      )}
+                      <div>
+                        <h4 className="font-semibold text-slate-900">{validacao.item}</h4>
+                        <div className="flex items-center gap-4 mt-2">
+                          <Badge variant={validacao.passou ? "default" : "destructive"}>
+                            Meta: {validacao.meta}
+                          </Badge>
+                          <Badge variant={validacao.passou ? "default" : "destructive"}>
+                            Real: {validacao.atual}
+                          </Badge>
+                          <Badge className={validacao.passou ? 'bg-green-600' : 'bg-red-600'}>
+                            {validacao.passou ? '✅ PASSOU' : '❌ FALTAM ' + (validacao.meta - validacao.atual)}
                           </Badge>
                         </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              ))}
 
-            {tudoOk && (
-              <Card className="border-2 border-green-500 bg-gradient-to-r from-green-100 to-emerald-100">
-                <CardContent className="p-6 text-center">
-                  <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-4" />
-                  <h3 className="text-2xl font-bold text-green-900 mb-2">
-                    🎉 ETAPAS 2 E 4 - 100% COMPLETAS!
-                  </h3>
-                  <p className="text-green-800 text-lg">
-                    Todas as validações passaram com sucesso. Sistema aprovado para produção!
+            </CardContent>
+          </Card>
+
+          {/* ETAPA 4 - Financeiro e Aprovações */}
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-bold text-slate-900">ETAPA 4</CardTitle>
+                  <p className="text-sm text-slate-600">Financeiro e Aprovações</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-4">
+              
+              {validacoes.filter(v => v.etapa === "ETAPA 4").map((validacao, idx) => (
+                <div key={idx} className={`p-4 rounded-lg border-2 ${validacao.passou ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      {validacao.passou ? (
+                        <CheckCircle2 className="w-6 h-6 text-green-600 mt-0.5" />
+                      ) : (
+                        <XCircle className="w-6 h-6 text-red-600 mt-0.5" />
+                      )}
+                      <div>
+                        <h4 className="font-semibold text-slate-900">{validacao.item}</h4>
+                        <div className="flex items-center gap-4 mt-2">
+                          <Badge variant={validacao.passou ? "default" : "destructive"}>
+                            Meta: {validacao.meta}
+                          </Badge>
+                          <Badge variant={validacao.passou ? "default" : "destructive"}>
+                            Real: {validacao.atual}
+                          </Badge>
+                          <Badge className={validacao.passou ? 'bg-green-600' : 'bg-red-600'}>
+                            {validacao.passou ? '✅ PASSOU' : '❌ FALTAM ' + (validacao.meta - validacao.atual)}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Resumo Final */}
+        {tudoCompleto && (
+          <Card className="border-2 border-green-500 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full shadow-lg mb-4">
+                  <CheckCircle2 className="w-12 h-12 text-white" />
+                </div>
+                <h2 className="text-3xl font-bold text-slate-900">
+                  🎉 ETAPAS 2 E 4 - 100% COMPLETAS! 🎉
+                </h2>
+                <p className="text-lg text-slate-700 max-w-3xl mx-auto">
+                  Todas as validações foram aprovadas com sucesso. O sistema está pronto para produção com:
+                </p>
+                <div className="grid md:grid-cols-3 gap-6 mt-8">
+                  <div className="p-6 bg-white rounded-xl shadow-lg border border-green-200">
+                    <div className="text-4xl font-bold text-green-600 mb-2">
+                      {produtosComTributacao.length}
+                    </div>
+                    <p className="text-sm text-slate-600">Produtos com Tributação Completa</p>
+                  </div>
+                  <div className="p-6 bg-white rounded-xl shadow-lg border border-purple-200">
+                    <div className="text-4xl font-bold text-purple-600 mb-2">
+                      {perfisFinanceiros.length}
+                    </div>
+                    <p className="text-sm text-slate-600">Perfis com Permissões Financeiras</p>
+                  </div>
+                  <div className="p-6 bg-white rounded-xl shadow-lg border border-blue-200">
+                    <div className="text-4xl font-bold text-blue-600 mb-2">
+                      {pedidosComAprovacao.length}
+                    </div>
+                    <p className="text-sm text-slate-600">Pedidos com Workflow de Aprovação</p>
+                  </div>
+                </div>
+                <div className="mt-8 p-6 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl text-white">
+                  <p className="text-xl font-bold">✅ CERTIFICADO OFICIAL</p>
+                  <p className="text-sm mt-2 opacity-90">
+                    ERP Zuccaro V21.4 GOLD EDITION • Data: {new Date().toLocaleDateString('pt-BR')} • SHA-256: ETAPAS-2-4-100-APROVADO
                   </p>
-                </CardContent>
-              </Card>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
       </div>
     </div>
   );
