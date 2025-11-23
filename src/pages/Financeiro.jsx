@@ -43,6 +43,7 @@ import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
+import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -332,6 +333,10 @@ export default function Financeiro() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
+          <TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Dashboard Realtime
+          </TabsTrigger>
           <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
             <Wallet className="w-4 h-4 mr-2" />
             Caixa e Liquidação
@@ -372,6 +377,10 @@ export default function Financeiro() {
             Relatórios
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard-realtime">
+          <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} />
+        </TabsContent>
 
         <TabsContent value="caixa-diario">
           <CaixaDiarioTab />
