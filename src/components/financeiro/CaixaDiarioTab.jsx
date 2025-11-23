@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useWindow } from "@/components/lib/useWindow";
-import AdicionarMovimentoForm from "./AdicionarMovimentoForm";
 import { 
   DollarSign, 
   TrendingUp, 
@@ -414,7 +413,7 @@ export default function CaixaDiarioTab() {
                   size="sm"
                   onClick={() => {
                     openWindow(
-                      AdicionarMovimentoForm,
+                      "AdicionarMovimentoForm",
                       { 
                         initialData: { tipo: 'entrada' },
                         empresaAtual: empresaAtual,
@@ -440,7 +439,7 @@ export default function CaixaDiarioTab() {
                   size="sm"
                   onClick={() => {
                     openWindow(
-                      AdicionarMovimentoForm,
+                      "AdicionarMovimentoForm",
                       { 
                         initialData: { tipo: 'saida' },
                         empresaAtual: empresaAtual,
@@ -467,7 +466,7 @@ export default function CaixaDiarioTab() {
                   variant="outline"
                   onClick={() => {
                     openWindow(
-                      AdicionarMovimentoForm,
+                      "AdicionarMovimentoForm",
                       { 
                         initialData: { tipo: 'saida', categoria: 'Sangria', descricao: 'Sangria de Caixa' },
                         empresaAtual: empresaAtual,
@@ -491,7 +490,7 @@ export default function CaixaDiarioTab() {
                   variant="outline"
                   onClick={() => {
                     openWindow(
-                      AdicionarMovimentoForm,
+                      "AdicionarMovimentoForm",
                       { 
                         initialData: { tipo: 'entrada', categoria: 'Reforço', descricao: 'Reforço de Caixa' },
                         empresaAtual: empresaAtual,

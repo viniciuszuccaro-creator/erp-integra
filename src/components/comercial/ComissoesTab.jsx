@@ -259,7 +259,7 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
                 className="bg-purple-600 hover:bg-purple-700"
                 onClick={() => {
                   openWindow(
-                    CalcularComissoesForm,
+                    "CalcularComissoesForm",
                     { 
                       pedidos: pedidos,
                       onSubmit: () => {
