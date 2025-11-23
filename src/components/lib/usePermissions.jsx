@@ -2,7 +2,7 @@ import { useUser } from "./UserContext";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
-export function usePermissions() {
+export default function usePermissions() {
   const { user, isLoading: loadingUser } = useUser();
 
   // Buscar perfil de acesso completo
@@ -69,5 +69,3 @@ export function usePermissions() {
     perfilAcesso
   };
 }
-
-export default usePermissions;
