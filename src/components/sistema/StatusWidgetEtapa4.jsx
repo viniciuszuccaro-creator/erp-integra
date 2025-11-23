@@ -78,12 +78,37 @@ export default function StatusWidgetEtapa4() {
   ).length;
 
   const produtosComTributacao = produtos.filter(p => 
-    p.tributacao?.icms_cst || p.cfop_padrao_venda
+    p.tributacao?.icms_aliquota !== undefined &&
+    p.tributacao?.pis_aliquota !== undefined &&
+    p.tributacao?.cofins_aliquota !== undefined &&
+    p.tributacao?.ipi_aliquota !== undefined &&
+    p.setor_atividade_nome &&
+    p.grupo_produto_nome &&
+    p.marca_nome
   ).length;
 
   const produtosComEstoqueAvancado = produtos.filter(p => 
     p.controla_lote || p.controla_validade || p.almoxarifado_id
   ).length;
+
+  const perfisComPermissoesFinanceiras = perfisAcesso.filter(p => {
+    const fin = p.permissoes?.financeiro;
+    return fin && (
+      (Array.isArray(fin.contas_receber) && fin.contas_receber.length > 0) ||
+      (Array.isArray(fin.contas_pagar) && fin.contas_pagar.length > 0) ||
+      (Array.isArray(fin.caixa_diario) && fin.caixa_diario.length > 0) ||
+      fin.pode_baixar_titulos === true ||
+      (fin.limite_aprovacao_pagamento !== undefined && fin.limite_aprovacao_pagamento >= 0)
+    );
+  }).length;
+
+  const perfisComPermissoesAprovacao = perfisAcesso.filter(p => {
+    const comercial = p.permissoes?.comercial;
+    const financeiro = p.permissoes?.financeiro;
+    return (comercial?.pedidos?.includes('aprovar') || 
+            comercial?.orcamentos?.includes('aprovar')) ||
+           (financeiro?.limite_aprovacao_pagamento !== undefined && financeiro.limite_aprovacao_pagamento > 0);
+  }).length;
 
   // CHECKLIST ETAPA 4
   const checklistEtapa4 = [
@@ -157,25 +182,31 @@ export default function StatusWidgetEtapa4() {
       ]
     },
     {
-      titulo: "Produto Completo (ETAPA 2/3)",
+      titulo: "Produto e Perfis (ETAPA 2+4)",
       itens: [
         { 
-          nome: "Tripla Classificação Produtos", 
-          ok: produtos.some(p => p.setor_atividade_id && p.grupo_produto_id && p.marca_id),
+          nome: "Produtos com Tributação Completa + Snapshots", 
+          ok: produtosComTributacao >= 4,
           icone: Package,
-          dados: "Setor → Grupo → Marca obrigatórios"
-        },
-        { 
-          nome: "Tributação Fiscal Completa", 
-          ok: produtosComTributacao > 0,
-          icone: Package,
-          dados: `${produtosComTributacao} produtos com ICMS/PIS/COFINS/IPI`
+          dados: `${produtosComTributacao}/4 produtos ICMS+PIS+COFINS+IPI`
         },
         { 
           nome: "Estoque Avançado (Lote/Validade)", 
-          ok: produtosComEstoqueAvancado > 0,
+          ok: produtosComEstoqueAvancado >= 4,
           icone: Package,
-          dados: `${produtosComEstoqueAvancado} produtos com controle avançado`
+          dados: `${produtosComEstoqueAvancado}/4 produtos com controle avançado`
+        },
+        { 
+          nome: "Perfis com Permissões Financeiras", 
+          ok: perfisComPermissoesFinanceiras >= 6,
+          icone: Users,
+          dados: `${perfisComPermissoesFinanceiras}/6 perfis configurados`
+        },
+        { 
+          nome: "Perfis com Permissões de Aprovação", 
+          ok: perfisComPermissoesAprovacao >= 4,
+          icone: Users,
+          dados: `${perfisComPermissoesAprovacao}/4 perfis aprovadores`
         },
       ]
     },
