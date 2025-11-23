@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import CartoesACompensar from "./CartoesACompensar";
+import ConciliacaoBancariaTab from "./ConciliacaoBancariaTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -270,6 +272,12 @@ export default function CaixaDiarioTab() {
           <TabsTrigger value="ordens-pendentes" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
             <Clock className="w-4 h-4 mr-2" />
             Ordens ({ordensPendentes.length})
+          </TabsTrigger>
+          <TabsTrigger value="cartoes" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            💳 Cartões a Compensar
+          </TabsTrigger>
+          <TabsTrigger value="conciliacao" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            🏦 Conciliação
           </TabsTrigger>
           <TabsTrigger value="historico" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white">
             <CheckCircle2 className="w-4 h-4 mr-2" />
@@ -957,6 +965,16 @@ export default function CaixaDiarioTab() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ABA: CARTÕES A COMPENSAR */}
+        <TabsContent value="cartoes" className="space-y-4">
+          <CartoesACompensar />
+        </TabsContent>
+
+        {/* ABA: CONCILIAÇÃO BANCÁRIA */}
+        <TabsContent value="conciliacao" className="space-y-4">
+          <ConciliacaoBancariaTab />
         </TabsContent>
 
         {/* ABA: HISTÓRICO */}
