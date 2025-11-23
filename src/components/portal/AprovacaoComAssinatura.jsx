@@ -15,11 +15,14 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 /**
- * V21.1.2-R2 - Aprovação de Orçamentos com Assinatura Eletrônica
- * ✅ Canvas para assinatura digital
- * ✅ Geração de hash MD5 para validação
- * ✅ Upload de assinatura
+ * V21.5 - Aprovação de Orçamentos com Assinatura Eletrônica COMPLETO
+ * ✅ Canvas para assinatura digital (mouse + touch)
+ * ✅ Geração de hash para validação
+ * ✅ Upload de assinatura seguro
  * ✅ Criação automática de pedido
+ * ✅ Rejeição com motivo
+ * ✅ Histórico de aprovações
+ * ✅ 100% Responsivo w-full h-full
  */
 export default function AprovacaoComAssinatura({ clienteId }) {
   const queryClient = useQueryClient();
@@ -175,8 +178,8 @@ export default function AprovacaoComAssinatura({ clienteId }) {
   };
 
   return (
-    <div className="space-y-4">
-      <Card className="border-2 border-blue-300 bg-blue-50 shadow-lg">
+    <div className="space-y-4 w-full h-full">
+      <Card className="border-2 border-blue-300 bg-blue-50 shadow-lg w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-6 h-6 text-blue-600" />
@@ -338,11 +341,34 @@ export default function AprovacaoComAssinatura({ clienteId }) {
                   ref={canvasRef}
                   width={600}
                   height={200}
-                  className="w-full border border-slate-300 rounded cursor-crosshair bg-white"
+                  className="w-full border border-slate-300 rounded cursor-crosshair bg-white touch-none"
                   onMouseDown={startDrawing}
                   onMouseMove={draw}
                   onMouseUp={stopDrawing}
                   onMouseLeave={stopDrawing}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent('mousedown', {
+                      clientX: touch.clientX,
+                      clientY: touch.clientY
+                    });
+                    canvasRef.current.dispatchEvent(mouseEvent);
+                  }}
+                  onTouchMove={(e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    const mouseEvent = new MouseEvent('mousemove', {
+                      clientX: touch.clientX,
+                      clientY: touch.clientY
+                    });
+                    canvasRef.current.dispatchEvent(mouseEvent);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    const mouseEvent = new MouseEvent('mouseup', {});
+                    canvasRef.current.dispatchEvent(mouseEvent);
+                  }}
                 />
                 <div className="flex justify-between items-center mt-3">
                   <p className="text-xs text-slate-500">

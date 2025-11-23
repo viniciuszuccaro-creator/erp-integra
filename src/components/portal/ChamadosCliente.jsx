@@ -14,6 +14,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { Plus, Eye, MessageSquare, Star, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 
+/**
+ * V21.5 - Chamados/Suporte Cliente COMPLETO
+ * ✅ Abertura de chamados com categorização
+ * ✅ Histórico completo de mensagens
+ * ✅ Avaliação de atendimento
+ * ✅ Priorização visual
+ * ✅ 100% Responsivo w-full h-full
+ */
 export default function ChamadosCliente({ clienteId, clienteNome }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [chamadoSelecionado, setChamadoSelecionado] = useState(null);
@@ -106,8 +114,8 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 w-full h-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">Meus Chamados</h2>
           <p className="text-sm text-slate-600">Acompanhe suas solicitações de suporte</p>
@@ -200,9 +208,9 @@ export default function ChamadosCliente({ clienteId, clienteNome }) {
         </Dialog>
       </div>
 
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-0">
-          <Table>
+      <Card className="border-0 shadow-md w-full">
+        <CardContent className="p-0 w-full overflow-x-auto">
+          <Table className="w-full">
             <TableHeader>
               <TableRow className="bg-slate-50">
                 <TableHead>Nº</TableHead>

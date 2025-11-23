@@ -11,6 +11,15 @@ import { useToast } from "@/components/ui/use-toast";
 import { Upload, FileText, CheckCircle2, Clock, AlertCircle, Download } from "lucide-react";
 import { format } from "date-fns";
 
+/**
+ * V21.5 - Upload de Projetos COMPLETO
+ * ✅ Upload de arquivos PDF, DWG, DXF, Imagens
+ * ✅ Validação de tamanho e tipo
+ * ✅ Histórico de projetos enviados
+ * ✅ Status de processamento IA
+ * ✅ Geração automática de orçamento
+ * ✅ 100% Responsivo w-full h-full
+ */
 export default function UploadProjetos({ clienteId, clienteNome }) {
   const [arquivoSelecionado, setArquivoSelecionado] = useState(null);
   const [descricaoProjeto, setDescricaoProjeto] = useState("");
@@ -130,17 +139,17 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full h-full">
       <div>
-        <h2 className="text-2xl font-bold">Enviar Projeto</h2>
+        <h2 className="text-xl sm:text-2xl font-bold">Enviar Projeto</h2>
         <p className="text-sm text-slate-600">
-          Envie seus projetos (PDF, DWG, DXF) e receba um orçamento detalhado
+          Envie seus projetos (PDF, DWG, DXF, Imagens) e receba um orçamento detalhado com análise IA
         </p>
       </div>
 
       {/* Upload Form */}
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-6">
+      <Card className="border-0 shadow-md w-full">
+        <CardContent className="p-6 w-full">
           <div className="space-y-4">
             <div>
               <Label>Arquivo do Projeto *</Label>
@@ -204,11 +213,15 @@ export default function UploadProjetos({ clienteId, clienteNome }) {
       </Card>
 
       {/* Lista de Projetos Enviados */}
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md w-full">
         <CardHeader className="bg-slate-50 border-b">
-          <CardTitle>Projetos Enviados</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5 text-blue-600" />
+            Projetos Enviados
+            <Badge className="ml-auto bg-blue-600 text-white">{projetos.length}</Badge>
+          </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-6 w-full">
           {projetos.length > 0 ? (
             <div className="space-y-4">
               {projetos.map((proj, idx) => (

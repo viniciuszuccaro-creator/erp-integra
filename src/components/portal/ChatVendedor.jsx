@@ -15,11 +15,14 @@ import { useUser } from "@/components/lib/UserContext";
 import { toast } from "sonner";
 
 /**
- * V21.1.2-R2 - Chat Direto Cliente → Vendedor/Suporte
- * ✅ Mensagens em tempo real
+ * V21.5 - Chat Direto Cliente → Vendedor COMPLETO
+ * ✅ Mensagens em tempo real (5s refresh)
  * ✅ Indicador de digitação
  * ✅ Histórico persistente
  * ✅ Notificação automática para vendedor
+ * ✅ Contatos alternativos visíveis
+ * ✅ Status online/offline do vendedor
+ * ✅ 100% Responsivo w-full h-full
  */
 export default function ChatVendedor({ clienteId }) {
   const { user } = useUser();
@@ -118,8 +121,8 @@ export default function ChatVendedor({ clienteId }) {
   }
 
   return (
-    <Card className="h-[600px] flex flex-col shadow-lg border-2 border-blue-200">
-      <CardHeader className="border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+    <Card className="w-full h-[600px] flex flex-col shadow-lg border-2 border-blue-200">
+      <CardHeader className="border-b bg-gradient-to-r from-blue-600 to-purple-600 text-white flex-shrink-0">
         <CardTitle className="flex items-center gap-3">
           <MessageCircle className="w-6 h-6" />
           <div className="flex-1">

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,20 +6,25 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { 
   ShoppingBag, Truck, DollarSign, FileText, Clock, 
-  CheckCircle2, Package, TrendingUp, AlertCircle, Loader2 
+  CheckCircle2, Package, TrendingUp, AlertCircle, Loader2,
+  Target, RefreshCw, Zap
 } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import { format } from "date-fns";
 
 /**
- * V21.1.2-R2 - Dashboard Interativo com Tempo Real
- * ✅ Status de pedidos em tempo real
- * ✅ Rastreamento de entregas atualizado
+ * V21.5 - Dashboard Interativo COMPLETO com Tempo Real
+ * ✅ Status de pedidos em tempo real (15s refresh)
+ * ✅ Rastreamento de entregas atualizado (10s refresh)
  * ✅ Timeline de atividades
- * ✅ Métricas dinâmicas
+ * ✅ Métricas dinâmicas e KPIs visuais
+ * ✅ Oportunidades em tempo real
+ * ✅ Alertas inteligentes
+ * ✅ 100% Responsivo w-full h-full
  */
 export default function DashboardClienteInterativo() {
   const { user } = useUser();
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   const { data: cliente } = useQuery({
     queryKey: ['cliente-portal', user?.id],
@@ -61,6 +66,20 @@ export default function DashboardClienteInterativo() {
       status: 'Pendente' 
     }),
     enabled: !!cliente?.id
+  });
+
+  const { data: oportunidades = [] } = useQuery({
+    queryKey: ['oportunidades-dashboard', cliente?.id],
+    queryFn: async () => {
+      if (!cliente?.id) return [];
+      return await base44.entities.Oportunidade.filter(
+        { cliente_id: cliente.id },
+        '-data_abertura',
+        10
+      );
+    },
+    enabled: !!cliente?.id,
+    refetchInterval: 30000
   });
 
   if (!cliente) {
@@ -108,16 +127,36 @@ export default function DashboardClienteInterativo() {
     return cores[status] || 'bg-slate-100 text-slate-700';
   };
 
+  const oportunidadesAbertas = oportunidades.filter(o => 
+    o.status !== 'Ganho' && o.status !== 'Perdido' && o.status !== 'Cancelado'
+  );
+
+  const valorPipelineTotal = oportunidadesAbertas.reduce((sum, o) => sum + (o.valor_estimado || 0), 0);
+
   return (
-    <div className="space-y-6">
-      {/* Saudação */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">
-          Olá, {cliente.nome || user?.full_name}! 👋
-        </h1>
-        <p className="text-blue-100">
-          Aqui está um resumo das suas atividades em tempo real
-        </p>
+    <div className="space-y-6 w-full h-full">
+      {/* Saudação + Auto-Refresh */}
+      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 rounded-xl p-6 text-white shadow-2xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+              Olá, {cliente.nome || user?.full_name}! 👋
+            </h1>
+            <p className="text-blue-100 flex items-center gap-2">
+              <Zap className="w-4 h-4" />
+              Dados atualizados em tempo real
+            </p>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => window.location.reload()}
+            className="bg-white/20 hover:bg-white/30 text-white border-0"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Alertas */}
@@ -157,8 +196,8 @@ export default function DashboardClienteInterativo() {
         </Card>
       )}
 
-      {/* Cards de Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Cards de Métricas - 100% Responsivo */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -228,12 +267,28 @@ export default function DashboardClienteInterativo() {
             </p>
           </CardContent>
         </Card>
+
+        <Card className="border-0 shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <Target className="w-6 h-6 text-indigo-600" />
+              </div>
+              <TrendingUp className="w-5 h-5 text-green-500" />
+            </div>
+            <p className="text-sm text-slate-600 mb-1">Oportunidades</p>
+            <p className="text-4xl font-bold text-indigo-600">{oportunidadesAbertas.length}</p>
+            <p className="text-xs text-slate-500 mt-2">
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorPipelineTotal)}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Grid: Pedidos + Timeline */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      {/* Grid: Pedidos + Timeline - 100% Responsivo */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         {/* Pedidos em Andamento */}
-        <Card className="shadow-lg">
+        <Card className="shadow-lg w-full h-full">
           <CardHeader className="border-b bg-slate-50">
             <CardTitle className="flex items-center gap-2 text-base">
               <Package className="w-5 h-5 text-blue-600" />
@@ -241,8 +296,8 @@ export default function DashboardClienteInterativo() {
               <Badge className="ml-auto bg-blue-600 text-white">{pedidosAtivos.length}</Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+          <CardContent className="p-4 w-full h-full">
+            <div className="space-y-3 max-h-[400px] overflow-y-auto w-full">
               {pedidosAtivos.slice(0, 5).map(pedido => {
                 const progressMap = {
                   'Aprovado': 25,
@@ -292,7 +347,7 @@ export default function DashboardClienteInterativo() {
         </Card>
 
         {/* Timeline de Atividades */}
-        <Card className="shadow-lg">
+        <Card className="shadow-lg w-full h-full">
           <CardHeader className="border-b bg-slate-50">
             <CardTitle className="flex items-center gap-2 text-base">
               <Clock className="w-5 h-5 text-green-600" />
@@ -300,8 +355,8 @@ export default function DashboardClienteInterativo() {
               <div className="ml-auto w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4">
-            <div className="space-y-4 max-h-[400px] overflow-y-auto">
+          <CardContent className="p-4 w-full h-full">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto w-full">
               {atividadesRecentes.map((atividade, idx) => (
                 <div key={idx} className="flex gap-3">
                   <div className="flex flex-col items-center">
