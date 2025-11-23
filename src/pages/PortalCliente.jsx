@@ -7,28 +7,43 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Home, ShoppingCart, FileText, Upload, DollarSign, LogOut, Package, Calendar, Download, LayoutDashboard, CheckCircle2, AlertTriangle, User, LogIn, ShoppingBag, Truck, MapPin, Navigation, MessageCircle, MessageSquare } from "lucide-react";
+import { Home, ShoppingCart, FileText, Upload, DollarSign, LogOut, Package, Calendar, Download, LayoutDashboard, CheckCircle2, AlertTriangle, User, LogIn, ShoppingBag, Truck, MapPin, Navigation, MessageCircle, MessageSquare, Send, Target } from "lucide-react";
 import DashboardClienteInterativo from "@/components/portal/DashboardClienteInterativo";
 import ChatVendedor from "@/components/portal/ChatVendedor";
 import ChamadosCliente from "@/components/portal/ChamadosCliente";
 import UploadProjetos from "@/components/portal/UploadProjetos";
 import AprovacaoComAssinatura from "@/components/portal/AprovacaoComAssinatura";
+import PedidosCliente from "@/components/portal/PedidosCliente";
+import DocumentosCliente from "@/components/portal/DocumentosCliente";
+import SolicitarOrcamento from "@/components/portal/SolicitarOrcamento";
+import MinhasOportunidades from "@/components/portal/MinhasOportunidades";
+import ChatbotPortal from "@/components/portal/ChatbotPortal";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { AnimatePresence } from "framer-motion";
 
 /**
- * Portal do Cliente - V21.1.2-R2 APRIMORADO
- * ✅ Dashboard interativo com tempo real
- * ✅ Chat direto com vendedor
+ * PORTAL DO CLIENTE V21.5 - ROBUSTO E INTERATIVO
+ * ✅ Acompanhamento de pedidos em tempo real
+ * ✅ Rastreamento logístico com GPS e QR Code
+ * ✅ Visualização e download de NFes e Boletos
+ * ✅ Solicitação de orçamentos
+ * ✅ Acompanhamento de oportunidades/funil
+ * ✅ Chatbot com IA integrada
+ * ✅ Totalmente responsivo (web e mobile)
+ * ✅ Dashboard interativo com métricas
+ * ✅ Chat com vendedor
  * ✅ Aprovação com assinatura eletrônica
  */
 export default function PortalCliente() {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [cliente, setCliente] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMinimized, setChatMinimized] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -202,7 +217,7 @@ export default function PortalCliente() {
       'Pendente': 'bg-yellow-100 text-yellow-700',
       'Aberto': 'bg-blue-100 text-blue-700',
       'Em Atendimento': 'bg-orange-100 text-orange-700',
-      'Concluído': 'bg-green-100 text-green-700', // Added for chamados
+      'Concluído': 'bg-green-100 text-green-700',
     };
     return cores[status] || 'bg-slate-100 text-slate-700';
   };
@@ -214,7 +229,6 @@ export default function PortalCliente() {
 
     return (
       <div className="space-y-6">
-        {/* Seção 1: Itens de Revenda */}
         {temRevenda && (
           <Card className="border-blue-200 bg-blue-50">
             <CardHeader className="bg-blue-100 border-b border-blue-200">
@@ -246,7 +260,6 @@ export default function PortalCliente() {
           </Card>
         )}
 
-        {/* Seção 2: Itens de Armado Padrão */}
         {temArmado && (
           <Card className="border-purple-200 bg-purple-50">
             <CardHeader className="bg-purple-100 border-b border-purple-200">
@@ -268,7 +281,6 @@ export default function PortalCliente() {
           </Card>
         )}
 
-        {/* Seção 3: Itens de Corte e Dobra */}
         {temCorte && (
           <Card className="border-green-200 bg-green-50">
             <CardHeader className="bg-green-100 border-b border-green-200">
@@ -292,106 +304,124 @@ export default function PortalCliente() {
             </CardContent>
           </Card>
         )}
-
-        {/* Resumo de Bitolas */}
-        <Card className="border-slate-200">
-          <CardHeader className="bg-slate-50 border-b">
-            <CardTitle className="text-sm font-semibold">Resumo de Bitolas (kg)</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            <p className="text-xs text-slate-500">Cálculo consolidado disponível após aprovação do pedido</p>
-          </CardContent>
-        </Card>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+      {/* Header do Portal */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Portal do Cliente</h1>
-              <p className="text-sm text-slate-600">{cliente.nome_fantasia || cliente.razao_social}</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Portal do Cliente</h1>
+              <p className="text-sm text-slate-600">{cliente?.nome_fantasia || cliente?.razao_social || user?.full_name}</p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-medium">{user.full_name}</p>
-                <p className="text-xs text-slate-500">{user.email}</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
+            <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+              <Button
+                onClick={() => setChatOpen(!chatOpen)}
+                className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                size="sm"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Assistente IA</span>
+                <span className="sm:hidden">IA</span>
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                size="sm"
+              >
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sair</span>
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto p-6">
+      {/* Conteúdo Principal */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white shadow-sm">
-            <TabsTrigger value="dashboard">
-              <LayoutDashboard className="w-4 h-4 mr-2" />
-              Dashboard
+          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-5 md:grid-cols-9 bg-white shadow-sm overflow-x-auto">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2">
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="hidden lg:inline">Dashboard</span>
             </TabsTrigger>
-            <TabsTrigger value="orcamentos">
-              <FileText className="w-4 h-4 mr-2" />
-              Orçamentos
+            <TabsTrigger value="meus-pedidos" className="flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              <span className="hidden lg:inline">Meus Pedidos</span>
+            </TabsTrigger>
+            <TabsTrigger value="documentos-novos" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              <span className="hidden lg:inline">Documentos</span>
+            </TabsTrigger>
+            <TabsTrigger value="solicitar-orcamento" className="flex items-center gap-2">
+              <Send className="w-4 h-4" />
+              <span className="hidden lg:inline">Solicitar</span>
+            </TabsTrigger>
+            <TabsTrigger value="minhas-oportunidades" className="flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              <span className="hidden lg:inline">Oportunidades</span>
+            </TabsTrigger>
+            <TabsTrigger value="orcamentos" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              <span className="hidden lg:inline">Orçamentos</span>
               {orcamentos.length > 0 && (
-                <Badge className="ml-2 bg-orange-600 text-white text-xs animate-pulse">{orcamentos.length}</Badge>
+                <Badge className="ml-1 sm:ml-2 bg-orange-600 text-white text-xs">{orcamentos.length}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="pedidos">
-              <ShoppingBag className="w-4 h-4 mr-2" />
-              Pedidos
+            <TabsTrigger value="pedidos" className="flex items-center gap-2">
+              <ShoppingBag className="w-4 h-4" />
+              <span className="hidden lg:inline">Histórico</span>
             </TabsTrigger>
-            <TabsTrigger value="entregas">
-              <Truck className="w-4 h-4 mr-2" />
-              Rastreamento
+            <TabsTrigger value="projetos" className="flex items-center gap-2">
+              <Upload className="w-4 h-4" />
+              <span className="hidden lg:inline">Enviar</span>
             </TabsTrigger>
-            <TabsTrigger value="financeiro">
-              <DollarSign className="w-4 h-4 mr-2" />
-              Financeiro
-            </TabsTrigger>
-            <TabsTrigger value="documentos">
-              <Download className="w-4 h-4 mr-2" />
-              Documentos
-            </TabsTrigger>
-            <TabsTrigger value="projetos">
-              <Upload className="w-4 h-4 mr-2" />
-              Enviar Projeto
-            </TabsTrigger>
-            <TabsTrigger value="chamados">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Chamados
-              {chamadosAbertos.length > 0 && (
-                <Badge className="ml-2 bg-blue-600 text-white text-xs">{chamadosAbertos.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="chat">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Chat Vendedor
-              <div className="ml-2 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+            <TabsTrigger value="chat" className="flex items-center gap-2">
+              <MessageCircle className="w-4 h-4" />
+              <span className="hidden lg:inline">Chat</span>
+              <div className="ml-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             </TabsTrigger>
           </TabsList>
 
-          {/* V21.1.2-R2: Dashboard Interativo */}
+          {/* Dashboard Interativo */}
           <TabsContent value="dashboard">
             <DashboardClienteInterativo />
           </TabsContent>
 
-          {/* V21.1.2-R2: Aprovação com Assinatura */}
+          {/* Nova Aba: Meus Pedidos (Componente Novo) */}
+          <TabsContent value="meus-pedidos">
+            <PedidosCliente />
+          </TabsContent>
+
+          {/* Nova Aba: Documentos (Componente Novo) */}
+          <TabsContent value="documentos-novos">
+            <DocumentosCliente />
+          </TabsContent>
+
+          {/* Nova Aba: Solicitar Orçamento */}
+          <TabsContent value="solicitar-orcamento">
+            <SolicitarOrcamento />
+          </TabsContent>
+
+          {/* Nova Aba: Minhas Oportunidades */}
+          <TabsContent value="minhas-oportunidades">
+            <MinhasOportunidades />
+          </TabsContent>
+
+          {/* Aprovação com Assinatura */}
           <TabsContent value="orcamentos">
             <AprovacaoComAssinatura clienteId={cliente?.id} />
           </TabsContent>
 
-          {/* PEDIDOS TAB - REFATORADO COM SEÇÕES */}
+          {/* Histórico de Pedidos */}
           <TabsContent value="pedidos">
             <Card className="border-0 shadow-md">
               <CardHeader className="bg-slate-50 border-b">
-                <CardTitle>Meus Pedidos e Produção</CardTitle>
+                <CardTitle>Histórico de Pedidos</CardTitle>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="space-y-6">
@@ -401,14 +431,14 @@ export default function PortalCliente() {
                     return (
                       <Card key={pedido.id} className="border-2 border-blue-200">
                         <CardHeader className="bg-blue-50 border-b">
-                          <div className="flex justify-between items-start">
+                          <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                             <div>
                               <p className="font-bold text-lg">Pedido #{pedido.numero_pedido}</p>
                               <p className="text-sm text-slate-600">
                                 {format(new Date(pedido.data_pedido), 'dd/MM/yyyy')}
                               </p>
                             </div>
-                            <div className="text-right">
+                            <div className="text-left sm:text-right">
                               <Badge className={getStatusColor(pedido.status)}>
                                 {pedido.status}
                               </Badge>
@@ -449,247 +479,37 @@ export default function PortalCliente() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="entregas">
-            <Card>
-              <CardHeader>
-                <CardTitle>Rastreamento de Entregas</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {entregasEmAndamento
-                    .filter(e => e.status !== 'Entregue') // Filter out delivered ones as they will be in documents tab
-                    .map(entrega => (
-                      <Card key={entrega.id} className="border-2 border-green-300 bg-green-50">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div>
-                              <p className="font-bold">{entrega.numero_pedido}</p>
-                              <p className="text-sm text-slate-600">{cliente.nome_fantasia || cliente.razao_social}</p>
-                            </div>
-                            <Badge className={getStatusColor(entrega.status)}>{entrega.status}</Badge>
-                          </div>
-
-                          {entrega.codigo_rastreamento && (
-                            <div className="p-3 bg-white rounded border mb-3">
-                              <p className="text-xs text-slate-600">Código de Rastreamento</p>
-                              <p className="font-mono font-semibold">{entrega.codigo_rastreamento}</p>
-                            </div>
-                          )}
-
-                          <div className="text-sm space-y-2">
-                            <p>
-                              <MapPin className="w-4 h-4 inline mr-2" />
-                              {entrega.endereco_entrega_completo?.logradouro}, {entrega.endereco_entrega_completo?.numero}
-                            </p>
-                            <p className="text-slate-600">
-                              {entrega.endereco_entrega_completo?.cidade} - {entrega.endereco_entrega_completo?.estado}
-                            </p>
-                          </div>
-
-                          {entrega.link_rastreamento && (
-                            <Button
-                              className="w-full mt-3"
-                              onClick={() => window.open(entrega.link_rastreamento, '_blank')}
-                            >
-                              <Navigation className="w-4 h-4 mr-2" />
-                              Rastrear em Tempo Real
-                            </Button>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-
-                  {entregasEmAndamento.filter(e => e.status !== 'Entregue').length === 0 && (
-                    <div className="text-center py-12 text-slate-500">
-                      <Truck className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                      <p>Nenhuma entrega em andamento</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="financeiro">
-            <Card className="border-0 shadow-md">
-              <CardHeader className="bg-slate-50 border-b">
-                <CardTitle>Títulos e Pagamentos</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {contasReceber.map(conta => (
-                    <div key={conta.id} className={`p-4 rounded-lg border ${
-                      conta.status === 'Pendente' ? 'bg-yellow-50 border-yellow-200' : 'bg-green-50 border-green-200'
-                    }`}>
-                      <div className="flex justify-between items-start flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                          <p className="font-semibold">{conta.descricao}</p>
-                          <div className="flex items-center gap-3 mt-2 text-sm flex-wrap">
-                            <Badge className={conta.status === 'Pendente' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}>
-                              {conta.status}
-                            </Badge>
-                            <span className="text-slate-600">
-                              Vencimento: {format(new Date(conta.data_vencimento), 'dd/MM/yyyy')}
-                            </span>
-                          </div>
-                          <div className="flex gap-2 mt-3 flex-wrap">
-                            {conta.boleto_url && (
-                              <Button size="sm" variant="outline" onClick={() => window.open(conta.boleto_url, '_blank')}>
-                                Ver Boleto
-                              </Button>
-                            )}
-                            {conta.pix_copia_cola && (
-                              <Button
-                                size="sm"
-                                className="bg-green-600 hover:bg-green-700"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(conta.pix_copia_cola);
-                                  toast({ title: '✅ Código PIX copiado!' });
-                                }}
-                              >
-                                Copiar PIX
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-green-600">
-                            R$ {conta.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {contasReceber.length === 0 && (
-                    <div className="text-center py-12 text-slate-500">
-                      <DollarSign className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                      <p>Nenhum título em aberto</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* DOCUMENTOS TAB - COM COMPROVANTES DE ENTREGA */}
-          <TabsContent value="documentos">
-            <Card className="border-0 shadow-md">
-              <CardHeader className="bg-slate-50 border-b">
-                <CardTitle>Documentos e Comprovantes</CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                {/* NF-e */}
-                <div>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-green-600" />
-                    Notas Fiscais
-                  </h4>
-                  <div className="space-y-2">
-                    {notasFiscais.length > 0 ? (
-                      notasFiscais.map(nf => (
-                        <div key={nf.id} className="p-3 border rounded flex justify-between items-center bg-white">
-                          <div>
-                            <p className="font-medium">NF-e {nf.numero}/{nf.serie}</p>
-                            <p className="text-xs text-slate-500">{format(new Date(nf.data_emissao), 'dd/MM/yyyy')}</p>
-                          </div>
-                          <div className="flex gap-2">
-                            {nf.xml_nfe && (
-                              <Button size="sm" variant="outline" onClick={() => window.open(nf.xml_nfe, '_blank')}>
-                                XML
-                              </Button>
-                            )}
-                            {nf.pdf_danfe && (
-                              <Button size="sm" onClick={() => window.open(nf.pdf_danfe, '_blank')}>
-                                PDF
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-6 text-slate-500 text-sm">
-                        Nenhuma nota fiscal disponível.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* NOVO: Comprovantes de Entrega */}
-                <div>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <Truck className="w-5 h-5 text-purple-600" />
-                    Comprovantes de Entrega
-                  </h4>
-                  <div className="space-y-2">
-                    {entregasEmAndamento
-                      .filter(e => e.status === 'Entregue' && e.comprovante_entrega?.foto_comprovante)
-                      .map(entrega => (
-                        <div key={entrega.id} className="p-3 border rounded bg-green-50">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <p className="font-medium">Pedido #{entrega.numero_pedido}</p>
-                              <p className="text-xs text-slate-600">
-                                Entregue em: {format(new Date(entrega.comprovante_entrega.data_hora_recebimento), 'dd/MM/yyyy HH:mm')}
-                              </p>
-                              <p className="text-xs text-slate-600">
-                                Recebido por: {entrega.comprovante_entrega.nome_recebedor}
-                              </p>
-                            </div>
-                            <Badge className="bg-green-600 text-white">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              Entregue
-                            </Badge>
-                          </div>
-                          
-                          <div className="flex gap-2 mt-3 flex-wrap">
-                            {entrega.comprovante_entrega.foto_comprovante && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(entrega.comprovante_entrega.foto_comprovante, '_blank')}
-                              >
-                                Ver Foto
-                              </Button>
-                            )}
-                            {entrega.comprovante_entrega.assinatura_digital && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => window.open(entrega.comprovante_entrega.assinatura_digital, '_blank')}
-                              >
-                                Ver Assinatura
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    }
-                    {entregasEmAndamento.filter(e => e.status === 'Entregue' && e.comprovante_entrega?.foto_comprovante).length === 0 && (
-                      <div className="text-center py-6 text-slate-500 text-sm">
-                        Nenhum comprovante de entrega disponível.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="projetos">
             <UploadProjetos clienteId={cliente?.id} />
           </TabsContent>
 
-          <TabsContent value="chamados">
-            <ChamadosCliente clienteId={cliente?.id} />
-          </TabsContent>
-
-          {/* V21.1.2-R2: Chat com Vendedor */}
+          {/* Chat com Vendedor */}
           <TabsContent value="chat">
             <ChatVendedor clienteId={cliente?.id} />
           </TabsContent>
         </Tabs>
-      </main>
+      </div>
+
+      {/* Chatbot IA Flutuante */}
+      <AnimatePresence>
+        {chatOpen && (
+          <ChatbotPortal
+            onClose={() => setChatOpen(false)}
+            isMinimized={chatMinimized}
+            onToggleMinimize={() => setChatMinimized(!chatMinimized)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Botão Flutuante do Chat (quando minimizado) */}
+      {chatMinimized && (
+        <Button
+          onClick={() => setChatMinimized(false)}
+          className="fixed bottom-4 right-4 w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-2xl z-40"
+        >
+          <MessageCircle className="w-6 h-6" />
+        </Button>
+      )}
     </div>
   );
 }
