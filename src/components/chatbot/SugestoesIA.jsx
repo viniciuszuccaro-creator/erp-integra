@@ -38,9 +38,10 @@ export default function SugestoesIA({ conversa, mensagens = [] }) {
 
       if (!ultimaMensagemCliente) return null;
 
-      // Gerar sugestões usando IA
-      const resultado = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é um assistente de atendimento ao cliente de um ERP industrial.
+      try {
+        // Gerar sugestões usando IA
+        const resultado = await base44.integrations.Core.InvokeLLM({
+          prompt: `Você é um assistente de atendimento ao cliente de um ERP industrial.
 
 ÚLTIMA MENSAGEM DO CLIENTE:
 "${ultimaMensagemCliente.mensagem}"
@@ -53,39 +54,60 @@ CONTEXTO DA CONVERSA:
 
 Gere 3 respostas curtas e profissionais que o atendente pode usar.
 Também sugira 2 ações que o atendente deve considerar.`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            respostas_sugeridas: {
-              type: "array",
-              items: {
+          response_json_schema: {
+            type: "object",
+            properties: {
+              respostas_sugeridas: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    texto: { type: "string" },
+                    tom: { type: "string", enum: ["formal", "amigavel", "tecnico"] }
+                  }
+                }
+              },
+              acoes_recomendadas: {
+                type: "array",
+                items: { type: "string" }
+              },
+              alerta: {
                 type: "object",
                 properties: {
-                  texto: { type: "string" },
-                  tom: { type: "string", enum: ["formal", "amigavel", "tecnico"] }
+                  tem_alerta: { type: "boolean" },
+                  mensagem: { type: "string" },
+                  tipo: { type: "string", enum: ["info", "aviso", "urgente"] }
                 }
-              }
-            },
-            acoes_recomendadas: {
-              type: "array",
-              items: { type: "string" }
-            },
-            alerta: {
-              type: "object",
-              properties: {
-                tem_alerta: { type: "boolean" },
-                mensagem: { type: "string" },
-                tipo: { type: "string", enum: ["info", "aviso", "urgente"] }
               }
             }
           }
-        }
-      });
+        });
 
-      return resultado;
+        return resultado;
+      } catch (err) {
+        console.warn('Erro ao gerar sugestões IA:', err);
+        // Retornar sugestões fallback
+        return {
+          respostas_sugeridas: [
+            { texto: 'Olá! Como posso ajudar você hoje?', tom: 'amigavel' },
+            { texto: 'Entendo sua solicitação. Vou verificar isso para você.', tom: 'formal' },
+            { texto: 'Um momento, estou consultando as informações.', tom: 'formal' }
+          ],
+          acoes_recomendadas: [
+            'Verificar histórico do cliente',
+            'Consultar pedidos recentes'
+          ],
+          alerta: {
+            tem_alerta: false,
+            mensagem: '',
+            tipo: 'info'
+          }
+        };
+      }
     },
     enabled: !!conversa && mensagens.length >= 1,
-    staleTime: 30000
+    staleTime: 30000,
+    retry: 1
   });
 
   const copiarResposta = async (texto) => {

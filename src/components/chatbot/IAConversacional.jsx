@@ -30,7 +30,7 @@ import { motion } from 'framer-motion';
  */
 export default function IAConversacional({ conversa, mensagens = [], clienteId }) {
   // Buscar análise da IA
-  const { data: analise, isLoading, refetch } = useQuery({
+  const { data: analise, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['ia-analise-conversa', conversa?.id],
     queryFn: async () => {
       if (!conversa || mensagens.length < 2) return null;
@@ -41,9 +41,10 @@ export default function IAConversacional({ conversa, mensagens = [], clienteId }
         sentimento: m.sentimento
       }));
 
-      const resultado = await base44.integrations.Core.InvokeLLM({
-        prompt: `Você é um analista de atendimento ao cliente de um ERP industrial.
-        
+      try {
+        const resultado = await base44.integrations.Core.InvokeLLM({
+          prompt: `Você é um analista de atendimento ao cliente de um ERP industrial.
+          
 Analise esta conversa e forneça insights acionáveis:
 
 CONVERSA:
@@ -63,54 +64,77 @@ Forneça:
 5. Produtos/serviços que poderiam ser oferecidos
 6. Risco de insatisfação (baixo/médio/alto)
 7. Oportunidade de venda (sim/não e valor estimado)`,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            resumo: { type: "string" },
-            sentimento: { 
-              type: "object",
-              properties: {
-                tipo: { type: "string" },
-                intensidade: { type: "number" },
-                motivo: { type: "string" }
-              }
-            },
-            necessidade_principal: { type: "string" },
-            acoes_recomendadas: { 
-              type: "array", 
-              items: { type: "string" } 
-            },
-            produtos_sugeridos: { 
-              type: "array", 
-              items: { 
+          response_json_schema: {
+            type: "object",
+            properties: {
+              resumo: { type: "string" },
+              sentimento: { 
                 type: "object",
                 properties: {
-                  produto: { type: "string" },
+                  tipo: { type: "string" },
+                  intensidade: { type: "number" },
                   motivo: { type: "string" }
                 }
-              } 
-            },
-            risco_insatisfacao: { type: "string" },
-            oportunidade_venda: {
-              type: "object",
-              properties: {
-                existe: { type: "boolean" },
-                valor_estimado: { type: "number" },
-                tipo: { type: "string" }
+              },
+              necessidade_principal: { type: "string" },
+              acoes_recomendadas: { 
+                type: "array", 
+                items: { type: "string" } 
+              },
+              produtos_sugeridos: { 
+                type: "array", 
+                items: { 
+                  type: "object",
+                  properties: {
+                    produto: { type: "string" },
+                    motivo: { type: "string" }
+                  }
+                } 
+              },
+              risco_insatisfacao: { type: "string" },
+              oportunidade_venda: {
+                type: "object",
+                properties: {
+                  existe: { type: "boolean" },
+                  valor_estimado: { type: "number" },
+                  tipo: { type: "string" }
+                }
+              },
+              palavras_chave: {
+                type: "array",
+                items: { type: "string" }
               }
-            },
-            palavras_chave: {
-              type: "array",
-              items: { type: "string" }
             }
           }
-        }
-      });
+        });
 
-      return resultado;
+        return resultado;
+      } catch (err) {
+        console.warn('Erro na análise IA:', err);
+        // Retornar análise fallback baseada em regras simples
+        return {
+          resumo: 'Análise automática baseada em regras (IA indisponível)',
+          sentimento: {
+            tipo: conversa.sentimento_geral || 'Neutro',
+            intensidade: 0.5,
+            motivo: 'Análise baseada em palavras-chave'
+          },
+          necessidade_principal: conversa.intent_principal || 'Atendimento geral',
+          acoes_recomendadas: [
+            'Verificar histórico do cliente',
+            'Oferecer ajuda personalizada',
+            'Encaminhar para especialista se necessário'
+          ],
+          produtos_sugeridos: [],
+          risco_insatisfacao: 'médio',
+          oportunidade_venda: { existe: false, valor_estimado: 0, tipo: '' },
+          palavras_chave: conversa.tags || []
+        };
+      }
     },
     enabled: !!conversa && mensagens.length >= 2,
-    staleTime: 60000 // 1 minuto
+    staleTime: 60000, // 1 minuto
+    retry: 1 // Tentar apenas 1 vez em caso de erro
   });
 
   if (!conversa) return null;
