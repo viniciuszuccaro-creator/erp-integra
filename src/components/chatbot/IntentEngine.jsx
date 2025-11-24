@@ -252,7 +252,7 @@ Retorne em JSON:
       mensagem: 'Para calcular o prazo preciso, informe sua cidade e estado, ou me passe seu CEP.',
       dados: null
     };
-  }
+  },
 
   async acaoOrcamento(entidades, clienteId) {
     // Verificar se cliente tem orçamentos em andamento
