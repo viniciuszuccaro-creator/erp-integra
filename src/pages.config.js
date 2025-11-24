@@ -24,6 +24,7 @@ import ChatbotAtendimento from './pages/ChatbotAtendimento';
 import DemoMultitarefas from './pages/DemoMultitarefas';
 import Cadastros from './pages/Cadastros';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
+import HubAtendimento from './pages/HubAtendimento';
 import __Layout from './Layout.jsx';
 
 
@@ -54,6 +55,7 @@ export const PAGES = {
     "DemoMultitarefas": DemoMultitarefas,
     "Cadastros": Cadastros,
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
+    "HubAtendimento": HubAtendimento,
 }
 
 export const pagesConfig = {
