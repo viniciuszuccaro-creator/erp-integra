@@ -87,6 +87,16 @@ export default function AnalyticsAtendimento() {
   const metricas = calcularMetricas();
 
   // Dados para gráficos
+  const canais = [
+    { nome: 'WhatsApp' },
+    { nome: 'Instagram' },
+    { nome: 'Facebook' },
+    { nome: 'Telegram' },
+    { nome: 'Email' },
+    { nome: 'WebChat' },
+    { nome: 'Portal' }
+  ];
+  
   const conversasPorCanal = canais.map(canal => ({
     canal: canal.nome,
     total: conversas.filter(c => c.canal === canal.nome).length
