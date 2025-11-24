@@ -20,20 +20,10 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import PortalCliente from './pages/PortalCliente';
 import Documentacao from './pages/Documentacao';
 import Seguranca from './pages/Seguranca';
-import TesteGoldenThread from './pages/TesteGoldenThread';
 import ChatbotAtendimento from './pages/ChatbotAtendimento';
-import ValidadorFase1 from './pages/ValidadorFase1';
-import LimparDados from './pages/LimparDados';
 import DemoMultitarefas from './pages/DemoMultitarefas';
 import Cadastros from './pages/Cadastros';
-import DemoFase1Completa from './pages/DemoFase1Completa';
-import ValidadorFase2 from './pages/ValidadorFase2';
-import ValidadorFase3 from './pages/ValidadorFase3';
-import ValidadorEtapa4 from './pages/ValidadorEtapa4';
-import ValidadorFinalEtapas234 from './pages/ValidadorFinalEtapas234';
-import CertificacaoFinal from './pages/CertificacaoFinal';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
-import ValidadorEtapas512 from './pages/ValidadorEtapas512';
 import __Layout from './Layout.jsx';
 
 
@@ -60,20 +50,10 @@ export const PAGES = {
     "PortalCliente": PortalCliente,
     "Documentacao": Documentacao,
     "Seguranca": Seguranca,
-    "TesteGoldenThread": TesteGoldenThread,
     "ChatbotAtendimento": ChatbotAtendimento,
-    "ValidadorFase1": ValidadorFase1,
-    "LimparDados": LimparDados,
     "DemoMultitarefas": DemoMultitarefas,
     "Cadastros": Cadastros,
-    "DemoFase1Completa": DemoFase1Completa,
-    "ValidadorFase2": ValidadorFase2,
-    "ValidadorFase3": ValidadorFase3,
-    "ValidadorEtapa4": ValidadorEtapa4,
-    "ValidadorFinalEtapas234": ValidadorFinalEtapas234,
-    "CertificacaoFinal": CertificacaoFinal,
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
-    "ValidadorEtapas512": ValidadorEtapas512,
 }
 
 export const pagesConfig = {
