@@ -17,9 +17,17 @@ import { base44 } from '@/api/base44Client';
  * Processa mensagens e detecta intenções usando IA
  */
 
+/**
+ * REGRAS DE NEGÓCIO DO INTENT ENGINE V21.5:
+ * - Detecta 15+ tipos de intents diferentes
+ * - Extrai entidades automaticamente (CPF, valores, datas, produtos)
+ * - Analisa sentimento e urgência
+ * - Sugere ações contextualizadas
+ * - Aprende com histórico do cliente
+ */
 export const IntentEngine = {
   /**
-   * Analisa uma mensagem e detecta a intenção
+   * Analisa uma mensagem e detecta a intenção com IA Avançada
    */
   async detectarIntent(mensagem, clienteId = null, contexto = {}) {
     try {
@@ -35,12 +43,20 @@ export const IntentEngine = {
         }
       }
 
+      // Buscar dados adicionais do cliente
+      let contextoDados = '';
+      if (contexto.dadosCliente) {
+        contextoDados = `\nDados do Cliente: ${contexto.dadosCliente.nome}, classificação ABC: ${contexto.dadosCliente.classificacao_abc || 'Novo'}`;
+      }
+
       const resultado = await base44.integrations.Core.InvokeLLM({
         prompt: `
-Você é um assistente de vendas de um ERP industrial (metalurgia, ferro, aço).
+Você é um assistente de vendas inteligente de um ERP industrial (metalurgia, ferro, aço, construção civil).
 
 Mensagem do cliente: "${mensagem}"
 ${historico}
+${contextoDados}
+Canal: ${contexto.canal || 'Portal'}
 
 Analise a mensagem e detecte a INTENÇÃO principal:
 
@@ -51,7 +67,16 @@ Analise a mensagem e detecte a INTENÇÃO principal:
 5. **boleto** - Quer 2ª via de boleto, código PIX, link pagamento
 6. **falar_atendente** - Quer falar com humano ou problema complexo
 7. **reclamacao** - Está insatisfeito, reclamando
-8. **outro** - Outras intenções
+8. **cadastro** - Quer atualizar dados, endereço, contato
+9. **produto_especifico** - Pergunta sobre produto específico
+10. **disponibilidade** - Consultar estoque/disponibilidade
+11. **prazo_entrega** - Consultar prazo de entrega
+12. **forma_pagamento** - Perguntas sobre formas de pagamento
+13. **cancelamento** - Quer cancelar pedido
+14. **troca_devolucao** - Quer trocar ou devolver
+15. **outro** - Outras intenções
+
+IMPORTANTE: Se cliente demonstrar frustração, urgência ou insatisfação, marque necessita_atendente=true.
 
 Retorne em JSON:
 {
@@ -128,18 +153,135 @@ Retorne em JSON:
       case 'financeiro':
         return await this.acaoFinanceiro(entidades, clienteId);
       
+      case 'disponibilidade':
+        return await this.acaoDisponibilidade(entidades, clienteId);
+      
+      case 'produto_especifico':
+        return await this.acaoProdutoEspecifico(entidades, clienteId);
+      
+      case 'prazo_entrega':
+        return await this.acaoPrazoEntrega(entidades, clienteId);
+      
       default:
         return null;
     }
   },
 
+  async acaoDisponibilidade(entidades, clienteId) {
+    // Buscar produtos mais comprados pelo cliente
+    if (clienteId) {
+      const cliente = await base44.entities.Cliente.filter({ id: clienteId });
+      const produtos = cliente[0]?.produtos_mais_comprados || [];
+      
+      if (produtos.length > 0) {
+        const produtosMaisComprados = await base44.entities.Produto.filter({
+          id: { $in: produtos.slice(0, 5).map(p => p.produto_id) }
+        });
+        
+        const lista = produtosMaisComprados.map(p => 
+          `• ${p.descricao} - ${p.estoque_disponivel > 0 ? `✅ ${p.estoque_disponivel} ${p.unidade_principal} disponível` : '❌ Sem estoque'}`
+        ).join('\n');
+        
+        return {
+          tipo: 'estoque_consultado',
+          mensagem: `Aqui está a disponibilidade dos produtos que você costuma comprar:\n\n${lista}\n\nPrecisa de outro produto?`,
+          dados: { produtos: produtosMaisComprados }
+        };
+      }
+    }
+    
+    return {
+      tipo: 'consulta_estoque',
+      mensagem: 'Qual produto você gostaria de consultar a disponibilidade? Pode me passar o código ou descrição.',
+      dados: null
+    };
+  },
+
+  async acaoProdutoEspecifico(entidades, clienteId) {
+    const produto = entidades.produto_interesse;
+    if (produto) {
+      // Buscar produto por descrição ou código
+      const produtos = await base44.entities.Produto.list();
+      const encontrado = produtos.find(p => 
+        p.descricao?.toLowerCase().includes(produto.toLowerCase()) ||
+        p.codigo?.toLowerCase().includes(produto.toLowerCase())
+      );
+      
+      if (encontrado) {
+        return {
+          tipo: 'produto_encontrado',
+          mensagem: `📦 ${encontrado.descricao}\n\n` +
+            `Código: ${encontrado.codigo}\n` +
+            `Preço: R$ ${encontrado.preco_venda?.toLocaleString('pt-BR')}\n` +
+            `Estoque: ${encontrado.estoque_disponivel} ${encontrado.unidade_principal}\n\n` +
+            `Deseja incluir no orçamento?`,
+          dados: { produto: encontrado }
+        };
+      }
+    }
+    
+    return {
+      tipo: 'produto_nao_encontrado',
+      mensagem: 'Não encontrei o produto. Pode descrever melhor ou informar o código?',
+      dados: null
+    };
+  },
+
+  async acaoPrazoEntrega(entidades, clienteId) {
+    if (clienteId) {
+      const cliente = await base44.entities.Cliente.filter({ id: clienteId });
+      const enderecoCliente = cliente[0]?.endereco_principal;
+      
+      if (enderecoCliente?.cidade) {
+        const prazoEstimado = enderecoCliente.estado === 'SP' ? '2-3 dias úteis' : '5-7 dias úteis';
+        
+        return {
+          tipo: 'prazo_informado',
+          mensagem: `📍 Para sua região (${enderecoCliente.cidade}/${enderecoCliente.estado}):\n\n` +
+            `Prazo estimado: ${prazoEstimado}\n\n` +
+            `Produtos em estoque: entrega mais rápida\n` +
+            `Produtos sob encomenda: +10-15 dias\n\n` +
+            `Precisa de urgência? Fale com um atendente!`,
+          dados: { prazo: prazoEstimado, regiao: enderecoCliente.estado }
+        };
+      }
+    }
+    
+    return {
+      tipo: 'prazo_consulta',
+      mensagem: 'Para calcular o prazo preciso, informe sua cidade e estado, ou me passe seu CEP.',
+      dados: null
+    };
+  }
+
   async acaoOrcamento(entidades, clienteId) {
-    // Criar orçamento preliminar
+    // Verificar se cliente tem orçamentos em andamento
+    let orcamentosAbertos = [];
+    if (clienteId) {
+      orcamentosAbertos = await base44.entities.Pedido.filter({
+        cliente_id: clienteId,
+        tipo: 'Orçamento',
+        status: ['Rascunho', 'Aguardando Aprovação']
+      }, '-data_pedido', 3);
+    }
+
+    if (orcamentosAbertos.length > 0) {
+      const lista = orcamentosAbertos.map(o => 
+        `• ${o.numero_pedido} - R$ ${o.valor_total?.toLocaleString('pt-BR')} - ${o.status}`
+      ).join('\n');
+      
+      return {
+        tipo: 'orcamentos_em_andamento',
+        mensagem: `Você tem ${orcamentosAbertos.length} orçamento(s) em andamento:\n\n${lista}\n\nDeseja continuar com algum deles ou criar um novo?`,
+        dados: { orcamentos: orcamentosAbertos }
+      };
+    }
+
     return {
       tipo: 'orcamento_iniciado',
-      mensagem: 'Ótimo! Vou ajudá-lo com o orçamento. Você pode enviar o projeto (PDF/DWG) ou descrever o que precisa?',
+      mensagem: 'Ótimo! Vou ajudá-lo com o orçamento. 📋\n\nVocê pode:\n• Enviar o projeto (PDF/DWG/IMAGEM)\n• Descrever o que precisa\n• Informar os produtos e quantidades\n\nComo prefere começar?',
       dados: {
-        proximos_passos: ['upload_projeto', 'descricao_manual']
+        proximos_passos: ['upload_projeto', 'descricao_manual', 'lista_produtos']
       }
     };
   },

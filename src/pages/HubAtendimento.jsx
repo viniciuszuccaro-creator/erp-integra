@@ -23,12 +23,21 @@ import {
   Archive,
   UserPlus,
   TrendingUp,
-  Activity
+  Activity,
+  BarChart3,
+  Settings,
+  FileText,
+  Zap
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
+import ConfiguracaoCanais from "@/components/chatbot/ConfiguracaoCanais";
+import GerenciadorTemplates from "@/components/chatbot/GerenciadorTemplates";
+import AnalyticsAtendimento from "@/components/chatbot/AnalyticsAtendimento";
+import HistoricoClienteChat from "@/components/chatbot/HistoricoClienteChat";
 
 /**
  * V21.5 - HUB DE ATENDIMENTO OMNICANAL
@@ -45,6 +54,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * ✅ Controle de acesso por perfil
  */
 export default function HubAtendimento() {
+  const [abaAtiva, setAbaAtiva] = useState("atendimento");
   const [filtroStatus, setFiltroStatus] = useState("Em Progresso");
   const [filtroCanal, setFiltroCanal] = useState("Todos");
   const [buscaTexto, setBuscaTexto] = useState("");
@@ -237,21 +247,67 @@ export default function HubAtendimento() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <MessageCircle className="w-8 h-8 text-blue-600" />
-            Hub de Atendimento Omnicanal
-          </h1>
-          <p className="text-slate-600 mt-1">
-            Central unificada de atendimento • Todos os canais em um só lugar
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
+              <MessageCircle className="w-8 h-8 text-blue-600" />
+              Hub de Atendimento Omnicanal
+            </h1>
+            <p className="text-slate-600 mt-1">
+              Central unificada de atendimento • Todos os canais em um só lugar • V21.5
+            </p>
+          </div>
+          
+          {/* Navegação entre abas */}
+          <div className="flex gap-2">
+            <Button
+              variant={abaAtiva === "atendimento" ? "default" : "outline"}
+              onClick={() => setAbaAtiva("atendimento")}
+              className={abaAtiva === "atendimento" ? "bg-blue-600" : ""}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Atendimento
+            </Button>
+            <Button
+              variant={abaAtiva === "analytics" ? "default" : "outline"}
+              onClick={() => setAbaAtiva("analytics")}
+              className={abaAtiva === "analytics" ? "bg-blue-600" : ""}
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analytics
+            </Button>
+            <Button
+              variant={abaAtiva === "templates" ? "default" : "outline"}
+              onClick={() => setAbaAtiva("templates")}
+              className={abaAtiva === "templates" ? "bg-blue-600" : ""}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Templates
+            </Button>
+            <Button
+              variant={abaAtiva === "config" ? "default" : "outline"}
+              onClick={() => setAbaAtiva("config")}
+              className={abaAtiva === "config" ? "bg-blue-600" : ""}
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Canais
+            </Button>
+          </div>
         </div>
 
-        {/* Métricas */}
-        {metricas && (
+        {/* Renderizar aba ativa */}
+        {abaAtiva === "analytics" && <ChatbotDashboard />}
+        {abaAtiva === "templates" && <GerenciadorTemplates />}
+        {abaAtiva === "config" && <ConfiguracaoCanais />}
+        
+        {/* Aba de Atendimento */}
+        {abaAtiva === "atendimento" && (
+          <>
+            {/* Métricas */}
+            {metricas && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             <Card>
               <CardContent className="p-4">
@@ -578,6 +634,8 @@ export default function HubAtendimento() {
             )}
           </Card>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
