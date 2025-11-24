@@ -27,7 +27,8 @@ import {
   BarChart3,
   Settings,
   FileText,
-  Zap
+  Zap,
+  Tag
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
