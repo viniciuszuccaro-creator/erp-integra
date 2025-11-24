@@ -46,6 +46,10 @@ import RespostasRapidas from "@/components/chatbot/RespostasRapidas";
 import TagsCategorizacao from "@/components/chatbot/TagsCategorizacao";
 import SugestoesIA from "@/components/chatbot/SugestoesIA";
 import ExportarConversas from "@/components/chatbot/ExportarConversas";
+import IAConversacional from "@/components/chatbot/IAConversacional";
+import CriarPedidoChat from "@/components/chatbot/CriarPedidoChat";
+import GerarBoletoChat from "@/components/chatbot/GerarBoletoChat";
+import ConsultarEntregaChat from "@/components/chatbot/ConsultarEntregaChat";
 
 /**
  * V21.5 - HUB DE ATENDIMENTO OMNICANAL
@@ -714,12 +718,11 @@ export default function HubAtendimento() {
           {exibirPainelLateral && conversaSelecionada && (
             <Card className="lg:col-span-1">
               <CardHeader className="border-b">
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-1">
                   <Button
                     size="sm"
                     variant={painelLateralConteudo === 'info' ? 'default' : 'outline'}
                     onClick={() => setPainelLateralConteudo('info')}
-                    className="flex-1"
                   >
                     Info
                   </Button>
@@ -727,9 +730,22 @@ export default function HubAtendimento() {
                     size="sm"
                     variant={painelLateralConteudo === 'respostas' ? 'default' : 'outline'}
                     onClick={() => setPainelLateralConteudo('respostas')}
-                    className="flex-1"
                   >
-                    Respostas
+                    Rápidas
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={painelLateralConteudo === 'acoes' ? 'default' : 'outline'}
+                    onClick={() => setPainelLateralConteudo('acoes')}
+                  >
+                    Ações
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={painelLateralConteudo === 'ia' ? 'default' : 'outline'}
+                    onClick={() => setPainelLateralConteudo('ia')}
+                  >
+                    IA
                   </Button>
                 </div>
               </CardHeader>
@@ -824,6 +840,42 @@ export default function HubAtendimento() {
                       forma_pagamento: 'Boleto'
                     }}
                   />
+                )}
+
+                {painelLateralConteudo === 'acoes' && (
+                  <div className="space-y-4">
+                    <CriarPedidoChat 
+                      conversa={conversaSelecionada}
+                      clienteId={conversaSelecionada.cliente_id}
+                      onPedidoCriado={(pedido) => {
+                        setMensagemAtendente(`✅ Pedido ${pedido.numero_pedido} criado com sucesso! Valor: R$ ${pedido.valor_total?.toLocaleString('pt-BR')}`);
+                        setPainelLateralConteudo('info');
+                      }}
+                    />
+                    <GerarBoletoChat 
+                      conversa={conversaSelecionada}
+                      clienteId={conversaSelecionada.cliente_id}
+                      onBoletoEnviado={(boleto) => {
+                        setMensagemAtendente(`📄 Boleto gerado!\n\nValor: R$ ${boleto.valor?.toLocaleString('pt-BR')}\nVencimento: ${new Date(boleto.data_vencimento).toLocaleDateString('pt-BR')}\n\nLinha digitável:\n${boleto.linha_digitavel || 'Disponível no link'}`);
+                        setPainelLateralConteudo('info');
+                      }}
+                    />
+                    <ConsultarEntregaChat 
+                      clienteId={conversaSelecionada.cliente_id}
+                      conversa={conversaSelecionada}
+                    />
+                  </div>
+                )}
+
+                {painelLateralConteudo === 'ia' && (
+                  <div className="space-y-4">
+                    <IAConversacional 
+                      conversa={conversaSelecionada}
+                      mensagens={mensagens}
+                      clienteId={conversaSelecionada.cliente_id}
+                    />
+                    <SugestoesIA conversa={conversaSelecionada} mensagens={mensagens} />
+                  </div>
                 )}
               </CardContent>
             </Card>
