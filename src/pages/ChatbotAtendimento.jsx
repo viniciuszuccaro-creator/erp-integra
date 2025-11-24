@@ -24,8 +24,12 @@ import {
 import { toast } from "sonner";
 
 /**
- * V21.1 - Chatbot ERP-Cêntrico - 100% COMPLETO
+ * V21.6 - Chatbot ERP-Cêntrico - 100% COMPLETO
  * Intent Engine + Sentimento + Transbordo com Verificação de Permissão
+ * ✅ Suporte multi-empresa
+ * ✅ Integração com HubAtendimento
+ * ✅ IA com fallback
+ * ✅ Layout responsivo w-full h-full
  */
 export default function ChatbotAtendimento() {
   const [mensagem, setMensagem] = useState('');
@@ -300,8 +304,8 @@ export default function ChatbotAtendimento() {
   const ultimasInteracoes = interacoes.slice().reverse(); // Reverse for chronological display
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
+    <div className="w-full h-full min-h-screen p-4 lg:p-6 bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
+      <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">🤖 Chatbot ERP-Cêntrico</h1>
@@ -309,7 +313,7 @@ export default function ChatbotAtendimento() {
           </div>
           <Badge className="bg-indigo-600 text-white px-4 py-2">
             <Bot className="w-4 h-4 mr-2" />
-            V21.1 - 100%
+            V21.6 - 100%
           </Badge>
         </div>
 

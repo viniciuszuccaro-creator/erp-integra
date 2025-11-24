@@ -10,8 +10,10 @@ import { Workflow, Clock, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
- * V21.5 - AUTOMAÇÕES E FLUXOS
+ * V21.6 - AUTOMAÇÕES E FLUXOS
  * Configurar ações automáticas baseadas em triggers
+ * ✅ Suporte multi-empresa
+ * ✅ Layout responsivo w-full h-full
  */
 export default function AutomacaoFluxos({ canalConfig }) {
   const [automacoes, setAutomacoes] = useState([

@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
- * V21.5 - ROTEAMENTO INTELIGENTE DE CONVERSAS
+ * V21.6 - ROTEAMENTO INTELIGENTE DE CONVERSAS
  * 
  * Sistema de distribuição automática:
  * ✅ Round-robin (rotativo)
@@ -19,6 +19,8 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  * ✅ Por carga de trabalho
  * ✅ Por histórico cliente-atendente
  * ✅ IA preditiva de melhor match
+ * ✅ Suporte multi-empresa
+ * ✅ Layout responsivo w-full h-full
  */
 export default function RoteamentoInteligente({ canalConfig }) {
   const queryClient = useQueryClient();
@@ -124,8 +126,8 @@ export default function RoteamentoInteligente({ canalConfig }) {
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="w-full h-full space-y-6">
+      <Card className="w-full">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Settings2 className="w-5 h-5 text-yellow-600" />

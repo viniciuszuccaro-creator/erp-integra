@@ -10,8 +10,10 @@ import { Webhook, Send, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
- * V21.5 - TESTADOR DE WEBHOOKS
+ * V21.6 - TESTADOR DE WEBHOOKS
  * Testar webhooks de canais externos
+ * ✅ Suporte multi-empresa
+ * ✅ Layout responsivo w-full h-full
  */
 export default function WebhooksTester({ canalConfig }) {
   const [payload, setPayload] = useState('{\n  "type": "message",\n  "text": "Teste"\n}');
