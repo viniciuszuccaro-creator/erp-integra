@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 import {
   MessageCircle,
   User,
@@ -28,10 +29,25 @@ import {
   Settings,
   FileText,
   Timer,
-  Tag
+  Tag,
+  ArrowRightLeft,
+  RefreshCw,
+  Download,
+  Brain,
+  Smile,
+  Star,
+  ThumbsUp,
+  ThumbsDown,
+  Copy,
+  Maximize2,
+  Minimize2,
+  Users,
+  Building,
+  Mic,
+  Image as ImageIcon
 } from "lucide-react";
 import { toast } from "sonner";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
@@ -50,6 +66,8 @@ import IAConversacional from "@/components/chatbot/IAConversacional";
 import CriarPedidoChat from "@/components/chatbot/CriarPedidoChat";
 import GerarBoletoChat from "@/components/chatbot/GerarBoletoChat";
 import ConsultarEntregaChat from "@/components/chatbot/ConsultarEntregaChat";
+import DashboardAtendente from "@/components/chatbot/DashboardAtendente";
+import TransferirConversa from "@/components/chatbot/TransferirConversa";
 
 /**
  * V21.5 - HUB DE ATENDIMENTO OMNICANAL
@@ -69,15 +87,34 @@ export default function HubAtendimento() {
   const [abaAtiva, setAbaAtiva] = useState("atendimento");
   const [filtroStatus, setFiltroStatus] = useState("Em Progresso");
   const [filtroCanal, setFiltroCanal] = useState("Todos");
+  const [filtroPrioridade, setFiltroPrioridade] = useState("Todas");
   const [buscaTexto, setBuscaTexto] = useState("");
   const [conversaSelecionada, setConversaSelecionada] = useState(null);
   const [mensagemAtendente, setMensagemAtendente] = useState("");
   const [exibirPainelLateral, setExibirPainelLateral] = useState(true);
-  const [painelLateralConteudo, setPainelLateralConteudo] = useState('info'); // info, historico, respostas
+  const [painelLateralConteudo, setPainelLateralConteudo] = useState('info');
+  const [layoutExpandido, setLayoutExpandido] = useState(false);
+  const [exibirTransferir, setExibirTransferir] = useState(false);
+  const [arquivoAnexo, setArquivoAnexo] = useState(null);
+  const [notificacoesAudio, setNotificacoesAudio] = useState(true);
+  const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
   
   const queryClient = useQueryClient();
   const { hasPermission, user } = usePermissions();
   const { empresaAtual } = useContextoVisual();
+
+  // Auto-scroll para última mensagem
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [conversaSelecionada]);
+
+  // Notificação sonora para novas mensagens
+  useEffect(() => {
+    if (notificacoesAudio && typeof window !== 'undefined') {
+      // Implementar som de notificação
+    }
+  }, []);
 
   // Verificar permissão
   const podeAtenderTransbordo = hasPermission('chatbot', 'pode_atender_transbordo');
@@ -249,93 +286,139 @@ export default function HubAtendimento() {
   }
 
   const conversasFiltradas = conversas.filter(c => {
+    // Filtro por texto
     if (buscaTexto) {
       const texto = buscaTexto.toLowerCase();
-      return (
+      const matchTexto = (
         c.cliente_nome?.toLowerCase().includes(texto) ||
+        c.cliente_email?.toLowerCase().includes(texto) ||
+        c.cliente_telefone?.includes(texto) ||
         c.sessao_id?.toLowerCase().includes(texto) ||
-        c.assuntos_detectados?.some(a => a.toLowerCase().includes(texto))
+        c.intent_principal?.toLowerCase().includes(texto) ||
+        c.assuntos_detectados?.some(a => a.toLowerCase().includes(texto)) ||
+        c.tags?.some(t => t.toLowerCase().includes(texto))
       );
+      if (!matchTexto) return false;
     }
+    
+    // Filtro por prioridade
+    if (filtroPrioridade !== "Todas" && c.prioridade !== filtroPrioridade) {
+      return false;
+    }
+    
     return true;
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <div className="w-full h-full min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 lg:p-6 overflow-auto">
+      <div className={`${layoutExpandido ? 'max-w-full' : 'max-w-7xl'} mx-auto space-y-4`}
+        {/* Header Responsivo */}
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-              <MessageCircle className="w-8 h-8 text-blue-600" />
+            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 flex items-center gap-3">
+              <MessageCircle className="w-7 h-7 lg:w-8 lg:h-8 text-blue-600" />
               Hub de Atendimento Omnicanal
             </h1>
-            <p className="text-slate-600 mt-1">
-              Central unificada de atendimento • Todos os canais em um só lugar • V21.5
+            <p className="text-slate-600 text-sm lg:text-base mt-1">
+              Central unificada • Multi-empresa • IA Avançada • V21.6
             </p>
           </div>
           
-          {/* Navegação entre abas */}
-          <div className="flex gap-2">
+          {/* Navegação entre abas - Responsiva */}
+          <div className="flex flex-wrap gap-2">
             <Button
               variant={abaAtiva === "atendimento" ? "default" : "outline"}
               onClick={() => setAbaAtiva("atendimento")}
+              size="sm"
               className={abaAtiva === "atendimento" ? "bg-blue-600" : ""}
             >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Atendimento
+              <MessageCircle className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Atendimento</span>
+            </Button>
+            <Button
+              variant={abaAtiva === "meupainel" ? "default" : "outline"}
+              onClick={() => setAbaAtiva("meupainel")}
+              size="sm"
+              className={abaAtiva === "meupainel" ? "bg-purple-600" : ""}
+            >
+              <User className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Meu Painel</span>
             </Button>
             <Button
               variant={abaAtiva === "analytics" ? "default" : "outline"}
               onClick={() => setAbaAtiva("analytics")}
+              size="sm"
               className={abaAtiva === "analytics" ? "bg-blue-600" : ""}
             >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Analytics
+              <BarChart3 className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Analytics</span>
             </Button>
             <Button
               variant={abaAtiva === "templates" ? "default" : "outline"}
               onClick={() => setAbaAtiva("templates")}
+              size="sm"
               className={abaAtiva === "templates" ? "bg-blue-600" : ""}
             >
-              <FileText className="w-4 h-4 mr-2" />
-              Templates
+              <FileText className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Templates</span>
             </Button>
             <Button
               variant={abaAtiva === "config" ? "default" : "outline"}
               onClick={() => setAbaAtiva("config")}
+              size="sm"
               className={abaAtiva === "config" ? "bg-blue-600" : ""}
             >
-              <Settings className="w-4 h-4 mr-2" />
-              Canais
+              <Settings className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Canais</span>
             </Button>
             <Button
               variant={abaAtiva === "sla" ? "default" : "outline"}
               onClick={() => setAbaAtiva("sla")}
+              size="sm"
               className={abaAtiva === "sla" ? "bg-blue-600" : ""}
             >
-              <Timer className="w-4 h-4 mr-2" />
-              SLA
+              <Timer className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">SLA</span>
             </Button>
             <Button
               variant={abaAtiva === "fila" ? "default" : "outline"}
               onClick={() => setAbaAtiva("fila")}
+              size="sm"
               className={abaAtiva === "fila" ? "bg-blue-600" : ""}
             >
-              <Clock className="w-4 h-4 mr-2" />
-              Fila
+              <Users className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Fila</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLayoutExpandido(!layoutExpandido)}
+              title={layoutExpandido ? "Reduzir" : "Expandir"}
+            >
+              {layoutExpandido ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button>
           </div>
         </div>
 
         {/* Renderizar aba ativa */}
-        {abaAtiva === "analytics" && (
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
+        {abaAtiva === "meupainel" && (
+          <div className="grid lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-1">
+              <DashboardAtendente />
+            </div>
+            <div className="lg:col-span-3">
               <ChatbotDashboard />
             </div>
-            <div>
+          </div>
+        )}
+        {abaAtiva === "analytics" && (
+          <div className="grid lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-3">
+              <ChatbotDashboard />
+            </div>
+            <div className="lg:col-span-1 space-y-4">
               <ExportarConversas />
+              <AnalyticsAtendimento />
             </div>
           </div>
         )}
@@ -422,25 +505,26 @@ export default function HubAtendimento() {
           </div>
         )}
 
-        {/* Filtros */}
+        {/* Filtros Avançados */}
         <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex-1 min-w-[200px]">
+          <CardContent className="p-3 lg:p-4">
+            <div className="flex flex-wrap items-center gap-2 lg:gap-3">
+              <div className="flex-1 min-w-[180px] relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input
-                  placeholder="Buscar por cliente, sessão ou assunto..."
+                  placeholder="Buscar cliente, assunto..."
                   value={buscaTexto}
                   onChange={(e) => setBuscaTexto(e.target.value)}
-                  className="w-full"
+                  className="pl-9 w-full"
                 />
               </div>
 
               <select
                 value={filtroStatus}
                 onChange={(e) => setFiltroStatus(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm"
+                className="px-3 py-2 border rounded-md text-sm bg-white"
               >
-                <option value="Todas">Todas</option>
+                <option value="Todas">Todos Status</option>
                 <option value="Em Progresso">Em Progresso</option>
                 <option value="Aguardando">Aguardando</option>
                 <option value="Não Atribuída">Não Atribuída</option>
@@ -450,29 +534,61 @@ export default function HubAtendimento() {
               <select
                 value={filtroCanal}
                 onChange={(e) => setFiltroCanal(e.target.value)}
-                className="px-3 py-2 border rounded-md text-sm"
+                className="px-3 py-2 border rounded-md text-sm bg-white"
               >
-                <option value="Todos">Todos os canais</option>
+                <option value="Todos">Todos Canais</option>
                 <option value="WhatsApp">WhatsApp</option>
                 <option value="Instagram">Instagram</option>
+                <option value="Facebook">Facebook</option>
                 <option value="Telegram">Telegram</option>
                 <option value="Email">Email</option>
                 <option value="WebChat">WebChat</option>
                 <option value="Portal">Portal</option>
+                <option value="SMS">SMS</option>
               </select>
+
+              <select
+                value={filtroPrioridade}
+                onChange={(e) => setFiltroPrioridade(e.target.value)}
+                className="px-3 py-2 border rounded-md text-sm bg-white"
+              >
+                <option value="Todas">Todas Prioridades</option>
+                <option value="Urgente">🔴 Urgente</option>
+                <option value="Alta">🟠 Alta</option>
+                <option value="Normal">🟢 Normal</option>
+                <option value="Baixa">⚪ Baixa</option>
+              </select>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] })}
+                title="Atualizar"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Layout Principal */}
-        <div className={`grid gap-6 ${exibirPainelLateral && conversaSelecionada ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
+        {/* Layout Principal - Responsivo e Redimensionável */}
+        <div className={`grid gap-4 lg:gap-6 ${
+          exibirPainelLateral && conversaSelecionada 
+            ? 'grid-cols-1 lg:grid-cols-4' 
+            : 'grid-cols-1 lg:grid-cols-3'
+        }`}>
           {/* Lista de Conversas */}
-          <Card className="lg:col-span-1">
-            <CardHeader className="border-b">
-              <CardTitle className="text-lg">Conversas Ativas</CardTitle>
+          <Card className="lg:col-span-1 flex flex-col">
+            <CardHeader className="border-b p-3 lg:p-4">
+              <CardTitle className="text-base lg:text-lg flex items-center justify-between">
+                <span>Conversas ({conversasFiltradas.length})</span>
+                <Badge variant="outline" className="text-xs">
+                  {metricas?.naoAtribuidas || 0} novas
+                </Badge>
+              </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="h-[600px] overflow-y-auto">
+            <CardContent className="p-0 flex-1">
+              <div className="h-[500px] lg:h-[600px] overflow-y-auto">
                 {isLoading ? (
                   <div className="p-4 text-center text-slate-500">Carregando...</div>
                 ) : conversasFiltradas.length === 0 ? (
@@ -537,8 +653,8 @@ export default function HubAtendimento() {
             </CardContent>
           </Card>
 
-          {/* Área de Chat */}
-          <Card className={`${exibirPainelLateral && conversaSelecionada ? 'lg:col-span-2' : 'lg:col-span-2'} flex flex-col h-[700px]`}>
+          {/* Área de Chat - Responsiva */}
+          <Card className={`${exibirPainelLateral && conversaSelecionada ? 'lg:col-span-2' : 'lg:col-span-2'} flex flex-col h-[500px] lg:h-[700px]`}>
             {conversaSelecionada ? (
               <>
                 {/* Header da Conversa */}
@@ -578,26 +694,37 @@ export default function HubAtendimento() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 lg:gap-2">
                       {conversaSelecionada.atendente_id !== user.id && (
                         <Button
                           size="sm"
                           onClick={() => assumirConversaMutation.mutate(conversaSelecionada.id)}
                           disabled={assumirConversaMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700"
                         >
-                          <UserPlus className="w-4 h-4 mr-2" />
-                          Assumir
+                          <UserPlus className="w-4 h-4 lg:mr-2" />
+                          <span className="hidden lg:inline">Assumir</span>
                         </Button>
                       )}
                       
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => setExibirTransferir(true)}
+                        title="Transferir"
+                      >
+                        <ArrowRightLeft className="w-4 h-4" />
+                      </Button>
+                      
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => resolverConversaMutation.mutate(conversaSelecionada.id)}
                         disabled={resolverConversaMutation.isPending}
+                        className="text-green-600 hover:text-green-700"
                       >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Resolver
+                        <CheckCircle className="w-4 h-4 lg:mr-2" />
+                        <span className="hidden lg:inline">Resolver</span>
                       </Button>
 
                       <Button
@@ -664,17 +791,55 @@ export default function HubAtendimento() {
                   })}
                 </CardContent>
 
-                {/* Input de Mensagem */}
-                <div className="border-t p-4 bg-slate-50">
+                {/* Input de Mensagem Avançado */}
+                <div className="border-t p-3 lg:p-4 bg-slate-50">
+                  {/* Arquivo anexado */}
+                  {arquivoAnexo && (
+                    <div className="mb-2 flex items-center gap-2 text-sm bg-blue-50 border border-blue-200 p-2 rounded-lg">
+                      <Paperclip className="w-4 h-4 text-blue-600" />
+                      <span className="flex-1 truncate">{arquivoAnexo.name}</span>
+                      <button
+                        onClick={() => setArquivoAnexo(null)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                  
                   <div className="flex gap-2">
+                    {/* Botão anexar */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setArquivoAnexo(file);
+                          toast.success('Arquivo anexado!');
+                        }
+                      }}
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      title="Anexar arquivo"
+                    >
+                      <Paperclip className="w-4 h-4" />
+                    </Button>
+                    
                     <Input
                       value={mensagemAtendente}
                       onChange={(e) => setMensagemAtendente(e.target.value)}
                       onKeyPress={(e) => {
                         if (e.key === 'Enter' && !e.shiftKey) {
                           e.preventDefault();
-                          if (mensagemAtendente.trim()) {
-                            enviarMensagemMutation.mutate({ mensagem: mensagemAtendente });
+                          if (mensagemAtendente.trim() || arquivoAnexo) {
+                            enviarMensagemMutation.mutate({ mensagem: mensagemAtendente, arquivo: arquivoAnexo });
+                            setArquivoAnexo(null);
                           }
                         }
                       }}
@@ -682,27 +847,35 @@ export default function HubAtendimento() {
                       disabled={enviarMensagemMutation.isPending}
                       className="flex-1"
                     />
+                    
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => setPainelLateralConteudo('respostas')}
+                      onClick={() => {
+                        setExibirPainelLateral(true);
+                        setPainelLateralConteudo('respostas');
+                      }}
                       title="Respostas Rápidas"
                     >
                       <MessageCircle className="w-4 h-4" />
                     </Button>
+                    
                     <Button
                       onClick={() => {
-                        if (mensagemAtendente.trim()) {
-                          enviarMensagemMutation.mutate({ mensagem: mensagemAtendente });
+                        if (mensagemAtendente.trim() || arquivoAnexo) {
+                          enviarMensagemMutation.mutate({ mensagem: mensagemAtendente, arquivo: arquivoAnexo });
+                          setArquivoAnexo(null);
                         }
                       }}
-                      disabled={!mensagemAtendente.trim() || enviarMensagemMutation.isPending}
+                      disabled={(!mensagemAtendente.trim() && !arquivoAnexo) || enviarMensagemMutation.isPending}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
                       <Send className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
+                
+                <div ref={messagesEndRef} />
               </>
             ) : (
               <CardContent className="flex-1 flex items-center justify-center text-slate-400">
@@ -714,10 +887,10 @@ export default function HubAtendimento() {
             )}
           </Card>
 
-          {/* Painel Lateral Contextual */}
+          {/* Painel Lateral Contextual - Responsivo */}
           {exibirPainelLateral && conversaSelecionada && (
-            <Card className="lg:col-span-1">
-              <CardHeader className="border-b">
+            <Card className="lg:col-span-1 flex flex-col">
+              <CardHeader className="border-b p-2 lg:p-3">
                 <div className="flex flex-wrap gap-1">
                   <Button
                     size="sm"
@@ -749,7 +922,7 @@ export default function HubAtendimento() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 h-[600px] overflow-y-auto">
+              <CardContent className="p-3 lg:p-4 h-[400px] lg:h-[600px] overflow-y-auto flex-1">
                 {painelLateralConteudo === 'info' && (
                   <div className="space-y-4">
                     {/* Informações do Cliente */}
@@ -877,10 +1050,50 @@ export default function HubAtendimento() {
                     <SugestoesIA conversa={conversaSelecionada} mensagens={mensagens} />
                   </div>
                 )}
+
+                {painelLateralConteudo === 'transferir' && (
+                  <TransferirConversa 
+                    conversa={conversaSelecionada}
+                    onTransferido={() => {
+                      setPainelLateralConteudo('info');
+                      setConversaSelecionada(null);
+                    }}
+                  />
+                )}
               </CardContent>
             </Card>
           )}
         </div>
+
+        {/* Modal de Transferência */}
+        <AnimatePresence>
+          {exibirTransferir && conversaSelecionada && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+              onClick={() => setExibirTransferir(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md"
+              >
+                <TransferirConversa 
+                  conversa={conversaSelecionada}
+                  onTransferido={() => {
+                    setExibirTransferir(false);
+                    setConversaSelecionada(null);
+                    queryClient.invalidateQueries({ queryKey: ['conversas-omnicanal'] });
+                  }}
+                />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
           </>
         )}
       </div>
