@@ -135,9 +135,6 @@ export default function RH() {
           </div>
         </div>
 
-        {/* STATUS WIDGET ETAPAS 5-12 */}
-        <StatusWidgetEtapas512 />
-
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border-0 shadow-md">
             <CardContent className="p-6">
