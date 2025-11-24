@@ -44,6 +44,7 @@ import ChatbotFilaEspera from "@/components/chatbot/ChatbotFilaEspera";
 import RespostasRapidas from "@/components/chatbot/RespostasRapidas";
 import TagsCategorizacao from "@/components/chatbot/TagsCategorizacao";
 import SugestoesIA from "@/components/chatbot/SugestoesIA";
+import ExportarConversas from "@/components/chatbot/ExportarConversas";
 
 /**
  * V21.5 - HUB DE ATENDIMENTO OMNICANAL
@@ -323,7 +324,16 @@ export default function HubAtendimento() {
         </div>
 
         {/* Renderizar aba ativa */}
-        {abaAtiva === "analytics" && <ChatbotDashboard />}
+        {abaAtiva === "analytics" && (
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <ChatbotDashboard />
+            </div>
+            <div>
+              <ExportarConversas />
+            </div>
+          </div>
+        )}
         {abaAtiva === "templates" && <GerenciadorTemplates />}
         {abaAtiva === "config" && <ConfiguracaoCanais />}
         {abaAtiva === "sla" && <MonitorSLA />}
