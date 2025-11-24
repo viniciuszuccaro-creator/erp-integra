@@ -287,7 +287,7 @@ export default function DashboardFinanceiroUnificado({ empresaId }) {
         <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
           <CardTitle className="flex items-center gap-2">
             <Link2 className="w-5 h-5 text-blue-600" />
-            Status das Integrações
+            Status das Integrações (ETAPA 4)
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">

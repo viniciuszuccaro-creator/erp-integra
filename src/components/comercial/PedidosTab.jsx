@@ -59,7 +59,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
 
   return (
     <div className="space-y-6">
-      {/* ALERTA DE APROVAÇÕES PENDENTES */}
+      {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Alert className="border-orange-300 bg-orange-50">
           <AlertDescription className="flex items-center justify-between">

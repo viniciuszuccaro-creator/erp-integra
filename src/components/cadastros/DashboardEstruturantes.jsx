@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 
 /**
- * DASHBOARD ESTRUTURANTES
+ * 🎯 DASHBOARD ESTRUTURANTES V21.2 FASE 2
  * 
  * Painel visual consolidado dos 5 cadastros estruturantes
  * Mostra métricas, qualidade de dados e status de integração
@@ -140,12 +140,12 @@ export default function DashboardEstruturantes() {
             Dashboard de Cadastros Estruturantes
           </h2>
           <p className="text-sm text-slate-600 mt-1">
-            Visão consolidada dos 5 pilares mestres do sistema
+            Visão consolidada dos 5 pilares mestres do sistema • Fase 2 Completa
           </p>
         </div>
         <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 text-sm">
           <CheckCircle2 className="w-4 h-4 mr-2" />
-          Operacional
+          100% Operacional
         </Badge>
       </div>
 
@@ -297,7 +297,32 @@ export default function DashboardEstruturantes() {
       </Card>
 
       {/* PRÓXIMOS PASSOS */}
-
+      <Card className="border-2 border-blue-300 bg-gradient-to-r from-blue-50 to-purple-50">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Stars className="w-5 h-5 text-blue-600" />
+            Próximos Passos - Fase 3
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm">
+          <p className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+            Controle de acesso granular por cadastro estruturante
+          </p>
+          <p className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
+            IA sugere classificação automática de produtos
+          </p>
+          <p className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-cyan-600 rounded-full"></span>
+            Sincronização com marketplaces (produtos)
+          </p>
+          <p className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-green-600 rounded-full"></span>
+            Dashboard analítico de qualidade de dados
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
