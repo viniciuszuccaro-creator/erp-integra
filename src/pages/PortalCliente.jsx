@@ -517,7 +517,7 @@ export default function PortalCliente() {
                                 )}
                               </div>
                             </div>
-                            <Badge className={getStatusColor(entrega.status)} className="text-sm px-3 py-1">
+                            <Badge className={`${getStatusColor(entrega.status)} text-sm px-3 py-1`}>
                               {entrega.status}
                             </Badge>
                           </div>

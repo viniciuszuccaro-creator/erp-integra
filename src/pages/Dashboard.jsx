@@ -51,11 +51,6 @@ import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import DashboardOperacionalBI from "@/components/dashboard/DashboardOperacionalBI";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import StatusFase1 from "../components/sistema/StatusFase1";
-import StatusFase2 from "../components/sistema/StatusFase2";
-import StatusFase3 from "../components/sistema/StatusFase3";
-import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
-import StatusFinal100 from "../components/sistema/STATUS_FINAL_100";
 import { useWindow } from "@/components/lib/useWindow";
 
 
@@ -660,17 +655,6 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
-          {/* STATUS FINAL 100% */}
-          <StatusFinal100 />
-          
-          {/* STATUS FASE 1, FASE 2, FASE 3 e ETAPA 4 */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <StatusFase1 />
-            <StatusFase2 />
-            <StatusFase3 />
-            <StatusWidgetEtapa4 />
-          </div>
-
           {/* KPIs Principais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statsCards.map((stat, index) => (
