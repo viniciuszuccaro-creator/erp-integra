@@ -45,7 +45,6 @@ import { useWindow } from "@/components/lib/useWindow";
 import MonitoramentoRHInteligente from "@/components/rh/MonitoramentoRHInteligente";
 import PontoEletronicoBiometrico from "@/components/rh/PontoEletronicoBiometrico";
 import DashboardRHRealtime from "../components/rh/DashboardRHRealtime";
-import StatusWidgetEtapas512 from "../components/sistema/StatusWidgetEtapas512";
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
