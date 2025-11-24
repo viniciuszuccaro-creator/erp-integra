@@ -41,7 +41,6 @@ import IAChurnDetection from "../components/crm/IAChurnDetection";
 import OportunidadeForm from "../components/crm/OportunidadeForm";
 import FunilComercialInteligente from "@/components/crm/FunilComercialInteligente";
 import FunilVendasAvancado from "@/components/crm/FunilVendasAvancado";
-import StatusWidgetEtapas512 from "../components/sistema/StatusWidgetEtapas512";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
@@ -522,9 +521,6 @@ export default function CRMPage() {
         <h1 className="text-3xl font-bold text-slate-900 mb-2">CRM - Gestão de Relacionamento com Clientes</h1>
         <p className="text-slate-600">V21.1 - Gerencie oportunidades, interações, campanhas + IA de Churn</p>
       </div>
-
-      {/* STATUS WIDGET ETAPAS 5-12 */}
-      <StatusWidgetEtapas512 />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-0 shadow-md">
