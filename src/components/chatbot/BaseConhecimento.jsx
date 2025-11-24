@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Plus, Search, Edit2, Trash2 } from 'lucide-react';
+import { BookOpen, Plus, Search, Edit2, Trash2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';

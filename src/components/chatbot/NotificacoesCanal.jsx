@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Mail, MessageSquare, Send } from 'lucide-react';
+import { Bell, Mail, MessageSquare, Send, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
