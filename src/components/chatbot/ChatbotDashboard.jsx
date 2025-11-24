@@ -33,7 +33,7 @@ import {
 } from 'recharts';
 
 /**
- * V21.5 - DASHBOARD ANALYTICS CHATBOT OMNICANAL
+ * V21.6 - DASHBOARD ANALYTICS CHATBOT OMNICANAL
  * 
  * Dashboard completo com métricas avançadas:
  * ✅ KPIs em tempo real
@@ -170,7 +170,7 @@ export default function ChatbotDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full space-y-6 overflow-auto">
       {/* KPIs Principais */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <Card>
