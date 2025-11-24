@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Search } from 'lucide-react';
+import { Zap, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 
@@ -88,7 +88,7 @@ export default function RespostasRapidas({ onSelecionarResposta, contextoConvers
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <MessageSquare className="w-5 h-5 text-yellow-600" />
+        <Zap className="w-5 h-5 text-yellow-600" />
         <h3 className="font-semibold text-slate-900">Respostas Rápidas</h3>
       </div>
 
