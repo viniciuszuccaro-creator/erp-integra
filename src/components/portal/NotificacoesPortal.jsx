@@ -64,7 +64,7 @@ export default function NotificacoesPortal() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 sm:w-96 p-0">
+      <DropdownMenuContent align="end" className="w-full max-w-sm sm:max-w-md p-0">
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
           <h3 className="font-bold text-lg">Notificações</h3>
           <p className="text-xs text-blue-100">{notificacoes.length} não lida(s)</p>

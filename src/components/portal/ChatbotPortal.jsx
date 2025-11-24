@@ -135,9 +135,9 @@ IMPORTANTE: Responda de forma conversacional e natural, como um atendente humano
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.8, y: 20 }}
-      className="fixed bottom-4 right-4 w-full max-w-md h-[600px] z-50 shadow-2xl mx-4"
+      className="fixed bottom-4 right-4 w-full max-w-md h-[600px] z-50 shadow-2xl mx-4 sm:mx-0"
     >
-      <Card className="h-full w-full flex flex-col">
+      <Card className="h-full w-full flex flex-col shadow-2xl border-2 border-blue-200">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

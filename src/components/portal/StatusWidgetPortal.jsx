@@ -8,7 +8,7 @@ import { CheckCircle2, Zap } from 'lucide-react';
  */
 export default function StatusWidgetPortal() {
   return (
-    <Card className="border-2 border-green-500 bg-gradient-to-r from-green-50 to-blue-50 shadow-lg w-full">
+    <Card className="border-2 border-green-500 bg-gradient-to-r from-green-50 to-blue-50 shadow-xl w-full">
       <CardContent className="p-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-xl">
@@ -20,7 +20,7 @@ export default function StatusWidgetPortal() {
               <Zap className="w-5 h-5 text-yellow-500" />
             </div>
             <p className="text-sm text-green-700 font-medium">
-              ✅ 100% COMPLETO • 13 Módulos Integrados • Tempo Real • IA • Mobile
+              ✅ 100% COMPLETO • 19 Componentes • 14 Abas • Tempo Real • IA
             </p>
             <div className="flex gap-2 mt-3 flex-wrap">
               <span className="text-xs bg-white px-2 py-1 rounded border border-green-200 text-green-800">
