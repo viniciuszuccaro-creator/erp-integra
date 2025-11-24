@@ -18,6 +18,7 @@ import DocumentosCliente from "@/components/portal/DocumentosCliente";
 import SolicitarOrcamento from "@/components/portal/SolicitarOrcamento";
 import MinhasOportunidades from "@/components/portal/MinhasOportunidades";
 import ChatbotPortal from "@/components/portal/ChatbotPortal";
+import ChatbotWidgetAvancado from "@/components/chatbot/ChatbotWidgetAvancado";
 import RastreamentoRealtime from "@/components/portal/RastreamentoRealtime";
 import NotificacoesPortal from "@/components/portal/NotificacoesPortal";
 import AnalyticsPortalCliente from "@/components/portal/AnalyticsPortalCliente";
@@ -673,9 +674,27 @@ export default function PortalCliente() {
             <UploadProjetos clienteId={cliente?.id} clienteNome={cliente?.nome || cliente?.razao_social} />
           </TabsContent>
 
-          {/* Chat com Vendedor */}
+          {/* Chat Duplo: IA + Vendedor */}
           <TabsContent value="chat">
-            <ChatVendedor clienteId={cliente?.id} />
+            <div className="grid lg:grid-cols-2 gap-6 w-full">
+              <Card className="w-full">
+                <CardHeader className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    🤖 Assistente IA Virtual
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 h-[600px] w-full">
+                  <ChatbotWidgetAvancado
+                    clienteId={cliente?.id}
+                    canal="Portal"
+                    exibirBotaoFlutuante={false}
+                    habilitarAvaliacao={true}
+                  />
+                </CardContent>
+              </Card>
+
+              <ChatVendedor clienteId={cliente?.id} />
+            </div>
           </TabsContent>
 
           {/* Chamados e Suporte */}
