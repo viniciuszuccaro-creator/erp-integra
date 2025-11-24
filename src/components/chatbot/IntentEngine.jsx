@@ -1,6 +1,18 @@
 import { base44 } from '@/api/base44Client';
 
 /**
+ * V21.5 - INTENT ENGINE OMNICANAL AVANÇADO
+ * 
+ * Motor de processamento de linguagem natural integrado ao ERP
+ * ✅ Detecção de intents com IA
+ * ✅ Extração de entidades (NER)
+ * ✅ Análise de sentimento
+ * ✅ Execução de ações automáticas
+ * ✅ Integração com todos os módulos do ERP
+ * ✅ Suporte multi-canal
+ */
+
+/**
  * Engine de Detecção de Intents do Chatbot
  * Processa mensagens e detecta intenções usando IA
  */
