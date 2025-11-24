@@ -52,7 +52,6 @@ import DashboardRefugoIA from "../components/producao/DashboardRefugoIA";
 import DigitalTwin3D from "../components/producao/DigitalTwin3D";
 import IADiagnosticoEquipamentos from "../components/producao/IADiagnosticoEquipamentos";
 import DashboardProducaoRealtime from "../components/producao/DashboardProducaoRealtime";
-import StatusWidgetEtapas512 from "../components/sistema/StatusWidgetEtapas512";
 
 export default function Producao() {
   const [activeTab, setActiveTab] = useState("kanban"); // ALTERADO: default agora é kanban
@@ -181,9 +180,6 @@ export default function Producao() {
             </Badge>
           )}
         </div>
-
-        {/* STATUS WIDGET ETAPAS 5-12 */}
-        <StatusWidgetEtapas512 />
 
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

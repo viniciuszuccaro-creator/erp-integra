@@ -45,7 +45,6 @@ import { useWindow } from "@/components/lib/useWindow";
 import MonitoramentoRHInteligente from "@/components/rh/MonitoramentoRHInteligente";
 import PontoEletronicoBiometrico from "@/components/rh/PontoEletronicoBiometrico";
 import DashboardRHRealtime from "../components/rh/DashboardRHRealtime";
-import StatusWidgetEtapas512 from "../components/sistema/StatusWidgetEtapas512";
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
@@ -135,9 +134,6 @@ export default function RH() {
             <p className="text-slate-600 mt-1">Gestão de colaboradores, ponto e benefícios</p>
           </div>
         </div>
-
-        {/* STATUS WIDGET ETAPAS 5-12 */}
-        <StatusWidgetEtapas512 />
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="border-0 shadow-md">
