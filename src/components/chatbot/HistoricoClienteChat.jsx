@@ -10,7 +10,8 @@ import {
   TrendingUp,
   Calendar,
   FileText,
-  Phone
+  Phone,
+  User
 } from "lucide-react";
 
 /**
