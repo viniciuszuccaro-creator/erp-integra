@@ -20,7 +20,13 @@ import {
   Smartphone
 } from "lucide-react";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import RoteamentoInteligente from "./RoteamentoInteligente";
+import NotificacoesCanal from "./NotificacoesCanal";
+import AutomacaoFluxos from "./AutomacaoFluxos";
+import BaseConhecimento from "./BaseConhecimento";
+import WebhooksTester from "./WebhooksTester";
 
 /**
  * V21.5 - CONFIGURAÇÃO DE CANAIS OMNICANAL
@@ -75,13 +81,8 @@ export default function ConfiguracaoCanais() {
   });
 
   return (
-    <div className="w-full h-full p-6 overflow-auto">
-      <div className="max-w-6xl mx-auto space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Configuração de Canais</h1>
-          <p className="text-slate-600 mt-1">Gerencie todos os canais de comunicação</p>
-        </div>
-
+    <div className="w-full h-full overflow-auto">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Cards de Status dos Canais */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {canais.map((canal) => {
@@ -110,23 +111,41 @@ export default function ConfiguracaoCanais() {
           })}
         </div>
 
-        {/* Configuração Detalhada */}
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="w-5 h-5" />
-              Configurar {canalSelecionado}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <ConfiguracaoCanalForm
-              canal={canalSelecionado}
-              config={configAtual}
-              onSave={(dados) => salvarConfigMutation.mutate(dados)}
-              isSaving={salvarConfigMutation.isPending}
-            />
-          </CardContent>
-        </Card>
+        {/* Grid: Config + Recursos Avançados */}
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Configuração Básica */}
+          <Card className="lg:col-span-2">
+            <CardHeader className="border-b">
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Configurar {canalSelecionado}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <ConfiguracaoCanalForm
+                canal={canalSelecionado}
+                config={configAtual}
+                onSave={(dados) => salvarConfigMutation.mutate(dados)}
+                isSaving={salvarConfigMutation.isPending}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Recursos Avançados */}
+          <div className="space-y-4">
+            <RoteamentoInteligente canalConfig={configAtual} />
+            <NotificacoesCanal canalConfig={configAtual} />
+          </div>
+        </div>
+
+        {/* Automações e Base de Conhecimento */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <AutomacaoFluxos canalConfig={configAtual} />
+          <BaseConhecimento />
+        </div>
+
+        {/* Testador de Webhooks */}
+        <WebhooksTester canalConfig={configAtual} />
       </div>
     </div>
   );
