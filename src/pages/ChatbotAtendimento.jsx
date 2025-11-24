@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,7 +18,7 @@ import {
   Phone,
   Loader2,
   User,
-  Zap,
+  Timer,
   Shield
 } from "lucide-react";
 import { toast } from "sonner";
@@ -382,7 +381,7 @@ export default function ChatbotAtendimento() {
                         )}
                         {inter.sentimento_detectado === 'Urgente' && (
                           <Badge className="bg-orange-100 text-orange-700 text-xs">
-                            <Zap className="w-3 h-3 mr-1" />
+                            <Timer className="w-3 h-3 mr-1" />
                             Urgente
                           </Badge>
                         )}
