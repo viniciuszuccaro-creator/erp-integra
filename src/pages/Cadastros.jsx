@@ -60,8 +60,6 @@ import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
 import DashboardControleAcesso from "../components/sistema/DashboardControleAcesso";
 import FonteUnicaVerdade from "../components/sistema/FonteUnicaVerdade";
-import StatusWidgetFase3 from "../components/sistema/StatusWidgetFase3";
-import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
 import usePermissions from "../components/lib/usePermissions";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
 import { useWindow } from "../components/lib/useWindow";
@@ -503,20 +501,12 @@ export default function Cadastros() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
             <Stars className="w-8 h-8 text-purple-600" />
-            Cadastros Gerais V21.4 • ETAPA 4
-            <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-3 py-1 text-sm shadow-lg">
-              FASE 3 ✅ 100%
-            </Badge>
-            <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 text-sm shadow-lg animate-pulse">
-              ETAPA 4 ✅ 100%
-            </Badge>
+            Cadastros Gerais V21.4
           </h1>
           <p className="text-slate-600 flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-blue-600">Hub Central Unificado</span>
             <span>•</span>
             <span>6 Blocos + Integrações</span>
-            <span>•</span>
-            <span className="font-semibold text-purple-600">ETAPA 4: Caixa • Conciliação • Aprovações</span>
             <span>•</span>
             <span>Multiempresa Total</span>
             <span>•</span>
@@ -530,22 +520,8 @@ export default function Cadastros() {
             <Stars className="w-4 h-4 mr-2" />
             28 IAs Ativas
           </Badge>
-          <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 shadow-lg animate-pulse">
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            F1 ✅ | F2 ✅ | F3 ✅
-          </Badge>
-          <Badge className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-2 shadow-lg">
-            <Zap className="w-4 h-4 mr-2" />
-            89 Janelas
-          </Badge>
         </div>
       </div>
-
-      {/* STATUS WIDGET FASE 3 - 100% COMPLETA */}
-      <StatusWidgetFase3 />
-
-      {/* STATUS WIDGET ETAPA 4 - 100% COMPLETA */}
-      <StatusWidgetEtapa4 />
 
       {/* ALERT DE REGRA-MÃE */}
       <Alert className="border-purple-400 bg-gradient-to-r from-purple-50 via-blue-50 to-cyan-50 shadow-lg">
@@ -564,7 +540,7 @@ export default function Cadastros() {
             <Badge className="bg-red-600 text-white">NUNCA APAGAR</Badge>
           </div>
           <div className="mt-2 text-xs text-slate-700">
-            ✅ ETAPA 4 COMPLETA • 47 Entidades • Multiempresa 100% • 6 Blocos + Integrações Unificadas • Caixa Central • Conciliação • Aprovações • Omnichannel • w-full/h-full total
+            47 Entidades • Multiempresa 100% • 6 Blocos + Integrações Unificadas • w-full/h-full total
           </div>
         </AlertDescription>
       </Alert>

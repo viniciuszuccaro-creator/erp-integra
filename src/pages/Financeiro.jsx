@@ -41,10 +41,8 @@ import ContaPagarForm from "../components/financeiro/ContaPagarForm";
 import CaixaCentralLiquidacao from "../components/financeiro/CaixaCentralLiquidacao";
 import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
-import StatusWidgetEtapa4 from "../components/sistema/StatusWidgetEtapa4";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
 import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
-import StatusWidgetEtapas512 from "../components/sistema/StatusWidgetEtapas512";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -171,10 +169,10 @@ export default function Financeiro() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Financeiro Multi-Empresa • ETAPA 4</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Financeiro Multi-Empresa</h1>
           <p className="text-slate-600">
             {estaNoGrupo
-              ? 'Visão consolidada • Caixa Central • Conciliação • Omnichannel • Aprovações'
+              ? 'Visão consolidada • Caixa Central • Conciliação • Omnichannel'
               : `Gestão financeira completa - ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || ''}`
             }
           </p>
@@ -186,10 +184,7 @@ export default function Financeiro() {
               Visão Consolidada
             </Badge>
           )}
-          <Badge className="bg-green-100 text-green-700 px-4 py-2">
-            <Sparkles className="w-4 h-4 mr-2" />
-            ETAPA 4
-          </Badge>
+
         </div>
       </div>
 
@@ -322,12 +317,6 @@ export default function Financeiro() {
           </CardContent>
         </Card>
       </div>
-
-      {/* STATUS WIDGET ETAPA 4 */}
-      <StatusWidgetEtapa4 />
-
-      {/* STATUS WIDGET ETAPAS 5-12 */}
-      <StatusWidgetEtapas512 />
 
       {/* DASHBOARD UNIFICADO ETAPA 4 */}
       <DashboardFinanceiroUnificado empresaId={empresaAtual?.id} />
