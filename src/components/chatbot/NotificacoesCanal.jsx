@@ -1,130 +1,156 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { useMutation } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Bell, Mail, MessageSquare, Send } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Bell, 
+  Mail, 
+  MessageCircle, 
+  Smartphone,
+  Volume2,
+  VolumeX,
+  Settings,
+  Check,
+  AlertTriangle
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
- * V21.5 - GERENCIADOR DE NOTIFICAÇÕES POR CANAL
+ * V21.6 - CONFIGURAÇÃO DE NOTIFICAÇÕES
  * 
- * Configura notificações automáticas para:
- * ✅ Nova mensagem do cliente
- * ✅ Transbordo de bot para humano
- * ✅ Conversa inativa há X minutos
- * ✅ Cliente insatisfeito detectado
- * ✅ Nova avaliação recebida
+ * ✅ Notificações por canal
+ * ✅ Tipos de alerta
+ * ✅ Sons de notificação
+ * ✅ Prioridades
  */
-export default function NotificacoesCanal({ canalConfig }) {
-  const [config, setConfig] = React.useState({
-    notificar_nova_mensagem: true,
-    notificar_transbordo: true,
-    notificar_inatividade: true,
-    notificar_insatisfacao: true,
-    notificar_avaliacao: true,
-    tempo_inatividade_minutos: 30,
-    canais_notificacao: ['Email', 'Sistema']
+export default function NotificacoesCanal({ canalId }) {
+  const { empresaAtual } = useContextoVisual();
+  const queryClient = useQueryClient();
+
+  const tiposNotificacao = [
+    { id: 'nova_mensagem', label: 'Nova mensagem do cliente', icone: MessageCircle },
+    { id: 'transbordo', label: 'Transferência para humano', icone: AlertTriangle },
+    { id: 'sla_alerta', label: 'SLA em risco', icone: AlertTriangle },
+    { id: 'cliente_insatisfeito', label: 'Cliente insatisfeito detectado', icone: AlertTriangle }
+  ];
+
+  const canaisNotificacao = [
+    { id: 'sistema', label: 'Sistema', icone: Bell },
+    { id: 'email', label: 'E-mail', icone: Mail },
+    { id: 'whatsapp', label: 'WhatsApp', icone: MessageCircle },
+    { id: 'push', label: 'Push', icone: Smartphone }
+  ];
+
+  // Buscar configuração
+  const { data: config } = useQuery({
+    queryKey: ['config-notificacoes', canalId, empresaAtual?.id],
+    queryFn: async () => {
+      if (!canalId) {
+        const configs = await base44.entities.ConfiguracaoCanal.filter({
+          empresa_id: empresaAtual?.id,
+          ativo: true
+        });
+        return configs[0];
+      }
+      return await base44.entities.ConfiguracaoCanal.get(canalId);
+    },
+    enabled: !!empresaAtual?.id
   });
+
+  const [configLocal, setConfigLocal] = useState({
+    nova_mensagem: true,
+    transbordo: true,
+    sla_alerta: true,
+    cliente_insatisfeito: true,
+    canais: ['sistema', 'email'],
+    som_ativado: true
+  });
+
+  // Sincronizar com config quando carregar
+  React.useEffect(() => {
+    if (config?.notificacoes) {
+      setConfigLocal({
+        nova_mensagem: config.notificacoes.nova_mensagem ?? true,
+        transbordo: config.notificacoes.transbordo ?? true,
+        sla_alerta: config.notificacoes.sla_alerta ?? true,
+        cliente_insatisfeito: config.notificacoes.cliente_insatisfeito ?? true,
+        canais: config.notificacoes.canais || ['sistema'],
+        som_ativado: true
+      });
+    }
+  }, [config]);
 
   const salvarMutation = useMutation({
     mutationFn: async () => {
-      if (!canalConfig?.id) return;
+      if (!config?.id) return;
       
-      await base44.entities.ConfiguracaoCanal.update(canalConfig.id, {
-        acoes_automaticas: [
-          ...(canalConfig.acoes_automaticas || []).filter(a => a.trigger !== 'notificacoes'),
-          {
-            trigger: 'notificacoes',
-            acao: 'enviar_notificacao',
-            parametros: config
-          }
-        ]
+      await base44.entities.ConfiguracaoCanal.update(config.id, {
+        notificacoes: configLocal
       });
     },
     onSuccess: () => {
-      toast.success('Notificações configuradas!');
+      queryClient.invalidateQueries({ queryKey: ['config-notificacoes'] });
+      toast.success('Configurações de notificação salvas!');
     }
   });
 
+  const toggleTipo = (tipoId) => {
+    setConfigLocal(prev => ({
+      ...prev,
+      [tipoId]: !prev[tipoId]
+    }));
+  };
+
+  const toggleCanal = (canalIdLocal) => {
+    setConfigLocal(prev => ({
+      ...prev,
+      canais: prev.canais.includes(canalIdLocal)
+        ? prev.canais.filter(c => c !== canalIdLocal)
+        : [...prev.canais, canalIdLocal]
+    }));
+  };
+
   return (
     <Card className="w-full">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <Bell className="w-5 h-5 text-blue-600" />
-          Notificações Automáticas
+          Configurações de Notificação
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="nova-msg" className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4" />
-            Nova mensagem do cliente
-          </Label>
-          <Switch
-            id="nova-msg"
-            checked={config.notificar_nova_mensagem}
-            onCheckedChange={(checked) => setConfig({ ...config, notificar_nova_mensagem: checked })}
-          />
+      <CardContent className="space-y-6">
+        {/* Tipos de Notificação */}
+        <div>
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">
+            Tipos de Alerta
+          </h3>
+          <div className="space-y-3">
+            {tiposNotificacao.map(tipo => {
+              const Icone = tipo.icone;
+              return (
+                <div key={tipo.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Icone className="w-4 h-4 text-slate-600" />
+                    <span className="text-sm">{tipo.label}</span>
+                  </div>
+                  <Switch
+                    checked={configLocal[tipo.id]}
+                    onCheckedChange={() => toggleTipo(tipo.id)}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <Label htmlFor="transbordo" className="flex items-center gap-2">
-            <Send className="w-4 h-4" />
-            Transbordo para atendente
-          </Label>
-          <Switch
-            id="transbordo"
-            checked={config.notificar_transbordo}
-            onCheckedChange={(checked) => setConfig({ ...config, notificar_transbordo: checked })}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <Label htmlFor="inatividade">
-            Conversa inativa
-          </Label>
-          <Switch
-            id="inatividade"
-            checked={config.notificar_inatividade}
-            onCheckedChange={(checked) => setConfig({ ...config, notificar_inatividade: checked })}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <Label htmlFor="insatisfacao">
-            Cliente insatisfeito (IA)
-          </Label>
-          <Switch
-            id="insatisfacao"
-            checked={config.notificar_insatisfacao}
-            onCheckedChange={(checked) => setConfig({ ...config, notificar_insatisfacao: checked })}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <Label htmlFor="avaliacao">
-            Nova avaliação
-          </Label>
-          <Switch
-            id="avaliacao"
-            checked={config.notificar_avaliacao}
-            onCheckedChange={(checked) => setConfig({ ...config, notificar_avaliacao: checked })}
-          />
-        </div>
-
-        <div className="pt-4 border-t">
-          <Button
-            onClick={() => salvarMutation.mutate()}
-            disabled={salvarMutation.isPending}
-            className="w-full bg-blue-600 hover:bg-blue-700"
-          >
-            Salvar Configurações
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+        {/* Canais de Notificação */}
+        <div>
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">
+            Canais de Entrega
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+            {canaisNotificacao.map(

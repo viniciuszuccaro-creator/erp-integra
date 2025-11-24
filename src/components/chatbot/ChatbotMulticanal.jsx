@@ -1,53 +1,277 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageCircle, Instagram, Send as TelegramIcon, Mail } from 'lucide-react';
-import ChatbotWidgetAvancado from './ChatbotWidgetAvancado';
+import { base44 } from '@/api/base44Client';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { 
+  MessageCircle, 
+  Instagram, 
+  Send,
+  Phone,
+  Mail,
+  Globe,
+  Smartphone,
+  Settings,
+  CheckCircle,
+  AlertCircle,
+  RefreshCw,
+  ExternalLink
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
- * V21.5 - CHATBOT MULTI-CANAL UNIFICADO
- * Container que permite trocar entre canais
+ * V21.6 - GERENCIADOR MULTICANAL
+ * 
+ * Visualização e controle de todos os canais:
+ * ✅ Status de conexão por canal
+ * ✅ Ativar/desativar canais
+ * ✅ Estatísticas por canal
+ * ✅ Configurações rápidas
+ * ✅ Links para configuração detalhada
  */
-export default function ChatbotMulticanal({ clienteId, configuracoes = {} }) {
-  const [canalAtivo, setCanalAtivo] = useState('Portal');
+export default function ChatbotMulticanal() {
+  const { empresaAtual } = useContextoVisual();
+  const queryClient = useQueryClient();
 
-  const canais = [
-    { id: 'Portal', nome: 'Portal', icone: MessageCircle, cor: 'text-blue-600' },
-    { id: 'WhatsApp', nome: 'WhatsApp', icone: MessageCircle, cor: 'text-green-600' },
-    { id: 'Instagram', nome: 'Instagram', icone: Instagram, cor: 'text-pink-600' },
-    { id: 'Telegram', nome: 'Telegram', icone: TelegramIcon, cor: 'text-blue-500' },
-    { id: 'Email', nome: 'Email', icone: Mail, cor: 'text-slate-600' }
+  const canaisDisponiveis = [
+    { id: 'WhatsApp', nome: 'WhatsApp', icone: Phone, cor: 'bg-green-600', corLight: 'bg-green-100 text-green-700' },
+    { id: 'Instagram', nome: 'Instagram', icone: Instagram, cor: 'bg-pink-600', corLight: 'bg-pink-100 text-pink-700' },
+    { id: 'Facebook', nome: 'Facebook', icone: MessageCircle, cor: 'bg-blue-600', corLight: 'bg-blue-100 text-blue-700' },
+    { id: 'Telegram', nome: 'Telegram', icone: Send, cor: 'bg-sky-500', corLight: 'bg-sky-100 text-sky-700' },
+    { id: 'Email', nome: 'Email', icone: Mail, cor: 'bg-slate-600', corLight: 'bg-slate-100 text-slate-700' },
+    { id: 'WebChat', nome: 'WebChat', icone: Globe, cor: 'bg-purple-600', corLight: 'bg-purple-100 text-purple-700' },
+    { id: 'Portal', nome: 'Portal Cliente', icone: Globe, cor: 'bg-indigo-600', corLight: 'bg-indigo-100 text-indigo-700' },
+    { id: 'SMS', nome: 'SMS', icone: Smartphone, cor: 'bg-orange-600', corLight: 'bg-orange-100 text-orange-700' }
   ];
 
+  // Buscar configurações de canais
+  const { data: configsCanais = [], isLoading } = useQuery({
+    queryKey: ['configs-canais-multi', empresaAtual?.id],
+    queryFn: async () => {
+      return await base44.entities.ConfiguracaoCanal.filter({
+        empresa_id: empresaAtual?.id
+      });
+    },
+    enabled: !!empresaAtual?.id
+  });
+
+  // Buscar estatísticas por canal
+  const { data: estatisticas = {} } = useQuery({
+    queryKey: ['estatisticas-canais', empresaAtual?.id],
+    queryFn: async () => {
+      const conversas = await base44.entities.ConversaOmnicanal.filter({
+        empresa_id: empresaAtual?.id
+      });
+
+      const stats = {};
+      canaisDisponiveis.forEach(canal => {
+        const conversasCanal = conversas.filter(c => c.canal === canal.id);
+        stats[canal.id] = {
+          total: conversasCanal.length,
+          ativas: conversasCanal.filter(c => c.status !== 'Resolvida').length,
+          resolvidas: conversasCanal.filter(c => c.status === 'Resolvida').length,
+          tempoMedio: 0 // TODO: calcular
+        };
+      });
+
+      return stats;
+    },
+    enabled: !!empresaAtual?.id
+  });
+
+  const toggleCanalMutation = useMutation({
+    mutationFn: async ({ canalId, ativo }) => {
+      const configExistente = configsCanais.find(c => c.canal === canalId);
+      
+      if (configExistente) {
+        await base44.entities.ConfiguracaoCanal.update(configExistente.id, { ativo });
+      } else {
+        await base44.entities.ConfiguracaoCanal.create({
+          canal: canalId,
+          empresa_id: empresaAtual?.id,
+          ativo,
+          modo_atendimento: 'Bot com Transbordo',
+          mensagem_boas_vindas: `Olá! Bem-vindo ao atendimento via ${canalId}. Como posso ajudar?`
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['configs-canais-multi'] });
+      toast.success('Canal atualizado!');
+    }
+  });
+
+  const getConfigCanal = (canalId) => {
+    return configsCanais.find(c => c.canal === canalId);
+  };
+
+  const getStatusCanal = (canalId) => {
+    const config = getConfigCanal(canalId);
+    if (!config) return { status: 'nao_configurado', label: 'Não Configurado', cor: 'bg-slate-400' };
+    if (!config.ativo) return { status: 'inativo', label: 'Inativo', cor: 'bg-slate-400' };
+    
+    // Verificar se tem credenciais para canais que precisam
+    if (['WhatsApp', 'Instagram', 'Facebook', 'Telegram'].includes(canalId)) {
+      if (!config.credenciais?.api_key && !config.credenciais?.access_token) {
+        return { status: 'pendente', label: 'Pendente Config', cor: 'bg-orange-500' };
+      }
+    }
+    
+    return { status: 'ativo', label: 'Ativo', cor: 'bg-green-500' };
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full h-full">
-      <Tabs value={canalAtivo} onValueChange={setCanalAtivo} className="w-full h-full flex flex-col">
-        <TabsList className="w-full justify-start bg-slate-100 p-1">
-          {canais.map(canal => {
-            const Icon = canal.icone;
+    <div className="w-full h-full overflow-auto p-4 lg:p-6">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 flex items-center gap-3">
+              <MessageCircle className="w-8 h-8 text-blue-600" />
+              Canais de Atendimento
+            </h1>
+            <p className="text-slate-600 mt-1">Gerencie todos os canais de comunicação</p>
+          </div>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['configs-canais-multi'] })}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
+        </div>
+
+        {/* Grid de Canais */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {canaisDisponiveis.map(canal => {
+            const config = getConfigCanal(canal.id);
+            const status = getStatusCanal(canal.id);
+            const stats = estatisticas[canal.id] || { total: 0, ativas: 0, resolvidas: 0 };
+            const Icone = canal.icone;
+
             return (
-              <TabsTrigger 
-                key={canal.id} 
-                value={canal.id}
-                className="flex items-center gap-2"
-              >
-                <Icon className={`w-4 h-4 ${canal.cor}`} />
-                {canal.nome}
-              </TabsTrigger>
+              <Card key={canal.id} className={`relative overflow-hidden transition-all hover:shadow-lg ${
+                status.status === 'ativo' ? 'ring-2 ring-green-500' : ''
+              }`}>
+                {/* Indicador de Status */}
+                <div className={`absolute top-0 left-0 right-0 h-1 ${status.cor}`} />
+                
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 ${canal.cor} rounded-lg flex items-center justify-center`}>
+                        <Icone className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">{canal.nome}</CardTitle>
+                        <Badge className={`text-xs ${canal.corLight}`}>
+                          {status.label}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <Switch
+                      checked={config?.ativo || false}
+                      onCheckedChange={(checked) => {
+                        toggleCanalMutation.mutate({ canalId: canal.id, ativo: checked });
+                      }}
+                    />
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  {/* Estatísticas */}
+                  <div className="grid grid-cols-3 gap-2 text-center mb-3">
+                    <div className="p-2 bg-slate-50 rounded">
+                      <p className="text-lg font-bold text-blue-600">{stats.ativas}</p>
+                      <p className="text-xs text-slate-500">Ativas</p>
+                    </div>
+                    <div className="p-2 bg-slate-50 rounded">
+                      <p className="text-lg font-bold text-green-600">{stats.resolvidas}</p>
+                      <p className="text-xs text-slate-500">Resolvidas</p>
+                    </div>
+                    <div className="p-2 bg-slate-50 rounded">
+                      <p className="text-lg font-bold text-slate-600">{stats.total}</p>
+                      <p className="text-xs text-slate-500">Total</p>
+                    </div>
+                  </div>
+
+                  {/* Modo de Atendimento */}
+                  {config && (
+                    <div className="text-xs text-slate-600 mb-3">
+                      <span className="font-medium">Modo:</span> {config.modo_atendimento || 'Não definido'}
+                    </div>
+                  )}
+
+                  {/* Botão Configurar */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      // Abrir configuração do canal
+                      toast.info(`Configurar ${canal.nome} - Em desenvolvimento`);
+                    }}
+                  >
+                    <Settings className="w-3 h-3 mr-1" />
+                    Configurar
+                  </Button>
+                </CardContent>
+              </Card>
             );
           })}
-        </TabsList>
+        </div>
 
-        {canais.map(canal => (
-          <TabsContent key={canal.id} value={canal.id} className="flex-1">
-            <ChatbotWidgetAvancado
-              clienteId={clienteId}
-              canal={canal.id}
-              exibirBotaoFlutuante={false}
-              configuracoes={configuracoes}
-            />
-          </TabsContent>
-        ))}
-      </Tabs>
+        {/* Resumo Geral */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Resumo de Integração</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-green-600">
+                  {configsCanais.filter(c => c.ativo).length}
+                </p>
+                <p className="text-sm text-slate-600">Canais Ativos</p>
+              </div>
+              
+              <div className="text-center p-4 bg-orange-50 rounded-lg">
+                <AlertCircle className="w-8 h-8 text-orange-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-orange-600">
+                  {canaisDisponiveis.filter(c => getStatusCanal(c.id).status === 'pendente').length}
+                </p>
+                <p className="text-sm text-slate-600">Pendentes Config</p>
+              </div>
+              
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <MessageCircle className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-blue-600">
+                  {Object.values(estatisticas).reduce((sum, s) => sum + s.ativas, 0)}
+                </p>
+                <p className="text-sm text-slate-600">Conversas Ativas</p>
+              </div>
+              
+              <div className="text-center p-4 bg-slate-50 rounded-lg">
+                <Globe className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+                <p className="text-2xl font-bold text-slate-600">
+                  {canaisDisponiveis.length}
+                </p>
+                <p className="text-sm text-slate-600">Canais Disponíveis</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
