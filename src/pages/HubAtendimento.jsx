@@ -684,7 +684,7 @@ export default function HubAtendimento() {
                       onClick={() => setPainelLateralConteudo('respostas')}
                       title="Respostas Rápidas"
                     >
-                      <Zap className="w-4 h-4" />
+                      <MessageCircle className="w-4 h-4" />
                     </Button>
                     <Button
                       onClick={() => {
