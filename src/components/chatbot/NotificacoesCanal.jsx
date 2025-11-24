@@ -153,4 +153,60 @@ export default function NotificacoesCanal({ canalId }) {
             Canais de Entrega
           </h3>
           <div className="grid grid-cols-2 gap-2">
-            {canaisNotificacao.map(
+            {canaisNotificacao.map(canal => {
+              const Icone = canal.icone;
+              const ativo = configLocal.canais.includes(canal.id);
+              return (
+                <button
+                  key={canal.id}
+                  onClick={() => toggleCanal(canal.id)}
+                  className={`p-3 rounded-lg border-2 flex items-center gap-2 transition-all ${
+                    ativo 
+                      ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                      : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  <Icone className="w-4 h-4" />
+                  <span className="text-sm font-medium">{canal.label}</span>
+                  {ativo && <Check className="w-4 h-4 ml-auto" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Som */}
+        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-center gap-3">
+            {configLocal.som_ativado ? (
+              <Volume2 className="w-4 h-4 text-blue-600" />
+            ) : (
+              <VolumeX className="w-4 h-4 text-slate-400" />
+            )}
+            <span className="text-sm">Som de notificação</span>
+          </div>
+          <Switch
+            checked={configLocal.som_ativado}
+            onCheckedChange={(checked) => setConfigLocal(prev => ({ ...prev, som_ativado: checked }))}
+          />
+        </div>
+
+        {/* Salvar */}
+        <Button
+          onClick={() => salvarMutation.mutate()}
+          disabled={salvarMutation.isPending}
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          {salvarMutation.isPending ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+          ) : (
+            <>
+              <Check className="w-4 h-4 mr-2" />
+              Salvar Configurações
+            </>
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
