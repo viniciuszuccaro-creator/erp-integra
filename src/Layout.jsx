@@ -15,17 +15,11 @@ import {
   FileText,
   Settings,
   Shield,
-  Link2,
   Calendar,
   BarChart3,
   Factory,
   BookOpen,
-  Search,
-  Rocket,
-  CheckCircle,
-  Trash2,
-  Wallet,
-  Award
+  Search
 } from "lucide-react";
 import {
   Sidebar,
@@ -73,16 +67,6 @@ const navigationItems = [
   { title: "Configurações do Sistema", url: createPageUrl("ConfiguracoesSistema"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
-  { title: "🧪 Teste Golden Thread", url: createPageUrl("TesteGoldenThread"), icon: Rocket, group: "sistema", adminOnly: true },
-  { title: "✅ Validador Fase 1", url: createPageUrl("ValidadorFase1"), icon: CheckCircle, group: "sistema", adminOnly: true },
-  { title: "✅ Validador Fase 2", url: createPageUrl("ValidadorFase2"), icon: CheckCircle, group: "sistema", adminOnly: true },
-  { title: "✅ Validador Fase 3", url: createPageUrl("ValidadorFase3"), icon: CheckCircle, group: "sistema", adminOnly: true },
-  { title: "✅ Validador Etapa 4", url: createPageUrl("ValidadorEtapa4"), icon: Wallet, group: "sistema", adminOnly: true },
-  { title: "✅ Validador Final 2+3+4", url: createPageUrl("ValidadorFinalEtapas234"), icon: CheckCircle, group: "sistema", adminOnly: true },
-  { title: "✅ Validador Etapas 5-12", url: createPageUrl("ValidadorEtapas512"), icon: Rocket, group: "sistema", adminOnly: true },
-  { title: "🏆 Certificação Final", url: createPageUrl("CertificacaoFinal"), icon: Award, group: "sistema", adminOnly: true },
-  { title: "🏆 Demo Fase 1 Completa", url: createPageUrl("DemoFase1Completa"), icon: Rocket, group: "sistema", adminOnly: true },
-  { title: "🗑️ Limpar Dados Teste", url: createPageUrl("LimparDados"), icon: Trash2, group: "sistema", adminOnly: true },
   { title: "🌐 Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico", public: true },
 ];
 
@@ -215,7 +199,7 @@ function LayoutContent({ children, currentPageName }) {
               </div>
               <div>
                 <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">V21.4 • F1✅ F2✅ F3✅ E4✅ • 94W</p>
+                <p className="text-xs text-slate-500">V21.5 • Sistema Completo</p>
               </div>
             </div>
           </SidebarHeader>
