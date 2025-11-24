@@ -38,6 +38,12 @@ import ConfiguracaoCanais from "@/components/chatbot/ConfiguracaoCanais";
 import GerenciadorTemplates from "@/components/chatbot/GerenciadorTemplates";
 import AnalyticsAtendimento from "@/components/chatbot/AnalyticsAtendimento";
 import HistoricoClienteChat from "@/components/chatbot/HistoricoClienteChat";
+import RoteamentoInteligente from "@/components/chatbot/RoteamentoInteligente";
+import MonitorSLA from "@/components/chatbot/MonitorSLA";
+import ChatbotFilaEspera from "@/components/chatbot/ChatbotFilaEspera";
+import RespostasRapidas from "@/components/chatbot/RespostasRapidas";
+import TagsCategorizacao from "@/components/chatbot/TagsCategorizacao";
+import SugestoesIA from "@/components/chatbot/SugestoesIA";
 
 /**
  * V21.5 - HUB DE ATENDIMENTO OMNICANAL
@@ -60,6 +66,8 @@ export default function HubAtendimento() {
   const [buscaTexto, setBuscaTexto] = useState("");
   const [conversaSelecionada, setConversaSelecionada] = useState(null);
   const [mensagemAtendente, setMensagemAtendente] = useState("");
+  const [exibirPainelLateral, setExibirPainelLateral] = useState(true);
+  const [painelLateralConteudo, setPainelLateralConteudo] = useState('info'); // info, historico, respostas
   
   const queryClient = useQueryClient();
   const { hasPermission, user } = usePermissions();
@@ -295,6 +303,22 @@ export default function HubAtendimento() {
               <Settings className="w-4 h-4 mr-2" />
               Canais
             </Button>
+            <Button
+              variant={abaAtiva === "sla" ? "default" : "outline"}
+              onClick={() => setAbaAtiva("sla")}
+              className={abaAtiva === "sla" ? "bg-blue-600" : ""}
+            >
+              <Zap className="w-4 h-4 mr-2" />
+              SLA
+            </Button>
+            <Button
+              variant={abaAtiva === "fila" ? "default" : "outline"}
+              onClick={() => setAbaAtiva("fila")}
+              className={abaAtiva === "fila" ? "bg-blue-600" : ""}
+            >
+              <Clock className="w-4 h-4 mr-2" />
+              Fila
+            </Button>
           </div>
         </div>
 
@@ -302,6 +326,8 @@ export default function HubAtendimento() {
         {abaAtiva === "analytics" && <ChatbotDashboard />}
         {abaAtiva === "templates" && <GerenciadorTemplates />}
         {abaAtiva === "config" && <ConfiguracaoCanais />}
+        {abaAtiva === "sla" && <MonitorSLA />}
+        {abaAtiva === "fila" && <ChatbotFilaEspera />}
         
         {/* Aba de Atendimento */}
         {abaAtiva === "atendimento" && (
@@ -424,7 +450,7 @@ export default function HubAtendimento() {
         </Card>
 
         {/* Layout Principal */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className={`grid gap-6 ${exibirPainelLateral && conversaSelecionada ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
           {/* Lista de Conversas */}
           <Card className="lg:col-span-1">
             <CardHeader className="border-b">
@@ -497,22 +523,44 @@ export default function HubAtendimento() {
           </Card>
 
           {/* Área de Chat */}
-          <Card className="lg:col-span-2 flex flex-col">
+          <Card className={`${exibirPainelLateral && conversaSelecionada ? 'lg:col-span-2' : 'lg:col-span-2'} flex flex-col h-[700px]`}>
             {conversaSelecionada ? (
               <>
                 {/* Header da Conversa */}
-                <CardHeader className="border-b">
+                <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-purple-50">
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle className="flex items-center gap-2">
                         {conversaSelecionada.cliente_nome || 'Cliente Anônimo'}
-                        <Badge className="ml-2">
+                        <Badge className="ml-2 bg-blue-600">
                           {conversaSelecionada.canal}
                         </Badge>
+                        {conversaSelecionada.prioridade === 'Urgente' && (
+                          <Badge className="bg-red-600">Urgente</Badge>
+                        )}
                       </CardTitle>
-                      <p className="text-sm text-slate-600 mt-1">
-                        Sessão: {conversaSelecionada.sessao_id}
-                      </p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <p className="text-xs text-slate-600">
+                          Sessão: {conversaSelecionada.sessao_id.substring(0, 16)}...
+                        </p>
+                        {conversaSelecionada.intent_principal && (
+                          <Badge variant="outline" className="text-xs">
+                            {conversaSelecionada.intent_principal}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* Tags da conversa */}
+                      {conversaSelecionada.tags && conversaSelecionada.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {conversaSelecionada.tags.slice(0, 3).map((tag, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              <Tag className="w-3 h-3 mr-1" />
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -535,6 +583,14 @@ export default function HubAtendimento() {
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Resolver
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setExibirPainelLateral(!exibirPainelLateral)}
+                      >
+                        <MoreVertical className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -594,7 +650,7 @@ export default function HubAtendimento() {
                 </CardContent>
 
                 {/* Input de Mensagem */}
-                <div className="border-t p-4">
+                <div className="border-t p-4 bg-slate-50">
                   <div className="flex gap-2">
                     <Input
                       value={mensagemAtendente}
@@ -607,10 +663,18 @@ export default function HubAtendimento() {
                           }
                         }
                       }}
-                      placeholder="Digite sua mensagem..."
+                      placeholder="Digite sua mensagem... (Enter para enviar)"
                       disabled={enviarMensagemMutation.isPending}
                       className="flex-1"
                     />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setPainelLateralConteudo('respostas')}
+                      title="Respostas Rápidas"
+                    >
+                      <Zap className="w-4 h-4" />
+                    </Button>
                     <Button
                       onClick={() => {
                         if (mensagemAtendente.trim()) {
@@ -618,6 +682,7 @@ export default function HubAtendimento() {
                         }
                       }}
                       disabled={!mensagemAtendente.trim() || enviarMensagemMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
                     >
                       <Send className="w-4 h-4" />
                     </Button>
@@ -633,6 +698,125 @@ export default function HubAtendimento() {
               </CardContent>
             )}
           </Card>
+
+          {/* Painel Lateral Contextual */}
+          {exibirPainelLateral && conversaSelecionada && (
+            <Card className="lg:col-span-1">
+              <CardHeader className="border-b">
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant={painelLateralConteudo === 'info' ? 'default' : 'outline'}
+                    onClick={() => setPainelLateralConteudo('info')}
+                    className="flex-1"
+                  >
+                    Info
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={painelLateralConteudo === 'respostas' ? 'default' : 'outline'}
+                    onClick={() => setPainelLateralConteudo('respostas')}
+                    className="flex-1"
+                  >
+                    Respostas
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4 h-[600px] overflow-y-auto">
+                {painelLateralConteudo === 'info' && (
+                  <div className="space-y-4">
+                    {/* Informações do Cliente */}
+                    <div>
+                      <h3 className="font-semibold text-sm text-slate-900 mb-2">Dados do Cliente</h3>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <span className="text-slate-600">Email:</span>
+                          <p className="font-medium">{conversaSelecionada.cliente_email || '-'}</p>
+                        </div>
+                        <div>
+                          <span className="text-slate-600">Telefone:</span>
+                          <p className="font-medium">{conversaSelecionada.cliente_telefone || '-'}</p>
+                        </div>
+                        <div>
+                          <span className="text-slate-600">Canal Origem:</span>
+                          <p className="font-medium">{conversaSelecionada.canal_id_externo || '-'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Métricas da Conversa */}
+                    <div className="border-t pt-4">
+                      <h3 className="font-semibold text-sm text-slate-900 mb-2">Métricas</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Total Mensagens:</span>
+                          <span className="font-bold">{conversaSelecionada.total_mensagens || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Bot:</span>
+                          <span className="font-bold text-purple-600">{conversaSelecionada.mensagens_bot || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Cliente:</span>
+                          <span className="font-bold text-blue-600">{conversaSelecionada.mensagens_cliente || 0}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">Sentimento:</span>
+                          <Badge className={`${
+                            conversaSelecionada.sentimento_geral === 'Positivo' ? 'bg-green-600' :
+                            conversaSelecionada.sentimento_geral === 'Negativo' ? 'bg-red-600' :
+                            'bg-slate-600'
+                          }`}>
+                            {conversaSelecionada.sentimento_geral || 'Neutro'}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="border-t pt-4">
+                      <TagsCategorizacao conversa={conversaSelecionada} />
+                    </div>
+
+                    {/* Sugestões da IA */}
+                    <div className="border-t pt-4">
+                      <SugestoesIA conversa={conversaSelecionada} mensagens={mensagens} />
+                    </div>
+
+                    {/* Histórico Cliente */}
+                    {conversaSelecionada.cliente_id && (
+                      <div className="border-t pt-4">
+                        <HistoricoClienteChat clienteId={conversaSelecionada.cliente_id} />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {painelLateralConteudo === 'respostas' && (
+                  <RespostasRapidas
+                    onSelecionarResposta={(texto) => {
+                      setMensagemAtendente(texto);
+                      setPainelLateralConteudo('info');
+                    }}
+                    contextoConversa={{
+                      pedido: conversaSelecionada.pedido_gerado_id || 'PED-XXX',
+                      status: 'Em Processamento',
+                      data_entrega: 'DD/MM/AAAA',
+                      endereco: 'Endereço do cliente',
+                      link: '#',
+                      linha_digitavel: 'XXXXX.XXXXX',
+                      vencimento: 'DD/MM/AAAA',
+                      quantidade: '3',
+                      valor_total: 'R$ 5.000,00',
+                      valor: 'R$ 5.000,00',
+                      prazo: '5',
+                      forma_pagamento: 'Boleto'
+                    }}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
           </>
         )}
