@@ -10,6 +10,8 @@ import { base44 } from '@/api/base44Client';
  * ✅ Execução de ações automáticas
  * ✅ Geração de respostas contextuais
  * ✅ Integração com dados do ERP
+ * ✅ Suporte multi-empresa
+ * ✅ Fallback quando IA indisponível
  */
 const IntentEngine = {
   // Intents conhecidos e suas configurações
@@ -375,6 +377,43 @@ const IntentEngine = {
     } catch (error) {
       console.error('Erro ao executar ação:', error);
       return { tipo: 'erro', mensagem: 'Desculpe, ocorreu um erro ao processar sua solicitação. Tente novamente.' };
+    }
+  },
+
+  /**
+   * V21.6: Usar IA avançada para análise (com fallback)
+   */
+  async analisarComIA(mensagem, contexto = {}) {
+    try {
+      const resultado = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analise a mensagem de um cliente e retorne:
+1. Intent principal (consultar_pedido, consultar_entrega, segunda_via_boleto, orcamento, suporte_tecnico, falar_atendente, cancelamento, saudacao, agradecimento, despedida, desconhecido)
+2. Confiança de 0 a 100
+3. Sentimento (Positivo, Neutro, Negativo, Frustrado, Urgente)
+4. Entidades detectadas (CPF, CNPJ, número de pedido, valor, data, email, telefone)
+5. Se precisa de atendente humano
+
+Mensagem: "${mensagem}"
+
+Contexto do cliente: ${JSON.stringify(contexto)}`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            intent: { type: "string" },
+            confianca: { type: "number" },
+            sentimento: { type: "string" },
+            entidades: { type: "object" },
+            necessita_atendente: { type: "boolean" },
+            resposta_sugerida: { type: "string" },
+            acoes_sugeridas: { type: "array", items: { type: "string" } }
+          }
+        }
+      });
+      return resultado;
+    } catch (error) {
+      console.warn('IA indisponível, usando fallback:', error.message);
+      // Fallback para análise local
+      return this.detectarIntent(mensagem, null, contexto);
     }
   }
 };

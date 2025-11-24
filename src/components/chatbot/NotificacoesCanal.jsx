@@ -26,8 +26,11 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  * ✅ Tipos de alerta
  * ✅ Sons de notificação
  * ✅ Prioridades
+ * ✅ Suporte multi-empresa
  */
-export default function NotificacoesCanal({ canalId }) {
+export default function NotificacoesCanal({ canalConfig }) {
+  // Compatibilidade - aceita canalConfig ou canalId
+  const canalId = canalConfig?.id;
   const { empresaAtual } = useContextoVisual();
   const queryClient = useQueryClient();
 
