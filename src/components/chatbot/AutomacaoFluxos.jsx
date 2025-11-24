@@ -95,7 +95,7 @@ export default function AutomacaoFluxos({ canalConfig }) {
         ))}
 
         <Button onClick={() => salvarMutation.mutate()} className="w-full bg-purple-600 hover:bg-purple-700">
-          <Zap className="w-4 h-4 mr-2" />
+          <Workflow className="w-4 h-4 mr-2" />
           Salvar Automações
         </Button>
       </CardContent>
