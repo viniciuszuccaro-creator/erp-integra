@@ -13,7 +13,7 @@ import {
   AlertCircle,
   BarChart3,
   Activity,
-  Zap
+  Timer
 } from 'lucide-react';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import {
@@ -216,7 +216,7 @@ export default function ChatbotDashboard() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-purple-600 text-sm mb-1">
-              <Zap className="w-4 h-4" />
+              <Timer className="w-4 h-4" />
               Tempo Médio
             </div>
             <p className="text-3xl font-bold text-purple-600">{metricas.tempoMedio}min</p>

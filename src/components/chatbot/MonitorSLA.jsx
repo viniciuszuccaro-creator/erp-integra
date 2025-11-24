@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Clock, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle, TrendingUp, Timer } from 'lucide-react';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { Progress } from '@/components/ui/progress';
 
@@ -124,7 +124,7 @@ export default function MonitorSLA() {
           <CardHeader>
             <CardTitle className="text-base flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-blue-600" />
+                <Timer className="w-5 h-5 text-blue-600" />
                 Tempo Primeira Resposta (TFR)
               </span>
               <Badge className={parseFloat(metricas.taxaTFR) >= 90 ? 'bg-green-600' : parseFloat(metricas.taxaTFR) >= 70 ? 'bg-yellow-600' : 'bg-red-600'}>
