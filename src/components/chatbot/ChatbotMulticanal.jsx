@@ -51,20 +51,17 @@ export default function ChatbotMulticanal() {
   const { data: configsCanais = [], isLoading } = useQuery({
     queryKey: ['configs-canais-multi', empresaAtual?.id],
     queryFn: async () => {
-      return await base44.entities.ConfiguracaoCanal.filter({
-        empresa_id: empresaAtual?.id
-      });
-    },
-    enabled: !!empresaAtual?.id
+      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+      return await base44.entities.ConfiguracaoCanal.filter(filtro);
+    }
   });
 
   // Buscar estatísticas por canal
   const { data: estatisticas = {} } = useQuery({
     queryKey: ['estatisticas-canais', empresaAtual?.id],
     queryFn: async () => {
-      const conversas = await base44.entities.ConversaOmnicanal.filter({
-        empresa_id: empresaAtual?.id
-      });
+      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+      const conversas = await base44.entities.ConversaOmnicanal.filter(filtro);
 
       const stats = {};
       canaisDisponiveis.forEach(canal => {
@@ -73,13 +70,12 @@ export default function ChatbotMulticanal() {
           total: conversasCanal.length,
           ativas: conversasCanal.filter(c => c.status !== 'Resolvida').length,
           resolvidas: conversasCanal.filter(c => c.status === 'Resolvida').length,
-          tempoMedio: 0 // TODO: calcular
+          tempoMedio: 0
         };
       });
 
       return stats;
-    },
-    enabled: !!empresaAtual?.id
+    }
   });
 
   const toggleCanalMutation = useMutation({
@@ -91,7 +87,7 @@ export default function ChatbotMulticanal() {
       } else {
         await base44.entities.ConfiguracaoCanal.create({
           canal: canalId,
-          empresa_id: empresaAtual?.id,
+          empresa_id: empresaAtual?.id || 'default',
           ativo,
           modo_atendimento: 'Bot com Transbordo',
           mensagem_boas_vindas: `Olá! Bem-vindo ao atendimento via ${canalId}. Como posso ajudar?`
@@ -100,7 +96,12 @@ export default function ChatbotMulticanal() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['configs-canais-multi'] });
+      queryClient.invalidateQueries({ queryKey: ['estatisticas-canais'] });
       toast.success('Canal atualizado!');
+    },
+    onError: (error) => {
+      console.error('Erro ao atualizar canal:', error);
+      toast.error('Erro ao atualizar canal');
     }
   });
 
@@ -180,6 +181,7 @@ export default function ChatbotMulticanal() {
                     
                     <Switch
                       checked={config?.ativo || false}
+                      disabled={toggleCanalMutation.isPending}
                       onCheckedChange={(checked) => {
                         toggleCanalMutation.mutate({ canalId: canal.id, ativo: checked });
                       }}
@@ -216,9 +218,10 @@ export default function ChatbotMulticanal() {
                     variant="outline"
                     size="sm"
                     className="w-full"
-                    onClick={() => {
-                      // Abrir configuração do canal
-                      toast.info(`Configurar ${canal.nome} - Em desenvolvimento`);
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toast.info(`Acesse a aba "Canais" para configurar ${canal.nome} em detalhes.`);
                     }}
                   >
                     <Settings className="w-3 h-3 mr-1" />
