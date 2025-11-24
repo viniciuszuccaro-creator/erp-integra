@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Workflow, Zap, Clock, MessageSquare } from 'lucide-react';
+import { Workflow, Clock, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
