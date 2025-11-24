@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Zap, Users, TrendingUp, Settings, Brain } from 'lucide-react';
+import { Settings2, Users, TrendingUp, Settings, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
@@ -128,7 +128,7 @@ export default function RoteamentoInteligente({ canalConfig }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-yellow-600" />
+            <Settings2 className="w-5 h-5 text-yellow-600" />
             Regras de Roteamento Inteligente
           </CardTitle>
         </CardHeader>
