@@ -19,7 +19,8 @@ import {
   BarChart3,
   Factory,
   BookOpen,
-  Search
+  Search,
+  MessageCircle
 } from "lucide-react";
 import {
   Sidebar,
