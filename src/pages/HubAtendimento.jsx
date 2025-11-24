@@ -27,7 +27,7 @@ import {
   BarChart3,
   Settings,
   FileText,
-  Zap,
+  Timer,
   Tag
 } from "lucide-react";
 import { toast } from "sonner";
@@ -310,7 +310,7 @@ export default function HubAtendimento() {
               onClick={() => setAbaAtiva("sla")}
               className={abaAtiva === "sla" ? "bg-blue-600" : ""}
             >
-              <Zap className="w-4 h-4 mr-2" />
+              <Timer className="w-4 h-4 mr-2" />
               SLA
             </Button>
             <Button
