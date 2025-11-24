@@ -69,10 +69,12 @@ import ConsultarEntregaChat from "@/components/chatbot/ConsultarEntregaChat";
 import DashboardAtendente from "@/components/chatbot/DashboardAtendente";
 import TransferirConversa from "@/components/chatbot/TransferirConversa";
 import RelatoriosAtendimento from "@/components/chatbot/RelatoriosAtendimento";
-import ConfiguracaoAvancada from "@/components/chatbot/ConfiguracaoAvancada";
+import ConfiguracaoCanais from "@/components/chatbot/ConfiguracaoCanais";
 import ChatbotMulticanal from "@/components/chatbot/ChatbotMulticanal";
 import BaseConhecimento from "@/components/chatbot/BaseConhecimento";
 import AutomacaoFluxos from "@/components/chatbot/AutomacaoFluxos";
+import TemplatesMensagens from "@/components/chatbot/TemplatesMensagens";
+import AvaliacaoAtendimento from "@/components/chatbot/AvaliacaoAtendimento";
 
 /**
  * V21.5 - HUB DE ATENDIMENTO OMNICANAL
@@ -422,13 +424,22 @@ export default function HubAtendimento() {
               <span className="hidden lg:inline">Base IA</span>
             </Button>
             <Button
-              variant={abaAtiva === "avancado" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("avancado")}
+              variant={abaAtiva === "templates" ? "default" : "outline"}
+              onClick={() => setAbaAtiva("templates")}
               size="sm"
-              className={abaAtiva === "avancado" ? "bg-blue-600" : ""}
+              className={abaAtiva === "templates" ? "bg-blue-600" : ""}
+            >
+              <FileText className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Templates</span>
+            </Button>
+            <Button
+              variant={abaAtiva === "config" ? "default" : "outline"}
+              onClick={() => setAbaAtiva("config")}
+              size="sm"
+              className={abaAtiva === "config" ? "bg-blue-600" : ""}
             >
               <Settings className="w-4 h-4 lg:mr-2" />
-              <span className="hidden lg:inline">Avançado</span>
+              <span className="hidden lg:inline">Config</span>
             </Button>
             <Button
               variant="outline"
@@ -470,7 +481,8 @@ export default function HubAtendimento() {
         {abaAtiva === "relatorios" && <RelatoriosAtendimento />}
         {abaAtiva === "multicanal" && <ChatbotMulticanal />}
         {abaAtiva === "base" && <BaseConhecimento />}
-        {abaAtiva === "avancado" && <ConfiguracaoAvancada />}
+        {abaAtiva === "templates" && <TemplatesMensagens />}
+        {abaAtiva === "config" && <ConfiguracaoCanais />}
         
         {/* Aba de Atendimento */}
         {abaAtiva === "atendimento" && (
