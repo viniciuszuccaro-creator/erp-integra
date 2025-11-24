@@ -55,7 +55,6 @@ import ConfiguracaoCanais from "@/components/chatbot/ConfiguracaoCanais";
 import GerenciadorTemplates from "@/components/chatbot/GerenciadorTemplates";
 import AnalyticsAtendimento from "@/components/chatbot/AnalyticsAtendimento";
 import HistoricoClienteChat from "@/components/chatbot/HistoricoClienteChat";
-import RoteamentoInteligente from "@/components/chatbot/RoteamentoInteligente";
 import MonitorSLA from "@/components/chatbot/MonitorSLA";
 import ChatbotFilaEspera from "@/components/chatbot/ChatbotFilaEspera";
 import RespostasRapidas from "@/components/chatbot/RespostasRapidas";
@@ -69,12 +68,8 @@ import ConsultarEntregaChat from "@/components/chatbot/ConsultarEntregaChat";
 import DashboardAtendente from "@/components/chatbot/DashboardAtendente";
 import TransferirConversa from "@/components/chatbot/TransferirConversa";
 import RelatoriosAtendimento from "@/components/chatbot/RelatoriosAtendimento";
-import ConfiguracaoCanais from "@/components/chatbot/ConfiguracaoCanais";
 import ChatbotMulticanal from "@/components/chatbot/ChatbotMulticanal";
 import BaseConhecimento from "@/components/chatbot/BaseConhecimento";
-import AutomacaoFluxos from "@/components/chatbot/AutomacaoFluxos";
-import TemplatesMensagens from "@/components/chatbot/TemplatesMensagens";
-import AvaliacaoAtendimento from "@/components/chatbot/AvaliacaoAtendimento";
 
 /**
  * V21.5 - HUB DE ATENDIMENTO OMNICANAL
@@ -412,7 +407,7 @@ export default function HubAtendimento() {
               className={abaAtiva === "multicanal" ? "bg-blue-600" : ""}
             >
               <MessageCircle className="w-4 h-4 lg:mr-2" />
-              <span className="hidden lg:inline">Canais</span>
+              <span className="hidden lg:inline">Multi</span>
             </Button>
             <Button
               variant={abaAtiva === "base" ? "default" : "outline"}
@@ -424,24 +419,6 @@ export default function HubAtendimento() {
               <span className="hidden lg:inline">Base IA</span>
             </Button>
             <Button
-              variant={abaAtiva === "templates" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("templates")}
-              size="sm"
-              className={abaAtiva === "templates" ? "bg-blue-600" : ""}
-            >
-              <FileText className="w-4 h-4 lg:mr-2" />
-              <span className="hidden lg:inline">Templates</span>
-            </Button>
-            <Button
-              variant={abaAtiva === "config" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("config")}
-              size="sm"
-              className={abaAtiva === "config" ? "bg-blue-600" : ""}
-            >
-              <Settings className="w-4 h-4 lg:mr-2" />
-              <span className="hidden lg:inline">Config</span>
-            </Button>
-            <Button
               variant="outline"
               size="sm"
               onClick={() => setLayoutExpandido(!layoutExpandido)}
@@ -449,8 +426,8 @@ export default function HubAtendimento() {
             >
               {layoutExpandido ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
             </Button>
-            </div>
-            </div>
+          </div>
+        </div>
 
         {/* Renderizar aba ativa */}
         {abaAtiva === "meupainel" && (
@@ -481,8 +458,6 @@ export default function HubAtendimento() {
         {abaAtiva === "relatorios" && <RelatoriosAtendimento />}
         {abaAtiva === "multicanal" && <ChatbotMulticanal />}
         {abaAtiva === "base" && <BaseConhecimento />}
-        {abaAtiva === "templates" && <TemplatesMensagens />}
-        {abaAtiva === "config" && <ConfiguracaoCanais />}
         
         {/* Aba de Atendimento */}
         {abaAtiva === "atendimento" && (
