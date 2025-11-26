@@ -41,10 +41,7 @@ export default function ConfiguracoesSistema() {
             <Zap className="w-4 h-4 mr-2" />
             Configurações Globais
           </TabsTrigger>
-          <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Shield className="w-4 h-4 mr-2" />
-            Acessos e Permissões
-          </TabsTrigger>
+          
           <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
             Auditoria

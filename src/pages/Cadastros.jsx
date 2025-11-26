@@ -58,7 +58,7 @@ import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormComp
 import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
 import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
-import DashboardControleAcesso from "../components/sistema/DashboardControleAcesso";
+import GerenciamentoAcessosCompleto from "../components/sistema/GerenciamentoAcessosCompleto";
 import FonteUnicaVerdade from "../components/sistema/FonteUnicaVerdade";
 import usePermissions from "../components/lib/usePermissions";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
@@ -76,7 +76,7 @@ import DepartamentoForm from "../components/cadastros/DepartamentoForm";
 import CargoForm from "../components/cadastros/CargoForm";
 import TurnoForm from "../components/cadastros/TurnoForm";
 import UsuarioForm from "../components/cadastros/UsuarioForm";
-import PerfilAcessoForm from "../components/cadastros/PerfilAcessoForm";
+
 import CentroCustoForm from "../components/cadastros/CentroCustoForm";
 import GrupoProdutoForm from "../components/cadastros/GrupoProdutoForm";
 import MarcaForm from "../components/cadastros/MarcaForm";
