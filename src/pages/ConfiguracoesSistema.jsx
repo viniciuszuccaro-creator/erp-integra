@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, FileText, Settings, Zap, Sparkles } from "lucide-react";
-import GerenciamentoAcessos from "@/components/sistema/GerenciamentoAcessos";
+
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
 import ConfigGlobal from "@/components/sistema/ConfigGlobal";
@@ -95,9 +95,7 @@ export default function ConfiguracoesSistema() {
           />
         </TabsContent>
 
-        <TabsContent value="acessos">
-          <GerenciamentoAcessos />
-        </TabsContent>
+        
 
         <TabsContent value="auditoria">
           <LogsAuditoria />

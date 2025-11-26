@@ -75,7 +75,7 @@ import GrupoEmpresarialForm from "../components/cadastros/GrupoEmpresarialForm";
 import DepartamentoForm from "../components/cadastros/DepartamentoForm";
 import CargoForm from "../components/cadastros/CargoForm";
 import TurnoForm from "../components/cadastros/TurnoForm";
-import UsuarioForm from "../components/cadastros/UsuarioForm";
+
 
 import CentroCustoForm from "../components/cadastros/CentroCustoForm";
 import GrupoProdutoForm from "../components/cadastros/GrupoProdutoForm";
@@ -2491,56 +2491,7 @@ export default function Cadastros() {
                     </CardContent>
                   </Card>
 
-                  {/* USUÁRIOS */}
-                  <Card className="border-blue-200">
-                    <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">👥 Usuários ({usuarios.length})</CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(UsuarioForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('User', 'usuarios')
-                          }, {
-                            title: '👥 Convidar Usuário',
-                            width: 800,
-                            height: 600
-                          })}
-                          className="bg-blue-600 hover:bg-blue-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {usuarios.map(usuario => (
-                        <div key={usuario.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                          <div className="flex-1">
-                            <p className="font-semibold text-sm">{usuario.full_name}</p>
-                            <span className="text-xs text-slate-500">{usuario.email}</span>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openWindow(UsuarioForm, {
-                              usuario,
-                              windowMode: true,
-                              onSubmit: handleSubmitGenerico('User', 'usuarios')
-                            }, {
-                              title: `👥 Editar: ${usuario.full_name}`,
-                              width: 800,
-                              height: 600
-                            })}
-                            disabled={!hasPermission('cadastros', 'editar')}
-                          >
-                            <Edit className="w-3 h-3 text-blue-600" />
-                          </Button>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                  
 
                   {/* DEPARTAMENTOS */}
                   <Card className="border-green-200">
@@ -2689,61 +2640,7 @@ export default function Cadastros() {
                     </CardContent>
                   </Card>
 
-                  {/* PERFIS DE ACESSO */}
-                  <Card className="border-red-200">
-                    <CardHeader className="bg-red-50 border-b border-red-200 pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">
-                          <Shield className="w-4 h-4 inline mr-2 text-red-600" />
-                          Perfis de Acesso ({perfisAcesso.length})
-                        </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(PerfilAcessoForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('PerfilAcesso', 'perfis-acesso')
-                          }, {
-                            title: '🔒 Novo Perfil de Acesso',
-                            width: 1000,
-                            height: 700
-                          })}
-                          className="bg-red-600 hover:bg-red-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {perfisAcesso.map(perfil => (
-                        <div key={perfil.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                          <div className="flex-1">
-                            <p className="font-semibold text-sm">{perfil.nome_perfil}</p>
-                            <Badge className={perfil.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                              {perfil.ativo ? 'Ativo' : 'Inativo'}
-                            </Badge>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openWindow(PerfilAcessoForm, {
-                              perfil,
-                              windowMode: true,
-                              onSubmit: handleSubmitGenerico('PerfilAcesso', 'perfis-acesso')
-                            }, {
-                              title: `🔒 Editar: ${perfil.nome_perfil}`,
-                              width: 1000,
-                              height: 700
-                            })}
-                            disabled={!hasPermission('cadastros', 'editar')}
-                          >
-                            <Edit className="w-3 h-3 text-red-600" />
-                          </Button>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                  
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -3452,7 +3349,7 @@ export default function Cadastros() {
 
         {/* ABA: CONTROLE DE ACESSO */}
         <TabsContent value="acesso" className="mt-6">
-          <DashboardControleAcesso />
+          <GerenciamentoAcessosCompleto />
         </TabsContent>
 
         {/* ABA: AUDIT LOG */}
