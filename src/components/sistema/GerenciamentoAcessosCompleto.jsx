@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,8 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import {
   Accordion,
   AccordionContent,
@@ -57,7 +59,19 @@ import {
   RefreshCw,
   Filter,
   ChevronRight,
-  Layers
+  Layers,
+  Brain,
+  History,
+  UserCheck,
+  Key,
+  Sparkles,
+  Activity,
+  Clock,
+  Ban,
+  ShieldCheck,
+  UserPlus,
+  Building,
+  Fingerprint
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
@@ -270,13 +284,16 @@ const NIVEIS_PERFIL = [
 ];
 
 export default function GerenciamentoAcessosCompleto() {
-  const [activeTab, setActiveTab] = useState("perfis");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [perfilDialogOpen, setPerfilDialogOpen] = useState(false);
   const [editingPerfil, setEditingPerfil] = useState(null);
   const [permissaoDialogOpen, setPermissaoDialogOpen] = useState(false);
   const [busca, setBusca] = useState("");
   const [filtroNivel, setFiltroNivel] = useState("todos");
   const [moduloExpandido, setModuloExpandido] = useState([]);
+  const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+  const [analisandoIA, setAnalisandoIA] = useState(false);
+  const [recomendacoesIA, setRecomendacoesIA] = useState(null);
 
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
@@ -301,6 +318,11 @@ export default function GerenciamentoAcessosCompleto() {
   const { data: permissoesEmpresa = [] } = useQuery({
     queryKey: ['permissoes-empresa'],
     queryFn: () => base44.entities.PermissaoEmpresaModulo.list(),
+  });
+
+  const { data: auditoriaAcessos = [] } = useQuery({
+    queryKey: ['auditoria-acessos'],
+    queryFn: () => base44.entities.AuditoriaAcesso.list('-created_date', 100),
   });
 
   // Estado do formulário de perfil
@@ -600,6 +622,78 @@ export default function GerenciamentoAcessosCompleto() {
     });
   }, [usuarios, busca]);
 
+  // Estatísticas do Dashboard
+  const estatisticas = useMemo(() => {
+    const totalPerfis = perfis.length;
+    const perfisAtivos = perfis.filter(p => p.ativo !== false).length;
+    const totalUsuarios = usuarios.length;
+    const usuariosComPerfil = usuarios.filter(u => u.perfil_acesso_id).length;
+    const usuariosSemPerfil = totalUsuarios - usuariosComPerfil;
+    const admins = usuarios.filter(u => u.role === 'admin').length;
+    const conflitosTotal = perfis.reduce((acc, p) => acc + (p.conflitos_sod_detectados?.length || 0), 0);
+    
+    return {
+      totalPerfis,
+      perfisAtivos,
+      totalUsuarios,
+      usuariosComPerfil,
+      usuariosSemPerfil,
+      admins,
+      conflitosTotal,
+      cobertura: totalUsuarios > 0 ? Math.round((usuariosComPerfil / totalUsuarios) * 100) : 0
+    };
+  }, [perfis, usuarios]);
+
+  // Analisar com IA
+  const analisarComIA = async () => {
+    setAnalisandoIA(true);
+    try {
+      const resultado = await base44.integrations.Core.InvokeLLM({
+        prompt: `Analise a estrutura de controle de acesso a seguir e forneça recomendações de segurança:
+
+PERFIS DE ACESSO:
+${perfis.map(p => `- ${p.nome_perfil} (${p.nivel_perfil}): ${p.conflitos_sod_detectados?.length || 0} conflitos SoD`).join('\n')}
+
+USUÁRIOS:
+${usuarios.map(u => `- ${u.full_name} (${u.role}): ${u.perfil_acesso_id ? 'Com perfil' : 'SEM PERFIL'}`).join('\n')}
+
+ESTATÍSTICAS:
+- ${estatisticas.usuariosSemPerfil} usuários sem perfil atribuído
+- ${estatisticas.admins} administradores
+- ${estatisticas.conflitosTotal} conflitos de segregação de funções
+
+Forneça recomendações práticas de segurança.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            score_seguranca: { type: "number", description: "Score de 0 a 100" },
+            nivel_risco: { type: "string", enum: ["Baixo", "Médio", "Alto", "Crítico"] },
+            recomendacoes: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  titulo: { type: "string" },
+                  descricao: { type: "string" },
+                  prioridade: { type: "string", enum: ["Alta", "Média", "Baixa"] },
+                  acao: { type: "string" }
+                }
+              }
+            },
+            alertas: { type: "array", items: { type: "string" } },
+            resumo: { type: "string" }
+          }
+        }
+      });
+      setRecomendacoesIA(resultado);
+      toast.success("Análise IA concluída!");
+    } catch (error) {
+      toast.error("Erro na análise IA: " + error.message);
+    } finally {
+      setAnalisandoIA(false);
+    }
+  };
+
   // Verificar se uma permissão está marcada
   const temPermissao = (modulo, secao, acao) => {
     return formPerfil.permissoes?.[modulo]?.[secao]?.includes(acao) || false;
@@ -689,6 +783,10 @@ export default function GerenciamentoAcessosCompleto() {
       {/* Tabs Principais */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
+          <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <LayoutDashboard className="w-4 h-4 mr-2" />
+            Dashboard
+          </TabsTrigger>
           <TabsTrigger value="perfis" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Shield className="w-4 h-4 mr-2" />
             Perfis de Acesso
@@ -705,7 +803,314 @@ export default function GerenciamentoAcessosCompleto() {
             <Layers className="w-4 h-4 mr-2" />
             Matriz de Permissões
           </TabsTrigger>
+          <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <History className="w-4 h-4 mr-2" />
+            Auditoria
+          </TabsTrigger>
+          <TabsTrigger value="ia" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <Brain className="w-4 h-4 mr-2" />
+            IA de Segurança
+          </TabsTrigger>
         </TabsList>
+
+        {/* Tab: Dashboard */}
+        <TabsContent value="dashboard" className="space-y-6">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-blue-100 text-sm">Perfis</p>
+                    <p className="text-2xl font-bold">{estatisticas.totalPerfis}</p>
+                  </div>
+                  <Shield className="w-8 h-8 text-blue-200" />
+                </div>
+                <p className="text-xs text-blue-100 mt-2">{estatisticas.perfisAtivos} ativos</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-green-100 text-sm">Usuários</p>
+                    <p className="text-2xl font-bold">{estatisticas.totalUsuarios}</p>
+                  </div>
+                  <Users className="w-8 h-8 text-green-200" />
+                </div>
+                <p className="text-xs text-green-100 mt-2">{estatisticas.admins} admins</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-purple-100 text-sm">Com Perfil</p>
+                    <p className="text-2xl font-bold">{estatisticas.usuariosComPerfil}</p>
+                  </div>
+                  <UserCheck className="w-8 h-8 text-purple-200" />
+                </div>
+                <Progress value={estatisticas.cobertura} className="mt-2 h-1.5 bg-purple-400" />
+              </CardContent>
+            </Card>
+
+            <Card className={`bg-gradient-to-br ${estatisticas.usuariosSemPerfil > 0 ? 'from-orange-500 to-orange-600' : 'from-emerald-500 to-emerald-600'} text-white`}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white/80 text-sm">Sem Perfil</p>
+                    <p className="text-2xl font-bold">{estatisticas.usuariosSemPerfil}</p>
+                  </div>
+                  <Ban className="w-8 h-8 text-white/60" />
+                </div>
+                <p className="text-xs text-white/80 mt-2">
+                  {estatisticas.usuariosSemPerfil > 0 ? 'Atenção!' : 'Todos cobertos'}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className={`bg-gradient-to-br ${estatisticas.conflitosTotal > 0 ? 'from-red-500 to-red-600' : 'from-teal-500 to-teal-600'} text-white`}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white/80 text-sm">Conflitos SoD</p>
+                    <p className="text-2xl font-bold">{estatisticas.conflitosTotal}</p>
+                  </div>
+                  <AlertTriangle className="w-8 h-8 text-white/60" />
+                </div>
+                <p className="text-xs text-white/80 mt-2">
+                  {estatisticas.conflitosTotal > 0 ? 'Resolver!' : 'OK'}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-indigo-100 text-sm">Cobertura</p>
+                    <p className="text-2xl font-bold">{estatisticas.cobertura}%</p>
+                  </div>
+                  <ShieldCheck className="w-8 h-8 text-indigo-200" />
+                </div>
+                <Progress value={estatisticas.cobertura} className="mt-2 h-1.5 bg-indigo-400" />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Ações Rápidas e Resumo */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Ações Rápidas */}
+            <Card className="lg:col-span-1">
+              <CardHeader className="bg-slate-50 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-yellow-500" />
+                  Ações Rápidas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-3">
+                <Button
+                  className="w-full justify-start bg-blue-600 hover:bg-blue-700"
+                  onClick={() => {
+                    resetFormPerfil();
+                    setPerfilDialogOpen(true);
+                  }}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Criar Novo Perfil
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setActiveTab("usuarios")}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Atribuir Perfil a Usuário
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setActiveTab("empresas")}
+                >
+                  <Building className="w-4 h-4 mr-2" />
+                  Permissão por Empresa
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full justify-start border-purple-200 text-purple-700 hover:bg-purple-50"
+                  onClick={analisarComIA}
+                  disabled={analisandoIA}
+                >
+                  {analisandoIA ? (
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Brain className="w-4 h-4 mr-2" />
+                  )}
+                  Analisar com IA
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setActiveTab("auditoria")}
+                >
+                  <History className="w-4 h-4 mr-2" />
+                  Ver Auditoria
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Usuários sem Perfil */}
+            <Card className="lg:col-span-1">
+              <CardHeader className="bg-orange-50 border-b">
+                <CardTitle className="text-lg flex items-center gap-2 text-orange-700">
+                  <AlertTriangle className="w-5 h-5" />
+                  Usuários sem Perfil
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[200px]">
+                  {usuarios.filter(u => !u.perfil_acesso_id).length > 0 ? (
+                    usuarios.filter(u => !u.perfil_acesso_id).map(u => (
+                      <div key={u.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                        <div>
+                          <p className="font-medium text-sm">{u.full_name}</p>
+                          <p className="text-xs text-slate-500">{u.email}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setUsuarioSelecionado(u);
+                            setActiveTab("usuarios");
+                          }}
+                        >
+                          <Key className="w-3 h-3 mr-1" />
+                          Atribuir
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-green-600">
+                      <CheckCircle className="w-10 h-10 mx-auto mb-2" />
+                      <p className="text-sm">Todos os usuários têm perfil!</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Perfis com Conflitos */}
+            <Card className="lg:col-span-1">
+              <CardHeader className="bg-red-50 border-b">
+                <CardTitle className="text-lg flex items-center gap-2 text-red-700">
+                  <XCircle className="w-5 h-5" />
+                  Conflitos de SoD
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[200px]">
+                  {perfis.filter(p => p.conflitos_sod_detectados?.length > 0).length > 0 ? (
+                    perfis.filter(p => p.conflitos_sod_detectados?.length > 0).map(p => (
+                      <div key={p.id} className="p-3 border-b hover:bg-slate-50">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-medium text-sm">{p.nome_perfil}</p>
+                          <Badge className="bg-red-100 text-red-700">
+                            {p.conflitos_sod_detectados.length} conflitos
+                          </Badge>
+                        </div>
+                        {p.conflitos_sod_detectados.slice(0, 2).map((c, i) => (
+                          <p key={i} className="text-xs text-slate-600 truncate">
+                            • {c.descricao}
+                          </p>
+                        ))}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="w-full mt-2 text-red-600"
+                          onClick={() => abrirEdicaoPerfil(p)}
+                        >
+                          <Edit className="w-3 h-3 mr-1" />
+                          Corrigir
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-green-600">
+                      <ShieldCheck className="w-10 h-10 mx-auto mb-2" />
+                      <p className="text-sm">Nenhum conflito detectado!</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recomendações da IA */}
+          {recomendacoesIA && (
+            <Card className="border-purple-200 bg-purple-50/50">
+              <CardHeader className="border-b border-purple-200">
+                <CardTitle className="text-lg flex items-center gap-2 text-purple-700">
+                  <Sparkles className="w-5 h-5" />
+                  Análise de Segurança por IA
+                  <Badge className={
+                    recomendacoesIA.nivel_risco === 'Crítico' ? 'bg-red-600 text-white' :
+                    recomendacoesIA.nivel_risco === 'Alto' ? 'bg-orange-600 text-white' :
+                    recomendacoesIA.nivel_risco === 'Médio' ? 'bg-yellow-600 text-white' :
+                    'bg-green-600 text-white'
+                  }>
+                    Score: {recomendacoesIA.score_seguranca}/100 • {recomendacoesIA.nivel_risco}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                <p className="text-slate-700">{recomendacoesIA.resumo}</p>
+
+                {recomendacoesIA.alertas?.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="font-medium text-red-700">⚠️ Alertas:</p>
+                    {recomendacoesIA.alertas.map((alerta, i) => (
+                      <Alert key={i} className="border-red-200 bg-red-50">
+                        <AlertDescription>{alerta}</AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                )}
+
+                {recomendacoesIA.recomendacoes?.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="font-medium text-purple-700">💡 Recomendações:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {recomendacoesIA.recomendacoes.map((rec, i) => (
+                        <div key={i} className="p-3 border rounded-lg bg-white">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge className={
+                              rec.prioridade === 'Alta' ? 'bg-red-100 text-red-700' :
+                              rec.prioridade === 'Média' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-blue-100 text-blue-700'
+                            }>
+                              {rec.prioridade}
+                            </Badge>
+                            <span className="font-medium text-sm">{rec.titulo}</span>
+                          </div>
+                          <p className="text-xs text-slate-600">{rec.descricao}</p>
+                          {rec.acao && (
+                            <p className="text-xs text-purple-600 mt-1 font-medium">→ {rec.acao}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
         {/* Tab: Perfis de Acesso */}
         <TabsContent value="perfis" className="space-y-4">
@@ -1376,6 +1781,213 @@ export default function GerenciamentoAcessosCompleto() {
                   </tbody>
                 </table>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab: Auditoria */}
+        <TabsContent value="auditoria" className="space-y-4">
+          <Card>
+            <CardHeader className="bg-slate-50 border-b flex flex-row items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <History className="w-5 h-5 text-blue-600" />
+                Log de Auditoria de Acessos
+              </CardTitle>
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </Button>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead>Data/Hora</TableHead>
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>Ação</TableHead>
+                    <TableHead>Recurso</TableHead>
+                    <TableHead>Detalhes</TableHead>
+                    <TableHead>IP</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {auditoriaAcessos.slice(0, 50).map(log => (
+                    <TableRow key={log.id}>
+                      <TableCell className="text-sm">
+                        {new Date(log.created_date).toLocaleString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="font-medium">{log.usuario_nome || log.created_by}</TableCell>
+                      <TableCell>
+                        <Badge className={
+                          log.acao === 'criar' ? 'bg-green-100 text-green-700' :
+                          log.acao === 'editar' ? 'bg-blue-100 text-blue-700' :
+                          log.acao === 'excluir' ? 'bg-red-100 text-red-700' :
+                          log.acao === 'login' ? 'bg-purple-100 text-purple-700' :
+                          'bg-slate-100 text-slate-700'
+                        }>
+                          {log.acao}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{log.recurso || log.modulo}</TableCell>
+                      <TableCell className="text-sm text-slate-600 max-w-[200px] truncate">
+                        {log.detalhes}
+                      </TableCell>
+                      <TableCell className="text-sm font-mono text-slate-500">
+                        {log.ip || '-'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {auditoriaAcessos.length === 0 && (
+                <div className="text-center py-12 text-slate-500">
+                  <History className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <p>Nenhum registro de auditoria</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab: IA de Segurança */}
+        <TabsContent value="ia" className="space-y-4">
+          <Card className="border-purple-200">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b">
+              <CardTitle className="text-lg flex items-center gap-2 text-purple-700">
+                <Brain className="w-5 h-5" />
+                Inteligência Artificial de Segurança
+                <Badge className="bg-purple-600 text-white ml-2">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  Avançado
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Análise Automática */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-purple-600" />
+                    Análise de Segurança
+                  </h3>
+                  
+                  <div className="p-4 border rounded-lg bg-white space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Cobertura de Perfis</span>
+                      <span className="font-semibold">{estatisticas.cobertura}%</span>
+                    </div>
+                    <Progress value={estatisticas.cobertura} className="h-2" />
+                    
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-sm">Conflitos SoD Detectados</span>
+                      <Badge className={estatisticas.conflitosTotal > 0 ? 'bg-red-600' : 'bg-green-600'}>
+                        {estatisticas.conflitosTotal}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Usuários sem Perfil</span>
+                      <Badge className={estatisticas.usuariosSemPerfil > 0 ? 'bg-orange-600' : 'bg-green-600'}>
+                        {estatisticas.usuariosSemPerfil}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full bg-purple-600 hover:bg-purple-700"
+                    onClick={analisarComIA}
+                    disabled={analisandoIA}
+                  >
+                    {analisandoIA ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Analisando...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="w-4 h-4 mr-2" />
+                        Executar Análise Completa
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Regras SoD */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-red-600" />
+                    Regras de Segregação de Funções
+                  </h3>
+                  
+                  <div className="space-y-2">
+                    <div className="p-3 border rounded-lg bg-white">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className="bg-red-100 text-red-700">SoD-001</Badge>
+                        <span className="font-medium text-sm">Crítico</span>
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        Não pode criar fornecedor E aprovar pagamentos
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 border rounded-lg bg-white">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className="bg-orange-100 text-orange-700">SoD-002</Badge>
+                        <span className="font-medium text-sm">Alto</span>
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        Criar cliente e aprovar pedidos pode gerar risco
+                      </p>
+                    </div>
+                    
+                    <div className="p-3 border rounded-lg bg-white">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge className="bg-red-100 text-red-700">SoD-003</Badge>
+                        <span className="font-medium text-sm">Crítico</span>
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        Controle total de estoque E financeiro juntos
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Resultado da Análise IA */}
+              {recomendacoesIA && (
+                <div className="mt-6 p-4 border rounded-lg bg-purple-50/50">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                      recomendacoesIA.score_seguranca >= 80 ? 'bg-green-100' :
+                      recomendacoesIA.score_seguranca >= 60 ? 'bg-yellow-100' :
+                      recomendacoesIA.score_seguranca >= 40 ? 'bg-orange-100' :
+                      'bg-red-100'
+                    }`}>
+                      <span className={`text-2xl font-bold ${
+                        recomendacoesIA.score_seguranca >= 80 ? 'text-green-700' :
+                        recomendacoesIA.score_seguranca >= 60 ? 'text-yellow-700' :
+                        recomendacoesIA.score_seguranca >= 40 ? 'text-orange-700' :
+                        'text-red-700'
+                      }`}>
+                        {recomendacoesIA.score_seguranca}
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-lg">Score de Segurança</h4>
+                      <Badge className={
+                        recomendacoesIA.nivel_risco === 'Crítico' ? 'bg-red-600' :
+                        recomendacoesIA.nivel_risco === 'Alto' ? 'bg-orange-600' :
+                        recomendacoesIA.nivel_risco === 'Médio' ? 'bg-yellow-600' :
+                        'bg-green-600'
+                      }>
+                        Risco {recomendacoesIA.nivel_risco}
+                      </Badge>
+                    </div>
+                  </div>
+                  <p className="text-slate-700">{recomendacoesIA.resumo}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
