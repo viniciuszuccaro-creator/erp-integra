@@ -84,9 +84,13 @@ import RelatorioPermissoes from "./RelatorioPermissoes";
 import TemplatesPerfilInteligente from "./TemplatesPerfilInteligente";
 import ComparadorPerfis from "./ComparadorPerfis";
 import ImportarExportarPerfis from "./ImportarExportarPerfis";
+import MonitorAcessoRealtime from "./MonitorAcessoRealtime";
+import HistoricoAlteracoesPerfil from "./HistoricoAlteracoesPerfil";
+import GraficosAcessoAvancados from "./GraficosAcessoAvancados";
+import ValidadorAcessoCompleto from "./ValidadorAcessoCompleto";
 
 /**
- * V21.7 - GERENCIAMENTO DE ACESSOS COMPLETO E UNIFICADO 100% ✅
+ * V21.7 FINAL - GERENCIAMENTO DE ACESSOS COMPLETO E UNIFICADO 100% ✅ 🏆
  * 
  * Central única de controle de acesso com granularidade total:
  * ✅ Dashboard de Segurança com KPIs e métricas
@@ -317,6 +321,8 @@ export default function GerenciamentoAcessosCompleto() {
   const [gestaoUsuarioOpen, setGestaoUsuarioOpen] = useState(false);
   const [clonarPerfilOpen, setClonarPerfilOpen] = useState(false);
   const [perfilParaClonar, setPerfilParaClonar] = useState(null);
+  const [historicoOpen, setHistoricoOpen] = useState(false);
+  const [perfilHistorico, setPerfilHistorico] = useState(null);
 
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
@@ -841,6 +847,18 @@ Forneça recomendações práticas de segurança.`,
           <TabsTrigger value="comparador" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
             <GitCompare className="w-4 h-4 mr-2" />
             Comparar
+          </TabsTrigger>
+          <TabsTrigger value="monitor" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+            <Activity className="w-4 h-4 mr-2" />
+            Monitor Real-time
+          </TabsTrigger>
+          <TabsTrigger value="graficos" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Gráficos
+          </TabsTrigger>
+          <TabsTrigger value="validador" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Validador
           </TabsTrigger>
         </TabsList>
 
@@ -1519,6 +1537,17 @@ Forneça recomendações práticas de segurança.`,
                             >
                               <Copy className="w-4 h-4 text-green-600" />
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setPerfilHistorico(perfil);
+                                setHistoricoOpen(true);
+                              }}
+                              title="Ver Histórico"
+                            >
+                              <History className="w-4 h-4 text-slate-600" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -2035,6 +2064,25 @@ Forneça recomendações práticas de segurança.`,
             estruturaSistema={ESTRUTURA_SISTEMA}
           />
         </TabsContent>
+
+        {/* Tab: Monitor Real-time */}
+        <TabsContent value="monitor" className="space-y-4 w-full h-full">
+          <MonitorAcessoRealtime />
+        </TabsContent>
+
+        {/* Tab: Gráficos Avançados */}
+        <TabsContent value="graficos" className="space-y-4 w-full h-full">
+          <GraficosAcessoAvancados
+            perfis={perfis}
+            usuarios={usuarios}
+            auditoriaAcessos={auditoriaAcessos}
+          />
+        </TabsContent>
+
+        {/* Tab: Validador */}
+        <TabsContent value="validador" className="space-y-4 w-full h-full">
+          <ValidadorAcessoCompleto />
+        </TabsContent>
       </Tabs>
 
       {/* Modais */}
@@ -2081,6 +2129,21 @@ Forneça recomendações práticas de segurança.`,
           setClonarPerfilOpen(false);
         }}
       />
+
+      {/* Modal Histórico */}
+      <Dialog open={historicoOpen} onOpenChange={setHistoricoOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-blue-600" />
+              Histórico: {perfilHistorico?.nome_perfil}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-auto">
+            <HistoricoAlteracoesPerfil perfilId={perfilHistorico?.id} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
