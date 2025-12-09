@@ -280,6 +280,11 @@ export default function Cadastros() {
     queryFn: () => base44.entities.SegmentoCliente.list(),
   });
 
+  const { data: regioesAtendimento = [] } = useQuery({
+    queryKey: ['regioes-atendimento'],
+    queryFn: () => base44.entities.RegiaoAtendimento.list(),
+  });
+
   const { data: unidadesMedida = [] } = useQuery({
     queryKey: ['unidades-medida'],
     queryFn: () => base44.entities.UnidadeMedida.list(),
@@ -434,7 +439,7 @@ export default function Cadastros() {
   });
 
   // Cálculo de totais por bloco
-  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length;
+  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
   const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
@@ -1096,6 +1101,70 @@ export default function Cadastros() {
                       ))}
                       {segmentosCliente.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum segmento cadastrado</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* REGIÕES DE ATENDIMENTO */}
+                  <Card className="border-sky-200">
+                    <CardHeader className="bg-sky-50 border-b border-sky-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <MapPin className="w-5 h-5 text-sky-600" />
+                          Regiões de Atendimento ({regioesAtendimento.length})
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(RegiaoAtendimentoForm, {
+                            windowMode: true,
+                            onSubmit: handleSubmitGenerico('RegiaoAtendimento', 'regioes-atendimento')
+                          }, {
+                            title: '🗺️ Nova Região de Atendimento',
+                            width: 1000,
+                            height: 700
+                          })}
+                          className="bg-sky-600 hover:bg-sky-700"
+                          disabled={!hasPermission('cadastros', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                      {regioesAtendimento.map(regiao => (
+                        <div key={regiao.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{regiao.nome_regiao}</p>
+                            <div className="flex gap-2 mt-1 flex-wrap">
+                              <Badge variant="outline" className="text-xs">{regiao.tipo_regiao}</Badge>
+                              {regiao.estados_abrangidos?.length > 0 && (
+                                <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                  {regiao.estados_abrangidos.length} estados
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(RegiaoAtendimentoForm, {
+                              regiaoId: regiao.id,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('RegiaoAtendimento', 'regioes-atendimento')
+                            }, {
+                              title: `🗺️ Editar: ${regiao.nome_regiao}`,
+                              width: 1000,
+                              height: 700
+                            })}
+                            disabled={!hasPermission('cadastros', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-sky-600" />
+                          </Button>
+                        </div>
+                      ))}
+                      {regioesAtendimento.length === 0 && (
+                        <p className="text-center text-slate-500 py-8 text-sm">Nenhuma região cadastrada</p>
                       )}
                     </CardContent>
                   </Card>
