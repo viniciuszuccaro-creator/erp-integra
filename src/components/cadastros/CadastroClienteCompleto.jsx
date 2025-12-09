@@ -191,6 +191,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
         nome: dados.razao_social || prev.nome,
         razao_social: dados.razao_social || "",
         nome_fantasia: dados.nome_fantasia || "",
+        inscricao_estadual: dados.inscricao_estadual || prev.inscricao_estadual,
         endereco_principal: {
           ...prev.endereco_principal,
           cep: dados.endereco_completo?.cep || prev.endereco_principal.cep,
@@ -510,6 +511,21 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                         value={formData.cpf}
                         onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
                         placeholder="000.000.000-00"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>&nbsp;</Label>
+                      <BotaoBuscaAutomatica
+                        tipo="cpf"
+                        valor={formData.cpf}
+                        onDadosEncontrados={(dados) => {
+                          if (dados.valido) {
+                            setFormData({ ...formData, cpf: dados.formatado });
+                            toast({ title: "✅ CPF validado com sucesso!" });
+                          }
+                        }}
+                        disabled={!formData.cpf || formData.cpf.replace(/\D/g, '').length < 11}
                       />
                     </div>
 

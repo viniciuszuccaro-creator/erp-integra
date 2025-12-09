@@ -35,6 +35,7 @@ export async function buscarDadosCNPJ(cnpj) {
       Retorne EXATAMENTE as seguintes informações:
       - razao_social (nome completo oficial)
       - nome_fantasia (se houver)
+      - inscricao_estadual (número da IE se disponível publicamente)
       - situacao_cadastral (Ativa, Suspensa, Inapta, Baixada)
       - data_abertura (formato YYYY-MM-DD)
       - porte (MEI, ME, EPP, Grande)
@@ -54,6 +55,7 @@ export async function buscarDadosCNPJ(cnpj) {
           erro: { type: "string" },
           razao_social: { type: "string" },
           nome_fantasia: { type: "string" },
+          inscricao_estadual: { type: "string" },
           situacao_cadastral: { type: "string" },
           data_abertura: { type: "string" },
           porte: { type: "string" },

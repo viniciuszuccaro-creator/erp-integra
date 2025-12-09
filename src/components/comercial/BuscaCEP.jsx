@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -9,10 +9,16 @@ import { toast } from 'sonner';
  * Busca CEP com auto-completar endereço
  * V12.0 - Com integração ViaCEP
  */
-export default function BuscaCEP({ onEnderecoEncontrado, label = "Buscar por CEP" }) {
-  const [cep, setCep] = useState('');
+export default function BuscaCEP({ onEnderecoEncontrado, enderecoAtual, label = "Buscar por CEP" }) {
+  const [cep, setCep] = useState(enderecoAtual?.cep || '');
   const [buscando, setBuscando] = useState(false);
   const [encontrado, setEncontrado] = useState(false);
+
+  useEffect(() => {
+    if (enderecoAtual?.cep) {
+      setCep(enderecoAtual.cep);
+    }
+  }, [enderecoAtual?.cep]);
 
   const buscarCEP = async () => {
     const cepLimpo = cep.replace(/\D/g, '');
