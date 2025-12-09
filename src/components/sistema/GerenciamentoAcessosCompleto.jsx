@@ -75,6 +75,12 @@ import {
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import PermissoesGranularesModal from "./PermissoesGranularesModal";
+import GestaoUsuariosAvancada from "./GestaoUsuariosAvancada";
+import MatrizPermissoesVisual from "./MatrizPermissoesVisual";
+import DashboardSeguranca from "./DashboardSeguranca";
+import ClonarPerfilModal from "./ClonarPerfilModal";
+import RelatorioPermissoes from "./RelatorioPermissoes";
 
 /**
  * V21.6 - GERENCIAMENTO DE ACESSOS COMPLETO E UNIFICADO
@@ -294,6 +300,11 @@ export default function GerenciamentoAcessosCompleto() {
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
   const [analisandoIA, setAnalisandoIA] = useState(false);
   const [recomendacoesIA, setRecomendacoesIA] = useState(null);
+  const [permissoesGranularesOpen, setPermissoesGranularesOpen] = useState(false);
+  const [perfilParaGranular, setPerfilParaGranular] = useState(null);
+  const [gestaoUsuarioOpen, setGestaoUsuarioOpen] = useState(false);
+  const [clonarPerfilOpen, setClonarPerfilOpen] = useState(false);
+  const [perfilParaClonar, setPerfilParaClonar] = useState(null);
 
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
@@ -814,7 +825,14 @@ Forneça recomendações práticas de segurança.`,
         </TabsList>
 
         {/* Tab: Dashboard */}
-        <TabsContent value="dashboard" className="space-y-6">
+        <TabsContent value="dashboard" className="space-y-6 w-full h-full">
+          <DashboardSeguranca
+            estatisticas={estatisticas}
+            perfis={perfis}
+            usuarios={usuarios}
+            auditoriaAcessos={auditoriaAcessos}
+          />
+
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
@@ -962,6 +980,14 @@ Forneça recomendações práticas de segurança.`,
                   <History className="w-4 h-4 mr-2" />
                   Ver Auditoria
                 </Button>
+
+                <div className="pt-3 border-t">
+                  <RelatorioPermissoes
+                    perfis={perfis}
+                    usuarios={usuarios}
+                    empresas={empresas}
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -1435,6 +1461,7 @@ Forneça recomendações práticas de segurança.`,
                               variant="ghost"
                               size="sm"
                               onClick={() => abrirEdicaoPerfil(perfil)}
+                              title="Editar Perfil"
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -1442,11 +1469,23 @@ Forneça recomendações práticas de segurança.`,
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                navigator.clipboard.writeText(JSON.stringify(perfil.permissoes, null, 2));
-                                toast.success("Permissões copiadas!");
+                                setPerfilParaGranular(perfil);
+                                setPermissoesGranularesOpen(true);
                               }}
+                              title="Permissões Granulares"
                             >
-                              <Copy className="w-4 h-4" />
+                              <Settings className="w-4 h-4 text-purple-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setPerfilParaClonar(perfil);
+                                setClonarPerfilOpen(true);
+                              }}
+                              title="Clonar Perfil"
+                            >
+                              <Copy className="w-4 h-4 text-green-600" />
                             </Button>
                           </div>
                         </TableCell>
@@ -1532,7 +1571,14 @@ Forneça recomendações práticas de segurança.`,
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setUsuarioSelecionado(usuario);
+                              setGestaoUsuarioOpen(true);
+                            }}
+                          >
                             <Settings className="w-4 h-4" />
                           </Button>
                         </TableCell>
@@ -1725,64 +1771,11 @@ Forneça recomendações práticas de segurança.`,
         </TabsContent>
 
         {/* Tab: Matriz de Permissões */}
-        <TabsContent value="matriz" className="space-y-4">
-          <Card>
-            <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-lg">
-                Matriz Visual de Permissões
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      <th className="border p-2 bg-slate-100 text-left">Módulo / Perfil</th>
-                      {perfis.filter(p => p.ativo !== false).map(p => (
-                        <th key={p.id} className="border p-2 bg-slate-100 text-center text-sm">
-                          {p.nome_perfil}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(ESTRUTURA_SISTEMA).map(([moduloId, modulo]) => {
-                      const Icone = modulo.icone;
-                      return (
-                        <tr key={moduloId}>
-                          <td className="border p-2">
-                            <div className="flex items-center gap-2">
-                              <Icone className={`w-4 h-4 text-${modulo.cor}-600`} />
-                              <span className="font-medium text-sm">{modulo.nome}</span>
-                            </div>
-                          </td>
-                          {perfis.filter(p => p.ativo !== false).map(perfil => {
-                            const perms = perfil.permissoes?.[moduloId] || {};
-                            const temAcesso = Object.values(perms).some(arr => arr?.length > 0);
-                            const acessoTotal = Object.keys(modulo.secoes).every(
-                              secao => perms[secao]?.length === ACOES.length
-                            );
-
-                            return (
-                              <td key={perfil.id} className="border p-2 text-center">
-                                {acessoTotal ? (
-                                  <Badge className="bg-green-600 text-white text-xs">Total</Badge>
-                                ) : temAcesso ? (
-                                  <Badge className="bg-blue-100 text-blue-700 text-xs">Parcial</Badge>
-                                ) : (
-                                  <Badge className="bg-slate-100 text-slate-500 text-xs">Nenhum</Badge>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="matriz" className="space-y-4 w-full h-full">
+          <MatrizPermissoesVisual 
+            perfis={perfis} 
+            estruturaSistema={ESTRUTURA_SISTEMA}
+          />
         </TabsContent>
 
         {/* Tab: Auditoria */}
@@ -1992,6 +1985,51 @@ Forneça recomendações práticas de segurança.`,
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Modais */}
+      <PermissoesGranularesModal
+        open={permissoesGranularesOpen}
+        onOpenChange={setPermissoesGranularesOpen}
+        perfil={perfilParaGranular}
+        onSave={(perfilAtualizado) => {
+          salvarPerfilMutation.mutate(perfilAtualizado);
+        }}
+      />
+
+      {gestaoUsuarioOpen && usuarioSelecionado && (
+        <Dialog open={gestaoUsuarioOpen} onOpenChange={setGestaoUsuarioOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] w-full overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-blue-600" />
+                Configuração Avançada - {usuarioSelecionado.full_name}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 overflow-auto">
+              <GestaoUsuariosAvancada
+                usuario={usuarioSelecionado}
+                perfis={perfis}
+                empresas={empresas}
+                onClose={() => setGestaoUsuarioOpen(false)}
+                onSuccess={() => {
+                  setGestaoUsuarioOpen(false);
+                  setUsuarioSelecionado(null);
+                }}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      <ClonarPerfilModal
+        open={clonarPerfilOpen}
+        onOpenChange={setClonarPerfilOpen}
+        perfilOriginal={perfilParaClonar}
+        onClonar={(novoPerfil) => {
+          salvarPerfilMutation.mutate(novoPerfil);
+          setClonarPerfilOpen(false);
+        }}
+      />
     </div>
   );
 }
