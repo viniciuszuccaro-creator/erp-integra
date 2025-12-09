@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Save, Truck } from "lucide-react";
+import { Save, Truck, Trash2, Power, PowerOff } from "lucide-react";
 
 /**
  * V21.1.2: Transportadora Form - Adaptado para Window Mode
@@ -34,6 +34,20 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
+  };
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir a transportadora "${formData.razao_social}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = formData.status === 'Ativo' ? 'Inativo' : 'Ativo';
+    setFormData({ ...formData, status: novoStatus });
   };
 
   const content = (
@@ -141,6 +155,36 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
       </Card>
 
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+        {transportadora && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAlternarStatus}
+              className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+            >
+              {formData.status === 'Ativo' ? (
+                <>
+                  <PowerOff className="w-4 h-4 mr-2" />
+                  Inativar
+                </>
+              ) : (
+                <>
+                  <Power className="w-4 h-4 mr-2" />
+                  Ativar
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleExcluir}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir
+            </Button>
+          </>
+        )}
         <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
           <Save className="w-4 h-4 mr-2" />
           {transportadora ? 'Atualizar' : 'Criar'} Transportadora

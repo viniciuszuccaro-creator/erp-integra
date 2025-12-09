@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Save, User } from "lucide-react";
+import { Save, User, Trash2, Power, PowerOff } from "lucide-react";
 
 /**
  * V21.1.2: Colaborador Form - Adaptado para Window Mode
@@ -41,6 +41,20 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
+  };
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir o colaborador "${formData.nome_completo}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = formData.status === 'Ativo' ? 'Desligado' : 'Ativo';
+    setFormData({ ...formData, status: novoStatus });
   };
 
   const content = (
@@ -239,6 +253,36 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
         </Card>
 
         <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+          {colaborador && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAlternarStatus}
+                className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+              >
+                {formData.status === 'Ativo' ? (
+                  <>
+                    <PowerOff className="w-4 h-4 mr-2" />
+                    Desligar
+                  </>
+                ) : (
+                  <>
+                    <Power className="w-4 h-4 mr-2" />
+                    Reativar
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleExcluir}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
+              </Button>
+            </>
+          )}
           <Button type="submit" className="bg-pink-600 hover:bg-pink-700">
             <Save className="w-4 h-4 mr-2" />
             {colaborador ? 'Atualizar' : 'Criar'} Colaborador

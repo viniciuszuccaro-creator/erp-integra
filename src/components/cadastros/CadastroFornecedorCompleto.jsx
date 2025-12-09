@@ -14,7 +14,10 @@ import {
   Building2, 
   Phone, 
   Save,
-  Star
+  Star,
+  Trash2,
+  Power,
+  PowerOff
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
@@ -75,6 +78,37 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
       });
     }
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id) => {
+      return base44.entities.Fornecedor.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
+      toast({ title: "✅ Fornecedor excluído com sucesso!" });
+      if (onSuccess) onSuccess();
+      onClose();
+    },
+    onError: (error) => {
+      toast({
+        title: "❌ Erro ao excluir fornecedor",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  });
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir o fornecedor "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    deleteMutation.mutate(fornecedor.id);
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = formData.status === 'Ativo' ? 'Inativo' : 'Ativo';
+    setFormData({ ...formData, status: novoStatus });
+  };
 
   const handleSave = () => {
     saveMutation.mutate(formData);
@@ -159,14 +193,47 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
               )}
             </div>
             
-          <Button 
-            onClick={handleSave} 
-            disabled={saveMutation.isPending}
-            className="bg-cyan-600 hover:bg-cyan-700"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {saveMutation.isPending ? 'Salvando...' : 'Salvar Fornecedor'}
-          </Button>
+          <div className="flex items-center gap-2">
+            {fornecedor?.id && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAlternarStatus}
+                  className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+                >
+                  {formData.status === 'Ativo' ? (
+                    <>
+                      <PowerOff className="w-4 h-4 mr-2" />
+                      Inativar
+                    </>
+                  ) : (
+                    <>
+                      <Power className="w-4 h-4 mr-2" />
+                      Ativar
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleExcluir}
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
+                </Button>
+              </>
+            )}
+            <Button 
+              onClick={handleSave} 
+              disabled={saveMutation.isPending}
+              className="bg-cyan-600 hover:bg-cyan-700"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {saveMutation.isPending ? 'Salvando...' : 'Salvar Fornecedor'}
+            </Button>
+          </div>
         </div>
       </div>
 
