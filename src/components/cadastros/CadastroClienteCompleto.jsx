@@ -108,6 +108,11 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
     queryFn: () => base44.entities.Colaborador.filter({ status: 'Ativo' }),
   });
 
+  const { data: regioes = [] } = useQuery({
+    queryKey: ['regioes'],
+    queryFn: () => base44.entities.RegiaoAtendimento.list()
+  });
+
   const { data: ultimaNF } = useQuery({
     queryKey: ['ultima-nf-cliente', cliente?.id],
     queryFn: () => base44.entities.NotaFiscal.filter({ cliente_fornecedor_id: cliente.id }, '-data_emissao', 1),
@@ -648,22 +653,27 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                 </div>
 
                 <div>
-                  <Label htmlFor="regiao_atendimento">Região de Atendimento</Label>
-                  <Select
-                    value={formData.regiao_atendimento || "Sudeste"}
-                    onValueChange={(value) => setFormData({ ...formData, regiao_atendimento: value })}
+                  <Label htmlFor="regiao_atendimento_id">Região de Atendimento</Label>
+                  <Select 
+                    value={formData.regiao_atendimento_id || ""} 
+                    onValueChange={(value) => {
+                      const regiao = regioes.find(r => r.id === value);
+                      setFormData({ 
+                        ...formData, 
+                        regiao_atendimento_id: value,
+                        regiao_atendimento_nome: regiao?.nome_regiao || ''
+                      });
+                    }}
                   >
-                    <SelectTrigger id="regiao_atendimento">
-                      <SelectValue />
+                    <SelectTrigger id="regiao_atendimento_id">
+                      <SelectValue placeholder="Selecione a região" />
                     </SelectTrigger>
                     <SelectContent className="z-[9999]">
-                      <SelectItem value="Norte">Norte</SelectItem>
-                      <SelectItem value="Nordeste">Nordeste</SelectItem>
-                      <SelectItem value="Centro-Oeste">Centro-Oeste</SelectItem>
-                      <SelectItem value="Sudeste">Sudeste</SelectItem>
-                      <SelectItem value="Sul">Sul</SelectItem>
-                      <SelectItem value="Nacional">Nacional</SelectItem>
-                      <SelectItem value="Internacional">Internacional</SelectItem>
+                      {regioes.filter(r => r.ativo).map((regiao) => (
+                        <SelectItem key={regiao.id} value={regiao.id}>
+                          {regiao.nome_regiao} {regiao.tipo_regiao && `(${regiao.tipo_regiao})`}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
