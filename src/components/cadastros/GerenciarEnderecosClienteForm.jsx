@@ -220,7 +220,7 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
       )}
 
       <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto z-[9999]">
           <DialogHeader>
             <DialogTitle>
               {enderecoEditando !== null ? 'Editar' : 'Novo'} Endereço
@@ -241,11 +241,11 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
               <div>
                 <Label>Tipo de Endereço</Label>
                 <Select
-                  value={novoEndereco.tipo_endereco}
+                  value={novoEndereco.tipo_endereco || "Entrega"}
                   onValueChange={(value) => setNovoEndereco({ ...novoEndereco, tipo_endereco: value })}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[10000]">
                     <SelectItem value="Entrega">Entrega</SelectItem>
                     <SelectItem value="Cobrança">Cobrança</SelectItem>
                     <SelectItem value="Matriz">Matriz</SelectItem>

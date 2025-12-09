@@ -157,7 +157,7 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange }
       )}
 
       <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md z-[9999]">
           <DialogHeader>
             <DialogTitle>
               {contatoEditando !== null ? 'Editar' : 'Novo'} Contato
@@ -186,11 +186,11 @@ export default function GerenciarContatosClienteForm({ contatos = [], onChange }
             <div>
               <Label>Tipo de Contato *</Label>
               <Select
-                value={novoContato.tipo}
+                value={novoContato.tipo || "Telefone"}
                 onValueChange={(v) => setNovoContato({ ...novoContato, tipo: v })}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[10000]">
                   <SelectItem value="Telefone">Telefone</SelectItem>
                   <SelectItem value="Celular">Celular</SelectItem>
                   <SelectItem value="WhatsApp">WhatsApp</SelectItem>

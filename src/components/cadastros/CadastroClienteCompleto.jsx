@@ -400,13 +400,13 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                 <div>
                   <Label htmlFor="tipo">Tipo de Pessoa *</Label>
                   <Select
-                    value={formData.tipo}
+                    value={formData.tipo || "Pessoa Física"}
                     onValueChange={(value) => setFormData({ ...formData, tipo: value })}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger id="tipo">
+                      <SelectValue placeholder="Selecione o tipo..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[9999]">
                       <SelectItem value="Pessoa Física">Pessoa Física</SelectItem>
                       <SelectItem value="Pessoa Jurídica">Pessoa Jurídica</SelectItem>
                     </SelectContent>
@@ -416,13 +416,13 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                 <div>
                   <Label htmlFor="status">Situação *</Label>
                   <Select
-                    value={formData.status}
+                    value={formData.status || "Prospect"}
                     onValueChange={(value) => setFormData({ ...formData, status: value })}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
+                    <SelectTrigger id="status">
+                      <SelectValue placeholder="Selecione a situação..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[9999]">
                       <SelectItem value="Prospect">Prospect</SelectItem>
                       <SelectItem value="Ativo">Ativo</SelectItem>
                       <SelectItem value="Inativo">Inativo</SelectItem>
@@ -634,13 +634,13 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                 <div>
                   <Label htmlFor="regiao_atendimento">Região de Atendimento</Label>
                   <Select
-                    value={formData.regiao_atendimento}
+                    value={formData.regiao_atendimento || "Sudeste"}
                     onValueChange={(value) => setFormData({ ...formData, regiao_atendimento: value })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="regiao_atendimento">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[9999]">
                       <SelectItem value="Norte">Norte</SelectItem>
                       <SelectItem value="Nordeste">Nordeste</SelectItem>
                       <SelectItem value="Centro-Oeste">Centro-Oeste</SelectItem>
@@ -655,7 +655,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                 <div>
                   <Label htmlFor="vendedor_responsavel_id">Vendedor Responsável</Label>
                   <Select
-                    value={formData.vendedor_responsavel_id}
+                    value={formData.vendedor_responsavel_id || ""}
                     onValueChange={(value) => {
                       const vendedor = colaboradores.find(c => c.id === value);
                       setFormData({
@@ -665,10 +665,10 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       });
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="vendedor_responsavel_id">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[9999]">
                       {colaboradores.filter(c => c.departamento === 'Comercial').map(c => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.nome_completo} - {c.cargo}
@@ -794,10 +794,10 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       });
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="tabela_preco_id">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[9999]">
                       {tabelasPreco.filter(t => t.ativo).map(t => (
                         <SelectItem key={t.id} value={t.id}>
                           {t.nome} ({t.tipo})
@@ -823,10 +823,10 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       });
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="forma_pagamento_padrao_id">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[9999]">
                       {formasPagamento.filter(f => f.ativa).map(f => (
                         <SelectItem key={f.id} value={f.id}>
                           {f.descricao}
@@ -848,10 +848,10 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       }
                     })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="condicao_pagamento">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[9999]">
                       <SelectItem value="À Vista">À Vista</SelectItem>
                       <SelectItem value="7 dias">7 dias</SelectItem>
                       <SelectItem value="15 dias">15 dias</SelectItem>
@@ -946,10 +946,10 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       }
                     })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="regime_tributario">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[9999]">
                       <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
                       <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
                       <SelectItem value="Lucro Real">Lucro Real</SelectItem>
@@ -985,10 +985,10 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       }
                     })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="tipo_contribuinte">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[9999]">
                       <SelectItem value="1 - Contribuinte">1 - Contribuinte ICMS</SelectItem>
                       <SelectItem value="2 - Isento">2 - Isento</SelectItem>
                       <SelectItem value="9 - Não Contribuinte">9 - Não Contribuinte</SelectItem>
@@ -1135,7 +1135,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col p-0">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] flex flex-col p-0 overflow-hidden">
         {content}
       </DialogContent>
     </Dialog>
