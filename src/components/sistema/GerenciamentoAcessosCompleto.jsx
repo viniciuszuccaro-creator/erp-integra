@@ -71,7 +71,8 @@ import {
   ShieldCheck,
   UserPlus,
   Building,
-  Fingerprint
+  Fingerprint,
+  GitCompare
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
