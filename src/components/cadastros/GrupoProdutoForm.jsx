@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Package } from "lucide-react";
+import { Loader2, Package, Trash2, Power, PowerOff } from "lucide-react";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -27,6 +27,20 @@ export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting, window
       return;
     }
     onSubmit(formData);
+  };
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir o grupo "${formData.nome_grupo}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = !formData.ativo;
+    setFormData({ ...formData, ativo: novoStatus });
   };
 
   const formContent = (
@@ -94,6 +108,25 @@ export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting, window
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
+        {grupo && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAlternarStatus}
+              className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+            >
+              {formData.ativo ? (
+                <><PowerOff className="w-4 h-4 mr-2" />Inativar</>
+              ) : (
+                <><Power className="w-4 h-4 mr-2" />Ativar</>
+              )}
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleExcluir}>
+              <Trash2 className="w-4 h-4 mr-2" />Excluir
+            </Button>
+          </>
+        )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {grupo ? 'Atualizar' : 'Criar Grupo'}

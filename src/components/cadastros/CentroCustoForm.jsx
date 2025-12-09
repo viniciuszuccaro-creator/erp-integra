@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Receipt } from "lucide-react";
+import { Receipt, Trash2, Power, PowerOff } from "lucide-react";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -28,6 +28,20 @@ export default function CentroCustoForm({ centroCusto, onSubmit, isSubmitting, w
       orcamento_mensal: formData.orcamento_mensal ? parseFloat(formData.orcamento_mensal) : null
     };
     onSubmit(dataToSubmit);
+  };
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir o centro de custo "${formData.descricao}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = formData.status === 'Ativo' ? 'Inativo' : 'Ativo';
+    setFormData({ ...formData, status: novoStatus });
   };
 
   const formContent = (
@@ -141,6 +155,25 @@ export default function CentroCustoForm({ centroCusto, onSubmit, isSubmitting, w
       </div>
 
       <div className="flex justify-end gap-3 pt-4">
+        {centroCusto && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAlternarStatus}
+              className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+            >
+              {formData.status === 'Ativo' ? (
+                <><PowerOff className="w-4 h-4 mr-2" />Inativar</>
+              ) : (
+                <><Power className="w-4 h-4 mr-2" />Ativar</>
+              )}
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleExcluir}>
+              <Trash2 className="w-4 h-4 mr-2" />Excluir
+            </Button>
+          </>
+        )}
         <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
           {isSubmitting ? 'Salvando...' : 'Salvar'}
         </Button>

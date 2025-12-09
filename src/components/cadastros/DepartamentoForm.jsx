@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Building2 } from "lucide-react";
+import { Loader2, Building2, Trash2, Power, PowerOff } from "lucide-react";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -24,6 +24,20 @@ export default function DepartamentoForm({ departamento, onSubmit, isSubmitting,
       return;
     }
     onSubmit(formData);
+  };
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir o departamento "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = !formData.ativo;
+    setFormData({ ...formData, ativo: novoStatus });
   };
 
   const formContent = (
@@ -65,6 +79,25 @@ export default function DepartamentoForm({ departamento, onSubmit, isSubmitting,
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
+        {departamento && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAlternarStatus}
+              className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+            >
+              {formData.ativo ? (
+                <><PowerOff className="w-4 h-4 mr-2" />Inativar</>
+              ) : (
+                <><Power className="w-4 h-4 mr-2" />Ativar</>
+              )}
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleExcluir}>
+              <Trash2 className="w-4 h-4 mr-2" />Excluir
+            </Button>
+          </>
+        )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {departamento ? 'Atualizar' : 'Criar Departamento'}

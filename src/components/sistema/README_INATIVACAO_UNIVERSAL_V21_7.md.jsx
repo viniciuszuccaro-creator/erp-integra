@@ -6,7 +6,7 @@ Sistema universal de controle de status e exclusão de registros implementado em
 
 ---
 
-## ✅ COMPONENTES ATUALIZADOS (100%)
+## ✅ COMPONENTES ATUALIZADOS (16 TOTAL - 100%)
 
 ### 📦 Cadastros de Pessoas e Parceiros
 1. ✅ **CadastroClienteCompleto.jsx** - Ativar/Inativar/Excluir
@@ -14,15 +14,25 @@ Sistema universal de controle de status e exclusão de registros implementado em
 3. ✅ **ColaboradorForm.jsx** - Ativar/Desligar/Excluir
 4. ✅ **TransportadoraForm.jsx** - Ativar/Inativar/Excluir
 
-### 🏭 Cadastros de Produtos e Operações
+### 🏭 Cadastros de Produtos e Estruturantes
 5. ✅ **ProdutoFormV22_Completo.jsx** - Ativar/Inativar/Descontinuar/Excluir
+6. ✅ **GrupoProdutoForm.jsx** - Ativar/Inativar/Excluir
+7. ✅ **MarcaForm.jsx** - Ativar/Inativar/Excluir
+8. ✅ **SetorAtividadeForm.jsx** - Ativar/Inativar/Excluir
 
 ### 🏢 Cadastros Organizacionais
-6. ✅ **EmpresaFormCompleto.jsx** - Ativar/Inativar/Excluir
-7. ✅ **TabelaPrecoFormCompleto.jsx** - Ativar/Inativar/Excluir
+9. ✅ **EmpresaFormCompleto.jsx** - Ativar/Inativar/Excluir
+10. ✅ **GrupoEmpresarialForm.jsx** - Ativar/Inativar/Excluir
+11. ✅ **DepartamentoForm.jsx** - Ativar/Inativar/Excluir
+12. ✅ **CargoForm.jsx** - Ativar/Inativar/Excluir
+
+### 💰 Cadastros Financeiro e Comercial
+13. ✅ **TabelaPrecoFormCompleto.jsx** - Ativar/Inativar/Excluir
+14. ✅ **FormaPagamentoForm.jsx** - Ativar/Inativar/Excluir
+15. ✅ **CentroCustoForm.jsx** - Ativar/Inativar/Excluir
 
 ### 🔒 Cadastros de Segurança
-8. ✅ **PerfilAcessoForm.jsx** - Ativar/Inativar/Excluir (com validação SoD)
+16. ✅ **PerfilAcessoForm.jsx** - Ativar/Inativar/Excluir (com validação SoD)
 
 ---
 
@@ -190,7 +200,7 @@ Toast notifications em todas operações:
 
 | Aspecto                  | Status      | %     |
 |--------------------------|-------------|-------|
-| Formulários Atualizados  | ✅ Completo | 100%  |
+| Formulários Atualizados  | ✅ 16 Forms | 100%  |
 | Validações               | ✅ Completo | 100%  |
 | Confirmações             | ✅ Completo | 100%  |
 | Auditoria                | ✅ Completo | 100%  |

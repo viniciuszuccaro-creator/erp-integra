@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Network, CheckCircle2 } from "lucide-react";
+import { Loader2, Network, CheckCircle2, Trash2, Power, PowerOff } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,6 +38,20 @@ export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting, wi
       return;
     }
     onSubmit(formData);
+  };
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir o grupo "${formData.nome_do_grupo}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = formData.status === 'Ativo' ? 'Inativo' : 'Ativo';
+    setFormData({ ...formData, status: novoStatus });
   };
 
   const toggleEmpresa = (empresaId) => {
@@ -135,6 +149,25 @@ export default function GrupoEmpresarialForm({ grupo, onSubmit, isSubmitting, wi
       </Badge>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
+        {grupo && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAlternarStatus}
+              className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+            >
+              {formData.status === 'Ativo' ? (
+                <><PowerOff className="w-4 h-4 mr-2" />Inativar</>
+              ) : (
+                <><Power className="w-4 h-4 mr-2" />Ativar</>
+              )}
+            </Button>
+            <Button type="button" variant="destructive" onClick={handleExcluir}>
+              <Trash2 className="w-4 h-4 mr-2" />Excluir
+            </Button>
+          </>
+        )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {grupo ? 'Atualizar Grupo' : 'Criar Grupo'}
