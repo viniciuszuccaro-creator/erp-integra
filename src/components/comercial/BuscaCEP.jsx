@@ -36,6 +36,11 @@ export default function BuscaCEP({ onEnderecoEncontrado, label = "Buscar por CEP
         return;
       }
 
+      // Buscar coordenadas GPS via IA
+      const coordenadas = await buscarCoordenadasPorEndereco(
+        `${data.logradouro}, ${data.bairro}, ${data.localidade}, ${data.uf}`
+      );
+
       const endereco = {
         cep: data.cep,
         logradouro: data.logradouro,
@@ -43,18 +48,43 @@ export default function BuscaCEP({ onEnderecoEncontrado, label = "Buscar por CEP
         cidade: data.localidade,
         estado: data.uf,
         complemento: data.complemento || '',
-        numero: ''
+        numero: '',
+        latitude: coordenadas?.latitude || null,
+        longitude: coordenadas?.longitude || null,
+        mapa_url: coordenadas?.latitude && coordenadas?.longitude 
+          ? `https://www.google.com/maps?q=${coordenadas.latitude},${coordenadas.longitude}`
+          : ''
       };
 
       onEnderecoEncontrado(endereco);
       setEncontrado(true);
-      toast.success('✅ Endereço encontrado e preenchido!');
+      toast.success('✅ Endereço encontrado e preenchido com coordenadas GPS!');
 
       setTimeout(() => setEncontrado(false), 3000);
     } catch (error) {
       toast.error('Erro ao buscar CEP. Verifique sua conexão.');
     } finally {
       setBuscando(false);
+    }
+  };
+
+  const buscarCoordenadasPorEndereco = async (enderecoTexto) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(enderecoTexto)}&limit=1`
+      );
+      const data = await response.json();
+      
+      if (data && data.length > 0) {
+        return {
+          latitude: parseFloat(data[0].lat),
+          longitude: parseFloat(data[0].lon)
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Erro ao buscar coordenadas:', error);
+      return null;
     }
   };
 

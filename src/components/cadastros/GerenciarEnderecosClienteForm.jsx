@@ -257,11 +257,18 @@ export default function GerenciarEnderecosClienteForm({ enderecos = [], onChange
             </div>
 
             <BuscaCEP
-              enderecoAtual={novoEndereco}
               onEnderecoEncontrado={(endereco) => {
                 setNovoEndereco({
                   ...novoEndereco,
-                  ...endereco
+                  cep: endereco.cep || novoEndereco.cep,
+                  logradouro: endereco.logradouro || novoEndereco.logradouro,
+                  bairro: endereco.bairro || novoEndereco.bairro,
+                  cidade: endereco.cidade || novoEndereco.cidade,
+                  estado: endereco.estado || novoEndereco.estado,
+                  complemento: endereco.complemento || novoEndereco.complemento,
+                  latitude: endereco.latitude || novoEndereco.latitude,
+                  longitude: endereco.longitude || novoEndereco.longitude,
+                  mapa_url: endereco.mapa_url || novoEndereco.mapa_url
                 });
               }}
             />
