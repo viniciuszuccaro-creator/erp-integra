@@ -81,20 +81,32 @@ import MatrizPermissoesVisual from "./MatrizPermissoesVisual";
 import DashboardSeguranca from "./DashboardSeguranca";
 import ClonarPerfilModal from "./ClonarPerfilModal";
 import RelatorioPermissoes from "./RelatorioPermissoes";
+import TemplatesPerfilInteligente from "./TemplatesPerfilInteligente";
+import ComparadorPerfis from "./ComparadorPerfis";
+import ImportarExportarPerfis from "./ImportarExportarPerfis";
 
 /**
- * V21.6 - GERENCIAMENTO DE ACESSOS COMPLETO E UNIFICADO
+ * V21.7 - GERENCIAMENTO DE ACESSOS COMPLETO E UNIFICADO 100% ✅
  * 
  * Central única de controle de acesso com granularidade total:
- * ✅ Módulos do sistema
- * ✅ Seções dentro de cada módulo
- * ✅ Abas específicas
- * ✅ Ações (visualizar, criar, editar, excluir, aprovar, exportar)
- * ✅ Permissões por empresa
- * ✅ Perfis de acesso pré-definidos
- * ✅ IA de Segregação de Funções (SoD)
- * ✅ Auditoria de acessos
- * ✅ Multi-empresa total
+ * ✅ Dashboard de Segurança com KPIs e métricas
+ * ✅ Módulos, Seções e Abas do sistema
+ * ✅ Ações granulares (visualizar, criar, editar, excluir, aprovar, exportar)
+ * ✅ Permissões por empresa e multi-empresa total
+ * ✅ Perfis de acesso pré-definidos + templates inteligentes
+ * ✅ IA de Segregação de Funções (SoD) com validação automática
+ * ✅ Auditoria completa de acessos
+ * ✅ Gestão avançada de usuários com restrições individuais
+ * ✅ Matriz visual de permissões interativa
+ * ✅ Comparador de perfis
+ * ✅ Importação/Exportação de perfis
+ * ✅ Clonagem de perfis
+ * ✅ Permissões granulares por funcionalidade
+ * ✅ Análise de segurança por IA
+ * ✅ Relatórios exportáveis (JSON/TXT)
+ * ✅ 100% responsivo com w-full e h-full
+ * 
+ * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar
  */
 
 // Estrutura completa de módulos, seções e abas do sistema
@@ -822,6 +834,14 @@ Forneça recomendações práticas de segurança.`,
             <Brain className="w-4 h-4 mr-2" />
             IA de Segurança
           </TabsTrigger>
+          <TabsTrigger value="templates" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <Sparkles className="w-4 h-4 mr-2" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger value="comparador" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
+            <GitCompare className="w-4 h-4 mr-2" />
+            Comparar
+          </TabsTrigger>
         </TabsList>
 
         {/* Tab: Dashboard */}
@@ -981,11 +1001,23 @@ Forneça recomendações práticas de segurança.`,
                   Ver Auditoria
                 </Button>
 
-                <div className="pt-3 border-t">
+                <div className="pt-3 border-t space-y-3">
                   <RelatorioPermissoes
                     perfis={perfis}
                     usuarios={usuarios}
                     empresas={empresas}
+                  />
+                  
+                  <ImportarExportarPerfis
+                    perfis={perfis}
+                    onImportar={(perfisImportados) => {
+                      perfisImportados.forEach(p => {
+                        salvarPerfilMutation.mutate({
+                          ...p,
+                          group_id: empresaAtual?.group_id
+                        });
+                      });
+                    }}
                   />
                 </div>
               </CardContent>
@@ -1983,6 +2015,25 @@ Forneça recomendações práticas de segurança.`,
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Tab: Templates */}
+        <TabsContent value="templates" className="space-y-4 w-full h-full">
+          <TemplatesPerfilInteligente
+            onAplicarTemplate={(template) => {
+              setFormPerfil(template);
+              validarSOD(template.permissoes);
+              setPerfilDialogOpen(true);
+            }}
+          />
+        </TabsContent>
+
+        {/* Tab: Comparador */}
+        <TabsContent value="comparador" className="space-y-4 w-full h-full">
+          <ComparadorPerfis
+            perfis={perfis}
+            estruturaSistema={ESTRUTURA_SISTEMA}
+          />
         </TabsContent>
       </Tabs>
 
