@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, FileText, MapPin, Webhook, Sparkles, Upload, Calendar } from "lucide-react";
+import { Building2, FileText, MapPin, Webhook, Sparkles, Upload, Calendar, Trash2, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
 import BuscaCEP from "../comercial/BuscaCEP";
 
@@ -75,6 +75,20 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
     }
 
     onSubmit(formData);
+  };
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir a empresa "${formData.razao_social}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = formData.status === 'Ativa' ? 'Inativa' : 'Ativa';
+    setFormData({ ...formData, status: novoStatus });
   };
 
   return (
@@ -333,6 +347,36 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
       </Tabs>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
+        {empresa && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAlternarStatus}
+              className={formData.status === 'Ativa' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+            >
+              {formData.status === 'Ativa' ? (
+                <>
+                  <PowerOff className="w-4 h-4 mr-2" />
+                  Inativar
+                </>
+              ) : (
+                <>
+                  <Power className="w-4 h-4 mr-2" />
+                  Ativar
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleExcluir}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir
+            </Button>
+          </>
+        )}
         <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
           {isSubmitting ? 'Salvando...' : (empresa ? 'Salvar Alterações' : 'Criar Empresa')}
         </Button>

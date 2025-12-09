@@ -12,7 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Loader2, Sparkles, Package, Upload, Calculator, 
   CheckCircle2, AlertTriangle, FileText, Globe, 
-  TrendingUp, ArrowRightLeft, ShoppingCart, Image, Warehouse
+  TrendingUp, ArrowRightLeft, ShoppingCart, Image, Warehouse,
+  Trash2, Power, PowerOff, Save
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
@@ -477,6 +478,20 @@ Caso contrário, sugira:
     };
 
     onSubmit(dadosSubmit);
+  };
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir o produto "${formData.descricao}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = formData.status === 'Ativo' ? 'Inativo' : 'Ativo';
+    setFormData({ ...formData, status: novoStatus });
   };
 
   const totalAbas = 7; // SEMPRE 7 abas - ETAPA 4 COMPLETA
@@ -1476,10 +1491,43 @@ Caso contrário, sugira:
         </TabsContent>
       </Tabs>
 
-      {/* BOTÃO SUBMIT */}
-      <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
+      {/* BOTÕES DE AÇÃO */}
+      <div className="flex items-center justify-between pt-4 border-t sticky bottom-0 bg-white">
+        <div className="flex gap-2">
+          {produto && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAlternarStatus}
+                className={formData.status === 'Ativo' ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+              >
+                {formData.status === 'Ativo' ? (
+                  <>
+                    <PowerOff className="w-4 h-4 mr-2" />
+                    Inativar
+                  </>
+                ) : (
+                  <>
+                    <Power className="w-4 h-4 mr-2" />
+                    Ativar
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleExcluir}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
+              </Button>
+            </>
+          )}
+        </div>
         <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700 px-8">
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          {!isSubmitting && <Save className="w-4 h-4 mr-2" />}
           {produto ? 'Atualizar Produto' : 'Criar Produto'}
         </Button>
       </div>

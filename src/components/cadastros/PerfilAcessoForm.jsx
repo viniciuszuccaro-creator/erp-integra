@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Shield, AlertTriangle, XCircle } from "lucide-react";
+import { Loader2, Shield, AlertTriangle, XCircle, Trash2, Power, PowerOff } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
@@ -96,6 +96,20 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
     }
     
     onSubmit(formData);
+  };
+
+  const handleExcluir = () => {
+    if (!window.confirm(`Tem certeza que deseja excluir o perfil "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = !formData.ativo;
+    setFormData({ ...formData, ativo: novoStatus });
   };
 
   const formContent = (
@@ -193,6 +207,36 @@ export default function PerfilAcessoForm({ perfil, onSubmit, isSubmitting, windo
       </Card>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
+        {perfil && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAlternarStatus}
+              className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+            >
+              {formData.ativo ? (
+                <>
+                  <PowerOff className="w-4 h-4 mr-2" />
+                  Inativar
+                </>
+              ) : (
+                <>
+                  <Power className="w-4 h-4 mr-2" />
+                  Ativar
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleExcluir}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir
+            </Button>
+          </>
+        )}
         <Button type="submit" disabled={isSubmitting || bloqueioSoD}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
           {bloqueioSoD && <XCircle className="w-4 h-4 mr-2 text-red-600" />}

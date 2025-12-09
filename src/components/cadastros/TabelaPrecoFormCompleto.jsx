@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Save, Factory, Award, Boxes, TrendingUp, CheckCircle2 } from "lucide-react";
+import { Loader2, DollarSign, Plus, Calculator, Sparkles, Package, Search, X, Save, Factory, Award, Boxes, TrendingUp, CheckCircle2, Trash2, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
 
 /**
@@ -314,6 +314,20 @@ RETORNE:
   const handleRemoverItem = (idx) => {
     setItensTabela(prev => prev.filter((_, i) => i !== idx));
     toast.success('Item removido');
+  };
+
+  const handleExcluir = async () => {
+    if (!window.confirm(`Tem certeza que deseja excluir a tabela "${formData.nome}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    if (onSubmit) {
+      onSubmit({ ...formData, _action: 'delete' });
+    }
+  };
+
+  const handleAlternarStatus = () => {
+    const novoStatus = formData.ativo ? false : true;
+    setFormData({ ...formData, ativo: novoStatus });
   };
 
   const handleSalvar = async () => {
@@ -959,16 +973,48 @@ RETORNE:
             </p>
           )}
         </div>
-        <Button 
-          type="button" 
-          onClick={handleSalvar}
-          disabled={salvando || !podeAvancar} 
-          className="bg-green-600 hover:bg-green-700 min-w-[180px]"
-        >
-          {salvando && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {!salvando && <Save className="w-4 h-4 mr-2" />}
-          {tabela ? 'Salvar Alterações' : 'Criar Tabela'}
-        </Button>
+        <div className="flex gap-2">
+          {tabela && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAlternarStatus}
+                className={formData.ativo ? 'border-orange-300 text-orange-700' : 'border-green-300 text-green-700'}
+              >
+                {formData.ativo ? (
+                  <>
+                    <PowerOff className="w-4 h-4 mr-2" />
+                    Inativar
+                  </>
+                ) : (
+                  <>
+                    <Power className="w-4 h-4 mr-2" />
+                    Ativar
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={handleExcluir}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir
+              </Button>
+            </>
+          )}
+          <Button 
+            type="button" 
+            onClick={handleSalvar}
+            disabled={salvando || !podeAvancar} 
+            className="bg-green-600 hover:bg-green-700 min-w-[180px]"
+          >
+            {salvando && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {!salvando && <Save className="w-4 h-4 mr-2" />}
+            {tabela ? 'Salvar Alterações' : 'Criar Tabela'}
+          </Button>
+        </div>
       </div>
     </div>
   );
