@@ -112,6 +112,7 @@ import ChatbotCanalForm from "../components/cadastros/ChatbotCanalForm";
 import ConfiguracaoNFeForm from "../components/cadastros/ConfiguracaoNFeForm";
 import ConfiguracaoBoletosForm from "../components/cadastros/ConfiguracaoBoletosForm";
 import ConfiguracaoWhatsAppForm from "../components/cadastros/ConfiguracaoWhatsAppForm";
+import RegiaoAtendimentoForm from "../components/cadastros/RegiaoAtendimentoForm";
 import StatusIntegracoes from '../components/integracoes/StatusIntegracoes';
 import ConfiguracaoNotificacoes from '../components/sistema/ConfiguracaoNotificacoes';
 import TesteNFe from "../components/integracoes/TesteNFe";
