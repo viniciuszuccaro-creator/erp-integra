@@ -102,19 +102,29 @@ export default function Comercial() {
     // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
 
-  // V21.1.2: Handlers usando sistema de janelas
+  // V21.5: Handlers usando sistema de janelas - COM PROTEÇÃO ANTI-DUPLICAÇÃO
   const handleCreateNewPedido = () => {
+    let pedidoCriado = false; // Flag para evitar duplicação
+    
     openWindow(
       PedidoFormCompleto,
       { 
         clientes,
         windowMode: true,
         onSubmit: async (formData) => {
+          if (pedidoCriado) {
+            console.warn('⚠️ Tentativa de criação duplicada bloqueada');
+            return;
+          }
+          
+          pedidoCriado = true;
+          
           try {
             await base44.entities.Pedido.create(formData);
             toast.success("✅ Pedido criado com sucesso!");
-            pedidosQuery.refetch();
+            await pedidosQuery.refetch();
           } catch (error) {
+            pedidoCriado = false; // Reset em caso de erro
             toast.error("Erro ao salvar pedido: " + error.message);
           }
         },
@@ -129,6 +139,8 @@ export default function Comercial() {
   };
 
   const handleEditPedido = (pedido) => {
+    let atualizacaoEmAndamento = false; // Flag anti-duplicação
+    
     openWindow(
       PedidoFormCompleto,
       { 
@@ -136,11 +148,19 @@ export default function Comercial() {
         clientes,
         windowMode: true,
         onSubmit: async (formData) => {
+          if (atualizacaoEmAndamento) {
+            console.warn('⚠️ Tentativa de atualização duplicada bloqueada');
+            return;
+          }
+          
+          atualizacaoEmAndamento = true;
+          
           try {
             await base44.entities.Pedido.update(formData.id, formData);
             toast.success("✅ Pedido atualizado com sucesso!");
-            pedidosQuery.refetch();
+            await pedidosQuery.refetch();
           } catch (error) {
+            atualizacaoEmAndamento = false;
             toast.error("Erro ao salvar pedido: " + error.message);
           }
         },

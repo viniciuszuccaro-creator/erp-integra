@@ -43,6 +43,7 @@ import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
  */
 export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowMode = false }) {
   const [activeTab, setActiveTab] = useState('identificacao');
+  const [salvando, setSalvando] = useState(false); // V21.5: Anti-duplicação
   const [formData, setFormData] = useState(() => ({
     tipo: 'Pedido',
     tipo_pedido: 'Misto',
@@ -164,8 +165,10 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     formData?.valor_frete
   ]);
 
-  const handleSubmit = () => {
-    if (!formData) return;
+  const [salvando, setSalvando] = useState(false); // Anti-duplicação
+
+  const handleSubmit = async () => {
+    if (!formData || salvando) return;
     
     if (!validacoes.identificacao) {
       toast.error('❌ Complete os dados de identificação');
@@ -179,31 +182,35 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
       return;
     }
 
-    // ETAPA 4: Validar aprovação de desconto
-    if (formData.desconto_geral_pedido_percentual > 0) {
-      // Calcular margem após desconto (simplificado)
-      const custoTotal = formData.valor_produtos * 0.7; // assumindo 30% de custo médio
-      const valorComDesconto = formData.valor_produtos * (1 - formData.desconto_geral_pedido_percentual / 100);
-      const margemAposDesconto = ((valorComDesconto - custoTotal) / custoTotal) * 100;
-      const margemMinima = 10; // pode vir de configuração
+    setSalvando(true);
 
-      if (margemAposDesconto < margemMinima) {
-        // Exige aprovação
-        const dadosComAprovacao = {
-          ...formData,
-          status_aprovacao: 'pendente',
-          margem_minima_produto: margemMinima,
-          margem_aplicada_vendedor: margemAposDesconto,
-          desconto_solicitado_percentual: formData.desconto_geral_pedido_percentual,
-          status: 'Aguardando Aprovação'
-        };
-        onSubmit(dadosComAprovacao);
-        toast.info('⚠️ Pedido enviado para aprovação de desconto');
-        return;
+    try {
+      // ETAPA 4: Validar aprovação de desconto
+      if (formData.desconto_geral_pedido_percentual > 0) {
+        const custoTotal = formData.valor_produtos * 0.7;
+        const valorComDesconto = formData.valor_produtos * (1 - formData.desconto_geral_pedido_percentual / 100);
+        const margemAposDesconto = ((valorComDesconto - custoTotal) / custoTotal) * 100;
+        const margemMinima = 10;
+
+        if (margemAposDesconto < margemMinima) {
+          const dadosComAprovacao = {
+            ...formData,
+            status_aprovacao: 'pendente',
+            margem_minima_produto: margemMinima,
+            margem_aplicada_vendedor: margemAposDesconto,
+            desconto_solicitado_percentual: formData.desconto_geral_pedido_percentual,
+            status: 'Aguardando Aprovação'
+          };
+          await onSubmit(dadosComAprovacao);
+          toast.info('⚠️ Pedido enviado para aprovação de desconto');
+          return;
+        }
       }
-    }
 
-    onSubmit(formData);
+      await onSubmit(formData);
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const abas = [
@@ -499,13 +506,38 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
             >
               Cancelar
             </Button>
+            
+            {/* V21.5: FECHAR PEDIDO E ENVIAR PARA ENTREGA */}
+            {pedido && pedido.status === 'Aprovado' && (
+              <Button
+                onClick={async () => {
+                  if (salvando) return;
+                  setSalvando(true);
+                  try {
+                    await onSubmit({
+                      ...formData,
+                      status: 'Pronto para Faturar'
+                    });
+                    toast.success('✅ Pedido fechado e pronto para faturar!');
+                  } finally {
+                    setSalvando(false);
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+              >
+                <Truck className="w-4 h-4 mr-2" />
+                Fechar e Enviar para Entrega
+              </Button>
+            )}
+            
             <Button
               onClick={handleSubmit}
               className="bg-green-600 hover:bg-green-700"
-              disabled={!validacoes.identificacao || !validacoes.itens}
+              disabled={salvando || !validacoes.identificacao || !validacoes.itens}
             >
               <Check className="w-4 h-4 mr-2" />
-              {pedido ? 'Salvar Alterações' : 'Criar Pedido'}
+              {salvando ? 'Salvando...' : (pedido ? 'Salvar Alterações' : 'Criar Pedido')}
             </Button>
           </div>
         </div>

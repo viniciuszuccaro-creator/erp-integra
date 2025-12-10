@@ -143,12 +143,15 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
               <SelectTrigger className="w-full sm:w-64">
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[99999]">
                 <SelectItem value="todos">Todos</SelectItem>
                 <SelectItem value="Rascunho">Rascunho</SelectItem>
                 <SelectItem value="Aguardando Aprovação">Aguardando Aprovação</SelectItem>
                 <SelectItem value="Aprovado">Aprovado</SelectItem>
+                <SelectItem value="Pronto para Faturar">Pronto para Faturar</SelectItem>
                 <SelectItem value="Faturado">Faturado</SelectItem>
+                <SelectItem value="Em Expedição">Em Expedição</SelectItem>
+                <SelectItem value="Entregue">Entregue</SelectItem>
                 <SelectItem value="Cancelado">Cancelado</SelectItem>
               </SelectContent>
             </Select>
@@ -225,6 +228,43 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                         </Button>
                         
                         {pedido.status === "Aprovado" && (
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  await base44.entities.Pedido.update(pedido.id, {
+                                    status: 'Pronto para Faturar'
+                                  });
+                                  toast({ title: "✅ Pedido fechado para entrega!" });
+                                  queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                                } catch (error) {
+                                  toast({ title: "❌ Erro ao fechar pedido", variant: "destructive" });
+                                }
+                              }}
+                              title="Fechar Pedido e Enviar para Entrega"
+                              className="h-8 px-2 text-blue-600 font-semibold"
+                            >
+                              <Truck className="w-3 h-3 mr-1" />
+                              <span className="text-xs">Fechar e Entregar</span>
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => {
+                                toast({ title: "🚀 Gerando NF-e..." });
+                              }}
+                              title="Gerar NF-e"
+                              className="h-8 px-2 text-green-600"
+                            >
+                              <FileText className="w-3 h-3 mr-1" />
+                              <span className="text-xs">NF-e</span>
+                            </Button>
+                          </>
+                        )}
+
+                        {pedido.status === "Pronto para Faturar" && (
                           <Button 
                             variant="ghost" 
                             size="sm"
