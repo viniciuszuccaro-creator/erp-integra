@@ -32,47 +32,37 @@ export async function buscarDadosCNPJ(cnpj) {
 
   try {
     const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Você DEVE consultar a Receita Federal do Brasil e retornar os dados OFICIAIS do CNPJ: ${cnpjLimpo}
+      prompt: `Consulte os dados do CNPJ ${cnpjLimpo} na Receita Federal do Brasil (fonte oficial pública).
 
-Acesse e retorne dados de:
-- ReceitaWS: https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}
-- BrasilAPI: https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}
-- Consulta Receita Federal: https://solucoes.receita.fazenda.gov.br
+Retorne JSON com todos os dados que conseguir encontrar. Deixe campos vazios se não encontrar.
 
-OBRIGATÓRIO: Retorne dados REAIS que você encontrou. Se não encontrar o CNPJ, retorne com erro.
-
-JSON esperado:
+Formato esperado:
 {
-  "razao_social": "RAZÃO SOCIAL COMPLETA",
-  "nome_fantasia": "NOME FANTASIA",
-  "inscricao_estadual": "IE SE DISPONÍVEL",
-  "situacao_cadastral": "ATIVA",
-  "data_abertura": "01/01/2020",
-  "porte": "ME",
-  "cnae_principal": "descrição da atividade",
+  "razao_social": "",
+  "nome_fantasia": "",
+  "inscricao_estadual": "",
+  "situacao_cadastral": "",
+  "porte": "",
+  "cnae_principal": "",
   "endereco_completo": {
-    "logradouro": "RUA X",
-    "numero": "123",
-    "bairro": "BAIRRO",
-    "cidade": "CIDADE",
-    "uf": "SP",
-    "cep": "12345678"
+    "logradouro": "",
+    "numero": "",
+    "bairro": "",
+    "cidade": "",
+    "uf": "",
+    "cep": ""
   },
-  "telefone": "11999999999",
-  "email": "email@empresa.com"
-}
-
-Se CNPJ não existir: {"erro": "CNPJ não encontrado"}`,
+  "telefone": "",
+  "email": ""
+}`,
       add_context_from_internet: true,
       response_json_schema: {
         type: "object",
         properties: {
-          erro: { type: "string" },
           razao_social: { type: "string" },
           nome_fantasia: { type: "string" },
           inscricao_estadual: { type: "string" },
           situacao_cadastral: { type: "string" },
-          data_abertura: { type: "string" },
           porte: { type: "string" },
           cnae_principal: { type: "string" },
           endereco_completo: {
@@ -92,10 +82,10 @@ Se CNPJ não existir: {"erro": "CNPJ não encontrado"}`,
       }
     });
 
-    if (resultado.erro) {
+    if (!resultado.razao_social) {
       return {
         sucesso: false,
-        erro: resultado.erro
+        erro: 'CNPJ não encontrado na Receita Federal'
       };
     }
 
@@ -107,7 +97,7 @@ Se CNPJ não existir: {"erro": "CNPJ não encontrado"}`,
   } catch (error) {
     return {
       sucesso: false,
-      erro: 'Erro ao buscar CNPJ - tente novamente'
+      erro: 'Erro ao buscar CNPJ'
     };
   }
 }
@@ -129,26 +119,18 @@ export async function buscarDadosCPF(cpf) {
 
   try {
     const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Valide o CPF ${cpfLimpo} usando o algoritmo matemático oficial brasileiro de validação (módulo 11).
+      prompt: `Valide o CPF ${cpfLimpo} usando o algoritmo de validação oficial brasileiro.
 
-PASSOS:
-1. Verificar se NÃO é sequência repetida (00000000000, 11111111111, etc) - se for, é INVÁLIDO
-2. Calcular o PRIMEIRO dígito verificador (posição 10)
-3. Calcular o SEGUNDO dígito verificador (posição 11)
-4. Comparar com os 2 últimos dígitos do CPF informado
-
-Retorne JSON:
+Retorne apenas:
 {
   "valido": true ou false,
-  "formatado": "XXX.XXX.XXX-XX",
-  "mensagem": "CPF válido" ou "CPF inválido - dígitos verificadores incorretos"
+  "formatado": "XXX.XXX.XXX-XX"
 }`,
       response_json_schema: {
         type: "object",
         properties: {
           valido: { type: "boolean" },
-          formatado: { type: "string" },
-          mensagem: { type: "string" }
+          formatado: { type: "string" }
         }
       }
     });
@@ -156,22 +138,19 @@ Retorne JSON:
     if (!resultado.valido) {
       return {
         sucesso: false,
-        erro: resultado.mensagem || 'CPF inválido'
+        erro: 'CPF inválido'
       };
     }
 
     return {
       sucesso: true,
-      dados: {
-        valido: true,
-        formatado: resultado.formatado
-      }
+      dados: resultado
     };
 
   } catch (error) {
     return {
       sucesso: false,
-      erro: 'Erro ao validar CPF - tente novamente'
+      erro: 'Erro ao validar CPF'
     };
   }
 }
