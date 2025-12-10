@@ -18,27 +18,19 @@ import {
   Download,
   AlertCircle,
   Navigation,
-  FileUp,
-  User,
-  Calendar,
-  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { useAutomacaoFluxoPedido } from "./AutomacaoFluxoPedido";
 
 /**
- * 🚚 PEDIDOS PARA ENTREGA V21.5 FINAL
- * Gestão inteligente de pedidos aprovados que precisam ser entregues
+ * 🚚 PEDIDOS PARA ENTREGA V21.5
+ * Gestão de pedidos aprovados que precisam ser entregues
  * - Agrupamento por região de atendimento
  * - Rastreamento de status de entrega
  * - Upload/visualização de canhoto e fotos
  * - Integração com Expedição
- * - IA de sugestões e otimização
- * - Notificações automáticas
  */
 export default function PedidosEntregaTab({ windowMode = false }) {
   const [busca, setBusca] = useState("");
@@ -46,13 +38,8 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [detalhesOpen, setDetalhesOpen] = useState(false);
   const [entregaSelecionada, setEntregaSelecionada] = useState(null);
-  const [uploadMode, setUploadMode] = useState(false);
-  const [arquivoComprovante, setArquivoComprovante] = useState(null);
-  const [nomeRecebedor, setNomeRecebedor] = useState("");
-  const [docRecebedor, setDocRecebedor] = useState("");
 
   const queryClient = useQueryClient();
-  const automacao = useAutomacaoFluxoPedido();
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
@@ -117,42 +104,11 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   }, [pedidosParaEntrega, busca, statusFiltro, regiaoFiltro]);
 
   const atualizarStatusMutation = useMutation({
-    mutationFn: async ({ pedidoId, novoStatus, dadosComprovante }) => {
-      await base44.entities.Pedido.update(pedidoId, { status: novoStatus });
-      
-      // Se está confirmando entrega, criar/atualizar registro de entrega
-      if (novoStatus === 'Entregue' && dadosComprovante) {
-        const entregaExistente = await base44.entities.Entrega.filter({ pedido_id: pedidoId });
-        
-        if (entregaExistente?.length > 0) {
-          await base44.entities.Entrega.update(entregaExistente[0].id, {
-            status: 'Entregue',
-            data_entrega: new Date().toISOString(),
-            comprovante_entrega: dadosComprovante
-          });
-        } else {
-          const pedido = await base44.entities.Pedido.filter({ id: pedidoId });
-          if (pedido?.length > 0) {
-            await base44.entities.Entrega.create({
-              pedido_id: pedidoId,
-              numero_pedido: pedido[0].numero_pedido,
-              cliente_id: pedido[0].cliente_id,
-              cliente_nome: pedido[0].cliente_nome,
-              empresa_id: pedido[0].empresa_id,
-              endereco_entrega_completo: pedido[0].endereco_entrega_principal,
-              tipo_frete: pedido[0].tipo_frete,
-              status: 'Entregue',
-              data_entrega: new Date().toISOString(),
-              comprovante_entrega: dadosComprovante
-            });
-          }
-        }
-      }
-    },
+    mutationFn: ({ pedidoId, novoStatus }) => 
+      base44.entities.Pedido.update(pedidoId, { status: novoStatus }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      queryClient.invalidateQueries({ queryKey: ['entregas'] });
-      toast.success("✅ Entrega confirmada com sucesso!");
+      toast.success("✅ Status atualizado!");
     }
   });
 
@@ -173,21 +129,8 @@ export default function PedidosEntregaTab({ windowMode = false }) {
             <Truck className="w-7 h-7 text-blue-600" />
             Logística de Entrega
           </h2>
-          <p className="text-slate-600 text-sm">Gestão inteligente de entregas com IA</p>
+          <p className="text-slate-600 text-sm">Pedidos aprovados aguardando entrega</p>
         </div>
-        <Button
-          variant="outline"
-          onClick={async () => {
-            // Notificar todos os clientes em trânsito
-            const emTransito = pedidosParaEntrega.filter(p => p.status === 'Em Trânsito');
-            for (const pedido of emTransito) {
-              await automacao.notificarClienteStatusPedido(pedido, 'Em Trânsito');
-            }
-            toast.success(`📢 ${emTransito.length} notificação(ões) enviada(s)!`);
-          }}
-        >
-          📢 Notificar Clientes
-        </Button>
       </div>
 
       {/* Estatísticas por Região */}
@@ -333,70 +276,37 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                           }
                         </TableCell>
                         <TableCell>
-                          <Badge className={
-                            pedido.status === 'Entregue' ? 'bg-green-600' :
-                            pedido.status === 'Em Trânsito' ? 'bg-purple-600' :
-                            pedido.status === 'Em Expedição' ? 'bg-orange-600' :
-                            pedido.status === 'Faturado' ? 'bg-blue-600' :
-                            'bg-slate-600'
-                          }>
-                            {pedido.status === 'Entregue' ? '✅ Entregue' : pedido.status}
-                          </Badge>
+                          <Select
+                            value={pedido.status}
+                            onValueChange={(novoStatus) => 
+                              atualizarStatusMutation.mutate({ 
+                                pedidoId: pedido.id, 
+                                novoStatus 
+                              })
+                            }
+                          >
+                            <SelectTrigger className="w-40 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Aprovado">Aprovado</SelectItem>
+                              <SelectItem value="Pronto para Faturar">Pronto p/ Faturar</SelectItem>
+                              <SelectItem value="Faturado">Faturado</SelectItem>
+                              <SelectItem value="Em Expedição">Em Expedição</SelectItem>
+                              <SelectItem value="Em Trânsito">Em Trânsito</SelectItem>
+                              <SelectItem value="Entregue">✅ Entregue</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
-                            {pedido.status === 'Aprovado' || pedido.status === 'Pronto para Faturar' ? (
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  atualizarStatusMutation.mutate({
-                                    pedidoId: pedido.id,
-                                    novoStatus: 'Em Expedição'
-                                  });
-                                }}
-                                className="bg-orange-600 hover:bg-orange-700"
-                              >
-                                <Package className="w-4 h-4 mr-1" />
-                                Expedir
-                              </Button>
-                            ) : pedido.status === 'Em Expedição' || pedido.status === 'Faturado' ? (
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  atualizarStatusMutation.mutate({
-                                    pedidoId: pedido.id,
-                                    novoStatus: 'Em Trânsito'
-                                  });
-                                }}
-                                className="bg-purple-600 hover:bg-purple-700"
-                              >
-                                <Truck className="w-4 h-4 mr-1" />
-                                Saiu
-                              </Button>
-                            ) : pedido.status === 'Em Trânsito' ? (
-                              <Button
-                                size="sm"
-                                onClick={() => handleVerDetalhes(pedido)}
-                                className="bg-green-600 hover:bg-green-700"
-                              >
-                                <CheckCircle2 className="w-4 h-4 mr-1" />
-                                Entregar
-                              </Button>
-                            ) : pedido.status === 'Entregue' ? (
-                              <Badge className="bg-green-100 text-green-700">
-                                ✅ Entregue
-                              </Badge>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleVerDetalhes(pedido)}
-                              >
-                                <Eye className="w-4 h-4 mr-1" />
-                                Ver
-                              </Button>
-                            )}
-                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleVerDetalhes(pedido)}
+                          >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Ver
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -527,165 +437,57 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                 </CardContent>
               </Card>
 
-              {/* Confirmar Entrega com Comprovante */}
-              {!uploadMode ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Fluxo Automático de Status</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex flex-col gap-2">
-                      {entregaSelecionada.pedido.status === 'Faturado' && (
-                        <Button
-                          onClick={async () => {
-                            await atualizarStatusMutation.mutateAsync({
-                              pedidoId: entregaSelecionada.pedido.id,
-                              novoStatus: 'Em Expedição'
-                            });
-                            await automacao.notificarClienteStatusPedido(entregaSelecionada.pedido, 'Em Expedição');
-                            setDetalhesOpen(false);
-                          }}
-                          className="bg-orange-600 hover:bg-orange-700 w-full"
-                        >
-                          <Package className="w-4 h-4 mr-2" />
-                          📦 Marcar Em Expedição
-                        </Button>
-                      )}
+              {/* Atualizar Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Atualizar Status de Entrega</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      onClick={() => {
+                        atualizarStatusMutation.mutate({
+                          pedidoId: entregaSelecionada.pedido.id,
+                          novoStatus: 'Em Expedição'
+                        });
+                        setDetalhesOpen(false);
+                      }}
+                      className="bg-orange-600 hover:bg-orange-700"
+                    >
+                      <Package className="w-4 h-4 mr-2" />
+                      Marcar Em Expedição
+                    </Button>
 
-                      {entregaSelecionada.pedido.status === 'Em Expedição' && (
-                        <Button
-                          onClick={async () => {
-                            await atualizarStatusMutation.mutateAsync({
-                              pedidoId: entregaSelecionada.pedido.id,
-                              novoStatus: 'Em Trânsito'
-                            });
-                            await automacao.notificarClienteStatusPedido(entregaSelecionada.pedido, 'Em Trânsito');
-                            setDetalhesOpen(false);
-                          }}
-                          className="bg-purple-600 hover:bg-purple-700 w-full"
-                        >
-                          <Truck className="w-4 h-4 mr-2" />
-                          🚚 Saiu para Entrega
-                        </Button>
-                      )}
+                    <Button
+                      onClick={() => {
+                        atualizarStatusMutation.mutate({
+                          pedidoId: entregaSelecionada.pedido.id,
+                          novoStatus: 'Em Trânsito'
+                        });
+                        setDetalhesOpen(false);
+                      }}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <Truck className="w-4 h-4 mr-2" />
+                      Saiu para Entrega
+                    </Button>
 
-                      {entregaSelecionada.pedido.status === 'Em Trânsito' && (
-                        <Button
-                          onClick={() => setUploadMode(true)}
-                          className="bg-green-600 hover:bg-green-700 w-full"
-                        >
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          ✅ Confirmar Entrega
-                        </Button>
-                      )}
-
-                      {entregaSelecionada.pedido.status === 'Entregue' && (
-                        <Badge className="bg-green-100 text-green-700 p-3 text-center w-full justify-center">
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Pedido já foi entregue
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="border-green-300 bg-green-50">
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                      Confirmar Entrega
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-semibold">Nome de Quem Recebeu *</Label>
-                      <Input
-                        value={nomeRecebedor}
-                        onChange={(e) => setNomeRecebedor(e.target.value)}
-                        placeholder="Nome completo do recebedor"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-semibold">CPF/RG do Recebedor</Label>
-                      <Input
-                        value={docRecebedor}
-                        onChange={(e) => setDocRecebedor(e.target.value)}
-                        placeholder="Documento"
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label className="text-sm font-semibold">Foto do Comprovante (opcional)</Label>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => setArquivoComprovante(e.target.files[0])}
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-slate-500 mt-1">
-                        Foto do canhoto assinado ou comprovante de entrega
-                      </p>
-                    </div>
-
-                    <div className="flex gap-3 pt-4 border-t">
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setUploadMode(false);
-                          setNomeRecebedor("");
-                          setDocRecebedor("");
-                          setArquivoComprovante(null);
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        className="bg-green-600 hover:bg-green-700 flex-1"
-                        onClick={async () => {
-                          if (!nomeRecebedor.trim()) {
-                            toast.error("⚠️ Informe quem recebeu a entrega");
-                            return;
-                          }
-
-                          let fotoUrl = null;
-                          if (arquivoComprovante) {
-                            const upload = await base44.integrations.Core.UploadFile({ 
-                              file: arquivoComprovante 
-                            });
-                            fotoUrl = upload.file_url;
-                          }
-
-                          await atualizarStatusMutation.mutateAsync({
-                            pedidoId: entregaSelecionada.pedido.id,
-                            novoStatus: 'Entregue',
-                            dadosComprovante: {
-                              nome_recebedor: nomeRecebedor,
-                              documento_recebedor: docRecebedor,
-                              data_hora_recebimento: new Date().toISOString(),
-                              foto_comprovante: fotoUrl
-                            }
-                          });
-                          
-                          await automacao.notificarClienteStatusPedido(entregaSelecionada.pedido, 'Entregue');
-                          
-                          setDetalhesOpen(false);
-                          setUploadMode(false);
-                          setNomeRecebedor("");
-                          setDocRecebedor("");
-                          setArquivoComprovante(null);
-                        }}
-                        disabled={atualizarStatusMutation.isPending}
-                      >
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                        {atualizarStatusMutation.isPending ? 'Confirmando...' : 'Confirmar Entrega'}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                    <Button
+                      onClick={() => {
+                        atualizarStatusMutation.mutate({
+                          pedidoId: entregaSelecionada.pedido.id,
+                          novoStatus: 'Entregue'
+                        });
+                        setDetalhesOpen(false);
+                      }}
+                      className="bg-green-600 hover:bg-green-700 col-span-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4 mr-2" />
+                      ✅ Confirmar Entrega
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Comprovante de Entrega */}
               {entregaSelecionada.entrega?.comprovante_entrega && (

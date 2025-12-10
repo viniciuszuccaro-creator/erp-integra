@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck, Truck, Package, BarChart3 } from "lucide-react";
+import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck, Truck, Package } from "lucide-react";
 import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
 import ComissoesTab from "../components/comercial/ComissoesTab";
@@ -16,8 +16,6 @@ import usePermissions from "@/components/lib/usePermissions";
 import CentralAprovacoesManager from "../components/comercial/CentralAprovacoesManager";
 import PedidosEntregaTab from "../components/comercial/PedidosEntregaTab";
 import PedidosRetiradaTab from "../components/comercial/PedidosRetiradaTab";
-import DashboardLogisticaRealTime from "../components/comercial/DashboardLogisticaRealTime";
-import { useMonitoramentoPedidos } from "../components/comercial/AutomacaoFluxoPedido";
 
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
@@ -43,9 +41,6 @@ export default function Comercial() {
 
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
-  
-  // V21.5: Monitoramento automático em tempo real
-  useMonitoramentoPedidos(pedidos);
 
   const { data: clientes = [], isLoading: loadingClientes } = useQuery({
     queryKey: ['clientes'],
@@ -277,18 +272,11 @@ export default function Comercial() {
             Pedidos
           </TabsTrigger>
           <TabsTrigger 
-            value="dashboard-logistica" 
-            className="data-[state=active]:bg-purple-600 data-[state=active]:text-white relative"
-          >
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Dashboard Logística
-          </TabsTrigger>
-          <TabsTrigger 
             value="entrega" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative"
           >
             <Truck className="w-4 h-4 mr-2" />
-            Entregas
+            Logística de Entrega
             {pedidos.filter(p => 
               (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') && 
               ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito'].includes(p.status)
@@ -388,10 +376,6 @@ export default function Comercial() {
             onCreatePedido={handleCreateNewPedido}
             onEditPedido={handleEditPedido}
           />
-        </TabsContent>
-
-        <TabsContent value="dashboard-logistica">
-          <DashboardLogisticaRealTime windowMode={false} />
         </TabsContent>
 
         <TabsContent value="entrega">

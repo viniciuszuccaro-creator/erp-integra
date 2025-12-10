@@ -15,8 +15,6 @@ import {
   Calendar,
   AlertCircle,
   Bell,
-  Send,
-  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -24,7 +22,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useAutomacaoFluxoPedido } from "./AutomacaoFluxoPedido";
 
 /**
  * 📦 PEDIDOS PARA RETIRADA V21.5
@@ -43,7 +40,6 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   const [observacoes, setObservacoes] = useState("");
 
   const queryClient = useQueryClient();
-  const automacao = useAutomacaoFluxoPedido();
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
@@ -63,17 +59,6 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
     );
   }, [pedidos]);
 
-  // Estatísticas
-  const prontoParaRetirada = useMemo(() => 
-    pedidos.filter(p => p.status === 'Pronto para Retirada').length,
-    [pedidos]
-  );
-  
-  const retirados = useMemo(() => 
-    pedidos.filter(p => p.status === 'Entregue' && p.tipo_frete === 'Retirada').length,
-    [pedidos]
-  );
-
   // Aplicar filtros
   const pedidosFiltrados = useMemo(() => {
     let resultado = pedidosParaRetirada;
@@ -92,6 +77,9 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
     return resultado;
   }, [pedidosParaRetirada, busca, statusFiltro]);
 
+  const prontoParaRetirada = pedidos.filter(p => p.status === 'Pronto para Retirada').length;
+  const retirados = pedidos.filter(p => p.status === 'Entregue' && p.tipo_frete === 'Retirada').length;
+
   const atualizarStatusMutation = useMutation({
     mutationFn: ({ pedidoId, novoStatus }) => 
       base44.entities.Pedido.update(pedidoId, { status: novoStatus }),
@@ -102,8 +90,8 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   });
 
   const confirmarRetiradaMutation = useMutation({
-    mutationFn: async ({ pedido, nomeRecebedor, docRecebedor, observacoes, userId }) => {
-      // V21.5: BAIXAR ESTOQUE AUTOMATICAMENTE NA RETIRADA
+    mutationFn: async ({ pedido }) => {
+      // Baixar estoque automaticamente
       if (pedido.itens_revenda?.length > 0) {
         for (const item of pedido.itens_revenda) {
           if (item.produto_id) {
@@ -130,7 +118,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
                 data_movimentacao: new Date().toISOString(),
                 documento: pedido.numero_pedido,
                 motivo: `Retirada confirmada - ${nomeRecebedor}`,
-                responsavel: userId || "Sistema",
+                responsavel: user?.full_name || "Sistema",
                 aprovado: true
               });
               
@@ -180,20 +168,13 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
     }
   });
 
-  const handleConfirmarRetirada = async () => {
+  const handleConfirmarRetirada = () => {
     if (!nomeRecebedor.trim()) {
       toast.error("⚠️ Informe quem retirou o pedido");
       return;
     }
     
-    await confirmarRetiradaMutation.mutateAsync({ 
-      pedido: pedidoSelecionado,
-      nomeRecebedor,
-      docRecebedor,
-      observacoes,
-      userId: user?.full_name
-    });
-    await automacao.notificarClienteStatusPedido(pedidoSelecionado, 'Entregue');
+    confirmarRetiradaMutation.mutate({ pedido: pedidoSelecionado });
   };
 
   const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
@@ -207,26 +188,8 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
             <Package className="w-7 h-7 text-green-600" />
             Pedidos para Retirada
           </h2>
-          <p className="text-slate-600 text-sm">Gestão inteligente de retiradas no local</p>
+          <p className="text-slate-600 text-sm">Pedidos que o cliente irá buscar no local</p>
         </div>
-        <Button
-          variant="outline"
-          onClick={async () => {
-            if (!pedidos || pedidos.length === 0) {
-              toast.error("⚠️ Nenhum pedido carregado");
-              return;
-            }
-            const prontos = pedidos.filter(p => p.status === 'Pronto para Retirada');
-            for (const pedido of prontos) {
-              await automacao.notificarClienteStatusPedido(pedido, 'Pronto para Retirada');
-            }
-            toast.success(`📢 ${prontos.length} cliente(s) notificado(s)!`);
-          }}
-          disabled={!pedidos || pedidos.length === 0}
-        >
-          <Send className="w-4 h-4 mr-2" />
-          Notificar Prontos
-        </Button>
       </div>
 
       {/* Estatísticas */}
@@ -331,17 +294,16 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
                           {pedido.status !== 'Pronto para Retirada' && (
                             <Button
                               size="sm"
-                              onClick={async () => {
-                                await atualizarStatusMutation.mutateAsync({
+                              onClick={() => {
+                                atualizarStatusMutation.mutate({
                                   pedidoId: pedido.id,
                                   novoStatus: 'Pronto para Retirada'
                                 });
-                                await automacao.notificarClienteStatusPedido(pedido, 'Pronto para Retirada');
                               }}
                               className="bg-blue-600 hover:bg-blue-700"
                             >
                               <Bell className="w-4 h-4 mr-1" />
-                              ✅ Avisar Pronto
+                              Avisar Pronto
                             </Button>
                           )}
                           
