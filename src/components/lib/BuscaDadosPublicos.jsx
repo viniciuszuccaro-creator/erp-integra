@@ -31,73 +31,48 @@ export async function buscarDadosCNPJ(cnpj) {
   }
 
   try {
-    const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Consulte os dados do CNPJ ${cnpjLimpo} na Receita Federal do Brasil (fonte oficial pública).
+    // Tentar ReceitaWS primeiro
+    const resposta = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`);
+    
+    if (!resposta.ok) {
+      throw new Error('API indisponível');
+    }
 
-Retorne JSON com todos os dados que conseguir encontrar. Deixe campos vazios se não encontrar.
+    const dados = await resposta.json();
 
-Formato esperado:
-{
-  "razao_social": "",
-  "nome_fantasia": "",
-  "inscricao_estadual": "",
-  "situacao_cadastral": "",
-  "porte": "",
-  "cnae_principal": "",
-  "endereco_completo": {
-    "logradouro": "",
-    "numero": "",
-    "bairro": "",
-    "cidade": "",
-    "uf": "",
-    "cep": ""
-  },
-  "telefone": "",
-  "email": ""
-}`,
-      add_context_from_internet: true,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          razao_social: { type: "string" },
-          nome_fantasia: { type: "string" },
-          inscricao_estadual: { type: "string" },
-          situacao_cadastral: { type: "string" },
-          porte: { type: "string" },
-          cnae_principal: { type: "string" },
-          endereco_completo: {
-            type: "object",
-            properties: {
-              logradouro: { type: "string" },
-              numero: { type: "string" },
-              bairro: { type: "string" },
-              cidade: { type: "string" },
-              uf: { type: "string" },
-              cep: { type: "string" }
-            }
-          },
-          telefone: { type: "string" },
-          email: { type: "string" }
-        }
-      }
-    });
-
-    if (!resultado.razao_social) {
+    if (dados.status === 'ERROR') {
       return {
         sucesso: false,
-        erro: 'CNPJ não encontrado na Receita Federal'
+        erro: dados.message || 'CNPJ não encontrado'
       };
     }
 
     return {
       sucesso: true,
-      dados: resultado
+      dados: {
+        razao_social: dados.nome || '',
+        nome_fantasia: dados.fantasia || '',
+        inscricao_estadual: '',
+        situacao_cadastral: dados.situacao || '',
+        porte: dados.porte || '',
+        cnae_principal: dados.atividade_principal?.[0]?.text || '',
+        endereco_completo: {
+          logradouro: dados.logradouro || '',
+          numero: dados.numero || '',
+          bairro: dados.bairro || '',
+          cidade: dados.municipio || '',
+          uf: dados.uf || '',
+          cep: dados.cep || ''
+        },
+        telefone: dados.telefone || '',
+        email: dados.email || ''
+      }
     };
 
   } catch (error) {
     return {
       sucesso: false,
-      erro: 'Erro ao buscar CNPJ'
+      erro: 'Erro ao buscar CNPJ - tente novamente'
     };
   }
 }
@@ -117,42 +92,51 @@ export async function buscarDadosCPF(cpf) {
     };
   }
 
-  try {
-    const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Valide o CPF ${cpfLimpo} usando o algoritmo de validação oficial brasileiro.
-
-Retorne apenas:
-{
-  "valido": true ou false,
-  "formatado": "XXX.XXX.XXX-XX"
-}`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          valido: { type: "boolean" },
-          formatado: { type: "string" }
-        }
-      }
-    });
-
-    if (!resultado.valido) {
-      return {
-        sucesso: false,
-        erro: 'CPF inválido'
-      };
-    }
-
-    return {
-      sucesso: true,
-      dados: resultado
-    };
-
-  } catch (error) {
+  // Validação local usando algoritmo oficial
+  if (/^(\d)\1{10}$/.test(cpfLimpo)) {
     return {
       sucesso: false,
-      erro: 'Erro ao validar CPF'
+      erro: 'CPF inválido'
     };
   }
+  
+  let soma = 0;
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cpfLimpo.charAt(i)) * (10 - i);
+  }
+  let resto = 11 - (soma % 11);
+  let digito1 = resto > 9 ? 0 : resto;
+  
+  if (digito1 !== parseInt(cpfLimpo.charAt(9))) {
+    return {
+      sucesso: false,
+      erro: 'CPF inválido'
+    };
+  }
+  
+  soma = 0;
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cpfLimpo.charAt(i)) * (11 - i);
+  }
+  resto = 11 - (soma % 11);
+  let digito2 = resto > 9 ? 0 : resto;
+  
+  if (digito2 !== parseInt(cpfLimpo.charAt(10))) {
+    return {
+      sucesso: false,
+      erro: 'CPF inválido'
+    };
+  }
+
+  const formatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+
+  return {
+    sucesso: true,
+    dados: {
+      valido: true,
+      formatado: formatado
+    }
+  };
 }
 
 /**
