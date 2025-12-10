@@ -426,13 +426,16 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                 </CardContent>
               </Card>
 
-              {/* Atualizar Status */}
-              <Card>
+              {/* Ações Automáticas de Status */}
+              <Card className="bg-blue-50">
                 <CardHeader>
-                  <CardTitle className="text-base">Atualizar Status de Entrega</CardTitle>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    🤖 Ações Automáticas de Entrega
+                  </CardTitle>
+                  <p className="text-sm text-slate-600">Clique para atualizar o status automaticamente</p>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
+                  {entregaSelecionada.pedido.status === 'Aprovado' || entregaSelecionada.pedido.status === 'Pronto para Faturar' ? (
                     <Button
                       onClick={() => {
                         atualizarStatusMutation.mutate({
@@ -440,13 +443,16 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                           novoStatus: 'Em Expedição'
                         });
                         setDetalhesOpen(false);
+                        toast.success("📦 Pedido enviado para expedição!");
                       }}
-                      className="bg-orange-600 hover:bg-orange-700"
+                      className="bg-orange-600 hover:bg-orange-700 w-full"
                     >
                       <Package className="w-4 h-4 mr-2" />
-                      Marcar Em Expedição
+                      📦 Iniciar Separação/Expedição
                     </Button>
+                  ) : null}
 
+                  {entregaSelecionada.pedido.status === 'Em Expedição' || entregaSelecionada.pedido.status === 'Faturado' ? (
                     <Button
                       onClick={() => {
                         atualizarStatusMutation.mutate({
@@ -454,27 +460,77 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                           novoStatus: 'Em Trânsito'
                         });
                         setDetalhesOpen(false);
+                        toast.success("🚚 Pedido saiu para entrega!");
                       }}
-                      className="bg-purple-600 hover:bg-purple-700"
+                      className="bg-purple-600 hover:bg-purple-700 w-full"
                     >
                       <Truck className="w-4 h-4 mr-2" />
-                      Saiu para Entrega
+                      🚚 Confirmar Saída do Veículo
                     </Button>
+                  ) : null}
 
+                  {entregaSelecionada.pedido.status === 'Em Trânsito' ? (
                     <Button
-                      onClick={() => {
+                      onClick={async () => {
+                        // Baixa automática de estoque
+                        if (entregaSelecionada.pedido.itens_revenda?.length > 0) {
+                          for (const item of entregaSelecionada.pedido.itens_revenda) {
+                            if (item.produto_id) {
+                              const produtos = await base44.entities.Produto.filter({ 
+                                id: item.produto_id,
+                                empresa_id: entregaSelecionada.pedido.empresa_id 
+                              });
+                              
+                              const produto = produtos[0];
+                              if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
+                                const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
+                                
+                                await base44.entities.MovimentacaoEstoque.create({
+                                  empresa_id: entregaSelecionada.pedido.empresa_id,
+                                  tipo_movimento: "saida",
+                                  origem_movimento: "pedido",
+                                  origem_documento_id: entregaSelecionada.pedido.id,
+                                  produto_id: item.produto_id,
+                                  produto_descricao: item.descricao || item.produto_descricao,
+                                  quantidade: item.quantidade,
+                                  unidade_medida: item.unidade,
+                                  estoque_anterior: produto.estoque_atual || 0,
+                                  estoque_atual: novoEstoque,
+                                  data_movimentacao: new Date().toISOString(),
+                                  documento: entregaSelecionada.pedido.numero_pedido,
+                                  motivo: "Entrega confirmada",
+                                  aprovado: true
+                                });
+                                
+                                await base44.entities.Produto.update(item.produto_id, {
+                                  estoque_atual: novoEstoque
+                                });
+                              }
+                            }
+                          }
+                        }
+                        
                         atualizarStatusMutation.mutate({
                           pedidoId: entregaSelecionada.pedido.id,
                           novoStatus: 'Entregue'
                         });
                         setDetalhesOpen(false);
+                        toast.success("✅ Entrega confirmada e estoque baixado automaticamente!");
                       }}
-                      className="bg-green-600 hover:bg-green-700 col-span-2"
+                      className="bg-green-600 hover:bg-green-700 w-full"
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      ✅ Confirmar Entrega
+                      ✅ Confirmar Entrega (Baixa Estoque Automática)
                     </Button>
-                  </div>
+                  ) : null}
+
+                  {entregaSelecionada.pedido.status === 'Entregue' && (
+                    <div className="bg-green-100 border border-green-300 rounded-lg p-4 text-center">
+                      <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
+                      <p className="font-semibold text-green-800">Pedido já foi entregue!</p>
+                      <p className="text-sm text-green-700">Estoque baixado automaticamente.</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
