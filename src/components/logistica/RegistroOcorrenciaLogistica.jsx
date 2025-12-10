@@ -13,7 +13,7 @@ import { toast } from "sonner";
  * ⚠️ REGISTRO DE OCORRÊNCIAS LOGÍSTICAS V21.5
  * Atrasos, avarias, extravios e problemas
  */
-export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose }) {
+export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, windowMode = false }) {
   const [tipoOcorrencia, setTipoOcorrencia] = useState("Atraso");
   const [descricao, setDescricao] = useState("");
   const [resolucao, setResolucao] = useState("");
@@ -88,8 +88,10 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose }
     }
   });
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col" : "";
+
   return (
-    <Card className="border-0 shadow-xl">
+    <Card className={`border-0 shadow-xl ${containerClass}`}>
       <CardHeader className="bg-gradient-to-r from-orange-500 to-red-600 text-white">
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5" />

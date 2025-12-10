@@ -13,7 +13,7 @@ import { toast } from "sonner";
  * 📸 COMPROVANTE DIGITAL DE ENTREGA V21.5
  * Upload de foto, assinatura digital e geolocalização
  */
-export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess }) {
+export default function ComprovanteEntregaDigital({ pedido, entrega, onSuccess, windowMode = false }) {
   const [nomeRecebedor, setNomeRecebedor] = useState("");
   const [documentoRecebedor, setDocumentoRecebedor] = useState("");
   const [cargoRecebedor, setCargoRecebedor] = useState("");

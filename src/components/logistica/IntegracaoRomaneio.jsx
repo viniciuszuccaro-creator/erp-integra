@@ -14,7 +14,7 @@ import { toast } from "sonner";
  * 📋 INTEGRAÇÃO COM ROMANEIO V21.5
  * Cria romaneios automaticamente com entregas selecionadas
  */
-export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose }) {
+export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose, windowMode = false }) {
   const [motorista, setMotorista] = useState("");
   const [veiculo, setVeiculo] = useState("");
   const [placa, setPlaca] = useState("");
@@ -118,8 +118,10 @@ export default function IntegracaoRomaneio({ pedidosSelecionados = [], onClose }
     .filter(p => pedidosSelecionadosIds.includes(p.id))
     .reduce((sum, p) => sum + (p.peso_total_kg || 0), 0);
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col" : "";
+
   return (
-    <Card className="border-0 shadow-xl">
+    <Card className={`border-0 shadow-xl ${containerClass}`}>
       <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
         <CardTitle className="flex items-center gap-2">
           <FileText className="w-5 h-5" />

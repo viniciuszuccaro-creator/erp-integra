@@ -71,10 +71,11 @@ export default function PainelMetricasRealtime({ windowMode = false }) {
 
   const progressoEntregas = Math.min((metricasHoje.entreguesHoje / meta.entregasDia) * 100, 100);
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
     <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <Card className="border-0 shadow-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -231,6 +232,7 @@ export default function PainelMetricasRealtime({ windowMode = false }) {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }

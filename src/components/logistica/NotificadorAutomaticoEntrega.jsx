@@ -14,7 +14,7 @@ import { toast } from "sonner";
  * 🔔 NOTIFICADOR AUTOMÁTICO DE ENTREGAS V21.5
  * Envia notificações ao cliente sobre status de entrega
  */
-export default function NotificadorAutomaticoEntrega({ pedido, entrega, onClose }) {
+export default function NotificadorAutomaticoEntrega({ pedido, entrega, onClose, windowMode = false }) {
   const [canal, setCanal] = useState("WhatsApp");
   const [mensagemCustom, setMensagemCustom] = useState("");
   const queryClient = useQueryClient();
@@ -75,8 +75,10 @@ export default function NotificadorAutomaticoEntrega({ pedido, entrega, onClose 
   const whatsappPrincipal = contatosCliente.find(c => c.tipo === 'WhatsApp' && c.principal)?.valor;
   const emailPrincipal = pedido.cliente_email;
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col" : "";
+
   return (
-    <Card className="border-0 shadow-xl">
+    <Card className={`border-0 shadow-xl ${containerClass}`}>
       <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
         <CardTitle className="flex items-center gap-2">
           <Bell className="w-5 h-5" />

@@ -112,10 +112,11 @@ Retorne a rota otimizada com:
     window.open(url, '_blank');
   };
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
     <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <Card className="border-0 shadow-xl">
         <CardHeader className="bg-gradient-to-r from-purple-500 to-blue-600 text-white">
           <CardTitle className="flex items-center gap-2">
@@ -266,6 +267,7 @@ Retorne a rota otimizada com:
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

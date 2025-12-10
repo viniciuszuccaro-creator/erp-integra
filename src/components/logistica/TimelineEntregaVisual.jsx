@@ -7,7 +7,7 @@ import { CheckCircle2, Clock, Package, Truck, Navigation, MapPin } from "lucide-
  * 📅 TIMELINE VISUAL DE ENTREGA V21.5
  * Mostra o progresso da entrega em formato de linha do tempo
  */
-export default function TimelineEntregaVisual({ pedido, entrega }) {
+export default function TimelineEntregaVisual({ pedido, entrega, windowMode = false }) {
   const etapas = [
     {
       status: 'Aprovado',

@@ -10,9 +10,11 @@ import { toast } from "sonner";
  * 🤖 IA DE PREVISÃO DE ENTREGA V21.5
  * Calcula data/hora prevista usando machine learning
  */
-export default function IAPrevisaoEntrega({ pedido, historico = [] }) {
+export default function IAPrevisaoEntrega({ pedido, historico = [], windowMode = false }) {
   const [previsao, setPrevisao] = useState(null);
   const [carregando, setCarregando] = useState(false);
+
+  const containerClass = windowMode ? "w-full h-full flex flex-col" : "";
 
   const calcularPrevisaoIA = async () => {
     setCarregando(true);
@@ -79,7 +81,7 @@ Retorne previsão precisa.`,
   };
 
   return (
-    <Card className="border-0 shadow-lg">
+    <Card className={`border-0 shadow-lg ${containerClass}`}>
       <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
         <CardTitle className="flex items-center gap-2">
           <Zap className="w-5 h-5" />
