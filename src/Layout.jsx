@@ -47,6 +47,7 @@ import { WindowProvider } from "@/components/lib/WindowManager";
 import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
+import ZIndexGuard from "@/components/lib/ZIndexFix";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -357,7 +358,9 @@ export default function Layout({ children, currentPageName }) {
   return (
     <UserProvider>
       <WindowProvider>
-        <LayoutContent children={children} currentPageName={currentPageName} />
+        <ZIndexGuard>
+          <LayoutContent children={children} currentPageName={currentPageName} />
+        </ZIndexGuard>
       </WindowProvider>
     </UserProvider>
   );
