@@ -15,6 +15,8 @@ import {
   Calendar,
   AlertCircle,
   Bell,
+  Send,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAutomacaoFluxoPedido } from "./AutomacaoFluxoPedido";
 
 /**
  * 📦 PEDIDOS PARA RETIRADA V21.5
@@ -40,6 +43,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   const [observacoes, setObservacoes] = useState("");
 
   const queryClient = useQueryClient();
+  const automacao = useAutomacaoFluxoPedido();
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
@@ -188,8 +192,21 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
             <Package className="w-7 h-7 text-green-600" />
             Pedidos para Retirada
           </h2>
-          <p className="text-slate-600 text-sm">Pedidos que o cliente irá buscar no local</p>
+          <p className="text-slate-600 text-sm">Gestão inteligente de retiradas no local</p>
         </div>
+        <Button
+          variant="outline"
+          onClick={async () => {
+            const prontos = pedidos.filter(p => p.status === 'Pronto para Retirada');
+            for (const pedido of prontos) {
+              await automacao.notificarClienteStatusPedido(pedido, 'Pronto para Retirada');
+            }
+            toast.success(`📢 ${prontos.length} cliente(s) notificado(s)!`);
+          }}
+        >
+          <Send className="w-4 h-4 mr-2" />
+          Notificar Prontos
+        </Button>
       </div>
 
       {/* Estatísticas */}
