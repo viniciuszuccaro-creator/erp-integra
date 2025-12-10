@@ -536,7 +536,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
       <Dialog open={romaneioOpen} onOpenChange={setRomaneioOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
           <IntegracaoRomaneio
-            pedidosSelecionados={pedidosElegiveis}
+            pedidosSelecionados={pedidosFiltrados}
             onClose={() => setRomaneioOpen(false)}
           />
         </DialogContent>
