@@ -113,62 +113,50 @@ export async function buscarDadosCPF(cpf) {
     const cpfLimpo = cpf.replace(/\D/g, '');
     
     if (cpfLimpo.length !== 11) {
-      return {
-        sucesso: false,
-        erro: 'CPF deve ter 11 dígitos'
-      };
+      throw new Error('CPF deve ter 11 dígitos');
     }
 
-    // Validação do CPF usando algoritmo de módulo 11
-    if (/^(\d)\1{10}$/.test(cpfLimpo)) {
-      return {
-        sucesso: false,
-        erro: 'CPF inválido'
-      };
-    }
-    
-    let soma = 0;
-    for (let i = 0; i < 9; i++) {
-      soma += parseInt(cpfLimpo.charAt(i)) * (10 - i);
-    }
-    let resto = 11 - (soma % 11);
-    let digito1 = resto > 9 ? 0 : resto;
-    
-    if (digito1 !== parseInt(cpfLimpo.charAt(9))) {
-      return {
-        sucesso: false,
-        erro: 'CPF inválido - dígito verificador incorreto'
-      };
-    }
-    
-    soma = 0;
-    for (let i = 0; i < 10; i++) {
-      soma += parseInt(cpfLimpo.charAt(i)) * (11 - i);
-    }
-    resto = 11 - (soma % 11);
-    let digito2 = resto > 9 ? 0 : resto;
-    
-    if (digito2 !== parseInt(cpfLimpo.charAt(10))) {
-      return {
-        sucesso: false,
-        erro: 'CPF inválido - dígito verificador incorreto'
-      };
-    }
+    // Validação usando IA
+    const resultado = await base44.integrations.Core.InvokeLLM({
+      prompt: `Valide o CPF ${cpfLimpo} usando o algoritmo oficial de validação de CPF brasileiro (módulo 11).
 
-    const formatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+ALGORITMO:
+1. Verificar se não é sequência repetida (111.111.111-11, etc)
+2. Calcular primeiro dígito verificador
+3. Calcular segundo dígito verificador
+
+Retorne:
+{
+  "valido": true ou false,
+  "formatado": "XXX.XXX.XXX-XX" (se válido),
+  "mensagem": "CPF válido" ou "CPF inválido - motivo"
+}`,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          valido: { type: "boolean" },
+          formatado: { type: "string" },
+          mensagem: { type: "string" }
+        }
+      }
+    });
+
+    if (!resultado.valido) {
+      throw new Error(resultado.mensagem || 'CPF inválido');
+    }
 
     return {
       sucesso: true,
       dados: {
         valido: true,
-        formatado: formatado
+        formatado: resultado.formatado || cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
       }
     };
 
   } catch (error) {
     return {
       sucesso: false,
-      erro: 'Erro ao validar CPF'
+      erro: error.message || 'Erro ao validar CPF'
     };
   }
 }
