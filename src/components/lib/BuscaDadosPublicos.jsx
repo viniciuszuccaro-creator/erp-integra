@@ -21,40 +21,48 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
  * @returns {object} Dados da empresa
  */
 export async function buscarDadosCNPJ(cnpj) {
+  const cnpjLimpo = cnpj.replace(/\D/g, '');
+  
+  if (cnpjLimpo.length !== 14) {
+    return {
+      sucesso: false,
+      erro: 'CNPJ deve ter 14 dígitos'
+    };
+  }
+
   try {
-    const cnpjLimpo = cnpj.replace(/\D/g, '');
-    
-    if (cnpjLimpo.length !== 14) {
-      throw new Error('CNPJ inválido - deve ter 14 dígitos');
-    }
-
     const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Busque os dados reais da empresa com CNPJ ${cnpjLimpo} na Receita Federal usando a consulta pública CNPJ (https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp) ou ReceitaWS.
+      prompt: `Você DEVE consultar a Receita Federal do Brasil e retornar os dados OFICIAIS do CNPJ: ${cnpjLimpo}
 
-Retorne um JSON com os dados REAIS encontrados:
+Acesse e retorne dados de:
+- ReceitaWS: https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}
+- BrasilAPI: https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}
+- Consulta Receita Federal: https://solucoes.receita.fazenda.gov.br
+
+OBRIGATÓRIO: Retorne dados REAIS que você encontrou. Se não encontrar o CNPJ, retorne com erro.
+
+JSON esperado:
 {
-  "razao_social": "nome completo da empresa",
-  "nome_fantasia": "nome fantasia",
-  "inscricao_estadual": "IE se disponível",
-  "situacao_cadastral": "ATIVA/SUSPENSA/INAPTA/BAIXADA",
-  "data_abertura": "DD/MM/YYYY",
-  "porte": "MEI/ME/EPP/MEDIO/GRANDE",
-  "natureza_juridica": "tipo da empresa",
-  "cnae_principal": "atividade principal",
+  "razao_social": "RAZÃO SOCIAL COMPLETA",
+  "nome_fantasia": "NOME FANTASIA",
+  "inscricao_estadual": "IE SE DISPONÍVEL",
+  "situacao_cadastral": "ATIVA",
+  "data_abertura": "01/01/2020",
+  "porte": "ME",
+  "cnae_principal": "descrição da atividade",
   "endereco_completo": {
-    "logradouro": "rua",
-    "numero": "num",
-    "complemento": "compl",
-    "bairro": "bairro",
-    "cidade": "cidade",
-    "uf": "UF",
-    "cep": "CEP"
+    "logradouro": "RUA X",
+    "numero": "123",
+    "bairro": "BAIRRO",
+    "cidade": "CIDADE",
+    "uf": "SP",
+    "cep": "12345678"
   },
-  "telefone": "tel",
-  "email": "email"
+  "telefone": "11999999999",
+  "email": "email@empresa.com"
 }
 
-Se não encontrar, retorne: {"erro": "CNPJ não encontrado"}`,
+Se CNPJ não existir: {"erro": "CNPJ não encontrado"}`,
       add_context_from_internet: true,
       response_json_schema: {
         type: "object",
@@ -66,14 +74,12 @@ Se não encontrar, retorne: {"erro": "CNPJ não encontrado"}`,
           situacao_cadastral: { type: "string" },
           data_abertura: { type: "string" },
           porte: { type: "string" },
-          natureza_juridica: { type: "string" },
           cnae_principal: { type: "string" },
           endereco_completo: {
             type: "object",
             properties: {
               logradouro: { type: "string" },
               numero: { type: "string" },
-              complemento: { type: "string" },
               bairro: { type: "string" },
               cidade: { type: "string" },
               uf: { type: "string" },
@@ -87,7 +93,10 @@ Se não encontrar, retorne: {"erro": "CNPJ não encontrado"}`,
     });
 
     if (resultado.erro) {
-      throw new Error(resultado.erro);
+      return {
+        sucesso: false,
+        erro: resultado.erro
+      };
     }
 
     return {
@@ -98,7 +107,7 @@ Se não encontrar, retorne: {"erro": "CNPJ não encontrado"}`,
   } catch (error) {
     return {
       sucesso: false,
-      erro: error.message || 'Erro ao buscar CNPJ'
+      erro: 'Erro ao buscar CNPJ - tente novamente'
     };
   }
 }
@@ -109,27 +118,30 @@ Se não encontrar, retorne: {"erro": "CNPJ não encontrado"}`,
  * @returns {object} Status do CPF
  */
 export async function buscarDadosCPF(cpf) {
+  const cpfLimpo = cpf.replace(/\D/g, '');
+  
+  if (cpfLimpo.length !== 11) {
+    return {
+      sucesso: false,
+      erro: 'CPF deve ter 11 dígitos'
+    };
+  }
+
   try {
-    const cpfLimpo = cpf.replace(/\D/g, '');
-    
-    if (cpfLimpo.length !== 11) {
-      throw new Error('CPF deve ter 11 dígitos');
-    }
-
-    // Validação usando IA
     const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Valide o CPF ${cpfLimpo} usando o algoritmo oficial de validação de CPF brasileiro (módulo 11).
+      prompt: `Valide o CPF ${cpfLimpo} usando o algoritmo matemático oficial brasileiro de validação (módulo 11).
 
-ALGORITMO:
-1. Verificar se não é sequência repetida (111.111.111-11, etc)
-2. Calcular primeiro dígito verificador
-3. Calcular segundo dígito verificador
+PASSOS:
+1. Verificar se NÃO é sequência repetida (00000000000, 11111111111, etc) - se for, é INVÁLIDO
+2. Calcular o PRIMEIRO dígito verificador (posição 10)
+3. Calcular o SEGUNDO dígito verificador (posição 11)
+4. Comparar com os 2 últimos dígitos do CPF informado
 
-Retorne:
+Retorne JSON:
 {
   "valido": true ou false,
-  "formatado": "XXX.XXX.XXX-XX" (se válido),
-  "mensagem": "CPF válido" ou "CPF inválido - motivo"
+  "formatado": "XXX.XXX.XXX-XX",
+  "mensagem": "CPF válido" ou "CPF inválido - dígitos verificadores incorretos"
 }`,
       response_json_schema: {
         type: "object",
@@ -142,21 +154,24 @@ Retorne:
     });
 
     if (!resultado.valido) {
-      throw new Error(resultado.mensagem || 'CPF inválido');
+      return {
+        sucesso: false,
+        erro: resultado.mensagem || 'CPF inválido'
+      };
     }
 
     return {
       sucesso: true,
       dados: {
         valido: true,
-        formatado: resultado.formatado || cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+        formatado: resultado.formatado
       }
     };
 
   } catch (error) {
     return {
       sucesso: false,
-      erro: error.message || 'Erro ao validar CPF'
+      erro: 'Erro ao validar CPF - tente novamente'
     };
   }
 }
