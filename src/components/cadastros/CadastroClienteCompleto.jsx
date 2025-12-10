@@ -766,29 +766,25 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       <SelectValue placeholder="Quem indicou este cliente?" />
                     </SelectTrigger>
                     <SelectContent className="z-[9999]">
-                      <SelectItem value={null}>
-                        <span className="text-slate-400">Nenhum indicador</span>
-                      </SelectItem>
-                      {representantes.map(rep => (
-                        <SelectItem key={rep.id} value={rep.id}>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{rep.nome}</span>
-                            {rep.percentual_comissao > 0 && (
-                              <span className="text-xs text-green-600">
-                                ({rep.percentual_comissao}% comissão)
-                              </span>
-                            )}
-                          </div>
-                        </SelectItem>
-                      ))}
+                     <SelectItem value={null}>
+                       <span className="text-slate-400">❌ Nenhum indicador</span>
+                     </SelectItem>
+                     {representantes.map(rep => (
+                       <SelectItem key={rep.id} value={rep.id}>
+                         <span className="font-medium">{rep.nome}</span>
+                         <span className="text-xs text-slate-500 ml-2">
+                           ({rep.tipo_representante || 'Representante'})
+                         </span>
+                         {rep.percentual_comissao > 0 && (
+                           <span className="text-xs text-green-600 ml-1">
+                             - {rep.percentual_comissao}%
+                           </span>
+                         )}
+                       </SelectItem>
+                     ))}
                     </SelectContent>
-                  </Select>
-                  {formData.indicador_id && (
-                    <p className="text-xs text-green-700 mt-1 flex items-center gap-1">
-                      ✅ Indicador configurado - receberá comissão/cashback automaticamente nas vendas
-                    </p>
-                  )}
-                </div>
+                    </Select>
+                    </div>
 
                 <div className="col-span-2">
                   {formData.indicador_id && representantes.find(r => r.id === formData.indicador_id) && (
