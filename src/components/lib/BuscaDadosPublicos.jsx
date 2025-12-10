@@ -28,63 +28,84 @@ export async function buscarDadosCNPJ(cnpj) {
       throw new Error('CNPJ inválido - deve ter 14 dígitos');
     }
 
-    // Usar API pública BrasilAPI (gratuita e oficial)
-    const resposta = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
-    
-    if (!resposta.ok) {
-      if (resposta.status === 404) {
-        throw new Error('CNPJ não encontrado na Receita Federal');
-      }
-      throw new Error('Erro ao consultar CNPJ - tente novamente');
-    }
+    const resultado = await base44.integrations.Core.InvokeLLM({
+      prompt: `Consulte o CNPJ ${cnpjLimpo} na base de dados pública da Receita Federal do Brasil.
 
-    const dados = await resposta.json();
+Acesse sites oficiais de consulta de CNPJ como:
+- Receita Federal (consulta pública)
+- BrasilAPI
+- ReceitaWS
+- Outros serviços públicos confiáveis
 
-    // Extrair inscrição estadual se disponível
-    let inscricaoEstadual = '';
-    if (dados.qsa && dados.qsa.length > 0) {
-      // Tentar buscar IE via IA se houver sócios
-      try {
-        const ieResult = await base44.integrations.Core.InvokeLLM({
-          prompt: `Para a empresa ${dados.razao_social}, CNPJ ${cnpjLimpo}, localizada em ${dados.municipio}/${dados.uf}, busque na internet a INSCRIÇÃO ESTADUAL (IE) se disponível publicamente. Retorne apenas o número da IE ou vazio se não encontrar.`,
-          add_context_from_internet: true,
-          response_json_schema: {
+RETORNE OS DADOS REAIS ENCONTRADOS nesses sites. Não invente informações.
+
+Formato da resposta JSON:
+{
+  "razao_social": "Nome completo da empresa conforme Receita",
+  "nome_fantasia": "Nome fantasia se houver",
+  "inscricao_estadual": "Número da IE se aparecer na consulta",
+  "situacao_cadastral": "ATIVA, INAPTA, SUSPENSA ou BAIXADA",
+  "data_abertura": "Data no formato YYYY-MM-DD",
+  "porte": "MEI, ME, EPP ou DEMAIS",
+  "natureza_juridica": "Ex: Sociedade Empresária Limitada",
+  "cnae_principal": "Código e descrição do CNAE",
+  "endereco_completo": {
+    "logradouro": "nome da rua",
+    "numero": "número",
+    "complemento": "complemento",
+    "bairro": "bairro",
+    "cidade": "cidade",
+    "uf": "UF",
+    "cep": "CEP"
+  },
+  "telefone": "telefone com DDD",
+  "email": "email se disponível"
+}
+
+Se NÃO encontrar o CNPJ em nenhum site, retorne APENAS:
+{"erro": "CNPJ não encontrado"}`,
+      add_context_from_internet: true,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          erro: { type: "string" },
+          razao_social: { type: "string" },
+          nome_fantasia: { type: "string" },
+          inscricao_estadual: { type: "string" },
+          situacao_cadastral: { type: "string" },
+          data_abertura: { type: "string" },
+          porte: { type: "string" },
+          natureza_juridica: { type: "string" },
+          cnae_principal: { type: "string" },
+          endereco_completo: {
             type: "object",
             properties: {
-              inscricao_estadual: { type: "string" }
+              logradouro: { type: "string" },
+              numero: { type: "string" },
+              complemento: { type: "string" },
+              bairro: { type: "string" },
+              cidade: { type: "string" },
+              uf: { type: "string" },
+              cep: { type: "string" }
             }
-          }
-        });
-        inscricaoEstadual = ieResult.inscricao_estadual || '';
-      } catch {
-        inscricaoEstadual = '';
+          },
+          telefone: { type: "string" },
+          email: { type: "string" }
+        }
       }
+    });
+
+    if (resultado.erro) {
+      throw new Error(resultado.erro);
+    }
+
+    if (!resultado.razao_social) {
+      throw new Error('CNPJ não encontrado ou dados incompletos');
     }
 
     return {
       sucesso: true,
-      dados: {
-        razao_social: dados.razao_social || '',
-        nome_fantasia: dados.nome_fantasia || '',
-        inscricao_estadual: inscricaoEstadual,
-        situacao_cadastral: dados.descricao_situacao_cadastral || '',
-        data_abertura: dados.data_inicio_atividade || '',
-        porte: dados.porte || '',
-        natureza_juridica: dados.natureza_juridica || '',
-        cnae_principal: dados.cnae_fiscal_descricao || '',
-        endereco_completo: {
-          logradouro: dados.logradouro || '',
-          numero: dados.numero || '',
-          complemento: dados.complemento || '',
-          bairro: dados.bairro || '',
-          cidade: dados.municipio || '',
-          uf: dados.uf || '',
-          cep: dados.cep || ''
-        },
-        telefone: dados.ddd_telefone_1 || '',
-        email: dados.email || '',
-        capital_social: parseFloat(dados.capital_social) || 0
-      }
+      dados: resultado
     };
 
   } catch (error) {
@@ -173,54 +194,48 @@ export async function buscarEnderecoCEP(cep) {
       throw new Error('CEP inválido - deve ter 8 dígitos');
     }
 
-    // 1. Buscar via ViaCEP
-    const resposta = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
-    if (!resposta.ok) {
-      throw new Error('Erro ao buscar CEP na API ViaCEP');
-    }
-    
-    const dadosViaCep = await resposta.json();
-    
-    if (dadosViaCep.erro) {
-      throw new Error('CEP não encontrado');
-    }
+    const resultado = await base44.integrations.Core.InvokeLLM({
+      prompt: `Consulte o CEP ${cepLimpo} usando ViaCEP (viacep.com.br) ou outra fonte oficial dos Correios brasileiros.
 
-    // 2. Buscar coordenadas GPS via OpenStreetMap Nominatim
-    const enderecoCompleto = `${dadosViaCep.logradouro}, ${dadosViaCep.bairro}, ${dadosViaCep.localidade}, ${dadosViaCep.uf}, Brasil`;
-    const urlNominatim = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(enderecoCompleto)}&format=json&limit=1`;
-    
-    let latitude = null;
-    let longitude = null;
-    
-    try {
-      const respostaGPS = await fetch(urlNominatim, {
-        headers: {
-          'User-Agent': 'ERP-Zuccaro/1.0'
-        }
-      });
-      
-      if (respostaGPS.ok) {
-        const dadosGPS = await respostaGPS.json();
-        if (dadosGPS && dadosGPS.length > 0) {
-          latitude = parseFloat(dadosGPS[0].lat);
-          longitude = parseFloat(dadosGPS[0].lon);
+Retorne os dados REAIS encontrados:
+{
+  "logradouro": "nome da rua/avenida",
+  "bairro": "nome do bairro",
+  "cidade": "nome da cidade",
+  "uf": "SP (sigla do estado)",
+  "ddd": "código DDD da região",
+  "latitude": coordenada GPS latitude (número),
+  "longitude": coordenada GPS longitude (número)
+}
+
+Se o CEP não existir, retorne: {"erro": "CEP não encontrado"}`,
+      add_context_from_internet: true,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          erro: { type: "string" },
+          logradouro: { type: "string" },
+          bairro: { type: "string" },
+          cidade: { type: "string" },
+          uf: { type: "string" },
+          latitude: { type: "number" },
+          longitude: { type: "number" },
+          ddd: { type: "string" }
         }
       }
-    } catch (erroGPS) {
-      console.warn('Não foi possível obter coordenadas GPS:', erroGPS);
+    });
+
+    if (resultado.erro) {
+      throw new Error(resultado.erro);
+    }
+
+    if (!resultado.cidade) {
+      throw new Error('CEP não encontrado ou dados incompletos');
     }
 
     return {
       sucesso: true,
-      dados: {
-        logradouro: dadosViaCep.logradouro || '',
-        bairro: dadosViaCep.bairro || '',
-        cidade: dadosViaCep.localidade || '',
-        uf: dadosViaCep.uf || '',
-        latitude: latitude,
-        longitude: longitude,
-        ddd: dadosViaCep.ddd || ''
-      }
+      dados: resultado
     };
 
   } catch (error) {
