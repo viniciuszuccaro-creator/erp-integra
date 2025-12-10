@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -371,7 +370,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[99999]">
                     {etapasObra.map(etapa => (
                       <SelectItem key={etapa.id} value={etapa.id}>
                         {etapa.nome}
@@ -418,7 +417,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[99999]">
                       {bitolas.map((b) => (
                         <SelectItem key={b.id} value={b.bitola_diametro_mm + 'mm'}>
                           {b.bitola_diametro_mm}mm ({b.tipo_aco})
@@ -443,7 +442,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[99999]">
                         {bitolas.filter(b => b.tipo_aco === 'CA-50').map((b) => (
                           <SelectItem key={b.id} value={b.bitola_diametro_mm + 'mm'}>
                             {b.bitola_diametro_mm}mm (CA-50)
@@ -510,7 +509,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[99999]">
                           {bitolas.filter(b => b.tipo_aco === 'CA-60' || b.bitola_diametro_mm <= 8).map((b) => (
                             <SelectItem key={b.id} value={b.bitola_diametro_mm + 'mm'}>
                               {b.bitola_diametro_mm}mm
@@ -571,7 +570,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="z-[99999]">
                             <SelectItem value="nenhum">Nenhum</SelectItem>
                             <SelectItem value="esquerda">Esquerda</SelectItem>
                             <SelectItem value="direita">Direita</SelectItem>

@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Plus, ExternalLink } from "lucide-react";
 
-export default function SeletorEnderecoEntregaPedido({ cliente, enderecoSelecionado, onChange }) {
+export default function SeletorEnderecoEntregaPedido({ cliente, enderecoSelecionado, onSelect }) {
+  const onChange = onSelect; // Alias para manter compatibilidade
   if (!cliente) return null;
 
   const enderecosDisponiveis = [
@@ -51,7 +52,7 @@ export default function SeletorEnderecoEntregaPedido({ cliente, enderecoSelecion
           <SelectTrigger>
             <SelectValue placeholder="Selecione um endereço..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[99999]">
             {enderecosDisponiveis.map((end, idx) => (
               <SelectItem key={end.id || `temp-${idx}`} value={end.id || `temp-${idx}`}>
                 <div className="flex items-center gap-2">

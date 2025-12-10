@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -323,7 +322,7 @@ Retorne APENAS posições claramente identificadas.`,
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[99999]">
                         {bitolas.map((b) => (
                           <SelectItem key={b.id} value={b.bitola_diametro_mm.toString()}>
                             {b.bitola_diametro_mm}mm ({b.tipo_aco})
@@ -346,7 +345,7 @@ Retorne APENAS posições claramente identificadas.`,
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[99999]">
                         {formatosDisponiveis.map((f) => (
                           <SelectItem key={f.id} value={f.id}>
                             {f.label}
@@ -377,7 +376,7 @@ Retorne APENAS posições claramente identificadas.`,
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[99999]">
                       {etapasObra.map(etapa => (
                         <SelectItem key={etapa.id} value={etapa.id}>
                           {etapa.nome}
