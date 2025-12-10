@@ -22,7 +22,9 @@ import {
   BarChart3,
   Route,
   Zap,
-  MessageCircle
+  MessageCircle,
+  Camera,
+  FileText
 } from "lucide-react";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -33,7 +35,12 @@ import NotificadorAutomaticoEntrega from "../logistica/NotificadorAutomaticoEntr
 import MapaRoteirizacaoIA from "../logistica/MapaRoteirizacaoIA";
 import TimelineEntregaVisual from "../logistica/TimelineEntregaVisual";
 import IAPrevisaoEntrega from "../logistica/IAPrevisaoEntrega";
+import ComprovanteEntregaDigital from "../logistica/ComprovanteEntregaDigital";
+import RegistroOcorrenciaLogistica from "../logistica/RegistroOcorrenciaLogistica";
+import IntegracaoRomaneio from "../logistica/IntegracaoRomaneio";
+import PainelMetricasRealtime from "../logistica/PainelMetricasRealtime";
 import { useWindow } from "@/components/lib/useWindow";
+import { usePermissoesLogistica } from "../logistica/ControleAcessoLogistica";
 
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
@@ -50,9 +57,13 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   const [detalhesOpen, setDetalhesOpen] = useState(false);
   const [entregaSelecionada, setEntregaSelecionada] = useState(null);
   const [notificadorOpen, setNotificadorOpen] = useState(false);
+  const [comprovanteOpen, setComprovanteOpen] = useState(false);
+  const [ocorrenciaOpen, setOcorrenciaOpen] = useState(false);
+  const [romaneioOpen, setRomaneioOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
+  const permissoes = usePermissoesLogistica();
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
@@ -145,7 +156,20 @@ export default function PedidosEntregaTab({ windowMode = false }) {
           <p className="text-slate-600 text-sm">Pedidos aprovados aguardando entrega</p>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => openWindow(PainelMetricasRealtime, { windowMode: true }, {
+              title: '⚡ Métricas em Tempo Real',
+              width: 1100,
+              height: 650
+            })}
+            variant="outline"
+            className="border-green-300 text-green-700 hover:bg-green-50"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            Tempo Real
+          </Button>
+
           <Button
             onClick={() => openWindow(DashboardLogisticaInteligente, { windowMode: true }, {
               title: '📊 Dashboard Logística IA',
@@ -156,7 +180,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
             className="border-blue-300 text-blue-700 hover:bg-blue-50"
           >
             <BarChart3 className="w-4 h-4 mr-2" />
-            Dashboard IA
+            Analytics IA
           </Button>
           
           <Button
@@ -170,6 +194,16 @@ export default function PedidosEntregaTab({ windowMode = false }) {
             <Route className="w-4 h-4 mr-2" />
             🤖 Otimizar Rotas
           </Button>
+
+          {permissoes.podeCriarRomaneio && (
+            <Button
+              onClick={() => setRomaneioOpen(true)}
+              className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Criar Romaneio
+            </Button>
+          )}
         </div>
       </div>
 
@@ -350,6 +384,20 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                               <Bell className="w-4 h-4 mr-1" />
                               Notificar
                             </Button>
+
+                            {pedido.status === 'Em Trânsito' && permissoes.podeConfirmarEntrega && (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setEntregaSelecionada({ pedido, entrega });
+                                  setComprovanteOpen(true);
+                                }}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-1" />
+                                Confirmar
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -452,6 +500,45 @@ export default function PedidosEntregaTab({ windowMode = false }) {
               onClose={() => setNotificadorOpen(false)}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Comprovante */}
+      <Dialog open={comprovanteOpen} onOpenChange={setComprovanteOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+          {entregaSelecionada && (
+            <ComprovanteEntregaDigital
+              pedido={entregaSelecionada.pedido}
+              entrega={entregaSelecionada.entrega}
+              onSuccess={() => {
+                setComprovanteOpen(false);
+                setDetalhesOpen(false);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Ocorrência */}
+      <Dialog open={ocorrenciaOpen} onOpenChange={setOcorrenciaOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+          {entregaSelecionada && (
+            <RegistroOcorrenciaLogistica
+              pedido={entregaSelecionada.pedido}
+              entrega={entregaSelecionada.entrega}
+              onClose={() => setOcorrenciaOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Romaneio */}
+      <Dialog open={romaneioOpen} onOpenChange={setRomaneioOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <IntegracaoRomaneio
+            pedidosSelecionados={pedidosElegiveis}
+            onClose={() => setRomaneioOpen(false)}
+          />
         </DialogContent>
       </Dialog>
 
@@ -614,18 +701,38 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                 historico={entregas.filter(e => e.status === 'Entregue').slice(0, 10)}
               />
 
-              {/* Botão de Notificação */}
-              <Card className="bg-blue-50 border-blue-300">
-                <CardContent className="p-4">
+              {/* Ações Adicionais */}
+              <Card className="bg-slate-50">
+                <CardContent className="p-4 space-y-2">
                   <Button
-                    onClick={() => {
-                      setNotificadorOpen(true);
-                    }}
+                    onClick={() => setNotificadorOpen(true)}
                     className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
                   >
                     <MessageCircle className="w-4 h-4 mr-2" />
-                    💬 Notificar Cliente sobre Status
+                    💬 Notificar Cliente
                   </Button>
+
+                  {permissoes.podeConfirmarEntrega && entregaSelecionada.pedido.status === 'Em Trânsito' && (
+                    <Button
+                      onClick={() => setComprovanteOpen(true)}
+                      variant="outline"
+                      className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      📸 Registrar Comprovante
+                    </Button>
+                  )}
+
+                  {permissoes.podeRegistrarOcorrencia && (
+                    <Button
+                      onClick={() => setOcorrenciaOpen(true)}
+                      variant="outline"
+                      className="w-full border-orange-300 text-orange-700 hover:bg-orange-50"
+                    >
+                      <AlertTriangle className="w-4 h-4 mr-2" />
+                      ⚠️ Registrar Ocorrência
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
 
