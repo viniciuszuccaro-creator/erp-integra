@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck } from "lucide-react";
+import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck, Truck, Package } from "lucide-react";
 import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
 import ComissoesTab from "../components/comercial/ComissoesTab";
