@@ -450,7 +450,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="tipo">
                       <SelectValue placeholder="Selecione o tipo..." />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Pessoa Física">Pessoa Física</SelectItem>
                       <SelectItem value="Pessoa Jurídica">Pessoa Jurídica</SelectItem>
                     </SelectContent>
@@ -466,7 +466,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="status">
                       <SelectValue placeholder="Selecione a situação..." />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Prospect">Prospect</SelectItem>
                       <SelectItem value="Ativo">Ativo</SelectItem>
                       <SelectItem value="Inativo">Inativo</SelectItem>
@@ -706,7 +706,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="regiao_atendimento_id">
                       <SelectValue placeholder="Selecione a região" />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       {regioes.filter(r => r.ativo).map((regiao) => (
                         <SelectItem key={regiao.id} value={regiao.id}>
                           {regiao.nome_regiao} {regiao.tipo_regiao && `(${regiao.tipo_regiao})`}
@@ -734,7 +734,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="vendedor_responsavel_id" className={!cliente?.id && formData.vendedor_responsavel_id ? 'border-green-300 bg-green-50' : ''}>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       {colaboradores.filter(c => c.departamento === 'Comercial').map(c => (
                         <SelectItem key={c.id} value={c.id}>
                           {c.nome_completo} - {c.cargo}
@@ -765,7 +765,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="indicador_id" className="w-full">
                       <SelectValue placeholder="Quem indicou este cliente?" />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                      <SelectItem value={null}>
                        <span className="text-slate-400">❌ Nenhum indicador</span>
                      </SelectItem>
@@ -944,7 +944,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="tabela_preco_id">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       {tabelasPreco.filter(t => t.ativo).map(t => (
                         <SelectItem key={t.id} value={t.id}>
                           {t.nome} ({t.tipo})
@@ -973,7 +973,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="forma_pagamento_padrao_id">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       {formasPagamento.filter(f => f.ativa).map(f => (
                         <SelectItem key={f.id} value={f.id}>
                           {f.descricao}
@@ -998,7 +998,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="condicao_pagamento">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="À Vista">À Vista</SelectItem>
                       <SelectItem value="7 dias">7 dias</SelectItem>
                       <SelectItem value="15 dias">15 dias</SelectItem>
@@ -1096,7 +1096,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="regime_tributario">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
                       <SelectItem value="Lucro Presumido">Lucro Presumido</SelectItem>
                       <SelectItem value="Lucro Real">Lucro Real</SelectItem>
@@ -1135,7 +1135,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                     <SelectTrigger id="tipo_contribuinte">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="1 - Contribuinte">1 - Contribuinte ICMS</SelectItem>
                       <SelectItem value="2 - Isento">2 - Isento</SelectItem>
                       <SelectItem value="9 - Não Contribuinte">9 - Não Contribuinte</SelectItem>
