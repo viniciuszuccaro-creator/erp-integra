@@ -34,17 +34,19 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
       return resultados;
     }
 
-    // 2. RESERVAR ESTOQUE (Itens de Revenda)
+    // 2. BAIXAR ESTOQUE IMEDIATAMENTE (Itens de Revenda) - V21.5 NOVO FLUXO
+    const baixasEstoque = [];
     if (pedido.itens_revenda?.length > 0) {
       for (const item of pedido.itens_revenda) {
         try {
-          const reserva = await reservarEstoqueItem(item, pedido, empresaId);
-          resultados.reservasEstoque.push(reserva);
+          const baixa = await baixarEstoqueItemAprovacao(item, pedido, empresaId);
+          baixasEstoque.push(baixa);
         } catch (error) {
-          resultados.erros.push(`Erro ao reservar ${item.descricao}: ${error.message}`);
+          resultados.erros.push(`Erro ao baixar estoque ${item.descricao}: ${error.message}`);
         }
       }
     }
+    resultados.reservasEstoque = baixasEstoque;
 
     // 3. GERAR OPs AUTOMATICAMENTE (Itens de Produção)
     if (pedido.itens_producao?.length > 0) {
@@ -90,7 +92,7 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
       referencia_numero: pedido.numero_pedido,
       tipo_evento: "Aprovacao",
       titulo_evento: "Pedido Aprovado e Processado",
-      descricao_detalhada: `Pedido aprovado. ${resultados.reservasEstoque.length} reservas, ${resultados.opsGeradas.length} OPs geradas`,
+      descricao_detalhada: `Pedido aprovado. ${resultados.reservasEstoque.length} baixas de estoque, ${resultados.opsGeradas.length} OPs geradas`,
       usuario_responsavel: "Sistema",
       data_evento: new Date().toISOString(),
       valor_relacionado: pedido.valor_total
@@ -147,9 +149,9 @@ async function validarLimiteCredito(pedido) {
 }
 
 /**
- * 3️⃣ RESERVAR ESTOQUE
+ * 3️⃣ BAIXAR ESTOQUE NA APROVAÇÃO (V21.5 - NOVO FLUXO)
  */
-async function reservarEstoqueItem(item, pedido, empresaId) {
+async function baixarEstoqueItemAprovacao(item, pedido, empresaId) {
   const produtos = await base44.entities.Produto.filter({
     id: item.produto_id,
     empresa_id: empresaId
@@ -161,38 +163,43 @@ async function reservarEstoqueItem(item, pedido, empresaId) {
     throw new Error("Produto não encontrado no estoque");
   }
 
-  const estoqueDisponivel = (produto.estoque_atual || 0) - (produto.estoque_reservado || 0);
+  const estoqueAtual = produto.estoque_atual || 0;
 
-  if (estoqueDisponivel < item.quantidade) {
-    throw new Error(`Estoque insuficiente. Disponível: ${estoqueDisponivel}`);
+  if (estoqueAtual < item.quantidade) {
+    throw new Error(`Estoque insuficiente. Disponível: ${estoqueAtual} ${item.unidade}`);
   }
 
-  // Criar movimentação de reserva
+  const novoEstoque = estoqueAtual - item.quantidade;
+
+  // Criar movimentação de saída imediata
   const movimentacao = await base44.entities.MovimentacaoEstoque.create({
     empresa_id: empresaId,
-    tipo_movimento: "reserva",
+    tipo_movimento: "saida",
     origem_movimento: "pedido",
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
-    produto_descricao: item.descricao,
+    produto_descricao: item.descricao || item.produto_descricao,
     codigo_produto: item.codigo_sku,
     quantidade: item.quantidade,
     unidade_medida: item.unidade,
-    estoque_anterior: produto.estoque_atual,
-    estoque_atual: produto.estoque_atual,
-    reservado_anterior: produto.estoque_reservado || 0,
-    reservado_atual: (produto.estoque_reservado || 0) + item.quantidade,
-    disponivel_anterior: estoqueDisponivel,
-    disponivel_atual: estoqueDisponivel - item.quantidade,
+    estoque_anterior: estoqueAtual,
+    estoque_atual: novoEstoque,
+    reservado_anterior: 0,
+    reservado_atual: 0,
+    disponivel_anterior: estoqueAtual,
+    disponivel_atual: novoEstoque,
     data_movimentacao: new Date().toISOString(),
     documento: pedido.numero_pedido,
-    motivo: `Reserva para pedido ${pedido.numero_pedido}`,
-    responsavel: "Sistema Automático"
+    motivo: `Baixa automática - Pedido ${pedido.numero_pedido} aprovado`,
+    responsavel: "Sistema Automático",
+    valor_unitario: item.preco_unitario || item.valor_unitario,
+    valor_total: item.valor_total || (item.quantidade * (item.preco_unitario || 0)),
+    aprovado: true
   });
 
   // Atualizar produto
   await base44.entities.Produto.update(item.produto_id, {
-    estoque_reservado: (produto.estoque_reservado || 0) + item.quantidade
+    estoque_atual: novoEstoque
   });
 
   return movimentacao;
