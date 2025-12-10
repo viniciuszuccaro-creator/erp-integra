@@ -1154,7 +1154,9 @@ export default function Cadastros() {
                         <Button
                           size="sm"
                           onClick={() => openWindow(RegiaoAtendimentoForm, {
+                            open: true,
                             windowMode: true,
+                            onOpenChange: () => {},
                             onSubmit: handleSubmitGenerico('RegiaoAtendimento', 'regioes-atendimento')
                           }, {
                             title: '🗺️ Nova Região de Atendimento',
@@ -1188,7 +1190,9 @@ export default function Cadastros() {
                             size="sm"
                             onClick={() => openWindow(RegiaoAtendimentoForm, {
                               regiaoId: regiao.id,
+                              open: true,
                               windowMode: true,
+                              onOpenChange: () => {},
                               onSubmit: handleSubmitGenerico('RegiaoAtendimento', 'regioes-atendimento')
                             }, {
                               title: `🗺️ Editar: ${regiao.nome_regiao}`,
