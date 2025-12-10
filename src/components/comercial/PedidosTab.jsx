@@ -28,7 +28,7 @@ import StatusBadge from "../StatusBadge";
 import SearchInput from "../ui/SearchInput";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
-import AprovacaoDescontosManager from "./AprovacaoDescontosManager";
+import CentralAprovacoesManager from "./CentralAprovacoesManager";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,19 +66,19 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             <div>
               <p className="font-semibold text-orange-900 flex items-center gap-2">
                 <AlertCircle className="w-5 h-5" />
-                {pedidosPendentesAprovacao.length} pedido(s) aguardando aprovação de desconto
-              </p>
-              <p className="text-xs text-orange-700 mt-1">
-                Pedidos com descontos acima da margem mínima precisam de aprovação do gestor
-              </p>
-            </div>
-            <Button
-              onClick={() => openWindow(AprovacaoDescontosManager, { windowMode: true }, {
-                title: '🔐 Aprovação de Descontos',
+                {pedidosPendentesAprovacao.length} pedido(s) aguardando aprovação
+                </p>
+                <p className="text-xs text-orange-700 mt-1">
+                Pedidos com descontos ou outras pendências financeiras aguardam sua análise.
+                </p>
+                </div>
+                <Button
+                onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true }, {
+                title: '🔐 Central de Aprovações',
                 width: 1200,
                 height: 700
-              })}
-              className="bg-orange-600 hover:bg-orange-700"
+                })}
+                className="bg-orange-600 hover:bg-orange-600/90"
             >
               <ShieldCheck className="w-4 h-4 mr-2" />
               Gerenciar Aprovações
@@ -189,33 +189,79 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                       R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
-                      <Select 
-                        value={pedido.status} 
-                        onValueChange={async (novoStatus) => {
-                          try {
-                            await base44.entities.Pedido.update(pedido.id, { status: novoStatus });
-                            toast({ title: `✅ Status alterado para: ${novoStatus}` });
-                            queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-                          } catch (error) {
-                            toast({ title: "❌ Erro ao alterar status", variant: "destructive" });
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="w-[180px] h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="z-[99999]">
-                          <SelectItem value="Rascunho">📝 Rascunho</SelectItem>
-                          <SelectItem value="Aguardando Aprovação">⏳ Aguardando Aprovação</SelectItem>
-                          <SelectItem value="Aprovado">✅ Aprovado</SelectItem>
-                          <SelectItem value="Pronto para Faturar">📦 Pronto para Faturar</SelectItem>
-                          <SelectItem value="Faturado">📄 Faturado</SelectItem>
-                          <SelectItem value="Em Expedição">🚚 Em Expedição</SelectItem>
-                          <SelectItem value="Em Trânsito">🛣️ Em Trânsito</SelectItem>
-                          <SelectItem value="Entregue">🎉 Entregue</SelectItem>
-                          <SelectItem value="Cancelado">❌ Cancelado</SelectItem>
-                        </SelectContent>
-                      </Select>
+                     <Select 
+                       value={pedido.status} 
+                       onValueChange={async (novoStatus) => {
+                         try {
+                           // V21.5: BAIXAR ESTOQUE AUTOMATICAMENTE AO APROVAR
+                           if (novoStatus === 'Aprovado' && pedido.itens_revenda?.length > 0) {
+                             for (const item of pedido.itens_revenda) {
+                               if (item.produto_id) {
+                                 const produtos = await base44.entities.Produto.filter({ 
+                                   id: item.produto_id,
+                                   empresa_id: pedido.empresa_id 
+                                 });
+
+                                 const produto = produtos[0];
+                                 if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
+                                   const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
+
+                                   // Criar movimentação
+                                   await base44.entities.MovimentacaoEstoque.create({
+                                     empresa_id: pedido.empresa_id,
+                                     tipo_movimento: "saida",
+                                     origem_movimento: "pedido",
+                                     origem_documento_id: pedido.id,
+                                     produto_id: item.produto_id,
+                                     produto_descricao: item.descricao || item.produto_descricao,
+                                     codigo_produto: item.codigo_sku,
+                                     quantidade: item.quantidade,
+                                     unidade_medida: item.unidade,
+                                     estoque_anterior: produto.estoque_atual || 0,
+                                     estoque_atual: novoEstoque,
+                                     data_movimentacao: new Date().toISOString(),
+                                     documento: pedido.numero_pedido,
+                                     motivo: `Baixa automática - Pedido aprovado`,
+                                     responsavel: "Sistema Automático",
+                                     aprovado: true
+                                   });
+
+                                   // Atualizar estoque do produto
+                                   await base44.entities.Produto.update(item.produto_id, {
+                                     estoque_atual: novoEstoque
+                                   });
+                                 }
+                               }
+                             }
+                             toast({ title: `✅ Pedido aprovado e estoque baixado!` });
+                           } else {
+                             toast({ title: `✅ Status alterado para: ${novoStatus}` });
+                           }
+
+                           await base44.entities.Pedido.update(pedido.id, { status: novoStatus });
+                           queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                           queryClient.invalidateQueries({ queryKey: ['produtos'] });
+                           queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
+                         } catch (error) {
+                           toast({ title: "❌ Erro ao alterar status", variant: "destructive" });
+                         }
+                       }}
+                     >
+                       <SelectTrigger className="w-[180px] h-8">
+                         <SelectValue />
+                       </SelectTrigger>
+                       <SelectContent className="z-[99999]">
+                         <SelectItem value="Rascunho">📝 Rascunho</SelectItem>
+                         <SelectItem value="Aguardando Aprovação">⏳ Aguardando Aprovação</SelectItem>
+                         <SelectItem value="Aprovado">✅ Aprovado</SelectItem>
+                         <SelectItem value="Pronto para Faturar">📦 Pronto para Faturar</SelectItem>
+                         <SelectItem value="Faturado">📄 Faturado</SelectItem>
+                         <SelectItem value="Em Expedição">🚚 Em Expedição</SelectItem>
+                         <SelectItem value="Em Trânsito">🛣️ Em Trânsito</SelectItem>
+                         <SelectItem value="Entregue">🎉 Entregue</SelectItem>
+                         <SelectItem value="Cancelado">❌ Cancelado</SelectItem>
+                       </SelectContent>
+                     </Select>
                     </TableCell>
                     <TableCell>
                       {pedido.status_aprovacao === "pendente" && (
@@ -248,14 +294,58 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                             size="sm"
                             onClick={async () => {
                               try {
+                                // V21.5: BAIXAR ESTOQUE AO APROVAR
+                                if (pedido.itens_revenda?.length > 0) {
+                                  for (const item of pedido.itens_revenda) {
+                                    if (item.produto_id) {
+                                      const produtos = await base44.entities.Produto.filter({ 
+                                        id: item.produto_id,
+                                        empresa_id: pedido.empresa_id 
+                                      });
+                                      
+                                      const produto = produtos[0];
+                                      if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
+                                        const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
+                                        
+                                        // Criar movimentação
+                                        await base44.entities.MovimentacaoEstoque.create({
+                                          empresa_id: pedido.empresa_id,
+                                          tipo_movimento: "saida",
+                                          origem_movimento: "pedido",
+                                          origem_documento_id: pedido.id,
+                                          produto_id: item.produto_id,
+                                          produto_descricao: item.descricao || item.produto_descricao,
+                                          codigo_produto: item.codigo_sku,
+                                          quantidade: item.quantidade,
+                                          unidade_medida: item.unidade,
+                                          estoque_anterior: produto.estoque_atual || 0,
+                                          estoque_atual: novoEstoque,
+                                          data_movimentacao: new Date().toISOString(),
+                                          documento: pedido.numero_pedido,
+                                          motivo: `Baixa automática - Aprovação rápida`,
+                                          responsavel: "Sistema Automático",
+                                          aprovado: true
+                                        });
+                                        
+                                        // Atualizar estoque do produto
+                                        await base44.entities.Produto.update(item.produto_id, {
+                                          estoque_atual: novoEstoque
+                                        });
+                                      }
+                                    }
+                                  }
+                                }
+                                
                                 await base44.entities.Pedido.update(pedido.id, { status: 'Aprovado' });
-                                toast({ title: "✅ Pedido aprovado!" });
+                                toast({ title: "✅ Pedido aprovado e estoque baixado!" });
                                 queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                                queryClient.invalidateQueries({ queryKey: ['produtos'] });
+                                queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
                               } catch (error) {
                                 toast({ title: "❌ Erro ao aprovar", variant: "destructive" });
                               }
                             }}
-                            title="Aprovar Pedido"
+                            title="Aprovar Pedido e Baixar Estoque"
                             className="h-8 px-2 bg-green-50 text-green-700 hover:bg-green-100 font-semibold"
                           >
                             <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -385,16 +475,16 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => openWindow(AprovacaoDescontosManager, { windowMode: true }, {
-                              title: '🔐 Aprovação de Descontos',
+                            onClick={() => openWindow(CentralAprovacoesManager, { windowMode: true, initialTab: "descontos" }, {
+                              title: '🔐 Central de Aprovações',
                               width: 1200,
                               height: 700
                             })}
-                            title="Aprovar Desconto"
+                            title="Analisar Aprovação"
                             className="h-8 px-2 text-orange-600 animate-pulse"
                           >
                             <ShieldCheck className="w-3 h-3 mr-1" />
-                            <span className="text-xs">Aprovar</span>
+                            <span className="text-xs">Analisar</span>
                           </Button>
                         )}
                         

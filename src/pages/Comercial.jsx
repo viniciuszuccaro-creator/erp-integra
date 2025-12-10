@@ -13,7 +13,7 @@ import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
 import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab"; // Keeping import as outline didn't specify removal
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
-import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
+import CentralAprovacoesManager from "../components/comercial/CentralAprovacoesManager";
 
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
@@ -102,7 +102,7 @@ export default function Comercial() {
     // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
 
-  // V21.5: Handlers usando sistema de janelas - COM PROTEÇÃO ANTI-DUPLICAÇÃO + STATUS INICIAL APROVADO
+  // V21.5: Handlers usando sistema de janelas - COM PROTEÇÃO ANTI-DUPLICAÇÃO
   const handleCreateNewPedido = () => {
     let pedidoCriado = false; // Flag para evitar duplicação
     
@@ -111,7 +111,7 @@ export default function Comercial() {
       { 
         clientes,
         windowMode: true,
-        pedido: { status: 'Aprovado' }, // ✅ NOVO: Status inicial já aprovado para facilitar fluxo
+        pedido: { status: 'Rascunho' }, // Criar como rascunho, aprovar depois com baixa
         onSubmit: async (formData) => {
           if (pedidoCriado) {
             console.warn('⚠️ Tentativa de criação duplicada bloqueada');
@@ -121,10 +121,8 @@ export default function Comercial() {
           pedidoCriado = true;
           
           try {
-            // Garante que o status seja Aprovado ao criar
-            const pedidoFinal = { ...formData, status: formData.status || 'Aprovado' };
-            await base44.entities.Pedido.create(pedidoFinal);
-            toast.success("✅ Pedido criado e aprovado com sucesso!");
+            await base44.entities.Pedido.create(formData);
+            toast.success("✅ Pedido criado com sucesso!");
             await pedidosQuery.refetch();
           } catch (error) {
             pedidoCriado = false; // Reset em caso de erro
@@ -134,7 +132,7 @@ export default function Comercial() {
         onCancel: () => {}
       },
       {
-        title: '🛒 Novo Pedido (Aprovação Automática)',
+        title: '🛒 Novo Pedido',
         width: 1400,
         height: 800
       }
@@ -304,7 +302,7 @@ export default function Comercial() {
             className="data-[state=active]:bg-orange-600 data-[state=active]:text-white relative"
           >
             <ShieldCheck className="w-4 h-4 mr-2" />
-            Aprovação Descontos
+            Central de Aprovações
             {pedidos.filter(p => p.status_aprovacao === "pendente").length > 0 && (
               <Badge className="ml-2 bg-red-500 text-white animate-pulse">
                 {pedidos.filter(p => p.status_aprovacao === "pendente").length}
@@ -423,9 +421,9 @@ export default function Comercial() {
           </Card>
         </TabsContent>
 
-        {/* ETAPA 4: Tab Aprovação de Descontos */}
+        {/* V21.5: Central de Aprovações Unificada */}
         <TabsContent value="aprovacoes">
-          <AprovacaoDescontosManager windowMode={false} />
+          <CentralAprovacoesManager windowMode={false} />
         </TabsContent>
 
         <TabsContent value="tabelas-preco">
