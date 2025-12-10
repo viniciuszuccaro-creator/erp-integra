@@ -756,7 +756,9 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       setFormData({
                         ...formData,
                         indicador_id: value,
-                        indicador_nome: indicador?.nome || ""
+                        indicador_nome: indicador?.nome || "",
+                        tipo_indicador: indicador?.tipo_representante || "",
+                        percentual_comissao_indicador: indicador?.percentual_comissao || 0
                       });
                     }}
                   >
