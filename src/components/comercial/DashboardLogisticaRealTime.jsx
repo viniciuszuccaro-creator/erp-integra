@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   CheckCircle2,
   Navigation,
-  Zap
+  Zap,
+  Bell
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 

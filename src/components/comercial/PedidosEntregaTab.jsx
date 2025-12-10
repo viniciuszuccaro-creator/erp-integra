@@ -531,36 +531,38 @@ export default function PedidosEntregaTab({ windowMode = false }) {
               {!uploadMode ? (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Atualizar Status de Entrega</CardTitle>
+                    <CardTitle className="text-base">Fluxo Automático de Status</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      {entregaSelecionada.pedido.status !== 'Em Expedição' && (
+                    <div className="flex flex-col gap-2">
+                      {entregaSelecionada.pedido.status === 'Faturado' && (
                         <Button
-                          onClick={() => {
-                            atualizarStatusMutation.mutate({
+                          onClick={async () => {
+                            await atualizarStatusMutation.mutateAsync({
                               pedidoId: entregaSelecionada.pedido.id,
                               novoStatus: 'Em Expedição'
                             });
+                            await automacao.notificarClienteStatusPedido(entregaSelecionada.pedido, 'Em Expedição');
                             setDetalhesOpen(false);
                           }}
-                          className="bg-orange-600 hover:bg-orange-700"
+                          className="bg-orange-600 hover:bg-orange-700 w-full"
                         >
                           <Package className="w-4 h-4 mr-2" />
-                          Marcar Em Expedição
+                          📦 Marcar Em Expedição
                         </Button>
                       )}
 
                       {entregaSelecionada.pedido.status === 'Em Expedição' && (
                         <Button
-                          onClick={() => {
-                            atualizarStatusMutation.mutate({
+                          onClick={async () => {
+                            await atualizarStatusMutation.mutateAsync({
                               pedidoId: entregaSelecionada.pedido.id,
                               novoStatus: 'Em Trânsito'
                             });
+                            await automacao.notificarClienteStatusPedido(entregaSelecionada.pedido, 'Em Trânsito');
                             setDetalhesOpen(false);
                           }}
-                          className="bg-purple-600 hover:bg-purple-700 col-span-2"
+                          className="bg-purple-600 hover:bg-purple-700 w-full"
                         >
                           <Truck className="w-4 h-4 mr-2" />
                           🚚 Saiu para Entrega
@@ -570,11 +572,18 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                       {entregaSelecionada.pedido.status === 'Em Trânsito' && (
                         <Button
                           onClick={() => setUploadMode(true)}
-                          className="bg-green-600 hover:bg-green-700 col-span-2"
+                          className="bg-green-600 hover:bg-green-700 w-full"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" />
                           ✅ Confirmar Entrega
                         </Button>
+                      )}
+
+                      {entregaSelecionada.pedido.status === 'Entregue' && (
+                        <Badge className="bg-green-100 text-green-700 p-3 text-center w-full justify-center">
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          Pedido já foi entregue
+                        </Badge>
                       )}
                     </div>
                   </CardContent>
@@ -649,7 +658,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                             fotoUrl = upload.file_url;
                           }
 
-                          atualizarStatusMutation.mutate({
+                          await atualizarStatusMutation.mutateAsync({
                             pedidoId: entregaSelecionada.pedido.id,
                             novoStatus: 'Entregue',
                             dadosComprovante: {
@@ -659,6 +668,8 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                               foto_comprovante: fotoUrl
                             }
                           });
+                          
+                          await automacao.notificarClienteStatusPedido(entregaSelecionada.pedido, 'Entregue');
                           
                           setDetalhesOpen(false);
                           setUploadMode(false);

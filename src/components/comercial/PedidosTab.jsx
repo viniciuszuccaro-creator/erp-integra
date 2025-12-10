@@ -350,7 +350,30 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           </Button>
                         )}
 
-                        {pedido.status === "Faturado" && (
+                        {pedido.status === "Faturado" && pedido.tipo_frete === 'Retirada' && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await base44.entities.Pedido.update(pedido.id, {
+                                  status: 'Pronto para Retirada'
+                                });
+                                toast({ title: "✅ Pronto para retirada!" });
+                                queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                              } catch (error) {
+                                toast({ title: "❌ Erro", variant: "destructive" });
+                              }
+                            }}
+                            title="Marcar Pronto para Retirada"
+                            className="h-8 px-2 bg-green-50 text-green-700 hover:bg-green-100 font-semibold"
+                          >
+                            <Package className="w-3 h-3 mr-1" />
+                            <span className="text-xs">📍 Pronto p/ Retirar</span>
+                          </Button>
+                        )}
+
+                        {pedido.status === "Faturado" && pedido.tipo_frete !== 'Retirada' && (
                           <Button 
                             variant="ghost" 
                             size="sm"
