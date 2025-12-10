@@ -83,6 +83,8 @@ import MarcaForm from "../components/cadastros/MarcaForm";
 import ServicoForm from "../components/cadastros/ServicoForm";
 import RepresentanteForm from "../components/cadastros/RepresentanteForm";
 import RepresentantesTab from "../components/cadastros/RepresentantesTab";
+import RepresentanteFormCompleto from "../components/cadastros/RepresentanteFormCompleto";
+import DashboardRepresentantes from "../components/relatorios/DashboardRepresentantes";
 import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
 import LocalEstoqueForm from "../components/cadastros/LocalEstoqueForm";
 import TabelaFiscalForm from "../components/cadastros/TabelaFiscalForm";
@@ -948,7 +950,7 @@ export default function Cadastros() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => openWindow(() => import('./components/relatorios/DashboardRepresentantes'), {}, {
+                            onClick={() => openWindow(DashboardRepresentantes, {}, {
                               title: '📊 Dashboard de Representantes',
                               width: 1200,
                               height: 700
@@ -960,7 +962,7 @@ export default function Cadastros() {
                           </Button>
                           <Button
                             size="sm"
-                            onClick={() => openWindow(() => import('./components/cadastros/RepresentanteFormCompleto'), { windowMode: true }, {
+                            onClick={() => openWindow(RepresentanteFormCompleto, { windowMode: true }, {
                               title: '💼 Novo Representante',
                               width: 1100,
                               height: 650
@@ -1006,7 +1008,7 @@ export default function Cadastros() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => openWindow(() => import('./components/cadastros/RepresentanteFormCompleto'), {
+                              onClick={() => openWindow(RepresentanteFormCompleto, {
                                 representante: rep,
                                 windowMode: true
                               }, {
