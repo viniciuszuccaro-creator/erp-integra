@@ -113,6 +113,38 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
     queryFn: () => base44.entities.RegiaoAtendimento.list()
   });
 
+  const { data: representantes = [] } = useQuery({
+    queryKey: ['representantes'],
+    queryFn: () => base44.entities.Representante.filter({ status: 'Ativo' })
+  });
+
+  const [usuarioLogado, setUsuarioLogado] = useState(null);
+
+  useEffect(() => {
+    const carregarUsuario = async () => {
+      try {
+        const user = await base44.auth.me();
+        setUsuarioLogado(user);
+        
+        // Se for novo cliente e não tem vendedor definido, preencher automaticamente
+        if (!cliente?.id && !formData.vendedor_responsavel_id && user) {
+          const colaboradorUsuario = colaboradores.find(c => c.email === user.email);
+          if (colaboradorUsuario) {
+            setFormData(prev => ({
+              ...prev,
+              vendedor_responsavel_id: colaboradorUsuario.id,
+              vendedor_responsavel: colaboradorUsuario.nome_completo
+            }));
+          }
+        }
+      } catch (error) {
+        console.log('Usuário não autenticado ou erro:', error);
+      }
+    };
+    
+    carregarUsuario();
+  }, [colaboradores, cliente?.id]);
+
   const { data: ultimaNF } = useQuery({
     queryKey: ['ultima-nf-cliente', cliente?.id],
     queryFn: () => base44.entities.NotaFiscal.filter({ cliente_fornecedor_id: cliente.id }, '-data_emissao', 1),
@@ -685,7 +717,9 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                 </div>
 
                 <div>
-                  <Label htmlFor="vendedor_responsavel_id">Vendedor Responsável</Label>
+                  <Label htmlFor="vendedor_responsavel_id">
+                    Vendedor Responsável {!cliente?.id && <span className="text-xs text-green-600">(Preenchido Automaticamente)</span>}
+                  </Label>
                   <Select
                     value={formData.vendedor_responsavel_id || ""}
                     onValueChange={(value) => {
@@ -697,7 +731,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       });
                     }}
                   >
-                    <SelectTrigger id="vendedor_responsavel_id">
+                    <SelectTrigger id="vendedor_responsavel_id" className={!cliente?.id && formData.vendedor_responsavel_id ? 'border-green-300 bg-green-50' : ''}>
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent className="z-[9999]">
@@ -708,6 +742,50 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="indicador_id">
+                    💰 Indicador (Comissão/Cashback)
+                    <span className="text-xs text-slate-500 ml-2">Representante • Construtor • Arquiteto • Engenheiro</span>
+                  </Label>
+                  <Select
+                    value={formData.indicador_id || ""}
+                    onValueChange={(value) => {
+                      const indicador = representantes.find(r => r.id === value);
+                      setFormData({
+                        ...formData,
+                        indicador_id: value,
+                        indicador_nome: indicador?.nome || ""
+                      });
+                    }}
+                  >
+                    <SelectTrigger id="indicador_id" className="w-full">
+                      <SelectValue placeholder="Quem indicou este cliente?" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[9999]">
+                      <SelectItem value={null}>
+                        <span className="text-slate-400">Nenhum indicador</span>
+                      </SelectItem>
+                      {representantes.map(rep => (
+                        <SelectItem key={rep.id} value={rep.id}>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{rep.nome}</span>
+                            {rep.percentual_comissao > 0 && (
+                              <span className="text-xs text-green-600">
+                                ({rep.percentual_comissao}% comissão)
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.indicador_id && (
+                    <p className="text-xs text-green-700 mt-1 flex items-center gap-1">
+                      ✅ Indicador configurado - receberá comissão/cashback automaticamente
+                    </p>
+                  )}
                 </div>
 
                 {(formData.status === 'Inativo' || formData.status === 'Bloqueado') && (
