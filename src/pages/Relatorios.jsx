@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -10,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ComposedChart } from 'recharts';
-import { FileText, Download, Calendar, Filter, Eye, BarChart3, PieChart as PieChartIcon, TrendingUp, DollarSign, Users, Package, AlertCircle, Send, Mail, Activity, TrendingDown } from "lucide-react";
+import { FileText, Download, Calendar, Filter, Eye, BarChart3, PieChart as PieChartIcon, TrendingUp, DollarSign, Users, Package, AlertCircle, Send, Mail, Activity, TrendingDown, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +19,7 @@ import FluxoCaixaProjetado from "@/components/relatorios/FluxoCaixaProjetado";
 import RentabilidadeCliente from "@/components/relatorios/RentabilidadeCliente";
 import RentabilidadeProduto from "@/components/relatorios/RentabilidadeProduto";
 import DashboardInadimplencia from "@/components/relatorios/DashboardInadimplencia";
+import RelatorioVendasPorRegiao from "@/components/relatorios/RelatorioVendasPorRegiao";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
 import AgendamentoRelatorios from "../components/relatorios/AgendamentoRelatorios";
@@ -211,6 +211,14 @@ export default function Relatorios() {
       icone: AlertCircle,
       cor: 'text-red-600',
       component: DashboardInadimplencia
+    },
+    {
+      id: 'vendas-regiao',
+      titulo: 'Vendas por Região de Atendimento',
+      descricao: 'Análise geográfica de desempenho comercial com metas e métricas',
+      icone: TrendingUp,
+      cor: 'text-indigo-600',
+      component: RelatorioVendasPorRegiao
     }
   ];
 
