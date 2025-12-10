@@ -183,6 +183,47 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     setSalvando(true);
 
     try {
+      // V21.5: BAIXAR ESTOQUE SE STATUS FOR APROVADO
+      if (formData.status === 'Aprovado' && formData.itens_revenda?.length > 0) {
+        for (const item of formData.itens_revenda) {
+          if (item.produto_id) {
+            const produtos = await base44.entities.Produto.filter({ 
+              id: item.produto_id,
+              empresa_id: formData.empresa_id 
+            });
+            
+            const produto = produtos[0];
+            if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
+              const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
+              
+              await base44.entities.MovimentacaoEstoque.create({
+                empresa_id: formData.empresa_id,
+                tipo_movimento: "saida",
+                origem_movimento: "pedido",
+                origem_documento_id: formData.id || `temp_${Date.now()}`,
+                produto_id: item.produto_id,
+                produto_descricao: item.descricao || item.produto_descricao,
+                codigo_produto: item.codigo_sku,
+                quantidade: item.quantidade,
+                unidade_medida: item.unidade,
+                estoque_anterior: produto.estoque_atual || 0,
+                estoque_atual: novoEstoque,
+                data_movimentacao: new Date().toISOString(),
+                documento: formData.numero_pedido,
+                motivo: `Baixa automática - Pedido ${formData.id ? 'atualizado' : 'criado'} aprovado`,
+                responsavel: "Sistema Automático",
+                aprovado: true
+              });
+              
+              await base44.entities.Produto.update(item.produto_id, {
+                estoque_atual: novoEstoque
+              });
+            }
+          }
+        }
+        toast.success('✅ Pedido salvo e estoque baixado!');
+      }
+      
       // ETAPA 4: Validar aprovação de desconto
       if (formData.desconto_geral_pedido_percentual > 0) {
         const custoTotal = formData.valor_produtos * 0.7;
@@ -190,7 +231,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
         const margemAposDesconto = ((valorComDesconto - custoTotal) / custoTotal) * 100;
         const margemMinima = 10;
 
-        if (margemAposDesconto < margemMinima) {
+        if (margemAposDesconto < margemMinima && formData.status !== 'Aprovado') {
           const dadosComAprovacao = {
             ...formData,
             status_aprovacao: 'pendente',
@@ -505,6 +546,32 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               Cancelar
             </Button>
             
+            {/* V21.5: APROVAR PEDIDO */}
+            {(!pedido || pedido.status === 'Rascunho') && (
+              <Button
+                onClick={async () => {
+                  if (salvando) return;
+                  setSalvando(true);
+                  try {
+                    await onSubmit({
+                      ...formData,
+                      status: 'Aprovado'
+                    });
+                    toast.success('✅ Pedido aprovado e estoque baixado!');
+                  } catch (error) {
+                    toast.error('❌ Erro ao aprovar pedido');
+                  } finally {
+                    setSalvando(false);
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700 shadow-lg"
+                disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                {salvando ? 'Aprovando...' : 'Aprovar Pedido'}
+              </Button>
+            )}
+            
             {/* V21.5: FECHAR PEDIDO E ENVIAR PARA ENTREGA */}
             {pedido && pedido.status === 'Aprovado' && (
               <Button
@@ -531,14 +598,27 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               </Button>
             )}
             
-            <Button
-              onClick={handleSubmit}
-              className="bg-green-600 hover:bg-green-700"
-              disabled={salvando || !validacoes.identificacao || !validacoes.itens}
-            >
-              <Check className="w-4 h-4 mr-2" />
-              {salvando ? 'Salvando...' : (pedido ? 'Salvar Alterações' : 'Criar Pedido')}
-            </Button>
+            {(pedido && pedido.status !== 'Rascunho' && pedido.status !== 'Aprovado') && (
+              <Button
+                onClick={handleSubmit}
+                className="bg-slate-600 hover:bg-slate-700"
+                disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                {salvando ? 'Salvando...' : 'Salvar Alterações'}
+              </Button>
+            )}
+            
+            {!pedido && (
+              <Button
+                onClick={handleSubmit}
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                {salvando ? 'Salvando...' : 'Criar Pedido'}
+              </Button>
+            )}
           </div>
         </div>
 
