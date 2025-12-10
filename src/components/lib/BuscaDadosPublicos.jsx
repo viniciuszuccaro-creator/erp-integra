@@ -31,50 +31,12 @@ export async function buscarDadosCNPJ(cnpj) {
   }
 
   try {
-    const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Busque dados do CNPJ ${cnpjLimpo} na Receita Federal. Retorne JSON com: razao_social, nome_fantasia, situacao_cadastral, porte, cnae_principal, endereco_completo (logradouro, numero, bairro, cidade, uf, cep), telefone, email.`,
-      add_context_from_internet: true,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          razao_social: { type: "string" },
-          nome_fantasia: { type: "string" },
-          situacao_cadastral: { type: "string" },
-          porte: { type: "string" },
-          cnae_principal: { type: "string" },
-          endereco_completo: {
-            type: "object",
-            properties: {
-              logradouro: { type: "string" },
-              numero: { type: "string" },
-              bairro: { type: "string" },
-              cidade: { type: "string" },
-              uf: { type: "string" },
-              cep: { type: "string" }
-            }
-          },
-          telefone: { type: "string" },
-          email: { type: "string" }
-        }
-      }
-    });
-
-    if (!resultado.razao_social) {
-      return {
-        sucesso: false,
-        erro: 'CNPJ não encontrado'
-      };
-    }
-
-    return {
-      sucesso: true,
-      dados: resultado
-    };
-
+    const resultado = await base44.functions.ConsultarCNPJ({ cnpj: cnpjLimpo });
+    return resultado;
   } catch (error) {
     return {
       sucesso: false,
-      erro: 'Erro ao buscar CNPJ'
+      erro: 'Erro ao buscar CNPJ - tente novamente'
     };
   }
 }
