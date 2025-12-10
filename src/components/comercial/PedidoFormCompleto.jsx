@@ -165,8 +165,6 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     formData?.valor_frete
   ]);
 
-  const [salvando, setSalvando] = useState(false); // Anti-duplicação
-
   const handleSubmit = async () => {
     if (!formData || salvando) return;
     
