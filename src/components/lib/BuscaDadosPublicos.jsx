@@ -21,7 +21,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
  * @returns {object} Dados da empresa
  */
 export async function buscarDadosCNPJ(cnpj) {
-  const cnpjLimpo = cnpj.replace(/\D/g, '');
+  const cnpjLimpo = cnpj?.replace(/\D/g, '') || '';
   
   if (cnpjLimpo.length !== 14) {
     return {
@@ -32,11 +32,17 @@ export async function buscarDadosCNPJ(cnpj) {
 
   try {
     const resultado = await base44.functions.ConsultarCNPJ({ cnpj: cnpjLimpo });
+    
+    if (!resultado) {
+      throw new Error('Resposta vazia da função');
+    }
+    
     return resultado;
   } catch (error) {
+    console.error('Erro ao buscar CNPJ:', error);
     return {
       sucesso: false,
-      erro: 'Erro ao buscar CNPJ - tente novamente'
+      erro: error.message || 'Erro ao buscar CNPJ - verifique se as Funções Backend estão habilitadas'
     };
   }
 }
@@ -281,7 +287,8 @@ export async function buscarDadosRNTRC(rntrc) {
 }
 
 /**
- * Componente de Botão de Busca Automática
+ * Componente de Botão de Busca Automática V21.5
+ * Integração completa com backend functions para dados reais
  */
 export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled }) {
   const [buscando, setBuscando] = React.useState(false);
@@ -296,11 +303,11 @@ export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled
   };
 
   const labels = {
-    cnpj: 'Buscar CNPJ',
-    cpf: 'Validar CPF',
-    cep: 'Buscar CEP',
-    ncm: 'Buscar NCM',
-    rntrc: 'Validar RNTRC'
+    cnpj: '🔍 Buscar CNPJ Real',
+    cpf: '✅ Validar CPF',
+    cep: '📍 Buscar CEP',
+    ncm: '📊 Buscar NCM',
+    rntrc: '🚛 Validar RNTRC'
   };
 
   const handleBuscar = async () => {
@@ -312,19 +319,25 @@ export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled
     setBuscando(true);
     setResultado(null);
 
-    const funcao = funcoesBusca[tipo];
-    if (!funcao) {
-      setResultado({ sucesso: false, erro: 'Tipo de busca inválido' });
+    try {
+      const funcao = funcoesBusca[tipo];
+      if (!funcao) {
+        throw new Error('Tipo de busca inválido');
+      }
+
+      const res = await funcao(valor);
+      setResultado(res);
+
+      if (res.sucesso && onDadosEncontrados) {
+        onDadosEncontrados(res.dados);
+      }
+    } catch (error) {
+      setResultado({ 
+        sucesso: false, 
+        erro: error.message || 'Erro ao buscar dados' 
+      });
+    } finally {
       setBuscando(false);
-      return;
-    }
-
-    const res = await funcao(valor);
-    setResultado(res);
-    setBuscando(false);
-
-    if (res.sucesso && onDadosEncontrados) {
-      onDadosEncontrados(res.dados);
     }
   };
 
@@ -341,7 +354,7 @@ export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled
         {buscando ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Buscando...
+            Buscando na Receita...
           </>
         ) : (
           <>
@@ -360,7 +373,12 @@ export function BotaoBuscaAutomatica({ tipo, valor, onDadosEncontrados, disabled
           )}
           <AlertDescription className="text-xs">
             {resultado.sucesso ? (
-              <span className="text-green-900 font-semibold">✅ Dados encontrados e preenchidos!</span>
+              <div className="text-green-900">
+                <p className="font-semibold">✅ Dados REAIS preenchidos!</p>
+                {resultado.fonte && (
+                  <p className="text-[10px] opacity-70 mt-1">Fonte: {resultado.fonte}</p>
+                )}
+              </div>
             ) : (
               <span className="text-red-900">{resultado.erro}</span>
             )}
