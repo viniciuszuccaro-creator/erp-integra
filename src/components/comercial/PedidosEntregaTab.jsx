@@ -17,6 +17,7 @@ import {
   Image,
   Download,
   AlertCircle,
+  AlertTriangle,
   Navigation,
   Bell,
   BarChart3,
@@ -142,10 +143,11 @@ export default function PedidosEntregaTab({ windowMode = false }) {
     setDetalhesOpen(true);
   };
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
     <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -775,6 +777,7 @@ export default function PedidosEntregaTab({ windowMode = false }) {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

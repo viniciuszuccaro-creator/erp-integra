@@ -87,6 +87,11 @@ export default function Expedicao() {
   const [comprovanteOpen, setComprovanteOpen] = useState(false);
   const [ocorrenciaOpen, setOcorrenciaOpen] = useState(false);
   const [romaneioOpen, setRomaneioOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingEntrega, setEditingEntrega] = useState(null);
+  const [assinaturaModal, setAssinaturaModal] = useState(null);
+  const [seletorEnderecoOpen, setSeletorEnderecoOpen] = useState(false);
+  const [clienteParaEndereco, setClienteParaEndereco] = useState(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
