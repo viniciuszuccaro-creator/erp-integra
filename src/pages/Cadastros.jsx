@@ -82,6 +82,7 @@ import GrupoProdutoForm from "../components/cadastros/GrupoProdutoForm";
 import MarcaForm from "../components/cadastros/MarcaForm";
 import ServicoForm from "../components/cadastros/ServicoForm";
 import RepresentanteForm from "../components/cadastros/RepresentanteForm";
+import RepresentantesTab from "../components/cadastros/RepresentantesTab";
 import ContatoB2BForm from "../components/cadastros/ContatoB2BForm";
 import LocalEstoqueForm from "../components/cadastros/LocalEstoqueForm";
 import TabelaFiscalForm from "../components/cadastros/TabelaFiscalForm";
@@ -935,57 +936,91 @@ export default function Cadastros() {
                     </CardContent>
                   </Card>
 
-                  {/* REPRESENTANTES */}
-                  <Card className="border-teal-200">
-                    <CardHeader className="bg-teal-50 border-b border-teal-200 pb-3">
+                  {/* REPRESENTANTES V21.5 COMPLETO */}
+                  <Card className="border-purple-200 lg:col-span-2">
+                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
-                          <Briefcase className="w-5 h-5 text-teal-600" />
-                          Representantes ({representantes.length})
+                          <Award className="w-5 h-5 text-purple-600" />
+                          💰 Representantes & Indicadores ({representantes.length})
                         </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(RepresentanteForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('Representante', 'representantes')
-                          }, {
-                            title: '💼 Novo Representante',
-                            width: 800,
-                            height: 550
-                          })}
-                          className="bg-teal-600 hover:bg-teal-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openWindow(() => import('./components/relatorios/DashboardRepresentantes'), {}, {
+                              title: '📊 Dashboard de Representantes',
+                              width: 1200,
+                              height: 700
+                            })}
+                            className="border-purple-300 text-purple-700"
+                          >
+                            <TrendingUp className="w-4 h-4 mr-1" />
+                            Dashboard
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => openWindow(() => import('./components/cadastros/RepresentanteFormCompleto'), { windowMode: true }, {
+                              title: '💼 Novo Representante',
+                              width: 1100,
+                              height: 650
+                            })}
+                            className="bg-purple-600 hover:bg-purple-700"
+                            disabled={!hasPermission('cadastros', 'criar')}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Novo
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {representantes.map(rep => (
-                        <div key={rep.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
-                          <div className="flex-1">
-                            <p className="font-semibold text-sm">{rep.nome}</p>
-                            {rep.email && <span className="text-xs text-slate-500">{rep.email}</span>}
+                      {representantes.map(rep => {
+                        const clientesIndicados = clientes.filter(c => c.indicador_id === rep.id).length;
+                        return (
+                          <div key={rep.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-all">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-lg">
+                                  {rep.tipo_representante === 'Arquiteto' ? '📐' :
+                                   rep.tipo_representante === 'Engenheiro' ? '⚙️' :
+                                   rep.tipo_representante === 'Construtor' ? '🏗️' : '🤝'}
+                                </span>
+                                <p className="font-semibold text-sm">{rep.nome}</p>
+                              </div>
+                              <div className="flex gap-2 flex-wrap items-center">
+                                <Badge variant="outline" className="text-xs">{rep.tipo_representante}</Badge>
+                                {rep.percentual_comissao > 0 && (
+                                  <Badge className="bg-green-100 text-green-700 text-xs">
+                                    {rep.percentual_comissao}% comissão
+                                  </Badge>
+                                )}
+                                {clientesIndicados > 0 && (
+                                  <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                    {clientesIndicados} clientes
+                                  </Badge>
+                                )}
+                                {rep.email && <span className="text-xs text-slate-500">📧 {rep.email}</span>}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openWindow(() => import('./components/cadastros/RepresentanteFormCompleto'), {
+                                representante: rep,
+                                windowMode: true
+                              }, {
+                                title: `💼 ${rep.nome}`,
+                                width: 1100,
+                                height: 650
+                              })}
+                              disabled={!hasPermission('cadastros', 'editar')}
+                            >
+                              <Edit className="w-4 h-4 text-purple-600" />
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openWindow(RepresentanteForm, {
-                              representante: rep,
-                              windowMode: true,
-                              onSubmit: handleSubmitGenerico('Representante', 'representantes')
-                            }, {
-                              title: `💼 Editar: ${rep.nome}`,
-                              width: 800,
-                              height: 550
-                            })}
-                            disabled={!hasPermission('cadastros', 'editar')}
-                          >
-                            <Edit className="w-4 h-4 text-teal-600" />
-                          </Button>
-                        </div>
-                      ))}
+                        );
+                      })}
                       {representantes.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum representante cadastrado</p>
                       )}

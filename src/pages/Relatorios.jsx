@@ -20,6 +20,7 @@ import RentabilidadeCliente from "@/components/relatorios/RentabilidadeCliente";
 import RentabilidadeProduto from "@/components/relatorios/RentabilidadeProduto";
 import DashboardInadimplencia from "@/components/relatorios/DashboardInadimplencia";
 import RelatorioVendasPorRegiao from "@/components/relatorios/RelatorioVendasPorRegiao";
+import DashboardRepresentantes from "@/components/relatorios/DashboardRepresentantes";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
 import AgendamentoRelatorios from "../components/relatorios/AgendamentoRelatorios";
