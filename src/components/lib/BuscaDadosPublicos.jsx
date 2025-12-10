@@ -25,29 +25,39 @@ export async function buscarDadosCNPJ(cnpj) {
     const cnpjLimpo = cnpj.replace(/\D/g, '');
     
     if (cnpjLimpo.length !== 14) {
-      throw new Error('CNPJ inválido');
+      throw new Error('CNPJ inválido - deve ter 14 dígitos');
     }
 
-    // Usar IA com contexto da internet (Receita Federal + fontes públicas)
     const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Busque os dados oficiais da empresa com CNPJ ${cnpjLimpo} na Receita Federal do Brasil.
-      
-      Retorne EXATAMENTE as seguintes informações:
-      - razao_social (nome completo oficial)
-      - nome_fantasia (se houver)
-      - inscricao_estadual (número da IE se disponível publicamente)
-      - situacao_cadastral (Ativa, Suspensa, Inapta, Baixada)
-      - data_abertura (formato YYYY-MM-DD)
-      - porte (MEI, ME, EPP, Grande)
-      - natureza_juridica
-      - cnae_principal (código + descrição)
-      - endereco_completo (objeto com logradouro, numero, complemento, bairro, cidade, uf, cep)
-      - telefone (se disponível)
-      - email (se disponível)
-      - capital_social (valor numérico)
-      - socios (array com nome e qualificacao se disponível)
-      
-      Se a empresa não for encontrada ou CNPJ inválido, retorne {"erro": "Empresa não encontrada"}`,
+      prompt: `Busque informações COMPLETAS e REAIS do CNPJ ${cnpjLimpo} usando fontes públicas oficiais da Receita Federal (consulta pública).
+
+IMPORTANTE: Retorne APENAS informações VERIFICADAS e REAIS. Não invente dados.
+
+Retorne um objeto JSON com:
+{
+  "razao_social": "Razão social oficial completa",
+  "nome_fantasia": "Nome fantasia (ou vazio se não houver)",
+  "inscricao_estadual": "Número da IE se disponível nos dados públicos (caso contrário deixe vazio)",
+  "situacao_cadastral": "ATIVA, INAPTA, SUSPENSA ou BAIXADA",
+  "data_abertura": "YYYY-MM-DD",
+  "porte": "MEI, ME, EPP, PEQUENO, MEDIO ou GRANDE",
+  "natureza_juridica": "Descrição da natureza jurídica",
+  "cnae_principal": "Código e descrição do CNAE principal",
+  "endereco_completo": {
+    "logradouro": "rua/avenida",
+    "numero": "número",
+    "complemento": "complemento se houver",
+    "bairro": "bairro",
+    "cidade": "cidade",
+    "uf": "SP (sigla do estado)",
+    "cep": "CEP formatado"
+  },
+  "telefone": "telefone se disponível",
+  "email": "email se disponível",
+  "capital_social": valor numérico
+}
+
+Se o CNPJ não existir ou for inválido, retorne: {"erro": "CNPJ não encontrado na Receita Federal"}`,
       add_context_from_internet: true,
       response_json_schema: {
         type: "object",
@@ -75,18 +85,9 @@ export async function buscarDadosCNPJ(cnpj) {
           },
           telefone: { type: "string" },
           email: { type: "string" },
-          capital_social: { type: "number" },
-          socios: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                nome: { type: "string" },
-                qualificacao: { type: "string" }
-              }
-            }
-          }
-        }
+          capital_social: { type: "number" }
+        },
+        required: []
       }
     });
 
@@ -117,30 +118,51 @@ export async function buscarDadosCPF(cpf) {
     const cpfLimpo = cpf.replace(/\D/g, '');
     
     if (cpfLimpo.length !== 11) {
-      throw new Error('CPF inválido');
+      throw new Error('CPF inválido - deve ter 11 dígitos');
     }
 
-    // IA apenas valida e retorna status público (sem dados sensíveis)
-    const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Valide se o CPF ${cpfLimpo} é um número válido usando o algoritmo de verificação de dígitos.
+    // Validação local do CPF (algoritmo de dígitos verificadores)
+    const validarCPF = (cpf) => {
+      if (cpf.length !== 11) return false;
+      if (/^(\d)\1{10}$/.test(cpf)) return false; // 111.111.111-11, etc.
       
-      Retorne apenas:
-      - valido (true/false)
-      - formatado (formato XXX.XXX.XXX-XX)
+      let soma = 0;
+      let resto;
       
-      NÃO busque dados pessoais (protegidos por LGPD).`,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          valido: { type: "boolean" },
-          formatado: { type: "string" }
-        }
+      for (let i = 1; i <= 9; i++) {
+        soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
       }
-    });
+      
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.substring(9, 10))) return false;
+      
+      soma = 0;
+      for (let i = 1; i <= 10; i++) {
+        soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+      }
+      
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.substring(10, 11))) return false;
+      
+      return true;
+    };
+
+    const valido = validarCPF(cpfLimpo);
+    
+    if (!valido) {
+      throw new Error('CPF inválido - dígitos verificadores incorretos');
+    }
+
+    const formatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
 
     return {
       sucesso: true,
-      dados: resultado
+      dados: {
+        valido: true,
+        formatado: formatado
+      }
     };
 
   } catch (error) {
@@ -161,46 +183,57 @@ export async function buscarEnderecoCEP(cep) {
     const cepLimpo = cep.replace(/\D/g, '');
     
     if (cepLimpo.length !== 8) {
-      throw new Error('CEP inválido');
+      throw new Error('CEP inválido - deve ter 8 dígitos');
     }
 
-    // Buscar via IA (usa ViaCEP + Google Maps automaticamente)
-    const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Busque o endereço completo do CEP ${cepLimpo} no Brasil usando ViaCEP ou fontes oficiais dos Correios.
+    // 1. Buscar via ViaCEP
+    const resposta = await fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`);
+    if (!resposta.ok) {
+      throw new Error('Erro ao buscar CEP na API ViaCEP');
+    }
+    
+    const dadosViaCep = await resposta.json();
+    
+    if (dadosViaCep.erro) {
+      throw new Error('CEP não encontrado');
+    }
+
+    // 2. Buscar coordenadas GPS via OpenStreetMap Nominatim
+    const enderecoCompleto = `${dadosViaCep.logradouro}, ${dadosViaCep.bairro}, ${dadosViaCep.localidade}, ${dadosViaCep.uf}, Brasil`;
+    const urlNominatim = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(enderecoCompleto)}&format=json&limit=1`;
+    
+    let latitude = null;
+    let longitude = null;
+    
+    try {
+      const respostaGPS = await fetch(urlNominatim, {
+        headers: {
+          'User-Agent': 'ERP-Zuccaro/1.0'
+        }
+      });
       
-      Retorne:
-      - logradouro (rua/avenida)
-      - bairro
-      - cidade (localidade)
-      - uf (estado sigla)
-      - latitude (coordenadas GPS)
-      - longitude (coordenadas GPS)
-      - ddd
-      
-      Se CEP não encontrado, retorne {"erro": "CEP não encontrado"}`,
-      add_context_from_internet: true,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          erro: { type: "string" },
-          logradouro: { type: "string" },
-          bairro: { type: "string" },
-          cidade: { type: "string" },
-          uf: { type: "string" },
-          latitude: { type: "number" },
-          longitude: { type: "number" },
-          ddd: { type: "string" }
+      if (respostaGPS.ok) {
+        const dadosGPS = await respostaGPS.json();
+        if (dadosGPS && dadosGPS.length > 0) {
+          latitude = parseFloat(dadosGPS[0].lat);
+          longitude = parseFloat(dadosGPS[0].lon);
         }
       }
-    });
-
-    if (resultado.erro) {
-      throw new Error(resultado.erro);
+    } catch (erroGPS) {
+      console.warn('Não foi possível obter coordenadas GPS:', erroGPS);
     }
 
     return {
       sucesso: true,
-      dados: resultado
+      dados: {
+        logradouro: dadosViaCep.logradouro || '',
+        bairro: dadosViaCep.bairro || '',
+        cidade: dadosViaCep.localidade || '',
+        uf: dadosViaCep.uf || '',
+        latitude: latitude,
+        longitude: longitude,
+        ddd: dadosViaCep.ddd || ''
+      }
     };
 
   } catch (error) {
