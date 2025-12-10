@@ -783,8 +783,47 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
                   </Select>
                   {formData.indicador_id && (
                     <p className="text-xs text-green-700 mt-1 flex items-center gap-1">
-                      ✅ Indicador configurado - receberá comissão/cashback automaticamente
+                      ✅ Indicador configurado - receberá comissão/cashback automaticamente nas vendas
                     </p>
+                  )}
+                </div>
+
+                <div className="col-span-2">
+                  {formData.indicador_id && representantes.find(r => r.id === formData.indicador_id) && (
+                    <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+                      <CardContent className="p-3">
+                        {(() => {
+                          const indicador = representantes.find(r => r.id === formData.indicador_id);
+                          return (
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-lg">💰</span>
+                                </div>
+                                <div>
+                                  <p className="font-semibold text-green-900">{indicador.nome}</p>
+                                  <p className="text-xs text-green-700">
+                                    {indicador.tipo_representante || 'Representante'} • {indicador.tipo_comissao || 'Percentual'}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                {indicador.percentual_comissao > 0 && (
+                                  <p className="text-lg font-bold text-green-600">
+                                    {indicador.percentual_comissao}%
+                                  </p>
+                                )}
+                                {indicador.valor_fixo_comissao > 0 && (
+                                  <p className="text-sm text-green-700">
+                                    + R$ {indicador.valor_fixo_comissao.toLocaleString('pt-BR')} fixo
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
                   )}
                 </div>
 
