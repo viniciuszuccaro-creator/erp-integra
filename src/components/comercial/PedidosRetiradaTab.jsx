@@ -212,12 +212,17 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
         <Button
           variant="outline"
           onClick={async () => {
+            if (!pedidos || pedidos.length === 0) {
+              toast.error("⚠️ Nenhum pedido carregado");
+              return;
+            }
             const prontos = pedidos.filter(p => p.status === 'Pronto para Retirada');
             for (const pedido of prontos) {
               await automacao.notificarClienteStatusPedido(pedido, 'Pronto para Retirada');
             }
             toast.success(`📢 ${prontos.length} cliente(s) notificado(s)!`);
           }}
+          disabled={!pedidos || pedidos.length === 0}
         >
           <Send className="w-4 h-4 mr-2" />
           Notificar Prontos
