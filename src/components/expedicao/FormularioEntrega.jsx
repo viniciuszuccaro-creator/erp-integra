@@ -9,13 +9,9 @@ import BuscaCEP from "../comercial/BuscaCEP";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-
-// New imports
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
 import { base44 } from "@/api/base44Client";
-import { Zap } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { toast as sonnerToast } from "sonner";
 
 
