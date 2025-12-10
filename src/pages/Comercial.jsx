@@ -102,7 +102,7 @@ export default function Comercial() {
     // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
 
-  // V21.5: Handlers usando sistema de janelas - COM PROTEÇÃO ANTI-DUPLICAÇÃO
+  // V21.5: Handlers usando sistema de janelas - COM PROTEÇÃO ANTI-DUPLICAÇÃO + STATUS INICIAL APROVADO
   const handleCreateNewPedido = () => {
     let pedidoCriado = false; // Flag para evitar duplicação
     
@@ -111,6 +111,7 @@ export default function Comercial() {
       { 
         clientes,
         windowMode: true,
+        pedido: { status: 'Aprovado' }, // ✅ NOVO: Status inicial já aprovado para facilitar fluxo
         onSubmit: async (formData) => {
           if (pedidoCriado) {
             console.warn('⚠️ Tentativa de criação duplicada bloqueada');
@@ -120,8 +121,10 @@ export default function Comercial() {
           pedidoCriado = true;
           
           try {
-            await base44.entities.Pedido.create(formData);
-            toast.success("✅ Pedido criado com sucesso!");
+            // Garante que o status seja Aprovado ao criar
+            const pedidoFinal = { ...formData, status: formData.status || 'Aprovado' };
+            await base44.entities.Pedido.create(pedidoFinal);
+            toast.success("✅ Pedido criado e aprovado com sucesso!");
             await pedidosQuery.refetch();
           } catch (error) {
             pedidoCriado = false; // Reset em caso de erro
@@ -131,7 +134,7 @@ export default function Comercial() {
         onCancel: () => {}
       },
       {
-        title: '🛒 Novo Pedido',
+        title: '🛒 Novo Pedido (Aprovação Automática)',
         width: 1400,
         height: 800
       }
