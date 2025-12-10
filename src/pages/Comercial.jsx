@@ -10,10 +10,12 @@ import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
 import ComissoesTab from "../components/comercial/ComissoesTab";
 import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
-import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab"; // Keeping import as outline didn't specify removal
+import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab";
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
 import CentralAprovacoesManager from "../components/comercial/CentralAprovacoesManager";
+import PedidosEntregaTab from "../components/comercial/PedidosEntregaTab";
+import PedidosRetiradaTab from "../components/comercial/PedidosRetiradaTab";
 
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
@@ -269,6 +271,42 @@ export default function Comercial() {
             <ShoppingCart className="w-4 h-4 mr-2" />
             Pedidos
           </TabsTrigger>
+          <TabsTrigger 
+            value="entrega" 
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative"
+          >
+            <Truck className="w-4 h-4 mr-2" />
+            Logística de Entrega
+            {pedidos.filter(p => 
+              (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') && 
+              ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito'].includes(p.status)
+            ).length > 0 && (
+              <Badge className="ml-2 bg-blue-500 text-white">
+                {pedidos.filter(p => 
+                  (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') && 
+                  ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito'].includes(p.status)
+                ).length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger 
+            value="retirada" 
+            className="data-[state=active]:bg-green-600 data-[state=active]:text-white relative"
+          >
+            <Package className="w-4 h-4 mr-2" />
+            Pedidos p/ Retirada
+            {pedidos.filter(p => 
+              p.tipo_frete === 'Retirada' && 
+              ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Pronto para Retirada'].includes(p.status)
+            ).length > 0 && (
+              <Badge className="ml-2 bg-green-500 text-white">
+                {pedidos.filter(p => 
+                  p.tipo_frete === 'Retirada' && 
+                  ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Pronto para Retirada'].includes(p.status)
+                ).length}
+              </Badge>
+            )}
+          </TabsTrigger>
           {/* Removed Tabelas de Preço TabTrigger */}
           <TabsTrigger 
             value="comissoes" 
@@ -334,10 +372,18 @@ export default function Comercial() {
             pedidos={pedidos} 
             clientes={clientes} 
             isLoading={loadingPedidos} 
-            empresas={empresas} // Added empresas prop for printing or other order details
-            onCreatePedido={handleCreateNewPedido} // Added prop to open new order form
-            onEditPedido={handleEditPedido} // Added prop to open edit order form
+            empresas={empresas}
+            onCreatePedido={handleCreateNewPedido}
+            onEditPedido={handleEditPedido}
           />
+        </TabsContent>
+
+        <TabsContent value="entrega">
+          <PedidosEntregaTab windowMode={false} />
+        </TabsContent>
+
+        <TabsContent value="retirada">
+          <PedidosRetiradaTab windowMode={false} />
         </TabsContent>
 
         {/* Removed TabelasPrecoTab TabsContent */}

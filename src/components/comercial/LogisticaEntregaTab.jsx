@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -333,16 +332,29 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes = 
         <CardContent className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label>Tipo de Frete</Label>
+              <Label>Tipo de Logística *</Label>
               <select
                 value={formData?.tipo_frete || 'CIF'}
-                onChange={(e) => setFormData(prev => ({ ...prev, tipo_frete: e.target.value }))}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, tipo_frete: e.target.value }));
+                  if (e.target.value === 'Retirada') {
+                    setFormData(prev => ({ ...prev, valor_frete: 0 }));
+                    toast.info('💡 Pedido configurado para RETIRADA - cliente buscará no local');
+                  } else {
+                    toast.info('💡 Pedido configurado para ENTREGA - será enviado ao cliente');
+                  }
+                }}
                 className="w-full p-2 border rounded-lg"
               >
-                <option value="CIF">CIF (Por nossa conta)</option>
-                <option value="FOB">FOB (Por conta do cliente)</option>
-                <option value="Retirada">Retirada no local</option>
+                <option value="CIF">🚚 ENTREGA - CIF (Por nossa conta)</option>
+                <option value="FOB">🚚 ENTREGA - FOB (Por conta do cliente)</option>
+                <option value="Retirada">📦 RETIRADA no local</option>
               </select>
+              <p className="text-xs text-slate-500 mt-1">
+                {formData?.tipo_frete === 'Retirada' 
+                  ? '📦 Cliente retirará o pedido na empresa' 
+                  : '🚚 Pedido será entregue no endereço'}
+              </p>
             </div>
 
             <div>
