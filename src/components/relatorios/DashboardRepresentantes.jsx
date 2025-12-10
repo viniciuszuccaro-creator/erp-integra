@@ -109,7 +109,7 @@ export default function DashboardRepresentantes() {
             <SelectTrigger className="w-48">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[99999]">
               {tiposRepresentante.map(tipo => (
                 <SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>
               ))}
@@ -121,7 +121,7 @@ export default function DashboardRepresentantes() {
               <Calendar className="w-4 h-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[99999]">
               <SelectItem value="mes">Este Mês</SelectItem>
               <SelectItem value="trimestre">Trimestre</SelectItem>
               <SelectItem value="ano">Este Ano</SelectItem>

@@ -126,7 +126,7 @@ export default function RepresentantesTab() {
               <Filter className="w-4 h-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[99999]">
               {tiposRepresentante.map(tipo => (
                 <SelectItem key={tipo.value} value={tipo.value}>{tipo.label}</SelectItem>
               ))}
@@ -137,7 +137,7 @@ export default function RepresentantesTab() {
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[99999]">
               <SelectItem value="todos">Todos</SelectItem>
               <SelectItem value="Ativo">✅ Ativos</SelectItem>
               <SelectItem value="Inativo">❌ Inativos</SelectItem>

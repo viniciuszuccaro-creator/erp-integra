@@ -247,7 +247,7 @@ export default function RepresentanteFormCompleto({ representante, isOpen, onClo
                   <Label>Tipo de Pessoa *</Label>
                   <Select value={formData.tipo_pessoa} onValueChange={(v) => setFormData({ ...formData, tipo_pessoa: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Pessoa Física">Pessoa Física</SelectItem>
                       <SelectItem value="Pessoa Jurídica">Pessoa Jurídica</SelectItem>
                     </SelectContent>
@@ -258,7 +258,7 @@ export default function RepresentanteFormCompleto({ representante, isOpen, onClo
                   <Label>Tipo de Representante *</Label>
                   <Select value={formData.tipo_representante} onValueChange={(v) => setFormData({ ...formData, tipo_representante: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Representante Comercial">🤝 Representante Comercial</SelectItem>
                       <SelectItem value="Construtor">🏗️ Construtor</SelectItem>
                       <SelectItem value="Arquiteto">📐 Arquiteto</SelectItem>
@@ -414,7 +414,7 @@ export default function RepresentanteFormCompleto({ representante, isOpen, onClo
                   <Label>Tipo de Comissão *</Label>
                   <Select value={formData.tipo_comissao} onValueChange={(v) => setFormData({ ...formData, tipo_comissao: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Percentual">📊 Percentual sobre venda</SelectItem>
                       <SelectItem value="Valor Fixo por Venda">💵 Valor fixo por venda</SelectItem>
                       <SelectItem value="Cashback Percentual">💰 Cashback % (Construtor/Arquiteto)</SelectItem>
@@ -428,7 +428,7 @@ export default function RepresentanteFormCompleto({ representante, isOpen, onClo
                   <Label>Status do Contrato</Label>
                   <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Ativo">✅ Ativo</SelectItem>
                       <SelectItem value="Inativo">❌ Inativo</SelectItem>
                       <SelectItem value="Suspenso">⏸️ Suspenso</SelectItem>
@@ -513,7 +513,7 @@ export default function RepresentanteFormCompleto({ representante, isOpen, onClo
                   <Label>Forma de Pagamento Preferencial</Label>
                   <Select value={formData.forma_pagamento_comissao} onValueChange={(v) => setFormData({ ...formData, forma_pagamento_comissao: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="PIX">PIX</SelectItem>
                       <SelectItem value="Transferência">Transferência</SelectItem>
                       <SelectItem value="Boleto">Boleto</SelectItem>
@@ -527,7 +527,7 @@ export default function RepresentanteFormCompleto({ representante, isOpen, onClo
                   <Label>Tipo de Chave PIX</Label>
                   <Select value={formData.dados_bancarios?.tipo_pix || "CPF"} onValueChange={(v) => setFormData({ ...formData, dados_bancarios: { ...formData.dados_bancarios, tipo_pix: v } })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="CPF">CPF</SelectItem>
                       <SelectItem value="CNPJ">CNPJ</SelectItem>
                       <SelectItem value="E-mail">E-mail</SelectItem>
@@ -561,7 +561,7 @@ export default function RepresentanteFormCompleto({ representante, isOpen, onClo
                   <Label>Tipo de Conta</Label>
                   <Select value={formData.dados_bancarios?.tipo_conta || "Corrente"} onValueChange={(v) => setFormData({ ...formData, dados_bancarios: { ...formData.dados_bancarios, tipo_conta: v } })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent className="z-[9999]">
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Corrente">Corrente</SelectItem>
                       <SelectItem value="Poupança">Poupança</SelectItem>
                     </SelectContent>
