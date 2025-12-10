@@ -175,25 +175,29 @@ export function useAutomacaoFluxoPedido() {
 }
 
 // Hook para monitorar pedidos em tempo real
-export function useMonitoramentoPedidos(pedidos) {
+export function useMonitoramentoPedidos(pedidos = []) {
   const automacao = useAutomacaoFluxoPedido();
 
   useEffect(() => {
-    if (!pedidos?.length) return;
+    if (!pedidos || pedidos.length === 0) return;
 
     // Verificar pedidos que precisam de ação automática
-    pedidos.forEach(async (pedido) => {
-      // Auto-enviar para produção se aprovado e tiver itens de produção
-      if (pedido.status === 'Aprovado') {
-        await automacao.verificarEnviarProducao(pedido);
-      }
+    const processarPedidos = async () => {
+      for (const pedido of pedidos) {
+        // Auto-enviar para produção se aprovado e tiver itens de produção
+        if (pedido.status === 'Aprovado') {
+          await automacao.verificarEnviarProducao(pedido);
+        }
 
-      // Auto-criar entrega se faturado
-      if (pedido.status === 'Faturado') {
-        await automacao.criarEntregaAutomatica(pedido);
+        // Auto-criar entrega se faturado
+        if (pedido.status === 'Faturado') {
+          await automacao.criarEntregaAutomatica(pedido);
+        }
       }
-    });
-  }, [pedidos]);
+    };
+
+    processarPedidos();
+  }, [pedidos, automacao]);
 
   return automacao;
 }
