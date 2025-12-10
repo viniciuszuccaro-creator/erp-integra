@@ -276,27 +276,16 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                           }
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={pedido.status}
-                            onValueChange={(novoStatus) => 
-                              atualizarStatusMutation.mutate({ 
-                                pedidoId: pedido.id, 
-                                novoStatus 
-                              })
-                            }
-                          >
-                            <SelectTrigger className="w-40 h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Aprovado">Aprovado</SelectItem>
-                              <SelectItem value="Pronto para Faturar">Pronto p/ Faturar</SelectItem>
-                              <SelectItem value="Faturado">Faturado</SelectItem>
-                              <SelectItem value="Em Expedição">Em Expedição</SelectItem>
-                              <SelectItem value="Em Trânsito">Em Trânsito</SelectItem>
-                              <SelectItem value="Entregue">✅ Entregue</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Badge className={
+                            pedido.status === 'Entregue' ? 'bg-green-600' :
+                            pedido.status === 'Em Trânsito' ? 'bg-purple-600' :
+                            pedido.status === 'Em Expedição' ? 'bg-orange-600' :
+                            pedido.status === 'Faturado' ? 'bg-blue-600' :
+                            pedido.status === 'Pronto para Faturar' ? 'bg-indigo-600' :
+                            'bg-slate-600'
+                          }>
+                            {pedido.status === 'Entregue' ? '✅ Entregue' : pedido.status}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <Button
