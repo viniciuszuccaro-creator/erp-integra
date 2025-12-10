@@ -172,7 +172,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                   <TableHead>Cliente</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead className="min-w-[180px]">Status (Clique p/ Mudar)</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Aprovação</TableHead>
                   <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
                 </TableRow>
@@ -189,79 +189,27 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                       R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
-                     <Select 
-                       value={pedido.status} 
-                       onValueChange={async (novoStatus) => {
-                         try {
-                           // V21.5: BAIXAR ESTOQUE AUTOMATICAMENTE AO APROVAR
-                           if (novoStatus === 'Aprovado' && pedido.itens_revenda?.length > 0) {
-                             for (const item of pedido.itens_revenda) {
-                               if (item.produto_id) {
-                                 const produtos = await base44.entities.Produto.filter({ 
-                                   id: item.produto_id,
-                                   empresa_id: pedido.empresa_id 
-                                 });
-
-                                 const produto = produtos[0];
-                                 if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-                                   const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-
-                                   // Criar movimentação
-                                   await base44.entities.MovimentacaoEstoque.create({
-                                     empresa_id: pedido.empresa_id,
-                                     tipo_movimento: "saida",
-                                     origem_movimento: "pedido",
-                                     origem_documento_id: pedido.id,
-                                     produto_id: item.produto_id,
-                                     produto_descricao: item.descricao || item.produto_descricao,
-                                     codigo_produto: item.codigo_sku,
-                                     quantidade: item.quantidade,
-                                     unidade_medida: item.unidade,
-                                     estoque_anterior: produto.estoque_atual || 0,
-                                     estoque_atual: novoEstoque,
-                                     data_movimentacao: new Date().toISOString(),
-                                     documento: pedido.numero_pedido,
-                                     motivo: `Baixa automática - Pedido aprovado`,
-                                     responsavel: "Sistema Automático",
-                                     aprovado: true
-                                   });
-
-                                   // Atualizar estoque do produto
-                                   await base44.entities.Produto.update(item.produto_id, {
-                                     estoque_atual: novoEstoque
-                                   });
-                                 }
-                               }
-                             }
-                             toast({ title: `✅ Pedido aprovado e estoque baixado!` });
-                           } else {
-                             toast({ title: `✅ Status alterado para: ${novoStatus}` });
-                           }
-
-                           await base44.entities.Pedido.update(pedido.id, { status: novoStatus });
-                           queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-                           queryClient.invalidateQueries({ queryKey: ['produtos'] });
-                           queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
-                         } catch (error) {
-                           toast({ title: "❌ Erro ao alterar status", variant: "destructive" });
-                         }
-                       }}
-                     >
-                       <SelectTrigger className="w-[180px] h-8">
-                         <SelectValue />
-                       </SelectTrigger>
-                       <SelectContent className="z-[99999]">
-                         <SelectItem value="Rascunho">📝 Rascunho</SelectItem>
-                         <SelectItem value="Aguardando Aprovação">⏳ Aguardando Aprovação</SelectItem>
-                         <SelectItem value="Aprovado">✅ Aprovado</SelectItem>
-                         <SelectItem value="Pronto para Faturar">📦 Pronto para Faturar</SelectItem>
-                         <SelectItem value="Faturado">📄 Faturado</SelectItem>
-                         <SelectItem value="Em Expedição">🚚 Em Expedição</SelectItem>
-                         <SelectItem value="Em Trânsito">🛣️ Em Trânsito</SelectItem>
-                         <SelectItem value="Entregue">🎉 Entregue</SelectItem>
-                         <SelectItem value="Cancelado">❌ Cancelado</SelectItem>
-                       </SelectContent>
-                     </Select>
+                      <Badge className={
+                        pedido.status === 'Entregue' ? 'bg-green-600 text-white' :
+                        pedido.status === 'Em Trânsito' ? 'bg-purple-600 text-white' :
+                        pedido.status === 'Em Expedição' ? 'bg-orange-600 text-white' :
+                        pedido.status === 'Faturado' ? 'bg-blue-600 text-white' :
+                        pedido.status === 'Pronto para Faturar' ? 'bg-indigo-600 text-white' :
+                        pedido.status === 'Aprovado' ? 'bg-green-500 text-white' :
+                        pedido.status === 'Aguardando Aprovação' ? 'bg-yellow-500 text-white' :
+                        pedido.status === 'Cancelado' ? 'bg-red-600 text-white' :
+                        'bg-slate-500 text-white'
+                      }>
+                        {pedido.status === 'Entregue' ? '🎉 Entregue' :
+                         pedido.status === 'Em Trânsito' ? '🛣️ Em Trânsito' :
+                         pedido.status === 'Em Expedição' ? '🚚 Em Expedição' :
+                         pedido.status === 'Faturado' ? '📄 Faturado' :
+                         pedido.status === 'Pronto para Faturar' ? '📦 Pronto p/ Faturar' :
+                         pedido.status === 'Aprovado' ? '✅ Aprovado' :
+                         pedido.status === 'Aguardando Aprovação' ? '⏳ Aguardando' :
+                         pedido.status === 'Cancelado' ? '❌ Cancelado' :
+                         '📝 ' + pedido.status}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {pedido.status_aprovacao === "pendente" && (
