@@ -172,9 +172,9 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                   <TableHead>Cliente</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="min-w-[180px]">Status (Clique p/ Mudar)</TableHead>
                   <TableHead>Aprovação</TableHead>
-                  <TableHead className="min-w-[280px]">Ações</TableHead>
+                  <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -189,7 +189,33 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                       R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={pedido.status} size="sm" />
+                      <Select 
+                        value={pedido.status} 
+                        onValueChange={async (novoStatus) => {
+                          try {
+                            await base44.entities.Pedido.update(pedido.id, { status: novoStatus });
+                            toast({ title: `✅ Status alterado para: ${novoStatus}` });
+                            queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                          } catch (error) {
+                            toast({ title: "❌ Erro ao alterar status", variant: "destructive" });
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-[180px] h-8">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[99999]">
+                          <SelectItem value="Rascunho">📝 Rascunho</SelectItem>
+                          <SelectItem value="Aguardando Aprovação">⏳ Aguardando Aprovação</SelectItem>
+                          <SelectItem value="Aprovado">✅ Aprovado</SelectItem>
+                          <SelectItem value="Pronto para Faturar">📦 Pronto para Faturar</SelectItem>
+                          <SelectItem value="Faturado">📄 Faturado</SelectItem>
+                          <SelectItem value="Em Expedição">🚚 Em Expedição</SelectItem>
+                          <SelectItem value="Em Trânsito">🛣️ Em Trânsito</SelectItem>
+                          <SelectItem value="Entregue">🎉 Entregue</SelectItem>
+                          <SelectItem value="Cancelado">❌ Cancelado</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       {pedido.status_aprovacao === "pendente" && (
@@ -216,6 +242,27 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
+                        {pedido.status === "Rascunho" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await base44.entities.Pedido.update(pedido.id, { status: 'Aprovado' });
+                                toast({ title: "✅ Pedido aprovado!" });
+                                queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                              } catch (error) {
+                                toast({ title: "❌ Erro ao aprovar", variant: "destructive" });
+                              }
+                            }}
+                            title="Aprovar Pedido"
+                            className="h-8 px-2 bg-green-50 text-green-700 hover:bg-green-100 font-semibold"
+                          >
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            <span className="text-xs">Aprovar</span>
+                          </Button>
+                        )}
+                        
                         <Button 
                           variant="ghost" 
                           size="sm" 
@@ -244,10 +291,10 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                                 }
                               }}
                               title="Fechar Pedido e Enviar para Entrega"
-                              className="h-8 px-2 text-blue-600 font-semibold"
+                              className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200"
                             >
-                              <Truck className="w-3 h-3 mr-1" />
-                              <span className="text-xs">Fechar e Entregar</span>
+                              <Truck className="w-4 h-4 mr-1" />
+                              <span className="text-xs">🚚 Fechar p/ Entrega</span>
                             </Button>
                             <Button 
                               variant="ghost" 
