@@ -64,16 +64,29 @@ import { useRealtimeEntregas } from '@/components/lib/useRealtimeData';
 import MapaTempoReal from '../components/expedicao/MapaTempoReal';
 import DetalhesEntregaView from "../components/expedicao/DetalhesEntregaView";
 import DashboardEntregasRealtime from "../components/expedicao/DashboardEntregasRealtime";
+import DashboardLogisticaInteligente from "../components/logistica/DashboardLogisticaInteligente";
+import NotificadorAutomaticoEntrega from "../components/logistica/NotificadorAutomaticoEntrega";
+import MapaRoteirizacaoIA from "../components/logistica/MapaRoteirizacaoIA";
+import ComprovanteEntregaDigital from "../components/logistica/ComprovanteEntregaDigital";
+import RegistroOcorrenciaLogistica from "../components/logistica/RegistroOcorrenciaLogistica";
+import IntegracaoRomaneio from "../components/logistica/IntegracaoRomaneio";
+import PainelMetricasRealtime from "../components/logistica/PainelMetricasRealtime";
+import { usePermissoesLogistica } from "../components/logistica/ControleAcessoLogistica";
 
 export default function Expedicao() {
   const [activeTab, setActiveTab] = useState("entregas");
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
+  const permissoesLogistica = usePermissoesLogistica();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
   const [comprovanteModal, setComprovanteModal] = useState(null);
   const [entregaSelecionada, setEntregaSelecionada] = useState(null);
+  const [notificadorOpen, setNotificadorOpen] = useState(false);
+  const [comprovanteOpen, setComprovanteOpen] = useState(false);
+  const [ocorrenciaOpen, setOcorrenciaOpen] = useState(false);
+  const [romaneioOpen, setRomaneioOpen] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -484,7 +497,7 @@ export default function Expedicao() {
             </p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2 flex-wrap">
             {estaNoGrupo && (
               <Badge className="bg-blue-100 text-blue-700 px-4 py-2">
                 <Building2 className="w-4 h-4 mr-2" />
@@ -493,19 +506,70 @@ export default function Expedicao() {
             )}
 
             <Button
-              onClick={() => openWindow(RomaneioForm, {
-                empresaId: empresaAtual?.id,
-                windowMode: true
-              }, {
-                title: '📋 Gerar Romaneio',
+              onClick={() => openWindow(PainelMetricasRealtime, { windowMode: true }, {
+                title: '⚡ Métricas Tempo Real',
+                width: 1100,
+                height: 650
+              })}
+              variant="outline"
+              className="border-green-300 text-green-700 hover:bg-green-50"
+            >
+              <Activity className="w-4 h-4 mr-2" />
+              Tempo Real
+            </Button>
+
+            <Button
+              onClick={() => openWindow(DashboardLogisticaInteligente, { windowMode: true }, {
+                title: '📊 Dashboard IA',
                 width: 1200,
                 height: 700
               })}
-              className="bg-purple-600 hover:bg-purple-700"
+              variant="outline"
+              className="border-blue-300 text-blue-700 hover:bg-blue-50"
             >
-              <FileText className="w-4 h-4 mr-2" />
-              Gerar Romaneio
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Analytics IA
             </Button>
+
+            <Button
+              onClick={() => openWindow(MapaRoteirizacaoIA, { windowMode: true }, {
+                title: '🗺️ Roteirização IA',
+                width: 1000,
+                height: 700
+              })}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            >
+              <Route className="w-4 h-4 mr-2" />
+              🤖 Otimizar Rotas
+            </Button>
+
+            {permissoesLogistica.podeCriarRomaneio && (
+              <>
+                <Button
+                  onClick={() => setRomaneioOpen(true)}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Criar Romaneio
+                </Button>
+
+                <Button
+                  onClick={() => openWindow(RomaneioForm, {
+                    empresaId: empresaAtual?.id,
+                    windowMode: true
+                  }, {
+                    title: '📋 Gerar Romaneio Avançado',
+                    width: 1200,
+                    height: 700
+                  })}
+                  variant="outline"
+                  className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Romaneio Avançado
+                </Button>
+              </>
+            )}
 
             <Button 
               onClick={() => openWindow(FormularioEntrega, {
@@ -554,6 +618,14 @@ export default function Expedicao() {
             </TabsTrigger>
             <TabsTrigger value="roteirizacao-ia" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               🤖 Roteirização IA
+            </TabsTrigger>
+            <TabsTrigger value="metricas-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+              <Activity className="w-4 h-4 mr-2" />
+              ⚡ Tempo Real
+            </TabsTrigger>
+            <TabsTrigger value="dashboard-ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              📊 Dashboard IA
             </TabsTrigger>
             <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
@@ -825,12 +897,55 @@ export default function Expedicao() {
                                  <Edit className="w-4 h-4" />
                                 </Button>
 
+                                {entrega.status === "Em Trânsito" && permissoesLogistica.podeConfirmarEntrega && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      setEntregaSelecionada(entrega);
+                                      setComprovanteOpen(true);
+                                    }}
+                                    title="Confirmar Entrega"
+                                    className="text-green-600 hover:text-green-700"
+                                  >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+
+                                {permissoesLogistica.podeRegistrarOcorrencia && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      setEntregaSelecionada(entrega);
+                                      setOcorrenciaOpen(true);
+                                    }}
+                                    title="Registrar Ocorrência"
+                                    className="text-orange-600 hover:text-orange-700"
+                                  >
+                                    <AlertCircle className="w-4 h-4" />
+                                  </Button>
+                                )}
+
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setEntregaSelecionada(entrega);
+                                    setNotificadorOpen(true);
+                                  }}
+                                  title="Notificar Cliente"
+                                  className="text-blue-600 hover:text-blue-700"
+                                >
+                                  <MessageCircle className="w-4 h-4" />
+                                </Button>
+
                                 {entrega.status === "Entregue" && (
                                   <Button
                                     variant="ghost"
                                     size="icon"
                                     onClick={() => setComprovanteModal(entrega)}
-                                    title="Comprovante"
+                                    title="Ver Comprovante"
                                     className="text-green-600 hover:text-green-700"
                                   >
                                     <Camera className="w-4 h-4" />
@@ -1080,6 +1195,16 @@ export default function Expedicao() {
             </Card>
           </TabsContent>
 
+          {/* NOVA ABA: MÉTRICAS TEMPO REAL */}
+          <TabsContent value="metricas-realtime">
+            <PainelMetricasRealtime windowMode={false} />
+          </TabsContent>
+
+          {/* NOVA ABA: DASHBOARD IA */}
+          <TabsContent value="dashboard-ia">
+            <DashboardLogisticaInteligente windowMode={false} />
+          </TabsContent>
+
           {/* NOVA ABA: DASHBOARD */}
           <TabsContent value="dashboard">
             <DashboardLogistico entregas={entregasFiltradas} />
@@ -1105,6 +1230,56 @@ export default function Expedicao() {
             <ConfiguracaoExpedicao empresaId={empresaAtual?.id} />
           </TabsContent>
         </Tabs>
+
+        {/* Dialogs Modernos V21.5 */}
+        <Dialog open={notificadorOpen} onOpenChange={setNotificadorOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+            {entregaSelecionada && (
+              <NotificadorAutomaticoEntrega
+                pedido={pedidos.find(p => p.id === entregaSelecionada.pedido_id)}
+                entrega={entregaSelecionada}
+                onClose={() => setNotificadorOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={comprovanteOpen} onOpenChange={setComprovanteOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+            {entregaSelecionada && (
+              <ComprovanteEntregaDigital
+                pedido={pedidos.find(p => p.id === entregaSelecionada.pedido_id)}
+                entrega={entregaSelecionada}
+                onSuccess={() => {
+                  setComprovanteOpen(false);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={ocorrenciaOpen} onOpenChange={setOcorrenciaOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+            {entregaSelecionada && (
+              <RegistroOcorrenciaLogistica
+                pedido={pedidos.find(p => p.id === entregaSelecionada.pedido_id)}
+                entrega={entregaSelecionada}
+                onClose={() => setOcorrenciaOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={romaneioOpen} onOpenChange={setRomaneioOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <IntegracaoRomaneio
+              pedidosSelecionados={pedidos.filter(p => 
+                ['Faturado', 'Em Expedição', 'Pronto para Faturar'].includes(p.status)
+              )}
+              onClose={() => setRomaneioOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
 
         {/* Modal de Comprovante - mantido por ser visualização de imagem */}
         {comprovanteModal && (

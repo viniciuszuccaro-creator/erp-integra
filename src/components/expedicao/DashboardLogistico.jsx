@@ -19,9 +19,10 @@ import {
 } from "recharts";
 
 /**
- * Dashboard analítico de logística
+ * Dashboard analítico de logística (LEGADO - preservado)
+ * NOVO: DashboardLogisticaInteligente.jsx com IA avançada
  */
-export default function DashboardLogistico({ entregas }) {
+export default function DashboardLogistico({ entregas, windowMode = false }) {
   // KPIs
   const totalEntregas = entregas.length;
   const entregasEntregues = entregas.filter(e => e.status === "Entregue").length;
@@ -78,8 +79,10 @@ export default function DashboardLogistico({ entregas }) {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+  const containerClass = windowMode ? "w-full h-full overflow-auto p-6 space-y-6" : "space-y-6";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="border-0 shadow-md">
