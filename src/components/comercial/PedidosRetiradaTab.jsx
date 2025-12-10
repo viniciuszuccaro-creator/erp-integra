@@ -63,6 +63,17 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
     );
   }, [pedidos]);
 
+  // Estatísticas
+  const prontoParaRetirada = useMemo(() => 
+    pedidos.filter(p => p.status === 'Pronto para Retirada').length,
+    [pedidos]
+  );
+  
+  const retirados = useMemo(() => 
+    pedidos.filter(p => p.status === 'Entregue' && p.tipo_frete === 'Retirada').length,
+    [pedidos]
+  );
+
   // Aplicar filtros
   const pedidosFiltrados = useMemo(() => {
     let resultado = pedidosParaRetirada;
@@ -80,9 +91,6 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
     
     return resultado;
   }, [pedidosParaRetirada, busca, statusFiltro]);
-
-  const prontoParaRetirada = pedidos.filter(p => p.status === 'Pronto para Retirada').length;
-  const retirados = pedidos.filter(p => p.status === 'Entregue' && p.tipo_frete === 'Retirada').length;
 
   const atualizarStatusMutation = useMutation({
     mutationFn: ({ pedidoId, novoStatus }) => 
