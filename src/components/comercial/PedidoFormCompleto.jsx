@@ -17,11 +17,11 @@ import {
   Check,
   AlertTriangle,
   ChevronRight,
-  Clock
+  Clock,
+  CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
-import { CheckCircle2 } from 'lucide-react';
 
 // Componentes das Etapas
 import WizardEtapa1Cliente from './wizard/WizardEtapa1Cliente';
