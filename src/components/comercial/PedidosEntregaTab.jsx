@@ -276,37 +276,70 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                           }
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={pedido.status}
-                            onValueChange={(novoStatus) => 
-                              atualizarStatusMutation.mutate({ 
-                                pedidoId: pedido.id, 
-                                novoStatus 
-                              })
-                            }
-                          >
-                            <SelectTrigger className="w-40 h-8 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Aprovado">Aprovado</SelectItem>
-                              <SelectItem value="Pronto para Faturar">Pronto p/ Faturar</SelectItem>
-                              <SelectItem value="Faturado">Faturado</SelectItem>
-                              <SelectItem value="Em Expedição">Em Expedição</SelectItem>
-                              <SelectItem value="Em Trânsito">Em Trânsito</SelectItem>
-                              <SelectItem value="Entregue">✅ Entregue</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Badge className={
+                            pedido.status === 'Entregue' ? 'bg-green-600' :
+                            pedido.status === 'Em Trânsito' ? 'bg-purple-600' :
+                            pedido.status === 'Em Expedição' ? 'bg-orange-600' :
+                            pedido.status === 'Faturado' ? 'bg-blue-600' :
+                            'bg-slate-600'
+                          }>
+                            {pedido.status === 'Entregue' ? '✅ Entregue' : pedido.status}
+                          </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleVerDetalhes(pedido)}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Ver
-                          </Button>
+                          <div className="flex gap-2">
+                            {pedido.status === 'Aprovado' || pedido.status === 'Pronto para Faturar' ? (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  atualizarStatusMutation.mutate({
+                                    pedidoId: pedido.id,
+                                    novoStatus: 'Em Expedição'
+                                  });
+                                }}
+                                className="bg-orange-600 hover:bg-orange-700"
+                              >
+                                <Package className="w-4 h-4 mr-1" />
+                                Expedir
+                              </Button>
+                            ) : pedido.status === 'Em Expedição' || pedido.status === 'Faturado' ? (
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  atualizarStatusMutation.mutate({
+                                    pedidoId: pedido.id,
+                                    novoStatus: 'Em Trânsito'
+                                  });
+                                }}
+                                className="bg-purple-600 hover:bg-purple-700"
+                              >
+                                <Truck className="w-4 h-4 mr-1" />
+                                Saiu
+                              </Button>
+                            ) : pedido.status === 'Em Trânsito' ? (
+                              <Button
+                                size="sm"
+                                onClick={() => handleVerDetalhes(pedido)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-1" />
+                                Entregar
+                              </Button>
+                            ) : pedido.status === 'Entregue' ? (
+                              <Badge className="bg-green-100 text-green-700">
+                                ✅ Entregue
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleVerDetalhes(pedido)}
+                              >
+                                <Eye className="w-4 h-4 mr-1" />
+                                Ver
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
