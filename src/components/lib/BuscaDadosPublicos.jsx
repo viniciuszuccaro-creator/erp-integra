@@ -28,61 +28,71 @@ export async function buscarDadosCNPJ(cnpj) {
       throw new Error('CNPJ inválido - deve ter 14 dígitos');
     }
 
-    // Usar ReceitaWS (API pública mais estável)
-    const resposta = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`);
-    
-    if (!resposta.ok) {
-      throw new Error('Erro ao consultar CNPJ na Receita Federal');
-    }
+    const resultado = await base44.integrations.Core.InvokeLLM({
+      prompt: `Busque os dados reais da empresa com CNPJ ${cnpjLimpo} na Receita Federal usando a consulta pública CNPJ (https://solucoes.receita.fazenda.gov.br/servicos/cnpjreva/cnpjreva_solicitacao.asp) ou ReceitaWS.
 
-    const dados = await resposta.json();
+Retorne um JSON com os dados REAIS encontrados:
+{
+  "razao_social": "nome completo da empresa",
+  "nome_fantasia": "nome fantasia",
+  "inscricao_estadual": "IE se disponível",
+  "situacao_cadastral": "ATIVA/SUSPENSA/INAPTA/BAIXADA",
+  "data_abertura": "DD/MM/YYYY",
+  "porte": "MEI/ME/EPP/MEDIO/GRANDE",
+  "natureza_juridica": "tipo da empresa",
+  "cnae_principal": "atividade principal",
+  "endereco_completo": {
+    "logradouro": "rua",
+    "numero": "num",
+    "complemento": "compl",
+    "bairro": "bairro",
+    "cidade": "cidade",
+    "uf": "UF",
+    "cep": "CEP"
+  },
+  "telefone": "tel",
+  "email": "email"
+}
 
-    if (dados.status === 'ERROR') {
-      throw new Error(dados.message || 'CNPJ não encontrado');
-    }
-
-    // Buscar IE via IA se disponível
-    let inscricaoEstadual = '';
-    try {
-      const ieResult = await base44.integrations.Core.InvokeLLM({
-        prompt: `Empresa: ${dados.nome}. Estado: ${dados.uf}. Busque a INSCRIÇÃO ESTADUAL se disponível publicamente. Retorne só o número ou vazio.`,
-        add_context_from_internet: true,
-        response_json_schema: {
-          type: "object",
-          properties: {
-            inscricao_estadual: { type: "string" }
-          }
+Se não encontrar, retorne: {"erro": "CNPJ não encontrado"}`,
+      add_context_from_internet: true,
+      response_json_schema: {
+        type: "object",
+        properties: {
+          erro: { type: "string" },
+          razao_social: { type: "string" },
+          nome_fantasia: { type: "string" },
+          inscricao_estadual: { type: "string" },
+          situacao_cadastral: { type: "string" },
+          data_abertura: { type: "string" },
+          porte: { type: "string" },
+          natureza_juridica: { type: "string" },
+          cnae_principal: { type: "string" },
+          endereco_completo: {
+            type: "object",
+            properties: {
+              logradouro: { type: "string" },
+              numero: { type: "string" },
+              complemento: { type: "string" },
+              bairro: { type: "string" },
+              cidade: { type: "string" },
+              uf: { type: "string" },
+              cep: { type: "string" }
+            }
+          },
+          telefone: { type: "string" },
+          email: { type: "string" }
         }
-      });
-      inscricaoEstadual = ieResult.inscricao_estadual || '';
-    } catch {
-      inscricaoEstadual = '';
+      }
+    });
+
+    if (resultado.erro) {
+      throw new Error(resultado.erro);
     }
 
     return {
       sucesso: true,
-      dados: {
-        razao_social: dados.nome || '',
-        nome_fantasia: dados.fantasia || '',
-        inscricao_estadual: inscricaoEstadual,
-        situacao_cadastral: dados.situacao || '',
-        data_abertura: dados.abertura || '',
-        porte: dados.porte || '',
-        natureza_juridica: dados.natureza_juridica || '',
-        cnae_principal: dados.atividade_principal?.[0]?.text || '',
-        endereco_completo: {
-          logradouro: dados.logradouro || '',
-          numero: dados.numero || '',
-          complemento: dados.complemento || '',
-          bairro: dados.bairro || '',
-          cidade: dados.municipio || '',
-          uf: dados.uf || '',
-          cep: dados.cep || ''
-        },
-        telefone: dados.telefone || '',
-        email: dados.email || '',
-        capital_social: parseFloat(dados.capital_social?.replace(/\D/g, '')) || 0
-      }
+      dados: resultado
     };
 
   } catch (error) {
@@ -103,41 +113,46 @@ export async function buscarDadosCPF(cpf) {
     const cpfLimpo = cpf.replace(/\D/g, '');
     
     if (cpfLimpo.length !== 11) {
-      throw new Error('CPF inválido - deve ter 11 dígitos');
+      return {
+        sucesso: false,
+        erro: 'CPF deve ter 11 dígitos'
+      };
     }
 
-    // Validação local do CPF (algoritmo de dígitos verificadores)
-    const validarCPF = (cpf) => {
-      if (cpf.length !== 11) return false;
-      if (/^(\d)\1{10}$/.test(cpf)) return false; // 111.111.111-11, etc.
-      
-      let soma = 0;
-      let resto;
-      
-      for (let i = 1; i <= 9; i++) {
-        soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
-      }
-      
-      resto = (soma * 10) % 11;
-      if (resto === 10 || resto === 11) resto = 0;
-      if (resto !== parseInt(cpf.substring(9, 10))) return false;
-      
-      soma = 0;
-      for (let i = 1; i <= 10; i++) {
-        soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
-      }
-      
-      resto = (soma * 10) % 11;
-      if (resto === 10 || resto === 11) resto = 0;
-      if (resto !== parseInt(cpf.substring(10, 11))) return false;
-      
-      return true;
-    };
-
-    const valido = validarCPF(cpfLimpo);
+    // Validação do CPF usando algoritmo de módulo 11
+    if (/^(\d)\1{10}$/.test(cpfLimpo)) {
+      return {
+        sucesso: false,
+        erro: 'CPF inválido'
+      };
+    }
     
-    if (!valido) {
-      throw new Error('CPF inválido - dígitos verificadores incorretos');
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+      soma += parseInt(cpfLimpo.charAt(i)) * (10 - i);
+    }
+    let resto = 11 - (soma % 11);
+    let digito1 = resto > 9 ? 0 : resto;
+    
+    if (digito1 !== parseInt(cpfLimpo.charAt(9))) {
+      return {
+        sucesso: false,
+        erro: 'CPF inválido - dígito verificador incorreto'
+      };
+    }
+    
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+      soma += parseInt(cpfLimpo.charAt(i)) * (11 - i);
+    }
+    resto = 11 - (soma % 11);
+    let digito2 = resto > 9 ? 0 : resto;
+    
+    if (digito2 !== parseInt(cpfLimpo.charAt(10))) {
+      return {
+        sucesso: false,
+        erro: 'CPF inválido - dígito verificador incorreto'
+      };
     }
 
     const formatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -153,7 +168,7 @@ export async function buscarDadosCPF(cpf) {
   } catch (error) {
     return {
       sucesso: false,
-      erro: error.message || 'Erro ao validar CPF'
+      erro: 'Erro ao validar CPF'
     };
   }
 }
