@@ -197,6 +197,11 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
         razao_social: dados.razao_social || "",
         nome_fantasia: dados.nome_fantasia || "",
         inscricao_estadual: dados.inscricao_estadual || prev.inscricao_estadual,
+        inscricao_municipal: dados.inscricao_municipal || prev.inscricao_municipal,
+        cnae_principal: dados.cnae_principal || prev.cnae_principal,
+        ramo_atividade: dados.cnae_principal || prev.ramo_atividade,
+        status_fiscal_receita: dados.situacao_cadastral || "Não Verificado",
+        porte_empresa: dados.porte || prev.porte_empresa,
         endereco_principal: {
           ...prev.endereco_principal,
           cep: dados.endereco_completo?.cep || prev.endereco_principal.cep,
@@ -218,22 +223,23 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
       if (dados.email && !(newFormData.contatos || []).some(c => c.valor === dados.email)) {
         newFormData.contatos = [
           ...(newFormData.contatos || []),
-          { tipo: 'E-mail', valor: dados.email, principal: false }
+          { tipo: 'E-mail', valor: dados.email, principal: true }
         ];
       }
 
       if (dados.telefone && !(newFormData.contatos || []).some(c => c.valor === dados.telefone)) {
         newFormData.contatos = [
           ...(newFormData.contatos || []),
-          { tipo: 'Telefone', valor: dados.telefone, principal: false }
+          { tipo: 'Telefone', valor: dados.telefone, principal: !dados.email }
         ];
       }
       return newFormData;
     });
 
     toast({
-      title: "✅ Dados da Receita Federal preenchidos!",
-      description: `${dados.razao_social} - ${dados.situacao_cadastral}`
+      title: "✅ Dados REAIS da Receita Federal preenchidos!",
+      description: `${dados.razao_social} - ${dados.situacao_cadastral}${dados.inscricao_estadual ? ' - IE: ' + dados.inscricao_estadual : ''}`,
+      duration: 5000
     });
   };
 

@@ -6,11 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, Truck, Trash2, Power, PowerOff } from "lucide-react";
+import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
+import { useToast } from "@/components/ui/use-toast";
 
 /**
  * V21.1.2: Transportadora Form - Adaptado para Window Mode
  */
 export default function TransportadoraForm({ transportadora, onSubmit, windowMode = false }) {
+  const { toast } = useToast();
+  
   const [formData, setFormData] = useState(transportadora || {
     razao_social: '',
     nome_fantasia: '',
@@ -50,6 +54,57 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
     setFormData({ ...formData, status: novoStatus });
   };
 
+  const handleDadosCNPJ = (dados) => {
+    setFormData({
+      ...formData,
+      razao_social: dados.razao_social || formData.razao_social,
+      nome_fantasia: dados.nome_fantasia || formData.nome_fantasia,
+      inscricao_estadual: dados.inscricao_estadual || formData.inscricao_estadual,
+      cnae_principal: dados.cnae_principal || formData.cnae_principal,
+      status_fiscal_receita: dados.situacao_cadastral || "Não Verificado",
+      endereco: dados.endereco_completo?.logradouro 
+        ? `${dados.endereco_completo.logradouro}, ${dados.endereco_completo.numero || 'S/N'}${dados.endereco_completo.complemento ? ', ' + dados.endereco_completo.complemento : ''}, ${dados.endereco_completo.bairro || ''}`
+        : formData.endereco,
+      cidade: dados.endereco_completo?.cidade || formData.cidade,
+      estado: dados.endereco_completo?.uf || formData.estado,
+      cep: dados.endereco_completo?.cep || formData.cep,
+      email: dados.email || formData.email,
+      telefone: dados.telefone || formData.telefone
+    });
+
+    toast({
+      title: "✅ Dados REAIS da Receita Federal preenchidos!",
+      description: `${dados.razao_social} - ${dados.situacao_cadastral}${dados.inscricao_estadual ? ' - IE: ' + dados.inscricao_estadual : ''}`,
+      duration: 5000
+    });
+  };
+
+  const handleDadosCEP = (dados) => {
+    setFormData({
+      ...formData,
+      endereco: dados.logradouro ? `${dados.logradouro}` : formData.endereco,
+      cidade: dados.cidade || formData.cidade,
+      estado: dados.uf || formData.estado
+    });
+
+    toast({ title: "✅ Endereço preenchido automaticamente!" });
+  };
+
+  const handleDadosRNTRC = (dados) => {
+    if (dados.valido) {
+      toast({
+        title: "✅ RNTRC Válido",
+        description: `Situação: ${dados.situacao} - ${dados.tipo_registro}`
+      });
+    } else {
+      toast({
+        title: "⚠️ RNTRC com restrições",
+        description: dados.situacao,
+        variant: "destructive"
+      });
+    }
+  };
+
   const content = (
     <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
@@ -83,6 +138,17 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
                 value={formData.cnpj}
                 onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
                 required
+                placeholder="00.000.000/0000-00"
+              />
+            </div>
+
+            <div>
+              <Label>&nbsp;</Label>
+              <BotaoBuscaAutomatica
+                tipo="cnpj"
+                valor={formData.cnpj}
+                onDadosEncontrados={handleDadosCNPJ}
+                disabled={!formData.cnpj || formData.cnpj.replace(/\D/g, '').length < 14}
               />
             </div>
 
@@ -95,11 +161,67 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
             </div>
 
             <div>
-              <Label>RNTRC</Label>
+              <Label>RNTRC (ANTT)</Label>
               <Input
                 value={formData.rntrc}
                 onChange={(e) => setFormData({ ...formData, rntrc: e.target.value })}
                 placeholder="Registro Nacional"
+              />
+            </div>
+
+            <div>
+              <Label>&nbsp;</Label>
+              <BotaoBuscaAutomatica
+                tipo="rntrc"
+                valor={formData.rntrc}
+                onDadosEncontrados={handleDadosRNTRC}
+                disabled={!formData.rntrc}
+              />
+            </div>
+
+            <div>
+              <Label>CEP</Label>
+              <Input
+                value={formData.cep}
+                onChange={(e) => setFormData({ ...formData, cep: e.target.value })}
+                placeholder="00000-000"
+              />
+            </div>
+
+            <div>
+              <Label>&nbsp;</Label>
+              <BotaoBuscaAutomatica
+                tipo="cep"
+                valor={formData.cep}
+                onDadosEncontrados={handleDadosCEP}
+                disabled={!formData.cep || formData.cep.replace(/\D/g, '').length < 8}
+              />
+            </div>
+
+            <div className="col-span-2">
+              <Label>Endereço</Label>
+              <Input
+                value={formData.endereco}
+                onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                placeholder="Rua, Número, Bairro"
+              />
+            </div>
+
+            <div>
+              <Label>Cidade</Label>
+              <Input
+                value={formData.cidade}
+                onChange={(e) => setFormData({ ...formData, cidade: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label>Estado</Label>
+              <Input
+                value={formData.estado}
+                onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+                maxLength={2}
+                placeholder="SP"
               />
             </div>
 
@@ -117,6 +239,24 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
               <Input
                 value={formData.telefone}
                 onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <Label>WhatsApp</Label>
+              <Input
+                value={formData.whatsapp}
+                onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+
+            <div>
+              <Label>Contato Responsável</Label>
+              <Input
+                value={formData.contato_responsavel}
+                onChange={(e) => setFormData({ ...formData, contato_responsavel: e.target.value })}
+                placeholder="Nome do responsável"
               />
             </div>
 

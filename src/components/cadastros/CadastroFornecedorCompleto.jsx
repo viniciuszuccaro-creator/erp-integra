@@ -120,8 +120,12 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
       nome: dados.razao_social || formData.nome,
       razao_social: dados.razao_social || "",
       nome_fantasia: dados.nome_fantasia || "",
+      inscricao_estadual: dados.inscricao_estadual || formData.inscricao_estadual,
+      cnae_principal: dados.cnae_principal || formData.cnae_principal,
+      ramo_atividade: dados.cnae_principal || formData.ramo_atividade,
+      status_fiscal_receita: dados.situacao_cadastral || "Não Verificado",
       endereco: dados.endereco_completo?.logradouro 
-        ? `${dados.endereco_completo.logradouro}, ${dados.endereco_completo.numero || 'S/N'}`
+        ? `${dados.endereco_completo.logradouro}, ${dados.endereco_completo.numero || 'S/N'}${dados.endereco_completo.complemento ? ', ' + dados.endereco_completo.complemento : ''}, ${dados.endereco_completo.bairro || ''}`
         : formData.endereco,
       cidade: dados.endereco_completo?.cidade || formData.cidade,
       estado: dados.endereco_completo?.uf || formData.estado,
@@ -131,8 +135,8 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
     });
 
     toast({
-      title: "✅ Dados da Receita Federal preenchidos!",
-      description: `${dados.razao_social} - ${dados.situacao_cadastral}`
+      title: "✅ Dados REAIS da Receita Federal preenchidos!",
+      description: `${dados.razao_social} - ${dados.situacao_cadastral}${dados.inscricao_estadual ? ' - IE: ' + dados.inscricao_estadual : ''}`
     });
   };
 
