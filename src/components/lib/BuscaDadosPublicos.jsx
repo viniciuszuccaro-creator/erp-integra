@@ -28,50 +28,48 @@ export async function buscarDadosCNPJ(cnpj) {
       throw new Error('CNPJ inválido - deve ter 14 dígitos');
     }
 
-    // Usar API pública BrasilAPI (gratuita e oficial)
-    const resposta = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+    // Usar ReceitaWS (API pública mais estável)
+    const resposta = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`);
     
     if (!resposta.ok) {
-      if (resposta.status === 404) {
-        throw new Error('CNPJ não encontrado na Receita Federal');
-      }
-      throw new Error('Erro ao consultar CNPJ - tente novamente');
+      throw new Error('Erro ao consultar CNPJ na Receita Federal');
     }
 
     const dados = await resposta.json();
 
-    // Extrair inscrição estadual se disponível
+    if (dados.status === 'ERROR') {
+      throw new Error(dados.message || 'CNPJ não encontrado');
+    }
+
+    // Buscar IE via IA se disponível
     let inscricaoEstadual = '';
-    if (dados.qsa && dados.qsa.length > 0) {
-      // Tentar buscar IE via IA se houver sócios
-      try {
-        const ieResult = await base44.integrations.Core.InvokeLLM({
-          prompt: `Para a empresa ${dados.razao_social}, CNPJ ${cnpjLimpo}, localizada em ${dados.municipio}/${dados.uf}, busque na internet a INSCRIÇÃO ESTADUAL (IE) se disponível publicamente. Retorne apenas o número da IE ou vazio se não encontrar.`,
-          add_context_from_internet: true,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              inscricao_estadual: { type: "string" }
-            }
+    try {
+      const ieResult = await base44.integrations.Core.InvokeLLM({
+        prompt: `Empresa: ${dados.nome}. Estado: ${dados.uf}. Busque a INSCRIÇÃO ESTADUAL se disponível publicamente. Retorne só o número ou vazio.`,
+        add_context_from_internet: true,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            inscricao_estadual: { type: "string" }
           }
-        });
-        inscricaoEstadual = ieResult.inscricao_estadual || '';
-      } catch {
-        inscricaoEstadual = '';
-      }
+        }
+      });
+      inscricaoEstadual = ieResult.inscricao_estadual || '';
+    } catch {
+      inscricaoEstadual = '';
     }
 
     return {
       sucesso: true,
       dados: {
-        razao_social: dados.razao_social || '',
-        nome_fantasia: dados.nome_fantasia || '',
+        razao_social: dados.nome || '',
+        nome_fantasia: dados.fantasia || '',
         inscricao_estadual: inscricaoEstadual,
-        situacao_cadastral: dados.descricao_situacao_cadastral || '',
-        data_abertura: dados.data_inicio_atividade || '',
+        situacao_cadastral: dados.situacao || '',
+        data_abertura: dados.abertura || '',
         porte: dados.porte || '',
         natureza_juridica: dados.natureza_juridica || '',
-        cnae_principal: dados.cnae_fiscal_descricao || '',
+        cnae_principal: dados.atividade_principal?.[0]?.text || '',
         endereco_completo: {
           logradouro: dados.logradouro || '',
           numero: dados.numero || '',
@@ -81,9 +79,9 @@ export async function buscarDadosCNPJ(cnpj) {
           uf: dados.uf || '',
           cep: dados.cep || ''
         },
-        telefone: dados.ddd_telefone_1 || '',
+        telefone: dados.telefone || '',
         email: dados.email || '',
-        capital_social: parseFloat(dados.capital_social) || 0
+        capital_social: parseFloat(dados.capital_social?.replace(/\D/g, '')) || 0
       }
     };
 
