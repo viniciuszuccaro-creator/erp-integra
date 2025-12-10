@@ -4,48 +4,19 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Phone, Calendar, Mail } from "lucide-react";
+import { MapPin, Phone, Calendar, Mail, Zap, CheckCircle2, AlertCircle } from "lucide-react";
 import BuscaCEP from "../comercial/BuscaCEP";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
 // New imports
-import NotificacoesAutomaticas from '../sistema/NotificacoesAutomaticas';
-import { useMutation, useQueryClient } from '@tanstack/react-query'; // Assuming react-query is used for mutations
-import { toast } from '@/components/ui/use-toast'; // Assuming shadcn/ui toast component
-
-// Placeholder for base44, adjust as per actual project structure.
-// In a real project, this would be imported from an API client.
-// This mock object is here to prevent syntax errors and simulate API calls.
-const base44 = {
-  entities: {
-    Entrega: {
-      create: async (data) => {
-        console.log("Mock API: Entrega.create called with", data);
-        return new Promise(resolve => setTimeout(() => {
-          resolve({ ...data, id: `new_entrega_${Date.now()}`, status: data.status || 'Aguardando Separação' });
-        }, 500));
-      },
-      update: async (id, data) => {
-        console.log("Mock API: Entrega.update called for ID", id, "with data", data);
-        return new Promise(resolve => setTimeout(() => {
-          resolve({ ...data, id: id, status: data.status || 'Aguardando Separação' });
-        }, 500));
-      },
-      get: async (id) => {
-        console.log("Mock API: Entrega.get called for ID", id);
-        // Simulate fetching a full delivery object for notification context
-        return new Promise(resolve => setTimeout(() => {
-          resolve({
-            id: id,
-            status: 'Saiu para Entrega', // Example status
-            numero_pedido: 'PED-001',
-            cliente_nome: 'Cliente Exemplo',
-            // ... other necessary fields for notifications
-          });
-        }, 300));
-      },
-    },
-  },
-};
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
+import { base44 } from "@/api/base44Client";
+import { Zap } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { toast as sonnerToast } from "sonner";
 
 
 export default function FormularioEntrega({
@@ -61,8 +32,59 @@ export default function FormularioEntrega({
   isLoading = false,
   windowMode = false
 }) {
+  const [previsaoIA, setPrevisaoIA] = useState(null);
+  const [calculandoPrevisao, setCalculandoPrevisao] = useState(false);
 
   const queryClient = useQueryClient();
+  const { toast: toastHook } = useToast();
+
+  const calcularPrevisaoEntrega = async () => {
+    if (!formData.endereco_entrega_completo?.cidade) {
+      sonnerToast.error("❌ Preencha o endereço primeiro");
+      return;
+    }
+
+    setCalculandoPrevisao(true);
+    
+    try {
+      const resultado = await base44.integrations.Core.InvokeLLM({
+        prompt: `Calcule a previsão de entrega para:
+Cidade: ${formData.endereco_entrega_completo.cidade}
+Estado: ${formData.endereco_entrega_completo.estado}
+Peso: ${formData.peso_total_kg || 0} kg
+Prioridade: ${formData.prioridade}
+Tipo Frete: ${formData.tipo_frete}
+
+Retorne:
+- data_prevista (formato YYYY-MM-DD)
+- prazo_dias (número inteiro)
+- horario_previsto (HH:MM)
+- confianca_percentual (0-100)`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            data_prevista: { type: "string" },
+            prazo_dias: { type: "number" },
+            horario_previsto: { type: "string" },
+            confianca_percentual: { type: "number" }
+          }
+        }
+      });
+
+      setPrevisaoIA(resultado);
+      setFormData(prev => ({
+        ...prev,
+        data_previsao: resultado.data_prevista
+      }));
+      
+      sonnerToast.success("🤖 Previsão calculada com IA!");
+      
+    } catch (error) {
+      sonnerToast.error("Erro ao calcular previsão");
+    } finally {
+      setCalculandoPrevisao(false);
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.Entrega.create(data),
@@ -70,18 +92,13 @@ export default function FormularioEntrega({
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
 
-      toast({ title: "✅ Entrega criada!" });
+      toastHook({ title: "✅ Entrega criada!" });
+      sonnerToast.success("✅ Entrega criada com sucesso!");
 
-      // NOVO: Disparar notificação automática
-      if (entregaCriada.status === 'Saiu para Entrega' || entregaCriada.status === 'Em Trânsito') {
-        await NotificacoesAutomaticas.notificarSaidaEntrega(entregaCriada);
-      }
-
-      onCancel(); // Use the existing onCancel prop as the onClose equivalent
+      onCancel();
     },
     onError: (error) => {
-      console.error("Erro ao criar entrega:", error);
-      toast({ title: "❌ Erro ao criar entrega", description: error.message, variant: "destructive" });
+      toastHook({ title: "❌ Erro ao criar entrega", description: error.message, variant: "destructive" });
     }
   });
 
@@ -91,26 +108,13 @@ export default function FormularioEntrega({
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
 
-      toast({ title: "✅ Entrega atualizada!" });
+      toastHook({ title: "✅ Entrega atualizada!" });
+      sonnerToast.success("✅ Entrega atualizada!");
 
-      // NOVO: Disparar notificação se mudou para "Saiu para Entrega"
-      // We need to fetch the full entrega object to ensure all data for notification is available
-      if (variables.data.status === 'Saiu para Entrega' || variables.data.status === 'Em Trânsito') {
-        const entrega = await base44.entities.Entrega.get(variables.id); // Re-fetch for full context if needed by NotificacoesAutomaticas
-        await NotificacoesAutomaticas.notificarSaidaEntrega(entrega);
-      }
-
-      // NOVO: Disparar notificação se entregue
-      if (variables.data.status === 'Entregue') {
-        const entrega = await base44.entities.Entrega.get(variables.id); // Re-fetch for full context if needed by NotificacoesAutomaticas
-        await NotificacoesAutomaticas.notificarEntregaRealizada(entrega);
-      }
-
-      onCancel(); // Use the existing onCancel prop as the onClose equivalent
+      onCancel();
     },
     onError: (error) => {
-      console.error("Erro ao atualizar entrega:", error);
-      toast({ title: "❌ Erro ao atualizar entrega", description: error.message, variant: "destructive" });
+      toastHook({ title: "❌ Erro ao atualizar entrega", description: error.message, variant: "destructive" });
     }
   });
 
@@ -184,6 +188,43 @@ export default function FormularioEntrega({
 
   const isSubmitting = isLoading || createMutation.isPending || updateMutation.isPending;
 
+  // 🤖 IA: Auto-preencher dados do Google Maps
+  const buscarDadosGoogleMaps = async () => {
+    const endereco = `${formData.endereco_entrega_completo.logradouro}, ${formData.endereco_entrega_completo.numero}, ${formData.endereco_entrega_completo.cidade}, ${formData.endereco_entrega_completo.estado}`;
+    
+    try {
+      const resultado = await base44.integrations.Core.InvokeLLM({
+        prompt: `Gere um link do Google Maps para o endereço: ${endereco}
+Também forneça coordenadas aproximadas (latitude, longitude).
+
+Retorne no formato JSON.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            link_google_maps: { type: "string" },
+            latitude: { type: "number" },
+            longitude: { type: "number" }
+          }
+        }
+      });
+
+      setFormData(prev => ({
+        ...prev,
+        endereco_entrega_completo: {
+          ...prev.endereco_entrega_completo,
+          link_google_maps: resultado.link_google_maps,
+          latitude: resultado.latitude,
+          longitude: resultado.longitude
+        }
+      }));
+      
+      sonnerToast.success("📍 Geolocalização obtida!");
+      
+    } catch (error) {
+      sonnerToast.error("Erro ao buscar coordenadas");
+    }
+  };
+
   const content = (
     <form onSubmit={handleSubmitForm} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       {/* Empresa (se no grupo) */}
@@ -251,11 +292,29 @@ export default function FormularioEntrega({
         <div className="grid grid-cols-3 gap-4">
           <div>
             <Label>Data Previsão</Label>
-            <Input
-              type="date"
-              value={formData.data_previsao}
-              onChange={(e) => setFormData({ ...formData, data_previsao: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                value={formData.data_previsao}
+                onChange={(e) => setFormData({ ...formData, data_previsao: e.target.value })}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                onClick={calcularPrevisaoEntrega}
+                disabled={calculandoPrevisao}
+                variant="outline"
+                className="border-purple-300 text-purple-700 hover:bg-purple-50"
+                title="Calcular com IA"
+              >
+                <Zap className="w-4 h-4" />
+              </Button>
+            </div>
+            {previsaoIA && (
+              <p className="text-xs text-green-600 mt-1">
+                🤖 IA: {previsaoIA.prazo_dias} dia(s) • {previsaoIA.confianca_percentual}% confiança
+              </p>
+            )}
           </div>
           <div>
             <Label>Prioridade</Label>
@@ -268,24 +327,22 @@ export default function FormularioEntrega({
                 <SelectItem value="Baixa">Baixa</SelectItem>
                 <SelectItem value="Normal">Normal</SelectItem>
                 <SelectItem value="Alta">Alta</SelectItem>
-                <SelectItem value="Urgente">Urgente</SelectItem>
+                <SelectItem value="Urgente">🔥 Urgente</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <Label>Status</Label>
+            <Label>Status Inicial</Label>
             <Select
               value={formData.status}
               onValueChange={(v) => setFormData({ ...formData, status: v })}
             >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Aguardando Separação">Aguardando Separação</SelectItem>
-                <SelectItem value="Em Separação">Em Separação</SelectItem>
-                <SelectItem value="Pronto para Expedir">Pronto para Expedir</SelectItem>
-                <SelectItem value="Saiu para Entrega">Saiu para Entrega</SelectItem>
-                <SelectItem value="Em Trânsito">Em Trânsito</SelectItem>
-                <SelectItem value="Entregue">Entregue</SelectItem>
+                <SelectItem value="Aguardando Separação">⏳ Aguardando</SelectItem>
+                <SelectItem value="Em Separação">📦 Em Separação</SelectItem>
+                <SelectItem value="Pronto para Expedir">✅ Pronto</SelectItem>
+                <SelectItem value="Saiu para Entrega">🚚 Saiu</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -382,6 +439,30 @@ export default function FormularioEntrega({
             placeholder="Apto, bloco, próximo a..."
           />
         </div>
+
+        {/* 🤖 IA: Botão para gerar link Google Maps */}
+        <Card className="bg-purple-50 border-purple-300">
+          <div className="p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-purple-600" />
+              <span className="text-sm text-purple-900 font-medium">
+                {formData.endereco_entrega_completo.link_google_maps 
+                  ? '✅ Geolocalização Configurada' 
+                  : '📍 Gerar Link Google Maps'}
+              </span>
+            </div>
+            <Button
+              type="button"
+              onClick={buscarDadosGoogleMaps}
+              variant="outline"
+              size="sm"
+              className="border-purple-300 text-purple-700 hover:bg-purple-100"
+            >
+              <Zap className="w-4 h-4 mr-1" />
+              Gerar com IA
+            </Button>
+          </div>
+        </Card>
 
         <div className="flex items-center gap-2 p-3 bg-blue-50 rounded border border-blue-200">
           <input
@@ -558,23 +639,39 @@ export default function FormularioEntrega({
         />
       </div>
 
+      {/* 🤖 IA: Validações Inteligentes */}
+      {formData.peso_total_kg > 1000 && (
+        <Card className="bg-orange-50 border-orange-300">
+          <div className="p-3 text-sm text-orange-800">
+            <p className="font-semibold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              ⚠️ Atenção: Carga Pesada
+            </p>
+            <p className="text-xs mt-1">
+              Verifique se o veículo suporta {formData.peso_total_kg}kg. Considere reforço estrutural.
+            </p>
+          </div>
+        </Card>
+      )}
+
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
         <Button
           type="submit"
-          disabled={isSubmitting} // Use combined loading state
-          className="bg-blue-600 hover:bg-blue-700"
+          disabled={isSubmitting}
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
         >
-          {isEditing ? 'Atualizar' : 'Criar'} Entrega
+          <CheckCircle2 className="w-4 h-4 mr-2" />
+          {isEditing ? '💾 Atualizar' : '🚀 Criar'} Entrega
         </Button>
       </div>
     </form>
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return <div className="w-full h-full bg-white overflow-auto">{content}</div>;
   }
 
   return content;
