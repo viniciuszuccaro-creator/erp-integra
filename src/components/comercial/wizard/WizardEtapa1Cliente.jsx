@@ -147,7 +147,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             <SelectTrigger id="cliente-select">
               <SelectValue placeholder="Selecione o cliente..." />
             </SelectTrigger>
-            <SelectContent className="max-h-60">
+            <SelectContent className="max-h-60 z-[99999]">
               {clientes.map(c => (
                 <SelectItem key={c.id} value={c.id}>
                   {c.nome_fantasia || c.nome || c.razao_social} {c.cnpj ? `(${c.cnpj})` : ''}
@@ -188,7 +188,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             <SelectTrigger id="prioridade-select">
               <SelectValue placeholder="Selecione a prioridade..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[99999]">
                 <SelectItem value="Baixa">Baixa</SelectItem>
                 <SelectItem value="Normal">Normal</SelectItem>
                 <SelectItem value="Alta">Alta</SelectItem>
@@ -206,7 +206,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             <SelectTrigger id="tipo-pedido-select">
               <SelectValue placeholder="Selecione o tipo de pedido..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[99999]">
               <SelectItem value="Revenda">Apenas Revenda</SelectItem>
               <SelectItem value="Produção Sob Medida">Apenas Produção</SelectItem>
               <SelectItem value="Misto">Misto (Revenda + Produção)</SelectItem>
@@ -234,7 +234,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             <SelectTrigger id="origem-pedido-select">
               <SelectValue placeholder="Selecione a origem..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[99999]">
               <SelectItem value="Manual">Manual (ERP)</SelectItem>
               <SelectItem value="Portal">Portal do Cliente</SelectItem>
               <SelectItem value="Site">Site/Base</SelectItem>
@@ -261,7 +261,7 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
             <SelectTrigger id="obra-destino-select">
               <SelectValue placeholder="Selecione a obra/local de entrega..." />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[99999]">
               <SelectItem value="none">
                 {clienteSelecionado?.endereco_principal?.logradouro ? `Endereço Principal: ${clienteSelecionado.endereco_principal.logradouro}, ${clienteSelecionado.endereco_principal.cidade}` : "Usar Endereço Principal do Cliente"}
               </SelectItem>

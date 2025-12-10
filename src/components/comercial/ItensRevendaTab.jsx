@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
@@ -281,7 +280,7 @@ export default function ItensRevendaTab({ formData, setFormData, onNext }) {
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a unidade" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[99999]">
                       {opcoesUnidade.map(un => (
                         <SelectItem key={un} value={un}>
                           {un === 'PÇ' ? 'Peça' : 
