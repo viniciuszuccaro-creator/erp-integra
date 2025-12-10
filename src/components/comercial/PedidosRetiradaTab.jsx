@@ -94,8 +94,8 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   });
 
   const confirmarRetiradaMutation = useMutation({
-    mutationFn: async ({ pedido }) => {
-      // Baixar estoque automaticamente
+    mutationFn: async ({ pedido, nomeRecebedor, docRecebedor, observacoes, userId }) => {
+      // V21.5: BAIXAR ESTOQUE AUTOMATICAMENTE NA RETIRADA
       if (pedido.itens_revenda?.length > 0) {
         for (const item of pedido.itens_revenda) {
           if (item.produto_id) {
@@ -122,7 +122,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
                 data_movimentacao: new Date().toISOString(),
                 documento: pedido.numero_pedido,
                 motivo: `Retirada confirmada - ${nomeRecebedor}`,
-                responsavel: user?.full_name || "Sistema",
+                responsavel: userId || "Sistema",
                 aprovado: true
               });
               
@@ -172,13 +172,20 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
     }
   });
 
-  const handleConfirmarRetirada = () => {
+  const handleConfirmarRetirada = async () => {
     if (!nomeRecebedor.trim()) {
       toast.error("⚠️ Informe quem retirou o pedido");
       return;
     }
     
-    confirmarRetiradaMutation.mutate({ pedido: pedidoSelecionado });
+    await confirmarRetiradaMutation.mutateAsync({ 
+      pedido: pedidoSelecionado,
+      nomeRecebedor,
+      docRecebedor,
+      observacoes,
+      userId: user?.full_name
+    });
+    await automacao.notificarClienteStatusPedido(pedidoSelecionado, 'Entregue');
   };
 
   const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
@@ -311,16 +318,17 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
                           {pedido.status !== 'Pronto para Retirada' && (
                             <Button
                               size="sm"
-                              onClick={() => {
-                                atualizarStatusMutation.mutate({
+                              onClick={async () => {
+                                await atualizarStatusMutation.mutateAsync({
                                   pedidoId: pedido.id,
                                   novoStatus: 'Pronto para Retirada'
                                 });
+                                await automacao.notificarClienteStatusPedido(pedido, 'Pronto para Retirada');
                               }}
                               className="bg-blue-600 hover:bg-blue-700"
                             >
                               <Bell className="w-4 h-4 mr-1" />
-                              Avisar Pronto
+                              ✅ Avisar Pronto
                             </Button>
                           )}
                           
