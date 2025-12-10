@@ -20,7 +20,8 @@ import {
   AlertCircle,
   Clock,
   XCircle,
-  Printer
+  Printer,
+  Package
 } from "lucide-react";
 import { ImprimirPedido } from "@/components/lib/impressao";
 import { useToast } from "@/components/ui/use-toast";
@@ -172,7 +173,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                   <TableHead>Cliente</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Valor</TableHead>
-                  <TableHead className="min-w-[180px]">Status (Clique p/ Mudar)</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Aprovação</TableHead>
                   <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
                 </TableRow>
@@ -189,79 +190,20 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                       R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell>
-                     <Select 
-                       value={pedido.status} 
-                       onValueChange={async (novoStatus) => {
-                         try {
-                           // V21.5: BAIXAR ESTOQUE AUTOMATICAMENTE AO APROVAR
-                           if (novoStatus === 'Aprovado' && pedido.itens_revenda?.length > 0) {
-                             for (const item of pedido.itens_revenda) {
-                               if (item.produto_id) {
-                                 const produtos = await base44.entities.Produto.filter({ 
-                                   id: item.produto_id,
-                                   empresa_id: pedido.empresa_id 
-                                 });
-
-                                 const produto = produtos[0];
-                                 if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-                                   const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-
-                                   // Criar movimentação
-                                   await base44.entities.MovimentacaoEstoque.create({
-                                     empresa_id: pedido.empresa_id,
-                                     tipo_movimento: "saida",
-                                     origem_movimento: "pedido",
-                                     origem_documento_id: pedido.id,
-                                     produto_id: item.produto_id,
-                                     produto_descricao: item.descricao || item.produto_descricao,
-                                     codigo_produto: item.codigo_sku,
-                                     quantidade: item.quantidade,
-                                     unidade_medida: item.unidade,
-                                     estoque_anterior: produto.estoque_atual || 0,
-                                     estoque_atual: novoEstoque,
-                                     data_movimentacao: new Date().toISOString(),
-                                     documento: pedido.numero_pedido,
-                                     motivo: `Baixa automática - Pedido aprovado`,
-                                     responsavel: "Sistema Automático",
-                                     aprovado: true
-                                   });
-
-                                   // Atualizar estoque do produto
-                                   await base44.entities.Produto.update(item.produto_id, {
-                                     estoque_atual: novoEstoque
-                                   });
-                                 }
-                               }
-                             }
-                             toast({ title: `✅ Pedido aprovado e estoque baixado!` });
-                           } else {
-                             toast({ title: `✅ Status alterado para: ${novoStatus}` });
-                           }
-
-                           await base44.entities.Pedido.update(pedido.id, { status: novoStatus });
-                           queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-                           queryClient.invalidateQueries({ queryKey: ['produtos'] });
-                           queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
-                         } catch (error) {
-                           toast({ title: "❌ Erro ao alterar status", variant: "destructive" });
-                         }
-                       }}
-                     >
-                       <SelectTrigger className="w-[180px] h-8">
-                         <SelectValue />
-                       </SelectTrigger>
-                       <SelectContent className="z-[99999]">
-                         <SelectItem value="Rascunho">📝 Rascunho</SelectItem>
-                         <SelectItem value="Aguardando Aprovação">⏳ Aguardando Aprovação</SelectItem>
-                         <SelectItem value="Aprovado">✅ Aprovado</SelectItem>
-                         <SelectItem value="Pronto para Faturar">📦 Pronto para Faturar</SelectItem>
-                         <SelectItem value="Faturado">📄 Faturado</SelectItem>
-                         <SelectItem value="Em Expedição">🚚 Em Expedição</SelectItem>
-                         <SelectItem value="Em Trânsito">🛣️ Em Trânsito</SelectItem>
-                         <SelectItem value="Entregue">🎉 Entregue</SelectItem>
-                         <SelectItem value="Cancelado">❌ Cancelado</SelectItem>
-                       </SelectContent>
-                     </Select>
+                      <Badge className={
+                        pedido.status === 'Entregue' ? 'bg-green-600' :
+                        pedido.status === 'Em Trânsito' ? 'bg-purple-600' :
+                        pedido.status === 'Em Expedição' ? 'bg-orange-600' :
+                        pedido.status === 'Faturado' ? 'bg-blue-600' :
+                        pedido.status === 'Pronto para Faturar' ? 'bg-blue-500' :
+                        pedido.status === 'Em Produção' ? 'bg-indigo-600' :
+                        pedido.status === 'Aprovado' ? 'bg-green-500' :
+                        pedido.status === 'Aguardando Aprovação' ? 'bg-yellow-500' :
+                        pedido.status === 'Cancelado' ? 'bg-red-600' :
+                        'bg-slate-500'
+                      }>
+                        {pedido.status}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       {pedido.status_aprovacao === "pendente" && (
@@ -288,13 +230,13 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {pedido.status === "Rascunho" && (
+                        {pedido.status === "Rascunho" && pedido.status_aprovacao !== "pendente" && (
                           <Button 
                             variant="ghost" 
                             size="sm"
                             onClick={async () => {
                               try {
-                                // V21.5: BAIXAR ESTOQUE AO APROVAR
+                                // V21.5: BAIXAR ESTOQUE AUTOMATICAMENTE AO APROVAR
                                 if (pedido.itens_revenda?.length > 0) {
                                   for (const item of pedido.itens_revenda) {
                                     if (item.produto_id) {
@@ -307,7 +249,6 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                                       if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
                                         const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
                                         
-                                        // Criar movimentação
                                         await base44.entities.MovimentacaoEstoque.create({
                                           empresa_id: pedido.empresa_id,
                                           tipo_movimento: "saida",
@@ -327,7 +268,6 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                                           aprovado: true
                                         });
                                         
-                                        // Atualizar estoque do produto
                                         await base44.entities.Produto.update(item.produto_id, {
                                           estoque_atual: novoEstoque
                                         });
@@ -349,7 +289,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                             className="h-8 px-2 bg-green-50 text-green-700 hover:bg-green-100 font-semibold"
                           >
                             <CheckCircle2 className="w-3 h-3 mr-1" />
-                            <span className="text-xs">Aprovar</span>
+                            <span className="text-xs">✅ Aprovar</span>
                           </Button>
                         )}
                         
@@ -365,54 +305,48 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                         </Button>
                         
                         {pedido.status === "Aprovado" && (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={async () => {
-                                try {
-                                  await base44.entities.Pedido.update(pedido.id, {
-                                    status: 'Pronto para Faturar'
-                                  });
-                                  toast({ title: "✅ Pedido fechado para entrega!" });
-                                  queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-                                } catch (error) {
-                                  toast({ title: "❌ Erro ao fechar pedido", variant: "destructive" });
-                                }
-                              }}
-                              title="Fechar Pedido e Enviar para Entrega"
-                              className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200"
-                            >
-                              <Truck className="w-4 h-4 mr-1" />
-                              <span className="text-xs">🚚 Fechar p/ Entrega</span>
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => {
-                                toast({ title: "🚀 Gerando NF-e..." });
-                              }}
-                              title="Gerar NF-e"
-                              className="h-8 px-2 text-green-600"
-                            >
-                              <FileText className="w-3 h-3 mr-1" />
-                              <span className="text-xs">NF-e</span>
-                            </Button>
-                          </>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                await base44.entities.Pedido.update(pedido.id, {
+                                  status: 'Pronto para Faturar'
+                                });
+                                toast({ title: "✅ Pedido fechado para faturamento!" });
+                                queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                              } catch (error) {
+                                toast({ title: "❌ Erro ao fechar pedido", variant: "destructive" });
+                              }
+                            }}
+                            title="Fechar Pedido e Preparar para Faturamento"
+                            className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold"
+                          >
+                            <FileText className="w-4 h-4 mr-1" />
+                            <span className="text-xs">Fechar p/ Faturar</span>
+                          </Button>
                         )}
 
                         {pedido.status === "Pronto para Faturar" && (
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => {
-                              toast({ title: "🚀 Gerando NF-e..." });
+                            onClick={async () => {
+                              try {
+                                await base44.entities.Pedido.update(pedido.id, {
+                                  status: 'Faturado'
+                                });
+                                toast({ title: "✅ Pedido faturado!" });
+                                queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                              } catch (error) {
+                                toast({ title: "❌ Erro", variant: "destructive" });
+                              }
                             }}
-                            title="Gerar NF-e"
-                            className="h-8 px-2 text-green-600"
+                            title="Marcar como Faturado"
+                            className="h-8 px-2 bg-green-50 text-green-700 hover:bg-green-100 font-semibold"
                           >
                             <FileText className="w-3 h-3 mr-1" />
-                            <span className="text-xs">NF-e</span>
+                            <span className="text-xs">✅ Faturar</span>
                           </Button>
                         )}
 
@@ -420,14 +354,22 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => {
-                              toast({ title: "📦 Criando entrega..." });
+                            onClick={async () => {
+                              try {
+                                await base44.entities.Pedido.update(pedido.id, {
+                                  status: 'Em Expedição'
+                                });
+                                toast({ title: "✅ Pedido em expedição!" });
+                                queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                              } catch (error) {
+                                toast({ title: "❌ Erro", variant: "destructive" });
+                              }
                             }}
-                            title="Criar Entrega"
-                            className="h-8 px-2 text-blue-600"
+                            title="Marcar Em Expedição"
+                            className="h-8 px-2 bg-orange-50 text-orange-700 hover:bg-orange-100 font-semibold"
                           >
-                            <Truck className="w-3 h-3 mr-1" />
-                            <span className="text-xs">Entrega</span>
+                            <Package className="w-3 h-3 mr-1" />
+                            <span className="text-xs">📦 Expedir</span>
                           </Button>
                         )}
 
@@ -488,20 +430,45 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           </Button>
                         )}
                         
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => {
-                            if (confirm("Excluir pedido?")) {
-                              deleteMutation.mutate(pedido.id);
-                            }
-                          }}
-                          title="Excluir"
-                          className="h-8 px-2 text-red-600"
-                        >
-                          <Trash2 className="w-3 h-3 mr-1" />
-                          <span className="text-xs">Excluir</span>
-                        </Button>
+                        {pedido.status === "Rascunho" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => {
+                              if (confirm("Excluir pedido?")) {
+                                deleteMutation.mutate(pedido.id);
+                              }
+                            }}
+                            title="Excluir Pedido"
+                            className="h-8 px-2 text-red-600"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            <span className="text-xs">Excluir</span>
+                          </Button>
+                        )}
+                        
+                        {pedido.status !== "Rascunho" && pedido.status !== "Entregue" && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={async () => {
+                              if (confirm("Cancelar pedido? Esta ação não pode ser desfeita.")) {
+                                try {
+                                  await base44.entities.Pedido.update(pedido.id, { status: 'Cancelado' });
+                                  toast({ title: "✅ Pedido cancelado!" });
+                                  queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                                } catch (error) {
+                                  toast({ title: "❌ Erro ao cancelar", variant: "destructive" });
+                                }
+                              }
+                            }}
+                            title="Cancelar Pedido"
+                            className="h-8 px-2 text-red-600"
+                          >
+                            <XCircle className="w-3 h-3 mr-1" />
+                            <span className="text-xs">Cancelar</span>
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
