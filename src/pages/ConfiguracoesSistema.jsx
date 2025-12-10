@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, FileText, Settings, Zap, Sparkles } from "lucide-react";
+import { Shield, FileText, Settings, Zap, Sparkles, Wrench } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
 import ConfigGlobal from "@/components/sistema/ConfigGlobal";
+import DiagnosticoBackend from "@/components/sistema/DiagnosticoBackend";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -30,6 +31,14 @@ export default function ConfiguracoesSistema() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger
+            value="diagnostico"
+            className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white"
+          >
+            <Wrench className="w-4 h-4 mr-2" />
+            🔧 Diagnóstico
+          </TabsTrigger>
+
+          <TabsTrigger
             value="ia"
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
@@ -51,6 +60,20 @@ export default function ConfiguracoesSistema() {
             Estoque Avançado
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="diagnostico">
+          <div className="space-y-4">
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardHeader>
+                <CardTitle className="text-yellow-900">🔧 Diagnóstico do Sistema</CardTitle>
+                <p className="text-sm text-yellow-700">
+                  Teste se as funcionalidades backend estão ativas (necessário para busca de CNPJ/CPF)
+                </p>
+              </CardHeader>
+            </Card>
+            <DiagnosticoBackend />
+          </div>
+        </TabsContent>
 
         <TabsContent value="ia">
           <Card>
