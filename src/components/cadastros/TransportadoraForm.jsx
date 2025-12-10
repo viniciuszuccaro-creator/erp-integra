@@ -275,7 +275,7 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[99999]">
                   <SelectItem value="Ativo">Ativo</SelectItem>
                   <SelectItem value="Inativo">Inativo</SelectItem>
                 </SelectContent>

@@ -327,7 +327,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Matéria Prima">Matéria Prima</SelectItem>
                       <SelectItem value="Equipamentos">Equipamentos</SelectItem>
                       <SelectItem value="Serviços">Serviços</SelectItem>
@@ -381,7 +381,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Em Análise">Em Análise</SelectItem>
                       <SelectItem value="Ativo">Ativo</SelectItem>
                       <SelectItem value="Bloqueado">Bloqueado</SelectItem>
@@ -399,7 +399,7 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[99999]">
                       <SelectItem value="Ativo">Ativo</SelectItem>
                       <SelectItem value="Inativo">Inativo</SelectItem>
                     </SelectContent>

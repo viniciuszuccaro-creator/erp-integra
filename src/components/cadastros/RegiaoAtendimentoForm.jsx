@@ -262,7 +262,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, open, onOpenChange, on
                   <SelectTrigger>
                     <SelectValue placeholder="UF" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[99999]">
                     {ESTADOS_BRASIL.map(estado => (
                       <SelectItem key={estado} value={estado}>{estado}</SelectItem>
                     ))}
@@ -411,7 +411,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, open, onOpenChange, on
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[99999]">
                   <SelectItem value="Fácil">Fácil</SelectItem>
                   <SelectItem value="Moderado">Moderado</SelectItem>
                   <SelectItem value="Difícil">Difícil</SelectItem>
@@ -494,7 +494,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, open, onOpenChange, on
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-[99999]">
                 <SelectItem value="Baixa">Baixa</SelectItem>
                 <SelectItem value="Normal">Normal</SelectItem>
                 <SelectItem value="Alta">Alta</SelectItem>
