@@ -18,11 +18,22 @@ import {
   Download,
   AlertCircle,
   Navigation,
+  Bell,
+  BarChart3,
+  Route,
+  Zap,
+  MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import DashboardLogisticaInteligente from "../logistica/DashboardLogisticaInteligente";
+import NotificadorAutomaticoEntrega from "../logistica/NotificadorAutomaticoEntrega";
+import MapaRoteirizacaoIA from "../logistica/MapaRoteirizacaoIA";
+import TimelineEntregaVisual from "../logistica/TimelineEntregaVisual";
+import IAPrevisaoEntrega from "../logistica/IAPrevisaoEntrega";
+import { useWindow } from "@/components/lib/useWindow";
 
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
@@ -38,8 +49,10 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [detalhesOpen, setDetalhesOpen] = useState(false);
   const [entregaSelecionada, setEntregaSelecionada] = useState(null);
+  const [notificadorOpen, setNotificadorOpen] = useState(false);
 
   const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
@@ -130,6 +143,33 @@ export default function PedidosEntregaTab({ windowMode = false }) {
             Logística de Entrega
           </h2>
           <p className="text-slate-600 text-sm">Pedidos aprovados aguardando entrega</p>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button
+            onClick={() => openWindow(DashboardLogisticaInteligente, { windowMode: true }, {
+              title: '📊 Dashboard Logística IA',
+              width: 1200,
+              height: 700
+            })}
+            variant="outline"
+            className="border-blue-300 text-blue-700 hover:bg-blue-50"
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Dashboard IA
+          </Button>
+          
+          <Button
+            onClick={() => openWindow(MapaRoteirizacaoIA, { windowMode: true }, {
+              title: '🗺️ Roteirização Inteligente',
+              width: 1000,
+              height: 700
+            })}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          >
+            <Route className="w-4 h-4 mr-2" />
+            🤖 Otimizar Rotas
+          </Button>
         </div>
       </div>
 
@@ -288,14 +328,29 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleVerDetalhes(pedido)}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Ver
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleVerDetalhes(pedido)}
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              Ver
+                            </Button>
+                            
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEntregaSelecionada({ pedido, entrega });
+                                setNotificadorOpen(true);
+                              }}
+                              className="border-green-300 text-green-700 hover:bg-green-50"
+                            >
+                              <Bell className="w-4 h-4 mr-1" />
+                              Notificar
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -387,9 +442,22 @@ export default function PedidosEntregaTab({ windowMode = false }) {
         ))}
       </Tabs>
 
+      {/* Dialog de Notificação */}
+      <Dialog open={notificadorOpen} onOpenChange={setNotificadorOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+          {entregaSelecionada && (
+            <NotificadorAutomaticoEntrega
+              pedido={entregaSelecionada.pedido}
+              entrega={entregaSelecionada.entrega}
+              onClose={() => setNotificadorOpen(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog de Detalhes da Entrega */}
       <Dialog open={detalhesOpen} onOpenChange={setDetalhesOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle>
               🚚 Detalhes da Entrega - {entregaSelecionada?.pedido?.numero_pedido}
@@ -398,6 +466,12 @@ export default function PedidosEntregaTab({ windowMode = false }) {
           
           {entregaSelecionada && (
             <div className="space-y-4">
+              {/* Timeline Visual */}
+              <TimelineEntregaVisual 
+                pedido={entregaSelecionada.pedido} 
+                entrega={entregaSelecionada.entrega} 
+              />
+
               <Card className="bg-slate-50">
                 <CardContent className="p-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -531,6 +605,27 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                       <p className="text-sm text-green-700">Estoque baixado automaticamente.</p>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+
+              {/* IA: Previsão de Entrega */}
+              <IAPrevisaoEntrega 
+                pedido={entregaSelecionada.pedido}
+                historico={entregas.filter(e => e.status === 'Entregue').slice(0, 10)}
+              />
+
+              {/* Botão de Notificação */}
+              <Card className="bg-blue-50 border-blue-300">
+                <CardContent className="p-4">
+                  <Button
+                    onClick={() => {
+                      setNotificadorOpen(true);
+                    }}
+                    className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    💬 Notificar Cliente sobre Status
+                  </Button>
                 </CardContent>
               </Card>
 
