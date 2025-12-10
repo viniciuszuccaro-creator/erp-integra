@@ -174,7 +174,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Aprovação</TableHead>
-                  <TableHead>Ações</TableHead>
+                  <TableHead className="min-w-[280px]">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
