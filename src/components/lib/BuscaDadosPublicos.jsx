@@ -23,7 +23,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 export async function buscarDadosCNPJ(cnpj) {
   const cnpjLimpo = cnpj?.replace(/\D/g, '') || '';
   
+  console.log('🔍 Iniciando busca CNPJ:', cnpjLimpo);
+  
   if (cnpjLimpo.length !== 14) {
+    console.error('❌ CNPJ inválido:', cnpjLimpo);
     return {
       sucesso: false,
       erro: 'CNPJ deve ter 14 dígitos'
@@ -31,18 +34,35 @@ export async function buscarDadosCNPJ(cnpj) {
   }
 
   try {
+    console.log('📡 Chamando base44.functions.ConsultarCNPJ...');
     const resultado = await base44.functions.ConsultarCNPJ({ cnpj: cnpjLimpo });
     
+    console.log('📦 Resultado recebido:', resultado);
+    
     if (!resultado) {
-      throw new Error('Resposta vazia da função');
+      throw new Error('Resposta vazia da função backend');
+    }
+    
+    if (!resultado.sucesso) {
+      console.warn('⚠️ Busca retornou sem sucesso:', resultado.erro);
+    } else {
+      console.log('✅ CNPJ encontrado com sucesso:', resultado.dados?.razao_social);
     }
     
     return resultado;
   } catch (error) {
-    console.error('Erro ao buscar CNPJ:', error);
+    console.error('❌ ERRO ao buscar CNPJ:', error);
+    
+    // Verificar se é erro de backend functions não habilitado
+    const isBackendError = error.message?.includes('not found') || 
+                          error.message?.includes('ECONNREFUSED') ||
+                          error.message?.includes('Network');
+    
     return {
       sucesso: false,
-      erro: error.message || 'Erro ao buscar CNPJ - verifique se as Funções Backend estão habilitadas'
+      erro: isBackendError ? 
+        '⚠️ Backend Functions não habilitado. Ative nas Configurações do App.' : 
+        `Erro: ${error.message || 'Falha na consulta'}`
     };
   }
 }
