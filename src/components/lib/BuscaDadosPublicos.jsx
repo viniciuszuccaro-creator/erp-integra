@@ -28,76 +28,63 @@ export async function buscarDadosCNPJ(cnpj) {
       throw new Error('CNPJ inválido - deve ter 14 dígitos');
     }
 
-    const resultado = await base44.integrations.Core.InvokeLLM({
-      prompt: `Busque informações COMPLETAS e REAIS do CNPJ ${cnpjLimpo} usando fontes públicas oficiais da Receita Federal (consulta pública).
+    // Usar API pública BrasilAPI (gratuita e oficial)
+    const resposta = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+    
+    if (!resposta.ok) {
+      if (resposta.status === 404) {
+        throw new Error('CNPJ não encontrado na Receita Federal');
+      }
+      throw new Error('Erro ao consultar CNPJ - tente novamente');
+    }
 
-IMPORTANTE: Retorne APENAS informações VERIFICADAS e REAIS. Não invente dados.
+    const dados = await resposta.json();
 
-Retorne um objeto JSON com:
-{
-  "razao_social": "Razão social oficial completa",
-  "nome_fantasia": "Nome fantasia (ou vazio se não houver)",
-  "inscricao_estadual": "Número da IE se disponível nos dados públicos (caso contrário deixe vazio)",
-  "situacao_cadastral": "ATIVA, INAPTA, SUSPENSA ou BAIXADA",
-  "data_abertura": "YYYY-MM-DD",
-  "porte": "MEI, ME, EPP, PEQUENO, MEDIO ou GRANDE",
-  "natureza_juridica": "Descrição da natureza jurídica",
-  "cnae_principal": "Código e descrição do CNAE principal",
-  "endereco_completo": {
-    "logradouro": "rua/avenida",
-    "numero": "número",
-    "complemento": "complemento se houver",
-    "bairro": "bairro",
-    "cidade": "cidade",
-    "uf": "SP (sigla do estado)",
-    "cep": "CEP formatado"
-  },
-  "telefone": "telefone se disponível",
-  "email": "email se disponível",
-  "capital_social": valor numérico
-}
-
-Se o CNPJ não existir ou for inválido, retorne: {"erro": "CNPJ não encontrado na Receita Federal"}`,
-      add_context_from_internet: true,
-      response_json_schema: {
-        type: "object",
-        properties: {
-          erro: { type: "string" },
-          razao_social: { type: "string" },
-          nome_fantasia: { type: "string" },
-          inscricao_estadual: { type: "string" },
-          situacao_cadastral: { type: "string" },
-          data_abertura: { type: "string" },
-          porte: { type: "string" },
-          natureza_juridica: { type: "string" },
-          cnae_principal: { type: "string" },
-          endereco_completo: {
+    // Extrair inscrição estadual se disponível
+    let inscricaoEstadual = '';
+    if (dados.qsa && dados.qsa.length > 0) {
+      // Tentar buscar IE via IA se houver sócios
+      try {
+        const ieResult = await base44.integrations.Core.InvokeLLM({
+          prompt: `Para a empresa ${dados.razao_social}, CNPJ ${cnpjLimpo}, localizada em ${dados.municipio}/${dados.uf}, busque na internet a INSCRIÇÃO ESTADUAL (IE) se disponível publicamente. Retorne apenas o número da IE ou vazio se não encontrar.`,
+          add_context_from_internet: true,
+          response_json_schema: {
             type: "object",
             properties: {
-              logradouro: { type: "string" },
-              numero: { type: "string" },
-              complemento: { type: "string" },
-              bairro: { type: "string" },
-              cidade: { type: "string" },
-              uf: { type: "string" },
-              cep: { type: "string" }
+              inscricao_estadual: { type: "string" }
             }
-          },
-          telefone: { type: "string" },
-          email: { type: "string" },
-          capital_social: { type: "number" }
-        },
-        required: []
+          }
+        });
+        inscricaoEstadual = ieResult.inscricao_estadual || '';
+      } catch {
+        inscricaoEstadual = '';
       }
-    });
-
-    if (resultado.erro) {
-      throw new Error(resultado.erro);
     }
 
     return {
       sucesso: true,
-      dados: resultado
+      dados: {
+        razao_social: dados.razao_social || '',
+        nome_fantasia: dados.nome_fantasia || '',
+        inscricao_estadual: inscricaoEstadual,
+        situacao_cadastral: dados.descricao_situacao_cadastral || '',
+        data_abertura: dados.data_inicio_atividade || '',
+        porte: dados.porte || '',
+        natureza_juridica: dados.natureza_juridica || '',
+        cnae_principal: dados.cnae_fiscal_descricao || '',
+        endereco_completo: {
+          logradouro: dados.logradouro || '',
+          numero: dados.numero || '',
+          complemento: dados.complemento || '',
+          bairro: dados.bairro || '',
+          cidade: dados.municipio || '',
+          uf: dados.uf || '',
+          cep: dados.cep || ''
+        },
+        telefone: dados.ddd_telefone_1 || '',
+        email: dados.email || '',
+        capital_social: parseFloat(dados.capital_social) || 0
+      }
     };
 
   } catch (error) {
