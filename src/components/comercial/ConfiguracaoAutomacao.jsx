@@ -30,9 +30,11 @@ export default function ConfiguracaoAutomacao() {
   const [settings, setSettings] = useState({
     habilitado: config?.habilitado ?? true,
     modo: config?.modo ?? 'completo',
-    auto_aprovacao: config?.auto_aprovacao ?? false,
+    auto_aprovar_descontos: config?.auto_aprovar_descontos ?? true,
     auto_faturamento: config?.auto_faturamento ?? true,
     auto_expedicao: config?.auto_expedicao ?? true,
+    auto_confirmar_entregas: config?.auto_confirmar_entregas ?? true,
+    tempo_auto_entrega_minutos: config?.tempo_auto_entrega_minutos ?? 5,
     auto_notificacao: config?.auto_notificacao ?? true,
     intervalo_watcher_segundos: config?.intervalo_watcher_segundos ?? 8,
     max_pedidos_lote: config?.max_pedidos_lote ?? 5
@@ -133,14 +135,14 @@ export default function ConfiguracaoAutomacao() {
           <CardTitle className="text-base">🔧 Automações Específicas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-3 border rounded-lg">
+          <div className="flex items-center justify-between p-3 border rounded-lg bg-green-50">
             <div className="flex-1">
-              <Label>Auto-Aprovação (sem desconto)</Label>
-              <p className="text-xs text-slate-600">Aprovar automaticamente pedidos sem desconto</p>
+              <Label className="font-bold">🚀 Auto-Aprovar Descontos</Label>
+              <p className="text-xs text-slate-600">Aprovar TODOS os descontos automaticamente (modo deus)</p>
             </div>
             <Switch
-              checked={settings.auto_aprovacao}
-              onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_aprovacao: checked }))}
+              checked={settings.auto_aprovar_descontos}
+              onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_aprovar_descontos: checked }))}
             />
           </div>
 
@@ -165,6 +167,35 @@ export default function ConfiguracaoAutomacao() {
               onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_expedicao: checked }))}
             />
           </div>
+
+          <div className="flex items-center justify-between p-3 border rounded-lg bg-purple-50">
+            <div className="flex-1">
+              <Label className="font-bold">🎯 Auto-Confirmar Entregas</Label>
+              <p className="text-xs text-slate-600">Confirmar entregas automaticamente após tempo configurado</p>
+            </div>
+            <Switch
+              checked={settings.auto_confirmar_entregas}
+              onCheckedChange={(checked) => setSettings(prev => ({ ...prev, auto_confirmar_entregas: checked }))}
+            />
+          </div>
+
+          {settings.auto_confirmar_entregas && (
+            <div className="ml-4 p-3 border rounded-lg bg-purple-50">
+              <Label>Tempo para auto-confirmação (minutos)</Label>
+              <p className="text-xs text-slate-600 mb-2">Após quanto tempo em trânsito confirmar automaticamente</p>
+              <input
+                type="number"
+                min="1"
+                max="60"
+                value={settings.tempo_auto_entrega_minutos}
+                onChange={(e) => setSettings(prev => ({ 
+                  ...prev, 
+                  tempo_auto_entrega_minutos: parseInt(e.target.value) 
+                }))}
+                className="w-full p-2 border rounded-lg"
+              />
+            </div>
+          )}
 
           <div className="flex items-center justify-between p-3 border rounded-lg">
             <div className="flex-1">
@@ -220,12 +251,31 @@ export default function ConfiguracaoAutomacao() {
       </Card>
 
       {/* Avisos */}
-      {settings.modo === 'completo' && (
+      {settings.modo === 'completo' && settings.auto_aprovar_descontos && settings.auto_confirmar_entregas && (
+        <Alert className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-300">
+          <CheckCircle2 className="w-5 h-5 text-green-600" />
+          <AlertDescription className="text-sm text-green-900">
+            <strong className="text-lg">🚀 MODO DEUS ATIVO</strong>
+            <ul className="list-disc ml-5 mt-2 space-y-1">
+              <li>✅ Auto-aprovação de descontos</li>
+              <li>✅ Auto-faturamento (NF-e homologação)</li>
+              <li>✅ Auto-expedição e criação de entregas</li>
+              <li>✅ Auto-confirmação de entregas após {settings.tempo_auto_entrega_minutos} min</li>
+              <li>✅ Ciclo completo SEM intervenção humana</li>
+            </ul>
+            <p className="mt-3 font-bold text-blue-900">
+              🎯 Resultado: Rascunho → Entregue em ~{settings.tempo_auto_entrega_minutos + 1} minutos
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {settings.modo === 'completo' && (!settings.auto_aprovar_descontos || !settings.auto_confirmar_entregas) && (
         <Alert className="bg-orange-50 border-orange-300">
           <AlertTriangle className="w-4 h-4 text-orange-600" />
           <AlertDescription className="text-sm text-orange-900">
-            <strong>Modo Completo Ativo:</strong> O sistema irá executar TODAS as etapas automaticamente,
-            incluindo geração de NF-e em homologação e criação de entregas.
+            <strong>Modo Completo Parcial:</strong> Algumas automações estão desativadas.
+            Para MEGA-AUTOMAÇÃO total, ative todas as opções acima.
           </AlertDescription>
         </Alert>
       )}

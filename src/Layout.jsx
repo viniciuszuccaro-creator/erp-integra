@@ -49,6 +49,7 @@ import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
 import ZIndexGuard from "@/components/lib/ZIndexFix";
 import WatcherCicloAutomatico from "@/components/comercial/WatcherCicloAutomatico";
+import IndicadorAutomacaoAtiva from "@/components/dashboard/IndicadorAutomacaoAtiva";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -196,6 +197,9 @@ function LayoutContent({ children, currentPageName }) {
 
       {/* 🤖 WATCHER GLOBAL DE AUTOMAÇÃO */}
       <WatcherCicloAutomatico habilitado={true} intervaloMs={8000} />
+
+      {/* 🚀 INDICADOR VISUAL DE AUTOMAÇÃO */}
+      <IndicadorAutomacaoAtiva />
 
       <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
         <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
