@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useUser } from '@/components/lib/UserContext';
 import WidgetPerfilRiscoCliente from '../WidgetPerfilRiscoCliente';
 import SugestorCanalInteligente from '../SugestorCanalInteligente';
+import HistoricoOrigemCliente from '../HistoricoOrigemCliente';
 
 /**
  * Aba 1: Identificação do Pedido e Seleção de Cliente
@@ -322,11 +323,12 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
         />
       )}
 
-      {/* NOVO V21.6: IA Sugestor de Canal */}
+      {/* V21.6: IA Sugestor + Histórico de Origem */}
       {formData.cliente_id && (
-        <SugestorCanalInteligente
-          clienteId={formData.cliente_id}
-        />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <SugestorCanalInteligente clienteId={formData.cliente_id} />
+          <HistoricoOrigemCliente clienteId={formData.cliente_id} compact={false} />
+        </div>
       )}
 
       <div className="flex justify-end pt-4 border-t">
