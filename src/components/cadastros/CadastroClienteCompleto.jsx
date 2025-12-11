@@ -33,6 +33,7 @@ import GerenciarContatosClienteForm from "./GerenciarContatosClienteForm";
 import GerenciarEnderecosClienteForm from "./GerenciarEnderecosClienteForm";
 import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineCliente";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
+import HistoricoOrigemCliente from "@/components/comercial/HistoricoOrigemCliente";
 
 export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSuccess, windowMode = false }) {
   const [activeTab, setActiveTab] = useState("dados-gerais");
@@ -1205,6 +1206,7 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
               {cliente?.id ? (
                 <div className="space-y-4">
                   <ResumoHistorico clienteId={cliente.id} />
+                  <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
                   <TimelineCliente clienteId={cliente.id} showFilters={true} />
                 </div>
               ) : (
