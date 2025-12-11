@@ -20,11 +20,8 @@ import {
 import { 
   FileText, 
   Download, 
-  Filter,
   Eye,
   TrendingUp,
-  Calendar,
-  List,
   BarChart3
 } from "lucide-react";
 import { useWindow } from "@/components/lib/useWindow";
@@ -94,7 +91,6 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
   const origens = Object.keys(pedidosPorOrigem);
 
   const handleExportar = () => {
-    // Lógica de exportação para Excel/PDF
     const csvContent = [
       ['Origem', 'Total Pedidos', 'Valor Total', 'Aprovados', 'Taxa Conversão'],
       ...origens.map(origem => {
@@ -132,7 +128,7 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
               Relatório Detalhado
             </TabsTrigger>
             <TabsTrigger value="dashboard">
-              <TrendingUp className="w-4 h-4 mr-2" />
+              <BarChart3 className="w-4 h-4 mr-2" />
               Dashboard Analytics
             </TabsTrigger>
           </TabsList>
@@ -145,3 +141,177 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
 
         {/* ABA: RELATÓRIO DETALHADO */}
         <TabsContent value="relatorio" className="mt-0">
+          
+          {/* Filtros */}
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="data-inicio">Data Início</Label>
+                  <Input
+                    id="data-inicio"
+                    type="date"
+                    value={dataInicio}
+                    onChange={(e) => setDataInicio(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="data-fim">Data Fim</Label>
+                  <Input
+                    id="data-fim"
+                    type="date"
+                    value={dataFim}
+                    onChange={(e) => setDataFim(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="origem-filtro">Filtrar por Origem</Label>
+                  <select
+                    id="origem-filtro"
+                    value={origemFiltro}
+                    onChange={(e) => setOrigemFiltro(e.target.value)}
+                    className="w-full h-10 rounded-md border border-slate-300 px-3"
+                  >
+                    <option value="todos">Todas as Origens</option>
+                    {origens.map(origem => (
+                      <option key={origem} value={origem}>{origem}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Resumo por Origem */}
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                Resumo por Origem ({pedidosFiltrados.length} pedidos)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Origem</TableHead>
+                    <TableHead className="text-right">Pedidos</TableHead>
+                    <TableHead className="text-right">Valor Total</TableHead>
+                    <TableHead className="text-right">Aprovados</TableHead>
+                    <TableHead className="text-right">Taxa Conversão</TableHead>
+                    <TableHead className="text-right">Ticket Médio</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {origens.map(origem => {
+                    const dados = pedidosPorOrigem[origem];
+                    const taxa = dados.total > 0 ? ((dados.aprovados / dados.total) * 100) : 0;
+                    const ticketMedio = dados.total > 0 ? (dados.valorTotal / dados.total) : 0;
+
+                    return (
+                      <TableRow key={origem}>
+                        <TableCell>
+                          <BadgeOrigemPedido origemPedido={origem} showLock={false} />
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">{dados.total}</TableCell>
+                        <TableCell className="text-right text-green-600 font-semibold">
+                          R$ {dados.valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right">{dados.aprovados}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge className={taxa >= 70 ? 'bg-green-100 text-green-700' : taxa >= 40 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}>
+                            {taxa.toFixed(1)}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right text-blue-600 font-semibold">
+                          R$ {ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Lista de Pedidos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-slate-600" />
+                Pedidos Detalhados
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="max-h-96 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Número</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Origem</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pedidosFiltrados.slice(0, 50).map(pedido => (
+                      <TableRow key={pedido.id}>
+                        <TableCell className="font-mono text-xs">
+                          {pedido.numero_pedido}
+                        </TableCell>
+                        <TableCell>{pedido.cliente_nome}</TableCell>
+                        <TableCell className="text-xs">
+                          {new Date(pedido.data_pedido).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          <BadgeOrigemPedido origemPedido={pedido.origem_pedido} />
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={
+                            pedido.status === 'Aprovado' ? 'bg-green-100 text-green-700' :
+                            pedido.status === 'Rascunho' ? 'bg-slate-100 text-slate-700' :
+                            pedido.status === 'Aguardando Aprovação' ? 'bg-orange-100 text-orange-700' :
+                            'bg-blue-100 text-blue-700'
+                          }>
+                            {pedido.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-green-600">
+                          R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => openWindow({
+                              title: `Pedido ${pedido.numero_pedido}`,
+                              component: PedidoFormCompleto,
+                              props: { pedido, clientes },
+                              size: 'xlarge'
+                            })}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+
+        </TabsContent>
+
+        {/* ABA: DASHBOARD ANALYTICS */}
+        <TabsContent value="dashboard" className="mt-0">
+          <DashboardCanaisOrigem empresaId={empresaId} windowMode={false} />
+        </TabsContent>
+      </Tabs>
+
+    </div>
+  );
+}
