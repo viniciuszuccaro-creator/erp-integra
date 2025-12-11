@@ -618,7 +618,18 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
             
             {(pedido && pedido.status !== 'Rascunho' && pedido.status !== 'Aprovado') && (
               <Button
-                onClick={handleSubmit}
+                onClick={async () => {
+                  if (salvando) return;
+                  setSalvando(true);
+                  try {
+                    await onSubmit(formData);
+                    toast.success('✅ Alterações salvas!');
+                  } catch (error) {
+                    toast.error('❌ Erro ao salvar');
+                  } finally {
+                    setSalvando(false);
+                  }
+                }}
                 className="bg-slate-600 hover:bg-slate-700"
                 disabled={salvando || !validacoes.identificacao || !validacoes.itens}
               >
