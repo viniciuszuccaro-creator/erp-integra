@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Zap, Settings, CheckCircle2, AlertTriangle, Sliders } from 'lucide-react';
+import { Zap, Settings, CheckCircle2, AlertTriangle, Sliders, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 
 /**
