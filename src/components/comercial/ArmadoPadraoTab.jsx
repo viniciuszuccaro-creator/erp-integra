@@ -62,12 +62,20 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
 
   const calcularPeca = () => {
     let resultado = {
+      ...dadosPeca,
       tipo_peca: tipoPeca,
       identificador: dadosPeca.identificador || `${tipoPeca.toUpperCase()}-${Date.now()}`,
       quantidade: dadosPeca.quantidade || 1,
-      etapa_obra_id: dadosPeca.etapa_obra_id || '', // V21.1
-      etapa_obra_nome: dadosPeca.etapa_obra_nome || '', // V21.1
-      ...dadosPeca
+      etapa_obra_id: dadosPeca.etapa_obra_id || '',
+      etapa_obra_nome: dadosPeca.etapa_obra_nome || '',
+      quantidade_ferros_principais: dadosPeca.quantidade_ferros_principais || 4,
+      bitola_principal: dadosPeca.bitola_principal || '',
+      reforco_bitola: dadosPeca.reforco_bitola || '',
+      reforco_quantidade: dadosPeca.reforco_quantidade || 0,
+      estribo_bitola: dadosPeca.estribo_bitola || '',
+      estribo_largura: dadosPeca.estribo_largura || 0,
+      estribo_altura: dadosPeca.estribo_altura || 0,
+      distancia_estribo: dadosPeca.distancia_estribo || 20
     };
 
     // Cálculos específicos por tipo
