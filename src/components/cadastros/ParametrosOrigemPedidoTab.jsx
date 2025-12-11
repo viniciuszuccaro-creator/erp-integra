@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWindow } from "@/components/lib/useWindow";
 import ParametroOrigemPedidoForm from "./ParametroOrigemPedidoForm";
+import DashboardCanaisOrigem from "./DashboardCanaisOrigem";
 import { 
   Plus, 
   Search, 
@@ -15,16 +17,19 @@ import {
   XCircle, 
   Edit,
   Zap,
-  User
+  User,
+  BarChart3,
+  List
 } from "lucide-react";
 
 /**
- * Tab para gerenciar parâmetros de origem de pedidos
- * Lista todos os canais configurados e permite criar/editar
+ * V21.6 - Tab COMPLETA para gerenciar origens de pedidos
+ * Lista canais + Dashboard de performance
  */
 export default function ParametrosOrigemPedidoTab() {
   const { openWindow } = useWindow();
   const [busca, setBusca] = useState('');
+  const [abaAtiva, setAbaAtiva] = useState('canais');
 
   const { data: parametros, isLoading } = useQuery({
     queryKey: ['parametros-origem-pedido'],
@@ -64,29 +69,65 @@ export default function ParametrosOrigemPedidoTab() {
   return (
     <div className="space-y-4">
       
-      {/* Header com busca e novo */}
-      <div className="flex gap-3 items-center">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <Input
-            placeholder="Buscar por nome ou canal..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Button onClick={handleNovo}>
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Canal
-        </Button>
-      </div>
+      {/* Tabs: Canais vs Dashboard */}
+      <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
+        <div className="flex gap-3 items-center mb-4">
+          <TabsList className="bg-slate-100">
+            <TabsTrigger value="canais">
+              <List className="w-4 h-4 mr-2" />
+              Canais Configurados
+            </TabsTrigger>
+            <TabsTrigger value="dashboard">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Dashboard & Performance
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Lista de parâmetros */}
-      {isLoading ? (
-        <div className="text-center py-12 text-slate-500">
-          Carregando parâmetros...
+          {abaAtiva === 'canais' && (
+            <>
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Buscar por nome ou canal..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button onClick={handleNovo}>
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Canal
+              </Button>
+            </>
+          )}
         </div>
-      ) : parametrosFiltrados.length === 0 ? (
+
+        {/* ABA: CANAIS */}
+        <TabsContent value="canais" className="mt-0">
+
+          {/* Header com busca e novo */}
+        <div className="flex gap-3 items-center mb-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Buscar por nome ou canal..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button onClick={handleNovo}>
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Canal
+          </Button>
+        </div>
+
+        {/* Lista de parâmetros */}
+        {isLoading ? (
+          <div className="text-center py-12 text-slate-500">
+            Carregando parâmetros...
+          </div>
+        ) : parametrosFiltrados.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Settings className="w-12 h-12 mx-auto text-slate-300 mb-3" />
@@ -186,8 +227,15 @@ export default function ParametrosOrigemPedidoTab() {
               </Card>
             );
           })}
-        </div>
-      )}
+          </div>
+        )}
+        </TabsContent>
+
+        {/* ABA: DASHBOARD */}
+        <TabsContent value="dashboard" className="mt-0">
+          <DashboardCanaisOrigem />
+        </TabsContent>
+      </Tabs>
 
     </div>
   );
