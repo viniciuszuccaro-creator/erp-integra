@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BadgeOrigemPedido from "@/components/comercial/BadgeOrigemPedido";
+import DashboardCanaisOrigem from "@/components/cadastros/DashboardCanaisOrigem";
 import {
   Table,
   TableBody,
@@ -21,7 +23,9 @@ import {
   Filter,
   Eye,
   TrendingUp,
-  Calendar
+  Calendar,
+  List,
+  BarChart3
 } from "lucide-react";
 import { useWindow } from "@/components/lib/useWindow";
 import PedidoFormCompleto from "@/components/comercial/PedidoFormCompleto";
@@ -32,6 +36,7 @@ import PedidoFormCompleto from "@/components/comercial/PedidoFormCompleto";
  */
 export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = false }) {
   const { openWindow } = useWindow();
+  const [abaAtiva, setAbaAtiva] = useState('relatorio');
   const [dataInicio, setDataInicio] = useState('');
   const [dataFim, setDataFim] = useState('');
   const [origemFiltro, setOrigemFiltro] = useState('todos');
@@ -122,10 +127,6 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
         <div className="flex items-center justify-between mb-4">
           <TabsList className="bg-slate-100">
-            <TabsTrigger value="canais">
-              <List className="w-4 h-4 mr-2" />
-              Lista de Canais
-            </TabsTrigger>
             <TabsTrigger value="relatorio">
               <FileText className="w-4 h-4 mr-2" />
               Relatório Detalhado
@@ -142,5 +143,5 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
           </Button>
         </div>
 
-        {/* ABA: LISTA DE CANAIS */}
-        <TabsContent value="canais" className="mt-0">{/* ... keep existing code ... */}
+        {/* ABA: RELATÓRIO DETALHADO */}
+        <TabsContent value="relatorio" className="mt-0">
