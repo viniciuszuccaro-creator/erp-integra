@@ -624,6 +624,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
                   try {
                     await onSubmit(formData);
                     toast.success('✅ Alterações salvas!');
+                    onCancel();
                   } catch (error) {
                     toast.error('❌ Erro ao salvar');
                   } finally {
