@@ -25,8 +25,9 @@ import {
   Clock,
   CheckCircle,
   Percent,
-  Trophy, // Added Trophy icon
-  Activity // Added Activity icon for Tempo Real tab
+  Trophy,
+  Activity,
+  BookOpen
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -659,6 +660,35 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
+          {/* V21.6 NOVO: Guia de Uso do Sistema */}
+          <Card className="border-4 border-yellow-400 bg-gradient-to-r from-yellow-50 to-orange-50">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-yellow-500 rounded-xl flex items-center justify-center shadow-lg">
+                    <BookOpen className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-yellow-900 mb-1">
+                      📖 Guia Completo do Sistema
+                    </h3>
+                    <p className="text-sm text-yellow-800">
+                      Aprenda o fluxo passo a passo: Venda → Automação → NF-e → Expedição → Entrega
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => navigate(createPageUrl("GuiaUsoSistema"))}
+                  className="bg-yellow-600 hover:bg-yellow-700 shadow-lg"
+                  size="lg"
+                >
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  Ver Guia Completo
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* V21.6 NOVO: Widget Fechamento Automático */}
           <WidgetFechamentoPedidos empresaId={empresaAtual?.id} />
 
