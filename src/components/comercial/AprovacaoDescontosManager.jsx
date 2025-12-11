@@ -23,17 +23,25 @@ import { useWindow } from "@/components/lib/useWindow";
 import AnalisePedidoAprovacao from "./AnalisePedidoAprovacao";
 
 /**
- * 🔐 APROVAÇÃO DE DESCONTOS MANAGER V21.4 ETAPA 4
- * Gestão hierárquica de aprovação de descontos em pedidos
+ * 🔐 APROVAÇÃO DE DESCONTOS MANAGER V21.6 - DEPRECATED
+ * ⚠️ ESTE COMPONENTE FOI SUBSTITUÍDO POR CentralAprovacoesManager.jsx
  * 
- * FUNCIONALIDADES:
- * - Lista pedidos pendentes de aprovação
- * - Aprovar/Negar descontos
- * - Histórico de aprovações
- * - Controle hierárquico
- * - Multiempresa
+ * NOVO COMPONENTE (V21.6):
+ * - CentralAprovacoesManager.jsx - Aprovação unificada + Fechamento automático
+ * - AnalisePedidoAprovacao.jsx - Análise detalhada com toggle automação
+ * 
+ * RAZÃO DA MUDANÇA:
+ * - Integração com sistema de fechamento automático
+ * - Interface mais completa e moderna
+ * - Suporte a fechamento simultâneo
+ * - Multi-empresa melhorado
+ * - w-full h-full responsivo
+ * 
+ * REGRA-MÃE: Mantido para compatibilidade, mas uso não recomendado
  */
-function AprovacaoDescontosManager({ windowMode = false }) {
+function AprovacaoDescontosManager({ windowMode = false, empresaId = null }) {
+  // V21.6: REDIRECIONAMENTO PARA NOVO COMPONENTE
+  console.warn('⚠️ AprovacaoDescontosManager está DEPRECATED. Use CentralAprovacoesManager.jsx');
   const [aprovacaoDialogOpen, setAprovacaoDialogOpen] = useState(false);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [comentariosAprovacao, setComentariosAprovacao] = useState("");
@@ -43,10 +51,12 @@ function AprovacaoDescontosManager({ windowMode = false }) {
   const { toast } = useToast();
   const { openWindow } = useWindow();
 
-  // QUERIES
+  // V21.6: Multi-empresa
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+    queryKey: ['pedidos', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date')
+      : base44.entities.Pedido.list('-created_date'),
   });
 
   const { data: user } = useQuery({
@@ -150,20 +160,53 @@ function AprovacaoDescontosManager({ windowMode = false }) {
     });
   };
 
+  // V21.6: w-full h-full responsivo
   const containerClass = windowMode 
-    ? "w-full h-full overflow-auto p-6" 
-    : "space-y-6";
+    ? 'w-full h-full flex flex-col overflow-hidden' 
+    : 'space-y-6';
+
+  const contentClass = windowMode 
+    ? 'flex-1 overflow-y-auto p-6 space-y-6' 
+    : 'space-y-6';
+
+  const Wrapper = ({ children }) => windowMode ? (
+    <div className={containerClass}>
+      <div className={contentClass}>{children}</div>
+    </div>
+  ) : (
+    <div className={containerClass}>{children}</div>
+  );
 
   return (
-    <div className={containerClass}>
+    <Wrapper>
+      {/* V21.6: ALERTA DE COMPONENTE DEPRECATED */}
+      <Card className="border-2 border-yellow-400 bg-yellow-50 mb-6">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-yellow-600" />
+            <div>
+              <p className="font-semibold text-yellow-900">
+                ⚠️ Componente Deprecated
+              </p>
+              <p className="text-sm text-yellow-800 mt-1">
+                Este componente foi substituído por <strong>CentralAprovacoesManager.jsx</strong> que inclui 
+                fechamento automático integrado. Recomendamos usar o novo componente.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <ShieldCheck className="w-7 h-7 text-orange-600" />
-            Aprovação de Descontos
+            Aprovação de Descontos (Legacy V21.4)
           </h2>
-          <p className="text-slate-600 text-sm">Gestão hierárquica de aprovações comerciais</p>
+          <p className="text-slate-600 text-sm">
+            Gestão hierárquica de aprovações comerciais • Use CentralAprovacoesManager para recursos V21.6
+          </p>
         </div>
       </div>
 
@@ -495,7 +538,7 @@ function AprovacaoDescontosManager({ windowMode = false }) {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Wrapper>
   );
 }
 

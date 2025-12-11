@@ -22,10 +22,23 @@ import { useUser } from "@/components/lib/UserContext";
 import { toast } from "sonner";
 
 /**
- * ETAPA 4 - Aprovação de Descontos por Hierarquia
- * Componente para gerentes aprovarem/rejeitarem descontos solicitados
+ * ETAPA 4 - Aprovação de Descontos V21.6 - DEPRECATED
+ * ⚠️ ESTE COMPONENTE FOI SUBSTITUÍDO
+ * 
+ * NOVO COMPONENTE RECOMENDADO:
+ * - CentralAprovacoesManager.jsx (V21.6)
+ * 
+ * RECURSOS DO NOVO:
+ * - Aprovação + Fechamento automático
+ * - Interface unificada (3 abas)
+ * - Controle de acesso robusto
+ * - Multi-empresa 100%
+ * - w-full h-full responsivo
+ * 
+ * REGRA-MÃE: Mantido para compatibilidade
  */
-export default function AprovacaoDescontos({ windowMode = false }) {
+export default function AprovacaoDescontos({ windowMode = false, empresaId = null }) {
+  console.warn('⚠️ AprovacaoDescontos está DEPRECATED. Use CentralAprovacoesManager.jsx');
   const { user } = useUser();
   const queryClient = useQueryClient();
   const [filtros, setFiltros] = useState({
@@ -40,11 +53,14 @@ export default function AprovacaoDescontos({ windowMode = false }) {
     comentarios: ""
   });
 
-  // Buscar pedidos pendentes de aprovação
+  // V21.6: Multi-empresa
   const { data: pedidosPendentes = [], isLoading } = useQuery({
-    queryKey: ['pedidos-aprovacao', filtros],
+    queryKey: ['pedidos-aprovacao', filtros, empresaId],
     queryFn: async () => {
-      const pedidos = await base44.entities.Pedido.list();
+      const pedidos = empresaId
+        ? await base44.entities.Pedido.filter({ empresa_id: empresaId })
+        : await base44.entities.Pedido.list();
+      
       return pedidos.filter(p => 
         p.status_aprovacao === "pendente" &&
         (!filtros.empresa_id || p.empresa_id === filtros.empresa_id) &&
@@ -152,14 +168,31 @@ export default function AprovacaoDescontos({ windowMode = false }) {
 
   const content = (
     <div className="space-y-6">
+      {/* V21.6: Alerta Deprecated */}
+      <Card className="border-2 border-yellow-400 bg-yellow-50">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-6 h-6 text-yellow-600" />
+            <div>
+              <p className="font-semibold text-yellow-900">
+                ⚠️ Componente Legacy (V21.4)
+              </p>
+              <p className="text-sm text-yellow-800 mt-1">
+                Migre para <strong>CentralAprovacoesManager.jsx</strong> (V21.6) para acesso a fechamento automático integrado.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <AlertCircle className="w-6 h-6 text-orange-600" />
-            Aprovação de Descontos
+            Aprovação de Descontos (Legacy)
           </h2>
           <p className="text-sm text-slate-600 mt-1">
-            Pedidos aguardando sua aprovação • ETAPA 4
+            Pedidos aguardando sua aprovação • ETAPA 4 • Use CentralAprovacoesManager para V21.6
           </p>
         </div>
         <Badge className="bg-orange-100 text-orange-800">
@@ -340,15 +373,16 @@ export default function AprovacaoDescontos({ windowMode = false }) {
     </div>
   );
 
-  if (windowMode) {
-    return (
-      <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex-1 overflow-auto p-6">
-          {content}
-        </div>
+  // V21.6: w-full h-full responsivo
+  const Wrapper = ({ children }) => windowMode ? (
+    <div className="w-full h-full flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="flex-1 overflow-y-auto p-6">
+        {children}
       </div>
-    );
-  }
+    </div>
+  ) : (
+    <>{children}</>
+  );
 
-  return content;
+  return <Wrapper>{content}</Wrapper>;
 }
