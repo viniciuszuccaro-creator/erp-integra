@@ -3,7 +3,6 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import WidgetFechamentoPedidos from "@/components/comercial/WidgetFechamentoPedidos";
 import GuiaFluxoCompletoV21_6 from "@/components/sistema/GuiaFluxoCompletoV21_6";
-import { useWindow } from "@/components/lib/useWindow";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useContextoVisual } from '@/components/lib/useContextoVisual'; // Updated import path
@@ -55,7 +54,6 @@ import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
 import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import DashboardOperacionalBI from "@/components/dashboard/DashboardOperacionalBI";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useWindow } from "@/components/lib/useWindow";
 import WidgetCanaisOrigem from "@/components/dashboard/WidgetCanaisOrigem";
 
 
