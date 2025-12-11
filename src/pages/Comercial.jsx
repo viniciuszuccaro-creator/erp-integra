@@ -144,8 +144,11 @@ export default function Comercial() {
 
   const handleEditPedido = (pedido) => {
     let atualizacaoEmAndamento = false;
+    let windowIdRef = null;
     
-    const windowId = openWindow(
+    const { closeWindow: closeWin } = useWindow();
+    
+    windowIdRef = openWindow(
       PedidoFormCompleto,
       { 
         pedido,
@@ -165,8 +168,9 @@ export default function Comercial() {
             await pedidosQuery.refetch();
             
             // Fechar a janela após salvar
-            const { closeWindow } = require('@/components/lib/WindowManager');
-            closeWindow(windowId);
+            if (windowIdRef) {
+              closeWin(windowIdRef);
+            }
           } catch (error) {
             atualizacaoEmAndamento = false;
             toast.error("Erro ao salvar pedido: " + error.message);
