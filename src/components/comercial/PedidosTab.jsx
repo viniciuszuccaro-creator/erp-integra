@@ -172,6 +172,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                   <TableHead>Nº Pedido</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Data</TableHead>
+                  <TableHead>Origem</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Aprovação</TableHead>
@@ -185,6 +186,9 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                     <TableCell>{pedido.cliente_nome}</TableCell>
                     <TableCell className="text-sm">
                       {new Date(pedido.data_pedido).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                    <TableCell>
+                      <BadgeOrigemPedido origemPedido={pedido.origem_pedido} showLock={true} />
                     </TableCell>
                     <TableCell className="font-bold text-green-600">
                       R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
