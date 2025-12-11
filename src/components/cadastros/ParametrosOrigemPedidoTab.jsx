@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useWindow } from "@/components/lib/useWindow";
 import ParametroOrigemPedidoForm from "./ParametroOrigemPedidoForm";
 import DashboardCanaisOrigem from "./DashboardCanaisOrigem";
+import GerenciadorCanaisOrigem from "./GerenciadorCanaisOrigem";
 import { 
   Plus, 
   Search, 
@@ -66,8 +67,41 @@ export default function ParametrosOrigemPedidoTab() {
     'Misto': Settings
   };
 
+  const canaisAtivos = parametros.filter(p => p.ativo).length;
+  const canaisInativos = parametros.filter(p => !p.ativo).length;
+
   return (
     <div className="space-y-4">
+      
+      {/* Estatísticas Rápidas */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="p-3">
+            <p className="text-xs text-slate-600">Total Canais</p>
+            <p className="text-2xl font-bold text-blue-600">{parametros.length}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <p className="text-xs text-slate-600">Ativos</p>
+            <p className="text-2xl font-bold text-green-600">{canaisAtivos}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <p className="text-xs text-slate-600">Inativos</p>
+            <p className="text-2xl font-bold text-orange-600">{canaisInativos}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-3">
+            <p className="text-xs text-slate-600">Automáticos</p>
+            <p className="text-2xl font-bold text-purple-600">
+              {parametros.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
       
       {/* Tabs: Canais vs Dashboard */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
@@ -76,6 +110,10 @@ export default function ParametrosOrigemPedidoTab() {
             <TabsTrigger value="canais">
               <List className="w-4 h-4 mr-2" />
               Canais Configurados
+            </TabsTrigger>
+            <TabsTrigger value="gerenciador">
+              <Settings className="w-4 h-4 mr-2" />
+              Gerenciador Rápido
             </TabsTrigger>
             <TabsTrigger value="dashboard">
               <BarChart3 className="w-4 h-4 mr-2" />
@@ -105,24 +143,7 @@ export default function ParametrosOrigemPedidoTab() {
         {/* ABA: CANAIS */}
         <TabsContent value="canais" className="mt-0">
 
-          {/* Header com busca e novo */}
-        <div className="flex gap-3 items-center mb-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <Input
-              placeholder="Buscar por nome ou canal..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button onClick={handleNovo}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Canal
-          </Button>
-        </div>
-
-        {/* Lista de parâmetros */}
+          {/* Lista de parâmetros */}
         {isLoading ? (
           <div className="text-center py-12 text-slate-500">
             Carregando parâmetros...
@@ -229,6 +250,16 @@ export default function ParametrosOrigemPedidoTab() {
           })}
           </div>
         )}
+        </TabsContent>
+
+        {/* ABA: GERENCIADOR RÁPIDO */}
+        <TabsContent value="gerenciador" className="mt-0">
+          <GerenciadorCanaisOrigem />
+        </TabsContent>
+
+        {/* ABA: GERENCIADOR RÁPIDO */}
+        <TabsContent value="gerenciador" className="mt-0">
+          <GerenciadorCanaisOrigem />
         </TabsContent>
 
         {/* ABA: DASHBOARD */}

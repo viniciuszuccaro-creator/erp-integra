@@ -66,11 +66,11 @@ export default function ParametroOrigemPedidoForm({
 
   const containerClass = windowMode 
     ? "w-full h-full flex flex-col overflow-hidden" 
-    : "space-y-6";
+    : "";
 
   return (
     <div className={containerClass}>
-      <form onSubmit={handleSubmit} className="flex-1 overflow-auto p-6 space-y-6">
+      <form onSubmit={handleSubmit} className={windowMode ? "flex-1 overflow-auto p-6 space-y-6" : "space-y-6"}>
         
         <Card>
           <CardHeader>
@@ -304,20 +304,37 @@ export default function ParametroOrigemPedidoForm({
           </Card>
         )}
 
-        <div className="flex gap-3 justify-end pt-4 border-t">
+        {!windowMode && (
+          <div className="flex gap-3 justify-end pt-4 border-t">
+            {onCancel && (
+              <Button type="button" variant="outline" onClick={onCancel}>
+                <X className="w-4 h-4 mr-2" />
+                Cancelar
+              </Button>
+            )}
+            <Button type="submit" disabled={mutation.isPending}>
+              <Save className="w-4 h-4 mr-2" />
+              {mutation.isPending ? 'Salvando...' : parametro ? 'Atualizar' : 'Criar'}
+            </Button>
+          </div>
+        )}
+
+      </form>
+
+      {windowMode && (
+        <div className="p-4 border-t bg-white flex gap-3 justify-end">
           {onCancel && (
             <Button type="button" variant="outline" onClick={onCancel}>
               <X className="w-4 h-4 mr-2" />
               Cancelar
             </Button>
           )}
-          <Button type="submit" disabled={mutation.isPending}>
+          <Button onClick={handleSubmit} disabled={mutation.isPending}>
             <Save className="w-4 h-4 mr-2" />
             {mutation.isPending ? 'Salvando...' : parametro ? 'Atualizar' : 'Criar'}
           </Button>
         </div>
-
-      </form>
+      )}
     </div>
   );
 }

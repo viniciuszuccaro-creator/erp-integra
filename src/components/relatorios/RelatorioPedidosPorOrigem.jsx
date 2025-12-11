@@ -115,13 +115,13 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
 
   const containerClass = windowMode 
     ? "w-full h-full flex flex-col overflow-hidden" 
-    : "space-y-6";
+    : "";
 
   return (
     <div className={containerClass}>
       
-      <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-        <div className="flex items-center justify-between mb-4">
+      <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className={windowMode ? "w-full h-full flex flex-col" : ""}>
+        <div className={windowMode ? "p-6 pb-4" : "mb-4"}>
           <TabsList className="bg-slate-100">
             <TabsTrigger value="relatorio">
               <FileText className="w-4 h-4 mr-2" />
@@ -140,7 +140,7 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
         </div>
 
         {/* ABA: RELATÓRIO DETALHADO */}
-        <TabsContent value="relatorio" className="mt-0">
+        <TabsContent value="relatorio" className={windowMode ? "mt-0 flex-1 overflow-auto p-6 pt-0" : "mt-0"}>
           
           {/* Filtros */}
           <Card className="mb-4">
@@ -307,8 +307,8 @@ export default function RelatorioPedidosPorOrigem({ empresaId, windowMode = fals
         </TabsContent>
 
         {/* ABA: DASHBOARD ANALYTICS */}
-        <TabsContent value="dashboard" className="mt-0">
-          <DashboardCanaisOrigem empresaId={empresaId} windowMode={false} />
+        <TabsContent value="dashboard" className={windowMode ? "mt-0 flex-1 overflow-auto" : "mt-0"}>
+          <DashboardCanaisOrigem empresaId={empresaId} windowMode={windowMode} />
         </TabsContent>
       </Tabs>
 
