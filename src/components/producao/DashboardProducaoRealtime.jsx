@@ -20,7 +20,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
  * Consolidação e melhoria do módulo de produção
  */
 
-export default function DashboardProducaoRealtime({ empresaId }) {
+export default function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
   const [metricas, setMetricas] = useState({
     eficienciaGeral: 0,
     opsAtrasadas: 0,
@@ -95,8 +95,11 @@ export default function DashboardProducaoRealtime({ empresaId }) {
 
   const COLORS = ['#94a3b8', '#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#22c55e'];
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6";
+
   return (
-    <div className="w-full h-full space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* KPIs Principais */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <Card>
@@ -278,6 +281,7 @@ export default function DashboardProducaoRealtime({ empresaId }) {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

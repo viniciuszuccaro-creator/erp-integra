@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
-export default function DashboardOperacionalBI() {
+export default function DashboardOperacionalBI({ windowMode = false }) {
   const [periodoFiltro, setPeriodoFiltro] = useState("mes");
 
   const { data: pedidos = [] } = useQuery({
@@ -68,8 +68,11 @@ export default function DashboardOperacionalBI() {
     { mes: "Jun", valor: 67000 },
   ];
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen";
+
   return (
-    <div className="space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Dashboard Operacional BI</h1>
@@ -267,6 +270,7 @@ export default function DashboardOperacionalBI() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

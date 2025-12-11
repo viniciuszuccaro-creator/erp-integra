@@ -30,7 +30,7 @@ import {
   Legend
 } from "recharts";
 
-export default function DashboardFinanceiroUnificado({ empresaId }) {
+export default function DashboardFinanceiroUnificado({ empresaId, windowMode = false }) {
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber'],
     queryFn: () => base44.entities.ContaReceber.list(),
@@ -101,8 +101,11 @@ export default function DashboardFinanceiroUnificado({ empresaId }) {
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981'];
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* KPIs Principais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50">
@@ -363,6 +366,7 @@ export default function DashboardFinanceiroUnificado({ empresaId }) {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }

@@ -21,7 +21,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
  * Consolidação Caixa Diário + Conciliação Bancária
  */
 
-export default function DashboardFinanceiroRealtime({ empresaId }) {
+export default function DashboardFinanceiroRealtime({ empresaId, windowMode = false }) {
   const [metricas, setMetricas] = useState({
     saldoCaixa: 0,
     receitasHoje: 0,
@@ -100,6 +100,8 @@ export default function DashboardFinanceiroRealtime({ empresaId }) {
     });
   }, [contasReceber, contasPagar, movimentosCartao, conciliacoes, caixaMovimentos]);
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6";
+
   const dadosFluxoCaixa7Dias = [];
   for (let i = 6; i >= 0; i--) {
     const data = new Date();
@@ -123,7 +125,8 @@ export default function DashboardFinanceiroRealtime({ empresaId }) {
   }
 
   return (
-    <div className="w-full h-full space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         <Card className={metricas.saldoCaixa >= 0 ? 'border-green-200' : 'border-red-200'}>
@@ -248,6 +251,7 @@ export default function DashboardFinanceiroRealtime({ empresaId }) {
           </ResponsiveContainer>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

@@ -18,7 +18,7 @@ const etapasFunil = [
   { id: "Fechamento", nome: "Fechamento", cor: "bg-green-100" },
 ];
 
-export default function FunilComercialInteligente() {
+export default function FunilComercialInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
 
@@ -111,8 +111,10 @@ Retorne uma lista priorizada com score e motivo.`,
 
   if (isLoading) return <div className="p-6">Carregando funil...</div>;
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-hidden" : "h-full flex flex-col bg-gradient-to-br from-slate-50 to-purple-50";
+
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-purple-50">
+    <div className={containerClass}>
       <div className="p-6 border-b bg-white shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>

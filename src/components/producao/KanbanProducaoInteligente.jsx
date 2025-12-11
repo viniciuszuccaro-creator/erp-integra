@@ -20,7 +20,7 @@ const colunas = [
   { id: "Pronto para Expedição", nome: "Pronto", cor: "bg-green-100" },
 ];
 
-export default function KanbanProducaoInteligente() {
+export default function KanbanProducaoInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
   const [filtroEmpresa, setFiltroEmpresa] = useState("todas");
@@ -95,8 +95,10 @@ export default function KanbanProducaoInteligente() {
 
   if (isLoading) return <div className="p-6">Carregando Kanban...</div>;
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-hidden" : "h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50";
+
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className={containerClass}>
       <div className="p-6 border-b bg-white shadow-sm">
         <div className="flex items-center justify-between">
           <div>
