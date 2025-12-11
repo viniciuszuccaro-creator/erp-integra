@@ -143,9 +143,9 @@ export default function Comercial() {
   };
 
   const handleEditPedido = (pedido) => {
-    let atualizacaoEmAndamento = false; // Flag anti-duplicação
+    let atualizacaoEmAndamento = false;
     
-    openWindow(
+    const windowId = openWindow(
       PedidoFormCompleto,
       { 
         pedido,
@@ -163,6 +163,10 @@ export default function Comercial() {
             await base44.entities.Pedido.update(formData.id, formData);
             toast.success("✅ Pedido atualizado com sucesso!");
             await pedidosQuery.refetch();
+            
+            // Fechar a janela após salvar
+            const { closeWindow } = require('@/components/lib/WindowManager');
+            closeWindow(windowId);
           } catch (error) {
             atualizacaoEmAndamento = false;
             toast.error("Erro ao salvar pedido: " + error.message);
