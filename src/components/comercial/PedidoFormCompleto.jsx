@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
+import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
 
 // Componentes das Etapas
 import WizardEtapa1Cliente from './wizard/WizardEtapa1Cliente';
@@ -43,13 +44,21 @@ import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
  * 
  * REGRA-MÃE: NUNCA APAGAR - APENAS ACRESCENTAR
  */
-export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowMode = false }) {
+export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowMode = false, contexto = 'erp', criacaoManual = true }) {
   const [activeTab, setActiveTab] = useState('identificacao');
   const [salvando, setSalvando] = useState(false); // V21.5: Anti-duplicação
+  
+  // V21.6: Hook para detectar origem automática
+  const { origemPedido, bloquearEdicao } = useOrigemPedido({ 
+    contexto, 
+    criacaoManual,
+    origemExterna: pedido?.origem_externa_id 
+  });
+  
   const [formData, setFormData] = useState(() => ({
     tipo: 'Pedido',
     tipo_pedido: 'Misto',
-    origem_pedido: 'Manual',
+    origem_pedido: pedido?.origem_pedido || origemPedido || 'Manual',
     status: 'Rascunho',
     data_pedido: new Date().toISOString().split('T')[0],
     prioridade: 'Normal',
@@ -78,6 +87,13 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     observacoes_nfe: '',
     ...(pedido || {})
   }));
+  
+  // V21.6: Atualizar origem quando detectada
+  useEffect(() => {
+    if (origemPedido && !pedido) {
+      setFormData(prev => ({ ...prev, origem_pedido: origemPedido }));
+    }
+  }, [origemPedido, pedido]);
 
   const [validacoes, setValidacoes] = useState({
     identificacao: false,
@@ -431,6 +447,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               setFormData={setFormData}
               clientes={clientes}
               onNext={() => setActiveTab('revenda')}
+              bloquearOrigemEdicao={bloquearEdicao}
             />
           </TabsContent>
 
