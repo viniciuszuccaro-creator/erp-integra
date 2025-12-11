@@ -5,18 +5,26 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, MapPin } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ChevronRight, MapPin, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/components/lib/UserContext';
 import WidgetPerfilRiscoCliente from '../WidgetPerfilRiscoCliente';
 
 /**
  * Aba 1: Identificação do Pedido e Seleção de Cliente
- * V21.1 - Com seleção de obra e widget de perfil de risco
+ * V21.6 - Com detecção automática de origem e bloqueio
  */
-export default function WizardEtapa1Cliente({ formData, setFormData, clientes = [], onNext }) {
+export default function WizardEtapa1Cliente({ formData, setFormData, clientes = [], onNext, bloquearOrigemEdicao = false }) {
   const { user } = useUser();
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
+  
+  // V21.6: Buscar configurações de origem
+  const { data: parametrosOrigem = [] } = useQuery({
+    queryKey: ['parametros-origem-pedido'],
+    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
+    initialData: [],
+  });
 
   // Buscar endereços do cliente quando cliente mudar
   const { data: enderecosCliente = [] } = useQuery({
@@ -226,24 +234,49 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
         </div>
 
         <div>
-          <Label htmlFor="origem-pedido-select">Origem do Pedido</Label>
+          <Label htmlFor="origem-pedido-select" className="flex items-center gap-2">
+            Origem do Pedido
+            {bloquearOrigemEdicao && (
+              <Badge className="bg-orange-100 text-orange-800 text-xs">
+                <Lock className="w-3 h-3 mr-1" />
+                Automático
+              </Badge>
+            )}
+          </Label>
           <Select
             value={formData?.origem_pedido || 'Manual'}
             onValueChange={(v) => setFormData && setFormData(prev => ({ ...(prev || {}), origem_pedido: v }))}
+            disabled={bloquearOrigemEdicao}
           >
-            <SelectTrigger id="origem-pedido-select">
+            <SelectTrigger 
+              id="origem-pedido-select"
+              className={bloquearOrigemEdicao ? "bg-slate-100 cursor-not-allowed" : ""}
+            >
               <SelectValue placeholder="Selecione a origem..." />
             </SelectTrigger>
             <SelectContent className="z-[99999]">
-              <SelectItem value="Manual">Manual (ERP)</SelectItem>
-              <SelectItem value="Portal">Portal do Cliente</SelectItem>
-              <SelectItem value="Site">Site/Base</SelectItem>
+              <SelectItem value="Manual">Manual</SelectItem>
+              <SelectItem value="E-commerce">E-commerce</SelectItem>
+              <SelectItem value="API">API</SelectItem>
+              <SelectItem value="Importado">Importado</SelectItem>
+              <SelectItem value="Site">Site</SelectItem>
+              <SelectItem value="App">App</SelectItem>
               <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-              <SelectItem value="Chatbot">Chatbot IA</SelectItem>
+              <SelectItem value="Portal">Portal</SelectItem>
               <SelectItem value="Marketplace">Marketplace</SelectItem>
-              <SelectItem value="API">API Externa</SelectItem>
+              <SelectItem value="Chatbot">Chatbot</SelectItem>
             </SelectContent>
           </Select>
+          {bloquearOrigemEdicao && (
+            <p className="text-xs text-orange-600 mt-1">
+              🔒 Origem bloqueada - pedido criado automaticamente
+            </p>
+          )}
+          {parametrosOrigem.length > 0 && !bloquearOrigemEdicao && (
+            <p className="text-xs text-slate-500 mt-1">
+              💡 {parametrosOrigem.length} canais configurados
+            </p>
+          )}
         </div>
       </div>
 
