@@ -3175,7 +3175,7 @@ export default function Cadastros() {
                           </CardContent>
                         </Card>
 
-                        {/* PARÂMETRO ORIGEM PEDIDO */}
+                        {/* PARÂMETRO ORIGEM PEDIDO - V21.6 COMPLETO */}
                         <Card className="border-purple-200">
                           <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                             <div className="flex items-center justify-between">
@@ -3183,17 +3183,30 @@ export default function Cadastros() {
                               <Button size="sm" onClick={() => openWindow(ParametroOrigemPedidoForm, {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('ParametroOrigemPedido', 'parametros-origem-pedido')
-                              }, { title: '🛒 Novo Parâmetro Origem', width: 800, height: 600 })}
+                              }, { title: '🛒 Novo Canal de Origem', width: 900, height: 650 })}
                                 className="bg-purple-600 hover:bg-purple-700"
                                 disabled={!hasPermission('cadastros', 'criar')}>
-                                <Plus className="w-4 h-4 mr-1" />Novo
+                                <Plus className="w-4 h-4 mr-1" />Novo Canal
                               </Button>
                             </div>
                           </CardHeader>
                           <CardContent className="p-4 max-h-60 overflow-y-auto">
                             {parametrosOrigemPedido.map(p => (
                               <div key={p.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                                <p className="font-semibold text-sm flex-1">{p.origem}</p>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-sm">{p.nome}</p>
+                                  <div className="flex gap-2 mt-1 flex-wrap">
+                                    <Badge variant="outline" className="text-xs">{p.canal}</Badge>
+                                    <Badge className={`text-xs ${
+                                      p.tipo_criacao === 'Manual' ? 'bg-blue-100 text-blue-700' :
+                                      p.tipo_criacao === 'Automático' ? 'bg-green-100 text-green-700' :
+                                      'bg-purple-100 text-purple-700'
+                                    }`}>
+                                      {p.tipo_criacao}
+                                    </Badge>
+                                    {p.ativo && <Badge className="bg-green-100 text-green-700 text-xs">✅ Ativo</Badge>}
+                                  </div>
+                                </div>
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -3201,13 +3214,18 @@ export default function Cadastros() {
                                     parametro: p,
                                     windowMode: true,
                                     onSubmit: handleSubmitGenerico('ParametroOrigemPedido', 'parametros-origem-pedido')
-                                  }, { title: `🛒 Editar: ${p.origem}`, width: 800, height: 600 })}
+                                  }, { title: `🛒 Editar: ${p.nome}`, width: 900, height: 650 })}
                                   disabled={!hasPermission('cadastros', 'editar')}
                                 >
                                   <Edit className="w-3 h-3 text-purple-600" />
                                 </Button>
                               </div>
                             ))}
+                            {parametrosOrigemPedido.length === 0 && (
+                              <p className="text-center text-slate-500 py-8 text-sm">
+                                Nenhum canal configurado. Crie canais para automação de origem.
+                              </p>
+                            )}
                           </CardContent>
                         </Card>
 
