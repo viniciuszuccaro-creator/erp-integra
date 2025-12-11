@@ -20,7 +20,8 @@ import {
   Factory,
   BookOpen,
   Search,
-  MessageCircle
+  MessageCircle,
+  Zap
 } from "lucide-react";
 import {
   Sidebar,
