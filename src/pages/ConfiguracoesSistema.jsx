@@ -4,6 +4,7 @@ import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
 import StatusFechamento100V21_6 from "@/components/sistema/STATUS_FECHAMENTO_100_V21_6";
 import CertificadoProducaoV21_6 from "@/components/sistema/CERTIFICADO_PRODUCAO_V21_6";
 import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
+import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_FINAL";
 import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
@@ -119,6 +120,8 @@ export default function ConfiguracoesSistema() {
             </Card>
 
             <ChecklistFinalV21_6 />
+            
+            <Sistema100CompletoFinal windowMode={false} empresaId={empresaAtual?.id} />
             
             <StatusFechamento100V21_6 windowMode={false} empresaId={empresaAtual?.id} />
           </div>
