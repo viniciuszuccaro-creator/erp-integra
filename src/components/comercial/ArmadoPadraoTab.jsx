@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNext }) {
   const [tipoPeca, setTipoPeca] = useState(null);
   const [dadosPeca, setDadosPeca] = useState({});
+  const [pecaEditandoIndex, setPecaEditandoIndex] = useState(null);
 
   const { data: bitolas = [] } = useQuery({
     queryKey: ['bitolas', empresaId || formData?.empresa_id],
@@ -79,6 +80,10 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
       
       resultado.estribo_quantidade = qtdeEstribos;
       resultado.quantidade_estribos = qtdeEstribos * resultado.quantidade;
+      
+      // Reforço
+      const reforco = dadosPeca.reforco_bitola ? ` + ${dadosPeca.reforco_quantidade || 0} ferros ${dadosPeca.reforco_bitola}` : '';
+      resultado.reforco_descricao = reforco;
     }
 
     if (tipoPeca === 'estaca') {
@@ -127,8 +132,9 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
     
     if (peca.tipo_peca === 'coluna' || peca.tipo_peca === 'viga') {
       return `${peca.quantidade} ${peca.tipo_peca.toUpperCase()}${etapaTexto} de ${peca.comprimento}m — ` +
-        `${peca.quantidade_ferros_principais || 0} ferros ${peca.bitola_principal}mm — ` +
-        `Estribo ${peca.estribo_largura}x${peca.estribo_altura}cm (${peca.estribo_bitola}mm) a cada ${peca.distancia_estribo}cm`;
+        `${peca.quantidade_ferros_principais || 0} ferros ${peca.bitola_principal}` +
+        `${peca.reforco_descricao || ''} — ` +
+        `Estribo ${peca.estribo_largura}x${peca.estribo_altura}cm (${peca.estribo_bitola}) a cada ${peca.distancia_estribo}cm`;
     }
 
     if (peca.tipo_peca === 'estaca') {
@@ -159,6 +165,11 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
       // Ferros principais
       pesoTotal += comprimento * qtdeFerros * qtdePecas * pesoMedioPorMetro;
       
+      // Reforço (V21.6)
+      if (peca.reforco_bitola && peca.reforco_quantidade) {
+        pesoTotal += comprimento * peca.reforco_quantidade * qtdePecas * pesoMedioPorMetro;
+      }
+      
       // Estribos
       const perimetroEstribo = peca.tipo_peca === 'estaca'
         ? Math.PI * (peca.estribo_diametro || 30) / 100
@@ -178,7 +189,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
     return pesoTotal;
   };
 
-  const adicionarPeca = () => {
+  const adicionarOuEditarPeca = () => {
     if (!tipoPeca) {
       toast.error('Selecione um tipo de peça');
       return;
@@ -186,15 +197,25 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
 
     const pecaCalculada = calcularPeca();
 
-    setFormData(prev => ({
-      ...prev,
-      itens_armado_padrao: [...(prev.itens_armado_padrao || []), pecaCalculada]
-    }));
+    setFormData(prev => {
+      const novosItens = [...(prev.itens_armado_padrao || [])];
+      if (pecaEditandoIndex !== null) {
+        novosItens[pecaEditandoIndex] = pecaCalculada;
+        toast.success('✅ Peça atualizada');
+      } else {
+        novosItens.push(pecaCalculada);
+        toast.success('✅ Peça adicionada');
+      }
+      return {
+        ...prev,
+        itens_armado_padrao: novosItens
+      };
+    });
 
     // Reset
     setTipoPeca(null);
     setDadosPeca({});
-    toast.success('✅ Peça adicionada');
+    setPecaEditandoIndex(null);
   };
 
   const removerPeca = (index) => {
@@ -203,6 +224,14 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
       itens_armado_padrao: prev.itens_armado_padrao.filter((_, i) => i !== index)
     }));
     toast.success('✅ Peça removida');
+  };
+
+  const editarPeca = (index) => {
+    const pecaParaEditar = formData.itens_armado_padrao[index];
+    setTipoPeca(pecaParaEditar.tipo_peca);
+    setDadosPeca(pecaParaEditar);
+    setPecaEditandoIndex(index);
+    toast.info('✏️ Editando peça');
   };
 
   // V21.1: Consolidar por Etapa de Obra
@@ -432,9 +461,9 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
             {/* Campos de COLUNA/VIGA/ESTACA */}
             {(tipoPeca === 'coluna' || tipoPeca === 'viga' || tipoPeca === 'estaca') && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <div>
-                    <Label>Bitola Principal</Label>
+                    <Label>Bitola Principal (CA-50)</Label>
                     <Select
                       value={dadosPeca.bitola_principal}
                       onValueChange={(value) => setDadosPeca({ ...dadosPeca, bitola_principal: value })}
@@ -458,6 +487,36 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                       min="1"
                       value={dadosPeca.quantidade_ferros_principais || 4}
                       onChange={(e) => setDadosPeca({ ...dadosPeca, quantidade_ferros_principais: parseInt(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Bitola Reforço (CA-50)</Label>
+                    <Select
+                      value={dadosPeca.reforco_bitola || ''}
+                      onValueChange={(value) => setDadosPeca({ ...dadosPeca, reforco_bitola: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Opcional" />
+                      </SelectTrigger>
+                      <SelectContent className="z-[99999]">
+                        <SelectItem value={null}>Nenhum</SelectItem>
+                        {bitolas.filter(b => b.tipo_aco === 'CA-50').map((b) => (
+                          <SelectItem key={b.id} value={b.bitola_diametro_mm + 'mm'}>
+                            {b.bitola_diametro_mm}mm
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Qtd Ferros Reforço</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={dadosPeca.reforco_quantidade || 0}
+                      onChange={(e) => setDadosPeca({ ...dadosPeca, reforco_quantidade: parseInt(e.target.value) })}
+                      disabled={!dadosPeca.reforco_bitola}
+                      className={!dadosPeca.reforco_bitola ? 'bg-slate-100' : ''}
                     />
                   </div>
                 </div>
@@ -595,13 +654,28 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
             )}
 
             <Button
-              onClick={adicionarPeca}
+              onClick={adicionarOuEditarPeca}
               className="w-full bg-blue-600 hover:bg-blue-700"
               size="lg"
             >
               <Plus className="w-5 h-5 mr-2" />
-              Adicionar Peça ao Pedido
+              {pecaEditandoIndex !== null ? '💾 Salvar Edição' : 'Adicionar Peça ao Pedido'}
             </Button>
+            {pecaEditandoIndex !== null && (
+              <Button
+                onClick={() => {
+                  setTipoPeca(null);
+                  setDadosPeca({});
+                  setPecaEditandoIndex(null);
+                  toast.info('❌ Edição cancelada');
+                }}
+                variant="outline"
+                className="w-full mt-2"
+                size="lg"
+              >
+                Cancelar Edição
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -675,14 +749,26 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                       R$ {peca.preco_venda_total?.toFixed(2)}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removerPeca(index)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center justify-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => editarPeca(index)}
+                          className="text-blue-600 hover:bg-blue-50"
+                          title="Editar Peça"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removerPeca(index)}
+                          className="text-red-600 hover:bg-red-50"
+                          title="Remover Peça"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
