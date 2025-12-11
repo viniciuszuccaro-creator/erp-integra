@@ -18,13 +18,11 @@ import {
   AlertTriangle,
   ChevronRight,
   Clock,
-  CheckCircle2,
-  Zap
+  CheckCircle2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
-import { executarCicloCompletoIntegral } from './AutomacaoCicloPedido';
 
 // Componentes das Etapas
 import WizardEtapa1Cliente from './wizard/WizardEtapa1Cliente';
@@ -36,7 +34,6 @@ import LogisticaEntregaTab from './LogisticaEntregaTab';
 import FechamentoFinanceiroTab from './FechamentoFinanceiroTab';
 import ArquivosProjetosTab from './ArquivosProjetosTab';
 import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
-import GerenciadorCicloPedido from './GerenciadorCicloPedido';
 
 /**
  * V21.1.2-R1 - Pedido Form Completo - PATCH OFICIAL
@@ -324,12 +321,6 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
       id: 'auditoria', 
       label: 'Auditoria', 
       icon: Shield 
-    },
-    { 
-      id: 'ciclo', 
-      label: 'Ciclo de Vida', 
-      icon: CheckCircle2,
-      novo: true
     }
   ];
 
@@ -535,25 +526,6 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               pedido={pedido}
             />
           </TabsContent>
-
-          {/* V21.7: ABA 10 - CICLO DE VIDA DO PEDIDO */}
-          <TabsContent value="ciclo" className="h-full overflow-y-auto p-6 m-0">
-            {pedido ? (
-              <GerenciadorCicloPedido
-                pedido={pedido}
-                onStatusChanged={() => {
-                  toast.info('🔄 Atualize a página para ver as alterações');
-                }}
-              />
-            ) : (
-              <Alert>
-                <AlertTriangle className="w-4 h-4" />
-                <AlertDescription>
-                  O ciclo de vida estará disponível após criar o pedido.
-                </AlertDescription>
-              </Alert>
-            )}
-          </TabsContent>
         </div>
       </Tabs>
 
@@ -592,46 +564,59 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               Cancelar
             </Button>
             
-            {!pedido && (
-              <>
-                <Button
-                  onClick={handleSubmit}
-                  variant="outline"
-                  disabled={salvando || !validacoes.identificacao || !validacoes.itens}
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  {salvando ? 'Salvando...' : 'Criar como Rascunho'}
-                </Button>
-
-                <Button
-                  onClick={async () => {
-                    if (!validacoes.identificacao || !validacoes.itens || salvando) return;
-                    setSalvando(true);
-                    try {
-                      const novoPedido = await onSubmit({ ...formData, status: 'Rascunho' });
-
-                      if (novoPedido?.id) {
-                        toast.info('🤖 Executando ciclo automático...');
-                        await executarCicloCompletoIntegral(novoPedido.id);
-                        toast.success('🎉 Pedido criado e automatizado até o máximo possível!');
-                        onCancel();
-                      }
-                    } catch (error) {
-                      toast.error('❌ Erro na automação');
-                    } finally {
-                      setSalvando(false);
-                    }
-                  }}
-                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                  disabled={salvando || !validacoes.identificacao || !validacoes.itens}
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  {salvando ? 'Criando...' : '🚀 Criar e Automatizar Tudo'}
-                </Button>
-              </>
+            {/* V21.5: APROVAR PEDIDO */}
+            {(!pedido || pedido.status === 'Rascunho') && (
+              <Button
+                onClick={async () => {
+                  if (salvando) return;
+                  setSalvando(true);
+                  try {
+                    await onSubmit({
+                      ...formData,
+                      status: 'Aprovado'
+                    });
+                    toast.success('✅ Pedido aprovado e estoque baixado!');
+                  } catch (error) {
+                    toast.error('❌ Erro ao aprovar pedido');
+                  } finally {
+                    setSalvando(false);
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700 shadow-lg"
+                disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                {salvando ? 'Aprovando...' : 'Aprovar Pedido'}
+              </Button>
             )}
             
-            {pedido && (
+            {/* V21.5: FECHAR PEDIDO E ENVIAR PARA ENTREGA */}
+            {pedido && pedido.status === 'Aprovado' && (
+              <Button
+                onClick={async () => {
+                  if (salvando) return;
+                  setSalvando(true);
+                  try {
+                    await onSubmit({
+                      ...formData,
+                      status: 'Pronto para Faturar'
+                    });
+                    toast.success('✅ Pedido fechado e pronto para faturar!');
+                  } catch (error) {
+                    toast.error('❌ Erro ao fechar pedido');
+                  } finally {
+                    setSalvando(false);
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 shadow-lg"
+                disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+              >
+                <Truck className="w-4 h-4 mr-2" />
+                {salvando ? 'Fechando...' : 'Fechar e Enviar para Entrega'}
+              </Button>
+            )}
+            
+            {(pedido && pedido.status !== 'Rascunho' && pedido.status !== 'Aprovado') && (
               <Button
                 onClick={async () => {
                   if (salvando) return;
@@ -651,6 +636,17 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               >
                 <Check className="w-4 h-4 mr-2" />
                 {salvando ? 'Salvando...' : 'Salvar Alterações'}
+              </Button>
+            )}
+            
+            {!pedido && (
+              <Button
+                onClick={handleSubmit}
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                {salvando ? 'Salvando...' : 'Criar Pedido'}
               </Button>
             )}
           </div>
