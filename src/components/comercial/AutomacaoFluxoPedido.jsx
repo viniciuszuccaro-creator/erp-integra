@@ -323,10 +323,25 @@ export default function AutomacaoFluxoPedido({
     { id: 'status', label: 'Atualizar Status', icon: FileText, concluida: etapaConcluida.status }
   ];
 
-  const containerClass = windowMode ? 'w-full h-full flex flex-col' : 'space-y-6';
+  // V21.6 FINAL: w-full h-full responsivo
+  const containerClass = windowMode 
+    ? 'w-full h-full flex flex-col overflow-hidden' 
+    : 'space-y-6';
+
+  const contentClass = windowMode 
+    ? 'flex-1 overflow-y-auto p-6 space-y-6' 
+    : 'space-y-6';
+
+  const Wrapper = ({ children }) => windowMode ? (
+    <div className={containerClass}>
+      <div className={contentClass}>{children}</div>
+    </div>
+  ) : (
+    <div className={containerClass}>{children}</div>
+  );
 
   return (
-    <div className={containerClass}>
+    <Wrapper>
       {/* Header */}
       <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-purple-50">
         <CardHeader>
@@ -488,6 +503,6 @@ export default function AutomacaoFluxoPedido({
           )}
         </CardContent>
       </Card>
-    </div>
+    </Wrapper>
   );
 }
