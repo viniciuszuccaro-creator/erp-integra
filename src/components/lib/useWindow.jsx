@@ -15,13 +15,22 @@ import { useWindowManager } from './WindowManager';
  */
 
 export function useWindow() {
-  const { openWindow, closeWindow, minimizeWindow, maximizeWindow } = useWindowManager();
+  const { 
+    openWindow, 
+    closeWindow, 
+    minimizeWindow, 
+    toggleMaximize,
+    restoreWindow,
+    bringToFront 
+  } = useWindowManager();
 
   return {
     openWindow,
     closeWindow,
     minimizeWindow,
-    maximizeWindow,
+    maximizeWindow: toggleMaximize,
+    restoreWindow,
+    bringToFront
   };
 }
 
