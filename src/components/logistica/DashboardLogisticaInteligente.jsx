@@ -106,7 +106,7 @@ export default function DashboardLogisticaInteligente({ windowMode = false }) {
 
   return (
     <div className={containerClass}>
-      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* KPIs Principais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100">

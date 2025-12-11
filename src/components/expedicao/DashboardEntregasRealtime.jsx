@@ -99,7 +99,7 @@ export default function DashboardEntregasRealtime({ empresaId, windowMode = fals
 
   return (
     <div className={containerClass}>
-      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
