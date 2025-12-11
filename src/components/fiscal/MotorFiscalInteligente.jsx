@@ -101,9 +101,12 @@ Retorne validação e alertas.`,
     p.status === "Aprovado" || p.status === "Pronto para Faturar"
   );
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
+        <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">Motor Fiscal Inteligente</h2>
             <p className="text-sm text-slate-600 mt-1">Validação automática com IA antes da emissão</p>
