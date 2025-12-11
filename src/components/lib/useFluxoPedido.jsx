@@ -796,11 +796,107 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
   return resultados;
 }
 
+/**
+ * 1️⃣4️⃣ VALIDAR ESTOQUE ANTES DE FECHAR
+ * V21.6 - Validação preventiva
+ */
+export async function validarEstoqueCompleto(pedido, empresaId) {
+  const itens = [
+    ...(pedido.itens_revenda || []),
+    ...(pedido.itens_armado_padrao || []),
+    ...(pedido.itens_corte_dobra || [])
+  ];
+
+  const resultados = {
+    valido: true,
+    itensInsuficientes: [],
+    itensOK: []
+  };
+
+  for (const item of itens) {
+    if (item.produto_id) {
+      const produtos = await base44.entities.Produto.filter({ 
+        id: item.produto_id,
+        empresa_id: empresaId 
+      });
+      
+      const produto = produtos[0];
+      if (produto) {
+        const estoqueAtual = produto.estoque_atual || 0;
+        const quantidadeNecessaria = item.quantidade || 0;
+
+        if (estoqueAtual >= quantidadeNecessaria) {
+          resultados.itensOK.push({
+            produto: item.descricao,
+            estoque: estoqueAtual,
+            necessario: quantidadeNecessaria,
+            sobra: estoqueAtual - quantidadeNecessaria
+          });
+        } else {
+          resultados.valido = false;
+          resultados.itensInsuficientes.push({
+            produto: item.descricao,
+            estoque: estoqueAtual,
+            necessario: quantidadeNecessaria,
+            falta: quantidadeNecessaria - estoqueAtual
+          });
+        }
+      }
+    }
+  }
+
+  return resultados;
+}
+
+/**
+ * 1️⃣5️⃣ ESTATÍSTICAS DE AUTOMAÇÃO
+ * V21.6 - Analytics do sistema
+ */
+export async function obterEstatisticasAutomacao(empresaId = null, diasRetroativos = 7) {
+  const dataLimite = new Date();
+  dataLimite.setDate(dataLimite.getDate() - diasRetroativos);
+
+  // Buscar pedidos
+  const pedidos = empresaId
+    ? await base44.entities.Pedido.filter({ empresa_id: empresaId })
+    : await base44.entities.Pedido.list();
+
+  const pedidosRecentes = pedidos.filter(p => {
+    const dataPedido = new Date(p.created_date);
+    return dataPedido >= dataLimite;
+  });
+
+  const pedidosFechados = pedidosRecentes.filter(p => 
+    p.status === 'Pronto para Faturar' || 
+    p.status === 'Faturado' || 
+    p.status === 'Em Expedição'
+  );
+
+  const pedidosComAutomacao = pedidosFechados.filter(p => 
+    p.observacoes_internas?.includes('[AUTOMAÇÃO')
+  );
+
+  const taxaAutomacao = pedidosFechados.length > 0 
+    ? (pedidosComAutomacao.length / pedidosFechados.length) * 100 
+    : 0;
+
+  return {
+    totalPedidos: pedidosRecentes.length,
+    pedidosFechados: pedidosFechados.length,
+    pedidosAutomaticos: pedidosComAutomacao.length,
+    taxaAutomacao,
+    diasAnalise: diasRetroativos,
+    empresaId
+  };
+}
+
 export default {
   aprovarPedidoCompleto,
   faturarPedidoCompleto,
   concluirOPCompleto,
   cancelarPedidoCompleto,
   validarLimiteCredito,
-  executarFechamentoCompleto // V21.6 NOVO
+  executarFechamentoCompleto, // V21.6
+  validarEstoqueCompleto, // V21.6
+  obterEstatisticasAutomacao // V21.6
 };

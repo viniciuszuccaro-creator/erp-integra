@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
 import StatusFechamento100V21_6 from "@/components/sistema/STATUS_FECHAMENTO_100_V21_6";
 import CertificadoProducaoV21_6 from "@/components/sistema/CERTIFICADO_PRODUCAO_V21_6";
+import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
 import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
@@ -116,6 +117,8 @@ export default function ConfiguracoesSistema() {
                 </Button>
               </CardContent>
             </Card>
+
+            <ChecklistFinalV21_6 />
             
             <StatusFechamento100V21_6 windowMode={false} empresaId={empresaAtual?.id} />
           </div>

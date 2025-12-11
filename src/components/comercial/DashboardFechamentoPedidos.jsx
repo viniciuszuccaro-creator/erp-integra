@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { 
   ShoppingCart, 
   Package, 
@@ -13,8 +14,12 @@ import {
   Clock,
   AlertTriangle,
   TrendingUp,
-  Zap
+  Zap,
+  BarChart3,
+  Activity,
+  Sparkles
 } from 'lucide-react';
+import { obterEstatisticasAutomacao } from '@/components/lib/useFluxoPedido';
 
 /**
  * V21.6 - DASHBOARD DE FECHAMENTO AUTOMÁTICO
@@ -26,7 +31,15 @@ import {
  * - Erros e alertas
  */
 export default function DashboardFechamentoPedidos({ windowMode = false, empresaId = null }) {
-  // V21.6: Multi-empresa
+  // V21.6: Multi-empresa + IA Analytics
+  const [estatisticasIA, setEstatisticasIA] = React.useState(null);
+
+  // Carregar estatísticas via IA
+  React.useEffect(() => {
+    obterEstatisticasAutomacao(empresaId, 7).then(stats => {
+      setEstatisticasIA(stats);
+    });
+  }, [empresaId]);
   
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos', empresaId],
@@ -166,21 +179,37 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
   return (
     <Wrapper>
       
-      {/* Header */}
-      <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-purple-50">
+      {/* Header com IA Analytics */}
+      <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="w-6 h-6 text-blue-600" />
-              Dashboard de Fechamento Automático
-            </CardTitle>
-            <Badge className="bg-blue-600 text-white px-3 py-1">
-              V21.6 - Últimos 7 dias
-            </Badge>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-6 h-6 text-blue-600" />
+                Dashboard de Fechamento Automático
+                {estatisticasIA && (
+                  <Badge className="bg-purple-600 text-white ml-2">
+                    <Sparkles className="w-3 h-3 mr-1" />
+                    IA Analytics
+                  </Badge>
+                )}
+              </CardTitle>
+              <p className="text-sm text-slate-600 mt-2">
+                Sistema inteligente de monitoramento e análise preditiva
+              </p>
+            </div>
+            <div className="text-right">
+              <Badge className="bg-blue-600 text-white px-3 py-1 mb-2">
+                V21.6 Final
+              </Badge>
+              {estatisticasIA && (
+                <div className="text-xs text-slate-600">
+                  Últimos {estatisticasIA.diasAnalise} dias
+                  {empresaId && ' • Empresa específica'}
+                </div>
+              )}
+            </div>
           </div>
-          <p className="text-sm text-slate-600 mt-2">
-            Monitore a eficiência do sistema de fechamento automático de pedidos
-          </p>
         </CardHeader>
       </Card>
 
@@ -245,6 +274,58 @@ export default function DashboardFechamentoPedidos({ windowMode = false, empresa
               <Badge className="bg-orange-600 text-white">
                 Ação Necessária
               </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* IA Analytics */}
+      {estatisticasIA && (
+        <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              Análise Inteligente (IA)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-white/80 p-3 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <Activity className="w-4 h-4 text-purple-600" />
+                  <p className="text-xs text-slate-600">Total Pedidos</p>
+                </div>
+                <p className="text-xl font-bold text-purple-600">
+                  {estatisticasIA.totalPedidos}
+                </p>
+              </div>
+              <div className="bg-white/80 p-3 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                  <p className="text-xs text-slate-600">Fechados</p>
+                </div>
+                <p className="text-xl font-bold text-blue-600">
+                  {estatisticasIA.pedidosFechados}
+                </p>
+              </div>
+              <div className="bg-white/80 p-3 rounded-lg border border-green-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <Zap className="w-4 h-4 text-green-600" />
+                  <p className="text-xs text-slate-600">Automáticos</p>
+                </div>
+                <p className="text-xl font-bold text-green-600">
+                  {estatisticasIA.pedidosAutomaticos}
+                </p>
+              </div>
+              <div className="bg-white/80 p-3 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <BarChart3 className="w-4 h-4 text-orange-600" />
+                  <p className="text-xs text-slate-600">Taxa Auto</p>
+                </div>
+                <p className="text-xl font-bold text-orange-600">
+                  {estatisticasIA.taxaAutomacao.toFixed(0)}%
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
