@@ -15,9 +15,11 @@ import {
   Settings,
   TrendingUp,
   Zap,
-  Shield
+  Shield,
+  Download
 } from "lucide-react";
 import { toast } from "sonner";
+import ExportButton from "@/components/ExportButton";
 
 /**
  * V21.6 - Gerenciador Avançado de Canais de Origem
@@ -173,10 +175,20 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
 
       {/* Lista de Canais com Toggle Rápido */}
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-          <Activity className="w-5 h-5 text-blue-600" />
-          Canais Configurados
-        </h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-blue-600" />
+            Canais Configurados
+          </h3>
+          <ExportButton
+            data={Object.values(metricas)}
+            filename="canais-origem-status"
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Exportar Status
+          </ExportButton>
+        </div>
 
         <div className="space-y-2">
           {parametros.map((param) => {

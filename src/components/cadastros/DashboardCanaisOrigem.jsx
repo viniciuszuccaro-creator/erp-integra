@@ -24,8 +24,10 @@ import {
   ShoppingCart, 
   CheckCircle, 
   AlertCircle,
-  Activity 
+  Activity,
+  Download
 } from "lucide-react";
+import ExportButton from "@/components/ExportButton";
 
 /**
  * Dashboard de Canais de Origem de Pedidos V21.6
@@ -207,10 +209,29 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
         {/* Tabela de Performance por Canal */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-blue-600" />
-              Performance por Canal
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                Performance por Canal
+              </CardTitle>
+              <ExportButton
+                data={Object.values(metricas).map(m => ({
+                  Canal: m.nome,
+                  Tipo: m.tipo,
+                  Ativo: m.ativo ? 'Sim' : 'Não',
+                  'Total Pedidos': m.totalPedidos,
+                  'Valor Total': m.valorTotal,
+                  'Pedidos Aprovados': m.pedidosAprovados,
+                  'Taxa Conversão (%)': m.taxaConversao.toFixed(2),
+                  'Ticket Médio': m.ticketMedio.toFixed(2)
+                }))}
+                filename="performance-canais-origem"
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Exportar
+              </ExportButton>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
