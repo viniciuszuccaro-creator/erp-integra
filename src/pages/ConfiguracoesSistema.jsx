@@ -32,6 +32,14 @@ export default function ConfiguracoesSistema() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger
+            value="status-origem"
+            className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
+          >
+            <Zap className="w-4 h-4 mr-2" />
+            ✅ Status Origem V21.6
+          </TabsTrigger>
+
+          <TabsTrigger
             value="diagnostico"
             className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white"
           >
@@ -61,6 +69,10 @@ export default function ConfiguracoesSistema() {
             Estoque Avançado
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="status-origem">
+          <StatusOrigemPedido100 />
+        </TabsContent>
 
         <TabsContent value="diagnostico">
           <div className="space-y-4">

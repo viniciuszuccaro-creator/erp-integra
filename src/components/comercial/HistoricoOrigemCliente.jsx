@@ -67,8 +67,11 @@ export default function HistoricoOrigemCliente({ clienteId, compact = false }) {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <History className="w-5 h-5 text-blue-600" />
-          Histórico de Canais - {pedidosCliente.length} Pedidos
+          📊 Histórico de Canais
         </CardTitle>
+        <p className="text-xs text-slate-600 mt-1">
+          Análise de {pedidosCliente.length} pedidos deste cliente
+        </p>
       </CardHeader>
       <CardContent>
         

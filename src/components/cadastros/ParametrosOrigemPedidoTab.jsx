@@ -10,6 +10,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import ParametroOrigemPedidoForm from "./ParametroOrigemPedidoForm";
 import DashboardCanaisOrigem from "./DashboardCanaisOrigem";
 import GerenciadorCanaisOrigem from "./GerenciadorCanaisOrigem";
+import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
 import { 
   Plus, 
   Search, 
@@ -118,6 +119,10 @@ export default function ParametrosOrigemPedidoTab() {
             <TabsTrigger value="dashboard">
               <BarChart3 className="w-4 h-4 mr-2" />
               Dashboard & Performance
+            </TabsTrigger>
+            <TabsTrigger value="status">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              ✅ Status 100%
             </TabsTrigger>
           </TabsList>
 
@@ -265,6 +270,11 @@ export default function ParametrosOrigemPedidoTab() {
         {/* ABA: DASHBOARD */}
         <TabsContent value="dashboard" className="mt-0">
           <DashboardCanaisOrigem />
+        </TabsContent>
+
+        {/* ABA: STATUS 100% */}
+        <TabsContent value="status" className="mt-0">
+          <StatusOrigemPedido100 />
         </TabsContent>
       </Tabs>
 
