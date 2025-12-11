@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DollarSign, Percent, FileText, Receipt, CheckCircle, AlertTriangle } from 'lucide-react';
 import GerarNFeModal from './GerarNFeModal';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
 
 /**
  * V21.1 - Aba 7: Fechamento Financeiro
@@ -16,6 +17,54 @@ import GerarNFeModal from './GerarNFeModal';
  */
 export default function FechamentoFinanceiroTab({ formData, setFormData, onNext }) {
   const [modalNFeOpen, setModalNFeOpen] = useState(false);
+  const [gerandoFinanceiro, setGerandoFinanceiro] = useState(false);
+
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
+
+  const gerarTitulosFinanceiros = async () => {
+    if (!formData?.id) {
+      toast.error('❌ Salve o pedido antes de gerar títulos');
+      return;
+    }
+
+    setGerandoFinanceiro(true);
+    try {
+      const numParcelas = formData.numero_parcelas || 1;
+      const valorParcela = valorTotal / numParcelas;
+      const intervalo = formData.intervalo_parcelas || 30;
+
+      for (let i = 0; i < numParcelas; i++) {
+        const dataVencimento = new Date(formData.data_pedido);
+        dataVencimento.setDate(dataVencimento.getDate() + (intervalo * i));
+
+        await base44.entities.ContaReceber.create({
+          empresa_id: formData.empresa_id,
+          origem_tipo: 'pedido',
+          pedido_id: formData.id,
+          descricao: `Pedido ${formData.numero_pedido} - Parcela ${i + 1}/${numParcelas}`,
+          cliente: formData.cliente_nome,
+          cliente_id: formData.cliente_id,
+          numero_parcela: `${i + 1}/${numParcelas}`,
+          valor: valorParcela,
+          data_emissao: formData.data_pedido,
+          data_vencimento: dataVencimento.toISOString().split('T')[0],
+          status: 'Pendente',
+          forma_cobranca: formData.forma_pagamento === 'Boleto' ? 'Boleto' : 'Não Definida',
+          numero_documento: `${formData.numero_pedido}-${i + 1}`,
+          visivel_no_portal: true
+        });
+      }
+
+      toast.success(`✅ ${numParcelas} título(s) gerado(s) com sucesso!`);
+    } catch (error) {
+      toast.error('❌ Erro ao gerar títulos financeiros');
+    } finally {
+      setGerandoFinanceiro(false);
+    }
+  };
 
   const valorProdutos = formData?.valor_produtos || 0;
   const descontoPercentual = formData?.desconto_geral_pedido_percentual || 0;
@@ -244,6 +293,46 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
           </div>
         </CardContent>
       </Card>
+
+      {/* Geração de Títulos Financeiros */}
+      {formData?.id && (
+        <Card className="border-2 border-blue-300 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-blue-600" />
+              Geração de Títulos Financeiros
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Alert className="bg-blue-100 border-blue-300">
+              <AlertDescription className="text-sm text-blue-900">
+                <p className="font-semibold mb-2">💡 Quando usar:</p>
+                <ul className="list-disc ml-4 space-y-1 text-xs">
+                  <li>Status <strong>"Faturado"</strong>: Gera automaticamente os títulos a receber</li>
+                  <li>Parcelamento: Divide o valor conforme número de parcelas e intervalo</li>
+                  <li>Títulos ficam visíveis no Portal do Cliente</li>
+                </ul>
+              </AlertDescription>
+            </Alert>
+
+            <Button
+              onClick={gerarTitulosFinanceiros}
+              disabled={gerandoFinanceiro || !formData?.forma_pagamento}
+              className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+              size="lg"
+            >
+              <DollarSign className="w-5 h-5 mr-2" />
+              {gerandoFinanceiro ? 'Gerando...' : '💰 Gerar Títulos a Receber'}
+            </Button>
+
+            {formData?.forma_pagamento === 'Parcelado' && (
+              <p className="text-xs text-center text-slate-600">
+                Será gerado {formData.numero_parcelas || 2}x de R$ {(valorTotal / (formData.numero_parcelas || 2)).toFixed(2)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Resumo Financeiro */}
       <Card className="border-2 border-green-300 bg-green-50">

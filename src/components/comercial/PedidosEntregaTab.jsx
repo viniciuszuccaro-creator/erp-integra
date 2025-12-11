@@ -42,6 +42,7 @@ import IntegracaoRomaneio from "../logistica/IntegracaoRomaneio";
 import PainelMetricasRealtime from "../logistica/PainelMetricasRealtime";
 import { useWindow } from "@/components/lib/useWindow";
 import { usePermissoesLogistica } from "../logistica/ControleAcessoLogistica";
+import GerenciadorCicloPedido from "./GerenciadorCicloPedido";
 
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
@@ -367,6 +368,30 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
+                              onClick={() => openWindow(
+                                GerenciadorCicloPedido,
+                                {
+                                  pedido,
+                                  onStatusChanged: () => {
+                                    queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                                    queryClient.invalidateQueries({ queryKey: ['entregas'] });
+                                    queryClient.invalidateQueries({ queryKey: ['produtos'] });
+                                  }
+                                },
+                                {
+                                  title: `🔄 Ciclo: ${pedido.numero_pedido}`,
+                                  width: 900,
+                                  height: 700
+                                }
+                              )}
+                              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                            >
+                              <CheckCircle2 className="w-4 h-4 mr-1" />
+                              Ciclo
+                            </Button>
+                            
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => handleVerDetalhes(pedido)}
                             >
@@ -386,20 +411,6 @@ export default function PedidosEntregaTab({ windowMode = false }) {
                               <Bell className="w-4 h-4 mr-1" />
                               Notificar
                             </Button>
-
-                            {pedido.status === 'Em Trânsito' && permissoes.podeConfirmarEntrega && (
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  setEntregaSelecionada({ pedido, entrega });
-                                  setComprovanteOpen(true);
-                                }}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                              >
-                                <CheckCircle2 className="w-4 h-4 mr-1" />
-                                Confirmar
-                              </Button>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>

@@ -6,7 +6,7 @@ import MonitoramentoCanaisRealtime from "@/components/comercial/MonitoramentoCan
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck, Truck, Package } from "lucide-react";
+import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck, Truck, Package, Activity } from "lucide-react";
 import ClientesTab from "../components/comercial/ClientesTab";
 import PedidosTab from "../components/comercial/PedidosTab";
 import ComissoesTab from "../components/comercial/ComissoesTab";
@@ -17,6 +17,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import CentralAprovacoesManager from "../components/comercial/CentralAprovacoesManager";
 import PedidosEntregaTab from "../components/comercial/PedidosEntregaTab";
 import PedidosRetiradaTab from "../components/comercial/PedidosRetiradaTab";
+import DashboardCicloPedidos from "../components/comercial/DashboardCicloPedidos";
 
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
@@ -353,6 +354,13 @@ export default function Comercial() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap">
           <TabsTrigger 
+            value="dashboard-ciclo" 
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            📊 Dashboard Ciclo
+          </TabsTrigger>
+          <TabsTrigger 
             value="clientes" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
@@ -450,6 +458,10 @@ export default function Comercial() {
             Tabelas de Preço
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard-ciclo">
+          <DashboardCicloPedidos />
+        </TabsContent>
 
         <TabsContent value="clientes">
           <ClientesTab 

@@ -22,6 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import GerenciadorCicloPedido from "./GerenciadorCicloPedido";
+import { useWindow } from "@/components/lib/useWindow";
 
 /**
  * 📦 PEDIDOS PARA RETIRADA V21.5
@@ -40,6 +42,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   const [observacoes, setObservacoes] = useState("");
 
   const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
@@ -289,6 +292,29 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => openWindow(
+                          GerenciadorCicloPedido,
+                          {
+                            pedido,
+                            onStatusChanged: () => {
+                              queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                              queryClient.invalidateQueries({ queryKey: ['produtos'] });
+                            }
+                          },
+                          {
+                            title: `🔄 Ciclo: ${pedido.numero_pedido}`,
+                            width: 900,
+                            height: 700
+                          }
+                        )}
+                        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-1" />
+                        Ciclo
+                      </Button>
+                      
                       {pedido.status !== 'Entregue' && (
                         <>
                           {pedido.status !== 'Pronto para Retirada' && (
