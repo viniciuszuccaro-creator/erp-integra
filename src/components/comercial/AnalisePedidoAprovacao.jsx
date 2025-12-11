@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   AlertCircle,
@@ -16,6 +17,7 @@ import {
   DollarSign,
   Box,
   Zap,
+  Rocket
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -48,6 +50,7 @@ export default function AnalisePedidoAprovacao({
   const [descontoGeralValor, setDescontoGeralValor] = useState(
     pedidoProp.desconto_geral_pedido_valor || 0
   );
+  const [fecharAutomatico, setFecharAutomatico] = useState(false); // V21.6
   
   // Estado para descontos individuais dos itens
   const [descontosItens, setDescontosItens] = useState({});
@@ -232,8 +235,16 @@ export default function AnalisePedidoAprovacao({
       comentarios,
       valorFinal: totaisPedido.valorFinal,
       margemMedia: totaisPedido.margemMedia,
+      executarFechamento: fecharAutomatico // V21.6
     });
   };
+
+  // V21.6: Verificar se tem estoque insuficiente
+  const temEstoqueInsuficiente = todosItens.some(item => {
+    if (item.tipo !== "Revenda") return false;
+    const valores = calcularValoresItem(item);
+    return !valores.estoque.disponivel;
+  });
 
   const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "p-6";
 
@@ -536,6 +547,35 @@ export default function AnalisePedidoAprovacao({
           </CardContent>
         </Card>
 
+        {/* V21.6: TOGGLE FECHAMENTO AUTOMÁTICO */}
+        <Card className="border-blue-300 bg-gradient-to-r from-blue-50 to-purple-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Rocket className="w-6 h-6 text-blue-600" />
+                <div>
+                  <p className="font-semibold text-slate-900">🚀 Fechamento Automático</p>
+                  <p className="text-xs text-slate-600">
+                    Após aprovação: Baixa Estoque + Gera Financeiro + Cria Logística
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={fecharAutomatico}
+                onCheckedChange={setFecharAutomatico}
+                id="auto-close-approval"
+              />
+            </div>
+            {fecharAutomatico && (
+              <div className="mt-3 p-2 bg-blue-100 rounded-lg border border-blue-300">
+                <p className="text-xs text-blue-800">
+                  ✅ Após aprovar, o sistema executará automaticamente todo o fluxo de fechamento (~10s)
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* AÇÕES */}
         <div className="flex justify-end gap-3 pt-4 border-t">
           <Button
@@ -547,12 +587,15 @@ export default function AnalisePedidoAprovacao({
             Negar Desconto
           </Button>
           <Button
-            className="bg-green-600 hover:bg-green-700 shadow-lg"
+            className={fecharAutomatico 
+              ? "bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg"
+              : "bg-green-600 hover:bg-green-700 shadow-lg"
+            }
             onClick={handleAprovar}
             disabled={temEstoqueInsuficiente}
           >
             <CheckCircle2 className="w-4 h-4 mr-2" />
-            Aprovar e Baixar Estoque
+            {fecharAutomatico ? '✅ Aprovar e 🚀 Fechar' : '✅ Aprovar Pedido'}
           </Button>
         </div>
         
