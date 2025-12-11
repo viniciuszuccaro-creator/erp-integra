@@ -7,7 +7,8 @@ import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
 import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_FINAL";
 import ValidacaoFinalTotalV21_6 from "@/components/sistema/VALIDACAO_FINAL_TOTAL_V21_6";
 import MasterDashboardV21_6 from "@/components/sistema/MASTER_DASHBOARD_V21_6";
-import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket } from "lucide-react";
+import GuiaFluxoCompletoV21_6 from "@/components/sistema/GuiaFluxoCompletoV21_6";
+import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket, BookOpen } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
@@ -92,6 +93,10 @@ export default function ConfiguracoesSistema() {
             <CertificadoProducaoV21_6 />
             <StatusOrigemPedido100 />
           </div>
+        </TabsContent>
+
+        <TabsContent value="guia-uso">
+          <GuiaFluxoCompletoV21_6 windowMode={false} />
         </TabsContent>
 
         <TabsContent value="status-fechamento">
