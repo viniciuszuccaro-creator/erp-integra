@@ -124,7 +124,49 @@ export default function Comercial() {
           pedidoCriado = true;
           
           try {
-            await base44.entities.Pedido.create(formData);
+            const newPedido = await base44.entities.Pedido.create(formData);
+            
+            // V21.7: BAIXAR ESTOQUE SE CRIADO COMO APROVADO
+            if (newPedido.status === 'Aprovado' && newPedido.itens_revenda?.length > 0) {
+              for (const item of newPedido.itens_revenda) {
+                if (item.produto_id) {
+                  const produtos = await base44.entities.Produto.filter({
+                    id: item.produto_id,
+                    empresa_id: newPedido.empresa_id
+                  });
+                  
+                  const produto = produtos[0];
+                  if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
+                    const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
+                    
+                    await base44.entities.MovimentacaoEstoque.create({
+                      empresa_id: newPedido.empresa_id,
+                      tipo_movimento: "saida",
+                      origem_movimento: "pedido",
+                      origem_documento_id: newPedido.id,
+                      produto_id: item.produto_id,
+                      produto_descricao: item.descricao || item.produto_descricao,
+                      codigo_produto: item.codigo_sku,
+                      quantidade: item.quantidade,
+                      unidade_medida: item.unidade,
+                      estoque_anterior: produto.estoque_atual || 0,
+                      estoque_atual: novoEstoque,
+                      data_movimentacao: new Date().toISOString(),
+                      documento: newPedido.numero_pedido,
+                      motivo: `Baixa automática - Pedido criado e aprovado`,
+                      responsavel: "Sistema Automático",
+                      aprovado: true
+                    });
+                    
+                    await base44.entities.Produto.update(item.produto_id, {
+                      estoque_atual: novoEstoque
+                    });
+                  }
+                }
+              }
+              toast.success('✅ Estoque baixado automaticamente!');
+            }
+            
             toast.success("✅ Pedido criado com sucesso!");
             await pedidosQuery.refetch();
           } catch (error) {
@@ -161,7 +203,50 @@ export default function Comercial() {
           atualizacaoEmAndamento = true;
           
           try {
-            await base44.entities.Pedido.update(formData.id, formData);
+            const statusAnterior = pedido.status;
+            const updatedPedido = await base44.entities.Pedido.update(formData.id, formData);
+            
+            // V21.7: BAIXAR ESTOQUE SE MUDOU PARA APROVADO
+            if (updatedPedido.status === 'Aprovado' && statusAnterior !== 'Aprovado' && updatedPedido.itens_revenda?.length > 0) {
+              for (const item of updatedPedido.itens_revenda) {
+                if (item.produto_id) {
+                  const produtos = await base44.entities.Produto.filter({
+                    id: item.produto_id,
+                    empresa_id: updatedPedido.empresa_id
+                  });
+                  
+                  const produto = produtos[0];
+                  if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
+                    const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
+                    
+                    await base44.entities.MovimentacaoEstoque.create({
+                      empresa_id: updatedPedido.empresa_id,
+                      tipo_movimento: "saida",
+                      origem_movimento: "pedido",
+                      origem_documento_id: updatedPedido.id,
+                      produto_id: item.produto_id,
+                      produto_descricao: item.descricao || item.produto_descricao,
+                      codigo_produto: item.codigo_sku,
+                      quantidade: item.quantidade,
+                      unidade_medida: item.unidade,
+                      estoque_anterior: produto.estoque_atual || 0,
+                      estoque_atual: novoEstoque,
+                      data_movimentacao: new Date().toISOString(),
+                      documento: updatedPedido.numero_pedido,
+                      motivo: `Baixa automática - Pedido aprovado`,
+                      responsavel: "Sistema Automático",
+                      aprovado: true
+                    });
+                    
+                    await base44.entities.Produto.update(item.produto_id, {
+                      estoque_atual: novoEstoque
+                    });
+                  }
+                }
+              }
+              toast.success('✅ Estoque baixado automaticamente!');
+            }
+            
             toast.success("✅ Pedido atualizado com sucesso!");
             await pedidosQuery.refetch();
             

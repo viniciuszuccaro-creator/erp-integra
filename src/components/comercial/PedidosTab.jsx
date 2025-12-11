@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import BadgeOrigemPedido from "./BadgeOrigemPedido";
+import GerenciadorCicloPedido from "./GerenciadorCicloPedido";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
@@ -241,70 +242,33 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {pedido.status === "Rascunho" && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={async () => {
-                              try {
-                                // V21.5: BAIXAR ESTOQUE AO APROVAR
-                                if (pedido.itens_revenda?.length > 0) {
-                                  for (const item of pedido.itens_revenda) {
-                                    if (item.produto_id) {
-                                      const produtos = await base44.entities.Produto.filter({ 
-                                        id: item.produto_id,
-                                        empresa_id: pedido.empresa_id 
-                                      });
-                                      
-                                      const produto = produtos[0];
-                                      if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-                                        const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-                                        
-                                        // Criar movimentação
-                                        await base44.entities.MovimentacaoEstoque.create({
-                                          empresa_id: pedido.empresa_id,
-                                          tipo_movimento: "saida",
-                                          origem_movimento: "pedido",
-                                          origem_documento_id: pedido.id,
-                                          produto_id: item.produto_id,
-                                          produto_descricao: item.descricao || item.produto_descricao,
-                                          codigo_produto: item.codigo_sku,
-                                          quantidade: item.quantidade,
-                                          unidade_medida: item.unidade,
-                                          estoque_anterior: produto.estoque_atual || 0,
-                                          estoque_atual: novoEstoque,
-                                          data_movimentacao: new Date().toISOString(),
-                                          documento: pedido.numero_pedido,
-                                          motivo: `Baixa automática - Aprovação rápida`,
-                                          responsavel: "Sistema Automático",
-                                          aprovado: true
-                                        });
-                                        
-                                        // Atualizar estoque do produto
-                                        await base44.entities.Produto.update(item.produto_id, {
-                                          estoque_atual: novoEstoque
-                                        });
-                                      }
-                                    }
-                                  }
-                                }
-                                
-                                await base44.entities.Pedido.update(pedido.id, { status: 'Aprovado' });
-                                toast({ title: "✅ Pedido aprovado e estoque baixado!" });
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => openWindow(
+                            GerenciadorCicloPedido,
+                            {
+                              pedido,
+                              onStatusChanged: () => {
                                 queryClient.invalidateQueries({ queryKey: ['pedidos'] });
                                 queryClient.invalidateQueries({ queryKey: ['produtos'] });
                                 queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
-                              } catch (error) {
-                                toast({ title: "❌ Erro ao aprovar", variant: "destructive" });
+                                queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+                                queryClient.invalidateQueries({ queryKey: ['entregas'] });
                               }
-                            }}
-                            title="Aprovar Pedido e Baixar Estoque"
-                            className="h-8 px-2 bg-green-50 text-green-700 hover:bg-green-100 font-semibold"
-                          >
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            <span className="text-xs">Aprovar</span>
-                          </Button>
-                        )}
+                            },
+                            {
+                              title: `🔄 Ciclo: ${pedido.numero_pedido}`,
+                              width: 900,
+                              height: 700
+                            }
+                          )}
+                          title="Gerenciar Ciclo de Vida"
+                          className="h-8 px-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 font-semibold"
+                        >
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          <span className="text-xs">Ciclo</span>
+                        </Button>
                         
                         <Button 
                           variant="ghost" 
@@ -316,73 +280,6 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           <Edit2 className="w-3 h-3 mr-1" />
                           <span className="text-xs">Editar</span>
                         </Button>
-                        
-                        {pedido.status === "Aprovado" && (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={async () => {
-                                try {
-                                  await base44.entities.Pedido.update(pedido.id, {
-                                    status: 'Pronto para Faturar'
-                                  });
-                                  toast({ title: "✅ Pedido fechado para entrega!" });
-                                  queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-                                } catch (error) {
-                                  toast({ title: "❌ Erro ao fechar pedido", variant: "destructive" });
-                                }
-                              }}
-                              title="Fechar Pedido e Enviar para Entrega"
-                              className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200"
-                            >
-                              <Truck className="w-4 h-4 mr-1" />
-                              <span className="text-xs">🚚 Fechar p/ Entrega</span>
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => {
-                                toast({ title: "🚀 Gerando NF-e..." });
-                              }}
-                              title="Gerar NF-e"
-                              className="h-8 px-2 text-green-600"
-                            >
-                              <FileText className="w-3 h-3 mr-1" />
-                              <span className="text-xs">NF-e</span>
-                            </Button>
-                          </>
-                        )}
-
-                        {pedido.status === "Pronto para Faturar" && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              toast({ title: "🚀 Gerando NF-e..." });
-                            }}
-                            title="Gerar NF-e"
-                            className="h-8 px-2 text-green-600"
-                          >
-                            <FileText className="w-3 h-3 mr-1" />
-                            <span className="text-xs">NF-e</span>
-                          </Button>
-                        )}
-
-                        {pedido.status === "Faturado" && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => {
-                              toast({ title: "📦 Criando entrega..." });
-                            }}
-                            title="Criar Entrega"
-                            className="h-8 px-2 text-blue-600"
-                          >
-                            <Truck className="w-3 h-3 mr-1" />
-                            <span className="text-xs">Entrega</span>
-                          </Button>
-                        )}
 
                         {(pedido.tipo_pedido === "Produção Sob Medida" || pedido.itens_corte_dobra?.length > 0 || pedido.itens_armado_padrao?.length > 0) && pedido.status !== "Cancelado" && (
                           <Button 
