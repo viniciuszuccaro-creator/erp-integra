@@ -299,9 +299,12 @@ export default function AutomacaoFluxoPedido({
           onComplete: (resultados) => {
             toast.success('✅ Fluxo de pedido concluído com sucesso!');
             
-            if (onComplete) {
-              onComplete(resultados);
-            }
+            // Aguardar 1s e fechar janela/modal
+            setTimeout(() => {
+              if (onComplete) {
+                onComplete(resultados);
+              }
+            }, 1000);
           },
           onError: (error) => {
             toast.error(`❌ Erro na automação: ${error.message}`);
