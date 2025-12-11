@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,12 +15,18 @@ import {
   TrendingDown,
   ShieldCheck,
   DollarSign,
+  Zap,
+  Shield
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
 import AnalisePedidoAprovacao from "./AnalisePedidoAprovacao";
+import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { executarFechamentoCompleto } from "@/components/lib/useFluxoPedido";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * 🔐 CENTRAL DE APROVAÇÕES V21.5
@@ -31,23 +37,29 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   const [aprovacaoDialogOpen, setAprovacaoDialogOpen] = useState(false);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [comentariosAprovacao, setComentariosAprovacao] = useState("");
+  const [permitido, setPermitido] = useState(true);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { openWindow } = useWindow();
+  const { user } = useUser();
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
     queryFn: () => base44.entities.Pedido.list('-created_date'),
   });
 
-  const { data: user } = useQuery({
-    queryKey: ['currentUser'],
-    queryFn: () => base44.auth.me(),
-  });
+  // V21.6: Validar permissão
+  useEffect(() => {
+    if (user) {
+      const temPermissao = user.role === 'admin' || user.role === 'gerente';
+      setPermitido(temPermissao);
+    }
+  }, [user]);
 
+  // V21.6: APROVAÇÃO COM FECHAMENTO AUTOMÁTICO OPCIONAL
   const aprovarPedidoMutation = useMutation({
-    mutationFn: async ({ pedidoId, dados }) => {
+    mutationFn: async ({ pedidoId, dados, executarFechamento = false }) => {
       const pedidosCompletos = await base44.entities.Pedido.filter({ id: pedidoId });
       const pedido = pedidosCompletos[0];
       
@@ -63,48 +75,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
         });
       }
 
-      const itensRevenda = itensRevendaAtualizados.length > 0 ? itensRevendaAtualizados : (pedido.itens_revenda || []);
-      
-      // BAIXAR ESTOQUE AUTOMATICAMENTE
-      if (itensRevenda.length > 0) {
-        for (const item of itensRevenda) {
-          if (item.produto_id) {
-            const produtos = await base44.entities.Produto.filter({ 
-              id: item.produto_id,
-              empresa_id: pedido.empresa_id 
-            });
-            
-            const produto = produtos[0];
-            if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-              const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-              
-              await base44.entities.MovimentacaoEstoque.create({
-                empresa_id: pedido.empresa_id,
-                tipo_movimento: "saida",
-                origem_movimento: "pedido",
-                origem_documento_id: pedidoId,
-                produto_id: item.produto_id,
-                produto_descricao: item.descricao || item.produto_descricao,
-                codigo_produto: item.codigo_sku,
-                quantidade: item.quantidade,
-                unidade_medida: item.unidade,
-                estoque_anterior: produto.estoque_atual || 0,
-                estoque_atual: novoEstoque,
-                data_movimentacao: new Date().toISOString(),
-                documento: pedido.numero_pedido,
-                motivo: `Baixa automática - Aprovação de desconto`,
-                responsavel: user?.full_name || "Sistema",
-                aprovado: true
-              });
-              
-              await base44.entities.Produto.update(item.produto_id, {
-                estoque_atual: novoEstoque
-              });
-            }
-          }
-        }
-      }
-
+      // Atualizar pedido com aprovação
       await base44.entities.Pedido.update(pedidoId, {
         status_aprovacao: "aprovado",
         status: "Aprovado",
@@ -120,14 +91,49 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
         ...(itensArmadoAtualizados.length > 0 && { itens_armado_padrao: itensArmadoAtualizados }),
         ...(itensCorteAtualizados.length > 0 && { itens_corte_dobra: itensCorteAtualizados }),
       });
+
+      // V21.6: Se solicitado, executar fechamento completo
+      if (executarFechamento) {
+        const pedidoAtualizado = await base44.entities.Pedido.filter({ id: pedidoId });
+        return { pedido: pedidoAtualizado[0], executarFechamento: true };
+      }
+
+      return { pedido: null, executarFechamento: false };
     },
-    onSuccess: () => {
+    onSuccess: (resultado) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
       queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
-      toast({ title: "✅ Desconto aprovado e estoque baixado!" });
+      queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+      queryClient.invalidateQueries({ queryKey: ['entregas'] });
+      
+      toast({ title: "✅ Desconto aprovado!" });
       setAprovacaoDialogOpen(false);
       setPedidoSelecionado(null);
+
+      // V21.6: Se deve executar fechamento, abrir modal de automação
+      if (resultado.executarFechamento && resultado.pedido) {
+        setTimeout(() => {
+          if (window.__currentOpenWindow) {
+            window.__currentOpenWindow(
+              AutomacaoFluxoPedido,
+              { 
+                pedido: resultado.pedido,
+                windowMode: true,
+                autoExecute: true,
+                onComplete: () => {
+                  toast({ title: "✅ Pedido fechado automaticamente!" });
+                }
+              },
+              {
+                title: `🚀 Automação - ${resultado.pedido.numero_pedido}`,
+                width: 1200,
+                height: 700
+              }
+            );
+          }
+        }, 200);
+      }
     },
     onError: (error) => {
       toast({ title: "❌ Erro ao aprovar", description: error.message, variant: "destructive" });
@@ -159,13 +165,27 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
 
   return (
     <div className={containerClass}>
+      
+      {/* V21.6: Controle de Acesso */}
+      {!permitido && (
+        <Alert className="border-red-300 bg-red-50 mb-6">
+          <Shield className="w-4 h-4 text-red-600" />
+          <AlertDescription>
+            <p className="font-semibold text-red-900">🔒 Acesso Negado</p>
+            <p className="text-sm text-red-700 mt-1">
+              Apenas <strong>Administradores</strong> e <strong>Gerentes</strong> podem acessar a Central de Aprovações.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <ShieldCheck className="w-7 h-7 text-orange-600" />
-            Central de Aprovações
+            Central de Aprovações V21.6
           </h2>
-          <p className="text-slate-600 text-sm">Gerencie todas as solicitações de aprovação</p>
+          <p className="text-slate-600 text-sm">Gerencie aprovações com fechamento automático integrado</p>
         </div>
       </div>
 
@@ -272,43 +292,89 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
                           {new Date(pedido.created_date).toLocaleDateString('pt-BR')}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              openWindow(
-                                AnalisePedidoAprovacao,
-                                {
-                                  pedido,
-                                  onAprovar: (dados) => {
-                                    aprovarPedidoMutation.mutate({
-                                      pedidoId: pedido.id,
-                                      dados
-                                    });
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                openWindow(
+                                  AnalisePedidoAprovacao,
+                                  {
+                                    pedido,
+                                    onAprovar: (dados) => {
+                                      aprovarPedidoMutation.mutate({
+                                        pedidoId: pedido.id,
+                                        dados,
+                                        executarFechamento: false
+                                      });
+                                    },
+                                    onNegar: (comentarios) => {
+                                      if (!comentarios.trim()) {
+                                        toast({ title: "⚠️ Informe o motivo da negação", variant: "destructive" });
+                                        return;
+                                      }
+                                      negarPedidoMutation.mutate({
+                                        pedidoId: pedido.id,
+                                        comentarios
+                                      });
+                                    },
+                                    windowMode: true
                                   },
-                                  onNegar: (comentarios) => {
-                                    if (!comentarios.trim()) {
-                                      toast({ title: "⚠️ Informe o motivo da negação", variant: "destructive" });
-                                      return;
-                                    }
-                                    negarPedidoMutation.mutate({
-                                      pedidoId: pedido.id,
-                                      comentarios
-                                    });
+                                  {
+                                    title: `🔐 Análise: ${pedido.numero_pedido}`,
+                                    width: 1400,
+                                    height: 800
+                                  }
+                                );
+                              }}
+                              className="bg-orange-600 hover:bg-orange-700"
+                              disabled={!permitido}
+                            >
+                              <ShieldCheck className="w-4 h-4 mr-1" />
+                              Analisar
+                            </Button>
+
+                            {/* V21.6 NOVO: Aprovar + Fechar Automático */}
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                openWindow(
+                                  AnalisePedidoAprovacao,
+                                  {
+                                    pedido,
+                                    onAprovar: (dados) => {
+                                      aprovarPedidoMutation.mutate({
+                                        pedidoId: pedido.id,
+                                        dados,
+                                        executarFechamento: true
+                                      });
+                                    },
+                                    onNegar: (comentarios) => {
+                                      if (!comentarios.trim()) {
+                                        toast({ title: "⚠️ Informe o motivo da negação", variant: "destructive" });
+                                        return;
+                                      }
+                                      negarPedidoMutation.mutate({
+                                        pedidoId: pedido.id,
+                                        comentarios
+                                      });
+                                    },
+                                    windowMode: true
                                   },
-                                  windowMode: true
-                                },
-                                {
-                                  title: `🔐 Análise: ${pedido.numero_pedido}`,
-                                  width: 1400,
-                                  height: 800
-                                }
-                              );
-                            }}
-                            className="bg-orange-600 hover:bg-orange-700"
-                          >
-                            <ShieldCheck className="w-4 h-4 mr-1" />
-                            Analisar
-                          </Button>
+                                  {
+                                    title: `🔐 Análise: ${pedido.numero_pedido}`,
+                                    width: 1400,
+                                    height: 800
+                                  }
+                                );
+                              }}
+                              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                              disabled={!permitido}
+                              title="Aprovar e Fechar Pedido Automaticamente"
+                            >
+                              <Zap className="w-4 h-4 mr-1" />
+                              Aprovar + Fechar
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
