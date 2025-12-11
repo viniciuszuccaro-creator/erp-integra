@@ -53,6 +53,7 @@ import DashboardOperacionalBI from "@/components/dashboard/DashboardOperacionalB
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useWindow } from "@/components/lib/useWindow";
 import WidgetCanaisOrigem from "@/components/dashboard/WidgetCanaisOrigem";
+import WidgetAutomacaoRealtime from "@/components/dashboard/WidgetAutomacaoRealtime";
 
 
 export default function Dashboard() {
@@ -681,9 +682,10 @@ export default function Dashboard() {
             ))}
             
             {/* Widget Canais de Origem */}
-            <div className="md:col-span-2 lg:col-span-2">
-              <WidgetCanaisOrigem empresaId={empresaAtual?.id} />
-            </div>
+            <WidgetCanaisOrigem empresaId={empresaAtual?.id} />
+            
+            {/* Widget Automação em Tempo Real */}
+            <WidgetAutomacaoRealtime />
           </div>
 
           {/* NOVOS KPIs OPERACIONAIS */}

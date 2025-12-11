@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
 import CertificadoProducaoV21_6 from "@/components/sistema/CERTIFICADO_PRODUCAO_V21_6";
-import { Shield, FileText, Settings, Zap, Sparkles, Wrench } from "lucide-react";
+import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Activity } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
 import ConfigGlobal from "@/components/sistema/ConfigGlobal";
 import DiagnosticoBackend from "@/components/sistema/DiagnosticoBackend";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import ConfiguracaoAutomacao from "@/components/comercial/ConfiguracaoAutomacao";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,14 @@ export default function ConfiguracoesSistema() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
+          <TabsTrigger
+            value="automacao"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-blue-600 data-[state=active]:text-white"
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            🤖 Automação V21.7
+          </TabsTrigger>
+
           <TabsTrigger
             value="status-origem"
             className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
@@ -70,6 +79,10 @@ export default function ConfiguracoesSistema() {
             Estoque Avançado
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="automacao">
+          <ConfiguracaoAutomacao />
+        </TabsContent>
 
         <TabsContent value="status-origem">
           <div className="space-y-6">
