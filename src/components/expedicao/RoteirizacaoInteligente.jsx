@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Zap, Map, Truck, Navigation, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
 
-export default function RoteirizacaoInteligente() {
+export default function RoteirizacaoInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
   const [dataRota, setDataRota] = useState(new Date().toISOString().split('T')[0]);
 
@@ -102,8 +102,11 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
     e.status === "Aguardando Separação" || e.status === "Pronto para Expedir"
   );
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Roteirização Inteligente</h2>
@@ -242,6 +245,7 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

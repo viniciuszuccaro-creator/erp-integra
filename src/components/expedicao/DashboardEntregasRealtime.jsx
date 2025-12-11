@@ -20,7 +20,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
  * Consolidação e melhoria do módulo de expedição
  */
 
-export default function DashboardEntregasRealtime({ empresaId }) {
+export default function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
   const [metricas, setMetricas] = useState({
     entregasHoje: 0,
     entregasPrazo: 0,
@@ -95,8 +95,11 @@ export default function DashboardEntregasRealtime({ empresaId }) {
     });
   }
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="w-full h-full space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
@@ -225,6 +228,7 @@ export default function DashboardEntregasRealtime({ empresaId }) {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

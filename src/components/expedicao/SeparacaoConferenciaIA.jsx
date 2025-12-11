@@ -37,7 +37,7 @@ import {
  * - ✅ Responsivo e redimensionável (w-full h-full)
  */
 
-export default function SeparacaoConferenciaIA({ pedidoId, onClose }) {
+export default function SeparacaoConferenciaIA({ pedidoId, onClose, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -268,8 +268,11 @@ Gere uma rota otimizada considerando:
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="w-full h-full overflow-auto p-6 space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* Header */}
       <Card className="bg-gradient-to-r from-purple-600 to-purple-700 text-white">
         <CardHeader>
@@ -473,6 +476,7 @@ Gere uma rota otimizada considerando:
           <CheckCircle className="w-4 h-4 mr-2" />
           Finalizar Separação
         </Button>
+      </div>
       </div>
     </div>
   );

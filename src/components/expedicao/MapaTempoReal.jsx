@@ -10,7 +10,7 @@ import { motion } from 'framer-motion';
  * Mapa de Rastreamento em Tempo Real
  * Atualiza posição GPS a cada 15 segundos
  */
-export default function MapaTempoReal({ romaneioId, entregaId }) {
+export default function MapaTempoReal({ romaneioId, entregaId, windowMode = false }) {
   const { data: posicaoGPS, hasChanges, isLoading } = useRealtimeGPS(romaneioId);
   const [ultimaPosicao, setUltimaPosicao] = useState(null);
 
@@ -49,8 +49,11 @@ export default function MapaTempoReal({ romaneioId, entregaId }) {
   const dataHora = new Date(posicao.data_hora).toLocaleString('pt-BR');
   const tempoDecorrido = Math.floor((new Date() - new Date(posicao.data_hora)) / 1000);
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-4";
+
   return (
-    <div className="space-y-4">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-4 flex-1" : "space-y-4"}>
       {/* Status da Conexão */}
       <Alert className={hasChanges ? 'border-green-300 bg-green-50' : 'border-blue-300 bg-blue-50'}>
         <Zap className={`w-5 h-5 ${hasChanges ? 'text-green-600 animate-pulse' : 'text-blue-600'}`} />
@@ -187,6 +190,7 @@ export default function MapaTempoReal({ romaneioId, entregaId }) {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

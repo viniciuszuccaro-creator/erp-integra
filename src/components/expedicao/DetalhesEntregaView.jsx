@@ -23,6 +23,7 @@ export default function DetalhesEntregaView({
   onStatusChange,
   windowMode = false
 }) {
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-hidden" : "";
   const queryClient = useQueryClient();
   const [showAssinatura, setShowAssinatura] = React.useState(false);
 
@@ -58,7 +59,7 @@ export default function DetalhesEntregaView({
   });
 
   const content = (
-    <div className={`${windowMode ? 'p-6 h-full overflow-auto' : 'space-y-4'}`}>
+    <div className={`${windowMode ? 'p-6 flex-1 overflow-auto' : 'space-y-4'}`}>
       {!windowMode && (
         <div className="flex items-center gap-2 mb-4">
           <Truck className="w-5 h-5 text-blue-600" />
@@ -286,7 +287,7 @@ export default function DetalhesEntregaView({
   );
 
   if (windowMode) {
-    return <div className="w-full h-full bg-white">{content}</div>;
+    return <div className={containerClass}>{content}</div>;
   }
 
   return content;
