@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
+import CertificadoProducaoV21_6 from "@/components/sistema/CERTIFICADO_PRODUCAO_V21_6";
 import { Shield, FileText, Settings, Zap, Sparkles, Wrench } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
@@ -71,7 +72,10 @@ export default function ConfiguracoesSistema() {
         </TabsList>
 
         <TabsContent value="status-origem">
-          <StatusOrigemPedido100 />
+          <div className="space-y-6">
+            <CertificadoProducaoV21_6 />
+            <StatusOrigemPedido100 />
+          </div>
         </TabsContent>
 
         <TabsContent value="diagnostico">

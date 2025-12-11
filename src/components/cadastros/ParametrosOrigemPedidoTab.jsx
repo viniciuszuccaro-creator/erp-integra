@@ -274,7 +274,9 @@ export default function ParametrosOrigemPedidoTab() {
 
         {/* ABA: STATUS 100% */}
         <TabsContent value="status" className="mt-0">
-          <StatusOrigemPedido100 />
+          <div className="space-y-4">
+            <StatusOrigemPedido100 />
+          </div>
         </TabsContent>
       </Tabs>
 
