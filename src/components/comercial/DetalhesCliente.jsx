@@ -10,9 +10,11 @@ import {
   TrendingUp,
   Package,
   FileText,
-  Clock
+  Clock,
+  Activity
 } from "lucide-react";
 import { motion } from "framer-motion";
+import HistoricoOrigemCliente from "./HistoricoOrigemCliente";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -100,6 +102,8 @@ export default function DetalhesCliente({ cliente, onClose, windowMode = false }
             </div>
 
             <div className="space-y-4">
+              <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
+              
               <div>
                 <h3 className="font-semibold text-slate-900 mb-2">Últimos Pedidos</h3>
                 {pedidos.slice(0, 5).map(pedido => (

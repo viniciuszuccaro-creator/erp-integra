@@ -28,6 +28,7 @@ import { createPageUrl } from "@/utils";
 import usePermissions from "@/components/lib/usePermissions";
 import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineCliente";
 import Top10ProdutosCliente from "@/components/comercial/Top10ProdutosCliente";
+import HistoricoOrigemCliente from "@/components/comercial/HistoricoOrigemCliente";
 import { Link } from "react-router-dom";
 
 /**
@@ -293,14 +294,18 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
             {/* COLUNA 3: Endereços e Top Produtos */}
             <div className="space-y-4">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="enderecos" className="text-xs">
                     <MapPin className="w-3 h-3 mr-1" />
                     Endereços
                   </TabsTrigger>
                   <TabsTrigger value="produtos" className="text-xs">
                     <Package className="w-3 h-3 mr-1" />
-                    Top Produtos
+                    Produtos
+                  </TabsTrigger>
+                  <TabsTrigger value="canais" className="text-xs">
+                    <Activity className="w-3 h-3 mr-1" />
+                    Canais
                   </TabsTrigger>
                 </TabsList>
 
@@ -402,6 +407,10 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
 
                 <TabsContent value="produtos" className="mt-4">
                   <Top10ProdutosCliente clienteId={cliente.id} />
+                </TabsContent>
+
+                <TabsContent value="canais" className="mt-4">
+                  <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
                 </TabsContent>
               </Tabs>
 

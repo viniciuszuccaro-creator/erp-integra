@@ -52,6 +52,7 @@ import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
 import DashboardOperacionalBI from "@/components/dashboard/DashboardOperacionalBI";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useWindow } from "@/components/lib/useWindow";
+import WidgetCanaisOrigem from "@/components/dashboard/WidgetCanaisOrigem";
 
 
 export default function Dashboard() {
@@ -655,7 +656,7 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
-          {/* KPIs Principais */}
+          {/* KPIs Principais + Widget Canais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statsCards.map((stat, index) => (
               <Card 
@@ -678,6 +679,11 @@ export default function Dashboard() {
                 </CardContent>
               </Card>
             ))}
+            
+            {/* Widget Canais de Origem */}
+            <div className="md:col-span-2 lg:col-span-2">
+              <WidgetCanaisOrigem empresaId={empresaAtual?.id} />
+            </div>
           </div>
 
           {/* NOVOS KPIs OPERACIONAIS */}
