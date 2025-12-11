@@ -19,6 +19,7 @@ import PedidosEntregaTab from "../components/comercial/PedidosEntregaTab";
 import PedidosRetiradaTab from "../components/comercial/PedidosRetiradaTab";
 import DashboardCicloPedidos from "../components/comercial/DashboardCicloPedidos";
 import MonitorAutomacaoPedidos from "../components/comercial/MonitorAutomacaoPedidos";
+import WatcherCicloAutomatico from "../components/comercial/WatcherCicloAutomatico";
 
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';

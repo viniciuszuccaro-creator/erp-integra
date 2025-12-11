@@ -48,6 +48,7 @@ import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
 import ZIndexGuard from "@/components/lib/ZIndexFix";
+import WatcherCicloAutomatico from "@/components/comercial/WatcherCicloAutomatico";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -192,7 +193,10 @@ function LayoutContent({ children, currentPageName }) {
   return (
     <SidebarProvider>
       {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
-      
+
+      {/* 🤖 WATCHER GLOBAL DE AUTOMAÇÃO */}
+      <WatcherCicloAutomatico habilitado={true} intervaloMs={8000} />
+
       <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
         <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
           <SidebarHeader className="border-b border-slate-200 p-6">
