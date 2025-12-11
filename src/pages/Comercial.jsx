@@ -256,6 +256,9 @@ export default function Comercial() {
         </Card>
       </div>
 
+      {/* NOVO V21.6: Monitoramento Realtime de Canais */}
+      <MonitoramentoCanaisRealtime autoRefresh={true} />
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap">
           <TabsTrigger 
