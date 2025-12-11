@@ -41,7 +41,7 @@ export default function Comercial() {
   const [clienteParaPainel, setClienteParaPainel] = useState(null);
 
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { openWindow } = useWindow();
+  const { openWindow, closeWindow } = useWindow();
 
   const { data: clientes = [], isLoading: loadingClientes } = useQuery({
     queryKey: ['clientes'],
@@ -146,8 +146,6 @@ export default function Comercial() {
     let atualizacaoEmAndamento = false;
     let windowIdRef = null;
     
-    const { closeWindow: closeWin } = useWindow();
-    
     windowIdRef = openWindow(
       PedidoFormCompleto,
       { 
@@ -169,7 +167,7 @@ export default function Comercial() {
             
             // Fechar a janela após salvar
             if (windowIdRef) {
-              closeWin(windowIdRef);
+              closeWindow(windowIdRef);
             }
           } catch (error) {
             atualizacaoEmAndamento = false;
