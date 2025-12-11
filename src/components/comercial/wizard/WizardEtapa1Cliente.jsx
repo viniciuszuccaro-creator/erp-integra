@@ -236,47 +236,31 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
         </div>
 
         <div>
-          <Label htmlFor="origem-pedido-select" className="flex items-center gap-2">
+          <Label htmlFor="origem-pedido-display" className="flex items-center gap-2">
             Origem do Pedido
-            {bloquearOrigemEdicao && (
-              <Badge className="bg-orange-100 text-orange-800 text-xs">
-                <Lock className="w-3 h-3 mr-1" />
-                Automático
-              </Badge>
-            )}
+            <Badge className="bg-blue-100 text-blue-800 text-xs">
+              <Lock className="w-3 h-3 mr-1" />
+              Detecção Automática
+            </Badge>
           </Label>
-          <Select
-            value={formData?.origem_pedido || 'Manual'}
-            onValueChange={(v) => setFormData && setFormData(prev => ({ ...(prev || {}), origem_pedido: v }))}
-            disabled={bloquearOrigemEdicao}
-          >
-            <SelectTrigger 
-              id="origem-pedido-select"
-              className={bloquearOrigemEdicao ? "bg-slate-100 cursor-not-allowed" : ""}
-            >
-              <SelectValue placeholder="Selecione a origem..." />
-            </SelectTrigger>
-            <SelectContent className="z-[99999]">
-              <SelectItem value="Manual">Manual</SelectItem>
-              <SelectItem value="E-commerce">E-commerce</SelectItem>
-              <SelectItem value="API">API</SelectItem>
-              <SelectItem value="Importado">Importado</SelectItem>
-              <SelectItem value="Site">Site</SelectItem>
-              <SelectItem value="App">App</SelectItem>
-              <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-              <SelectItem value="Portal">Portal</SelectItem>
-              <SelectItem value="Marketplace">Marketplace</SelectItem>
-              <SelectItem value="Chatbot">Chatbot</SelectItem>
-            </SelectContent>
-          </Select>
-          {bloquearOrigemEdicao && (
-            <p className="text-xs text-orange-600 mt-1">
-              🔒 Origem bloqueada - pedido criado automaticamente
-            </p>
-          )}
-          {parametrosOrigem.length > 0 && !bloquearOrigemEdicao && (
+          <div className="relative">
+            <Input
+              id="origem-pedido-display"
+              value={formData?.origem_pedido || 'Manual'}
+              readOnly
+              disabled
+              className="bg-gradient-to-r from-slate-100 to-slate-50 cursor-not-allowed font-semibold text-slate-900 pr-10 border-2 border-blue-200"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <Lock className="w-4 h-4 text-blue-600" />
+            </div>
+          </div>
+          <p className="text-xs text-blue-700 mt-1 font-medium">
+            🤖 Campo bloqueado - origem detectada automaticamente pelo sistema
+          </p>
+          {parametrosOrigem.length > 0 && (
             <p className="text-xs text-slate-500 mt-1">
-              💡 {parametrosOrigem.length} canais configurados
+              ✅ Rastreamento ativo em {parametrosOrigem.length} canais configurados
             </p>
           )}
         </div>
