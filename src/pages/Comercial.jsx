@@ -18,6 +18,7 @@ import CentralAprovacoesManager from "../components/comercial/CentralAprovacoesM
 import PedidosEntregaTab from "../components/comercial/PedidosEntregaTab";
 import PedidosRetiradaTab from "../components/comercial/PedidosRetiradaTab";
 import DashboardCicloPedidos from "../components/comercial/DashboardCicloPedidos";
+import MonitorAutomacaoPedidos from "../components/comercial/MonitorAutomacaoPedidos";
 
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
@@ -26,6 +27,7 @@ import { ImprimirPedido } from '@/components/lib/impressao';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { gatilhoAprovacao } from "../components/comercial/AutomacaoCicloPedido";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
@@ -127,45 +129,9 @@ export default function Comercial() {
           try {
             const newPedido = await base44.entities.Pedido.create(formData);
             
-            // V21.7: BAIXAR ESTOQUE SE CRIADO COMO APROVADO
-            if (newPedido.status === 'Aprovado' && newPedido.itens_revenda?.length > 0) {
-              for (const item of newPedido.itens_revenda) {
-                if (item.produto_id) {
-                  const produtos = await base44.entities.Produto.filter({
-                    id: item.produto_id,
-                    empresa_id: newPedido.empresa_id
-                  });
-                  
-                  const produto = produtos[0];
-                  if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-                    const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-                    
-                    await base44.entities.MovimentacaoEstoque.create({
-                      empresa_id: newPedido.empresa_id,
-                      tipo_movimento: "saida",
-                      origem_movimento: "pedido",
-                      origem_documento_id: newPedido.id,
-                      produto_id: item.produto_id,
-                      produto_descricao: item.descricao || item.produto_descricao,
-                      codigo_produto: item.codigo_sku,
-                      quantidade: item.quantidade,
-                      unidade_medida: item.unidade,
-                      estoque_anterior: produto.estoque_atual || 0,
-                      estoque_atual: novoEstoque,
-                      data_movimentacao: new Date().toISOString(),
-                      documento: newPedido.numero_pedido,
-                      motivo: `Baixa automática - Pedido criado e aprovado`,
-                      responsavel: "Sistema Automático",
-                      aprovado: true
-                    });
-                    
-                    await base44.entities.Produto.update(item.produto_id, {
-                      estoque_atual: novoEstoque
-                    });
-                  }
-                }
-              }
-              toast.success('✅ Estoque baixado automaticamente!');
+            // V21.7: 🤖 GATILHO AUTOMÁTICO SE CRIADO COMO APROVADO
+            if (newPedido.status === 'Aprovado') {
+              await gatilhoAprovacao(newPedido.id);
             }
             
             toast.success("✅ Pedido criado com sucesso!");
@@ -207,45 +173,9 @@ export default function Comercial() {
             const statusAnterior = pedido.status;
             const updatedPedido = await base44.entities.Pedido.update(formData.id, formData);
             
-            // V21.7: BAIXAR ESTOQUE SE MUDOU PARA APROVADO
-            if (updatedPedido.status === 'Aprovado' && statusAnterior !== 'Aprovado' && updatedPedido.itens_revenda?.length > 0) {
-              for (const item of updatedPedido.itens_revenda) {
-                if (item.produto_id) {
-                  const produtos = await base44.entities.Produto.filter({
-                    id: item.produto_id,
-                    empresa_id: updatedPedido.empresa_id
-                  });
-                  
-                  const produto = produtos[0];
-                  if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-                    const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-                    
-                    await base44.entities.MovimentacaoEstoque.create({
-                      empresa_id: updatedPedido.empresa_id,
-                      tipo_movimento: "saida",
-                      origem_movimento: "pedido",
-                      origem_documento_id: updatedPedido.id,
-                      produto_id: item.produto_id,
-                      produto_descricao: item.descricao || item.produto_descricao,
-                      codigo_produto: item.codigo_sku,
-                      quantidade: item.quantidade,
-                      unidade_medida: item.unidade,
-                      estoque_anterior: produto.estoque_atual || 0,
-                      estoque_atual: novoEstoque,
-                      data_movimentacao: new Date().toISOString(),
-                      documento: updatedPedido.numero_pedido,
-                      motivo: `Baixa automática - Pedido aprovado`,
-                      responsavel: "Sistema Automático",
-                      aprovado: true
-                    });
-                    
-                    await base44.entities.Produto.update(item.produto_id, {
-                      estoque_atual: novoEstoque
-                    });
-                  }
-                }
-              }
-              toast.success('✅ Estoque baixado automaticamente!');
+            // V21.7: 🤖 GATILHO AUTOMÁTICO SE MUDOU PARA APROVADO
+            if (updatedPedido.status === 'Aprovado' && statusAnterior !== 'Aprovado') {
+              await gatilhoAprovacao(updatedPedido.id);
             }
             
             toast.success("✅ Pedido atualizado com sucesso!");
@@ -460,7 +390,10 @@ export default function Comercial() {
         </TabsList>
 
         <TabsContent value="dashboard-ciclo">
-          <DashboardCicloPedidos />
+          <div className="space-y-6">
+            <MonitorAutomacaoPedidos />
+            <DashboardCicloPedidos />
+          </div>
         </TabsContent>
 
         <TabsContent value="clientes">

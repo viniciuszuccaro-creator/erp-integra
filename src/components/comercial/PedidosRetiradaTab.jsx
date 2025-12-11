@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import GerenciadorCicloPedido from "./GerenciadorCicloPedido";
 import { useWindow } from "@/components/lib/useWindow";
+import { gatilhoRetirada } from './AutomacaoCicloPedido';
 
 /**
  * 📦 PEDIDOS PARA RETIRADA V21.5
@@ -94,8 +95,15 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
 
   const confirmarRetiradaMutation = useMutation({
     mutationFn: async ({ pedido }) => {
-      // Baixar estoque automaticamente
-      if (pedido.itens_revenda?.length > 0) {
+      // 🤖 USAR GATILHO AUTOMÁTICO DE RETIRADA
+      await gatilhoRetirada(pedido.id, {
+        nome: nomeRecebedor,
+        documento: docRecebedor,
+        observacoes: observacoes
+      });
+      
+      // Baixar estoque se ainda não foi baixado
+      if (pedido.status !== 'Aprovado' && pedido.itens_revenda?.length > 0) {
         for (const item of pedido.itens_revenda) {
           if (item.produto_id) {
             const produtos = await base44.entities.Produto.filter({ 
@@ -120,7 +128,7 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
                 estoque_atual: novoEstoque,
                 data_movimentacao: new Date().toISOString(),
                 documento: pedido.numero_pedido,
-                motivo: `Retirada confirmada - ${nomeRecebedor}`,
+                motivo: `🤖 Baixa automática - Retirada confirmada`,
                 responsavel: user?.full_name || "Sistema",
                 aprovado: true
               });
@@ -132,30 +140,6 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
           }
         }
       }
-
-      // Atualizar pedido
-      await base44.entities.Pedido.update(pedido.id, {
-        status: 'Entregue',
-        data_entrega_real: new Date().toISOString()
-      });
-
-      // Criar registro de entrega
-      await base44.entities.Entrega.create({
-        pedido_id: pedido.id,
-        numero_pedido: pedido.numero_pedido,
-        cliente_id: pedido.cliente_id,
-        cliente_nome: pedido.cliente_nome,
-        empresa_id: pedido.empresa_id,
-        tipo_frete: 'Retirada',
-        status: 'Entregue',
-        data_entrega: new Date().toISOString(),
-        comprovante_entrega: {
-          nome_recebedor: nomeRecebedor,
-          documento_recebedor: docRecebedor,
-          data_hora_recebimento: new Date().toISOString(),
-          observacoes_recebimento: observacoes
-        }
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });

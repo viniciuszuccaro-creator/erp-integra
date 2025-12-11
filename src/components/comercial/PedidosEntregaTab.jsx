@@ -43,6 +43,7 @@ import PainelMetricasRealtime from "../logistica/PainelMetricasRealtime";
 import { useWindow } from "@/components/lib/useWindow";
 import { usePermissoesLogistica } from "../logistica/ControleAcessoLogistica";
 import GerenciadorCicloPedido from "./GerenciadorCicloPedido";
+import { gatilhoComprovanteEntrega, gatilhoSaidaVeiculo } from './AutomacaoCicloPedido';
 
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
@@ -628,73 +629,49 @@ export default function PedidosEntregaTab({ windowMode = false }) {
 
                   {entregaSelecionada.pedido.status === 'Em Expedição' || entregaSelecionada.pedido.status === 'Faturado' ? (
                     <Button
-                      onClick={() => {
-                        atualizarStatusMutation.mutate({
-                          pedidoId: entregaSelecionada.pedido.id,
-                          novoStatus: 'Em Trânsito'
-                        });
+                      onClick={async () => {
+                        if (entregaSelecionada.entrega?.id) {
+                          await gatilhoSaidaVeiculo(entregaSelecionada.entrega.id);
+                        } else {
+                          atualizarStatusMutation.mutate({
+                            pedidoId: entregaSelecionada.pedido.id,
+                            novoStatus: 'Em Trânsito'
+                          });
+                        }
                         setDetalhesOpen(false);
-                        toast.success("🚚 Pedido saiu para entrega!");
+                        queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                        queryClient.invalidateQueries({ queryKey: ['entregas'] });
                       }}
                       className="bg-purple-600 hover:bg-purple-700 w-full"
                     >
                       <Truck className="w-4 h-4 mr-2" />
-                      🚚 Confirmar Saída do Veículo
+                      🚚 Confirmar Saída (Automático → Em Trânsito)
                     </Button>
                   ) : null}
 
                   {entregaSelecionada.pedido.status === 'Em Trânsito' ? (
                     <Button
                       onClick={async () => {
-                        // Baixa automática de estoque
-                        if (entregaSelecionada.pedido.itens_revenda?.length > 0) {
-                          for (const item of entregaSelecionada.pedido.itens_revenda) {
-                            if (item.produto_id) {
-                              const produtos = await base44.entities.Produto.filter({ 
-                                id: item.produto_id,
-                                empresa_id: entregaSelecionada.pedido.empresa_id 
-                              });
-                              
-                              const produto = produtos[0];
-                              if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-                                const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-                                
-                                await base44.entities.MovimentacaoEstoque.create({
-                                  empresa_id: entregaSelecionada.pedido.empresa_id,
-                                  tipo_movimento: "saida",
-                                  origem_movimento: "pedido",
-                                  origem_documento_id: entregaSelecionada.pedido.id,
-                                  produto_id: item.produto_id,
-                                  produto_descricao: item.descricao || item.produto_descricao,
-                                  quantidade: item.quantidade,
-                                  unidade_medida: item.unidade,
-                                  estoque_anterior: produto.estoque_atual || 0,
-                                  estoque_atual: novoEstoque,
-                                  data_movimentacao: new Date().toISOString(),
-                                  documento: entregaSelecionada.pedido.numero_pedido,
-                                  motivo: "Entrega confirmada",
-                                  aprovado: true
-                                });
-                                
-                                await base44.entities.Produto.update(item.produto_id, {
-                                  estoque_atual: novoEstoque
-                                });
-                              }
-                            }
-                          }
+                        // 🤖 USAR GATILHO AUTOMÁTICO
+                        if (entregaSelecionada.entrega?.id) {
+                          await gatilhoComprovanteEntrega(entregaSelecionada.entrega.id, {
+                            nome_recebedor: 'Auto-confirmado',
+                            data_hora_recebimento: new Date().toISOString()
+                          });
+                        } else {
+                          atualizarStatusMutation.mutate({
+                            pedidoId: entregaSelecionada.pedido.id,
+                            novoStatus: 'Entregue'
+                          });
                         }
-                        
-                        atualizarStatusMutation.mutate({
-                          pedidoId: entregaSelecionada.pedido.id,
-                          novoStatus: 'Entregue'
-                        });
                         setDetalhesOpen(false);
-                        toast.success("✅ Entrega confirmada e estoque baixado automaticamente!");
+                        queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                        queryClient.invalidateQueries({ queryKey: ['entregas'] });
                       }}
                       className="bg-green-600 hover:bg-green-700 w-full"
                     >
                       <CheckCircle2 className="w-4 h-4 mr-2" />
-                      ✅ Confirmar Entrega (Baixa Estoque Automática)
+                      ✅ Confirmar Entrega (Automático → Entregue)
                     </Button>
                   ) : null}
 

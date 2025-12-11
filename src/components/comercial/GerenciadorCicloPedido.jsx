@@ -22,6 +22,14 @@ import {
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import usePermissions from '@/components/lib/usePermissions';
+import { 
+  gatilhoAprovacao, 
+  gatilhoFaturamento, 
+  gatilhoExpedicao,
+  orquestrarProximaEtapa,
+  executarCicloAutomatico,
+  validarTransicao
+} from './AutomacaoCicloPedido';
 import {
   Dialog,
   DialogContent,
@@ -56,6 +64,16 @@ export default function GerenciadorCicloPedido({
   const [processando, setProcessando] = useState(false);
   const [showReabrirDialog, setShowReabrirDialog] = useState(false);
   const [justificativaReabertura, setJustificativaReabertura] = useState('');
+  const [proximaAcaoAutomatica, setProximaAcaoAutomatica] = useState(null);
+
+  // 🤖 Carregar próxima ação automática
+  React.useEffect(() => {
+    orquestrarProximaEtapa(pedido.id).then(resultado => {
+      if (resultado) {
+        setProximaAcaoAutomatica(resultado);
+      }
+    });
+  }, [pedido.id, pedido.status]);
 
   // Mapa de transições permitidas
   const transicoes = {
@@ -187,7 +205,7 @@ export default function GerenciadorCicloPedido({
     });
   };
 
-  // 🔥 FUNÇÃO PRINCIPAL: TRANSIÇÃO DE STATUS
+  // 🔥 FUNÇÃO PRINCIPAL: TRANSIÇÃO AUTOMÁTICA DE STATUS
   const executarTransicao = async (novoStatus) => {
     if (processando) return;
     setProcessando(true);
@@ -195,52 +213,66 @@ export default function GerenciadorCicloPedido({
     try {
       const statusAtual = pedido.status;
 
-      // 1. APROVAR PEDIDO → Baixar Estoque
-      if (novoStatus === 'Aprovado' && statusAtual === 'Rascunho') {
-        await baixarEstoque(pedido.id);
-        toast.success('✅ Estoque baixado automaticamente!');
+      // ✅ VALIDAR ANTES DE TRANSICIONAR
+      const validacao = await validarTransicao(pedido.id, novoStatus);
+      if (!validacao.valido) {
+        toast.error(`❌ ${validacao.motivo}`);
+        setProcessando(false);
+        return;
       }
 
-      // 2. FATURAR PEDIDO → Gerar Financeiro
-      if (novoStatus === 'Faturado' && statusAtual === 'Pronto para Faturar') {
-        await gerarFinanceiro(pedido.id);
-        toast.success('✅ Títulos financeiros gerados!');
+      // 🤖 EXECUTAR GATILHOS AUTOMÁTICOS
+      if (novoStatus === 'Aprovado') {
+        const sucesso = await gatilhoAprovacao(pedido.id);
+        if (!sucesso) {
+          setProcessando(false);
+          return;
+        }
+      } else if (novoStatus === 'Faturado') {
+        const sucesso = await gatilhoFaturamento(pedido.id);
+        if (!sucesso) {
+          setProcessando(false);
+          return;
+        }
+      } else {
+        // Transição simples sem automações
+        await base44.entities.Pedido.update(pedido.id, { status: novoStatus });
+        
+        await base44.entities.AuditLog.create({
+          usuario_id: (await base44.auth.me()).id,
+          usuario: (await base44.auth.me()).full_name,
+          empresa_id: pedido.empresa_id,
+          acao: 'Transição Manual',
+          modulo: 'Comercial',
+          entidade: 'Pedido',
+          registro_id: pedido.id,
+          descricao: `Status alterado: ${statusAtual} → ${novoStatus}`,
+          data_hora: new Date().toISOString(),
+          dados_anteriores: { status: statusAtual },
+          dados_novos: { status: novoStatus },
+          sucesso: true
+        });
+
+        toast.success(`✅ Pedido movido para: ${novoStatus}`);
       }
 
-      // 3. EXPEDIR PEDIDO → Criar Entrega
-      if (novoStatus === 'Em Expedição' && statusAtual === 'Faturado') {
-        await criarEntrega(pedido.id);
-        toast.success('✅ Entrega criada automaticamente!');
-      }
-
-      // Atualizar status do pedido
-      await base44.entities.Pedido.update(pedido.id, {
-        status: novoStatus
-      });
-
-      // Criar log de auditoria
-      await base44.entities.AuditLog.create({
-        usuario_id: (await base44.auth.me()).id,
-        usuario: (await base44.auth.me()).full_name,
-        empresa_id: pedido.empresa_id,
-        acao: 'Transição de Status',
-        modulo: 'Comercial',
-        entidade: 'Pedido',
-        registro_id: pedido.id,
-        descricao: `Status alterado: ${statusAtual} → ${novoStatus}`,
-        data_hora: new Date().toISOString(),
-        dados_anteriores: { status: statusAtual },
-        dados_novos: { status: novoStatus },
-        sucesso: true
-      });
-
-      toast.success(`✅ Pedido movido para: ${novoStatus}`);
       if (onStatusChanged) onStatusChanged();
     } catch (error) {
       toast.error(error.message || '❌ Erro ao executar transição');
     } finally {
       setProcessando(false);
     }
+  };
+
+  // 🤖 EXECUTAR CICLO COMPLETO AUTOMÁTICO
+  const executarCicloCompleto = async () => {
+    setProcessando(true);
+    toast.info('🤖 Iniciando ciclo automático...');
+    
+    await executarCicloAutomatico(pedido.id);
+    
+    if (onStatusChanged) onStatusChanged();
+    setProcessando(false);
   };
 
   // 🔥 FUNÇÃO: REABRIR PEDIDO (APENAS GERÊNCIA)
@@ -370,6 +402,35 @@ export default function GerenciadorCicloPedido({
             })}
           </div>
 
+          {/* 🤖 Próxima Ação Automática */}
+          {proximaAcaoAutomatica && (
+            <Alert className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 mb-4">
+              <AlertDescription>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                    <Activity className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold text-blue-900 mb-1">🤖 Próxima Ação Automática:</p>
+                    <p className="text-sm text-blue-800">{proximaAcaoAutomatica.proximaEtapa}</p>
+                    
+                    {proximaAcaoAutomatica.acao && (
+                      <Button
+                        onClick={executarCicloCompleto}
+                        disabled={processando}
+                        className="mt-3 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                        size="sm"
+                      >
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        🚀 Executar Automação Agora
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Informações do Status */}
           <div className="bg-slate-50 rounded-lg p-4 mb-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -377,28 +438,28 @@ export default function GerenciadorCicloPedido({
                 <p className="text-slate-600">Estoque Baixado:</p>
                 <p className="font-bold">
                   {['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito', 'Entregue'].includes(pedido.status) 
-                    ? '✅ Sim' : '❌ Não'}
+                    ? '✅ Sim (Automático)' : '⏳ Aguardando'}
                 </p>
               </div>
               <div>
                 <p className="text-slate-600">Financeiro Gerado:</p>
                 <p className="font-bold">
                   {['Faturado', 'Em Expedição', 'Em Trânsito', 'Entregue'].includes(pedido.status) 
-                    ? '✅ Sim' : '❌ Não'}
+                    ? '✅ Sim (Automático)' : '⏳ Aguardando'}
                 </p>
               </div>
               <div>
                 <p className="text-slate-600">NF-e Emitida:</p>
                 <p className="font-bold">
                   {pedido.status === 'Faturado' || pedido.status === 'Em Expedição' || pedido.status === 'Em Trânsito' || pedido.status === 'Entregue'
-                    ? '✅ Sim' : '❌ Não'}
+                    ? '✅ Sim' : '⏳ Aguardando'}
                 </p>
               </div>
               <div>
                 <p className="text-slate-600">Entrega Criada:</p>
                 <p className="font-bold">
                   {['Em Expedição', 'Em Trânsito', 'Entregue'].includes(pedido.status) 
-                    ? '✅ Sim' : '❌ Não'}
+                    ? '✅ Sim (Automático)' : '⏳ Aguardando'}
                 </p>
               </div>
             </div>
@@ -407,7 +468,12 @@ export default function GerenciadorCicloPedido({
           {/* Ações Disponíveis */}
           {showActions && proximasTransicoes.length > 0 && (
             <div className="space-y-3">
-              <p className="text-sm font-semibold text-slate-700">Próximas Ações Disponíveis:</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-slate-700">Ações de Transição:</p>
+                <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
+                  🤖 Automático
+                </Badge>
+              </div>
               <div className="flex flex-wrap gap-3">
                 {proximasTransicoes.map((proxStatus) => {
                   const acaoConfig = {
