@@ -48,17 +48,13 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
   const [activeTab, setActiveTab] = useState('identificacao');
   const [salvando, setSalvando] = useState(false); // V21.5: Anti-duplicação
   
-  // V21.6: Hook para detectar origem automática
-  const { origemPedido, bloquearEdicao } = useOrigemPedido({ 
-    contexto, 
-    criacaoManual,
-    origemExterna: pedido?.origem_externa_id 
-  });
+  // V21.6 FINAL: Hook de detecção AUTOMÁTICA OBRIGATÓRIA
+  const { origemPedido, bloquearEdicao } = useOrigemPedido();
   
   const [formData, setFormData] = useState(() => ({
     tipo: 'Pedido',
     tipo_pedido: 'Misto',
-    origem_pedido: pedido?.origem_pedido || origemPedido || 'Manual',
+    origem_pedido: pedido?.origem_pedido || 'Manual', // Será preenchido pelo hook
     status: 'Rascunho',
     data_pedido: new Date().toISOString().split('T')[0],
     prioridade: 'Normal',
@@ -88,12 +84,13 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
     ...(pedido || {})
   }));
   
-  // V21.6: Atualizar origem quando detectada
+  // V21.6 FINAL: SEMPRE aplicar origem detectada automaticamente
   useEffect(() => {
-    if (origemPedido && !pedido) {
+    if (origemPedido) {
       setFormData(prev => ({ ...prev, origem_pedido: origemPedido }));
+      console.log('🎯 Origem automática aplicada:', origemPedido, '| Bloqueado:', bloquearEdicao);
     }
-  }, [origemPedido, pedido]);
+  }, [origemPedido, bloquearEdicao]);
 
   const [validacoes, setValidacoes] = useState({
     identificacao: false,
@@ -363,11 +360,13 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
                 Urgente
               </Badge>
             )}
-            {formData.origem_pedido && formData.origem_pedido !== 'Manual' && (
-              <Badge className="bg-purple-600">
-                📱 {formData.origem_pedido}
-              </Badge>
-            )}
+            <Badge className={`${
+              formData.origem_pedido === 'Manual' 
+                ? 'bg-slate-600' 
+                : 'bg-gradient-to-r from-purple-600 to-blue-600'
+            }`}>
+              🎯 {formData.origem_pedido}
+            </Badge>
           </div>
         </div>
 
