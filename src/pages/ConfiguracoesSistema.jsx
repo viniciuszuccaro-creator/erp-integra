@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
 import { Shield, FileText, Settings, Zap, Sparkles, Wrench } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
