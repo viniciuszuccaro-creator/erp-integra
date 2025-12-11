@@ -757,7 +757,7 @@ export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNe
                           className="text-blue-600 hover:bg-blue-50"
                           title="Editar Peça"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
