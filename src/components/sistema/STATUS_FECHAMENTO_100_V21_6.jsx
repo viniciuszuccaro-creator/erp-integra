@@ -20,29 +20,38 @@ import {
  * V21.6 FINAL - Widget de Status de Completude do Sistema de Fechamento
  * Valida todos os componentes e funcionalidades
  */
-export default function StatusFechamento100V21_6({ windowMode = false }) {
+export default function StatusFechamento100V21_6({ windowMode = false, empresaId = null }) {
+  // V21.6: Multi-empresa
   
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-validacao-fechamento'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 50),
+    queryKey: ['pedidos-validacao-fechamento', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', 50)
+      : base44.entities.Pedido.list('-created_date', 50),
     initialData: [],
   });
 
   const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes-validacao'],
-    queryFn: () => base44.entities.MovimentacaoEstoque.list('-created_date', 50),
+    queryKey: ['movimentacoes-validacao', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.MovimentacaoEstoque.filter({ empresa_id: empresaId }, '-created_date', 50)
+      : base44.entities.MovimentacaoEstoque.list('-created_date', 50),
     initialData: [],
   });
 
   const { data: contas = [] } = useQuery({
-    queryKey: ['contas-receber-validacao'],
-    queryFn: () => base44.entities.ContaReceber.list('-created_date', 50),
+    queryKey: ['contas-receber-validacao', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.ContaReceber.filter({ empresa_id: empresaId }, '-created_date', 50)
+      : base44.entities.ContaReceber.list('-created_date', 50),
     initialData: [],
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-validacao'],
-    queryFn: () => base44.entities.Entrega.list('-created_date', 50),
+    queryKey: ['entregas-validacao', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 50)
+      : base44.entities.Entrega.list('-created_date', 50),
     initialData: [],
   });
 
@@ -149,10 +158,25 @@ export default function StatusFechamento100V21_6({ windowMode = false }) {
     p.observacoes_internas?.includes('[AUTOMAÇÃO')
   );
 
-  const containerClass = windowMode ? 'w-full h-full overflow-auto p-6' : 'space-y-6';
+  // V21.6: Responsividade w-full h-full
+  const containerClass = windowMode 
+    ? 'w-full h-full flex flex-col overflow-hidden' 
+    : 'space-y-6';
+
+  const contentClass = windowMode 
+    ? 'flex-1 overflow-y-auto p-6 space-y-6' 
+    : 'space-y-6';
+
+  const Wrapper = ({ children }) => windowMode ? (
+    <div className={containerClass}>
+      <div className={contentClass}>{children}</div>
+    </div>
+  ) : (
+    <div className={containerClass}>{children}</div>
+  );
 
   return (
-    <div className={containerClass}>
+    <Wrapper>
       
       {/* Header de Status */}
       <Card className={`border-2 ${
@@ -372,6 +396,6 @@ export default function StatusFechamento100V21_6({ windowMode = false }) {
         </CardContent>
       </Card>
 
-    </div>
+    </Wrapper>
   );
 }

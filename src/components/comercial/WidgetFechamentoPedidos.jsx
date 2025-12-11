@@ -11,12 +11,14 @@ import DashboardFechamentoPedidos from './DashboardFechamentoPedidos';
 /**
  * V21.6 - WIDGET RESUMIDO PARA DASHBOARD PRINCIPAL
  */
-export default function WidgetFechamentoPedidos() {
+export default function WidgetFechamentoPedidos({ empresaId = null }) {
   const { openWindow } = useWindow();
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 50),
+    queryKey: ['pedidos', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', 50)
+      : base44.entities.Pedido.list('-created_date', 50),
     initialData: [],
   });
 
@@ -92,7 +94,7 @@ export default function WidgetFechamentoPedidos() {
         <Button
           onClick={() => openWindow(
             DashboardFechamentoPedidos,
-            { windowMode: true },
+            { windowMode: true, empresaId },
             {
               title: '📊 Dashboard de Fechamento Automático',
               width: 1200,

@@ -38,8 +38,11 @@ export default function AutomacaoFluxoPedido({
   pedido, 
   onComplete, 
   autoExecute = false,
-  windowMode = false 
+  windowMode = false,
+  empresaId = null
 }) {
+  // V21.6: Multi-empresa
+  const empresaProcessamento = empresaId || pedido?.empresa_id;
   const { user } = useUser();
   const [executando, setExecutando] = useState(false);
   const [etapaConcluida, setEtapaConcluida] = useState({
@@ -286,7 +289,7 @@ export default function AutomacaoFluxoPedido({
     try {
       await executarFechamentoCompleto(
         pedido,
-        pedido.empresa_id,
+        empresaProcessamento,
         {
           onProgresso: (valor) => setProgresso(valor),
           onLog: (mensagem, tipo) => adicionarLog(mensagem, tipo),

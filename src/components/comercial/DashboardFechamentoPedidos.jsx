@@ -25,29 +25,38 @@ import {
  * - Tempo médio de execução
  * - Erros e alertas
  */
-export default function DashboardFechamentoPedidos({ windowMode = false }) {
+export default function DashboardFechamentoPedidos({ windowMode = false, empresaId = null }) {
+  // V21.6: Multi-empresa
   
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 100),
+    queryKey: ['pedidos', empresaId],
+    queryFn: () => empresaId 
+      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', 100)
+      : base44.entities.Pedido.list('-created_date', 100),
     initialData: [],
   });
 
   const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes'],
-    queryFn: () => base44.entities.MovimentacaoEstoque.list('-created_date', 100),
+    queryKey: ['movimentacoes', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.MovimentacaoEstoque.filter({ empresa_id: empresaId }, '-created_date', 100)
+      : base44.entities.MovimentacaoEstoque.list('-created_date', 100),
     initialData: [],
   });
 
   const { data: contas = [] } = useQuery({
-    queryKey: ['contas-receber'],
-    queryFn: () => base44.entities.ContaReceber.list('-created_date', 100),
+    queryKey: ['contas-receber', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.ContaReceber.filter({ empresa_id: empresaId }, '-created_date', 100)
+      : base44.entities.ContaReceber.list('-created_date', 100),
     initialData: [],
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.list('-created_date', 100),
+    queryKey: ['entregas', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 100)
+      : base44.entities.Entrega.list('-created_date', 100),
     initialData: [],
   });
 
@@ -137,10 +146,25 @@ export default function DashboardFechamentoPedidos({ windowMode = false }) {
     (p.itens_revenda?.length > 0 || p.itens_armado_padrao?.length > 0)
   );
 
-  const containerClass = windowMode ? 'w-full h-full overflow-auto p-6' : 'space-y-6';
+  // V21.6: Garantir responsividade w-full h-full
+  const containerClass = windowMode 
+    ? 'w-full h-full flex flex-col overflow-hidden' 
+    : 'space-y-6';
+
+  const contentClass = windowMode 
+    ? 'flex-1 overflow-y-auto p-6 space-y-6' 
+    : 'space-y-6';
+
+  const Wrapper = ({ children }) => windowMode ? (
+    <div className={containerClass}>
+      <div className={contentClass}>{children}</div>
+    </div>
+  ) : (
+    <div className={containerClass}>{children}</div>
+  );
 
   return (
-    <div className={containerClass}>
+    <Wrapper>
       
       {/* Header */}
       <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-purple-50">
@@ -315,6 +339,6 @@ export default function DashboardFechamentoPedidos({ windowMode = false }) {
         </CardContent>
       </Card>
 
-    </div>
+    </Wrapper>
   );
 }

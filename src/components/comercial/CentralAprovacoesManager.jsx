@@ -32,7 +32,8 @@ import { useUser } from "@/components/lib/UserContext";
  * 🔐 CENTRAL DE APROVAÇÕES V21.5
  * Gerenciamento unificado de aprovações (descontos, crédito, duplicatas)
  */
-function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos" }) {
+function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos", empresaId = null }) {
+  // V21.6: Multi-empresa
   const [activeTab, setActiveTab] = useState(initialTab);
   const [aprovacaoDialogOpen, setAprovacaoDialogOpen] = useState(false);
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
@@ -45,8 +46,10 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   const { user } = useUser();
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+    queryKey: ['pedidos', empresaId],
+    queryFn: () => empresaId
+      ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date')
+      : base44.entities.Pedido.list('-created_date'),
   });
 
   // V21.6: Validar permissão
@@ -161,10 +164,25 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
   const pedidosAprovados = pedidos.filter(p => p.status_aprovacao === "aprovado");
   const pedidosNegados = pedidos.filter(p => p.status_aprovacao === "negado");
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
+  // V21.6: Responsividade w-full h-full
+  const containerClass = windowMode 
+    ? 'w-full h-full flex flex-col overflow-hidden' 
+    : 'space-y-6';
+
+  const contentClass = windowMode 
+    ? 'flex-1 overflow-y-auto p-6' 
+    : '';
+
+  const Wrapper = ({ children }) => windowMode ? (
+    <div className={containerClass}>
+      <div className={contentClass}>{children}</div>
+    </div>
+  ) : (
+    <div className="space-y-6">{children}</div>
+  );
 
   return (
-    <div className={containerClass}>
+    <Wrapper>
       
       {/* V21.6: Controle de Acesso */}
       {!permitido && (
@@ -479,7 +497,7 @@ function CentralAprovacoesManager({ windowMode = false, initialTab = "descontos"
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </Wrapper>
   );
 }
 

@@ -658,7 +658,7 @@ export default function Dashboard() {
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
           {/* V21.6 NOVO: Widget Fechamento Automático */}
-          <WidgetFechamentoPedidos />
+          <WidgetFechamentoPedidos empresaId={empresaAtual?.id} />
 
           {/* KPIs Principais + Widget Canais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

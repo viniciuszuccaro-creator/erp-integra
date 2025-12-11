@@ -32,7 +32,8 @@ import { useWindow } from "@/components/lib/useWindow";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 
-export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido }) {
+export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
+  // V21.6: Multi-empresa
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const { toast } = useToast();
@@ -51,7 +52,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     const matchStatus = statusFilter === "todos" || p.status === statusFilter;
     const matchSearch = p.numero_pedido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                        p.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchStatus && matchSearch;
+    const matchEmpresa = !empresaId || p.empresa_id === empresaId; // V21.6: Filtro empresa
+    return matchStatus && matchSearch && matchEmpresa;
   });
 
   // ETAPA 4: Estatísticas de aprovação
@@ -251,6 +253,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                                 AutomacaoFluxoPedido,
                                 { 
                                   pedido,
+                                  empresaId: pedido.empresa_id, // V21.6: Passar empresa
                                   windowMode: true,
                                   onComplete: () => {
                                     queryClient.invalidateQueries({ queryKey: ['pedidos'] });

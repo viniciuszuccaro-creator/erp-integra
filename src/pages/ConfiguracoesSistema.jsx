@@ -10,6 +10,8 @@ import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueComplet
 import ConfigGlobal from "@/components/sistema/ConfigGlobal";
 import DiagnosticoBackend from "@/components/sistema/DiagnosticoBackend";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useWindow } from "@/components/lib/useWindow";
+import DashboardFechamentoPedidos from "@/components/comercial/DashboardFechamentoPedidos";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 export default function ConfiguracoesSistema() {
   const [activeTab, setActiveTab] = useState("ia");
   const { empresaAtual, estaNoGrupo } = useContextoVisual();
+  const { openWindow } = useWindow();
 
   const { data: configsIA = [] } = useQuery({
     queryKey: ['configs-ia'],
@@ -88,7 +91,34 @@ export default function ConfiguracoesSistema() {
         </TabsContent>
 
         <TabsContent value="status-fechamento">
-          <StatusFechamento100V21_6 windowMode={false} />
+          <div className="space-y-4">
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="font-semibold text-blue-900">🚀 Dashboard Completo de Fechamento</p>
+                  <p className="text-sm text-blue-700">
+                    Visualize métricas detalhadas, performance e histórico
+                  </p>
+                </div>
+                <Button
+                  onClick={() => openWindow(
+                    DashboardFechamentoPedidos,
+                    { windowMode: true, empresaId: empresaAtual?.id },
+                    {
+                      title: '📊 Dashboard Fechamento Automático',
+                      width: 1200,
+                      height: 700
+                    }
+                  )}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Abrir Dashboard
+                </Button>
+              </CardContent>
+            </Card>
+            
+            <StatusFechamento100V21_6 windowMode={false} empresaId={empresaAtual?.id} />
+          </div>
         </TabsContent>
 
         <TabsContent value="diagnostico">
