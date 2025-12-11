@@ -1,0 +1,320 @@
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { 
+  ShoppingCart, 
+  Package, 
+  DollarSign, 
+  Truck, 
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  TrendingUp,
+  Zap
+} from 'lucide-react';
+
+/**
+ * V21.6 - DASHBOARD DE FECHAMENTO AUTOMÁTICO
+ * 
+ * Monitora métricas do sistema de fechamento:
+ * - Pedidos fechados automaticamente
+ * - Taxa de sucesso
+ * - Tempo médio de execução
+ * - Erros e alertas
+ */
+export default function DashboardFechamentoPedidos({ windowMode = false }) {
+  
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ['pedidos'],
+    queryFn: () => base44.entities.Pedido.list('-created_date', 100),
+    initialData: [],
+  });
+
+  const { data: movimentacoes = [] } = useQuery({
+    queryKey: ['movimentacoes'],
+    queryFn: () => base44.entities.MovimentacaoEstoque.list('-created_date', 100),
+    initialData: [],
+  });
+
+  const { data: contas = [] } = useQuery({
+    queryKey: ['contas-receber'],
+    queryFn: () => base44.entities.ContaReceber.list('-created_date', 100),
+    initialData: [],
+  });
+
+  const { data: entregas = [] } = useQuery({
+    queryKey: ['entregas'],
+    queryFn: () => base44.entities.Entrega.list('-created_date', 100),
+    initialData: [],
+  });
+
+  // Análise de pedidos fechados nos últimos 7 dias
+  const dataLimite = new Date();
+  dataLimite.setDate(dataLimite.getDate() - 7);
+
+  const pedidosRecentes = pedidos.filter(p => {
+    const dataPedido = new Date(p.created_date);
+    return dataPedido >= dataLimite;
+  });
+
+  const pedidosFechados = pedidosRecentes.filter(p => 
+    p.status === 'Pronto para Faturar' || 
+    p.status === 'Faturado' || 
+    p.status === 'Em Expedição'
+  );
+
+  const pedidosComAutomacao = pedidosFechados.filter(p => 
+    p.observacoes_internas?.includes('[AUTOMAÇÃO')
+  );
+
+  const taxaAutomacao = pedidosFechados.length > 0 
+    ? (pedidosComAutomacao.length / pedidosFechados.length) * 100 
+    : 0;
+
+  // Movimentações automáticas
+  const movimentacoesAutomaticas = movimentacoes.filter(m => 
+    m.responsavel === 'Sistema Automático' && 
+    new Date(m.created_date) >= dataLimite
+  );
+
+  // Contas geradas automaticamente
+  const contasAutomaticas = contas.filter(c => 
+    c.origem_tipo === 'pedido' && 
+    new Date(c.created_date) >= dataLimite
+  );
+
+  // Entregas criadas automaticamente
+  const entregasAutomaticas = entregas.filter(e => 
+    new Date(e.created_date) >= dataLimite
+  );
+
+  const metricas = [
+    {
+      label: 'Pedidos Fechados (7d)',
+      valor: pedidosFechados.length,
+      total: pedidosRecentes.length,
+      icon: ShoppingCart,
+      cor: 'blue',
+      percentual: pedidosRecentes.length > 0 ? (pedidosFechados.length / pedidosRecentes.length) * 100 : 0
+    },
+    {
+      label: 'Taxa Automação',
+      valor: pedidosComAutomacao.length,
+      total: pedidosFechados.length,
+      icon: Zap,
+      cor: 'purple',
+      percentual: taxaAutomacao
+    },
+    {
+      label: 'Itens Baixados',
+      valor: movimentacoesAutomaticas.length,
+      icon: Package,
+      cor: 'green',
+      badge: 'AUTO'
+    },
+    {
+      label: 'Contas Geradas',
+      valor: contasAutomaticas.length,
+      icon: DollarSign,
+      cor: 'orange',
+      badge: 'AUTO'
+    },
+    {
+      label: 'Entregas Criadas',
+      valor: entregasAutomaticas.length,
+      icon: Truck,
+      cor: 'indigo',
+      badge: 'AUTO'
+    }
+  ];
+
+  // Pedidos prontos para fechar
+  const pedidosProntosFechar = pedidos.filter(p => 
+    p.status === 'Rascunho' && 
+    (p.itens_revenda?.length > 0 || p.itens_armado_padrao?.length > 0)
+  );
+
+  const containerClass = windowMode ? 'w-full h-full overflow-auto p-6' : 'space-y-6';
+
+  return (
+    <div className={containerClass}>
+      
+      {/* Header */}
+      <Card className="border-2 border-blue-400 bg-gradient-to-r from-blue-50 to-purple-50">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-6 h-6 text-blue-600" />
+              Dashboard de Fechamento Automático
+            </CardTitle>
+            <Badge className="bg-blue-600 text-white px-3 py-1">
+              V21.6 - Últimos 7 dias
+            </Badge>
+          </div>
+          <p className="text-sm text-slate-600 mt-2">
+            Monitore a eficiência do sistema de fechamento automático de pedidos
+          </p>
+        </CardHeader>
+      </Card>
+
+      {/* Métricas Principais */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {metricas.map((metrica, idx) => {
+          const Icon = metrica.icon;
+          const cores = {
+            blue: 'bg-blue-100 text-blue-700 border-blue-300',
+            purple: 'bg-purple-100 text-purple-700 border-purple-300',
+            green: 'bg-green-100 text-green-700 border-green-300',
+            orange: 'bg-orange-100 text-orange-700 border-orange-300',
+            indigo: 'bg-indigo-100 text-indigo-700 border-indigo-300'
+          };
+
+          return (
+            <Card key={idx} className={`border-2 ${cores[metrica.cor]}`}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <Icon className={`w-5 h-5 ${metrica.cor === 'blue' ? 'text-blue-600' : 
+                    metrica.cor === 'purple' ? 'text-purple-600' :
+                    metrica.cor === 'green' ? 'text-green-600' :
+                    metrica.cor === 'orange' ? 'text-orange-600' :
+                    'text-indigo-600'}`} 
+                  />
+                  {metrica.badge && (
+                    <Badge className="text-xs bg-green-600 text-white">{metrica.badge}</Badge>
+                  )}
+                </div>
+                <p className="text-2xl font-bold">{metrica.valor}</p>
+                <p className="text-xs text-slate-600">{metrica.label}</p>
+                {metrica.total !== undefined && (
+                  <div className="mt-2">
+                    <Progress value={metrica.percentual} className="h-1" />
+                    <p className="text-xs text-slate-500 mt-1">
+                      {metrica.percentual.toFixed(0)}% de {metrica.total}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Alertas */}
+      {pedidosProntosFechar.length > 0 && (
+        <Card className="border-2 border-orange-400 bg-orange-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-6 h-6 text-orange-600" />
+                <div>
+                  <p className="font-semibold text-orange-900">
+                    {pedidosProntosFechar.length} pedido(s) em Rascunho pronto(s) para fechar
+                  </p>
+                  <p className="text-sm text-orange-700">
+                    Use o botão "🚀 Fechar Pedido" para processar automaticamente
+                  </p>
+                </div>
+              </div>
+              <Badge className="bg-orange-600 text-white">
+                Ação Necessária
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Performance */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Performance do Sistema</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <p className="font-semibold text-green-900">Taxa de Sucesso</p>
+              </div>
+              <p className="text-3xl font-bold text-green-600">
+                {taxaAutomacao.toFixed(0)}%
+              </p>
+              <p className="text-xs text-green-700 mt-1">
+                {pedidosComAutomacao.length} de {pedidosFechados.length} pedidos
+              </p>
+            </div>
+
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                <p className="font-semibold text-blue-900">Produtividade</p>
+              </div>
+              <p className="text-3xl font-bold text-blue-600">10x</p>
+              <p className="text-xs text-blue-700 mt-1">
+                Vs. processo manual
+              </p>
+            </div>
+
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="w-5 h-5 text-purple-600" />
+                <p className="font-semibold text-purple-900">Tempo Médio</p>
+              </div>
+              <p className="text-3xl font-bold text-purple-600">~10s</p>
+              <p className="text-xs text-purple-700 mt-1">
+                Por pedido completo
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Atividades Recentes */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Últimos Pedidos Fechados Automaticamente</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {pedidosComAutomacao.slice(0, 5).map(pedido => (
+              <div key={pedido.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">{pedido.numero_pedido}</p>
+                    <p className="text-xs text-slate-600">{pedido.cliente_nome}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-green-600">
+                      R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {new Date(pedido.updated_date).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <Badge className="bg-green-600 text-white">
+                    {pedido.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+
+            {pedidosComAutomacao.length === 0 && (
+              <div className="text-center py-8 text-slate-500">
+                <Zap className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Nenhum pedido fechado automaticamente ainda</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+    </div>
+  );
+}

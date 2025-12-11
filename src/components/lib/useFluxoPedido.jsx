@@ -627,10 +627,180 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
   });
 }
 
+/**
+ * 1️⃣3️⃣ EXECUTAR FLUXO COMPLETO DE FECHAMENTO
+ * V21.6 - FUNÇÃO PRINCIPAL DE AUTOMAÇÃO
+ */
+export async function executarFechamentoCompleto(pedido, empresaId, callbacks = {}) {
+  const {
+    onProgresso = () => {},
+    onLog = () => {},
+    onEtapaConcluida = () => {},
+    onComplete = () => {},
+    onError = () => {}
+  } = callbacks;
+
+  const resultados = {
+    estoque: { sucesso: false, itens: [], erros: [] },
+    financeiro: { sucesso: false, contas: [], erros: [] },
+    logistica: { sucesso: false, entrega: null, erros: [] },
+    status: { sucesso: false, erros: [] }
+  };
+
+  try {
+    onLog('🚀 Iniciando fechamento automático...', 'info');
+    onProgresso(0);
+
+    // ETAPA 1: Baixar Estoque
+    onLog('📦 Processando baixa de estoque...', 'info');
+    try {
+      const itens = [
+        ...(pedido.itens_revenda || []),
+        ...(pedido.itens_armado_padrao || []),
+        ...(pedido.itens_corte_dobra || [])
+      ];
+
+      for (const item of itens) {
+        if (item.produto_id) {
+          try {
+            const baixa = await baixarEstoqueItemAprovacao(item, pedido, empresaId);
+            resultados.estoque.itens.push(baixa);
+            onLog(`✅ ${item.descricao}: ${item.quantidade} ${item.unidade} baixado(s)`, 'success');
+          } catch (error) {
+            resultados.estoque.erros.push(error.message);
+            onLog(`⚠️ ${item.descricao}: ${error.message}`, 'warning');
+          }
+        }
+      }
+      
+      resultados.estoque.sucesso = true;
+      onEtapaConcluida('estoque', true);
+      onProgresso(25);
+    } catch (error) {
+      resultados.estoque.erros.push(error.message);
+      onLog(`❌ Erro na baixa de estoque: ${error.message}`, 'error');
+    }
+
+    // ETAPA 2: Gerar Financeiro
+    onLog('💰 Gerando contas a receber...', 'info');
+    try {
+      const numeroParcelas = pedido.numero_parcelas || 1;
+      const valorParcela = pedido.valor_total / numeroParcelas;
+      const dataEmissao = new Date();
+
+      for (let i = 1; i <= numeroParcelas; i++) {
+        const dataVencimento = new Date(dataEmissao);
+        const intervalo = pedido.intervalo_parcelas || 30;
+        dataVencimento.setDate(dataVencimento.getDate() + (i * intervalo));
+
+        const conta = await base44.entities.ContaReceber.create({
+          empresa_id: empresaId,
+          origem_tipo: 'pedido',
+          descricao: `Venda - Pedido ${pedido.numero_pedido} - Parcela ${i}/${numeroParcelas}`,
+          cliente: pedido.cliente_nome,
+          cliente_id: pedido.cliente_id,
+          pedido_id: pedido.id,
+          valor: valorParcela,
+          data_emissao: dataEmissao.toISOString().split('T')[0],
+          data_vencimento: dataVencimento.toISOString().split('T')[0],
+          status: 'Pendente',
+          forma_recebimento: pedido.forma_pagamento || 'À Vista',
+          numero_documento: pedido.numero_pedido,
+          numero_parcela: `${i}/${numeroParcelas}`,
+          visivel_no_portal: true
+        });
+
+        resultados.financeiro.contas.push(conta);
+        onLog(`✅ Parcela ${i}/${numeroParcelas}: R$ ${valorParcela.toFixed(2)} - Venc: ${dataVencimento.toLocaleDateString('pt-BR')}`, 'success');
+      }
+
+      resultados.financeiro.sucesso = true;
+      onEtapaConcluida('financeiro', true);
+      onProgresso(50);
+    } catch (error) {
+      resultados.financeiro.erros.push(error.message);
+      onLog(`❌ Erro ao gerar financeiro: ${error.message}`, 'error');
+    }
+
+    // ETAPA 3: Criar Logística
+    onLog('🚚 Criando registro de logística...', 'info');
+    try {
+      const tipoFrete = pedido.tipo_frete || 'CIF';
+      
+      if (tipoFrete === 'Retirada') {
+        await base44.entities.Pedido.update(pedido.id, {
+          observacoes_internas: (pedido.observacoes_internas || '') + '\n[AUTOMAÇÃO] Cliente irá retirar na loja.'
+        });
+        onLog(`✅ Pedido marcado para RETIRADA`, 'success');
+      } else {
+        const entrega = await base44.entities.Entrega.create({
+          empresa_id: empresaId,
+          pedido_id: pedido.id,
+          numero_pedido: pedido.numero_pedido,
+          cliente_id: pedido.cliente_id,
+          cliente_nome: pedido.cliente_nome,
+          endereco_entrega_completo: pedido.endereco_entrega_principal || {},
+          contato_entrega: {
+            nome: pedido.cliente_nome,
+            telefone: pedido.contatos_cliente?.[0]?.valor || ''
+          },
+          data_previsao: pedido.data_prevista_entrega || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          tipo_frete: tipoFrete,
+          valor_mercadoria: pedido.valor_total,
+          valor_frete: pedido.valor_frete || 0,
+          peso_total_kg: pedido.peso_total_kg || 0,
+          volumes: 1,
+          status: 'Aguardando Separação',
+          prioridade: pedido.prioridade || 'Normal'
+        });
+        
+        resultados.logistica.entrega = entrega;
+        onLog(`✅ Entrega criada - Previsão: ${pedido.data_prevista_entrega || 'A definir'}`, 'success');
+      }
+
+      resultados.logistica.sucesso = true;
+      onEtapaConcluida('logistica', true);
+      onProgresso(75);
+    } catch (error) {
+      resultados.logistica.erros.push(error.message);
+      onLog(`❌ Erro ao criar logística: ${error.message}`, 'error');
+    }
+
+    // ETAPA 4: Atualizar Status
+    onLog('📝 Atualizando status do pedido...', 'info');
+    try {
+      await base44.entities.Pedido.update(pedido.id, {
+        status: 'Pronto para Faturar',
+        observacoes_internas: (pedido.observacoes_internas || '') + 
+          `\n[AUTOMAÇÃO ${new Date().toLocaleString('pt-BR')}] Fluxo automático concluído com sucesso.`
+      });
+
+      resultados.status.sucesso = true;
+      onEtapaConcluida('status', true);
+      onProgresso(100);
+      onLog(`✅ Pedido atualizado para: PRONTO PARA FATURAR`, 'success');
+      onLog(`🎉 AUTOMAÇÃO CONCLUÍDA COM SUCESSO!`, 'success');
+      
+      onComplete(resultados);
+    } catch (error) {
+      resultados.status.erros.push(error.message);
+      onLog(`❌ Erro ao atualizar status: ${error.message}`, 'error');
+      onError(error);
+    }
+
+  } catch (error) {
+    onLog(`❌ Erro crítico: ${error.message}`, 'error');
+    onError(error);
+  }
+
+  return resultados;
+}
+
 export default {
   aprovarPedidoCompleto,
   faturarPedidoCompleto,
   concluirOPCompleto,
   cancelarPedidoCompleto,
-  validarLimiteCredito
+  validarLimiteCredito,
+  executarFechamentoCompleto // V21.6 NOVO
 };

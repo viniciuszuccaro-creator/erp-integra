@@ -18,6 +18,9 @@ import {
   ShoppingCart
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { executarFechamentoCompleto } from '@/components/lib/useFluxoPedido';
+import { useUser } from '@/components/lib/UserContext';
+import { useEffect } from 'react';
 
 /**
  * V21.6 - AUTOMAÇÃO COMPLETA DO FLUXO DE PEDIDO
@@ -37,6 +40,7 @@ export default function AutomacaoFluxoPedido({
   autoExecute = false,
   windowMode = false 
 }) {
+  const { user } = useUser();
   const [executando, setExecutando] = useState(false);
   const [etapaConcluida, setEtapaConcluida] = useState({
     estoque: false,
@@ -46,12 +50,32 @@ export default function AutomacaoFluxoPedido({
   });
   const [progresso, setProgresso] = useState(0);
   const [logs, setLogs] = useState([]);
+  const [permitido, setPermitido] = useState(true);
 
   const adicionarLog = (mensagem, tipo = 'info') => {
     setLogs(prev => [...prev, { mensagem, tipo, timestamp: new Date() }]);
   };
 
-  // ETAPA 1: Baixar Estoque
+  // Validar permissão (admin ou gerente)
+  useEffect(() => {
+    if (user) {
+      const temPermissao = user.role === 'admin' || user.role === 'gerente';
+      setPermitido(temPermissao);
+      
+      if (!temPermissao) {
+        adicionarLog('⚠️ Apenas administradores e gerentes podem executar fechamento automático', 'warning');
+      }
+    }
+  }, [user]);
+
+  // V21.6: Auto-executar se solicitado
+  useEffect(() => {
+    if (autoExecute && !executando && progresso === 0 && permitido) {
+      executarFluxoCompleto();
+    }
+  }, [autoExecute, permitido]);
+
+  // ETAPA 1: Baixar Estoque (DEPRECATED - usar hook centralizado)
   const baixarEstoque = async () => {
     adicionarLog('🔄 Iniciando baixa de estoque...', 'info');
     
@@ -246,38 +270,44 @@ export default function AutomacaoFluxoPedido({
     }
   };
 
-  // EXECUTAR FLUXO COMPLETO
+  // V21.6: EXECUTAR FLUXO COMPLETO COM HOOK CENTRALIZADO
   const executarFluxoCompleto = async () => {
-    if (executando) return;
+    if (executando || !permitido) {
+      if (!permitido) {
+        toast.error('❌ Sem permissão para executar fechamento automático');
+      }
+      return;
+    }
     
     setExecutando(true);
     setProgresso(0);
     setLogs([]);
     
     try {
-      adicionarLog('🚀 Iniciando automação do fluxo de pedido...', 'info');
-      
-      // Etapa 1: Baixar Estoque
-      await baixarEstoque();
-      
-      // Etapa 2: Gerar Financeiro
-      await gerarFinanceiro();
-      
-      // Etapa 3: Criar Logística
-      await criarLogistica();
-      
-      // Etapa 4: Atualizar Status
-      await atualizarStatus();
-      
-      toast.success('✅ Fluxo de pedido concluído com sucesso!');
-      adicionarLog('🎉 AUTOMAÇÃO CONCLUÍDA COM SUCESSO!', 'success');
-      
-      if (onComplete) {
-        onComplete();
-      }
+      await executarFechamentoCompleto(
+        pedido,
+        pedido.empresa_id,
+        {
+          onProgresso: (valor) => setProgresso(valor),
+          onLog: (mensagem, tipo) => adicionarLog(mensagem, tipo),
+          onEtapaConcluida: (etapa, sucesso) => {
+            setEtapaConcluida(prev => ({ ...prev, [etapa]: sucesso }));
+          },
+          onComplete: (resultados) => {
+            toast.success('✅ Fluxo de pedido concluído com sucesso!');
+            
+            if (onComplete) {
+              onComplete(resultados);
+            }
+          },
+          onError: (error) => {
+            toast.error(`❌ Erro na automação: ${error.message}`);
+          }
+        }
+      );
     } catch (error) {
-      toast.error(`❌ Erro na automação: ${error.message}`);
-      adicionarLog(`❌ FALHA NA AUTOMAÇÃO: ${error.message}`, 'error');
+      toast.error(`❌ Erro crítico: ${error.message}`);
+      adicionarLog(`❌ FALHA CRÍTICA: ${error.message}`, 'error');
     } finally {
       setExecutando(false);
     }
@@ -388,6 +418,19 @@ export default function AutomacaoFluxoPedido({
         </CardContent>
       </Card>
 
+      {/* Validação de Acesso */}
+      {!permitido && (
+        <Alert className="border-red-300 bg-red-50">
+          <AlertTriangle className="w-4 h-4 text-red-600" />
+          <AlertDescription>
+            <p className="font-semibold text-red-900">🔒 Acesso Negado</p>
+            <p className="text-sm text-red-700 mt-1">
+              Apenas <strong>Administradores</strong> e <strong>Gerentes</strong> podem executar o fechamento automático de pedidos.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Ações */}
       <Card>
         <CardContent className="p-6">
@@ -397,12 +440,17 @@ export default function AutomacaoFluxoPedido({
               <p className="text-sm text-slate-600">
                 Este processo irá: baixar estoque, gerar financeiro, criar logística e atualizar status
               </p>
+              {!permitido && (
+                <p className="text-xs text-red-600 mt-1">
+                  ⚠️ Você não tem permissão para executar esta ação
+                </p>
+              )}
             </div>
             
             <Button
               onClick={executarFluxoCompleto}
-              disabled={executando || progresso === 100}
-              className="bg-blue-600 hover:bg-blue-700 px-8"
+              disabled={executando || progresso === 100 || !permitido}
+              className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 px-8 shadow-lg"
               size="lg"
             >
               {executando ? (
@@ -418,7 +466,7 @@ export default function AutomacaoFluxoPedido({
               ) : (
                 <>
                   <ArrowRight className="w-5 h-5 mr-2" />
-                  Executar Fluxo Completo
+                  🚀 Executar Fluxo Completo
                 </>
               )}
             </Button>

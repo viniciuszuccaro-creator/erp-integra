@@ -578,6 +578,7 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
                       status: 'Rascunho'
                     });
                     toast.success('✅ Rascunho salvo!');
+                    onCancel();
                   } catch (error) {
                     toast.error('❌ Erro ao salvar');
                   } finally {
@@ -596,9 +597,9 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
                 onClick={async () => {
                   if (salvando) return;
 
-                  // Salvar pedido primeiro
                   setSalvando(true);
                   try {
+                    // 1. Salvar pedido como Aprovado
                     const pedidoSalvo = await onSubmit({
                       ...formData,
                       status: 'Aprovado'
@@ -606,31 +607,29 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
                     setSalvando(false);
 
-                    // Importar dinamicamente (para evitar problemas com hooks)
-                    const { useWindow: getWindow } = await import('@/components/lib/useWindow');
-
-                    // Fechar modal atual
+                    // 2. Fechar modal atual
                     onCancel();
 
-                    // Aguardar um frame para modal fechar
+                    // 3. Aguardar modal fechar e abrir automação
                     setTimeout(() => {
-                      // Abrir automação em nova janela
-                      window.__currentOpenWindow(
-                        AutomacaoFluxoPedido,
-                        { 
-                          pedido: pedidoSalvo || { ...formData, status: 'Aprovado' },
-                          windowMode: true,
-                          onComplete: () => {
-                            toast.success('✅ Pedido fechado com sucesso!');
+                      if (window.__currentOpenWindow) {
+                        window.__currentOpenWindow(
+                          AutomacaoFluxoPedido,
+                          { 
+                            pedido: pedidoSalvo || { ...formData, id: formData.id, status: 'Aprovado' },
+                            windowMode: true,
+                            onComplete: () => {
+                              toast.success('✅ Pedido fechado com sucesso!');
+                            }
+                          },
+                          {
+                            title: `🚀 Automação - Pedido ${formData.numero_pedido}`,
+                            width: 1200,
+                            height: 700
                           }
-                        },
-                        {
-                          title: `🚀 Automação - Pedido ${formData.numero_pedido}`,
-                          width: 1200,
-                          height: 700
-                        }
-                      );
-                    }, 100);
+                        );
+                      }
+                    }, 150);
                   } catch (error) {
                     setSalvando(false);
                     toast.error('❌ Erro ao salvar pedido');
