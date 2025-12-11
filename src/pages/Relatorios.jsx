@@ -219,9 +219,25 @@ export default function Relatorios() {
       id: 'vendas-regiao',
       titulo: 'Vendas por Região de Atendimento',
       descricao: 'Análise geográfica de desempenho comercial com metas e métricas',
-      icone: TrendingUp,
+      icone: MapPin,
       cor: 'text-indigo-600',
       component: RelatorioVendasPorRegiao
+    },
+    {
+      id: 'pedidos-origem',
+      titulo: 'Análise de Canais de Origem',
+      descricao: 'Performance, conversão e ROI por canal de venda (ERP, Site, Chatbot, etc.)',
+      icone: Activity,
+      cor: 'text-cyan-600',
+      component: DashboardCanaisOrigem
+    },
+    {
+      id: 'origem-detalhado',
+      titulo: 'Relatório Detalhado por Origem',
+      descricao: 'Lista completa de pedidos filtrados por origem com métricas',
+      icone: FileText,
+      cor: 'text-purple-600',
+      component: RelatorioPedidosPorOrigem
     }
   ];
 
