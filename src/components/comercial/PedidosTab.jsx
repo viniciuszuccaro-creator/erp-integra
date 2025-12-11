@@ -38,7 +38,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const [statusFilter, setStatusFilter] = useState("todos");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { openWindow } = useWindow();
+  const { openWindow, closeWindow } = useWindow();
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Pedido.delete(id),
@@ -249,18 +249,24 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                             variant="ghost" 
                             size="sm"
                             onClick={() => {
-                              openWindow(
+                              const windowId = openWindow(
                                 AutomacaoFluxoPedido,
                                 { 
                                   pedido,
-                                  empresaId: pedido.empresa_id, // V21.6: Passar empresa
+                                  empresaId: pedido.empresa_id,
                                   windowMode: true,
-                                  onComplete: () => {
+                                  onComplete: (resultados) => {
                                     queryClient.invalidateQueries({ queryKey: ['pedidos'] });
                                     queryClient.invalidateQueries({ queryKey: ['produtos'] });
                                     queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
                                     queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
                                     queryClient.invalidateQueries({ queryKey: ['entregas'] });
+                                    toast({ title: "✅ Pedido fechado com sucesso!" });
+                                    
+                                    // Fechar janela após sucesso
+                                    setTimeout(() => {
+                                      if (windowId) closeWindow(windowId);
+                                    }, 2500);
                                   }
                                 },
                                 {

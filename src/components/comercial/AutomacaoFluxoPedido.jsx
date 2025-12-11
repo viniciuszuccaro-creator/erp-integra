@@ -298,13 +298,14 @@ export default function AutomacaoFluxoPedido({
           },
           onComplete: (resultados) => {
             toast.success('✅ Fluxo de pedido concluído com sucesso!');
+            adicionarLog('🎉 AUTOMAÇÃO CONCLUÍDA! Fechando em 2s...', 'success');
             
-            // Aguardar 1s e fechar janela/modal
+            // Aguardar 2s e fechar janela/modal
             setTimeout(() => {
               if (onComplete) {
                 onComplete(resultados);
               }
-            }, 1000);
+            }, 2000);
           },
           onError: (error) => {
             toast.error(`❌ Erro na automação: ${error.message}`);
