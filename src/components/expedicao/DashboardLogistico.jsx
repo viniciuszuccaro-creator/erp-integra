@@ -221,6 +221,7 @@ export default function DashboardLogistico({ entregas, windowMode = false }) {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }

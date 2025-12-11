@@ -29,7 +29,7 @@ import {
 /**
  * Relatórios de Logística e Expedição
  */
-export default function RelatoriosLogistica({ empresaId }) {
+export default function RelatoriosLogistica({ empresaId, windowMode = false }) {
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
 
@@ -80,8 +80,11 @@ export default function RelatoriosLogistica({ empresaId }) {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
@@ -228,6 +231,7 @@ export default function RelatoriosLogistica({ empresaId }) {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

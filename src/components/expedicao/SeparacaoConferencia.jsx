@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -19,43 +18,49 @@ import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode com
 /**
  * Separação e Conferência de Itens (Picking) para Entregas
  */
-export default function SeparacaoConferencia({ entregaId }) {
+export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onClose, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState("scanner"); // Default to scanner tab
+  const [activeTab, setActiveTab] = useState("scanner");
+  
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
-  // Fetch the delivery details
+  // Fetch the delivery details (only if entregaId provided and no pedido)
   const { data: entrega, isLoading, isError, error } = useQuery({
     queryKey: ['entrega', entregaId],
-    queryFn: () => base44.entities.Entrega.getById(entregaId),
-    enabled: !!entregaId, // Only run if entregaId is provided
+    queryFn: async () => {
+      const entregas = await base44.entities.Entrega.list();
+      return entregas.find(e => e.id === entregaId);
+    },
+    enabled: !!entregaId && !pedido,
   });
 
   const [itens, setItens] = useState([]);
 
+  // Use pedido if provided, otherwise use entrega
+  const dadosParaSeparacao = pedido || entrega;
+
   useEffect(() => {
-    if (entrega?.itens && entrega.itens.length > 0) {
-      // Initialize items from delivery's items
-      const initialItens = entrega.itens.map(i => ({
+    if (dadosParaSeparacao?.itens_revenda && dadosParaSeparacao.itens_revenda.length > 0) {
+      const initialItens = dadosParaSeparacao.itens_revenda.map(i => ({
         ...i,
-        // Assuming 'quantidade' is the requested quantity for this item in the delivery
         quantidade_pedida: i.quantidade,
         quantidade_separada: 0,
         status_item: "aguardando",
-        divergencia: false, // Initialize with no divergence
+        divergencia: false,
         observacao_item: "",
       }));
       setItens(initialItens);
-    } else if (entregaId && !isLoading && !entrega) {
+    } else if ((entregaId || pedido) && !isLoading && !dadosParaSeparacao) {
       // If no delivery found or items array is empty
       toast({
-        title: "Nenhuma entrega encontrada",
-        description: "Não foi possível carregar os itens para a entrega especificada.",
+        title: "Nenhum dado encontrado",
+        description: "Não foi possível carregar os itens.",
         variant: "destructive",
       });
     }
-  }, [entrega, entregaId, isLoading, toast]);
+  }, [dadosParaSeparacao, entregaId, pedido, isLoading, toast]);
 
   const [checklist, setChecklist] = useState({
     conferiu_quantidade: false,
@@ -68,21 +73,20 @@ export default function SeparacaoConferencia({ entregaId }) {
 
   const criarSeparacaoMutation = useMutation({
     mutationFn: async () => {
-      if (!entrega) {
-        throw new Error("Dados da entrega não disponíveis para criar separação.");
+      if (!dadosParaSeparacao) {
+        throw new Error("Dados não disponíveis para criar separação.");
       }
 
       const temDivergencia = itens.some(i => i.divergencia);
       
       const separacao = await base44.entities.SeparacaoConferencia.create({
-        group_id: entrega.group_id,
-        empresa_id: entrega.empresa_id,
+        group_id: dadosParaSeparacao.group_id,
+        empresa_id: dadosParaSeparacao.empresa_id || empresaId,
         numero_separacao: `SEP-${Date.now()}`,
-        // Using entrega.id for pedido_id as SeparacaoConferencia likely refers to the "order" context of the delivery
-        pedido_id: entrega.id, // Assuming entrega.id can serve as a reference here
-        numero_pedido: entrega.numero_entrega, // Using entrega.numero_entrega as the reference number
-        cliente_id: entrega.cliente_id,
-        cliente_nome: entrega.cliente_nome,
+        pedido_id: dadosParaSeparacao.id,
+        numero_pedido: dadosParaSeparacao.numero_pedido || dadosParaSeparacao.numero_entrega,
+        cliente_id: dadosParaSeparacao.cliente_id,
+        cliente_nome: dadosParaSeparacao.cliente_nome,
         tipo: "conferencia",
         data_inicio: new Date().toISOString(),
         data_conclusao: new Date().toISOString(),
@@ -97,27 +101,35 @@ export default function SeparacaoConferencia({ entregaId }) {
         tempo_separacao_min: 0
       });
 
-      // Se não tem divergência, liberar para expedição
-      if (!temDivergencia) {
-        await base44.entities.Entrega.update(entrega.id, {
-          status: "Pronto para Expedição" // Update delivery status
-        });
+      // Se não tem divergência, atualizar status do pedido
+      if (!temDivergencia && dadosParaSeparacao) {
+        if (entrega?.id) {
+          await base44.entities.Entrega.update(entrega.id, {
+            status: "Pronto para Expedir"
+          });
+        }
+        
+        if (pedido?.id) {
+          await base44.entities.Pedido.update(pedido.id, {
+            status: "Pronto para Faturar"
+          });
+        }
 
         // Registrar histórico
         await base44.entities.HistoricoCliente.create({
-          group_id: entrega.group_id,
-          empresa_id: entrega.empresa_id,
-          cliente_id: entrega.cliente_id,
-          cliente_nome: entrega.cliente_nome,
+          group_id: dadosParaSeparacao.group_id,
+          empresa_id: dadosParaSeparacao.empresa_id || empresaId,
+          cliente_id: dadosParaSeparacao.cliente_id,
+          cliente_nome: dadosParaSeparacao.cliente_nome,
           modulo_origem: "Expedicao",
           referencia_id: separacao.id,
           referencia_tipo: "SeparacaoConferencia",
           tipo_evento: "Finalizacao",
           titulo_evento: "Separação e conferência concluída",
-          descricao_detalhada: `Entrega ${entrega.numero_entrega} conferida e liberada para expedição.`,
+          descricao_detalhada: `Separação conferida e liberada para expedição.`,
           usuario_responsavel: "Sistema",
           data_evento: new Date().toISOString(),
-          status_relacionado: "Pronto para Expedição"
+          status_relacionado: "Pronto para Expedir"
         });
       }
 
@@ -232,23 +244,26 @@ export default function SeparacaoConferencia({ entregaId }) {
     return <p className="text-red-500">Erro ao carregar entrega: {error?.message}</p>;
   }
 
-  if (!entrega) {
-    return <p className="text-gray-500">Nenhuma entrega encontrada para o ID fornecido.</p>;
+  if (!dadosParaSeparacao) {
+    return <p className="text-gray-500">Nenhum dado encontrado.</p>;
   }
 
+  const containerClass2 = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass2}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* Info Pedido (now Entrega) */}
       <Card className="border-2 border-blue-200 bg-blue-50">
         <CardContent className="p-5">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-slate-600">Entrega</p>
-              <p className="font-bold text-lg">{entrega.numero_entrega}</p>
+              <p className="text-slate-600">Referência</p>
+              <p className="font-bold text-lg">{dadosParaSeparacao.numero_pedido || dadosParaSeparacao.numero_entrega}</p>
             </div>
             <div>
               <p className="text-slate-600">Cliente</p>
-              <p className="font-bold text-lg">{entrega.cliente_nome}</p>
+              <p className="font-bold text-lg">{dadosParaSeparacao.cliente_nome}</p>
             </div>
           </div>
         </CardContent>
@@ -270,9 +285,9 @@ export default function SeparacaoConferencia({ entregaId }) {
         <TabsContent value="scanner">
           <ScannerQRCode
             entregaId={entregaId}
-            itensEsperados={entrega?.itens || []} // Pass expected items from the delivery
+            itensEsperados={dadosParaSeparacao?.itens_revenda || []}
             modo="separacao"
-            onItemEscaneado={handleItemEscaneado} // Callback to update state
+            onItemEscaneado={handleItemEscaneado}
           />
         </TabsContent>
 
@@ -460,6 +475,7 @@ export default function SeparacaoConferencia({ entregaId }) {
           </form>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

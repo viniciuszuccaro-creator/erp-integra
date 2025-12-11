@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -64,7 +63,7 @@ function otimizarRotaNN(pontos, origem) {
   return rotaOtimizada;
 }
 
-export default function RoteirizacaoMapa({ entregas, motoristas, veiculos }) {
+export default function RoteirizacaoMapa({ entregas, motoristas, veiculos, windowMode = false }) {
   const [entregasSelecionadas, setEntregasSelecionadas] = useState([]);
   const [rotaOtimizada, setRotaOtimizada] = useState(null);
   const [motoristaSelecionado, setMotoristaSelecionado] = useState("");
@@ -251,8 +250,11 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos }) {
     e.status === 'Pronto para Expedir'
   );
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <Card className="border-2 border-blue-200">
         <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b">
           <CardTitle className="flex items-center gap-2">
@@ -479,6 +481,7 @@ export default function RoteirizacaoMapa({ entregas, motoristas, veiculos }) {
             )}
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

@@ -17,6 +17,7 @@ import { FileText, Truck, CheckCircle, MapPin } from "lucide-react";
  * Formulário para Geração de Romaneio
  */
 export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = false }) {
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-hidden" : "";
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -135,7 +136,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
   const entregasSelecionadas = entregas.filter(e => formData.entregas_selecionadas.includes(e.id));
 
   const content = (
-    <div className={windowMode ? "w-full h-full flex flex-col bg-white" : ""}>
+    <div className={containerClass}>
       {windowMode && (
         <div className="flex-shrink-0 p-6 border-b">
           <h2 className="text-2xl font-bold flex items-center gap-2">
