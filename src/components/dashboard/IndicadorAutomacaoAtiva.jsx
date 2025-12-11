@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Zap } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 /**
  * V21.7 - INDICADOR DE AUTOMAÇÃO ATIVA
@@ -47,7 +47,7 @@ export default function IndicadorAutomacaoAtiva() {
       >
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-white animate-ping" />
-          <Activity className="w-4 h-4" />
+          <Zap className="w-4 h-4" />
           <span className="font-semibold">
             {modoDeus ? '🚀 MODO DEUS ATIVO' : '🤖 Automação Ativa'}
           </span>
