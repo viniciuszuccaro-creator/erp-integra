@@ -10,10 +10,11 @@ import { ChevronRight, MapPin, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUser } from '@/components/lib/UserContext';
 import WidgetPerfilRiscoCliente from '../WidgetPerfilRiscoCliente';
+import SugestorCanalInteligente from '../SugestorCanalInteligente';
 
 /**
  * Aba 1: Identificação do Pedido e Seleção de Cliente
- * V21.6 - Com detecção automática de origem e bloqueio
+ * V21.6 - Com detecção automática de origem, bloqueio e IA de sugestão
  */
 export default function WizardEtapa1Cliente({ formData, setFormData, clientes = [], onNext, bloquearOrigemEdicao = false }) {
   const { user } = useUser();
@@ -318,6 +319,13 @@ export default function WizardEtapa1Cliente({ formData, setFormData, clientes = 
         <WidgetPerfilRiscoCliente
           clienteId={formData.cliente_id}
           valorPedido={formData.valor_total || 0}
+        />
+      )}
+
+      {/* NOVO V21.6: IA Sugestor de Canal */}
+      {formData.cliente_id && (
+        <SugestorCanalInteligente
+          clienteId={formData.cliente_id}
         />
       )}
 

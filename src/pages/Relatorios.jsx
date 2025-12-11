@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import RelatorioPedidosPorOrigem from "@/components/relatorios/RelatorioPedidosPorOrigem";
+import DashboardCanaisOrigem from "@/components/cadastros/DashboardCanaisOrigem";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ComposedChart } from 'recharts';
 import { FileText, Download, Calendar, Filter, Eye, BarChart3, PieChart as PieChartIcon, TrendingUp, DollarSign, Users, Package, AlertCircle, Send, Mail, Activity, TrendingDown, MapPin } from "lucide-react";
