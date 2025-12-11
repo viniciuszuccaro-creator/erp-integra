@@ -8,22 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import BadgeOrigemPedido from "./BadgeOrigemPedido";
 import GerenciadorCicloPedido from "./GerenciadorCicloPedido";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import BotaoAutomacaoRapida from './BotaoAutomacaoRapida';
+import { Zap, Plus, Edit2, FileText, Truck, CheckCircle2, Factory, Eye, Trash2, ShieldCheck, AlertCircle, Clock, XCircle, Printer } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { 
-  Plus, 
-  Edit2, 
-  FileText, 
-  Truck, 
-  CheckCircle2, 
-  Factory, 
-  Eye, 
-  Trash2,
-  ShieldCheck,
-  AlertCircle,
-  Clock,
-  XCircle,
-  Printer
-} from "lucide-react";
+
 import { ImprimirPedido } from "@/components/lib/impressao";
 import { useToast } from "@/components/ui/use-toast";
 import StatusBadge from "../StatusBadge";
@@ -269,6 +257,8 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           <CheckCircle2 className="w-3 h-3 mr-1" />
                           <span className="text-xs">Ciclo</span>
                         </Button>
+
+                        <BotaoAutomacaoRapida pedido={pedido} variant="ghost" />
                         
                         <Button 
                           variant="ghost" 

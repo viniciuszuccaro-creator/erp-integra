@@ -266,6 +266,94 @@ export async function gatilhoRetirada(pedidoId, dadosRecebedor) {
   }
 }
 
+// 🔥 GATILHO 7: AUTO-FATURAMENTO (NF-e Simulada)
+export async function gatilhoAutoFaturamento(pedidoId) {
+  try {
+    const [pedido] = await base44.entities.Pedido.filter({ id: pedidoId });
+    if (!pedido) return;
+
+    // Criar NF-e simulada/homologação
+    const nfe = await base44.entities.NotaFiscal.create({
+      numero: `AUTO-${Date.now()}`,
+      serie: '1',
+      tipo: 'NF-e (Saída)',
+      natureza_operacao: pedido.natureza_operacao || 'Venda de mercadoria',
+      cliente_fornecedor: pedido.cliente_nome,
+      cliente_fornecedor_id: pedido.cliente_id,
+      cliente_cpf_cnpj: pedido.cliente_cpf_cnpj,
+      pedido_id: pedidoId,
+      numero_pedido: pedido.numero_pedido,
+      empresa_faturamento_id: pedido.empresa_id,
+      data_emissao: new Date().toISOString().split('T')[0],
+      data_saida: new Date().toISOString().split('T')[0],
+      valor_produtos: pedido.valor_produtos || 0,
+      valor_desconto: pedido.desconto_geral_pedido_valor || 0,
+      valor_frete: pedido.valor_frete || 0,
+      valor_total: pedido.valor_total || 0,
+      ambiente: 'Homologação',
+      status: 'Autorizada',
+      chave_acesso: `AUTO${Date.now()}${Math.random().toString(36).substring(7)}`,
+      itens: (pedido.itens_revenda || []).map((item, idx) => ({
+        numero_item: idx + 1,
+        produto_id: item.produto_id,
+        codigo_produto: item.codigo_sku,
+        descricao: item.descricao,
+        ncm: '7308.90.90',
+        cfop: pedido.cfop_pedido || '5102',
+        unidade: item.unidade,
+        quantidade: item.quantidade,
+        valor_unitario: item.preco_unitario,
+        valor_total: item.valor_item
+      }))
+    });
+
+    // 🔥 GATILHO AUTOMÁTICO DE FATURAMENTO
+    await gatilhoFaturamento(pedidoId, nfe.id);
+
+    await registrarAuditoria(pedido, 'Pronto para Faturar', 'Faturado', '🤖 NF-e gerada automaticamente');
+
+    toast.success('✅ NF-e gerada! Financeiro criado! Movido para "Em Expedição"');
+    
+    return nfe.id;
+  } catch (error) {
+    toast.error('❌ Erro no auto-faturamento');
+    return null;
+  }
+}
+
+// 🔥 GATILHO 8: AUTO-EXPEDIÇÃO (Cria entrega e avança)
+export async function gatilhoAutoExpedicao(pedidoId) {
+  try {
+    const [pedido] = await base44.entities.Pedido.filter({ id: pedidoId });
+    if (!pedido) return;
+
+    await gatilhoExpedicao(pedidoId);
+
+    // 🚀 SE FOR RETIRADA, VAI DIRETO PARA "PRONTO PARA RETIRADA"
+    if (pedido.tipo_frete === 'Retirada') {
+      await base44.entities.Pedido.update(pedidoId, {
+        status: 'Pronto para Retirada'
+      });
+      
+      await registrarAuditoria(pedido, 'Em Expedição', 'Pronto para Retirada', '🤖 Auto: Pedido retirada pronto');
+      toast.success('📦 Pedido pronto para retirada!');
+    } else {
+      // SE FOR ENTREGA, CRIA A ENTREGA E VAI PARA "EM TRÂNSITO" SIMULADO
+      await base44.entities.Pedido.update(pedidoId, {
+        status: 'Em Trânsito'
+      });
+      
+      await registrarAuditoria(pedido, 'Em Expedição', 'Em Trânsito', '🤖 Auto: Veículo saiu automaticamente');
+      toast.success('🚚 Pedido em trânsito automaticamente!');
+    }
+
+    return true;
+  } catch (error) {
+    toast.error('❌ Erro na auto-expedição');
+    return false;
+  }
+}
+
 // 🔥 ORQUESTRADOR INTELIGENTE - Decide próxima etapa automaticamente
 export async function orquestrarProximaEtapa(pedidoId) {
   try {
@@ -277,51 +365,46 @@ export async function orquestrarProximaEtapa(pedidoId) {
 
     switch (pedido.status) {
       case 'Rascunho':
-        // Se não tem desconto ou desconto aprovado → aprovar automaticamente
         if (pedido.desconto_geral_pedido_percentual === 0 || pedido.status_aprovacao === 'aprovado') {
-          proximaEtapa = 'Aprovado';
+          proximaEtapa = '🤖 Auto: Aprovar → Baixar Estoque';
           acao = async () => await gatilhoAprovacao(pedidoId);
         } else {
-          proximaEtapa = 'Aguardando Aprovação';
+          proximaEtapa = '⏳ Aguardando Aprovação de Desconto';
         }
         break;
 
       case 'Aguardando Aprovação':
-        // Aguarda aprovação manual da gerência
-        proximaEtapa = 'Aguardando gerência...';
+        proximaEtapa = '⏳ Aguardando gerência aprovar desconto';
         break;
 
       case 'Aprovado':
-        // Automático: já vai para Pronto para Faturar no gatilhoAprovacao
-        proximaEtapa = 'Já automatizado';
+        proximaEtapa = '✅ Já avançado para Pronto p/ Faturar';
         break;
 
       case 'Pronto para Faturar':
-        // Aguarda emissão de NF-e (manual ou integrada)
-        proximaEtapa = 'Aguardando NF-e...';
+        proximaEtapa = '🤖 Auto: Emitir NF-e → Gerar Financeiro';
+        acao = async () => await gatilhoAutoFaturamento(pedidoId);
         break;
 
       case 'Faturado':
-        // Automático: cria entrega e vai para expedição
-        proximaEtapa = 'Em Expedição';
-        acao = async () => {
-          await gatilhoExpedicao(pedidoId);
-          await base44.entities.Pedido.update(pedidoId, { status: 'Em Expedição' });
-        };
+        proximaEtapa = '✅ Já avançado para Em Expedição';
         break;
 
       case 'Em Expedição':
-        // Aguarda saída do veículo
-        proximaEtapa = 'Aguardando saída...';
+        proximaEtapa = '🤖 Auto: Criar Entrega → Em Trânsito';
+        acao = async () => await gatilhoAutoExpedicao(pedidoId);
         break;
 
       case 'Em Trânsito':
-        // Aguarda confirmação de entrega
-        proximaEtapa = 'Aguardando entrega...';
+        proximaEtapa = '⏳ Aguardando confirmação de entrega';
+        break;
+
+      case 'Pronto para Retirada':
+        proximaEtapa = '⏳ Aguardando cliente retirar';
         break;
 
       case 'Entregue':
-        proximaEtapa = 'Ciclo finalizado';
+        proximaEtapa = '🎉 Ciclo 100% Finalizado';
         break;
 
       default:
@@ -420,21 +503,83 @@ export async function validarTransicao(pedidoId, statusDestino) {
   }
 }
 
-// 🔥 EXECUÇÃO AUTOMÁTICA COMPLETA
-export async function executarCicloAutomatico(pedidoId) {
-  try {
-    const resultado = await orquestrarProximaEtapa(pedidoId);
-    
-    if (resultado?.acao) {
+// 🔥 EXECUÇÃO AUTOMÁTICA COMPLETA DO CICLO
+export async function executarCicloAutomatico(pedidoId, maxIteracoes = 10) {
+  let iteracao = 0;
+  
+  while (iteracao < maxIteracoes) {
+    try {
+      const resultado = await orquestrarProximaEtapa(pedidoId);
+      
+      if (!resultado?.acao) {
+        console.log('Ciclo automático finalizado:', resultado?.proximaEtapa);
+        break;
+      }
+
+      console.log(`🤖 Executando automação ${iteracao + 1}:`, resultado.proximaEtapa);
       await resultado.acao();
       
-      // Tentar avançar mais uma etapa recursivamente
-      setTimeout(() => executarCicloAutomatico(pedidoId), 1000);
+      // Aguardar 1 segundo entre transições
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      iteracao++;
+    } catch (error) {
+      console.error('Erro no ciclo automático:', error);
+      break;
     }
-    
-    return resultado;
+  }
+  
+  return iteracao;
+}
+
+// 🚀 MEGA AUTOMAÇÃO: RASCUNHO → ENTREGUE (TUDO DE UMA VEZ)
+export async function executarCicloCompletoIntegral(pedidoId) {
+  try {
+    const [pedido] = await base44.entities.Pedido.filter({ id: pedidoId });
+    if (!pedido) return { sucesso: false, erro: 'Pedido não encontrado' };
+
+    const etapasExecutadas = [];
+    let statusAtual = pedido.status;
+
+    // ETAPA 1: APROVAR (se necessário)
+    if (statusAtual === 'Rascunho' || statusAtual === 'Aguardando Aprovação') {
+      const validacao = await validarTransicao(pedidoId, 'Aprovado');
+      if (!validacao.valido) {
+        return { sucesso: false, erro: validacao.motivo };
+      }
+
+      await gatilhoAprovacao(pedidoId);
+      etapasExecutadas.push('Aprovado → Estoque Baixado → Pronto p/ Faturar');
+      statusAtual = 'Pronto para Faturar';
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    // ETAPA 2: FATURAR (automático)
+    if (statusAtual === 'Pronto para Faturar') {
+      await gatilhoAutoFaturamento(pedidoId);
+      etapasExecutadas.push('NF-e Gerada → Financeiro Criado → Em Expedição');
+      statusAtual = 'Em Expedição';
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    // ETAPA 3: EXPEDIR (automático)
+    if (statusAtual === 'Em Expedição' || statusAtual === 'Faturado') {
+      await gatilhoAutoExpedicao(pedidoId);
+      etapasExecutadas.push('Entrega Criada → Em Trânsito/Pronto p/ Retirada');
+      statusAtual = pedido.tipo_frete === 'Retirada' ? 'Pronto para Retirada' : 'Em Trânsito';
+    }
+
+    toast.success(`🎉 Ciclo automático executado! ${etapasExecutadas.length} etapas concluídas`);
+
+    return { 
+      sucesso: true, 
+      etapasExecutadas,
+      statusFinal: statusAtual
+    };
   } catch (error) {
-    console.error('Erro no ciclo automático:', error);
-    return null;
+    return { 
+      sucesso: false, 
+      erro: error.message 
+    };
   }
 }

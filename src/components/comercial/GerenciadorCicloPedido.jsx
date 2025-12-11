@@ -28,6 +28,7 @@ import {
   gatilhoExpedicao,
   orquestrarProximaEtapa,
   executarCicloAutomatico,
+  executarCicloCompletoIntegral,
   validarTransicao
 } from './AutomacaoCicloPedido';
 import {
@@ -264,12 +265,29 @@ export default function GerenciadorCicloPedido({
     }
   };
 
-  // 🤖 EXECUTAR CICLO COMPLETO AUTOMÁTICO
+  // 🤖 EXECUTAR CICLO COMPLETO AUTOMÁTICO (PRÓXIMA ETAPA)
   const executarCicloCompleto = async () => {
     setProcessando(true);
-    toast.info('🤖 Iniciando ciclo automático...');
+    toast.info('🤖 Iniciando automação...');
     
     await executarCicloAutomatico(pedido.id);
+    
+    if (onStatusChanged) onStatusChanged();
+    setProcessando(false);
+  };
+
+  // 🚀 MEGA AUTOMAÇÃO: EXECUTAR TUDO ATÉ O FIM
+  const executarCicloIntegralCompleto = async () => {
+    setProcessando(true);
+    toast.info('🚀 Executando ciclo COMPLETO automático...');
+    
+    const resultado = await executarCicloCompletoIntegral(pedido.id);
+    
+    if (resultado.sucesso) {
+      toast.success(`🎉 Ciclo completo! Etapas: ${resultado.etapasExecutadas.join(' → ')}`);
+    } else {
+      toast.error(`❌ ${resultado.erro}`);
+    }
     
     if (onStatusChanged) onStatusChanged();
     setProcessando(false);
@@ -407,24 +425,38 @@ export default function GerenciadorCicloPedido({
             <Alert className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-300 mb-4">
               <AlertDescription>
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0 animate-pulse">
                     <Activity className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-blue-900 mb-1">🤖 Próxima Ação Automática:</p>
+                    <p className="font-bold text-blue-900 mb-1">🤖 Automação Disponível:</p>
                     <p className="text-sm text-blue-800">{proximaAcaoAutomatica.proximaEtapa}</p>
                     
-                    {proximaAcaoAutomatica.acao && (
-                      <Button
-                        onClick={executarCicloCompleto}
-                        disabled={processando}
-                        className="mt-3 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
-                        size="sm"
-                      >
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                        🚀 Executar Automação Agora
-                      </Button>
-                    )}
+                    <div className="flex gap-2 mt-3">
+                      {proximaAcaoAutomatica.acao && (
+                        <Button
+                          onClick={executarCicloCompleto}
+                          disabled={processando}
+                          className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                          size="sm"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          ▶️ Próxima Etapa
+                        </Button>
+                      )}
+                      
+                      {pedido.status !== 'Entregue' && pedido.status !== 'Cancelado' && (
+                        <Button
+                          onClick={executarCicloIntegralCompleto}
+                          disabled={processando}
+                          className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
+                          size="sm"
+                        >
+                          <Zap className="w-4 h-4 mr-2" />
+                          🚀 CICLO COMPLETO (Tudo Automático)
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </AlertDescription>

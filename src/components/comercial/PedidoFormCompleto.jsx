@@ -18,11 +18,13 @@ import {
   AlertTriangle,
   ChevronRight,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
+import { executarCicloCompletoIntegral } from './AutomacaoCicloPedido';
 
 // Componentes das Etapas
 import WizardEtapa1Cliente from './wizard/WizardEtapa1Cliente';
@@ -591,14 +593,42 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
             </Button>
             
             {!pedido && (
-              <Button
-                onClick={handleSubmit}
-                className="bg-blue-600 hover:bg-blue-700"
-                disabled={salvando || !validacoes.identificacao || !validacoes.itens}
-              >
-                <Check className="w-4 h-4 mr-2" />
-                {salvando ? 'Salvando...' : 'Criar Pedido como Rascunho'}
-              </Button>
+              <>
+                <Button
+                  onClick={handleSubmit}
+                  variant="outline"
+                  disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  {salvando ? 'Salvando...' : 'Criar como Rascunho'}
+                </Button>
+
+                <Button
+                  onClick={async () => {
+                    if (!validacoes.identificacao || !validacoes.itens || salvando) return;
+                    setSalvando(true);
+                    try {
+                      const novoPedido = await onSubmit({ ...formData, status: 'Rascunho' });
+
+                      if (novoPedido?.id) {
+                        toast.info('🤖 Executando ciclo automático...');
+                        await executarCicloCompletoIntegral(novoPedido.id);
+                        toast.success('🎉 Pedido criado e automatizado até o máximo possível!');
+                        onCancel();
+                      }
+                    } catch (error) {
+                      toast.error('❌ Erro na automação');
+                    } finally {
+                      setSalvando(false);
+                    }
+                  }}
+                  className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                  disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  {salvando ? 'Criando...' : '🚀 Criar e Automatizar Tudo'}
+                </Button>
+              </>
             )}
             
             {pedido && (

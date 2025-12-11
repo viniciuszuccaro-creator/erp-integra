@@ -18,7 +18,7 @@ import {
   PauseCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { executarCicloAutomatico } from './AutomacaoCicloPedido';
+import { executarCicloAutomatico, executarCicloCompletoIntegral } from './AutomacaoCicloPedido';
 
 /**
  * V21.7 - MONITOR DE AUTOMAÇÃO DE PEDIDOS
@@ -65,14 +65,28 @@ export default function MonitorAutomacaoPedidos() {
     ? ((pedidos.filter(p => ['Pronto para Faturar', 'Em Expedição', 'Entregue'].includes(p.status)).length / pedidos.length) * 100)
     : 0;
 
-  // 🤖 Executar automação em lote
+  // 🤖 Executar automação em lote (MEGA)
   const executarAutomacaoEmLote = async () => {
     setProcessando(true);
     
+    let totalEtapas = 0;
+    const resultados = [];
+
     for (const pedido of pedidosProntosParaAutomacao.slice(0, 5)) {
       try {
-        await executarCicloAutomatico(pedido.id);
-        await new Promise(resolve => setTimeout(resolve, 500)); // Delay entre pedidos
+        toast.info(`🤖 Processando: ${pedido.numero_pedido}`);
+        const resultado = await executarCicloCompletoIntegral(pedido.id);
+        
+        if (resultado.sucesso) {
+          totalEtapas += resultado.etapasExecutadas.length;
+          resultados.push({
+            pedido: pedido.numero_pedido,
+            etapas: resultado.etapasExecutadas.length,
+            status: resultado.statusFinal
+          });
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Delay entre pedidos
       } catch (error) {
         console.error(`Erro ao processar pedido ${pedido.id}:`, error);
       }
@@ -80,7 +94,10 @@ export default function MonitorAutomacaoPedidos() {
 
     queryClient.invalidateQueries({ queryKey: ['pedidos'] });
     queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
-    toast.success('✅ Automação em lote concluída!');
+    queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+    queryClient.invalidateQueries({ queryKey: ['entregas'] });
+    
+    toast.success(`🎉 Automação concluída! ${totalEtapas} etapas executadas em ${resultados.length} pedido(s)`);
     setProcessando(false);
   };
 
@@ -210,29 +227,52 @@ export default function MonitorAutomacaoPedidos() {
       {pedidosProntosParaAutomacao.length > 0 && (
         <Card className="border-2 border-orange-300 bg-orange-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-900">
-              <Clock className="w-5 h-5" />
-              🔄 Fila de Automação ({pedidosProntosParaAutomacao.length} pedidos)
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-orange-900">
+                <Clock className="w-5 h-5" />
+                🔄 Fila de Automação ({pedidosProntosParaAutomacao.length} pedidos)
+              </CardTitle>
+              
+              {pedidosProntosParaAutomacao.length > 0 && (
+                <Badge className="bg-gradient-to-r from-orange-600 to-red-600 text-white animate-pulse">
+                  ⚡ Pronto para processar
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
             {pedidosProntosParaAutomacao.slice(0, 10).map(pedido => (
-              <div key={pedido.id} className="bg-white rounded-lg p-3 flex items-center justify-between">
-                <div>
+              <div key={pedido.id} className="bg-white rounded-lg p-3 flex items-center justify-between hover:shadow-md transition-shadow">
+                <div className="flex-1">
                   <p className="font-semibold">{pedido.numero_pedido}</p>
                   <p className="text-sm text-slate-600">{pedido.cliente_nome}</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Valor: R$ {(pedido.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <Badge className={
                     pedido.status === 'Aprovado' ? 'bg-green-500' :
-                    pedido.status === 'Faturado' ? 'bg-blue-500' :
+                    pedido.status === 'Pronto para Faturar' ? 'bg-blue-500' :
+                    pedido.status === 'Faturado' ? 'bg-purple-500' :
                     'bg-slate-500'
                   }>
                     {pedido.status}
                   </Badge>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                    🤖 Pronto
-                  </Badge>
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      setProcessando(true);
+                      await executarCicloCompletoIntegral(pedido.id);
+                      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                      setProcessando(false);
+                    }}
+                    disabled={processando}
+                    className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                  >
+                    <Zap className="w-3 h-3 mr-1" />
+                    🚀 Automatizar
+                  </Button>
                 </div>
               </div>
             ))}
