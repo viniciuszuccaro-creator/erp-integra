@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
+import StatusFechamento100V21_6 from "@/components/sistema/STATUS_FECHAMENTO_100_V21_6";
 import CertificadoProducaoV21_6 from "@/components/sistema/CERTIFICADO_PRODUCAO_V21_6";
-import { Shield, FileText, Settings, Zap, Sparkles, Wrench } from "lucide-react";
+import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
@@ -41,6 +42,14 @@ export default function ConfiguracoesSistema() {
           </TabsTrigger>
 
           <TabsTrigger
+            value="status-fechamento"
+            className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
+          >
+            <Rocket className="w-4 h-4 mr-2" />
+            🚀 Status Fechamento V21.6
+          </TabsTrigger>
+
+          <TabsTrigger
             value="diagnostico"
             className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white"
           >
@@ -76,6 +85,10 @@ export default function ConfiguracoesSistema() {
             <CertificadoProducaoV21_6 />
             <StatusOrigemPedido100 />
           </div>
+        </TabsContent>
+
+        <TabsContent value="status-fechamento">
+          <StatusFechamento100V21_6 windowMode={false} />
         </TabsContent>
 
         <TabsContent value="diagnostico">
