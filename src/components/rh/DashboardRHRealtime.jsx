@@ -20,7 +20,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
  * Consolidação e melhoria do módulo de RH
  */
 
-export default function DashboardRHRealtime({ empresaId }) {
+export default function DashboardRHRealtime({ empresaId, windowMode = false }) {
   const [metricas, setMetricas] = useState({
     colaboradoresAtivos: 0,
     presentesHoje: 0,
@@ -95,8 +95,11 @@ export default function DashboardRHRealtime({ empresaId }) {
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'];
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6";
+
   return (
-    <div className="w-full h-full space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         <Card>
@@ -270,6 +273,7 @@ export default function DashboardRHRealtime({ empresaId }) {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

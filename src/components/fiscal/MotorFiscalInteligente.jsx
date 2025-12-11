@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Zap, CheckCircle, AlertTriangle, FileText, Shield } from "lucide-react";
 import { toast } from "sonner";
 
-export default function MotorFiscalInteligente() {
+export default function MotorFiscalInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
   const [pedidoValidacao, setPedidoValidacao] = useState(null);
 
@@ -258,6 +258,7 @@ Retorne validação e alertas.`,
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

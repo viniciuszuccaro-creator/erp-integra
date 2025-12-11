@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, TrendingDown, TrendingUp, Users, Shield } from "lucide-react";
 
-export default function MonitoramentoRHInteligente() {
+export default function MonitoramentoRHInteligente({ windowMode = false }) {
   const { data: monitoramentos = [], isLoading } = useQuery({
     queryKey: ["monitoramento-rh"],
     queryFn: () => base44.entities.MonitoramentoRH.list(),
@@ -27,8 +27,11 @@ export default function MonitoramentoRHInteligente() {
 
   if (isLoading) return <div className="p-6">Carregando monitoramento...</div>;
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Monitoramento RH Inteligente</h2>
         <p className="text-sm text-slate-600 mt-1">IA detecta riscos e padrões comportamentais</p>
@@ -165,6 +168,7 @@ export default function MonitoramentoRHInteligente() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

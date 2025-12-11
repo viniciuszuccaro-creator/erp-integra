@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +11,7 @@ import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 
 import ExportMenu from "@/components/ui/ExportMenu";
 
-export default function DREComparativo({ empresaId }) {
+export default function DREComparativo({ empresaId, windowMode = false }) {
   const [periodo, setPeriodo] = useState("3"); // 3, 6, 12 meses
   const [tipoGrafico, setTipoGrafico] = useState("linha");
 
@@ -111,8 +110,11 @@ export default function DREComparativo({ empresaId }) {
   const ultimoMes = dadosComparativos[dadosComparativos.length - 1] || {};
   const penultimoMes = dadosComparativos[dadosComparativos.length - 2] || {};
 
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">DRE Comparativo Multi-Períodos</h2>
@@ -325,6 +327,7 @@ export default function DREComparativo({ empresaId }) {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

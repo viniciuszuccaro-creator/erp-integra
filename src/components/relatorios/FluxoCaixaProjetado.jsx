@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +10,7 @@ import { AlertTriangle, TrendingDown, TrendingUp, Download, Calendar } from "luc
 import { format, addMonths, startOfMonth, endOfMonth, isBefore, isAfter, isWithinInterval } from "date-fns";
 import ExportMenu from "@/components/ui/ExportMenu"; // Added new import
 
-export default function FluxoCaixaProjetado() { // Removed { empresaId } prop
+export default function FluxoCaixaProjetado({ windowMode = false }) {
   const [mesesProjecao, setMesesProjecao] = useState(6);
 
   // Note: Since empresaId is no longer a prop, the filtering logic
@@ -102,10 +101,11 @@ export default function FluxoCaixaProjetado() { // Removed { empresaId } prop
   const maiorEntrada = Math.max(...projecao.map(m => m.receitaPrevista));
   const maiorSaida = Math.max(...projecao.map(m => m.despesaPrevista));
 
-  // Removed exportarExcel function as ExportMenu handles it
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Fluxo de Caixa Projetado (6 meses)</h2> {/* Updated title */}
@@ -311,6 +311,7 @@ export default function FluxoCaixaProjetado() { // Removed { empresaId } prop
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }
