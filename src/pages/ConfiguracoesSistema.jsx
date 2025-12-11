@@ -5,6 +5,7 @@ import StatusFechamento100V21_6 from "@/components/sistema/STATUS_FECHAMENTO_100
 import CertificadoProducaoV21_6 from "@/components/sistema/CERTIFICADO_PRODUCAO_V21_6";
 import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
 import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_FINAL";
+import ValidacaoFinalTotalV21_6 from "@/components/sistema/VALIDACAO_FINAL_TOTAL_V21_6";
 import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
@@ -119,6 +120,8 @@ export default function ConfiguracoesSistema() {
               </CardContent>
             </Card>
 
+            <ValidacaoFinalTotalV21_6 windowMode={false} empresaId={empresaAtual?.id} />
+            
             <ChecklistFinalV21_6 />
             
             <Sistema100CompletoFinal windowMode={false} empresaId={empresaAtual?.id} />
