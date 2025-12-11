@@ -25,6 +25,7 @@ import Cadastros from './pages/Cadastros';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
 import HubAtendimento from './pages/HubAtendimento';
 import DashboardFechamentoPedidos from './pages/DashboardFechamentoPedidos';
+import statussistemav216 from './pages/StatusSistemaV21_6';
 import __Layout from './Layout.jsx';
 
 
@@ -56,6 +57,7 @@ export const PAGES = {
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
     "HubAtendimento": HubAtendimento,
     "DashboardFechamentoPedidos": DashboardFechamentoPedidos,
+    "StatusSistemaV21_6": statussistemav216,
 }
 
 export const pagesConfig = {

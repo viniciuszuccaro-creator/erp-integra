@@ -6,6 +6,7 @@ import CertificadoProducaoV21_6 from "@/components/sistema/CERTIFICADO_PRODUCAO_
 import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
 import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_FINAL";
 import ValidacaoFinalTotalV21_6 from "@/components/sistema/VALIDACAO_FINAL_TOTAL_V21_6";
+import MasterDashboardV21_6 from "@/components/sistema/MASTER_DASHBOARD_V21_6";
 import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
@@ -95,27 +96,31 @@ export default function ConfiguracoesSistema() {
 
         <TabsContent value="status-fechamento">
           <div className="space-y-4">
-            <Card className="border-blue-200 bg-blue-50">
+            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
               <CardContent className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-blue-900">🚀 Dashboard Completo de Fechamento</p>
+                  <p className="font-semibold text-blue-900 flex items-center gap-2">
+                    <Rocket className="w-5 h-5" />
+                    🚀 Master Dashboard V21.6
+                  </p>
                   <p className="text-sm text-blue-700">
-                    Visualize métricas detalhadas, performance e histórico
+                    Central de comando unificada • Métricas + Validação + Ações Rápidas
                   </p>
                 </div>
                 <Button
                   onClick={() => openWindow(
-                    DashboardFechamentoPedidos,
+                    MasterDashboardV21_6,
                     { windowMode: true, empresaId: empresaAtual?.id },
                     {
-                      title: '📊 Dashboard Fechamento Automático',
-                      width: 1200,
-                      height: 700
+                      title: '🏆 Master Dashboard V21.6',
+                      width: 1400,
+                      height: 800
                     }
                   )}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
-                  Abrir Dashboard
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Abrir Master Dashboard
                 </Button>
               </CardContent>
             </Card>

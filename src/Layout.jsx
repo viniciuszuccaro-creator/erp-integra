@@ -21,7 +21,8 @@ import {
   BookOpen,
   Search,
   MessageCircle,
-  Zap
+  Zap,
+  CheckCircle2
 } from "lucide-react";
 import {
   Sidebar,
@@ -54,6 +55,7 @@ const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
   { title: "Dashboard Corporativo", url: createPageUrl("DashboardCorporativo"), icon: BarChart3, group: "principal" },
   { title: "🚀 Fechamento Automático", url: createPageUrl("DashboardFechamentoPedidos"), icon: Zap, group: "principal", adminOnly: true },
+  { title: "🏆 Status do Sistema V21.6", url: createPageUrl("StatusSistemaV21_6"), icon: CheckCircle2, group: "sistema", adminOnly: true },
   { title: "Relatórios e Análises", url: createPageUrl("Relatorios"), icon: BarChart3, group: "principal" },
   { title: "Agenda e Calendário", url: createPageUrl("Agenda"), icon: Calendar, group: "principal" },
   { title: "CRM - Relacionamento", url: createPageUrl("CRM"), icon: Users, group: "principal" },
