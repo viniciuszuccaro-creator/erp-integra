@@ -564,29 +564,50 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               Cancelar
             </Button>
             
-            {/* V21.5: APROVAR PEDIDO */}
+            {/* V21.6: FECHAR PEDIDO COM AUTOMAÇÃO COMPLETA */}
             {(!pedido || pedido.status === 'Rascunho') && (
               <Button
-                onClick={async () => {
+                onClick={() => {
                   if (salvando) return;
+
+                  const AutomacaoFluxoPedido = require('./AutomacaoFluxoPedido').default;
+                  const { openWindow: openWin } = require('@/components/lib/useWindow').useWindow();
+
+                  // Salvar pedido primeiro
                   setSalvando(true);
-                  try {
-                    await onSubmit({
-                      ...formData,
-                      status: 'Aprovado'
-                    });
-                    toast.success('✅ Pedido aprovado e estoque baixado!');
-                  } catch (error) {
-                    toast.error('❌ Erro ao aprovar pedido');
-                  } finally {
+                  onSubmit({
+                    ...formData,
+                    status: 'Aprovado'
+                  }).then(() => {
                     setSalvando(false);
-                  }
+
+                    // Abrir janela de automação
+                    openWin(
+                      AutomacaoFluxoPedido,
+                      { 
+                        pedido: { ...formData, status: 'Aprovado' },
+                        windowMode: true,
+                        onComplete: () => {
+                          toast.success('✅ Pedido fechado com sucesso!');
+                          onCancel();
+                        }
+                      },
+                      {
+                        title: `🚀 Automação - Pedido ${formData.numero_pedido}`,
+                        width: 1200,
+                        height: 700
+                      }
+                    );
+                  }).catch(error => {
+                    setSalvando(false);
+                    toast.error('❌ Erro ao salvar pedido');
+                  });
                 }}
-                className="bg-green-600 hover:bg-green-700 shadow-lg"
+                className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg"
                 disabled={salvando || !validacoes.identificacao || !validacoes.itens}
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                {salvando ? 'Aprovando...' : 'Aprovar Pedido'}
+                {salvando ? 'Salvando...' : '🚀 Fechar Pedido Completo'}
               </Button>
             )}
             

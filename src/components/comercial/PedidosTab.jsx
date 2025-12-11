@@ -245,64 +245,32 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={async () => {
-                              try {
-                                // V21.5: BAIXAR ESTOQUE AO APROVAR
-                                if (pedido.itens_revenda?.length > 0) {
-                                  for (const item of pedido.itens_revenda) {
-                                    if (item.produto_id) {
-                                      const produtos = await base44.entities.Produto.filter({ 
-                                        id: item.produto_id,
-                                        empresa_id: pedido.empresa_id 
-                                      });
-                                      
-                                      const produto = produtos[0];
-                                      if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-                                        const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-                                        
-                                        // Criar movimentação
-                                        await base44.entities.MovimentacaoEstoque.create({
-                                          empresa_id: pedido.empresa_id,
-                                          tipo_movimento: "saida",
-                                          origem_movimento: "pedido",
-                                          origem_documento_id: pedido.id,
-                                          produto_id: item.produto_id,
-                                          produto_descricao: item.descricao || item.produto_descricao,
-                                          codigo_produto: item.codigo_sku,
-                                          quantidade: item.quantidade,
-                                          unidade_medida: item.unidade,
-                                          estoque_anterior: produto.estoque_atual || 0,
-                                          estoque_atual: novoEstoque,
-                                          data_movimentacao: new Date().toISOString(),
-                                          documento: pedido.numero_pedido,
-                                          motivo: `Baixa automática - Aprovação rápida`,
-                                          responsavel: "Sistema Automático",
-                                          aprovado: true
-                                        });
-                                        
-                                        // Atualizar estoque do produto
-                                        await base44.entities.Produto.update(item.produto_id, {
-                                          estoque_atual: novoEstoque
-                                        });
-                                      }
-                                    }
+                            onClick={() => {
+                              openWindow(
+                                () => import('./AutomacaoFluxoPedido').then(m => m.default),
+                                { 
+                                  pedido,
+                                  windowMode: true,
+                                  onComplete: () => {
+                                    queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                                    queryClient.invalidateQueries({ queryKey: ['produtos'] });
+                                    queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
+                                    queryClient.invalidateQueries({ queryKey: ['contas-receber'] });
+                                    queryClient.invalidateQueries({ queryKey: ['entregas'] });
                                   }
+                                },
+                                {
+                                  title: `🚀 Automação - Pedido ${pedido.numero_pedido}`,
+                                  width: 1200,
+                                  height: 700
                                 }
-                                
-                                await base44.entities.Pedido.update(pedido.id, { status: 'Aprovado' });
-                                toast({ title: "✅ Pedido aprovado e estoque baixado!" });
-                                queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-                                queryClient.invalidateQueries({ queryKey: ['produtos'] });
-                                queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
-                              } catch (error) {
-                                toast({ title: "❌ Erro ao aprovar", variant: "destructive" });
-                              }
+                              );
                             }}
-                            title="Aprovar Pedido e Baixar Estoque"
-                            className="h-8 px-2 bg-green-50 text-green-700 hover:bg-green-100 font-semibold"
+                            title="Fechar Pedido Automaticamente"
+                            className="h-8 px-2 bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 font-semibold shadow-lg"
                           >
                             <CheckCircle2 className="w-3 h-3 mr-1" />
-                            <span className="text-xs">Aprovar</span>
+                            <span className="text-xs">🚀 Fechar Pedido</span>
                           </Button>
                         )}
                         
