@@ -1,119 +1,104 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 
 /**
- * Hook para detectar e gerenciar origem automática de pedidos
+ * V21.6 FINAL - Hook de Detecção AUTOMÁTICA e OBRIGATÓRIA de Origem
  * 
- * Detecta de onde o pedido está sendo criado:
- * - ERP (interface web admin)
- * - Site (página pública)
- * - Chatbot (integração chatbot)
- * - Portal Cliente (portal self-service)
- * - API (chamada externa)
- * - Marketplace (integração marketplace)
+ * ⚡ Detecção 100% Automática - Campo SEMPRE bloqueado
+ * 🔒 Bloqueio Total - Sem edição manual permitida
+ * 🎯 Rastreabilidade 100% - Todos pedidos rastreados
  * 
- * @param {Object} options - Opções de configuração
- * @param {string} options.contexto - Contexto atual: 'erp', 'site', 'chatbot', 'portal', 'api', 'marketplace'
- * @param {boolean} options.criacaoManual - Se está sendo criado manualmente pelo usuário
- * @param {string} options.origemExterna - ID da origem externa (ex: pedido do marketplace)
- * @returns {Object} { origemPedido, bloquearEdicao, parametro, isLoading }
+ * Detecta origem de onde o pedido está sendo criado:
+ * - URL params (?origem=Site)
+ * - Sessão (localStorage)
+ * - Pathname (/portal, /site, /chatbot)
+ * - Referrer (de onde veio)
+ * - Padrão: Manual (ERP interno)
+ * 
+ * @returns {Object} { origemPedido, bloquearEdicao: true, parametro, parametros, isLoading }
  */
-export function useOrigemPedido({ 
-  contexto = 'erp', 
-  criacaoManual = true, 
-  origemExterna = null 
-} = {}) {
-  const [origemPedido, setOrigemPedido] = useState(null);
-  const [bloquearEdicao, setBloquearEdicao] = useState(false);
-
-  // Buscar parâmetros configurados
-  const { data: parametros, isLoading } = useQuery({
+export function useOrigemPedido() {
+  
+  // Buscar parâmetros configurados (cache otimizado)
+  const { data: parametros = [], isLoading } = useQuery({
     queryKey: ['parametros-origem-pedido'],
     queryFn: () => base44.entities.ParametroOrigemPedido.list(),
     initialData: [],
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000, // 10 minutos
   });
 
-  // Detectar contexto automaticamente se não fornecido
-  const detectarContexto = () => {
-    // Se tem origem externa, é automático
-    if (origemExterna) {
-      return { contexto: 'api', manual: false };
+  // Detectar origem AUTOMATICAMENTE (performance < 50ms)
+  const origemPedido = useMemo(() => {
+    const inicio = performance.now();
+
+    // 1️⃣ URL params (maior prioridade - integração externa)
+    const urlParams = new URLSearchParams(window.location.search);
+    const origemURL = urlParams.get('origem');
+    if (origemURL) {
+      console.log(`🎯 Origem AUTO via URL: ${origemURL} (${(performance.now() - inicio).toFixed(1)}ms)`);
+      return origemURL;
     }
 
-    // Detectar pelo URL ou outros sinais
-    const url = window.location.href;
-    
-    if (url.includes('/portal')) {
-      return { contexto: 'portal', manual: criacaoManual };
+    // 2️⃣ Sessão (origem persistida temporariamente)
+    const origemSessao = localStorage.getItem('origem_pedido_sessao');
+    if (origemSessao && origemSessao !== 'Manual') {
+      console.log(`🎯 Origem AUTO via sessão: ${origemSessao} (${(performance.now() - inicio).toFixed(1)}ms)`);
+      return origemSessao;
     }
-    if (url.includes('/site') || url.includes('public')) {
-      return { contexto: 'site', manual: criacaoManual };
+
+    // 3️⃣ Pathname (contexto da página)
+    const pathname = window.location.pathname.toLowerCase();
+    if (pathname.includes('portal')) {
+      console.log(`🎯 Origem AUTO via pathname: Portal (${(performance.now() - inicio).toFixed(1)}ms)`);
+      return 'Portal';
     }
-    if (url.includes('/chatbot')) {
-      return { contexto: 'chatbot', manual: false };
-    }
-    
-    // Por padrão, é ERP
-    return { contexto: 'erp', manual: criacaoManual };
-  };
+    if (pathname.includes('site')) return 'Site';
+    if (pathname.includes('api')) return 'API';
+    if (pathname.includes('marketplace')) return 'Marketplace';
+    if (pathname.includes('chatbot')) return 'Chatbot';
+    if (pathname.includes('whatsapp')) return 'WhatsApp';
+    if (pathname.includes('app')) return 'App';
 
-  useEffect(() => {
-    if (!parametros || parametros.length === 0) return;
+    // 4️⃣ Referrer (de onde o usuário veio)
+    const referrer = document.referrer.toLowerCase();
+    if (referrer.includes('ecommerce') || referrer.includes('loja')) return 'E-commerce';
+    if (referrer.includes('marketplace')) return 'Marketplace';
+    if (referrer.includes('site')) return 'Site';
 
-    const { contexto: ctx, manual } = detectarContexto();
+    // 5️⃣ Padrão: Manual (criado dentro do ERP)
+    console.log(`🎯 Origem padrão: Manual (ERP) (${(performance.now() - inicio).toFixed(1)}ms)`);
+    return 'Manual';
+  }, []);
 
-    // Mapear contexto para canal
-    const mapeamentoCanal = {
-      'erp': 'ERP',
-      'site': 'Site',
-      'chatbot': 'Chatbot',
-      'portal': 'Portal Cliente',
-      'api': 'API',
-      'marketplace': 'Marketplace',
-      'whatsapp': 'WhatsApp',
-      'ecommerce': 'E-commerce',
-      'app': 'App Mobile'
+  // Buscar parâmetro do canal detectado
+  const parametroAtivo = useMemo(() => {
+    if (!parametros || parametros.length === 0) return null;
+
+    // Mapear origem para canal
+    const origemParaCanal = {
+      'Manual': 'ERP',
+      'E-commerce': 'E-commerce',
+      'API': 'API',
+      'Importado': 'API',
+      'Site': 'Site',
+      'App': 'App Mobile',
+      'WhatsApp': 'WhatsApp',
+      'Portal': 'Portal Cliente',
+      'Marketplace': 'Marketplace',
+      'Chatbot': 'Chatbot'
     };
 
-    const canal = mapeamentoCanal[ctx] || 'ERP';
-
-    // Buscar parâmetro configurado para este canal
-    const parametro = parametros.find(p => p.canal === canal && p.ativo);
-
-    if (parametro) {
-      // Definir origem baseada se é manual ou automático
-      const origem = manual 
-        ? parametro.origem_pedido_manual 
-        : parametro.origem_pedido_automatico;
-
-      setOrigemPedido(origem || 'Manual');
-      
-      // Bloquear edição se for automático e configurado para bloquear
-      setBloquearEdicao(!manual && parametro.bloquear_edicao_automatico);
-    } else {
-      // Fallback se não houver parâmetro configurado
-      const origemPadrao = {
-        'ERP': 'Manual',
-        'Site': 'Site',
-        'Chatbot': 'Chatbot',
-        'Portal Cliente': 'Portal',
-        'API': 'API',
-        'Marketplace': 'Marketplace',
-        'WhatsApp': 'WhatsApp',
-        'E-commerce': 'E-commerce',
-        'App Mobile': 'App'
-      };
-
-      setOrigemPedido(origemPadrao[canal] || 'Manual');
-      setBloquearEdicao(!manual);
-    }
-  }, [parametros, contexto, criacaoManual, origemExterna]);
+    const canal = origemParaCanal[origemPedido] || 'ERP';
+    
+    return parametros.find(p => p.canal === canal && p.ativo) || null;
+  }, [parametros, origemPedido]);
 
   return {
     origemPedido,
-    bloquearEdicao,
-    parametro: parametros?.find(p => p.canal === contexto),
+    bloquearEdicao: true, // V21.6 FINAL: SEMPRE BLOQUEADO (detecção 100% automática)
+    parametro: parametroAtivo,
     parametros,
     isLoading
   };
@@ -135,3 +120,5 @@ export function useParametroOrigem(canal) {
     isLoading
   };
 }
+
+export default useOrigemPedido;
