@@ -79,10 +79,11 @@ export default function DashboardLogistico({ entregas, windowMode = false }) {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-  const containerClass = windowMode ? "w-full h-full overflow-auto p-6 space-y-6" : "space-y-6";
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
   return (
     <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="border-0 shadow-md">
@@ -221,6 +222,7 @@ export default function DashboardLogistico({ entregas, windowMode = false }) {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }
