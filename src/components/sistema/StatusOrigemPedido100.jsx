@@ -107,7 +107,8 @@ export default function StatusOrigemPedido100({ windowMode = false }) {
     "HistoricoOrigemCliente.jsx",
     "WidgetCanaisOrigem.jsx",
     "StatusOrigemPedido100.jsx",
-    "Docs (4 arquivos)"
+    "CERTIFICADO_PRODUCAO_V21_6.jsx",
+    "Docs (8 arquivos completos)"
   ];
 
   const melhorias = [
@@ -260,10 +261,10 @@ export default function StatusOrigemPedido100({ windowMode = false }) {
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
             <h3 className="text-2xl font-bold text-green-900 mb-2">
-              🎊 Sistema 100% Completo! 🎊
+              🎊 Sistema 100% Completo e Certificado! 🎊
             </h3>
             <p className="text-green-800 mb-4">
-              14 componentes criados • 11 melhorias aplicadas • 3 IAs integradas
+              15 componentes • 11 melhorias • 3 IAs • 8 canais • 8 docs
             </p>
             <div className="flex items-center justify-center gap-6 text-sm">
               <div>
