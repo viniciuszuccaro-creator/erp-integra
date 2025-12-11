@@ -30,6 +30,7 @@ import SearchInput from "../ui/SearchInput";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
+import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -247,7 +248,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                             size="sm"
                             onClick={() => {
                               openWindow(
-                                () => import('./AutomacaoFluxoPedido').then(m => m.default),
+                                AutomacaoFluxoPedido,
                                 { 
                                   pedido,
                                   windowMode: true,
@@ -266,7 +267,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                                 }
                               );
                             }}
-                            title="Fechar Pedido Automaticamente"
+                            title="Fechar Pedido Automaticamente (Estoque + Financeiro + Logística)"
                             className="h-8 px-2 bg-gradient-to-r from-green-600 to-blue-600 text-white hover:from-green-700 hover:to-blue-700 font-semibold shadow-lg"
                           >
                             <CheckCircle2 className="w-3 h-3 mr-1" />

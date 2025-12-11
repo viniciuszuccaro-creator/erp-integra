@@ -146,6 +146,9 @@ export default function Comercial() {
     let atualizacaoEmAndamento = false;
     let windowIdRef = null;
     
+    // V21.6: Guardar função openWindow para uso posterior
+    window.__currentOpenWindow = openWindow;
+    
     windowIdRef = openWindow(
       PedidoFormCompleto,
       { 
@@ -169,12 +172,19 @@ export default function Comercial() {
             if (windowIdRef) {
               closeWindow(windowIdRef);
             }
+            
+            return formData; // Retornar dados atualizados
           } catch (error) {
             atualizacaoEmAndamento = false;
             toast.error("Erro ao salvar pedido: " + error.message);
+            throw error;
           }
         },
-        onCancel: () => {}
+        onCancel: () => {
+          if (windowIdRef) {
+            closeWindow(windowIdRef);
+          }
+        }
       },
       {
         title: `📝 Editar Pedido ${pedido.numero_pedido}`,

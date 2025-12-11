@@ -34,6 +34,7 @@ import LogisticaEntregaTab from './LogisticaEntregaTab';
 import FechamentoFinanceiroTab from './FechamentoFinanceiroTab';
 import ArquivosProjetosTab from './ArquivosProjetosTab';
 import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
+import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
 
 /**
  * V21.1.2-R1 - Pedido Form Completo - PATCH OFICIAL
@@ -564,44 +565,76 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
               Cancelar
             </Button>
             
+            {/* V21.6: SALVAR COMO RASCUNHO */}
+            {(!pedido || pedido.status === 'Rascunho') && (
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  if (salvando) return;
+                  setSalvando(true);
+                  try {
+                    await onSubmit({
+                      ...formData,
+                      status: 'Rascunho'
+                    });
+                    toast.success('✅ Rascunho salvo!');
+                  } catch (error) {
+                    toast.error('❌ Erro ao salvar');
+                  } finally {
+                    setSalvando(false);
+                  }
+                }}
+                disabled={salvando || !validacoes.identificacao || !validacoes.itens}
+              >
+                {salvando ? 'Salvando...' : 'Salvar Rascunho'}
+              </Button>
+            )}
+
             {/* V21.6: FECHAR PEDIDO COM AUTOMAÇÃO COMPLETA */}
             {(!pedido || pedido.status === 'Rascunho') && (
               <Button
-                onClick={() => {
+                onClick={async () => {
                   if (salvando) return;
-
-                  const AutomacaoFluxoPedido = require('./AutomacaoFluxoPedido').default;
-                  const { openWindow: openWin } = require('@/components/lib/useWindow').useWindow();
 
                   // Salvar pedido primeiro
                   setSalvando(true);
-                  onSubmit({
-                    ...formData,
-                    status: 'Aprovado'
-                  }).then(() => {
+                  try {
+                    const pedidoSalvo = await onSubmit({
+                      ...formData,
+                      status: 'Aprovado'
+                    });
+
                     setSalvando(false);
 
-                    // Abrir janela de automação
-                    openWin(
-                      AutomacaoFluxoPedido,
-                      { 
-                        pedido: { ...formData, status: 'Aprovado' },
-                        windowMode: true,
-                        onComplete: () => {
-                          toast.success('✅ Pedido fechado com sucesso!');
-                          onCancel();
+                    // Importar dinamicamente (para evitar problemas com hooks)
+                    const { useWindow: getWindow } = await import('@/components/lib/useWindow');
+
+                    // Fechar modal atual
+                    onCancel();
+
+                    // Aguardar um frame para modal fechar
+                    setTimeout(() => {
+                      // Abrir automação em nova janela
+                      window.__currentOpenWindow(
+                        AutomacaoFluxoPedido,
+                        { 
+                          pedido: pedidoSalvo || { ...formData, status: 'Aprovado' },
+                          windowMode: true,
+                          onComplete: () => {
+                            toast.success('✅ Pedido fechado com sucesso!');
+                          }
+                        },
+                        {
+                          title: `🚀 Automação - Pedido ${formData.numero_pedido}`,
+                          width: 1200,
+                          height: 700
                         }
-                      },
-                      {
-                        title: `🚀 Automação - Pedido ${formData.numero_pedido}`,
-                        width: 1200,
-                        height: 700
-                      }
-                    );
-                  }).catch(error => {
+                      );
+                    }, 100);
+                  } catch (error) {
                     setSalvando(false);
                     toast.error('❌ Erro ao salvar pedido');
-                  });
+                  }
                 }}
                 className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg"
                 disabled={salvando || !validacoes.identificacao || !validacoes.itens}

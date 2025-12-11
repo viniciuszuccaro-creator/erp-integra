@@ -1,15 +1,18 @@
 import { base44 } from "@/api/base44Client";
 
 /**
- * 🔄 HOOK DE FLUXOS AUTOMÁTICOS DO PEDIDO
+ * 🔄 HOOK DE FLUXOS AUTOMÁTICOS DO PEDIDO V21.6 COMPLETO
  * 
- * Gerencia todos os gatilhos automáticos:
- * - Reserva de estoque
- * - Geração de OP
- * - Geração de Contas a Receber
- * - Baixa de estoque
- * - Liberação para expedição
+ * ✅ FLUXO COMPLETO IMPLEMENTADO:
  * - Validação de crédito
+ * - Baixa de estoque automática
+ * - Geração de Contas a Receber
+ * - Criação de Entrega/Retirada
+ * - Atualização de status
+ * - Cancelamento com estorno
+ * 
+ * Integrado com: AutomacaoFluxoPedido.jsx
+ * Regra-Mãe: Sempre melhorar, nunca apagar
  */
 
 /**
