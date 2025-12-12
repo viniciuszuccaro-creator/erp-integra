@@ -61,23 +61,23 @@ export function WindowProvider({ children }) {
     });
   }, []);
 
-  // Abrir nova janela - V21.6.2 DEFINITIVO: zIndex SEMPRE no topo absoluto
+  // Abrir nova janela - V21.6.3 DEFINITIVO ABSOLUTO: Sempre no topo + Ação imediata
   const openWindow = useCallback((component, props = {}, options = {}) => {
     // V21.6: Buscar por uniqueKey para evitar duplicação
     if (options.uniqueKey) {
       const janelaExistente = windows.find(w => w.uniqueKey === options.uniqueKey);
 
       if (janelaExistente) {
-        // Trazer janela existente para FRENTE
+        // Trazer janela existente para TOPO ABSOLUTO
+        const maxZ = Math.max(...windows.map(w => w.zIndex), 99999000);
         setActiveWindowId(janelaExistente.id);
-        setWindows(prev => {
-          const maxZ = Math.max(...prev.map(w => w.zIndex), 50000);
-          return prev.map(w => 
+        setWindows(prev => 
+          prev.map(w => 
             w.id === janelaExistente.id 
-              ? { ...w, zIndex: maxZ + 10000, isMinimized: false }
+              ? { ...w, zIndex: maxZ + 100000, isMinimized: false }
               : w
-          );
-        });
+          )
+        );
         return janelaExistente.id;
       }
     }
@@ -89,8 +89,10 @@ export function WindowProvider({ children }) {
     const maxOffset = 400;
     const cascade = offsetBase % maxOffset;
     
-    // V21.6.2: zIndex SEMPRE maior que TODAS janelas (incluindo visualizadores)
-    const maxZ = windows.length > 0 ? Math.max(...windows.map(w => w.zIndex), 50000) : 50000;
+    // V21.6.3: zIndex SEMPRE garantindo topo ABSOLUTO
+    const baseZ = 99999000; // Base alta para TODAS as janelas
+    const currentMaxZ = windows.length > 0 ? Math.max(...windows.map(w => w.zIndex), baseZ) : baseZ;
+    const finalZ = options.zIndex && options.zIndex > currentMaxZ ? options.zIndex : currentMaxZ + 100000;
     
     const newWindow = {
       id: windowId,
@@ -103,12 +105,24 @@ export function WindowProvider({ children }) {
       height: options.height || 600,
       x: options.x !== undefined ? options.x : 100 + cascade,
       y: options.y !== undefined ? options.y : 80 + cascade,
-      zIndex: options.zIndex || (maxZ + 1000),
+      zIndex: finalZ,
       uniqueKey: options.uniqueKey
     };
 
     setWindows(prev => [...prev, newWindow]);
     setActiveWindowId(windowId);
+    
+    // V21.6.3: Se bringToFront=true, forçar frente IMEDIATAMENTE após render
+    if (options.bringToFront || options.forceTop || options.ensureOnTop) {
+      setTimeout(() => {
+        setWindows(prevWins => {
+          const ultMaxZ = Math.max(...prevWins.map(w => w.zIndex), finalZ);
+          return prevWins.map(w => 
+            w.id === windowId ? { ...w, zIndex: ultMaxZ + 100000 } : w
+          );
+        });
+      }, 50);
+    }
     
     return windowId;
   }, [windows]);
