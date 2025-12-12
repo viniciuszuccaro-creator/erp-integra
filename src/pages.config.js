@@ -27,6 +27,7 @@ import HubAtendimento from './pages/HubAtendimento';
 import DashboardFechamentoPedidos from './pages/DashboardFechamentoPedidos';
 import statussistemav216 from './pages/StatusSistemaV21_6';
 import GuiaUsoSistema from './pages/GuiaUsoSistema';
+import ValidacaoFinal100 from './pages/ValidacaoFinal100';
 import __Layout from './Layout.jsx';
 
 
@@ -60,6 +61,7 @@ export const PAGES = {
     "DashboardFechamentoPedidos": DashboardFechamentoPedidos,
     "StatusSistemaV21_6": statussistemav216,
     "GuiaUsoSistema": GuiaUsoSistema,
+    "ValidacaoFinal100": ValidacaoFinal100,
 }
 
 export const pagesConfig = {
