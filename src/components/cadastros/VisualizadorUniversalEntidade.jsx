@@ -107,19 +107,44 @@ export default function VisualizadorUniversalEntidade({
     a.click();
   };
 
-  // Abrir edição - V21.6 ULTRA-CORRIGIDO: Múltiplos nomes de props
+  // Abrir edição - V21.6.1 CORREÇÃO DEFINITIVA: Passar dados corretamente
   const abrirEdicao = (item) => {
     if (componenteEdicao) {
-      // V21.6: Passar TODOS os formatos possíveis de nome
       const propName = nomeEntidade.charAt(0).toLowerCase() + nomeEntidade.slice(1);
+      
       const props = {
-        [propName]: item,           // Ex: setorAtividade
-        [nomeEntidade]: item,        // Ex: SetorAtividade  
-        // Nomes específicos para compatibilidade
-        setor: item,
-        grupo: item,
-        marca: item,
-        banco: item,
+        // TODOS os formatos possíveis de props
+        [propName]: item,                    // Ex: setorAtividade, grupoProduto
+        [nomeEntidade]: item,                 // Ex: SetorAtividade, GrupoProduto
+        setor: item,                          // compatibilidade
+        setorAtividade: item,                 // compatibilidade
+        grupo: item,                          // compatibilidade
+        grupoProduto: item,                   // compatibilidade
+        marca: item,                          // compatibilidade
+        banco: item,                          // compatibilidade
+        departamento: item,                   // compatibilidade
+        cargo: item,                          // compatibilidade
+        turno: item,                          // compatibilidade
+        condicaoComercial: item,              // compatibilidade
+        segmentoCliente: item,                // compatibilidade
+        kitProduto: item,                     // compatibilidade
+        centroResultado: item,                // compatibilidade
+        tipoDespesa: item,                    // compatibilidade
+        moedaIndice: item,                    // compatibilidade
+        motorista: item,                      // compatibilidade
+        tipoFrete: item,                      // compatibilidade
+        modeloDocumento: item,                // compatibilidade
+        localEstoque: item,                   // compatibilidade
+        contatoB2B: item,                     // compatibilidade
+        servico: item,                        // compatibilidade
+        veiculo: item,                        // compatibilidade
+        catalogoWeb: item,                    // compatibilidade
+        webhook: item,                        // compatibilidade
+        rotaPadrao: item,                     // compatibilidade
+        unidadeMedida: item,                  // compatibilidade
+        chatbotCanal: item,                   // compatibilidade
+        regiaoAtendimento: item,              // compatibilidade
+        representante: item,                  // compatibilidade
         onSuccess: () => refetch(),
         windowMode: true
       };
@@ -131,8 +156,9 @@ export default function VisualizadorUniversalEntidade({
           title: `✏️ Editar ${tituloDisplay}`,
           width: 1000,
           height: 700,
-          uniqueKey: `edit-${nomeEntidade}-${item.id}`,
-          zIndex: 99999 // FORÇAR z-index máximo
+          uniqueKey: `edit-${nomeEntidade}-${item.id}-${Date.now()}`,
+          zIndex: 999999,
+          bringToFront: true
         }
       );
     }
