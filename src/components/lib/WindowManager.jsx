@@ -20,6 +20,47 @@ export function WindowProvider({ children }) {
   const [windows, setWindows] = useState([]);
   const [activeWindowId, setActiveWindowId] = useState(null);
 
+  // Fechar janela
+  const closeWindow = useCallback((windowId) => {
+    setWindows(prev => prev.filter(w => w.id !== windowId));
+    if (activeWindowId === windowId) {
+      setActiveWindowId(windows[windows.length - 2]?.id || null);
+    }
+  }, [activeWindowId, windows]);
+
+  // Minimizar janela
+  const minimizeWindow = useCallback((windowId) => {
+    setWindows(prev => prev.map(w => 
+      w.id === windowId ? { ...w, isMinimized: true } : w
+    ));
+  }, []);
+
+  // Restaurar janela minimizada
+  const restoreWindow = useCallback((windowId) => {
+    setWindows(prev => prev.map(w => 
+      w.id === windowId ? { ...w, isMinimized: false } : w
+    ));
+    setActiveWindowId(windowId);
+  }, []);
+
+  // Maximizar/Restaurar janela
+  const toggleMaximize = useCallback((windowId) => {
+    setWindows(prev => prev.map(w => 
+      w.id === windowId ? { ...w, isMaximized: !w.isMaximized } : w
+    ));
+  }, []);
+
+  // Trazer janela para frente - V21.6 MELHORADO
+  const bringToFront = useCallback((windowId) => {
+    setActiveWindowId(windowId);
+    setWindows(prev => {
+      const maxZ = Math.max(...prev.map(w => w.zIndex), 1000);
+      return prev.map(w => 
+        w.id === windowId ? { ...w, zIndex: maxZ + 10, isMinimized: false } : w
+      );
+    });
+  }, []);
+
   // Abrir nova janela - V21.6 MELHORADO: Evita duplicação + Sempre na frente
   const openWindow = useCallback((component, props = {}, options = {}) => {
     // V21.6: Verificar se já existe janela com mesmo componente e registro
@@ -70,47 +111,6 @@ export function WindowProvider({ children }) {
     
     return windowId;
   }, [windows, bringToFront, restoreWindow]);
-
-  // Fechar janela
-  const closeWindow = useCallback((windowId) => {
-    setWindows(prev => prev.filter(w => w.id !== windowId));
-    if (activeWindowId === windowId) {
-      setActiveWindowId(windows[windows.length - 2]?.id || null);
-    }
-  }, [activeWindowId, windows]);
-
-  // Minimizar janela
-  const minimizeWindow = useCallback((windowId) => {
-    setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, isMinimized: true } : w
-    ));
-  }, []);
-
-  // Restaurar janela minimizada
-  const restoreWindow = useCallback((windowId) => {
-    setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, isMinimized: false } : w
-    ));
-    setActiveWindowId(windowId);
-  }, []);
-
-  // Maximizar/Restaurar janela
-  const toggleMaximize = useCallback((windowId) => {
-    setWindows(prev => prev.map(w => 
-      w.id === windowId ? { ...w, isMaximized: !w.isMaximized } : w
-    ));
-  }, []);
-
-  // Trazer janela para frente - V21.6 MELHORADO
-  const bringToFront = useCallback((windowId) => {
-    setActiveWindowId(windowId);
-    setWindows(prev => {
-      const maxZ = Math.max(...prev.map(w => w.zIndex), 1000);
-      return prev.map(w => 
-        w.id === windowId ? { ...w, zIndex: maxZ + 10, isMinimized: false } : w
-      );
-    });
-  }, []);
 
   // Atualizar posição e tamanho
   const updateWindow = useCallback((windowId, updates) => {
