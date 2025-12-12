@@ -23,7 +23,7 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
-export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose, onSuccess, windowMode = false }) {
+export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose, onSuccess, windowMode = false, onSubmit }) {
   const [activeTab, setActiveTab] = useState("dados-gerais");
   
   const { toast } = useToast();
@@ -68,7 +68,8 @@ export default function CadastroFornecedorCompleto({ fornecedor, isOpen, onClose
       queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
       toast({ title: `✅ Fornecedor ${fornecedor?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
-      onClose();
+      if (onSubmit) onSubmit(formData);
+      if (onClose) onClose();
     },
     onError: (error) => {
       toast({ 

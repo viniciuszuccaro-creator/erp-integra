@@ -107,17 +107,25 @@ export default function VisualizadorUniversalEntidade({
     a.click();
   };
 
-  // Abrir edição - V21.6 MELHORADO: Evita duplicação + Sempre na frente
+  // Abrir edição - V21.6 CORRIGIDO: Props corretos + Anti-duplicação
   const abrirEdicao = (item) => {
     if (componenteEdicao) {
+      // V21.6: Passar objeto com nome correto da entidade em minúsculo
+      const propName = nomeEntidade.charAt(0).toLowerCase() + nomeEntidade.slice(1);
+      const props = {
+        [propName]: item,
+        onSuccess: () => refetch(),
+        windowMode: true
+      };
+
       openWindow(
         componenteEdicao,
-        { [nomeEntidade.toLowerCase()]: item, id: item.id, onSuccess: () => refetch() },
+        props,
         {
           title: `✏️ Editar ${tituloDisplay}`,
           width: 1000,
           height: 700,
-          uniqueKey: `edit-${nomeEntidade}-${item.id}` // V21.6: Chave única para evitar duplicação
+          uniqueKey: `edit-${nomeEntidade}-${item.id}` // Evita duplicação
         }
       );
     }

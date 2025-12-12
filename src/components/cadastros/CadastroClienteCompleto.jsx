@@ -35,7 +35,7 @@ import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineC
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import HistoricoOrigemCliente from "@/components/comercial/HistoricoOrigemCliente";
 
-export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSuccess, windowMode = false }) {
+export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSuccess, windowMode = false, onSubmit }) {
   const [activeTab, setActiveTab] = useState("dados-gerais");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -164,7 +164,8 @@ export default function CadastroClienteCompleto({ cliente, isOpen, onClose, onSu
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       toast({ title: `✅ Cliente ${cliente?.id ? 'atualizado' : 'criado'} com sucesso!` });
       if (onSuccess) onSuccess();
-      onClose();
+      if (onSubmit) onSubmit(formData);
+      if (onClose) onClose();
     },
     onError: (error) => {
       toast({

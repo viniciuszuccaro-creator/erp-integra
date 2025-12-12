@@ -31,7 +31,7 @@ import HistoricoProduto from "./HistoricoProduto";
  * ✅ Aba 6: Estoque Avançado (NOVO)
  * ✅ Aba 7: Histórico (se edição)
  */
-export default function ProdutoFormV22_Completo({ produto, onSubmit, isSubmitting, windowMode = false }) {
+export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [user, setUser] = useState(null);
   
@@ -422,7 +422,7 @@ Caso contrário, sugira:
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!formData.descricao) {
@@ -477,7 +477,21 @@ Caso contrário, sugira:
       }
     };
 
-    onSubmit(dadosSubmit);
+    // V21.6: Salvar direto via SDK + callback
+    try {
+      if (produto?.id) {
+        await base44.entities.Produto.update(produto.id, dadosSubmit);
+        toast.success('✅ Produto atualizado com sucesso!');
+      } else {
+        await base44.entities.Produto.create(dadosSubmit);
+        toast.success('✅ Produto criado com sucesso!');
+      }
+      
+      if (onSuccess) onSuccess();
+      if (onSubmit) onSubmit(dadosSubmit);
+    } catch (error) {
+      toast.error('❌ Erro ao salvar produto: ' + error.message);
+    }
   };
 
   const handleExcluir = () => {
