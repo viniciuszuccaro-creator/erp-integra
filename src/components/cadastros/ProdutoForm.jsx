@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,16 +7,17 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, Package, Upload, Calculator, CheckCircle2, AlertTriangle, FileText } from "lucide-react";
+import { Loader2, Sparkles, Package, Upload, Calculator, CheckCircle2, AlertTriangle, FileText, Factory, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
 /**
- * V21.1.2 - EVOLUÇÃO DO CADASTRO DE PRODUTOS
+ * V21.6 - EVOLUÇÃO DO CADASTRO DE PRODUTOS
  * ✅ Toggle "Preencher manualmente" (ignorar IA)
  * ✅ Campos de peso líquido/bruto + dimensões (frete/e-commerce)
  * ✅ Suporte para cadastro via NF-e e em lote (botões preparados)
+ * ✅ NOVO: Botão "Enviar para Produção" - converte produtos de Revenda para Matéria-Prima
  * V22.0: REGRA MESTRE DE CONVERSÃO DE UNIDADES
  * Este formulário é o HUB central que define como o produto pode ser vendido/comprado
  */
@@ -100,18 +100,18 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
     if (formData.altura_cm > 0 && formData.largura_cm > 0 && formData.comprimento_cm > 0) {
       const volume_m3 = (formData.altura_cm * formData.largura_cm * formData.comprimento_cm) / 1000000;
       setFormData(prev => ({ ...prev, volume_m3 }));
-    } else if (formData.volume_m3 !== 0) { // If dimensions are 0 but volume_m3 was previously set, reset it
+    } else if (formData.volume_m3 !== 0) {
         setFormData(prev => ({ ...prev, volume_m3: 0 }));
     }
-  }, [formData.altura_cm, formData.largura_cm, formData.comprimento_cm, formData.volume_m3]); // Add volume_m3 to deps to prevent infinite loop on reset
+  }, [formData.altura_cm, formData.largura_cm, formData.comprimento_cm, formData.volume_m3]);
 
   // V22.0: MOTOR DE CONVERSÃO AUTOMÁTICA
   const recalcularFatoresConversao = () => {
     const pesoKgM = formData.peso_teorico_kg_m || 0;
     const comprimentoM = formData.comprimento_barra_padrao_m || 12;
     
-    const kgPorPeca = pesoKgM * comprimentoM; // 1 peça (12m) = peso_kg_m * 12
-    const pecaPorTon = kgPorPeca > 0 ? (1000 / kgPorPeca) : 0; // quantas peças em 1 TON
+    const kgPorPeca = pesoKgM * comprimentoM;
+    const pecaPorTon = kgPorPeca > 0 ? (1000 / kgPorPeca) : 0;
     
     const novosFatores = {
       kg_por_metro: pesoKgM,
@@ -249,13 +249,10 @@ Caso contrário, sugira:
   const handleDadosNCM = (dados) => {
     setFormData((prev) => ({
       ...prev,
-      // mantém o NCM digitado, já que a busca automática é um complemento
-      // Preenche campos automaticamente
       unidade_medida: dados.unidade || prev.unidade_medida,
       cest: dados.cest || prev.cest
     }));
 
-    // Atualiza sugestões IA (ou um estado similar para exibir as infos do NCM)
     setSugestoesIA((prev) => ({
       ...prev,
       ncm_info: `${dados.descricao}${dados.obs ? ' - ' + dados.obs : ''}`,
@@ -263,6 +260,20 @@ Caso contrário, sugira:
     }));
 
     toast.success("NCM encontrado!", { description: dados.descricao });
+  };
+
+  // V21.6: NOVO - Enviar para Produção
+  const enviarParaProducao = () => {
+    setFormData(prev => ({ 
+      ...prev, 
+      tipo_item: 'Matéria-Prima Produção',
+      setor_atividade_id: 'setor-fabrica-001',
+      setor_atividade_nome: 'Fábrica'
+    }));
+    setModoManual(false);
+    toast.success('🏭 Produto movido para Produção!', {
+      description: 'Lembre-se de salvar as alterações'
+    });
   };
 
   const handleSubmit = (e) => {
@@ -287,7 +298,7 @@ Caso contrário, sugira:
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 w-full h-full">
       {/* V21.1.2: TOGGLE MODO MANUAL */}
       <Alert className="border-blue-300 bg-blue-50">
         <AlertDescription>
@@ -374,7 +385,12 @@ Caso contrário, sugira:
 
             <div>
               <Label>Tipo de Item</Label>
-              <Select value={formData.tipo_item} onValueChange={(v) => setFormData(prev => ({...prev, tipo_item: v}))}>
+              <Select value={formData.tipo_item} onValueChange={(v) => {
+                setFormData(prev => ({...prev, tipo_item: v}));
+                if (v === 'Matéria-Prima Produção') {
+                  setModoManual(false);
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -386,6 +402,40 @@ Caso contrário, sugira:
               </Select>
             </div>
           </div>
+
+          {/* V21.6: NOVO BOTÃO - ENVIAR PARA PRODUÇÃO */}
+          {formData.tipo_item !== 'Matéria-Prima Produção' && (
+            <Alert className="border-orange-300 bg-gradient-to-r from-orange-50 to-amber-50">
+              <AlertDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-sm text-orange-900 mb-1">🏭 Usar este produto na Produção?</p>
+                    <p className="text-xs text-orange-700">
+                      Converte para Matéria-Prima e habilita uso em Ordens de Produção
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="bg-orange-600 text-white hover:bg-orange-700 border-orange-600"
+                    onClick={enviarParaProducao}
+                  >
+                    <Factory className="w-4 h-4 mr-2" />
+                    Enviar para Produção
+                  </Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {formData.tipo_item === 'Matéria-Prima Produção' && (
+            <Alert className="border-green-300 bg-green-50">
+              <CheckCircle2 className="w-4 h-4 text-green-700" />
+              <AlertDescription className="text-sm text-green-900">
+                ✅ <strong>Produto configurado para Produção</strong> - Disponível em Ordens de Produção e Fábrica
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* UPLOAD DE FOTO - V22.0 */}
           <div>
@@ -431,7 +481,8 @@ Caso contrário, sugira:
               setFormData(prev => ({
                 ...prev,
                 unidade_principal: 'KG',
-                unidades_secundarias: ['PÇ', 'KG', 'MT']
+                unidades_secundarias: ['PÇ', 'KG', 'MT'],
+                tipo_item: 'Matéria-Prima Produção'
               }));
             }
           }}
@@ -582,6 +633,9 @@ Caso contrário, sugira:
                   <p>• <strong>Compras:</strong> Dropdown terá opções: {formData.unidades_secundarias.join(', ')}</p>
                   <p>• <strong>Estoque:</strong> Saldo sempre em KG (conversão automática)</p>
                   <p>• <strong>NF-e:</strong> Unidade do pedido + equivalente KG</p>
+                  {formData.tipo_item === 'Matéria-Prima Produção' && (
+                    <p className="text-orange-700 font-semibold">• <strong>Produção:</strong> ✅ Disponível em OPs</p>
+                  )}
                 </div>
               </AlertDescription>
             </Alert>
@@ -592,7 +646,10 @@ Caso contrário, sugira:
       {/* SEÇÃO 5: Precificação */}
       <Card className="border-green-200 bg-green-50">
         <CardContent className="p-4 space-y-4">
-          <h3 className="font-bold text-green-900">💰 Precificação</h3>
+          <h3 className="font-bold text-green-900 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            💰 Precificação
+          </h3>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
