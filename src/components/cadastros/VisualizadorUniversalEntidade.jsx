@@ -204,15 +204,16 @@ export default function VisualizadorUniversalEntidade({
           width: 1000,
           height: 700,
           uniqueKey: `edit-${nomeEntidade}-${item.id}-${Date.now()}`,
-          zIndex: 9999999,
+          zIndex: 99999999,
           bringToFront: true,
-          forceTop: true
+          forceTop: true,
+          ensureOnTop: true
         }
       );
     }
   };
 
-  // Abrir visualização - V21.6 MELHORADO: Evita duplicação + Sempre na frente
+  // Abrir visualização - V21.6.2 CORREÇÃO: z-index alto
   const abrirVisualizacao = (item) => {
     if (componenteVisualizacao) {
       openWindow(
@@ -222,7 +223,9 @@ export default function VisualizadorUniversalEntidade({
           title: `👁️ Detalhes de ${tituloDisplay}`,
           width: 900,
           height: 600,
-          uniqueKey: `view-${nomeEntidade}-${item.id}` // V21.6: Chave única para evitar duplicação
+          uniqueKey: `view-${nomeEntidade}-${item.id}-${Date.now()}`,
+          zIndex: 99999999,
+          bringToFront: true
         }
       );
     }
