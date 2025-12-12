@@ -208,8 +208,14 @@ export default function Comercial() {
     <div className="p-6 lg:p-8 space-y-6">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Comercial e Vendas</h1>
-          <p className="text-slate-600">Gestão de clientes, pedidos, preços e vendas</p>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+            Comercial e Vendas
+            <Badge className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-3 py-1">
+              <Zap className="w-4 h-4 mr-1" />
+              Automação 10s
+            </Badge>
+          </h1>
+          <p className="text-slate-600">Gestão de clientes, pedidos, preços e vendas • Fechamento Automático</p>
         </div>
         
         {/* NOVO: Alerta de Pedidos Externos */}

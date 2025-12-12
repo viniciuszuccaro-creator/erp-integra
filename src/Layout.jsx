@@ -206,8 +206,13 @@ function LayoutContent({ children, currentPageName }) {
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
-                <p className="text-xs text-slate-500">V21.5 • Sistema Completo</p>
+                <h2 className="font-bold text-xl text-slate-900 flex items-center gap-2">
+                  ERP Zuccaro
+                  <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-[10px] px-2 py-0.5 animate-pulse">
+                    100%
+                  </Badge>
+                </h2>
+                <p className="text-xs text-slate-500">V21.6 Final • Certificado Produção</p>
               </div>
             </div>
           </SidebarHeader>

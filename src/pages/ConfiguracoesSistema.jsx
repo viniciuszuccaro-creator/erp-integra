@@ -8,9 +8,7 @@ import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_F
 import ValidacaoFinalTotalV21_6 from "@/components/sistema/VALIDACAO_FINAL_TOTAL_V21_6";
 import MasterDashboardV21_6 from "@/components/sistema/MASTER_DASHBOARD_V21_6";
 import GuiaFluxoCompletoV21_6 from "@/components/sistema/GuiaFluxoCompletoV21_6";
-import CertificacaoFinalV21_6_100 from "@/components/sistema/CERTIFICACAO_FINAL_V21_6_100";
-import SistemaV21_6_100Final from "@/components/sistema/SISTEMA_V21_6_100_FINAL";
-import ValidacaoProducaoV21_6 from "@/components/sistema/VALIDACAO_PRODUCAO_V21_6";
+import MasterCertificacaoV21_6 from "@/components/sistema/MASTER_CERTIFICACAO_V21_6";
 import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket, BookOpen, Trophy, CheckCircle2 } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
@@ -109,11 +107,7 @@ export default function ConfiguracoesSistema() {
         </TabsList>
 
         <TabsContent value="certificacao">
-          <div className="space-y-6">
-            <CertificacaoFinalV21_6_100 windowMode={false} />
-            <SistemaV21_6_100Final windowMode={false} />
-            <ValidacaoProducaoV21_6 windowMode={false} />
-          </div>
+          <MasterCertificacaoV21_6 windowMode={false} />
         </TabsContent>
 
         <TabsContent value="guia-uso">
