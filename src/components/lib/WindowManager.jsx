@@ -50,18 +50,18 @@ export function WindowProvider({ children }) {
     ));
   }, []);
 
-  // Trazer janela para frente - V21.6 MELHORADO
+  // Trazer janela para frente - V21.6.2 DEFINITIVO: SEMPRE no topo
   const bringToFront = useCallback((windowId) => {
     setActiveWindowId(windowId);
     setWindows(prev => {
-      const maxZ = Math.max(...prev.map(w => w.zIndex), 1000);
+      const maxZ = Math.max(...prev.map(w => w.zIndex), 50000);
       return prev.map(w => 
-        w.id === windowId ? { ...w, zIndex: maxZ + 10, isMinimized: false } : w
+        w.id === windowId ? { ...w, zIndex: maxZ + 1000, isMinimized: false } : w
       );
     });
   }, []);
 
-  // Abrir nova janela - V21.6 CORRIGIDO: Anti-duplicação + zIndex SEMPRE na frente
+  // Abrir nova janela - V21.6.2 DEFINITIVO: zIndex SEMPRE no topo absoluto
   const openWindow = useCallback((component, props = {}, options = {}) => {
     // V21.6: Buscar por uniqueKey para evitar duplicação
     if (options.uniqueKey) {
@@ -71,10 +71,10 @@ export function WindowProvider({ children }) {
         // Trazer janela existente para FRENTE
         setActiveWindowId(janelaExistente.id);
         setWindows(prev => {
-          const maxZ = Math.max(...prev.map(w => w.zIndex), 1000);
+          const maxZ = Math.max(...prev.map(w => w.zIndex), 50000);
           return prev.map(w => 
             w.id === janelaExistente.id 
-              ? { ...w, zIndex: maxZ + 100, isMinimized: false } // +100 para GARANTIR que fica na frente
+              ? { ...w, zIndex: maxZ + 10000, isMinimized: false }
               : w
           );
         });
@@ -89,8 +89,8 @@ export function WindowProvider({ children }) {
     const maxOffset = 400;
     const cascade = offsetBase % maxOffset;
     
-    // V21.6: zIndex SEMPRE maior que todas janelas abertas
-    const maxZ = windows.length > 0 ? Math.max(...windows.map(w => w.zIndex)) : 1000;
+    // V21.6.2: zIndex SEMPRE maior que TODAS janelas (incluindo visualizadores)
+    const maxZ = windows.length > 0 ? Math.max(...windows.map(w => w.zIndex), 50000) : 50000;
     
     const newWindow = {
       id: windowId,
@@ -103,8 +103,8 @@ export function WindowProvider({ children }) {
       height: options.height || 600,
       x: options.x !== undefined ? options.x : 100 + cascade,
       y: options.y !== undefined ? options.y : 80 + cascade,
-      zIndex: options.zIndex || (maxZ + 100), // V21.6: Aceitar zIndex customizado ou +100
-      uniqueKey: options.uniqueKey // V21.6: Salvar uniqueKey na janela
+      zIndex: options.zIndex || (maxZ + 1000),
+      uniqueKey: options.uniqueKey
     };
 
     setWindows(prev => [...prev, newWindow]);
