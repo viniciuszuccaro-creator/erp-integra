@@ -51,7 +51,7 @@ export default function Estoque() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('-created_date'),
+    queryFn: () => base44.entities.Produto.list(),
   });
 
   const { data: movimentacoes = [] } = useQuery({

@@ -199,7 +199,7 @@ export default function Cadastros() {
   // QUERIES - BLOCO 2: PRODUTOS & SERVIÇOS
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('-created_date'),
+    queryFn: () => base44.entities.Produto.list(),
   });
 
   const { data: servicos = [] } = useQuery({
@@ -1234,7 +1234,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Package className="w-5 h-5 text-purple-600" />
-                          Produtos ({produtosFiltrados.length})
+                          Produtos ({produtos.length})
                         </CardTitle>
                         <Button
                           size="sm"
@@ -1252,7 +1252,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {produtosFiltrados.slice(0, 10).map(produto => (
+                      {produtosFiltrados.map(produto => (
                         <div key={produto.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{produto.descricao}</p>

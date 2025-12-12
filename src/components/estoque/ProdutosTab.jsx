@@ -100,7 +100,8 @@ export default function ProdutosTab({ produtos, isLoading }) {
     const matchSearch = p.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                        p.codigo?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchGrupo = selectedCategoria === "todos" || p.grupo === selectedCategoria;
-    return matchSearch && matchGrupo;
+    const matchStatus = true; // Mostra todos independente do status
+    return matchSearch && matchGrupo && matchStatus;
   });
 
   const produtosBaixoEstoque = produtos.filter(p => 
