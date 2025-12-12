@@ -1104,7 +1104,21 @@ export default function Cadastros() {
                   <Card className="border-violet-200">
                     <CardHeader className="bg-violet-50 border-b border-violet-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-violet-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'ContatoB2B',
+                              tituloDisplay: 'Contatos B2B',
+                              icone: MessageCircle,
+                              camposPrincipais: ['nome', 'empresa', 'cargo', 'email', 'telefone'],
+                              componenteEdicao: ContatoB2BForm,
+                              windowMode: true
+                            },
+                            { title: '📞 Todos os Contatos B2B', width: 1400, height: 800 }
+                          )}
+                        >
                           <MessageCircle className="w-5 h-5 text-violet-600" />
                           Contatos B2B ({contatosB2B.length})
                         </CardTitle>
@@ -1161,7 +1175,21 @@ export default function Cadastros() {
                   <Card className="border-indigo-200">
                     <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-indigo-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'SegmentoCliente',
+                              tituloDisplay: 'Segmentos de Cliente',
+                              icone: TrendingUp,
+                              camposPrincipais: ['nome_segmento', 'descricao', 'criterios'],
+                              componenteEdicao: SegmentoClienteForm,
+                              windowMode: true
+                            },
+                            { title: '🎯 Todos os Segmentos', width: 1400, height: 800 }
+                          )}
+                        >
                           <TrendingUp className="w-5 h-5 text-indigo-600" />
                           Segmentos Cliente ({segmentosCliente.length})
                         </CardTitle>
@@ -1218,7 +1246,21 @@ export default function Cadastros() {
                   <Card className="border-sky-200">
                     <CardHeader className="bg-sky-50 border-b border-sky-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-sky-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'RegiaoAtendimento',
+                              tituloDisplay: 'Regiões de Atendimento',
+                              icone: MapPin,
+                              camposPrincipais: ['nome_regiao', 'tipo_regiao', 'estados_abrangidos'],
+                              componenteEdicao: RegiaoAtendimentoForm,
+                              windowMode: true
+                            },
+                            { title: '🗺️ Todas as Regiões', width: 1400, height: 800 }
+                          )}
+                        >
                           <MapPin className="w-5 h-5 text-sky-600" />
                           Regiões de Atendimento ({regioesAtendimento.length})
                         </CardTitle>
@@ -1749,7 +1791,23 @@ export default function Cadastros() {
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📦 Kits de Produto ({kits.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-purple-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'KitProduto',
+                              tituloDisplay: 'Kits de Produto',
+                              icone: Package,
+                              camposPrincipais: ['nome_kit', 'descricao', 'valor_total', 'ativo'],
+                              componenteEdicao: KitProdutoForm,
+                              windowMode: true
+                            },
+                            { title: '📦 Todos os Kits', width: 1400, height: 800 }
+                          )}
+                        >
+                          📦 Kits de Produto ({kits.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(KitProdutoForm, {
@@ -1795,7 +1853,23 @@ export default function Cadastros() {
                   <Card className="border-teal-200">
                     <CardHeader className="bg-teal-50 border-b border-teal-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📏 Unidades Medida ({unidadesMedida.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-teal-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'UnidadeMedida',
+                              tituloDisplay: 'Unidades de Medida',
+                              icone: Package,
+                              camposPrincipais: ['sigla', 'nome', 'tipo', 'conversao_base'],
+                              componenteEdicao: UnidadeMedidaForm,
+                              windowMode: true
+                            },
+                            { title: '📏 Todas as Unidades', width: 1400, height: 800 }
+                          )}
+                        >
+                          📏 Unidades Medida ({unidadesMedida.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(UnidadeMedidaForm, {
@@ -1841,7 +1915,23 @@ export default function Cadastros() {
                   <Card className="border-pink-200">
                     <CardHeader className="bg-pink-50 border-b border-pink-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🌐 Catálogo Web ({catalogoWeb.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-pink-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'CatalogoWeb',
+                              tituloDisplay: 'Catálogo Web',
+                              icone: Globe,
+                              camposPrincipais: ['nome_catalogo', 'descricao', 'url', 'ativo'],
+                              componenteEdicao: CatalogoWebForm,
+                              windowMode: true
+                            },
+                            { title: '🌐 Todos os Catálogos', width: 1400, height: 800 }
+                          )}
+                        >
+                          🌐 Catálogo Web ({catalogoWeb.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(CatalogoWebForm, {
@@ -1972,7 +2062,21 @@ export default function Cadastros() {
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-blue-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'FormaPagamento',
+                              tituloDisplay: 'Formas de Pagamento',
+                              icone: CreditCard,
+                              camposPrincipais: ['descricao', 'tipo', 'prazo_dias', 'taxa_percentual'],
+                              componenteEdicao: FormaPagamentoForm,
+                              windowMode: true
+                            },
+                            { title: '💳 Todas as Formas de Pagamento', width: 1400, height: 800 }
+                          )}
+                        >
                           <CreditCard className="w-5 h-5 text-blue-600" />
                           Formas de Pagamento ({formasPagamento.length})
                         </CardTitle>
@@ -2091,7 +2195,23 @@ export default function Cadastros() {
                   <Card className="border-indigo-200">
                     <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📋 Plano Contas ({planoContas.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-indigo-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'PlanoDeContas',
+                              tituloDisplay: 'Plano de Contas',
+                              icone: FileText,
+                              camposPrincipais: ['codigo', 'nome', 'tipo', 'nivel'],
+                              componenteEdicao: PlanoContasForm,
+                              windowMode: true
+                            },
+                            { title: '📋 Todo o Plano de Contas', width: 1400, height: 800 }
+                          )}
+                        >
+                          📋 Plano Contas ({planoContas.length})
+                        </CardTitle>
                         <Button size="sm" onClick={() => openWindow(PlanoContasForm, {
                           windowMode: true,
                           onSubmit: handleSubmitGenerico('PlanoDeContas', 'plano-contas')
@@ -2133,7 +2253,23 @@ export default function Cadastros() {
                   <Card className="border-teal-200">
                     <CardHeader className="bg-teal-50 border-b border-teal-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🎯 C. Resultado ({centrosResultado.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-teal-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'CentroResultado',
+                              tituloDisplay: 'Centros de Resultado',
+                              icone: TrendingUp,
+                              camposPrincipais: ['codigo', 'nome', 'responsavel', 'orcamento_anual'],
+                              componenteEdicao: CentroResultadoForm,
+                              windowMode: true
+                            },
+                            { title: '🎯 Todos os Centros de Resultado', width: 1400, height: 800 }
+                          )}
+                        >
+                          🎯 C. Resultado ({centrosResultado.length})
+                        </CardTitle>
                         <Button size="sm" onClick={() => openWindow(CentroResultadoForm, {
                           windowMode: true,
                           onSubmit: handleSubmitGenerico('CentroResultado', 'centros-resultado')
@@ -2175,7 +2311,23 @@ export default function Cadastros() {
                   <Card className="border-rose-200">
                     <CardHeader className="bg-rose-50 border-b border-rose-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">💳 Tipos Despesa ({tiposDespesa.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-rose-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'TipoDespesa',
+                              tituloDisplay: 'Tipos de Despesa',
+                              icone: Receipt,
+                              camposPrincipais: ['nome', 'categoria', 'descricao'],
+                              componenteEdicao: TipoDespesaForm,
+                              windowMode: true
+                            },
+                            { title: '💳 Todos os Tipos de Despesa', width: 1400, height: 800 }
+                          )}
+                        >
+                          💳 Tipos Despesa ({tiposDespesa.length})
+                        </CardTitle>
                         <Button size="sm" onClick={() => openWindow(TipoDespesaForm, {
                           windowMode: true,
                           onSubmit: handleSubmitGenerico('TipoDespesa', 'tipos-despesa')
@@ -2217,7 +2369,23 @@ export default function Cadastros() {
                   <Card className="border-emerald-200">
                     <CardHeader className="bg-emerald-50 border-b border-emerald-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">💱 Moedas/Índices ({moedasIndices.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-emerald-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'MoedaIndice',
+                              tituloDisplay: 'Moedas e Índices',
+                              icone: DollarSign,
+                              camposPrincipais: ['codigo', 'nome', 'cotacao_atual', 'data_atualizacao'],
+                              componenteEdicao: MoedaIndiceForm,
+                              windowMode: true
+                            },
+                            { title: '💱 Todas as Moedas e Índices', width: 1400, height: 800 }
+                          )}
+                        >
+                          💱 Moedas/Índices ({moedasIndices.length})
+                        </CardTitle>
                         <Button size="sm" onClick={() => openWindow(MoedaIndiceForm, {
                           windowMode: true,
                           onSubmit: handleSubmitGenerico('MoedaIndice', 'moedas-indices')
@@ -2259,7 +2427,23 @@ export default function Cadastros() {
                   <Card className="border-sky-200">
                     <CardHeader className="bg-sky-50 border-b border-sky-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🤝 Condições Comerciais ({condicoesComerciais.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-sky-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'CondicaoComercial',
+                              tituloDisplay: 'Condições Comerciais',
+                              icone: Briefcase,
+                              camposPrincipais: ['nome', 'prazo_dias', 'desconto_percentual', 'ativo'],
+                              componenteEdicao: CondicaoComercialForm,
+                              windowMode: true
+                            },
+                            { title: '🤝 Todas as Condições Comerciais', width: 1400, height: 800 }
+                          )}
+                        >
+                          🤝 Condições Comerciais ({condicoesComerciais.length})
+                        </CardTitle>
                         <Button size="sm" onClick={() => openWindow(CondicaoComercialForm, {
                           windowMode: true,
                           onSubmit: handleSubmitGenerico('CondicaoComercial', 'condicoes-comerciais')
@@ -2301,7 +2485,21 @@ export default function Cadastros() {
                   <Card className="border-red-200 lg:col-span-2">
                     <CardHeader className="bg-red-50 border-b border-red-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-red-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'TabelaFiscal',
+                              tituloDisplay: 'Tabelas Fiscais',
+                              icone: Receipt,
+                              camposPrincipais: ['nome_regra', 'regime_tributario', 'cfop', 'regra_ativa'],
+                              componenteEdicao: TabelaFiscalForm,
+                              windowMode: true
+                            },
+                            { title: '📋 Todas as Tabelas Fiscais', width: 1400, height: 800 }
+                          )}
+                        >
                           <Receipt className="w-5 h-5 text-red-600" />
                           Tabelas Fiscais ({tabelasFiscais.length})
                         </CardTitle>
@@ -2455,7 +2653,23 @@ export default function Cadastros() {
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">👤 Motoristas ({motoristas.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-blue-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Motorista',
+                              tituloDisplay: 'Motoristas',
+                              icone: User,
+                              camposPrincipais: ['nome', 'cnh_numero', 'cnh_categoria', 'telefone', 'status'],
+                              componenteEdicao: MotoristaForm,
+                              windowMode: true
+                            },
+                            { title: '👤 Todos os Motoristas', width: 1400, height: 800 }
+                          )}
+                        >
+                          👤 Motoristas ({motoristas.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(MotoristaForm, {
@@ -2506,7 +2720,23 @@ export default function Cadastros() {
                   <Card className="border-green-200">
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📦 Tipos de Frete ({tiposFrete.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-green-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'TipoFrete',
+                              tituloDisplay: 'Tipos de Frete',
+                              icone: Truck,
+                              camposPrincipais: ['nome', 'descricao', 'icone'],
+                              componenteEdicao: TipoFreteForm,
+                              windowMode: true
+                            },
+                            { title: '📦 Todos os Tipos de Frete', width: 1400, height: 800 }
+                          )}
+                        >
+                          📦 Tipos de Frete ({tiposFrete.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(TipoFreteForm, {
@@ -2554,7 +2784,23 @@ export default function Cadastros() {
                   <Card className="border-indigo-200">
                     <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📍 Locais de Estoque ({locaisEstoque.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-indigo-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'LocalEstoque',
+                              tituloDisplay: 'Locais de Estoque',
+                              icone: MapPin,
+                              camposPrincipais: ['nome', 'tipo', 'endereco', 'capacidade_m3'],
+                              componenteEdicao: LocalEstoqueForm,
+                              windowMode: true
+                            },
+                            { title: '📍 Todos os Locais de Estoque', width: 1400, height: 800 }
+                          )}
+                        >
+                          📍 Locais de Estoque ({locaisEstoque.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(LocalEstoqueForm, {
@@ -2605,7 +2851,23 @@ export default function Cadastros() {
                   <Card className="border-orange-200">
                     <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🗺️ Rotas Padrão ({rotasPadrao.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-orange-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'RotaPadrao',
+                              tituloDisplay: 'Rotas Padrão',
+                              icone: MapPin,
+                              camposPrincipais: ['nome_rota', 'origem', 'destino', 'distancia_km'],
+                              componenteEdicao: RotaPadraoForm,
+                              windowMode: true
+                            },
+                            { title: '🗺️ Todas as Rotas Padrão', width: 1400, height: 800 }
+                          )}
+                        >
+                          🗺️ Rotas Padrão ({rotasPadrao.length})
+                        </CardTitle>
                         <Button size="sm" onClick={() => openWindow(RotaPadraoForm, {
                           windowMode: true,
                           onSubmit: handleSubmitGenerico('RotaPadrao', 'rotas-padrao')
@@ -2647,7 +2909,23 @@ export default function Cadastros() {
                   <Card className="border-slate-200">
                     <CardHeader className="bg-slate-50 border-b border-slate-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">📄 Modelos Doc ({modelosDocumento.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-slate-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'ModeloDocumento',
+                              tituloDisplay: 'Modelos de Documento',
+                              icone: FileText,
+                              camposPrincipais: ['nome_modelo', 'tipo_documento', 'ativo'],
+                              componenteEdicao: ModeloDocumentoForm,
+                              windowMode: true
+                            },
+                            { title: '📄 Todos os Modelos de Documento', width: 1400, height: 800 }
+                          )}
+                        >
+                          📄 Modelos Doc ({modelosDocumento.length})
+                        </CardTitle>
                         <Button size="sm" onClick={() => openWindow(ModeloDocumentoForm, {
                           windowMode: true,
                           onSubmit: handleSubmitGenerico('ModeloDocumento', 'modelos-documento')
@@ -2773,7 +3051,23 @@ export default function Cadastros() {
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🏗️ Grupos Empresariais ({grupos.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-purple-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'GrupoEmpresarial',
+                              tituloDisplay: 'Grupos Empresariais',
+                              icone: Building2,
+                              camposPrincipais: ['nome_do_grupo', 'cnpj_holding', 'razao_social_holding'],
+                              componenteEdicao: GrupoEmpresarialForm,
+                              windowMode: true
+                            },
+                            { title: '🏗️ Todos os Grupos Empresariais', width: 1400, height: 800 }
+                          )}
+                        >
+                          🏗️ Grupos Empresariais ({grupos.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(GrupoEmpresarialForm, {
@@ -2823,7 +3117,23 @@ export default function Cadastros() {
                   <Card className="border-green-200">
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🏛️ Departamentos ({departamentos.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-green-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Departamento',
+                              tituloDisplay: 'Departamentos',
+                              icone: Building2,
+                              camposPrincipais: ['nome', 'descricao', 'responsavel'],
+                              componenteEdicao: DepartamentoForm,
+                              windowMode: true
+                            },
+                            { title: '🏛️ Todos os Departamentos', width: 1400, height: 800 }
+                          )}
+                        >
+                          🏛️ Departamentos ({departamentos.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(DepartamentoForm, {
@@ -2871,7 +3181,23 @@ export default function Cadastros() {
                   <Card className="border-cyan-200">
                     <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">💼 Cargos ({cargos.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-cyan-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Cargo',
+                              tituloDisplay: 'Cargos',
+                              icone: Briefcase,
+                              camposPrincipais: ['nome', 'descricao', 'departamento', 'salario_base'],
+                              componenteEdicao: CargoForm,
+                              windowMode: true
+                            },
+                            { title: '💼 Todos os Cargos', width: 1400, height: 800 }
+                          )}
+                        >
+                          💼 Cargos ({cargos.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(CargoForm, {
@@ -2919,7 +3245,21 @@ export default function Cadastros() {
                   <Card className="border-amber-200">
                     <CardHeader className="bg-amber-50 border-b border-amber-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-amber-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Turno',
+                              tituloDisplay: 'Turnos',
+                              icone: Clock,
+                              camposPrincipais: ['nome', 'horario_inicio', 'horario_fim', 'carga_horaria'],
+                              componenteEdicao: TurnoForm,
+                              windowMode: true
+                            },
+                            { title: '⏰ Todos os Turnos', width: 1400, height: 800 }
+                          )}
+                        >
                           <Clock className="w-4 h-4 inline mr-2 text-amber-600" />
                           Turnos ({turnos.length})
                         </CardTitle>
@@ -3036,7 +3376,23 @@ export default function Cadastros() {
                       <Card className="border-cyan-200">
                         <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="text-base">🔔 Eventos de Notificação ({eventosNotificacao.length})</CardTitle>
+                            <CardTitle 
+                              className="text-base cursor-pointer hover:text-cyan-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'EventoNotificacao',
+                                  tituloDisplay: 'Eventos de Notificação',
+                                  icone: Bell,
+                                  camposPrincipais: ['nome_evento', 'tipo_evento', 'canais', 'ativo'],
+                                  componenteEdicao: EventoNotificacaoForm,
+                                  windowMode: true
+                                },
+                                { title: '🔔 Todos os Eventos', width: 1400, height: 800 }
+                              )}
+                            >
+                              🔔 Eventos de Notificação ({eventosNotificacao.length})
+                            </CardTitle>
                             <Button
                               size="sm"
                               onClick={() => openWindow(EventoNotificacaoForm, {
@@ -3087,7 +3443,23 @@ export default function Cadastros() {
                       <Card className="border-purple-200">
                         <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="text-base">🛒 Integrações Marketplace ({configsIntegracao.length})</CardTitle>
+                            <CardTitle 
+                              className="text-base cursor-pointer hover:text-purple-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'ConfiguracaoIntegracaoMarketplace',
+                                  tituloDisplay: 'Integrações Marketplace',
+                                  icone: ShoppingCart,
+                                  camposPrincipais: ['marketplace', 'ativo', 'api_key', 'url_base'],
+                                  componenteEdicao: ConfiguracaoIntegracaoForm,
+                                  windowMode: true
+                                },
+                                { title: '🛒 Todas as Integrações', width: 1400, height: 800 }
+                              )}
+                            >
+                              🛒 Integrações Marketplace ({configsIntegracao.length})
+                            </CardTitle>
                             <Button
                               size="sm"
                               onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
@@ -3140,7 +3512,23 @@ export default function Cadastros() {
                       <Card className="border-indigo-200">
                         <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="text-base">🔗 Webhooks ({webhooks.length})</CardTitle>
+                            <CardTitle 
+                              className="text-base cursor-pointer hover:text-indigo-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'Webhook',
+                                  tituloDisplay: 'Webhooks',
+                                  icone: Link2,
+                                  camposPrincipais: ['nome_webhook', 'url', 'evento_gatilho', 'ativo'],
+                                  componenteEdicao: WebhookForm,
+                                  windowMode: true
+                                },
+                                { title: '🔗 Todos os Webhooks', width: 1400, height: 800 }
+                              )}
+                            >
+                              🔗 Webhooks ({webhooks.length})
+                            </CardTitle>
                             <Button size="sm" onClick={() => openWindow(WebhookForm, {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('Webhook', 'webhooks')
@@ -3182,7 +3570,23 @@ export default function Cadastros() {
                       <Card className="border-purple-200">
                         <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="text-base">💬 Intents ({chatbotIntents.length})</CardTitle>
+                            <CardTitle 
+                              className="text-base cursor-pointer hover:text-purple-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'ChatbotIntent',
+                                  tituloDisplay: 'Chatbot Intents',
+                                  icone: MessageCircle,
+                                  camposPrincipais: ['nome_intent', 'exemplos_frases', 'resposta_padrao', 'ativo'],
+                                  componenteEdicao: ChatbotIntentForm,
+                                  windowMode: true
+                                },
+                                { title: '💬 Todas as Intents', width: 1400, height: 800 }
+                              )}
+                            >
+                              💬 Intents ({chatbotIntents.length})
+                            </CardTitle>
                             <Button size="sm" onClick={() => openWindow(ChatbotIntentForm, {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('ChatbotIntent', 'chatbotIntents')
@@ -3224,7 +3628,23 @@ export default function Cadastros() {
                       <Card className="border-green-200">
                         <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="text-base">📱 Canais ({chatbotCanais.length})</CardTitle>
+                            <CardTitle 
+                              className="text-base cursor-pointer hover:text-green-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'ChatbotCanal',
+                                  tituloDisplay: 'Canais de Chatbot',
+                                  icone: MessageCircle,
+                                  camposPrincipais: ['nome_canal', 'tipo_canal', 'configuracao', 'ativo'],
+                                  componenteEdicao: ChatbotCanalForm,
+                                  windowMode: true
+                                },
+                                { title: '📱 Todos os Canais', width: 1400, height: 800 }
+                              )}
+                            >
+                              📱 Canais ({chatbotCanais.length})
+                            </CardTitle>
                             <Button size="sm" onClick={() => openWindow(ChatbotCanalForm, {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbotCanais')
@@ -3266,7 +3686,23 @@ export default function Cadastros() {
                       <Card className="border-blue-200">
                         <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="text-base">🔌 APIs ({apisExternas.length})</CardTitle>
+                            <CardTitle 
+                              className="text-base cursor-pointer hover:text-blue-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'ApiExterna',
+                                  tituloDisplay: 'APIs Externas',
+                                  icone: Link2,
+                                  camposPrincipais: ['nome_integracao', 'url_base', 'autenticacao', 'ativo'],
+                                  componenteEdicao: ApiExternaForm,
+                                  windowMode: true
+                                },
+                                { title: '🔌 Todas as APIs', width: 1400, height: 800 }
+                              )}
+                            >
+                              🔌 APIs ({apisExternas.length})
+                            </CardTitle>
                             <Button size="sm" onClick={() => openWindow(ApiExternaForm, {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('ApiExterna', 'apis-externas')
@@ -3308,7 +3744,23 @@ export default function Cadastros() {
                       <Card className="border-amber-200">
                         <CardHeader className="bg-amber-50 border-b border-amber-200 pb-3">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="text-base">⏰ Jobs IA ({jobsAgendados.length})</CardTitle>
+                            <CardTitle 
+                              className="text-base cursor-pointer hover:text-amber-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'JobAgendado',
+                                  tituloDisplay: 'Jobs Agendados (IA)',
+                                  icone: Clock,
+                                  camposPrincipais: ['nome_job', 'tipo_job', 'periodicidade', 'ativo', 'ultima_execucao'],
+                                  componenteEdicao: JobAgendadoForm,
+                                  windowMode: true
+                                },
+                                { title: '⏰ Todos os Jobs de IA', width: 1400, height: 800 }
+                              )}
+                            >
+                              ⏰ Jobs IA ({jobsAgendados.length})
+                            </CardTitle>
                             <Button size="sm" onClick={() => openWindow(JobAgendadoForm, {
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('JobAgendado', 'jobs-agendados')
@@ -3358,7 +3810,23 @@ export default function Cadastros() {
                         <Card className="border-blue-200">
                           <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">🌐 Portal Cliente ({parametrosPortal.length})</CardTitle>
+                              <CardTitle 
+                                className="text-base cursor-pointer hover:text-blue-700 transition-colors"
+                                onClick={() => openWindow(
+                                  VisualizadorUniversalEntidade,
+                                  {
+                                    nomeEntidade: 'ParametroPortalCliente',
+                                    tituloDisplay: 'Parâmetros Portal Cliente',
+                                    icone: Globe,
+                                    camposPrincipais: ['empresa_id', 'habilitar_portal', 'habilitar_aprovacao_orcamento'],
+                                    componenteEdicao: ParametroPortalClienteForm,
+                                    windowMode: true
+                                  },
+                                  { title: '🌐 Todos os Parâmetros Portal', width: 1400, height: 800 }
+                                )}
+                              >
+                                🌐 Portal Cliente ({parametrosPortal.length})
+                              </CardTitle>
                               <Button size="sm" onClick={() => openWindow(ParametroPortalClienteForm, {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('ParametroPortalCliente', 'parametros-portal')
@@ -3394,7 +3862,23 @@ export default function Cadastros() {
                         <Card className="border-purple-200">
                           <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">🛒 Origem Pedido ({parametrosOrigemPedido.length})</CardTitle>
+                              <CardTitle 
+                                className="text-base cursor-pointer hover:text-purple-700 transition-colors"
+                                onClick={() => openWindow(
+                                  VisualizadorUniversalEntidade,
+                                  {
+                                    nomeEntidade: 'ParametroOrigemPedido',
+                                    tituloDisplay: 'Parâmetros Origem de Pedido',
+                                    icone: ShoppingCart,
+                                    camposPrincipais: ['nome', 'canal', 'tipo_criacao', 'ativo'],
+                                    componenteEdicao: ParametroOrigemPedidoForm,
+                                    windowMode: true
+                                  },
+                                  { title: '🛒 Todos os Canais de Origem', width: 1400, height: 800 }
+                                )}
+                              >
+                                🛒 Origem Pedido ({parametrosOrigemPedido.length})
+                              </CardTitle>
                               <Button size="sm" onClick={() => openWindow(ParametroOrigemPedidoForm, {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('ParametroOrigemPedido', 'parametros-origem-pedido')
@@ -3448,7 +3932,23 @@ export default function Cadastros() {
                         <Card className="border-green-200">
                           <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">📄 Recebimento NF-e ({parametrosRecebimentoNFe.length})</CardTitle>
+                              <CardTitle 
+                                className="text-base cursor-pointer hover:text-green-700 transition-colors"
+                                onClick={() => openWindow(
+                                  VisualizadorUniversalEntidade,
+                                  {
+                                    nomeEntidade: 'ParametroRecebimentoNFe',
+                                    tituloDisplay: 'Parâmetros Recebimento NF-e',
+                                    icone: FileText,
+                                    camposPrincipais: ['empresa_id', 'criar_produto_automaticamente', 'validar_duplicidade'],
+                                    componenteEdicao: ParametroRecebimentoNFeForm,
+                                    windowMode: true
+                                  },
+                                  { title: '📄 Todos os Parâmetros NF-e', width: 1400, height: 800 }
+                                )}
+                              >
+                                📄 Recebimento NF-e ({parametrosRecebimentoNFe.length})
+                              </CardTitle>
                               <Button size="sm" onClick={() => openWindow(ParametroRecebimentoNFeForm, {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('ParametroRecebimentoNFe', 'parametros-recebimento-nfe')
@@ -3484,7 +3984,23 @@ export default function Cadastros() {
                         <Card className="border-orange-200">
                           <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">🗺️ Roteirização ({parametrosRoteirizacao.length})</CardTitle>
+                              <CardTitle 
+                                className="text-base cursor-pointer hover:text-orange-700 transition-colors"
+                                onClick={() => openWindow(
+                                  VisualizadorUniversalEntidade,
+                                  {
+                                    nomeEntidade: 'ParametroRoteirizacao',
+                                    tituloDisplay: 'Parâmetros de Roteirização',
+                                    icone: MapPin,
+                                    camposPrincipais: ['empresa_id', 'otimizar_por', 'habilitar_ia'],
+                                    componenteEdicao: ParametroRoteirizacaoForm,
+                                    windowMode: true
+                                  },
+                                  { title: '🗺️ Todos os Parâmetros de Rotas', width: 1400, height: 800 }
+                                )}
+                              >
+                                🗺️ Roteirização ({parametrosRoteirizacao.length})
+                              </CardTitle>
                               <Button size="sm" onClick={() => openWindow(ParametroRoteirizacaoForm, {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('ParametroRoteirizacao', 'parametros-roteirizacao')
@@ -3520,7 +4036,23 @@ export default function Cadastros() {
                         <Card className="border-cyan-200">
                           <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">🏦 Conciliação ({parametrosConciliacao.length})</CardTitle>
+                              <CardTitle 
+                                className="text-base cursor-pointer hover:text-cyan-700 transition-colors"
+                                onClick={() => openWindow(
+                                  VisualizadorUniversalEntidade,
+                                  {
+                                    nomeEntidade: 'ParametroConciliacaoBancaria',
+                                    tituloDisplay: 'Parâmetros Conciliação',
+                                    icone: Landmark,
+                                    camposPrincipais: ['empresa_id', 'tolerancia_valor', 'habilitar_ia'],
+                                    componenteEdicao: ParametroConciliacaoBancariaForm,
+                                    windowMode: true
+                                  },
+                                  { title: '🏦 Todos os Parâmetros Conciliação', width: 1400, height: 800 }
+                                )}
+                              >
+                                🏦 Conciliação ({parametrosConciliacao.length})
+                              </CardTitle>
                               <Button size="sm" onClick={() => openWindow(ParametroConciliacaoBancariaForm, {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('ParametroConciliacaoBancaria', 'parametros-conciliacao')
@@ -3556,7 +4088,23 @@ export default function Cadastros() {
                         <Card className="border-emerald-200">
                           <CardHeader className="bg-emerald-50 border-b border-emerald-200 pb-3">
                             <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">💰 Caixa Diário ({parametrosCaixa.length})</CardTitle>
+                              <CardTitle 
+                                className="text-base cursor-pointer hover:text-emerald-700 transition-colors"
+                                onClick={() => openWindow(
+                                  VisualizadorUniversalEntidade,
+                                  {
+                                    nomeEntidade: 'ParametroCaixaDiario',
+                                    tituloDisplay: 'Parâmetros Caixa Diário',
+                                    icone: Wallet,
+                                    camposPrincipais: ['empresa_id', 'horario_abertura', 'horario_fechamento'],
+                                    componenteEdicao: ParametroCaixaDiarioForm,
+                                    windowMode: true
+                                  },
+                                  { title: '💰 Todos os Parâmetros Caixa', width: 1400, height: 800 }
+                                )}
+                              >
+                                💰 Caixa Diário ({parametrosCaixa.length})
+                              </CardTitle>
                               <Button size="sm" onClick={() => openWindow(ParametroCaixaDiarioForm, {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('ParametroCaixaDiario', 'parametros-caixa')
