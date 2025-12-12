@@ -10,7 +10,8 @@ import { Loader2, Landmark } from "lucide-react";
  * V21.1.2 - WINDOW MODE READY
  */
 export default function BancoForm({ banco, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(banco || {
+  const dadosIniciais = banco;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_banco: '',
     codigo_banco: '',
     agencia: '',
@@ -190,7 +191,7 @@ export default function BancoForm({ banco, onSubmit, isSubmitting, windowMode = 
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {banco ? 'Atualizar Banco' : 'Criar Banco'}
+          {dadosIniciais ? 'Atualizar Banco' : 'Criar Banco'}
         </Button>
       </div>
     </form>
@@ -202,7 +203,7 @@ export default function BancoForm({ banco, onSubmit, isSubmitting, windowMode = 
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Landmark className="w-5 h-5 text-blue-600" />
-            {banco ? 'Editar Banco' : 'Novo Banco'}
+            {dadosIniciais ? 'Editar Banco' : 'Novo Banco'}
           </h2>
         </div>
         {formContent}
