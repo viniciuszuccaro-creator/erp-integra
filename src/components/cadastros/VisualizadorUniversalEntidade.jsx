@@ -107,31 +107,33 @@ export default function VisualizadorUniversalEntidade({
     a.click();
   };
 
-  // Abrir edição
+  // Abrir edição - V21.6 MELHORADO: Evita duplicação + Sempre na frente
   const abrirEdicao = (item) => {
     if (componenteEdicao) {
       openWindow(
         componenteEdicao,
-        { [nomeEntidade.toLowerCase()]: item, onSuccess: () => refetch() },
+        { [nomeEntidade.toLowerCase()]: item, id: item.id, onSuccess: () => refetch() },
         {
-          title: `Editar ${tituloDisplay}`,
+          title: `✏️ Editar ${tituloDisplay}`,
           width: 1000,
-          height: 700
+          height: 700,
+          uniqueKey: `edit-${nomeEntidade}-${item.id}` // V21.6: Chave única para evitar duplicação
         }
       );
     }
   };
 
-  // Abrir visualização
+  // Abrir visualização - V21.6 MELHORADO: Evita duplicação + Sempre na frente
   const abrirVisualizacao = (item) => {
     if (componenteVisualizacao) {
       openWindow(
         componenteVisualizacao,
-        { [nomeEntidade.toLowerCase()]: item },
+        { [nomeEntidade.toLowerCase()]: item, id: item.id },
         {
-          title: `Detalhes de ${tituloDisplay}`,
+          title: `👁️ Detalhes de ${tituloDisplay}`,
           width: 900,
-          height: 600
+          height: 600,
+          uniqueKey: `view-${nomeEntidade}-${item.id}` // V21.6: Chave única para evitar duplicação
         }
       );
     }
