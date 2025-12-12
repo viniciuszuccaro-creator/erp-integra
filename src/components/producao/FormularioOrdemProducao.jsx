@@ -5,11 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Save, Zap, Package, AlertTriangle } from "lucide-react";
+import { Save, Zap, Package, AlertTriangle, Factory, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import SeletorProdutosProducao from "./SeletorProdutosProducao";
 
+/**
+ * V21.6 - FORMULÁRIO DE ORDEM DE PRODUÇÃO COMPLETO
+ * ✅ Integração com seletor de produtos de produção
+ * ✅ Validação de estoque de matéria-prima
+ * ✅ IA para sugestões de produção
+ * ✅ Alerta de produtos insuficientes
+ */
 export default function FormularioOrdemProducao({ op, onClose }) {
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState(op || {
@@ -21,7 +31,11 @@ export default function FormularioOrdemProducao({ op, onClose }) {
     prioridade: "Normal",
     status: "Planejada",
     observacoes: "",
+    itens: []
   });
+
+  const [seletorProdutoAberto, setSeletorProdutoAberto] = useState(false);
+  const [produtosInsuficientes, setProdutosInsuficientes] = useState([]);
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ["pedidos"],
@@ -31,6 +45,17 @@ export default function FormularioOrdemProducao({ op, onClose }) {
   const { data: empresas = [] } = useQuery({
     queryKey: ["empresas"],
     queryFn: () => base44.entities.Empresa.list(),
+  });
+
+  const { data: produtosProducao = [] } = useQuery({
+    queryKey: ['produtos-producao'],
+    queryFn: async () => {
+      const all = await base44.entities.Produto.list();
+      return all.filter(p => 
+        p.tipo_item === 'Matéria-Prima Produção' && 
+        p.status === 'Ativo'
+      );
+    }
   });
 
   const saveMutation = useMutation({
@@ -99,20 +124,93 @@ Retorne sugestões de:
     }
   };
 
+  // V21.6: Validar estoque de matéria-prima
+  const validarEstoque = () => {
+    const insuficientes = [];
+    
+    (formData.itens || []).forEach(item => {
+      const produto = produtosProducao.find(p => p.id === item.produto_id);
+      if (produto) {
+        const estoqueDisponivel = produto.estoque_disponivel || produto.estoque_atual || 0;
+        if (estoqueDisponivel < item.quantidade) {
+          insuficientes.push({
+            produto: produto.descricao,
+            necessario: item.quantidade,
+            disponivel: estoqueDisponivel,
+            faltante: item.quantidade - estoqueDisponivel
+          });
+        }
+      }
+    });
+
+    setProdutosInsuficientes(insuficientes);
+    return insuficientes.length === 0;
+  };
+
+  const adicionarProduto = (produto) => {
+    const itemExistente = formData.itens?.find(i => i.produto_id === produto.id);
+    
+    if (itemExistente) {
+      toast.info("Produto já adicionado. Ajuste a quantidade.");
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      itens: [
+        ...(prev.itens || []),
+        {
+          produto_id: produto.id,
+          descricao: produto.descricao,
+          codigo: produto.codigo,
+          quantidade: 0,
+          unidade: produto.unidade_principal,
+          peso_teorico_kg_m: produto.peso_teorico_kg_m || 0,
+          estoque_disponivel: produto.estoque_disponivel || produto.estoque_atual || 0
+        }
+      ]
+    }));
+    
+    setSeletorProdutoAberto(false);
+    toast.success(`✅ ${produto.descricao} adicionado`);
+  };
+
+  const atualizarQuantidadeItem = (index, quantidade) => {
+    const novosItens = [...(formData.itens || [])];
+    novosItens[index].quantidade = parseFloat(quantidade) || 0;
+    setFormData(prev => ({ ...prev, itens: novosItens }));
+  };
+
+  const removerItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      itens: (prev.itens || []).filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (!validarEstoque()) {
+      toast.error("❌ Estoque insuficiente de matéria-prima!");
+      return;
+    }
+    
     saveMutation.mutate(formData);
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-white w-full">
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
         <div className="flex-1 overflow-auto p-6">
           <Tabs defaultValue="geral" className="h-full">
             <TabsList>
               <TabsTrigger value="geral">Geral</TabsTrigger>
+              <TabsTrigger value="materiaprima">
+                <Factory className="w-4 h-4 mr-2" />
+                Matéria-Prima
+              </TabsTrigger>
               <TabsTrigger value="engenharia">Engenharia</TabsTrigger>
-              <TabsTrigger value="materiaprima">Matéria-Prima</TabsTrigger>
               <TabsTrigger value="apontamentos">Apontamentos</TabsTrigger>
             </TabsList>
 
@@ -280,6 +378,184 @@ Retorne sugestões de:
               )}
             </TabsContent>
 
+            {/* V21.6: NOVA ABA - Matéria-Prima */}
+            <TabsContent value="materiaprima" className="space-y-4 mt-4">
+              <Alert className="border-orange-300 bg-orange-50">
+                <Factory className="w-5 h-5 text-orange-600" />
+                <AlertDescription>
+                  <p className="font-semibold text-orange-900 mb-1">🏭 Seleção de Matéria-Prima</p>
+                  <p className="text-sm text-orange-700">
+                    Apenas produtos configurados como "Matéria-Prima Produção" aparecem aqui
+                  </p>
+                </AlertDescription>
+              </Alert>
+
+              {/* Estatísticas */}
+              <div className="grid grid-cols-3 gap-4">
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-blue-700 mb-1">Produtos Disponíveis</p>
+                    <p className="text-2xl font-bold text-blue-900">{produtosProducao.length}</p>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-purple-200 bg-purple-50">
+                  <CardContent className="p-4">
+                    <p className="text-xs text-purple-700 mb-1">Itens na OP</p>
+                    <p className="text-2xl font-bold text-purple-900">{formData.itens?.length || 0}</p>
+                  </CardContent>
+                </Card>
+
+                <Card className={`${
+                  produtosInsuficientes.length > 0 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-green-300 bg-green-50'
+                }`}>
+                  <CardContent className="p-4">
+                    <p className={`text-xs mb-1 ${
+                      produtosInsuficientes.length > 0 ? 'text-red-700' : 'text-green-700'
+                    }`}>
+                      Status Estoque
+                    </p>
+                    <p className={`text-2xl font-bold ${
+                      produtosInsuficientes.length > 0 ? 'text-red-900' : 'text-green-900'
+                    }`}>
+                      {produtosInsuficientes.length > 0 ? '⚠️ Crítico' : '✅ OK'}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Alertas de Estoque Insuficiente */}
+              {produtosInsuficientes.length > 0 && (
+                <Alert className="border-red-300 bg-red-50">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <AlertDescription>
+                    <p className="font-semibold text-red-900 mb-2">
+                      ⚠️ {produtosInsuficientes.length} produto(s) com estoque insuficiente:
+                    </p>
+                    <div className="space-y-2">
+                      {produtosInsuficientes.map((item, idx) => (
+                        <div key={idx} className="text-sm text-red-800 p-2 bg-white rounded border border-red-200">
+                          <p className="font-semibold">{item.produto}</p>
+                          <div className="flex gap-4 text-xs mt-1">
+                            <span>Necessário: {item.necessario}</span>
+                            <span>Disponível: {item.disponivel}</span>
+                            <span className="text-red-600 font-bold">Faltam: {item.faltante.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Botão Adicionar Produto */}
+              <Button
+                type="button"
+                onClick={() => setSeletorProdutoAberto(true)}
+                variant="outline"
+                className="w-full border-dashed border-2 border-blue-300 hover:bg-blue-50"
+              >
+                <Package className="w-4 h-4 mr-2" />
+                Adicionar Matéria-Prima
+              </Button>
+
+              {/* Lista de Produtos Adicionados */}
+              {formData.itens && formData.itens.length > 0 && (
+                <Card className="border-slate-200">
+                  <CardHeader className="bg-slate-50 border-b">
+                    <CardTitle className="text-base">
+                      Matéria-Prima Selecionada ({formData.itens.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="divide-y">
+                      {formData.itens.map((item, idx) => {
+                        const estoqueInsuficiente = item.quantidade > item.estoque_disponivel;
+                        
+                        return (
+                          <div 
+                            key={idx} 
+                            className={`p-4 ${estoqueInsuficiente ? 'bg-red-50' : 'hover:bg-slate-50'}`}
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="flex-1">
+                                <p className="font-semibold text-slate-900">{item.descricao}</p>
+                                <p className="text-xs text-slate-600">SKU: {item.codigo}</p>
+                              </div>
+
+                              <div className="w-32">
+                                <Label className="text-xs">Quantidade</Label>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={item.quantidade}
+                                  onChange={(e) => atualizarQuantidadeItem(idx, e.target.value)}
+                                  className="text-sm"
+                                />
+                              </div>
+
+                              <div className="text-right min-w-[100px]">
+                                <p className="text-xs text-slate-600">Disponível</p>
+                                <p className={`font-bold ${
+                                  estoqueInsuficiente ? 'text-red-600' : 'text-green-600'
+                                }`}>
+                                  {item.estoque_disponivel} {item.unidade}
+                                </p>
+                              </div>
+
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removerItem(idx)}
+                                className="text-red-600 hover:bg-red-50"
+                              >
+                                ✕
+                              </Button>
+                            </div>
+
+                            {estoqueInsuficiente && (
+                              <Alert className="border-red-300 bg-red-100 mt-2">
+                                <AlertDescription className="text-xs text-red-800">
+                                  ⚠️ Estoque insuficiente! Faltam: {(item.quantidade - item.estoque_disponivel).toFixed(2)} {item.unidade}
+                                </AlertDescription>
+                              </Alert>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Seletor de Produtos (Modal/Dialog) */}
+              {seletorProdutoAberto && (
+                <Card className="border-blue-300 bg-blue-50">
+                  <CardHeader className="border-b bg-blue-100">
+                    <div className="flex justify-between items-center">
+                      <CardTitle className="text-base">Selecionar Produtos de Produção</CardTitle>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSeletorProdutoAberto(false)}
+                      >
+                        Fechar
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <SeletorProdutosProducao 
+                      onSelecionarProduto={adicionarProduto}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
             <TabsContent value="engenharia">
               <Card>
                 <CardHeader>
@@ -288,19 +564,6 @@ Retorne sugestões de:
                 <CardContent>
                   <p className="text-sm text-slate-600">
                     Detalhamento de engenharia, mapas de corte e sequenciamento serão gerenciados aqui.
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="materiaprima">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Matéria-Prima Prevista vs Consumida</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600">
-                    Controle de matéria-prima, lotes, certificados e rastreabilidade.
                   </p>
                 </CardContent>
               </Card>
@@ -325,7 +588,11 @@ Retorne sugestões de:
           <Button type="button" variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={saveMutation.isPending}>
+          <Button 
+            type="submit" 
+            disabled={saveMutation.isPending}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
             <Save className="w-4 h-4 mr-2" />
             {saveMutation.isPending ? "Salvando..." : "Salvar OP"}
           </Button>
