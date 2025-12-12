@@ -765,7 +765,9 @@ export default function Cadastros() {
                               title: `Editar Cliente: ${cliente.nome || cliente.razao_social}`,
                               width: 1100,
                               height: 650,
-                              uniqueKey: `edit-Cliente-${cliente.id}`
+                              uniqueKey: `edit-Cliente-${cliente.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -839,7 +841,9 @@ export default function Cadastros() {
                               title: `Editar Fornecedor: ${fornecedor.nome}`,
                               width: 1100,
                               height: 650,
-                              uniqueKey: `edit-Fornecedor-${fornecedor.id}`
+                              uniqueKey: `edit-Fornecedor-${fornecedor.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -915,7 +919,9 @@ export default function Cadastros() {
                                 title: `🚛 Editar: ${transp.razao_social || transp.nome_fantasia}`,
                                 width: 1100,
                                 height: 650,
-                                uniqueKey: `edit-Transportadora-${transp.id}`
+                                uniqueKey: `edit-Transportadora-${transp.id}-${Date.now()}`,
+                                zIndex: 999999,
+                                bringToFront: true
                               })}
                               disabled={!hasPermission('cadastros', 'editar')}
                             >
@@ -992,7 +998,9 @@ export default function Cadastros() {
                                 title: `👤 Editar: ${colab.nome_completo}`,
                                 width: 1100,
                                 height: 650,
-                                uniqueKey: `edit-Colaborador-${colab.id}`
+                                uniqueKey: `edit-Colaborador-${colab.id}-${Date.now()}`,
+                                zIndex: 999999,
+                                bringToFront: true
                               })}
                               disabled={!hasPermission('rh', 'editar')}
                             >
@@ -1099,7 +1107,9 @@ export default function Cadastros() {
                                 title: `💼 ${rep.nome}`,
                                 width: 1100,
                                 height: 650,
-                                uniqueKey: `edit-Representante-${rep.id}`
+                                uniqueKey: `edit-Representante-${rep.id}-${Date.now()}`,
+                                zIndex: 999999,
+                                bringToFront: true
                               })}
                               disabled={!hasPermission('cadastros', 'editar')}
                             >
@@ -1171,7 +1181,10 @@ export default function Cadastros() {
                             }, {
                               title: `📞 Editar: ${contato.nome}`,
                               width: 800,
-                              height: 600
+                              height: 600,
+                              uniqueKey: `edit-ContatoB2B-${contato.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1243,7 +1256,9 @@ export default function Cadastros() {
                               title: `🎯 Editar: ${seg.nome_segmento}`,
                               width: 800,
                               height: 600,
-                              uniqueKey: `edit-SegmentoCliente-${seg.id}`
+                              uniqueKey: `edit-SegmentoCliente-${seg.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1326,7 +1341,9 @@ export default function Cadastros() {
                               title: `🗺️ Editar: ${regiao.nome_regiao}`,
                               width: 1000,
                               height: 700,
-                              uniqueKey: `edit-RegiaoAtendimento-${regiao.id}`
+                              uniqueKey: `edit-RegiaoAtendimento-${regiao.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1432,7 +1449,9 @@ export default function Cadastros() {
                               title: `Editar Produto: ${produto.descricao}`,
                               width: 1200,
                               height: 700,
-                              uniqueKey: `edit-Produto-${produto.id}`
+                              uniqueKey: `edit-Produto-${produto.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('estoque', 'editar')}
                           >
@@ -1506,7 +1525,9 @@ export default function Cadastros() {
                               title: `🏭 Editar: ${setor.nome}`,
                               width: 800,
                               height: 550,
-                              uniqueKey: `edit-SetorAtividade-${setor.id}`
+                              uniqueKey: `edit-SetorAtividade-${setor.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1578,7 +1599,9 @@ export default function Cadastros() {
                               title: `📦 Editar: ${grupo.nome_grupo}`,
                               width: 800,
                               height: 550,
-                              uniqueKey: `edit-GrupoProduto-${grupo.id}`
+                              uniqueKey: `edit-GrupoProduto-${grupo.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1650,7 +1673,9 @@ export default function Cadastros() {
                               title: `🏆 Editar: ${marca.nome_marca}`,
                               width: 800,
                               height: 550,
-                              uniqueKey: `edit-Marca-${marca.id}`
+                              uniqueKey: `edit-Marca-${marca.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1718,7 +1743,9 @@ export default function Cadastros() {
                                   title: `Editar Tabela: ${tabela.nome}`,
                                   width: 1200,
                                   height: 700,
-                                  uniqueKey: `edit-TabelaPreco-${tabela.id}`
+                                  uniqueKey: `edit-TabelaPreco-${tabela.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
                                 })}
                                 disabled={!hasPermission('comercial', 'editar')}
                               >
@@ -1803,7 +1830,9 @@ export default function Cadastros() {
                               title: `✨ Editar: ${servico.nome}`,
                               width: 800,
                               height: 600,
-                              uniqueKey: `edit-Servico-${servico.id}`
+                              uniqueKey: `edit-Servico-${servico.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1869,7 +1898,9 @@ export default function Cadastros() {
                               title: `📦 Editar: ${kit.nome_kit}`,
                               width: 900,
                               height: 650,
-                              uniqueKey: `edit-KitProduto-${kit.id}`
+                              uniqueKey: `edit-KitProduto-${kit.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1932,7 +1963,9 @@ export default function Cadastros() {
                               title: `📏 Editar: ${un.sigla} - ${un.nome}`,
                               width: 700,
                               height: 500,
-                              uniqueKey: `edit-UnidadeMedida-${un.id}`
+                              uniqueKey: `edit-UnidadeMedida-${un.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1995,7 +2028,9 @@ export default function Cadastros() {
                               title: `🌐 Editar: ${cat.nome_catalogo}`,
                               width: 800,
                               height: 550,
-                              uniqueKey: `edit-CatalogoWeb-${cat.id}`
+                              uniqueKey: `edit-CatalogoWeb-${cat.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -2081,7 +2116,9 @@ export default function Cadastros() {
                               title: `🏦 Editar: ${banco.nome_banco}`,
                               width: 900,
                               height: 650,
-                              uniqueKey: `edit-Banco-${banco.id}`
+                              uniqueKey: `edit-Banco-${banco.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
@@ -2147,7 +2184,9 @@ export default function Cadastros() {
                               title: `💳 Editar: ${forma.descricao || forma.tipo}`,
                               width: 800,
                               height: 600,
-                              uniqueKey: `edit-FormaPagamento-${forma.id}`
+                              uniqueKey: `edit-FormaPagamento-${forma.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
@@ -2216,7 +2255,9 @@ export default function Cadastros() {
                               title: `📊 Editar: ${centro.codigo} - ${centro.descricao}`,
                               width: 800,
                               height: 550,
-                              uniqueKey: `edit-CentroCusto-${centro.id}`
+                              uniqueKey: `edit-CentroCusto-${centro.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
@@ -2275,7 +2316,9 @@ export default function Cadastros() {
                               title: `📋 Editar: ${conta.codigo} - ${conta.nome}`,
                               width: 800,
                               height: 600,
-                              uniqueKey: `edit-PlanoDeContas-${conta.id}`
+                              uniqueKey: `edit-PlanoDeContas-${conta.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
@@ -2334,7 +2377,9 @@ export default function Cadastros() {
                               title: `🎯 Editar: ${cr.codigo} - ${cr.nome}`,
                               width: 700,
                               height: 500,
-                              uniqueKey: `edit-CentroResultado-${cr.id}`
+                              uniqueKey: `edit-CentroResultado-${cr.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
@@ -2393,7 +2438,9 @@ export default function Cadastros() {
                               title: `💳 Editar: ${td.nome}`,
                               width: 700,
                               height: 500,
-                              uniqueKey: `edit-TipoDespesa-${td.id}`
+                              uniqueKey: `edit-TipoDespesa-${td.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
@@ -2452,7 +2499,9 @@ export default function Cadastros() {
                               title: `💱 Editar: ${m.codigo} - ${m.nome}`,
                               width: 700,
                               height: 500,
-                              uniqueKey: `edit-MoedaIndice-${m.id}`
+                              uniqueKey: `edit-MoedaIndice-${m.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('financeiro', 'editar')}
                           >
@@ -2511,7 +2560,9 @@ export default function Cadastros() {
                               title: `🤝 Editar: ${cc.nome}`,
                               width: 800,
                               height: 600,
-                              uniqueKey: `edit-CondicaoComercial-${cc.id}`
+                              uniqueKey: `edit-CondicaoComercial-${cc.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('comercial', 'editar')}
                           >
@@ -2579,7 +2630,9 @@ export default function Cadastros() {
                                   title: `📋 Editar: ${tabela.nome_regra}`,
                                   width: 1100,
                                   height: 700,
-                                  uniqueKey: `edit-TabelaFiscal-${tabela.id}`
+                                  uniqueKey: `edit-TabelaFiscal-${tabela.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
                                 })}
                                 disabled={!hasPermission('fiscal', 'editar')}
                               >
@@ -2681,7 +2734,9 @@ export default function Cadastros() {
                               title: `🚚 Editar: ${veiculo.placa}`,
                               width: 900,
                               height: 600,
-                              uniqueKey: `edit-Veiculo-${veiculo.id}`
+                              uniqueKey: `edit-Veiculo-${veiculo.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('expedicao', 'editar')}
                           >
@@ -2749,7 +2804,9 @@ export default function Cadastros() {
                               title: `👤 Editar: ${motorista.nome}`,
                               width: 800,
                               height: 600,
-                              uniqueKey: `edit-Motorista-${motorista.id}`
+                              uniqueKey: `edit-Motorista-${motorista.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('expedicao', 'editar')}
                           >
@@ -2814,7 +2871,9 @@ export default function Cadastros() {
                               title: `📦 Editar: ${tipo.nome}`,
                               width: 800,
                               height: 550,
-                              uniqueKey: `edit-TipoFrete-${tipo.id}`
+                              uniqueKey: `edit-TipoFrete-${tipo.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('expedicao', 'editar')}
                           >
@@ -2882,7 +2941,9 @@ export default function Cadastros() {
                               title: `📍 Editar: ${local.nome}`,
                               width: 900,
                               height: 650,
-                              uniqueKey: `edit-LocalEstoque-${local.id}`
+                              uniqueKey: `edit-LocalEstoque-${local.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('estoque', 'editar')}
                           >
@@ -2941,7 +3002,9 @@ export default function Cadastros() {
                               title: `🗺️ Editar: ${rota.nome_rota}`,
                               width: 800,
                               height: 550,
-                              uniqueKey: `edit-RotaPadrao-${rota.id}`
+                              uniqueKey: `edit-RotaPadrao-${rota.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('expedicao', 'editar')}
                           >
@@ -3000,7 +3063,9 @@ export default function Cadastros() {
                               title: `📄 Editar: ${md.nome_modelo}`,
                               width: 800,
                               height: 600,
-                              uniqueKey: `edit-ModeloDocumento-${md.id}`
+                              uniqueKey: `edit-ModeloDocumento-${md.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('expedicao', 'editar')}
                           >
@@ -3085,7 +3150,9 @@ export default function Cadastros() {
                               title: `🏢 Editar: ${empresa.nome_fantasia || empresa.razao_social}`,
                               width: 1000,
                               height: 700,
-                              uniqueKey: `edit-Empresa-${empresa.id}`
+                              uniqueKey: `edit-Empresa-${empresa.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -3150,7 +3217,9 @@ export default function Cadastros() {
                               title: `🏗️ Editar: ${grupo.nome_do_grupo || 'Grupo'}`,
                               width: 900,
                               height: 650,
-                              uniqueKey: `edit-GrupoEmpresarial-${grupo.id}`
+                              uniqueKey: `edit-GrupoEmpresarial-${grupo.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -3217,7 +3286,9 @@ export default function Cadastros() {
                               title: `🏛️ Editar: ${dept.nome}`,
                               width: 700,
                               height: 500,
-                              uniqueKey: `edit-Departamento-${dept.id}`
+                              uniqueKey: `edit-Departamento-${dept.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('rh', 'editar')}
                           >
@@ -3282,7 +3353,9 @@ export default function Cadastros() {
                               title: `💼 Editar: ${cargo.nome}`,
                               width: 800,
                               height: 600,
-                              uniqueKey: `edit-Cargo-${cargo.id}`
+                              uniqueKey: `edit-Cargo-${cargo.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('rh', 'editar')}
                           >
@@ -3348,7 +3421,9 @@ export default function Cadastros() {
                               title: `⏰ Editar: ${turno.nome}`,
                               width: 800,
                               height: 550,
-                              uniqueKey: `edit-Turno-${turno.id}`
+                              uniqueKey: `edit-Turno-${turno.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
                             })}
                             disabled={!hasPermission('rh', 'editar')}
                           >
@@ -3482,7 +3557,9 @@ export default function Cadastros() {
                                   title: `🔔 Editar: ${evento.nome_evento}`,
                                   width: 1000,
                                   height: 700,
-                                  uniqueKey: `edit-EventoNotificacao-${evento.id}`
+                                  uniqueKey: `edit-EventoNotificacao-${evento.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
                                 })}
                                 disabled={!hasPermission('cadastros', 'editar')}
                               >
@@ -3552,7 +3629,9 @@ export default function Cadastros() {
                                   title: `🔗 Editar: ${config.marketplace}`,
                                   width: 1100,
                                   height: 750,
-                                  uniqueKey: `edit-ConfiguracaoIntegracaoMarketplace-${config.id}`
+                                  uniqueKey: `edit-ConfiguracaoIntegracaoMarketplace-${config.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
                                 })}
                                 disabled={!hasPermission('cadastros', 'editar')}
                               >
@@ -3611,7 +3690,9 @@ export default function Cadastros() {
                                   title: `🔗 Editar: ${wh.nome_webhook}`,
                                   width: 900,
                                   height: 600,
-                                  uniqueKey: `edit-Webhook-${wh.id}`
+                                  uniqueKey: `edit-Webhook-${wh.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
                                 })}
                                 disabled={!hasPermission('cadastros', 'editar')}
                               >
@@ -3670,7 +3751,9 @@ export default function Cadastros() {
                                   title: `💬 Editar: ${intent.nome_intent}`,
                                   width: 900,
                                   height: 650,
-                                  uniqueKey: `edit-ChatbotIntent-${intent.id}`
+                                  uniqueKey: `edit-ChatbotIntent-${intent.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
                                 })}
                                 disabled={!hasPermission('cadastros', 'editar')}
                               >
@@ -3729,7 +3812,9 @@ export default function Cadastros() {
                                   title: `📱 Editar: ${canal.nome_canal}`,
                                   width: 800,
                                   height: 550,
-                                  uniqueKey: `edit-ChatbotCanal-${canal.id}`
+                                  uniqueKey: `edit-ChatbotCanal-${canal.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
                                 })}
                                 disabled={!hasPermission('cadastros', 'editar')}
                               >
@@ -3788,7 +3873,9 @@ export default function Cadastros() {
                                   title: `🔌 Editar: ${api.nome_integracao}`,
                                   width: 900,
                                   height: 700,
-                                  uniqueKey: `edit-ApiExterna-${api.id}`
+                                  uniqueKey: `edit-ApiExterna-${api.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
                                 })}
                                 disabled={!hasPermission('cadastros', 'editar')}
                               >
@@ -3847,7 +3934,9 @@ export default function Cadastros() {
                                   title: `⏰ Editar: ${job.nome_job}`,
                                   width: 900,
                                   height: 650,
-                                  uniqueKey: `edit-JobAgendado-${job.id}`
+                                  uniqueKey: `edit-JobAgendado-${job.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
                                 })}
                                 disabled={!hasPermission('cadastros', 'editar')}
                               >
@@ -3912,7 +4001,9 @@ export default function Cadastros() {
                                     title: '🌐 Editar Parâmetro Portal', 
                                     width: 900, 
                                     height: 650,
-                                    uniqueKey: `edit-ParametroPortalCliente-${p.id}`
+                                    uniqueKey: `edit-ParametroPortalCliente-${p.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
                                   })}
                                   disabled={!hasPermission('cadastros', 'editar')}
                                 >
@@ -3982,7 +4073,9 @@ export default function Cadastros() {
                                     title: `🛒 Editar: ${p.nome}`, 
                                     width: 900, 
                                     height: 650,
-                                    uniqueKey: `edit-ParametroOrigemPedido-${p.id}`
+                                    uniqueKey: `edit-ParametroOrigemPedido-${p.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
                                   })}
                                   disabled={!hasPermission('cadastros', 'editar')}
                                 >
@@ -4044,7 +4137,9 @@ export default function Cadastros() {
                                     title: '📄 Editar Parâmetro NFe', 
                                     width: 900, 
                                     height: 650,
-                                    uniqueKey: `edit-ParametroRecebimentoNFe-${p.id}`
+                                    uniqueKey: `edit-ParametroRecebimentoNFe-${p.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
                                   })}
                                   disabled={!hasPermission('cadastros', 'editar')}
                                 >
@@ -4101,7 +4196,9 @@ export default function Cadastros() {
                                     title: '🗺️ Editar Parâmetro Rotas', 
                                     width: 800, 
                                     height: 600,
-                                    uniqueKey: `edit-ParametroRoteirizacao-${p.id}`
+                                    uniqueKey: `edit-ParametroRoteirizacao-${p.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
                                   })}
                                   disabled={!hasPermission('cadastros', 'editar')}
                                 >
@@ -4158,7 +4255,9 @@ export default function Cadastros() {
                                     title: '🏦 Editar Parâmetro Conciliação', 
                                     width: 900, 
                                     height: 650,
-                                    uniqueKey: `edit-ParametroConciliacaoBancaria-${p.id}`
+                                    uniqueKey: `edit-ParametroConciliacaoBancaria-${p.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
                                   })}
                                   disabled={!hasPermission('cadastros', 'editar')}
                                 >
@@ -4215,7 +4314,9 @@ export default function Cadastros() {
                                     title: '💰 Editar Parâmetro Caixa', 
                                     width: 800, 
                                     height: 600,
-                                    uniqueKey: `edit-ParametroCaixaDiario-${p.id}`
+                                    uniqueKey: `edit-ParametroCaixaDiario-${p.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
                                   })}
                                   disabled={!hasPermission('cadastros', 'editar')}
                                 >
