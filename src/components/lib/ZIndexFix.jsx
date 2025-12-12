@@ -13,31 +13,28 @@ import { useEffect } from 'react';
  */
 export function useZIndexGuard() {
   useEffect(() => {
-    // Monitorar e corrigir z-index em tempo real
+    // Monitorar e corrigir z-index em tempo real - V21.6.2
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'childList') {
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === 1) { // Element node
-              // Corrigir SelectContent
+              // Corrigir Radix components - ABAIXO de janelas (999999)
               if (node.hasAttribute('data-radix-select-content')) {
-                node.style.zIndex = '99999';
+                node.style.zIndex = '999999';
               }
               
-              // Corrigir DropdownMenuContent
               if (node.hasAttribute('data-radix-dropdown-menu-content')) {
-                node.style.zIndex = '99999';
+                node.style.zIndex = '999999';
               }
               
-              // Corrigir PopoverContent
               if (node.hasAttribute('data-radix-popover-content')) {
-                node.style.zIndex = '99999';
+                node.style.zIndex = '999999';
               }
 
-              // Corrigir CommandDialog
               if (node.hasAttribute('data-radix-dialog-content') && 
                   node.closest('[cmdk-root]')) {
-                node.style.zIndex = '99999';
+                node.style.zIndex = '999999';
               }
 
               // Buscar recursivamente em filhos
@@ -46,7 +43,7 @@ export function useZIndexGuard() {
               const popovers = node.querySelectorAll('[data-radix-popover-content]');
               
               [...selects, ...dropdowns, ...popovers].forEach(el => {
-                el.style.zIndex = '99999';
+                el.style.zIndex = '999999';
               });
             }
           });
@@ -67,7 +64,7 @@ export function useZIndexGuard() {
       const popovers = document.querySelectorAll('[data-radix-popover-content]');
       
       [...selects, ...dropdowns, ...popovers].forEach(el => {
-        el.style.zIndex = '99999';
+        el.style.zIndex = '999999';
       });
     };
 
@@ -100,43 +97,48 @@ export function injectGlobalZIndexStyles() {
   const style = document.createElement('style');
   style.id = styleId;
   style.innerHTML = `
-    /* 🔧 GARANTIA GLOBAL DE Z-INDEX V21.5 */
+    /* 🔧 GARANTIA GLOBAL DE Z-INDEX V21.6.2 - HIERARQUIA CORRETA */
     
-    /* Select Content - SEMPRE na frente */
+    /* Janelas multitarefa - PRIORIDADE MÁXIMA */
+    [class*="motion-div"] {
+      position: relative;
+    }
+    
+    /* Select Content - abaixo de janelas */
     [data-radix-select-content] {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
     }
     
-    /* Dropdown Menu Content - SEMPRE na frente */
+    /* Dropdown Menu Content - abaixo de janelas */
     [data-radix-dropdown-menu-content] {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
     }
     
-    /* Popover Content - SEMPRE na frente */
+    /* Popover Content - abaixo de janelas */
     [data-radix-popover-content] {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
     }
     
-    /* Command Dialog - SEMPRE na frente */
+    /* Command Dialog - abaixo de janelas */
     [data-radix-dialog-content][cmdk-dialog-content] {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
     }
     
-    /* Tooltip Content - SEMPRE na frente */
+    /* Tooltip Content - abaixo de janelas */
     [data-radix-tooltip-content] {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
     }
     
-    /* Context Menu - SEMPRE na frente */
+    /* Context Menu - abaixo de janelas */
     [data-radix-context-menu-content] {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
     }
     
-    /* Garantia adicional para portals */
+    /* Garantia adicional para portals - mas abaixo de janelas */
     [data-radix-portal] > [role="dialog"],
     [data-radix-portal] > [role="menu"],
     [data-radix-portal] > [role="listbox"] {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
     }
   `;
   

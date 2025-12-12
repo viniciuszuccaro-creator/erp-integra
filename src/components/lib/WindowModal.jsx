@@ -112,8 +112,9 @@ export default function WindowModal({ window, children }) {
       ref={windowRef}
       style={{
         ...windowStyle,
-        zIndex: window.zIndex,
-        pointerEvents: 'auto' // GARANTIR eventos de mouse
+        zIndex: window.zIndex || 99999999,
+        pointerEvents: 'auto',
+        position: 'fixed'
       }}
       className={`bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden select-none ${
         isDragging ? 'cursor-grabbing shadow-blue-500/50 transition-none' : ''
