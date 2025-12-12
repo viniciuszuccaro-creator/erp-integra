@@ -113,7 +113,7 @@ export default function WindowModal({ window, children }) {
       style={{
         ...windowStyle,
         zIndex: window.zIndex,
-        pointerEvents: 'auto'
+        pointerEvents: 'auto' // GARANTIR eventos de mouse
       }}
       className={`bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden select-none ${
         isDragging ? 'cursor-grabbing shadow-blue-500/50 transition-none' : ''
@@ -126,11 +126,7 @@ export default function WindowModal({ window, children }) {
           ? 'border-blue-500 ring-4 ring-blue-200/50'
           : 'border-slate-300'
       }`}
-      onMouseDown={() => bringToFront(window.id)}
-      onClick={(e) => {
-        e.stopPropagation();
-        bringToFront(window.id);
-      }}
+      onClick={() => bringToFront(window.id)}
     >
       {/* Header - CURSOR MOVE VISÍVEL */}
       <div
