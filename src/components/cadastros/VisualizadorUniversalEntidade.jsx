@@ -107,13 +107,19 @@ export default function VisualizadorUniversalEntidade({
     a.click();
   };
 
-  // Abrir edição - V21.6 CORRIGIDO: Props corretos + Anti-duplicação
+  // Abrir edição - V21.6 ULTRA-CORRIGIDO: Múltiplos nomes de props
   const abrirEdicao = (item) => {
     if (componenteEdicao) {
-      // V21.6: Passar objeto com nome correto da entidade em minúsculo
+      // V21.6: Passar TODOS os formatos possíveis de nome
       const propName = nomeEntidade.charAt(0).toLowerCase() + nomeEntidade.slice(1);
       const props = {
-        [propName]: item,
+        [propName]: item,           // Ex: setorAtividade
+        [nomeEntidade]: item,        // Ex: SetorAtividade  
+        // Nomes específicos para compatibilidade
+        setor: item,
+        grupo: item,
+        marca: item,
+        banco: item,
         onSuccess: () => refetch(),
         windowMode: true
       };
@@ -125,7 +131,8 @@ export default function VisualizadorUniversalEntidade({
           title: `✏️ Editar ${tituloDisplay}`,
           width: 1000,
           height: 700,
-          uniqueKey: `edit-${nomeEntidade}-${item.id}` // Evita duplicação
+          uniqueKey: `edit-${nomeEntidade}-${item.id}`,
+          zIndex: 99999 // FORÇAR z-index máximo
         }
       );
     }
