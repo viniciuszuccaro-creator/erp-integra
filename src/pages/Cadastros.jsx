@@ -720,7 +720,7 @@ export default function Cadastros() {
                               componenteEdicao: CadastroClienteCompleto,
                               windowMode: true
                             },
-                            { title: '👥 Todos os Clientes', width: 1400, height: 800 }
+                            { title: '👥 Todos os Clientes', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Users className="w-5 h-5 text-blue-600" />
@@ -797,7 +797,7 @@ export default function Cadastros() {
                               componenteEdicao: CadastroFornecedorCompleto,
                               windowMode: true
                             },
-                            { title: '🏭 Todos os Fornecedores', width: 1400, height: 800 }
+                            { title: '🏭 Todos os Fornecedores', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Building2 className="w-5 h-5 text-cyan-600" />
@@ -873,7 +873,7 @@ export default function Cadastros() {
                               componenteEdicao: TransportadoraForm,
                               windowMode: true
                             },
-                            { title: '🚛 Todas as Transportadoras', width: 1400, height: 800 }
+                            { title: '🚛 Todas as Transportadoras', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Truck className="w-5 h-5 text-orange-600" />
@@ -952,7 +952,7 @@ export default function Cadastros() {
                               componenteEdicao: ColaboradorForm,
                               windowMode: true
                             },
-                            { title: '👥 Todos os Colaboradores', width: 1400, height: 800 }
+                            { title: '👥 Todos os Colaboradores', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <User className="w-5 h-5 text-pink-600" />
@@ -1031,7 +1031,7 @@ export default function Cadastros() {
                               componenteEdicao: RepresentanteFormCompleto,
                               windowMode: true
                             },
-                            { title: '💰 Todos os Representantes', width: 1400, height: 800 }
+                            { title: '💰 Todos os Representantes', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Award className="w-5 h-5 text-purple-600" />
@@ -1140,7 +1140,7 @@ export default function Cadastros() {
                               componenteEdicao: ContatoB2BForm,
                               windowMode: true
                             },
-                            { title: '📞 Todos os Contatos B2B', width: 1400, height: 800 }
+                            { title: '📞 Todos os Contatos B2B', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <MessageCircle className="w-5 h-5 text-violet-600" />
@@ -1214,7 +1214,7 @@ export default function Cadastros() {
                               componenteEdicao: SegmentoClienteForm,
                               windowMode: true
                             },
-                            { title: '🎯 Todos os Segmentos', width: 1400, height: 800 }
+                            { title: '🎯 Todos os Segmentos', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <TrendingUp className="w-5 h-5 text-indigo-600" />
@@ -1288,7 +1288,7 @@ export default function Cadastros() {
                               componenteEdicao: RegiaoAtendimentoForm,
                               windowMode: true
                             },
-                            { title: '🗺️ Todas as Regiões', width: 1400, height: 800 }
+                            { title: '🗺️ Todas as Regiões', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <MapPin className="w-5 h-5 text-sky-600" />
@@ -1390,7 +1390,7 @@ export default function Cadastros() {
                               componenteEdicao: ProdutoFormV22_Completo,
                               windowMode: true
                             },
-                            { title: '📦 Todos os Produtos', width: 1400, height: 800 }
+                            { title: '📦 Todos os Produtos', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Package className="w-5 h-5 text-purple-600" />
@@ -1481,7 +1481,7 @@ export default function Cadastros() {
                               componenteEdicao: SetorAtividadeForm,
                               windowMode: true
                             },
-                            { title: '🏭 Todos os Setores', width: 1400, height: 800 }
+                            { title: '🏭 Todos os Setores', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Factory className="w-5 h-5 text-indigo-600" />
@@ -1557,7 +1557,7 @@ export default function Cadastros() {
                               componenteEdicao: GrupoProdutoForm,
                               windowMode: true
                             },
-                            { title: '📦 Todos os Grupos', width: 1400, height: 800 }
+                            { title: '📦 Todos os Grupos', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Boxes className="w-5 h-5 text-cyan-600" />
@@ -1631,7 +1631,7 @@ export default function Cadastros() {
                               componenteEdicao: MarcaForm,
                               windowMode: true
                             },
-                            { title: '🏆 Todas as Marcas', width: 1400, height: 800 }
+                            { title: '🏆 Todas as Marcas', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Award className="w-5 h-5 text-orange-600" />
@@ -1705,7 +1705,7 @@ export default function Cadastros() {
                               componenteEdicao: TabelaPrecoFormCompleto,
                               windowMode: true
                             },
-                            { title: '💰 Todas as Tabelas de Preço', width: 1400, height: 800 }
+                            { title: '💰 Todas as Tabelas de Preço', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <TrendingUp className="w-5 h-5 text-green-600" />
@@ -1788,7 +1788,7 @@ export default function Cadastros() {
                               componenteEdicao: ServicoForm,
                               windowMode: true
                             },
-                            { title: '✨ Todos os Serviços', width: 1400, height: 800 }
+                            { title: '✨ Todos os Serviços', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Stars className="w-5 h-5 text-blue-600" />
@@ -1862,7 +1862,7 @@ export default function Cadastros() {
                               componenteEdicao: KitProdutoForm,
                               windowMode: true
                             },
-                            { title: '📦 Todos os Kits', width: 1400, height: 800 }
+                            { title: '📦 Todos os Kits', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           📦 Kits de Produto ({kits.length})
@@ -1927,7 +1927,7 @@ export default function Cadastros() {
                               componenteEdicao: UnidadeMedidaForm,
                               windowMode: true
                             },
-                            { title: '📏 Todas as Unidades', width: 1400, height: 800 }
+                            { title: '📏 Todas as Unidades', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           📏 Unidades Medida ({unidadesMedida.length})
@@ -1992,7 +1992,7 @@ export default function Cadastros() {
                               componenteEdicao: CatalogoWebForm,
                               windowMode: true
                             },
-                            { title: '🌐 Todos os Catálogos', width: 1400, height: 800 }
+                            { title: '🌐 Todos os Catálogos', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           🌐 Catálogo Web ({catalogoWeb.length})
@@ -2074,7 +2074,7 @@ export default function Cadastros() {
                               componenteEdicao: BancoForm,
                               windowMode: true
                             },
-                            { title: '🏦 Todos os Bancos', width: 1400, height: 800 }
+                            { title: '🏦 Todos os Bancos', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Landmark className="w-5 h-5 text-green-600" />
@@ -2145,7 +2145,7 @@ export default function Cadastros() {
                               componenteEdicao: FormaPagamentoForm,
                               windowMode: true
                             },
-                            { title: '💳 Todas as Formas de Pagamento', width: 1400, height: 800 }
+                            { title: '💳 Todas as Formas de Pagamento', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <CreditCard className="w-5 h-5 text-blue-600" />
@@ -2213,7 +2213,7 @@ export default function Cadastros() {
                               componenteEdicao: CentroCustoForm,
                               windowMode: true
                             },
-                            { title: '📊 Todos os Centros de Custo', width: 1400, height: 800 }
+                            { title: '📊 Todos os Centros de Custo', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Receipt className="w-5 h-5 text-purple-600" />
@@ -2284,7 +2284,7 @@ export default function Cadastros() {
                               componenteEdicao: PlanoContasForm,
                               windowMode: true
                             },
-                            { title: '📋 Todo o Plano de Contas', width: 1400, height: 800 }
+                            { title: '📋 Todo o Plano de Contas', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           📋 Plano Contas ({planoContas.length})
@@ -2345,7 +2345,7 @@ export default function Cadastros() {
                               componenteEdicao: CentroResultadoForm,
                               windowMode: true
                             },
-                            { title: '🎯 Todos os Centros de Resultado', width: 1400, height: 800 }
+                            { title: '🎯 Todos os Centros de Resultado', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           🎯 C. Resultado ({centrosResultado.length})
@@ -2406,7 +2406,7 @@ export default function Cadastros() {
                               componenteEdicao: TipoDespesaForm,
                               windowMode: true
                             },
-                            { title: '💳 Todos os Tipos de Despesa', width: 1400, height: 800 }
+                            { title: '💳 Todos os Tipos de Despesa', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           💳 Tipos Despesa ({tiposDespesa.length})
@@ -2467,7 +2467,7 @@ export default function Cadastros() {
                               componenteEdicao: MoedaIndiceForm,
                               windowMode: true
                             },
-                            { title: '💱 Todas as Moedas e Índices', width: 1400, height: 800 }
+                            { title: '💱 Todas as Moedas e Índices', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           💱 Moedas/Índices ({moedasIndices.length})
@@ -2528,7 +2528,7 @@ export default function Cadastros() {
                               componenteEdicao: CondicaoComercialForm,
                               windowMode: true
                             },
-                            { title: '🤝 Todas as Condições Comerciais', width: 1400, height: 800 }
+                            { title: '🤝 Todas as Condições Comerciais', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           🤝 Condições Comerciais ({condicoesComerciais.length})
@@ -2589,7 +2589,7 @@ export default function Cadastros() {
                               componenteEdicao: TabelaFiscalForm,
                               windowMode: true
                             },
-                            { title: '📋 Todas as Tabelas Fiscais', width: 1400, height: 800 }
+                            { title: '📋 Todas as Tabelas Fiscais', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Receipt className="w-5 h-5 text-red-600" />
@@ -2693,7 +2693,7 @@ export default function Cadastros() {
                               componenteEdicao: VeiculoForm,
                               windowMode: true
                             },
-                            { title: '🚚 Todos os Veículos', width: 1400, height: 800 }
+                            { title: '🚚 Todos os Veículos', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           🚚 Veículos ({veiculos.length})
@@ -2763,7 +2763,7 @@ export default function Cadastros() {
                               componenteEdicao: MotoristaForm,
                               windowMode: true
                             },
-                            { title: '👤 Todos os Motoristas', width: 1400, height: 800 }
+                            { title: '👤 Todos os Motoristas', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           👤 Motoristas ({motoristas.length})
@@ -2833,7 +2833,7 @@ export default function Cadastros() {
                               componenteEdicao: TipoFreteForm,
                               windowMode: true
                             },
-                            { title: '📦 Todos os Tipos de Frete', width: 1400, height: 800 }
+                            { title: '📦 Todos os Tipos de Frete', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           📦 Tipos de Frete ({tiposFrete.length})
@@ -2900,7 +2900,7 @@ export default function Cadastros() {
                               componenteEdicao: LocalEstoqueForm,
                               windowMode: true
                             },
-                            { title: '📍 Todos os Locais de Estoque', width: 1400, height: 800 }
+                            { title: '📍 Todos os Locais de Estoque', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           📍 Locais de Estoque ({locaisEstoque.length})
@@ -2970,7 +2970,7 @@ export default function Cadastros() {
                               componenteEdicao: RotaPadraoForm,
                               windowMode: true
                             },
-                            { title: '🗺️ Todas as Rotas Padrão', width: 1400, height: 800 }
+                            { title: '🗺️ Todas as Rotas Padrão', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           🗺️ Rotas Padrão ({rotasPadrao.length})
@@ -3031,7 +3031,7 @@ export default function Cadastros() {
                               componenteEdicao: ModeloDocumentoForm,
                               windowMode: true
                             },
-                            { title: '📄 Todos os Modelos de Documento', width: 1400, height: 800 }
+                            { title: '📄 Todos os Modelos de Documento', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           📄 Modelos Doc ({modelosDocumento.length})
@@ -3109,7 +3109,7 @@ export default function Cadastros() {
                               componenteEdicao: EmpresaForm,
                               windowMode: true
                             },
-                            { title: '🏢 Todas as Empresas', width: 1400, height: 800 }
+                            { title: '🏢 Todas as Empresas', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           🏢 Empresas ({empresas.length})
@@ -3179,7 +3179,7 @@ export default function Cadastros() {
                               componenteEdicao: GrupoEmpresarialForm,
                               windowMode: true
                             },
-                            { title: '🏗️ Todos os Grupos Empresariais', width: 1400, height: 800 }
+                            { title: '🏗️ Todos os Grupos Empresariais', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           🏗️ Grupos Empresariais ({grupos.length})
@@ -3248,7 +3248,7 @@ export default function Cadastros() {
                               componenteEdicao: DepartamentoForm,
                               windowMode: true
                             },
-                            { title: '🏛️ Todos os Departamentos', width: 1400, height: 800 }
+                            { title: '🏛️ Todos os Departamentos', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           🏛️ Departamentos ({departamentos.length})
@@ -3315,7 +3315,7 @@ export default function Cadastros() {
                               componenteEdicao: CargoForm,
                               windowMode: true
                             },
-                            { title: '💼 Todos os Cargos', width: 1400, height: 800 }
+                            { title: '💼 Todos os Cargos', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           💼 Cargos ({cargos.length})
@@ -3382,7 +3382,7 @@ export default function Cadastros() {
                               componenteEdicao: TurnoForm,
                               windowMode: true
                             },
-                            { title: '⏰ Todos os Turnos', width: 1400, height: 800 }
+                            { title: '⏰ Todos os Turnos', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <Clock className="w-4 h-4 inline mr-2 text-amber-600" />
@@ -3516,7 +3516,7 @@ export default function Cadastros() {
                                   componenteEdicao: EventoNotificacaoForm,
                                   windowMode: true
                                 },
-                                { title: '🔔 Todos os Eventos', width: 1400, height: 800 }
+                                { title: '🔔 Todos os Eventos', width: 1400, height: 800, zIndex: 50000 }
                               )}
                             >
                               🔔 Eventos de Notificação ({eventosNotificacao.length})
@@ -3586,7 +3586,7 @@ export default function Cadastros() {
                                   componenteEdicao: ConfiguracaoIntegracaoForm,
                                   windowMode: true
                                 },
-                                { title: '🛒 Todas as Integrações', width: 1400, height: 800 }
+                                { title: '🛒 Todas as Integrações', width: 1400, height: 800, zIndex: 50000 }
                               )}
                             >
                               🛒 Integrações Marketplace ({configsIntegracao.length})
@@ -3658,7 +3658,7 @@ export default function Cadastros() {
                                   componenteEdicao: WebhookForm,
                                   windowMode: true
                                 },
-                                { title: '🔗 Todos os Webhooks', width: 1400, height: 800 }
+                                { title: '🔗 Todos os Webhooks', width: 1400, height: 800, zIndex: 50000 }
                               )}
                             >
                               🔗 Webhooks ({webhooks.length})
@@ -3719,7 +3719,7 @@ export default function Cadastros() {
                                   componenteEdicao: ChatbotIntentForm,
                                   windowMode: true
                                 },
-                                { title: '💬 Todas as Intents', width: 1400, height: 800 }
+                                { title: '💬 Todas as Intents', width: 1400, height: 800, zIndex: 50000 }
                               )}
                             >
                               💬 Intents ({chatbotIntents.length})
@@ -3780,7 +3780,7 @@ export default function Cadastros() {
                                   componenteEdicao: ChatbotCanalForm,
                                   windowMode: true
                                 },
-                                { title: '📱 Todos os Canais', width: 1400, height: 800 }
+                                { title: '📱 Todos os Canais', width: 1400, height: 800, zIndex: 50000 }
                               )}
                             >
                               📱 Canais ({chatbotCanais.length})
@@ -3841,7 +3841,7 @@ export default function Cadastros() {
                                   componenteEdicao: ApiExternaForm,
                                   windowMode: true
                                 },
-                                { title: '🔌 Todas as APIs', width: 1400, height: 800 }
+                                { title: '🔌 Todas as APIs', width: 1400, height: 800, zIndex: 50000 }
                               )}
                             >
                               🔌 APIs ({apisExternas.length})
@@ -3902,7 +3902,7 @@ export default function Cadastros() {
                                   componenteEdicao: JobAgendadoForm,
                                   windowMode: true
                                 },
-                                { title: '⏰ Todos os Jobs de IA', width: 1400, height: 800 }
+                                { title: '⏰ Todos os Jobs de IA', width: 1400, height: 800, zIndex: 50000 }
                               )}
                             >
                               ⏰ Jobs IA ({jobsAgendados.length})
@@ -3971,7 +3971,7 @@ export default function Cadastros() {
                                     componenteEdicao: ParametroPortalClienteForm,
                                     windowMode: true
                                   },
-                                  { title: '🌐 Todos os Parâmetros Portal', width: 1400, height: 800 }
+                                  { title: '🌐 Todos os Parâmetros Portal', width: 1400, height: 800, zIndex: 50000 }
                                 )}
                               >
                                 🌐 Portal Cliente ({parametrosPortal.length})
@@ -4030,7 +4030,7 @@ export default function Cadastros() {
                                     componenteEdicao: ParametroOrigemPedidoForm,
                                     windowMode: true
                                   },
-                                  { title: '🛒 Todos os Canais de Origem', width: 1400, height: 800 }
+                                  { title: '🛒 Todos os Canais de Origem', width: 1400, height: 800, zIndex: 50000 }
                                 )}
                               >
                                 🛒 Origem Pedido ({parametrosOrigemPedido.length})
@@ -4107,7 +4107,7 @@ export default function Cadastros() {
                                     componenteEdicao: ParametroRecebimentoNFeForm,
                                     windowMode: true
                                   },
-                                  { title: '📄 Todos os Parâmetros NF-e', width: 1400, height: 800 }
+                                  { title: '📄 Todos os Parâmetros NF-e', width: 1400, height: 800, zIndex: 50000 }
                                 )}
                               >
                                 📄 Recebimento NF-e ({parametrosRecebimentoNFe.length})
@@ -4166,7 +4166,7 @@ export default function Cadastros() {
                                     componenteEdicao: ParametroRoteirizacaoForm,
                                     windowMode: true
                                   },
-                                  { title: '🗺️ Todos os Parâmetros de Rotas', width: 1400, height: 800 }
+                                  { title: '🗺️ Todos os Parâmetros de Rotas', width: 1400, height: 800, zIndex: 50000 }
                                 )}
                               >
                                 🗺️ Roteirização ({parametrosRoteirizacao.length})
@@ -4225,7 +4225,7 @@ export default function Cadastros() {
                                     componenteEdicao: ParametroConciliacaoBancariaForm,
                                     windowMode: true
                                   },
-                                  { title: '🏦 Todos os Parâmetros Conciliação', width: 1400, height: 800 }
+                                  { title: '🏦 Todos os Parâmetros Conciliação', width: 1400, height: 800, zIndex: 50000 }
                                 )}
                               >
                                 🏦 Conciliação ({parametrosConciliacao.length})
@@ -4284,7 +4284,7 @@ export default function Cadastros() {
                                     componenteEdicao: ParametroCaixaDiarioForm,
                                     windowMode: true
                                   },
-                                  { title: '💰 Todos os Parâmetros Caixa', width: 1400, height: 800 }
+                                  { title: '💰 Todos os Parâmetros Caixa', width: 1400, height: 800, zIndex: 50000 }
                                 )}
                               >
                                 💰 Caixa Diário ({parametrosCaixa.length})
