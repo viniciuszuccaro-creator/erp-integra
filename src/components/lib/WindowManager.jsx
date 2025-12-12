@@ -50,13 +50,15 @@ export function WindowProvider({ children }) {
     ));
   }, []);
 
-  // Trazer janela para frente - V21.6.2 DEFINITIVO: SEMPRE no topo
+  // Trazer janela para frente - V21.6.3 FORÇA ABSOLUTA
   const bringToFront = useCallback((windowId) => {
     setActiveWindowId(windowId);
     setWindows(prev => {
+      // Pegar o máximo z-index atual
       const maxZ = Math.max(...prev.map(w => w.zIndex), 50000);
+      // Colocar a janela clicada MUITO acima
       return prev.map(w => 
-        w.id === windowId ? { ...w, zIndex: maxZ + 1000, isMinimized: false } : w
+        w.id === windowId ? { ...w, zIndex: maxZ + 10000, isMinimized: false } : w
       );
     });
   }, []);
@@ -103,7 +105,7 @@ export function WindowProvider({ children }) {
       height: options.height || 600,
       x: options.x !== undefined ? options.x : 100 + cascade,
       y: options.y !== undefined ? options.y : 80 + cascade,
-      zIndex: options.zIndex || (maxZ + 1000),
+      zIndex: options.zIndex || (maxZ + 10000),
       uniqueKey: options.uniqueKey
     };
 
