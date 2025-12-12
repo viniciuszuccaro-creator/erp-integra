@@ -510,11 +510,7 @@ export default function Cadastros() {
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
             <Stars className="w-8 h-8 text-purple-600" />
-            Cadastros Gerais V21.6
-            <Badge className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-1.5 animate-pulse">
-              <CheckCircle2 className="w-4 h-4 mr-1" />
-              Click-to-View
-            </Badge>
+            Cadastros Gerais V21.4
           </h1>
           <p className="text-slate-600 flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-blue-600">Hub Central Unificado</span>

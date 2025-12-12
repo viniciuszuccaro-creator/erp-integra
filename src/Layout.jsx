@@ -24,7 +24,6 @@ import {
   Zap,
   CheckCircle2
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -57,7 +56,7 @@ const navigationItems = [
   { title: "Dashboard Corporativo", url: createPageUrl("DashboardCorporativo"), icon: BarChart3, group: "principal" },
   { title: "📖 Guia de Uso do Sistema", url: createPageUrl("GuiaUsoSistema"), icon: BookOpen, group: "principal" },
   { title: "🚀 Fechamento Automático", url: createPageUrl("DashboardFechamentoPedidos"), icon: Zap, group: "principal", adminOnly: true },
-  { title: "🏆 Status 100% V21.6", url: createPageUrl("StatusSistemaV21_6"), icon: CheckCircle2, group: "principal" },
+  { title: "🏆 Status do Sistema V21.6", url: createPageUrl("StatusSistemaV21_6"), icon: CheckCircle2, group: "sistema", adminOnly: true },
   { title: "Relatórios e Análises", url: createPageUrl("Relatorios"), icon: BarChart3, group: "principal" },
   { title: "Agenda e Calendário", url: createPageUrl("Agenda"), icon: Calendar, group: "principal" },
   { title: "CRM - Relacionamento", url: createPageUrl("CRM"), icon: Users, group: "principal" },
@@ -207,13 +206,8 @@ function LayoutContent({ children, currentPageName }) {
                 <FileText className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-xl text-slate-900 flex items-center gap-2">
-                  ERP Zuccaro
-                  <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-[10px] px-2 py-0.5 animate-pulse">
-                    100%
-                  </Badge>
-                </h2>
-                <p className="text-xs text-slate-500">V21.6 Final • Certificado Produção</p>
+                <h2 className="font-bold text-xl text-slate-900">ERP Zuccaro</h2>
+                <p className="text-xs text-slate-500">V21.5 • Sistema Completo</p>
               </div>
             </div>
           </SidebarHeader>
