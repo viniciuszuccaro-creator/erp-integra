@@ -6,8 +6,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Target } from 'lucide-react';
 
-export default function CentroResultadoForm({ centro, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(centro || {
+export default function CentroResultadoForm({ centro, centroResultado, onSubmit, windowMode = false }) {
+  const dadosIniciais = centroResultado || centro;
+  const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '',
     nome: '',
     descricao: '',
@@ -58,7 +59,7 @@ export default function CentroResultadoForm({ centro, onSubmit, windowMode = fal
       </div>
 
       <Button type="submit" className="w-full bg-teal-600 hover:bg-teal-700">
-        {centro ? 'Atualizar' : 'Criar Centro de Resultado'}
+        {dadosIniciais ? 'Atualizar' : 'Criar Centro de Resultado'}
       </Button>
     </form>
   );
@@ -69,7 +70,7 @@ export default function CentroResultadoForm({ centro, onSubmit, windowMode = fal
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-teal-50 to-teal-100">
           <Target className="w-6 h-6 text-teal-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {centro ? 'Editar Centro' : 'Novo Centro de Resultado'}
+            {dadosIniciais ? 'Editar Centro' : 'Novo Centro de Resultado'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

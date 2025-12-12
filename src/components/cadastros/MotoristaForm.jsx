@@ -13,7 +13,8 @@ import { format, differenceInDays } from "date-fns";
  * V21.1.2 - WINDOW MODE READY
  */
 export default function MotoristaForm({ motorista, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(motorista || {
+  const dadosIniciais = motorista;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_completo: '',
     cpf: '',
     cnh_numero: '',
@@ -150,7 +151,7 @@ export default function MotoristaForm({ motorista, onSubmit, isSubmitting, windo
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {motorista ? 'Atualizar' : 'Cadastrar Motorista'}
+          {dadosIniciais ? 'Atualizar' : 'Cadastrar Motorista'}
         </Button>
       </div>
     </form>
@@ -162,7 +163,7 @@ export default function MotoristaForm({ motorista, onSubmit, isSubmitting, windo
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <UserCircle className="w-5 h-5 text-blue-600" />
-            {motorista ? 'Editar Motorista' : 'Novo Motorista'}
+            {dadosIniciais ? 'Editar Motorista' : 'Novo Motorista'}
           </h2>
         </div>
         {formContent}

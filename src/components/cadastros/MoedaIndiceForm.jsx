@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { TrendingUp } from 'lucide-react';
 
-export default function MoedaIndiceForm({ moeda, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(moeda || {
+export default function MoedaIndiceForm({ moeda, moedaIndice, onSubmit, windowMode = false }) {
+  const dadosIniciais = moedaIndice || moeda;
+  const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '',
     nome: '',
     tipo: 'Moeda',
@@ -75,7 +76,7 @@ export default function MoedaIndiceForm({ moeda, onSubmit, windowMode = false })
       </div>
 
       <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700">
-        {moeda ? 'Atualizar' : 'Criar Moeda/Índice'}
+        {dadosIniciais ? 'Atualizar' : 'Criar Moeda/Índice'}
       </Button>
     </form>
   );
@@ -86,7 +87,7 @@ export default function MoedaIndiceForm({ moeda, onSubmit, windowMode = false })
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-emerald-50 to-emerald-100">
           <TrendingUp className="w-6 h-6 text-emerald-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {moeda ? 'Editar Moeda/Índice' : 'Nova Moeda/Índice'}
+            {dadosIniciais ? 'Editar Moeda/Índice' : 'Nova Moeda/Índice'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

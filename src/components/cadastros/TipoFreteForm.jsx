@@ -9,8 +9,9 @@ import { Loader2, Package } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function TipoFreteForm({ tipo, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(tipo || {
+export default function TipoFreteForm({ tipo, tipoFrete, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = tipoFrete || tipo;
+  const [formData, setFormData] = useState(dadosIniciais || {
     descricao: '',
     modalidade: 'CIF',
     cobra_frete: true,
@@ -116,7 +117,7 @@ export default function TipoFreteForm({ tipo, onSubmit, isSubmitting, windowMode
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Package className="w-5 h-5 text-blue-600" />
-            {tipo ? 'Editar Tipo de Frete' : 'Novo Tipo de Frete'}
+            {dadosIniciais ? 'Editar Tipo de Frete' : 'Novo Tipo de Frete'}
           </h2>
         </div>
         {formContent}

@@ -7,8 +7,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Receipt } from 'lucide-react';
 
-export default function TipoDespesaForm({ tipo, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(tipo || {
+export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMode = false }) {
+  const dadosIniciais = tipoDespesa || tipo;
+  const [formData, setFormData] = useState(dadosIniciais || {
     codigo: '',
     nome: '',
     categoria: 'Operacional',
@@ -110,7 +111,7 @@ export default function TipoDespesaForm({ tipo, onSubmit, windowMode = false }) 
       </div>
 
       <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
-        {tipo ? 'Atualizar Tipo' : 'Criar Tipo de Despesa'}
+        {dadosIniciais ? 'Atualizar Tipo' : 'Criar Tipo de Despesa'}
       </Button>
     </form>
   );
@@ -121,7 +122,7 @@ export default function TipoDespesaForm({ tipo, onSubmit, windowMode = false }) 
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-purple-50 to-purple-100">
           <Receipt className="w-6 h-6 text-purple-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {tipo ? 'Editar Tipo de Despesa' : 'Novo Tipo de Despesa'}
+            {dadosIniciais ? 'Editar Tipo de Despesa' : 'Novo Tipo de Despesa'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

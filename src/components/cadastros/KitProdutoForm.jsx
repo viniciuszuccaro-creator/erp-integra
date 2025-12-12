@@ -7,8 +7,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Box, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-export default function KitProdutoForm({ kit, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(kit || {
+export default function KitProdutoForm({ kit, kitProduto, onSubmit, windowMode = false }) {
+  const dadosIniciais = kitProduto || kit;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_kit: '',
     codigo_kit: '',
     descricao: '',
@@ -149,7 +150,7 @@ export default function KitProdutoForm({ kit, onSubmit, windowMode = false }) {
       </div>
 
       <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700">
-        {kit ? 'Atualizar Kit' : 'Criar Kit de Produtos'}
+        {dadosIniciais ? 'Atualizar Kit' : 'Criar Kit de Produtos'}
       </Button>
     </form>
   );
@@ -160,7 +161,7 @@ export default function KitProdutoForm({ kit, onSubmit, windowMode = false }) {
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-purple-50 to-purple-100">
           <Box className="w-6 h-6 text-purple-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {kit ? 'Editar Kit' : 'Novo Kit de Produtos'}
+            {dadosIniciais ? 'Editar Kit' : 'Novo Kit de Produtos'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>
