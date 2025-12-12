@@ -118,6 +118,7 @@ import ConfiguracaoWhatsAppForm from "../components/cadastros/ConfiguracaoWhatsA
 import RegiaoAtendimentoForm from "../components/cadastros/RegiaoAtendimentoForm";
 import StatusIntegracoes from '../components/integracoes/StatusIntegracoes';
 import ConfiguracaoNotificacoes from '../components/sistema/ConfiguracaoNotificacoes';
+import VisualizadorUniversalEntidade from '../components/cadastros/VisualizadorUniversalEntidade';
 import TesteNFe from "../components/integracoes/TesteNFe";
 import TesteBoletos from "../components/integracoes/TesteBoletos";
 import ConfigWhatsAppBusiness from '@/components/integracoes/ConfigWhatsAppBusiness';
@@ -707,7 +708,21 @@ export default function Cadastros() {
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-blue-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Cliente',
+                              tituloDisplay: 'Clientes',
+                              icone: Users,
+                              camposPrincipais: ['nome', 'razao_social', 'cnpj', 'cpf', 'status', 'email'],
+                              componenteEdicao: CadastroClienteCompleto,
+                              windowMode: true
+                            },
+                            { title: '👥 Todos os Clientes', width: 1400, height: 800 }
+                          )}
+                        >
                           <Users className="w-5 h-5 text-blue-600" />
                           Clientes ({clientesFiltrados.length})
                         </CardTitle>
@@ -763,7 +778,21 @@ export default function Cadastros() {
                   <Card className="border-cyan-200">
                     <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-cyan-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Fornecedor',
+                              tituloDisplay: 'Fornecedores',
+                              icone: Building2,
+                              camposPrincipais: ['nome', 'razao_social', 'cnpj', 'status', 'categoria'],
+                              componenteEdicao: CadastroFornecedorCompleto,
+                              windowMode: true
+                            },
+                            { title: '🏭 Todos os Fornecedores', width: 1400, height: 800 }
+                          )}
+                        >
                           <Building2 className="w-5 h-5 text-cyan-600" />
                           Fornecedores ({fornecedoresFiltrados.length})
                         </CardTitle>
@@ -818,7 +847,21 @@ export default function Cadastros() {
                   <Card className="border-orange-200">
                     <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-orange-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Transportadora',
+                              tituloDisplay: 'Transportadoras',
+                              icone: Truck,
+                              camposPrincipais: ['razao_social', 'nome_fantasia', 'cnpj', 'status', 'nota_media'],
+                              componenteEdicao: TransportadoraForm,
+                              windowMode: true
+                            },
+                            { title: '🚛 Todas as Transportadoras', width: 1400, height: 800 }
+                          )}
+                        >
                           <Truck className="w-5 h-5 text-orange-600" />
                           Transportadoras ({transportadorasFiltradas.length})
                         </CardTitle>
@@ -880,7 +923,21 @@ export default function Cadastros() {
                   <Card className="border-pink-200">
                     <CardHeader className="bg-pink-50 border-b border-pink-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-pink-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Colaborador',
+                              tituloDisplay: 'Colaboradores',
+                              icone: User,
+                              camposPrincipais: ['nome_completo', 'cpf', 'cargo', 'departamento', 'status', 'email'],
+                              componenteEdicao: ColaboradorForm,
+                              windowMode: true
+                            },
+                            { title: '👥 Todos os Colaboradores', width: 1400, height: 800 }
+                          )}
+                        >
                           <User className="w-5 h-5 text-pink-600" />
                           Colaboradores ({colaboradoresFiltrados.length})
                         </CardTitle>
@@ -942,7 +999,21 @@ export default function Cadastros() {
                   <Card className="border-purple-200 lg:col-span-2">
                     <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-purple-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Representante',
+                              tituloDisplay: 'Representantes & Indicadores',
+                              icone: Award,
+                              camposPrincipais: ['nome', 'tipo_representante', 'percentual_comissao', 'email', 'telefone'],
+                              componenteEdicao: RepresentanteFormCompleto,
+                              windowMode: true
+                            },
+                            { title: '💰 Todos os Representantes', width: 1400, height: 800 }
+                          )}
+                        >
                           <Award className="w-5 h-5 text-purple-600" />
                           💰 Representantes & Indicadores ({representantes.length})
                         </CardTitle>
@@ -1232,7 +1303,21 @@ export default function Cadastros() {
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-purple-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Produto',
+                              tituloDisplay: 'Produtos',
+                              icone: Package,
+                              camposPrincipais: ['descricao', 'codigo', 'setor_atividade_nome', 'grupo_produto_nome', 'marca_nome', 'status'],
+                              componenteEdicao: ProdutoFormV22_Completo,
+                              windowMode: true
+                            },
+                            { title: '📦 Todos os Produtos', width: 1400, height: 800 }
+                          )}
+                        >
                           <Package className="w-5 h-5 text-purple-600" />
                           Produtos ({produtos.length})
                         </CardTitle>
@@ -1302,7 +1387,21 @@ export default function Cadastros() {
                   <Card className="border-indigo-200">
                     <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-indigo-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'SetorAtividade',
+                              tituloDisplay: 'Setores de Atividade',
+                              icone: Factory,
+                              camposPrincipais: ['nome', 'tipo_operacao', 'icone', 'descricao'],
+                              componenteEdicao: SetorAtividadeForm,
+                              windowMode: true
+                            },
+                            { title: '🏭 Todos os Setores', width: 1400, height: 800 }
+                          )}
+                        >
                           <Factory className="w-5 h-5 text-indigo-600" />
                           Setores de Atividade ({setoresAtividade.length})
                         </CardTitle>
@@ -1361,7 +1460,21 @@ export default function Cadastros() {
                   <Card className="border-cyan-200">
                     <CardHeader className="bg-cyan-50 border-b border-cyan-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-cyan-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'GrupoProduto',
+                              tituloDisplay: 'Grupos/Linhas de Produto',
+                              icone: Boxes,
+                              camposPrincipais: ['nome_grupo', 'descricao', 'codigo'],
+                              componenteEdicao: GrupoProdutoForm,
+                              windowMode: true
+                            },
+                            { title: '📦 Todos os Grupos', width: 1400, height: 800 }
+                          )}
+                        >
                           <Boxes className="w-5 h-5 text-cyan-600" />
                           Grupos/Linhas ({gruposProduto.length})
                         </CardTitle>
@@ -1418,7 +1531,21 @@ export default function Cadastros() {
                   <Card className="border-orange-200">
                     <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-orange-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Marca',
+                              tituloDisplay: 'Marcas',
+                              icone: Award,
+                              camposPrincipais: ['nome_marca', 'pais_origem', 'site', 'descricao'],
+                              componenteEdicao: MarcaForm,
+                              windowMode: true
+                            },
+                            { title: '🏆 Todas as Marcas', width: 1400, height: 800 }
+                          )}
+                        >
                           <Award className="w-5 h-5 text-orange-600" />
                           Marcas ({marcas.length})
                         </CardTitle>
@@ -1475,7 +1602,21 @@ export default function Cadastros() {
                   <Card className="border-green-200 lg:col-span-2">
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-green-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'TabelaPreco',
+                              tituloDisplay: 'Tabelas de Preço',
+                              icone: TrendingUp,
+                              camposPrincipais: ['nome', 'tipo', 'ativo', 'data_inicio', 'data_fim'],
+                              componenteEdicao: TabelaPrecoFormCompleto,
+                              windowMode: true
+                            },
+                            { title: '💰 Todas as Tabelas de Preço', width: 1400, height: 800 }
+                          )}
+                        >
                           <TrendingUp className="w-5 h-5 text-green-600" />
                           Tabelas de Preço ({tabelasPreco.length})
                         </CardTitle>
@@ -1537,7 +1678,21 @@ export default function Cadastros() {
                   <Card className="border-blue-200">
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-blue-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Servico',
+                              tituloDisplay: 'Serviços',
+                              icone: Stars,
+                              camposPrincipais: ['nome', 'descricao', 'valor_padrao', 'unidade_medida'],
+                              componenteEdicao: ServicoForm,
+                              windowMode: true
+                            },
+                            { title: '✨ Todos os Serviços', width: 1400, height: 800 }
+                          )}
+                        >
                           <Stars className="w-5 h-5 text-blue-600" />
                           Serviços ({servicos.length})
                         </CardTitle>
@@ -1749,7 +1904,21 @@ export default function Cadastros() {
                   <Card className="border-green-200">
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-green-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Banco',
+                              tituloDisplay: 'Bancos',
+                              icone: Landmark,
+                              camposPrincipais: ['nome_banco', 'agencia', 'numero_conta', 'tipo_conta', 'saldo_inicial'],
+                              componenteEdicao: BancoForm,
+                              windowMode: true
+                            },
+                            { title: '🏦 Todos os Bancos', width: 1400, height: 800 }
+                          )}
+                        >
                           <Landmark className="w-5 h-5 text-green-600" />
                           Bancos ({bancos.length})
                         </CardTitle>
@@ -1854,7 +2023,21 @@ export default function Cadastros() {
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-purple-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'CentroCusto',
+                              tituloDisplay: 'Centros de Custo',
+                              icone: Receipt,
+                              camposPrincipais: ['codigo', 'descricao', 'tipo', 'responsavel', 'orcamento_mensal'],
+                              componenteEdicao: CentroCustoForm,
+                              windowMode: true
+                            },
+                            { title: '📊 Todos os Centros de Custo', width: 1400, height: 800 }
+                          )}
+                        >
                           <Receipt className="w-5 h-5 text-purple-600" />
                           Centros de Custo ({centrosCusto.length})
                         </CardTitle>
@@ -2205,7 +2388,23 @@ export default function Cadastros() {
                   <Card className="border-orange-200">
                     <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🚚 Veículos ({veiculos.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-orange-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Veiculo',
+                              tituloDisplay: 'Veículos',
+                              icone: Truck,
+                              camposPrincipais: ['placa', 'modelo', 'tipo', 'ano', 'capacidade_kg'],
+                              componenteEdicao: VeiculoForm,
+                              windowMode: true
+                            },
+                            { title: '🚚 Todos os Veículos', width: 1400, height: 800 }
+                          )}
+                        >
+                          🚚 Veículos ({veiculos.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(VeiculoForm, {
@@ -2507,7 +2706,23 @@ export default function Cadastros() {
                   <Card className="border-indigo-200">
                     <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">🏢 Empresas ({empresas.length})</CardTitle>
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-indigo-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'Empresa',
+                              tituloDisplay: 'Empresas',
+                              icone: Building2,
+                              camposPrincipais: ['razao_social', 'nome_fantasia', 'cnpj', 'regime_tributario', 'tipo_empresa'],
+                              componenteEdicao: EmpresaForm,
+                              windowMode: true
+                            },
+                            { title: '🏢 Todas as Empresas', width: 1400, height: 800 }
+                          )}
+                        >
+                          🏢 Empresas ({empresas.length})
+                        </CardTitle>
                         <Button
                           size="sm"
                           onClick={() => openWindow(EmpresaForm, {
