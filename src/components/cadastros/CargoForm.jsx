@@ -11,7 +11,8 @@ import { Loader2, Briefcase, Trash2, Power, PowerOff } from "lucide-react";
  * V21.1.2 - WINDOW MODE READY
  */
 export default function CargoForm({ cargo, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(cargo || {
+  const dadosIniciais = cargo;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_cargo: '',
     descricao: '',
     codigo_cbo: '',
@@ -107,7 +108,7 @@ export default function CargoForm({ cargo, onSubmit, isSubmitting, windowMode = 
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        {cargo && (
+        {dadosIniciais && (
           <>
             <Button
               type="button"
@@ -128,7 +129,7 @@ export default function CargoForm({ cargo, onSubmit, isSubmitting, windowMode = 
         )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {cargo ? 'Atualizar' : 'Criar Cargo'}
+          {dadosIniciais ? 'Atualizar' : 'Criar Cargo'}
         </Button>
       </div>
     </form>
@@ -140,7 +141,7 @@ export default function CargoForm({ cargo, onSubmit, isSubmitting, windowMode = 
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-blue-600" />
-            {cargo ? 'Editar Cargo' : 'Novo Cargo'}
+            {dadosIniciais ? 'Editar Cargo' : 'Novo Cargo'}
           </h2>
         </div>
         {formContent}

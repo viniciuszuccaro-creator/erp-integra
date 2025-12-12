@@ -10,7 +10,8 @@ import { Loader2, Building2, Trash2, Power, PowerOff } from "lucide-react";
  * V21.1.2 - WINDOW MODE READY
  */
 export default function DepartamentoForm({ departamento, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(departamento || {
+  const dadosIniciais = departamento;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome: '',
     codigo: '',
     descricao: '',
@@ -79,7 +80,7 @@ export default function DepartamentoForm({ departamento, onSubmit, isSubmitting,
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        {departamento && (
+        {dadosIniciais && (
           <>
             <Button
               type="button"
@@ -100,7 +101,7 @@ export default function DepartamentoForm({ departamento, onSubmit, isSubmitting,
         )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {departamento ? 'Atualizar' : 'Criar Departamento'}
+          {dadosIniciais ? 'Atualizar' : 'Criar Departamento'}
         </Button>
       </div>
     </form>
@@ -112,7 +113,7 @@ export default function DepartamentoForm({ departamento, onSubmit, isSubmitting,
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Building2 className="w-5 h-5 text-blue-600" />
-            {departamento ? 'Editar Departamento' : 'Novo Departamento'}
+            {dadosIniciais ? 'Editar Departamento' : 'Novo Departamento'}
           </h2>
         </div>
         {formContent}

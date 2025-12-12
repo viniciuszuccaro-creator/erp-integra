@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
  * V21.1.2 - WINDOW MODE READY
  */
 export default function TurnoForm({ turno, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(turno || {
+  const dadosIniciais = turno;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_turno: '',
     horario_inicio: '08:00',
     horario_fim: '17:00',
@@ -111,7 +112,7 @@ export default function TurnoForm({ turno, onSubmit, isSubmitting, windowMode = 
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {turno ? 'Atualizar' : 'Criar Turno'}
+          {dadosIniciais ? 'Atualizar' : 'Criar Turno'}
         </Button>
       </div>
     </form>
@@ -123,7 +124,7 @@ export default function TurnoForm({ turno, onSubmit, isSubmitting, windowMode = 
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Clock className="w-5 h-5 text-blue-600" />
-            {turno ? 'Editar Turno' : 'Novo Turno'}
+            {dadosIniciais ? 'Editar Turno' : 'Novo Turno'}
           </h2>
         </div>
         {formContent}

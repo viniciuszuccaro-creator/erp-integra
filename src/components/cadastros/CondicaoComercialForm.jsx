@@ -7,8 +7,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { DollarSign } from 'lucide-react';
 
-export default function CondicaoComercialForm({ condicao, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(condicao || {
+export default function CondicaoComercialForm({ condicao, condicaoComercial, onSubmit, windowMode = false }) {
+  const dadosIniciais = condicaoComercial || condicao;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_condicao: '',
     tipo_condicao: 'Pagamento',
     forma_pagamento: 'À Vista',
@@ -135,7 +136,7 @@ export default function CondicaoComercialForm({ condicao, onSubmit, windowMode =
       </div>
 
       <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
-        {condicao ? 'Atualizar Condição' : 'Criar Condição Comercial'}
+        {dadosIniciais ? 'Atualizar Condição' : 'Criar Condição Comercial'}
       </Button>
     </form>
   );
@@ -146,7 +147,7 @@ export default function CondicaoComercialForm({ condicao, onSubmit, windowMode =
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-green-50 to-green-100">
           <DollarSign className="w-6 h-6 text-green-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {condicao ? 'Editar Condição' : 'Nova Condição Comercial'}
+            {dadosIniciais ? 'Editar Condição' : 'Nova Condição Comercial'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

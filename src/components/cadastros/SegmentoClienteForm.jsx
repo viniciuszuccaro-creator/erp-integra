@@ -7,8 +7,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Users } from 'lucide-react';
 
-export default function SegmentoClienteForm({ segmento, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(segmento || {
+export default function SegmentoClienteForm({ segmento, segmentoCliente, onSubmit, windowMode = false }) {
+  const dadosIniciais = segmentoCliente || segmento;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_segmento: '',
     tipo_segmento: 'Comercial',
     ativo: true
@@ -66,7 +67,7 @@ export default function SegmentoClienteForm({ segmento, onSubmit, windowMode = f
       </div>
 
       <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-        {segmento ? 'Atualizar Segmento' : 'Criar Segmento'}
+        {dadosIniciais ? 'Atualizar Segmento' : 'Criar Segmento'}
       </Button>
     </form>
   );
@@ -77,7 +78,7 @@ export default function SegmentoClienteForm({ segmento, onSubmit, windowMode = f
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
           <Users className="w-6 h-6 text-blue-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {segmento ? 'Editar Segmento' : 'Novo Segmento de Cliente'}
+            {dadosIniciais ? 'Editar Segmento' : 'Novo Segmento de Cliente'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>
