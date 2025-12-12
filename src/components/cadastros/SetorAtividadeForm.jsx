@@ -10,8 +10,9 @@ import { Loader2, Factory, Trash2, Power, PowerOff } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function SetorAtividadeForm({ setor, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(setor || {
+export default function SetorAtividadeForm({ setor, setorAtividade, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = setorAtividade || setor;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome: '',
     descricao: '',
     tipo_operacao: 'Revenda',
@@ -105,7 +106,7 @@ export default function SetorAtividadeForm({ setor, onSubmit, isSubmitting, wind
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        {setor && (
+        {dadosIniciais && (
           <>
             <Button
               type="button"

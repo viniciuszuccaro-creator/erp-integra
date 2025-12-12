@@ -10,8 +10,9 @@ import { Loader2, Package, Trash2, Power, PowerOff } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(grupo || {
+export default function GrupoProdutoForm({ grupo, grupoProduto, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = grupoProduto || grupo;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_grupo: '',
     codigo: '',
     natureza: 'Revenda',
@@ -108,7 +109,7 @@ export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting, window
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t">
-        {grupo && (
+        {dadosIniciais && (
           <>
             <Button
               type="button"
@@ -129,7 +130,7 @@ export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting, window
         )}
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {grupo ? 'Atualizar' : 'Criar Grupo'}
+          {dadosIniciais ? 'Atualizar' : 'Criar Grupo'}
         </Button>
       </div>
     </form>
@@ -141,7 +142,7 @@ export default function GrupoProdutoForm({ grupo, onSubmit, isSubmitting, window
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Package className="w-5 h-5 text-blue-600" />
-            {grupo ? 'Editar Grupo de Produto' : 'Novo Grupo de Produto'}
+            {dadosIniciais ? 'Editar Grupo de Produto' : 'Novo Grupo de Produto'}
           </h2>
         </div>
         {formContent}
