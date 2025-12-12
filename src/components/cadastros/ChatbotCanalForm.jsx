@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Smartphone, Save } from "lucide-react";
 
 export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(chatbotCanal || {
+  const dadosIniciais = chatbotCanal;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_canal: "",
     tipo_canal: "WhatsApp",
     whatsapp_numero: "",
@@ -126,7 +127,7 @@ export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting,
       <div className="flex justify-end gap-3">
         <Button type="submit" className="bg-green-600 hover:bg-green-700" disabled={isSubmitting}>
           <Save className="w-4 h-4 mr-2" />
-          {isSubmitting ? 'Salvando...' : chatbotCanal ? 'Atualizar' : 'Criar'}
+          {isSubmitting ? 'Salvando...' : dadosIniciais ? 'Atualizar' : 'Criar'}
         </Button>
       </div>
     </form>
@@ -139,7 +140,7 @@ export default function ChatbotCanalForm({ chatbotCanal, onSubmit, isSubmitting,
           <div className="flex items-center gap-3 mb-6 pb-4 border-b">
             <Smartphone className="w-8 h-8 text-green-600" />
             <h2 className="text-2xl font-bold text-slate-900">
-              {chatbotCanal ? 'Editar Canal' : 'Novo Canal'}
+              {dadosIniciais ? 'Editar Canal' : 'Novo Canal'}
             </h2>
           </div>
           {form}

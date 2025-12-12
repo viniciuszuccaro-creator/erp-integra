@@ -7,8 +7,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Ruler } from 'lucide-react';
 
-export default function UnidadeMedidaForm({ unidade, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(unidade || {
+export default function UnidadeMedidaForm({ unidade, unidadeMedida, onSubmit, windowMode = false }) {
+  const dadosIniciais = unidadeMedida || unidade;
+  const [formData, setFormData] = useState(dadosIniciais || {
     sigla: '',
     nome_completo: '',
     tipo_grandeza: 'Unidade',
@@ -121,7 +122,7 @@ export default function UnidadeMedidaForm({ unidade, onSubmit, windowMode = fals
       </div>
 
       <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
-        {unidade ? 'Atualizar Unidade' : 'Criar Unidade de Medida'}
+        {dadosIniciais ? 'Atualizar Unidade' : 'Criar Unidade de Medida'}
       </Button>
     </form>
   );
@@ -132,7 +133,7 @@ export default function UnidadeMedidaForm({ unidade, onSubmit, windowMode = fals
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-indigo-50 to-indigo-100">
           <Ruler className="w-6 h-6 text-indigo-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {unidade ? 'Editar Unidade' : 'Nova Unidade de Medida'}
+            {dadosIniciais ? 'Editar Unidade' : 'Nova Unidade de Medida'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

@@ -19,8 +19,9 @@ const ESTADOS_BRASIL = [
   "RS", "RO", "RR", "SC", "SP", "SE", "TO"
 ];
 
-export default function RegiaoAtendimentoForm({ regiaoId, open, onOpenChange, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState({
+export default function RegiaoAtendimentoForm({ regiaoId, regiaoAtendimento, open, onOpenChange, onSubmit, windowMode = false }) {
+  const dadosIniciaisProps = regiaoAtendimento;
+  const [formData, setFormData] = useState(dadosIniciaisProps || {
     nome_regiao: "",
     codigo_regiao: "",
     descricao: "",
@@ -63,14 +64,16 @@ export default function RegiaoAtendimentoForm({ regiaoId, open, onOpenChange, on
   });
 
   useEffect(() => {
-    if (regiaoId && open) {
+    if (dadosIniciaisProps && open) {
+      setFormData(dadosIniciaisProps);
+    } else if (regiaoId && open && !dadosIniciaisProps) {
       base44.entities.RegiaoAtendimento.list().then(regioes => {
         const regiao = regioes.find(r => r.id === regiaoId);
         if (regiao) {
           setFormData(regiao);
         }
       });
-    } else if (!regiaoId && open) {
+    } else if (!regiaoId && !dadosIniciaisProps && open) {
       setFormData({
         nome_regiao: "",
         codigo_regiao: "",
@@ -566,7 +569,7 @@ export default function RegiaoAtendimentoForm({ regiaoId, open, onOpenChange, on
           )}
         </div>
         <Button type="submit">
-          {regiaoId ? "Atualizar" : "Criar"} Região
+          {regiaoId || dadosIniciaisProps ? "Atualizar" : "Criar"} Região
         </Button>
       </div>
     </form>

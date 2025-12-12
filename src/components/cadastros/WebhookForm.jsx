@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Webhook as WebhookIcon } from 'lucide-react';
 
 export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(webhook || {
+  const dadosIniciais = webhook;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_webhook: '',
     evento_gatilho: 'pedido_aprovado',
     url_destino: '',
@@ -94,7 +95,7 @@ export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
       </div>
 
       <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700">
-        {webhook ? 'Atualizar' : 'Criar Webhook'}
+        {dadosIniciais ? 'Atualizar' : 'Criar Webhook'}
       </Button>
     </form>
   );
@@ -105,7 +106,7 @@ export default function WebhookForm({ webhook, onSubmit, windowMode = false }) {
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-indigo-50 to-indigo-100">
           <WebhookIcon className="w-6 h-6 text-indigo-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {webhook ? 'Editar Webhook' : 'Novo Webhook'}
+            {dadosIniciais ? 'Editar Webhook' : 'Novo Webhook'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

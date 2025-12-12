@@ -6,8 +6,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { MapPin } from 'lucide-react';
 
-export default function RotaPadraoForm({ rota, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(rota || {
+export default function RotaPadraoForm({ rota, rotaPadrao, onSubmit, windowMode = false }) {
+  const dadosIniciais = rotaPadrao || rota;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_rota: '',
     descricao: '',
     origem: '',
@@ -89,7 +90,7 @@ export default function RotaPadraoForm({ rota, onSubmit, windowMode = false }) {
       </div>
 
       <Button type="submit" className="w-full bg-orange-600 hover:bg-orange-700">
-        {rota ? 'Atualizar' : 'Criar Rota Padrão'}
+        {dadosIniciais ? 'Atualizar' : 'Criar Rota Padrão'}
       </Button>
     </form>
   );
@@ -100,7 +101,7 @@ export default function RotaPadraoForm({ rota, onSubmit, windowMode = false }) {
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-orange-50 to-orange-100">
           <MapPin className="w-6 h-6 text-orange-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {rota ? 'Editar Rota' : 'Nova Rota Padrão'}
+            {dadosIniciais ? 'Editar Rota' : 'Nova Rota Padrão'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>
