@@ -6,8 +6,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Globe } from 'lucide-react';
 
-export default function CatalogoWebForm({ catalogo, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(catalogo || {
+export default function CatalogoWebForm({ catalogo, catalogoWeb, onSubmit, windowMode = false }) {
+  const dadosIniciais = catalogoWeb || catalogo;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_catalogo: '',
     descricao: '',
     produto_id: '',
@@ -86,7 +87,7 @@ export default function CatalogoWebForm({ catalogo, onSubmit, windowMode = false
       </div>
 
       <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-        {catalogo ? 'Atualizar' : 'Criar Catálogo Web'}
+        {dadosIniciais ? 'Atualizar' : 'Criar Catálogo Web'}
       </Button>
     </form>
   );
@@ -97,7 +98,7 @@ export default function CatalogoWebForm({ catalogo, onSubmit, windowMode = false
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-blue-50 to-blue-100">
           <Globe className="w-6 h-6 text-blue-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {catalogo ? 'Editar Catálogo' : 'Novo Catálogo Web'}
+            {dadosIniciais ? 'Editar Catálogo' : 'Novo Catálogo Web'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

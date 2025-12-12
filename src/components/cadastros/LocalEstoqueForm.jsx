@@ -13,11 +13,13 @@ import { Warehouse, MapPin } from "lucide-react";
  * Padrão: w-full h-full em window mode
  */
 export default function LocalEstoqueForm({ 
-  local, 
+  local,
+  localEstoque, 
   windowMode = false,
   onSubmit,
   onCancel 
 }) {
+  const dadosIniciais = localEstoque || local;
   const [formData, setFormData] = useState({
     nome: "",
     codigo: "",
@@ -32,7 +34,7 @@ export default function LocalEstoqueForm({
       quantidade_ruas: 0
     },
     controla_temperatura: false,
-    ...local
+    ...dadosIniciais
   });
 
   const handleSubmitForm = (e) => {
@@ -191,7 +193,7 @@ export default function LocalEstoqueForm({
               )}
               <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
                 <Warehouse className="w-4 h-4 mr-2" />
-                {local ? 'Atualizar' : 'Criar'} Local
+                {dadosIniciais ? 'Atualizar' : 'Criar'} Local
               </Button>
             </div>
           </div>

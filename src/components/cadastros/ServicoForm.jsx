@@ -11,7 +11,8 @@ import { Loader2, Stars } from "lucide-react";
  * V21.1.2 - WINDOW MODE READY
  */
 export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(servico || {
+  const dadosIniciais = servico;
+  const [formData, setFormData] = useState(dadosIniciais || {
     descricao: '',
     codigo_servico: '',
     tipo_servico: 'Produção',
@@ -119,7 +120,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {servico ? 'Atualizar' : 'Criar Serviço'}
+          {dadosIniciais ? 'Atualizar' : 'Criar Serviço'}
         </Button>
       </div>
     </form>
@@ -131,7 +132,7 @@ export default function ServicoForm({ servico, onSubmit, isSubmitting, windowMod
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Stars className="w-5 h-5 text-blue-600" />
-            {servico ? 'Editar Serviço' : 'Novo Serviço'}
+            {dadosIniciais ? 'Editar Serviço' : 'Novo Serviço'}
           </h2>
         </div>
         {formContent}

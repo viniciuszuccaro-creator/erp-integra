@@ -7,8 +7,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { FileText } from 'lucide-react';
 
-export default function ModeloDocumentoForm({ modelo, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(modelo || {
+export default function ModeloDocumentoForm({ modelo, modeloDocumento, onSubmit, windowMode = false }) {
+  const dadosIniciais = modeloDocumento || modelo;
+  const [formData, setFormData] = useState(dadosIniciais || {
     nome_modelo: '',
     tipo_documento: 'Romaneio',
     descricao: '',
@@ -105,7 +106,7 @@ export default function ModeloDocumentoForm({ modelo, onSubmit, windowMode = fal
       </div>
 
       <Button type="submit" className="w-full bg-slate-600 hover:bg-slate-700">
-        {modelo ? 'Atualizar' : 'Criar Modelo'}
+        {dadosIniciais ? 'Atualizar' : 'Criar Modelo'}
       </Button>
     </form>
   );
@@ -116,7 +117,7 @@ export default function ModeloDocumentoForm({ modelo, onSubmit, windowMode = fal
         <div className="flex items-center gap-3 p-4 border-b bg-gradient-to-r from-slate-50 to-slate-100">
           <FileText className="w-6 h-6 text-slate-600" />
           <h2 className="text-lg font-bold text-slate-900">
-            {modelo ? 'Editar Modelo' : 'Novo Modelo de Documento'}
+            {dadosIniciais ? 'Editar Modelo' : 'Novo Modelo de Documento'}
           </h2>
         </div>
         <div className="flex-1 overflow-auto">{content}</div>

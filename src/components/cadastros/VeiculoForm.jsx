@@ -10,7 +10,8 @@ import { Loader2, Truck } from "lucide-react";
  * V21.1.2 - WINDOW MODE READY
  */
 export default function VeiculoForm({ veiculo, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(veiculo || {
+  const dadosIniciais = veiculo;
+  const [formData, setFormData] = useState(dadosIniciais || {
     placa: '',
     modelo: '',
     tipo_veiculo: 'Caminhão Toco',
@@ -157,7 +158,7 @@ export default function VeiculoForm({ veiculo, onSubmit, isSubmitting, windowMod
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {veiculo ? 'Atualizar Veículo' : 'Cadastrar Veículo'}
+          {dadosIniciais ? 'Atualizar Veículo' : 'Cadastrar Veículo'}
         </Button>
       </div>
     </form>
@@ -169,7 +170,7 @@ export default function VeiculoForm({ veiculo, onSubmit, isSubmitting, windowMod
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Truck className="w-5 h-5 text-blue-600" />
-            {veiculo ? 'Editar Veículo' : 'Novo Veículo'}
+            {dadosIniciais ? 'Editar Veículo' : 'Novo Veículo'}
           </h2>
         </div>
         {formContent}

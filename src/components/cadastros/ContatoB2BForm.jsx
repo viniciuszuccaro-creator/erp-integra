@@ -11,8 +11,9 @@ import { base44 } from "@/api/base44Client";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function ContatoB2BForm({ contato, onSubmit, isSubmitting, windowMode = false }) {
-  const [formData, setFormData] = useState(contato || {
+export default function ContatoB2BForm({ contato, contatoB2B, onSubmit, isSubmitting, windowMode = false }) {
+  const dadosIniciais = contatoB2B || contato;
+  const [formData, setFormData] = useState(dadosIniciais || {
     cliente_id: '',
     nome_contato: '',
     cargo: '',
@@ -133,7 +134,7 @@ export default function ContatoB2BForm({ contato, onSubmit, isSubmitting, window
       <div className="flex justify-end gap-3 pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          {contato ? 'Atualizar' : 'Criar Contato'}
+          {dadosIniciais ? 'Atualizar' : 'Criar Contato'}
         </Button>
       </div>
     </form>
@@ -145,7 +146,7 @@ export default function ContatoB2BForm({ contato, onSubmit, isSubmitting, window
         <div className="mb-4 pb-4 border-b">
           <h2 className="text-xl font-bold flex items-center gap-2">
             <MessageCircle className="w-5 h-5 text-blue-600" />
-            {contato ? 'Editar Contato B2B' : 'Novo Contato B2B'}
+            {dadosIniciais ? 'Editar Contato B2B' : 'Novo Contato B2B'}
           </h2>
         </div>
         {formContent}
