@@ -110,7 +110,10 @@ export default function WindowModal({ window, children }) {
       exit={{ opacity: 0, scale: 0.9, y: 20 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       ref={windowRef}
-      style={windowStyle}
+      style={{
+        ...windowStyle,
+        zIndex: window.zIndex // GARANTIR que zIndex é aplicado no style inline
+      }}
       className={`bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden select-none ${
         isDragging ? 'cursor-grabbing shadow-blue-500/50 transition-none' : ''
       } ${
