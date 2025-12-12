@@ -107,45 +107,92 @@ export default function VisualizadorUniversalEntidade({
     a.click();
   };
 
-  // Abrir edição - V21.6.1 CORREÇÃO DEFINITIVA: Passar dados corretamente
+  // Abrir edição - V21.6.2 CORREÇÃO TOTAL: Passar TODOS os nomes possíveis + Z-index MÁXIMO
   const abrirEdicao = (item) => {
     if (componenteEdicao) {
       const propName = nomeEntidade.charAt(0).toLowerCase() + nomeEntidade.slice(1);
       
       const props = {
-        // TODOS os formatos possíveis de props
-        [propName]: item,                    // Ex: setorAtividade, grupoProduto
-        [nomeEntidade]: item,                 // Ex: SetorAtividade, GrupoProduto
-        setor: item,                          // compatibilidade
-        setorAtividade: item,                 // compatibilidade
-        grupo: item,                          // compatibilidade
-        grupoProduto: item,                   // compatibilidade
-        marca: item,                          // compatibilidade
-        banco: item,                          // compatibilidade
-        departamento: item,                   // compatibilidade
-        cargo: item,                          // compatibilidade
-        turno: item,                          // compatibilidade
-        condicaoComercial: item,              // compatibilidade
-        segmentoCliente: item,                // compatibilidade
-        kitProduto: item,                     // compatibilidade
-        centroResultado: item,                // compatibilidade
-        tipoDespesa: item,                    // compatibilidade
-        moedaIndice: item,                    // compatibilidade
-        motorista: item,                      // compatibilidade
-        tipoFrete: item,                      // compatibilidade
-        modeloDocumento: item,                // compatibilidade
-        localEstoque: item,                   // compatibilidade
-        contatoB2B: item,                     // compatibilidade
-        servico: item,                        // compatibilidade
-        veiculo: item,                        // compatibilidade
-        catalogoWeb: item,                    // compatibilidade
-        webhook: item,                        // compatibilidade
-        rotaPadrao: item,                     // compatibilidade
-        unidadeMedida: item,                  // compatibilidade
-        chatbotCanal: item,                   // compatibilidade
-        regiaoAtendimento: item,              // compatibilidade
-        representante: item,                  // compatibilidade
+        // TODOS os formatos possíveis de props (50+ variações)
+        [propName]: item,
+        [nomeEntidade]: item,
+        // Variações específicas por entidade
+        cliente: item,
+        fornecedor: item,
+        transportadora: item,
+        colaborador: item,
+        representante: item,
+        contatoB2B: item,
+        produto: item,
+        setor: item,
+        setorAtividade: item,
+        grupo: item,
+        grupoProduto: item,
+        marca: item,
+        tabela: item,
+        tabelaPreco: item,
+        tabelaFiscal: item,
+        servico: item,
+        kitProduto: item,
+        kit: item,
+        unidadeMedida: item,
+        unidade: item,
+        catalogoWeb: item,
+        catalogo: item,
+        banco: item,
+        formaPagamento: item,
+        forma: item,
+        planoDeContas: item,
+        conta: item,
+        centroCusto: item,
+        centro: item,
+        centroResultado: item,
+        tipoDespesa: item,
+        tipo: item,
+        moedaIndice: item,
+        moeda: item,
+        condicaoComercial: item,
+        condicao: item,
+        veiculo: item,
+        motorista: item,
+        tipoFrete: item,
+        localEstoque: item,
+        local: item,
+        rotaPadrao: item,
+        rota: item,
+        modeloDocumento: item,
+        modelo: item,
+        webhook: item,
+        eventoNotificacao: item,
+        evento: item,
+        configuracaoIntegracaoMarketplace: item,
+        config: item,
+        chatbotIntent: item,
+        intent: item,
+        chatbotCanal: item,
+        canal: item,
+        apiExterna: item,
+        api: item,
+        jobAgendado: item,
+        job: item,
+        parametroPortalCliente: item,
+        parametroOrigemPedido: item,
+        parametroRecebimentoNFe: item,
+        parametroRoteirizacao: item,
+        parametroConciliacaoBancaria: item,
+        parametroCaixaDiario: item,
+        empresa: item,
+        grupoEmpresarial: item,
+        departamento: item,
+        dept: item,
+        cargo: item,
+        turno: item,
+        segmentoCliente: item,
+        seg: item,
+        regiaoAtendimento: item,
+        regiao: item,
         onSuccess: () => refetch(),
+        onSubmit: () => refetch(),
         windowMode: true
       };
 
@@ -157,8 +204,9 @@ export default function VisualizadorUniversalEntidade({
           width: 1000,
           height: 700,
           uniqueKey: `edit-${nomeEntidade}-${item.id}-${Date.now()}`,
-          zIndex: 999999,
-          bringToFront: true
+          zIndex: 9999999,
+          bringToFront: true,
+          forceTop: true
         }
       );
     }
