@@ -103,7 +103,7 @@ export function WindowProvider({ children }) {
       height: options.height || 600,
       x: options.x !== undefined ? options.x : 100 + cascade,
       y: options.y !== undefined ? options.y : 80 + cascade,
-      zIndex: maxZ + 100, // V21.6: +100 para GARANTIR que nova janela fica na frente
+      zIndex: options.zIndex || (maxZ + 100), // V21.6: Aceitar zIndex customizado ou +100
       uniqueKey: options.uniqueKey // V21.6: Salvar uniqueKey na janela
     };
 
