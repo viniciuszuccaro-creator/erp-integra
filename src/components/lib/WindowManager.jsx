@@ -61,23 +61,23 @@ export function WindowProvider({ children }) {
     });
   }, []);
 
-  // Abrir nova janela - V21.6 MELHORADO: Evita duplicação + Sempre na frente
+  // Abrir nova janela - V21.6 CORRIGIDO: Anti-duplicação + zIndex SEMPRE na frente
   const openWindow = useCallback((component, props = {}, options = {}) => {
-    // V21.6: Verificar se já existe janela com mesmo componente e registro
-    const uniqueKey = options.uniqueKey || (props.id || props[Object.keys(props)[0]]?.id);
-    
-    if (uniqueKey) {
-      const janelaExistente = windows.find(w => 
-        w.component === component && 
-        (w.props.id === uniqueKey || w.props[Object.keys(props)[0]]?.id === uniqueKey)
-      );
+    // V21.6: Buscar por uniqueKey para evitar duplicação
+    if (options.uniqueKey) {
+      const janelaExistente = windows.find(w => w.uniqueKey === options.uniqueKey);
 
       if (janelaExistente) {
-        // Trazer janela existente para frente
-        bringToFront(janelaExistente.id);
-        if (janelaExistente.isMinimized) {
-          restoreWindow(janelaExistente.id);
-        }
+        // Trazer janela existente para FRENTE
+        setActiveWindowId(janelaExistente.id);
+        setWindows(prev => {
+          const maxZ = Math.max(...prev.map(w => w.zIndex), 1000);
+          return prev.map(w => 
+            w.id === janelaExistente.id 
+              ? { ...w, zIndex: maxZ + 100, isMinimized: false } // +100 para GARANTIR que fica na frente
+              : w
+          );
+        });
         return janelaExistente.id;
       }
     }
@@ -89,7 +89,7 @@ export function WindowProvider({ children }) {
     const maxOffset = 400;
     const cascade = offsetBase % maxOffset;
     
-    // V21.6: zIndex sempre maior que todas janelas abertas
+    // V21.6: zIndex SEMPRE maior que todas janelas abertas
     const maxZ = windows.length > 0 ? Math.max(...windows.map(w => w.zIndex)) : 1000;
     
     const newWindow = {
@@ -103,14 +103,15 @@ export function WindowProvider({ children }) {
       height: options.height || 600,
       x: options.x !== undefined ? options.x : 100 + cascade,
       y: options.y !== undefined ? options.y : 80 + cascade,
-      zIndex: maxZ + 10, // V21.6: Sempre 10 acima da maior
+      zIndex: maxZ + 100, // V21.6: +100 para GARANTIR que nova janela fica na frente
+      uniqueKey: options.uniqueKey // V21.6: Salvar uniqueKey na janela
     };
 
     setWindows(prev => [...prev, newWindow]);
     setActiveWindowId(windowId);
     
     return windowId;
-  }, [windows, bringToFront, restoreWindow]);
+  }, [windows]);
 
   // Atualizar posição e tamanho
   const updateWindow = useCallback((windowId, updates) => {
