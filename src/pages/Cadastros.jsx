@@ -757,10 +757,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openWindow(CadastroClienteCompleto, { cliente, windowMode: true }, {
+                            onClick={() => openWindow(CadastroClienteCompleto, { 
+                              cliente, 
+                              windowMode: true,
+                              onSuccess: () => queryClient.invalidateQueries({ queryKey: ['clientes'] })
+                            }, {
                               title: `Editar Cliente: ${cliente.nome || cliente.razao_social}`,
                               width: 1100,
-                              height: 650
+                              height: 650,
+                              uniqueKey: `edit-Cliente-${cliente.id}`
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -826,10 +831,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openWindow(CadastroFornecedorCompleto, { fornecedor, windowMode: true }, {
+                            onClick={() => openWindow(CadastroFornecedorCompleto, { 
+                              fornecedor, 
+                              windowMode: true,
+                              onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fornecedores'] })
+                            }, {
                               title: `Editar Fornecedor: ${fornecedor.nome}`,
                               width: 1100,
-                              height: 650
+                              height: 650,
+                              uniqueKey: `edit-Fornecedor-${fornecedor.id}`
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1408,10 +1418,15 @@ export default function Cadastros() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => openWindow(ProdutoFormV22_Completo, { produto, windowMode: true }, {
+                            onClick={() => openWindow(ProdutoFormV22_Completo, { 
+                              produto, 
+                              windowMode: true,
+                              onSuccess: () => queryClient.invalidateQueries({ queryKey: ['produtos'] })
+                            }, {
                               title: `Editar Produto: ${produto.descricao}`,
                               width: 1200,
-                              height: 700
+                              height: 700,
+                              uniqueKey: `edit-Produto-${produto.id}`
                             })}
                             disabled={!hasPermission('estoque', 'editar')}
                           >
@@ -1478,13 +1493,14 @@ export default function Cadastros() {
                             variant="ghost"
                             size="sm"
                             onClick={() => openWindow(SetorAtividadeForm, {
-                              setor,
+                              setorAtividade: setor,
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('SetorAtividade', 'setores-atividade')
                             }, {
                               title: `🏭 Editar: ${setor.nome}`,
                               width: 800,
-                              height: 550
+                              height: 550,
+                              uniqueKey: `edit-SetorAtividade-${setor.id}`
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1549,13 +1565,14 @@ export default function Cadastros() {
                             variant="ghost"
                             size="sm"
                             onClick={() => openWindow(GrupoProdutoForm, {
-                              grupo,
+                              grupoProduto: grupo,
                               windowMode: true,
                               onSubmit: handleSubmitGenerico('GrupoProduto', 'grupos-produto')
                             }, {
                               title: `📦 Editar: ${grupo.nome_grupo}`,
                               width: 800,
-                              height: 550
+                              height: 550,
+                              uniqueKey: `edit-GrupoProduto-${grupo.id}`
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
@@ -1626,7 +1643,8 @@ export default function Cadastros() {
                             }, {
                               title: `🏆 Editar: ${marca.nome_marca}`,
                               width: 800,
-                              height: 550
+                              height: 550,
+                              uniqueKey: `edit-Marca-${marca.id}`
                             })}
                             disabled={!hasPermission('cadastros', 'editar')}
                           >
