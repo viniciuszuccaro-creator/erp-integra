@@ -8,7 +8,8 @@ import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_F
 import ValidacaoFinalTotalV21_6 from "@/components/sistema/VALIDACAO_FINAL_TOTAL_V21_6";
 import MasterDashboardV21_6 from "@/components/sistema/MASTER_DASHBOARD_V21_6";
 import GuiaFluxoCompletoV21_6 from "@/components/sistema/GuiaFluxoCompletoV21_6";
-import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket, BookOpen } from "lucide-react";
+import CertificacaoFinalV21_6_100 from "@/components/sistema/CERTIFICACAO_FINAL_V21_6_100";
+import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket, BookOpen, Trophy } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
@@ -21,9 +22,10 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function ConfiguracoesSistema() {
-  const [activeTab, setActiveTab] = useState("ia");
+  const [activeTab, setActiveTab] = useState("certificacao");
   const { empresaAtual, estaNoGrupo } = useContextoVisual();
   const { openWindow } = useWindow();
 
@@ -42,11 +44,27 @@ export default function ConfiguracoesSistema() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger
+            value="certificacao"
+            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-orange-600 data-[state=active]:text-white"
+          >
+            <Trophy className="w-4 h-4 mr-2" />
+            🏆 Certificação 100%
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="guia-uso"
+            className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            📖 Guia de Uso
+          </TabsTrigger>
+
+          <TabsTrigger
             value="status-origem"
             className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
           >
             <Zap className="w-4 h-4 mr-2" />
-            ✅ Status Origem V21.6
+            ✅ Status Origem
           </TabsTrigger>
 
           <TabsTrigger
@@ -54,7 +72,7 @@ export default function ConfiguracoesSistema() {
             className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
           >
             <Rocket className="w-4 h-4 mr-2" />
-            🚀 Status Fechamento V21.6
+            🚀 Status Fechamento
           </TabsTrigger>
 
           <TabsTrigger
@@ -88,15 +106,19 @@ export default function ConfiguracoesSistema() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="certificacao">
+          <CertificacaoFinalV21_6_100 windowMode={false} />
+        </TabsContent>
+
+        <TabsContent value="guia-uso">
+          <GuiaFluxoCompletoV21_6 windowMode={false} />
+        </TabsContent>
+
         <TabsContent value="status-origem">
           <div className="space-y-6">
             <CertificadoProducaoV21_6 />
             <StatusOrigemPedido100 />
           </div>
-        </TabsContent>
-
-        <TabsContent value="guia-uso">
-          <GuiaFluxoCompletoV21_6 windowMode={false} />
         </TabsContent>
 
         <TabsContent value="status-fechamento">
