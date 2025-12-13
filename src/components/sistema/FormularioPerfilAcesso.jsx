@@ -151,7 +151,7 @@ export default function FormularioPerfilAcesso({ perfil, onSalvar, onCancelar, e
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!formPerfil.nome_perfil) {
       toast.error("❌ Nome do perfil é obrigatório");
       return;
@@ -159,7 +159,14 @@ export default function FormularioPerfilAcesso({ perfil, onSalvar, onCancelar, e
     
     setSalvando(true);
     try {
-      await onSalvar(formPerfil);
+      const sucesso = await onSalvar(formPerfil);
+      if (sucesso) {
+        toast.success("✅ Perfil salvo com sucesso!");
+        if (onCancelar) onCancelar();
+      }
+    } catch (error) {
+      console.error("❌ Erro ao salvar:", error);
+      toast.error("❌ Erro ao salvar perfil");
     } finally {
       setSalvando(false);
     }

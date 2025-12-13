@@ -244,10 +244,14 @@ export default function CentralPerfisAcesso() {
     mutationFn: async ({ perfil, data }) => {
       console.log("📝 Salvando perfil com permissões:", data);
       const perfilId = perfil?.id;
+      const dadosComGrupo = {
+        ...data,
+        group_id: empresaAtual?.group_id || null
+      };
       if (perfilId && !perfil.novo) {
-        return await base44.entities.PerfilAcesso.update(perfilId, data);
+        return await base44.entities.PerfilAcesso.update(perfilId, dadosComGrupo);
       } else {
-        return await base44.entities.PerfilAcesso.create(data);
+        return await base44.entities.PerfilAcesso.create(dadosComGrupo);
       }
     },
     onSuccess: (result) => {
