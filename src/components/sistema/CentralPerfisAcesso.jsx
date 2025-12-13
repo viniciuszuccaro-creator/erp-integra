@@ -1075,16 +1075,40 @@ export default function CentralPerfisAcesso() {
               {/* PERMISSÕES GRANULARES */}
               <div className="flex-1 overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between mb-4">
-                  <Label className="text-lg font-bold">Permissões Granulares por Módulo</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={selecionarTudoGlobal}
-                    className="text-sm"
-                  >
-                    <CheckSquare className="w-4 h-4 mr-2" />
-                    Selecionar/Desmarcar Tudo
-                  </Button>
+                  <Label className="text-lg font-bold flex items-center gap-2">
+                    Permissões Granulares por Módulo
+                    <Badge className="bg-blue-100 text-blue-700">
+                      {modulosExpandidos.length}/{Object.keys(ESTRUTURA_SISTEMA).length} expandidos
+                    </Badge>
+                  </Label>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        if (modulosExpandidos.length === Object.keys(ESTRUTURA_SISTEMA).length) {
+                          setModulosExpandidos([]);
+                          toast.info("📁 Todos os módulos foram recolhidos");
+                        } else {
+                          setModulosExpandidos(Object.keys(ESTRUTURA_SISTEMA));
+                          toast.info("📂 Todos os módulos foram expandidos");
+                        }
+                      }}
+                      className="text-sm"
+                    >
+                      <ChevronDown className="w-4 h-4 mr-2" />
+                      {modulosExpandidos.length === Object.keys(ESTRUTURA_SISTEMA).length ? 'Recolher Todos' : 'Expandir Todos'}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={selecionarTudoGlobal}
+                      className="text-sm"
+                    >
+                      <CheckSquare className="w-4 h-4 mr-2" />
+                      Selecionar/Desmarcar Tudo
+                    </Button>
+                  </div>
                 </div>
 
                 <Alert className="mb-4 border-blue-200 bg-blue-50">
@@ -1104,26 +1128,41 @@ export default function CentralPerfisAcesso() {
                   </AlertDescription>
                 </Alert>
 
-                <div className="flex-1 overflow-auto border rounded-lg bg-slate-50">
-                  <Accordion type="multiple" value={modulosExpandidos} onValueChange={setModulosExpandidos}>
+                <div className="flex-1 overflow-auto border-2 border-blue-300 rounded-lg bg-slate-50 shadow-inner">
+                  <Accordion 
+                    type="multiple" 
+                    value={modulosExpandidos} 
+                    onValueChange={setModulosExpandidos}
+                    className="w-full"
+                  >
                     {Object.entries(ESTRUTURA_SISTEMA).map(([moduloId, modulo]) => {
                       const Icone = modulo.icone;
                       const qtdPerms = contarPermissoesModulo(moduloId);
                       const temPermissoes = qtdPerms > 0;
+                      const estaExpandido = modulosExpandidos.includes(moduloId);
                       
                       return (
-                        <AccordionItem key={moduloId} value={moduloId} className={`border-b ${temPermissoes ? 'bg-blue-50/30' : ''}`}>
-                          <AccordionTrigger className={`px-4 py-3 hover:bg-white/50 ${temPermissoes ? 'font-bold' : ''}`}>
+                        <AccordionItem 
+                          key={moduloId} 
+                          value={moduloId} 
+                          className={`border-b-2 ${temPermissoes ? 'bg-gradient-to-r from-blue-50 to-green-50 border-green-300' : 'bg-white border-slate-200'}`}
+                        >
+                          <AccordionTrigger className={`px-4 py-4 hover:bg-white/70 ${temPermissoes ? 'font-bold' : ''} ${estaExpandido ? 'bg-white/50' : ''}`}>
                             <div className="flex items-center gap-3 flex-1">
-                              <Icone className={`w-5 h-5 text-${modulo.cor}-600`} />
-                              <span className={temPermissoes ? 'font-bold' : 'font-medium'}>{modulo.nome}</span>
+                              <Icone className={`w-6 h-6 text-${modulo.cor}-600 ${estaExpandido ? 'animate-pulse' : ''}`} />
+                              <span className={`text-base ${temPermissoes ? 'font-bold' : 'font-medium'}`}>{modulo.nome}</span>
                               {temPermissoes ? (
-                                <Badge className="bg-green-600 text-white ml-2 shadow-md">
+                                <Badge className="bg-gradient-to-r from-green-600 to-green-700 text-white ml-2 shadow-lg px-3 py-1">
                                   ✓ {qtdPerms} ativas
                                 </Badge>
                               ) : (
-                                <Badge className="bg-slate-200 text-slate-500 ml-2">
-                                  0
+                                <Badge className="bg-slate-200 text-slate-600 ml-2">
+                                  Vazio
+                                </Badge>
+                              )}
+                              {estaExpandido && (
+                                <Badge className="bg-blue-600 text-white ml-2 animate-pulse">
+                                  ⬇ Expandido
                                 </Badge>
                               )}
                               <div className="ml-auto mr-4">
@@ -1135,7 +1174,7 @@ export default function CentralPerfisAcesso() {
                                     e.stopPropagation();
                                     selecionarTudoModulo(moduloId);
                                   }}
-                                  className="text-xs"
+                                  className="text-xs bg-blue-100 hover:bg-blue-200"
                                 >
                                   <CheckSquare className="w-3 h-3 mr-1" />
                                   Tudo
@@ -1143,8 +1182,8 @@ export default function CentralPerfisAcesso() {
                               </div>
                             </div>
                           </AccordionTrigger>
-                          <AccordionContent className="px-4 pb-4">
-                            <div className="space-y-3">
+                          <AccordionContent className="px-4 pb-4 bg-white">
+                            <div className="space-y-3 pt-2">
                               {Object.entries(modulo.secoes).map(([secaoId, secao]) => {
                                 const qtdSecao = formPerfil.permissoes?.[moduloId]?.[secaoId]?.length || 0;
                                 const temPermissoesSecao = qtdSecao > 0;
