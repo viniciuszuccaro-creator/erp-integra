@@ -1126,6 +1126,7 @@ export default function Dashboard() {
           {/* Example: <PainelOperacoes3D empresaId={null} grupoId={null} /> */}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

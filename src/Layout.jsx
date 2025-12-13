@@ -183,6 +183,20 @@ function LayoutContent({ children, currentPageName }) {
     return true;
   });
 
+  // Adicionar item de Validador do Sistema para admins
+  if (user?.role === 'admin') {
+    const temValidador = itemsFiltrados.some(item => item.title === 'Validador do Sistema');
+    if (!temValidador) {
+      itemsFiltrados.push({
+        title: '🔍 Validador do Sistema',
+        url: createPageUrl('ValidadorSistema'),
+        icon: Shield,
+        group: 'sistema',
+        adminOnly: true
+      });
+    }
+  }
+
   const groupedItems = {
     principal: itemsFiltrados.filter(item => item.group === "principal"),
     cadastros: itemsFiltrados.filter(item => item.group === "cadastros"),
