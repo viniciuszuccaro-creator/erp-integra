@@ -108,12 +108,13 @@ export default function EmpresaSwitcher() {
 
   // 🤖 IA: Sugestões inteligentes baseadas em padrões de uso
   const { data: sugestoesIA = [] } = useQuery({
-    queryKey: ['sugestoes-empresa-ia', user?.id],
+    queryKey: ['sugestoes-empresa-ia', user?.id, historicoTrocas.length],
     queryFn: async () => {
+      if (!historicoTrocas || historicoTrocas.length === 0) return [];
+      
       try {
         const agora = new Date();
         const hora = agora.getHours();
-        const diaSemana = agora.getDay();
         
         // Análise de padrão temporal
         const empresaMaisUsadaManha = historicoTrocas
@@ -157,13 +158,15 @@ export default function EmpresaSwitcher() {
         return [];
       }
     },
-    enabled: !!user && historicoTrocas.length > 0,
+    enabled: !!user,
   });
 
   // 📊 ANALYTICS: Estatísticas de uso por empresa
   const { data: estatisticasUso = {} } = useQuery({
-    queryKey: ['estatisticas-uso-empresas', user?.id],
+    queryKey: ['estatisticas-uso-empresas', user?.id, empresasDisponiveis.length, historicoTrocas.length],
     queryFn: async () => {
+      if (!empresasDisponiveis || empresasDisponiveis.length === 0) return {};
+      
       try {
         const stats = {};
         for (const empresa of empresasDisponiveis) {
@@ -183,7 +186,7 @@ export default function EmpresaSwitcher() {
         return {};
       }
     },
-    enabled: !!user && empresasDisponiveis.length > 0,
+    enabled: !!user,
   });
 
   // 🎯 Marcar empresa como favorita
