@@ -26,6 +26,11 @@ import {
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
+import { createPageUrl } from "@/utils";
+import IAAnaliseSegurancaPerfis from "./IAAnaliseSegurancaPerfis";
+import TemplatesPerfisInteligentes, { TEMPLATES_PERFIS } from "./TemplatesPerfisInteligentes";
+import ComparadorPerfisVisual from "./ComparadorPerfisVisual";
+import DashboardSegurancaPerfis from "./DashboardSegurancaPerfis";
 
 /**
  * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% GRANULAR E COMPLETO
@@ -201,6 +206,10 @@ export default function CentralPerfisAcesso() {
   const [usuarioAberto, setUsuarioAberto] = useState(null);
   const [busca, setBusca] = useState("");
   const [modulosExpandidos, setModulosExpandidos] = useState([]);
+  const [modoTemplate, setModoTemplate] = useState(false);
+  const [modoComparador, setModoComparador] = useState(false);
+  const [perfilComparar1, setPerfilComparar1] = useState(null);
+  const [perfilComparar2, setPerfilComparar2] = useState(null);
 
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
@@ -415,7 +424,30 @@ export default function CentralPerfisAcesso() {
       permissoes: perfil.permissoes || {},
       ativo: perfil.ativo !== false
     });
+    setModoTemplate(false);
     console.log("📂 Abrindo perfil para edição:", perfil.nome_perfil, perfil.permissoes);
+  };
+
+  const aplicarTemplate = (template) => {
+    setFormPerfil({
+      nome_perfil: template.nome,
+      descricao: template.descricao,
+      nivel_perfil: template.nivel,
+      permissoes: template.permissoes,
+      ativo: true
+    });
+    setModoTemplate(false);
+    toast.success(`✅ Template "${template.nome}" aplicado! Revise e salve.`);
+  };
+
+  const abrirComparador = () => {
+    if (perfis.length < 2) {
+      toast.error("❌ É necessário ter pelo menos 2 perfis para comparar");
+      return;
+    }
+    setModoComparador(true);
+    setPerfilComparar1(perfis[0]?.id || null);
+    setPerfilComparar2(perfis[1]?.id || null);
   };
 
   const handleVincularEmpresa = (usuario, empresaId, acao) => {
@@ -609,7 +641,7 @@ export default function CentralPerfisAcesso() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3 bg-white border shadow-sm">
+        <TabsList className="grid w-full grid-cols-4 bg-white border shadow-sm">
           <TabsTrigger value="perfis" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Shield className="w-4 h-4 mr-2" />
             Perfis de Acesso
@@ -622,11 +654,32 @@ export default function CentralPerfisAcesso() {
             <Building2 className="w-4 h-4 mr-2" />
             Empresas e Grupos
           </TabsTrigger>
+          <TabsTrigger value="seguranca" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <ShieldCheck className="w-4 h-4 mr-2" />
+            Dashboard Segurança
+          </TabsTrigger>
         </TabsList>
 
         {/* TAB: PERFIS */}
         <TabsContent value="perfis" className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-between items-center">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setModoTemplate(!modoTemplate)}
+                className="bg-purple-50 hover:bg-purple-100"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {modoTemplate ? 'Ocultar Templates' : 'Templates Inteligentes'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={abrirComparador}
+              >
+                <Layers className="w-4 h-4 mr-2" />
+                Comparar Perfis
+              </Button>
+            </div>
             <Button
               onClick={() => {
                 resetForm();
@@ -638,6 +691,17 @@ export default function CentralPerfisAcesso() {
               Novo Perfil
             </Button>
           </div>
+
+          {/* Templates Inteligentes */}
+          {modoTemplate && (
+            <TemplatesPerfisInteligentes
+              onSelecionarTemplate={(template) => {
+                resetForm();
+                setPerfilAberto({ novo: true });
+                setTimeout(() => aplicarTemplate(template), 100);
+              }}
+            />
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {perfisFiltrados.map(perfil => {
@@ -876,6 +940,11 @@ export default function CentralPerfisAcesso() {
             </Card>
           </div>
         </TabsContent>
+
+        {/* TAB: DASHBOARD DE SEGURANÇA */}
+        <TabsContent value="seguranca" className="space-y-4">
+          <DashboardSegurancaPerfis perfis={perfis} usuarios={usuarios} />
+        </TabsContent>
       </Tabs>
 
       {/* MODAL: EDITAR/CRIAR PERFIL - ESTRUTURA GRANULAR COMPLETA */}
@@ -966,6 +1035,11 @@ export default function CentralPerfisAcesso() {
                   rows={2}
                 />
               </div>
+
+              {/* IA de Análise de Segurança */}
+              {!perfilAberto?.novo && perfilAberto?.id && (
+                <IAAnaliseSegurancaPerfis perfil={perfilAberto} usuarios={usuarios} />
+              )}
 
               {/* PERMISSÕES GRANULARES */}
               <div className="flex-1 overflow-hidden flex flex-col">
@@ -1309,6 +1383,61 @@ export default function CentralPerfisAcesso() {
             Vá para a aba "Usuários e Vínculos" para configurar.
           </AlertDescription>
         </Alert>
+      )}
+
+      {/* MODAL: COMPARADOR DE PERFIS */}
+      {modoComparador && (
+        <Card className="fixed inset-4 z-[9999999] bg-white shadow-2xl flex flex-col">
+          <CardHeader className="bg-purple-50 border-b sticky top-0 z-20">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="w-5 h-5 text-purple-600" />
+                Comparador de Perfis
+              </CardTitle>
+              <Button variant="ghost" onClick={() => setModoComparador(false)}>
+                ✕
+              </Button>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="flex-1 overflow-auto p-6 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Perfil 1</Label>
+                <Select value={perfilComparar1 || ""} onValueChange={setPerfilComparar1}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecione o primeiro perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {perfis.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.nome_perfil}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Perfil 2</Label>
+                <Select value={perfilComparar2 || ""} onValueChange={setPerfilComparar2}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecione o segundo perfil" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {perfis.map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.nome_perfil}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {perfilComparar1 && perfilComparar2 && (
+              <ComparadorPerfisVisual
+                perfil1={perfis.find(p => p.id === perfilComparar1)}
+                perfil2={perfis.find(p => p.id === perfilComparar2)}
+              />
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
