@@ -1372,6 +1372,8 @@ export default function CentralPerfisAcesso() {
         </Alert>
       )}
 
+      {/* Removido: Modal de edição de perfil - agora usa janela multitarefa */}
+
       {/* MODAL: COMPARADOR DE PERFIS */}
       {modoComparador && (
         <Card className="fixed inset-4 z-[9999999] bg-white shadow-2xl flex flex-col">
