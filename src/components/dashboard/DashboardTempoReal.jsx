@@ -12,22 +12,29 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
-  Zap
+  Zap,
+  Target,
+  Sparkles
 } from 'lucide-react';
 import { useRealtimeKPIs, useRealtimePedidos, useRealtimeEntregas } from '../lib/useRealtimeData';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Dashboard em Tempo Real
- * Auto-atualiza a cada 5-10 segundos
+ * V21.7: Auto-atualiza a cada 10s + Multiempresa + IA
  */
-export default function DashboardTempoReal({ empresaId }) {
+export default function DashboardTempoReal({ empresaId, windowMode = false }) {
   const [pulseActive, setPulseActive] = useState(false);
+  const { empresaAtual, estaNoGrupo, filtrarPorContexto } = useContextoVisual();
+  
+  // Usar empresa do contexto se não fornecida
+  const empresaIdFinal = empresaId || empresaAtual?.id;
   
   // Dados em tempo real
-  const { data: kpis, isLoading, hasChanges } = useRealtimeKPIs(empresaId, 10000);
-  const { data: pedidosRecentes } = useRealtimePedidos(empresaId, 5);
-  const { data: entregasAtivas } = useRealtimeEntregas(empresaId);
+  const { data: kpis, isLoading, hasChanges } = useRealtimeKPIs(empresaIdFinal, 10000);
+  const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5);
+  const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal);
 
   // Pulse visual quando atualizar
   useEffect(() => {
@@ -52,24 +59,33 @@ export default function DashboardTempoReal({ empresaId }) {
     ? new Date(kpis.ultimaAtualizacao).toLocaleTimeString('pt-BR')
     : '-';
 
+  const containerClass = windowMode 
+    ? "w-full h-full flex flex-col overflow-hidden" 
+    : "space-y-6";
+
   return (
-    <div className="space-y-6">
+    <div className={containerClass}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* Header com Status */}
       <Alert className="border-green-300 bg-green-50">
         <Activity className={`w-5 h-5 text-green-600 ${pulseActive ? 'animate-pulse' : ''}`} />
         <AlertDescription>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-green-900">
-                📡 Dashboard em Tempo Real Ativo
+              <p className="font-semibold text-green-900 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                Dashboard em Tempo Real Ativo
               </p>
               <p className="text-sm text-green-700">
-                Auto-atualização a cada 10 segundos • Última: {ultimaAtualizacao}
+                {estaNoGrupo ? 'Visão Consolidada do Grupo' : empresaAtual?.nome_fantasia || empresaAtual?.razao_social || 'Empresa'} • Auto-atualização: {ultimaAtualizacao}
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <Badge className="bg-green-600 px-3">
+                <Target className="w-3 h-3 mr-1" />
+                {estaNoGrupo ? 'GRUPO' : 'EMPRESA'}
+              </Badge>
               <div className={`w-2 h-2 rounded-full ${pulseActive ? 'bg-green-600 animate-ping' : 'bg-green-600'}`} />
-              <span className="text-xs text-green-700 font-semibold">CONECTADO</span>
             </div>
           </div>
         </AlertDescription>
@@ -467,10 +483,35 @@ export default function DashboardTempoReal({ empresaId }) {
         </CardContent>
       </Card>
 
+      {/* IA: Insights Rápidos */}
+      {kpis.pedidos.aguardandoAprovacao > 3 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Card className="border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <Sparkles className="w-6 h-6 text-purple-600" />
+                <div className="flex-1">
+                  <p className="font-bold text-purple-900">
+                    IA: {kpis.pedidos.aguardandoAprovacao} pedidos aguardando aprovação
+                  </p>
+                  <p className="text-sm text-purple-700">
+                    Ação sugerida: Revisar e aprovar pedidos urgentes para não atrasar produção
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
       {/* Timestamp */}
       <div className="text-center text-xs text-slate-500">
         <Zap className="w-3 h-3 inline mr-1" />
         Atualizado automaticamente a cada 10 segundos
+      </div>
       </div>
     </div>
   );
