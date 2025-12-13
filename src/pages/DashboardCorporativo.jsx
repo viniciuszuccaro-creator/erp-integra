@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, TrendingUp, DollarSign, ShoppingCart, Package, Users, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Zap, Target, TrendingDown, FileText, Truck, Box, CreditCard, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { Building2, TrendingUp, DollarSign, ShoppingCart, Package, Users, AlertCircle, ArrowUpRight, ArrowDownRight, Activity, Zap, Target, Truck, Box, CreditCard, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart,
@@ -25,7 +25,7 @@ import {
 import useContextoGrupoEmpresa from "@/components/lib/useContextoGrupoEmpresa";
 
 export default function DashboardCorporativo() {
-  const { grupoAtual, empresasDoGrupo, estaNoGrupo, contexto } = useContextoGrupoEmpresa();
+  const { grupoAtual, empresasDoGrupo, estaNoGrupo } = useContextoGrupoEmpresa();
   
   const [periodoSelecionado, setPeriodoSelecionado] = useState("mes_atual");
   const [empresaSelecionada, setEmpresaSelecionada] = useState("todas");
@@ -155,7 +155,6 @@ export default function DashboardCorporativo() {
 
   // 📈 Comparação com período anterior
   const { dataInicio: dataInicioPeriodoAnterior } = (() => {
-    const hoje = new Date();
     const diff = new Date(dataFim).getTime() - new Date(dataInicio).getTime();
     const diasDiff = Math.floor(diff / (1000 * 60 * 60 * 24));
     
@@ -205,7 +204,7 @@ export default function DashboardCorporativo() {
 
   if (!estaNoGrupo) {
     return (
-      <div className="p-6 lg:p-8 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="p-6 lg:p-8 min-h-screen w-full bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="max-w-7xl mx-auto">
           <Card className="border-orange-300 bg-gradient-to-br from-orange-50 to-yellow-50 shadow-lg">
             <CardContent className="p-8">
@@ -250,7 +249,7 @@ export default function DashboardCorporativo() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
-      <div className="p-6 lg:p-8 space-y-6 w-full h-full">
+      <div className="p-6 lg:p-8 space-y-6 w-full">
         <div className="w-full space-y-6">
           {/* Header com Filtros Avançados */}
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white rounded-xl shadow-md p-6 border border-slate-200">
@@ -502,14 +501,13 @@ export default function DashboardCorporativo() {
 
           {/* ABA: VISÃO GERAL */}
           <TabsContent value="visao-geral" className="space-y-6 mt-6 w-full">
-
             {/* Gráficos Principais */}
             <div className="grid lg:grid-cols-2 gap-6 w-full">
               {/* Faturamento por Empresa */}
               <Card className="border-0 shadow-lg hover:shadow-xl transition-all">
                 <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-slate-200">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <BarChart className="w-5 h-5 text-blue-600" />
+                    <TrendingUp className="w-5 h-5 text-blue-600" />
                     Faturamento por Empresa
                   </CardTitle>
                 </CardHeader>
@@ -558,7 +556,7 @@ export default function DashboardCorporativo() {
             <Card className="border-0 shadow-lg hover:shadow-xl transition-all w-full">
               <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-slate-200">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <PieChart className="w-5 h-5 text-purple-600" />
+                  <TrendingUp className="w-5 h-5 text-purple-600" />
                   Distribuição de Faturamento (%)
                 </CardTitle>
               </CardHeader>
@@ -711,7 +709,7 @@ export default function DashboardCorporativo() {
               <CardContent className="p-6">
                 <div className="space-y-3">
                   {dadosEmpresa.map((item, index) => {
-                    const percentual = (item.valor / totalVendas) * 100;
+                    const percentual = totalVendas > 0 ? (item.valor / totalVendas) * 100 : 0;
                     return (
                       <div key={index} className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
                         <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-lg font-bold text-sm">
@@ -839,7 +837,7 @@ export default function DashboardCorporativo() {
                         <p className="text-xs text-slate-600">
                           <strong className="text-purple-600">{dadosEmpresa[0]?.empresa}</strong> lidera com{' '}
                           <strong>R$ {dadosEmpresa[0]?.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
-                          {' '}({((dadosEmpresa[0]?.valor / totalVendas) * 100).toFixed(1)}% do total)
+                          {' '}({totalVendas > 0 ? ((dadosEmpresa[0]?.valor / totalVendas) * 100).toFixed(1) : 0}% do total)
                         </p>
                       </div>
                     </div>
@@ -919,6 +917,7 @@ export default function DashboardCorporativo() {
             </Card>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );
