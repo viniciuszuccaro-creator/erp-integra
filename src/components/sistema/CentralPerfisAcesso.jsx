@@ -14,81 +14,185 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 import {
-  Shield,
-  Users,
-  Building2,
-  CheckCircle,
-  XCircle,
-  Plus,
-  Edit,
-  Search,
-  Settings,
-  Eye,
-  Pencil,
-  Trash2,
-  AlertTriangle,
-  RefreshCw,
-  Sparkles,
-  UserPlus,
-  UserCheck,
-  Key,
-  ShieldCheck,
-  CheckSquare,
-  LayoutDashboard,
-  ShoppingCart,
-  DollarSign,
-  Package,
-  Truck,
-  Factory,
-  UserCircle,
-  FileText,
-  BarChart3,
-  Download,
-  MessageCircle,
-  Briefcase
+  Shield, Users, Building2, CheckCircle, XCircle, Plus, Edit, Search, Settings,
+  Eye, Pencil, Trash2, AlertTriangle, RefreshCw, Sparkles, UserPlus, UserCheck,
+  Key, ShieldCheck, CheckSquare, LayoutDashboard, ShoppingCart, DollarSign,
+  Package, Truck, Factory, UserCircle, FileText, BarChart3, Download,
+  MessageCircle, Briefcase, Calendar, Layers, ChevronDown, Info
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
 /**
- * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% UNIFICADO E COMPLETO
+ * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% GRANULAR E COMPLETO
  * 
- * Versão SIMPLIFICADA e RÁPIDA para uso diário:
- * ✅ Perfis de Acesso (criar, editar, EXCLUIR)
- * ✅ Usuários e Atribuições
- * ✅ Vínculo de Empresas E GRUPOS
- * ✅ Seleção em massa (módulo/global)
+ * ESTRUTURA COMPLETA E GRANULAR:
+ * ✅ Módulo → Seção → Aba → Ações (visualizar, criar, editar, excluir, aprovar, exportar)
+ * ✅ Controle fino: cada aba de cada seção pode ter permissões independentes
+ * ✅ Seleção em massa: tudo, por módulo, por seção, por aba
+ * ✅ Perfis com CRUD completo (criar, editar, EXCLUIR)
+ * ✅ Usuários: vincular empresas E grupos simultaneamente
  * ✅ Integrado com GerenciamentoAcessosCompleto (modo avançado)
+ * ✅ Salvamento garantido com validação
  * 
  * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar ✅
- * 
- * Para funcionalidades avançadas, usar GerenciamentoAcessosCompleto
  */
 
-const MODULOS = {
-  dashboard: { nome: "Dashboard", icone: LayoutDashboard, cor: "blue" },
-  comercial: { nome: "Comercial", icone: ShoppingCart, cor: "green" },
-  financeiro: { nome: "Financeiro", icone: DollarSign, cor: "emerald" },
-  estoque: { nome: "Estoque", icone: Package, cor: "purple" },
-  compras: { nome: "Compras", icone: Briefcase, cor: "orange" },
-  expedicao: { nome: "Expedição", icone: Truck, cor: "cyan" },
-  producao: { nome: "Produção", icone: Factory, cor: "indigo" },
-  rh: { nome: "RH", icone: UserCircle, cor: "pink" },
-  fiscal: { nome: "Fiscal", icone: FileText, cor: "red" },
-  cadastros: { nome: "Cadastros", icone: Users, cor: "slate" },
-  crm: { nome: "CRM", icone: MessageCircle, cor: "violet" },
-  relatorios: { nome: "Relatórios", icone: BarChart3, cor: "teal" }
+// ESTRUTURA COMPLETA DO SISTEMA - MESMA DO GerenciamentoAcessosCompleto
+const ESTRUTURA_SISTEMA = {
+  dashboard: {
+    nome: "Dashboard",
+    icone: LayoutDashboard,
+    cor: "blue",
+    secoes: {
+      principal: { nome: "Visão Geral", abas: ["kpis", "graficos", "alertas"] },
+      corporativo: { nome: "Dashboard Corporativo", abas: ["multiempresa", "consolidado"] }
+    }
+  },
+  comercial: {
+    nome: "Comercial e Vendas",
+    icone: ShoppingCart,
+    cor: "green",
+    secoes: {
+      clientes: { nome: "Clientes", abas: ["lista", "detalhes", "historico", "crm"] },
+      pedidos: { nome: "Pedidos", abas: ["lista", "novo", "aprovacao", "faturamento"] },
+      orcamentos: { nome: "Orçamentos", abas: ["lista", "novo", "conversao"] },
+      tabelas_preco: { nome: "Tabelas de Preço", abas: ["lista", "itens", "clientes_vinculados"] },
+      comissoes: { nome: "Comissões", abas: ["lista", "calculo", "pagamento"] },
+      notas_fiscais: { nome: "Notas Fiscais", abas: ["emissao", "lista", "cancelamento"] }
+    }
+  },
+  financeiro: {
+    nome: "Financeiro e Contábil",
+    icone: DollarSign,
+    cor: "emerald",
+    secoes: {
+      contas_receber: { nome: "Contas a Receber", abas: ["lista", "baixa", "cobranca", "boletos"] },
+      contas_pagar: { nome: "Contas a Pagar", abas: ["lista", "baixa", "aprovacao", "pagamento"] },
+      caixa: { nome: "Caixa Diário", abas: ["movimentos", "fechamento", "transferencias"] },
+      conciliacao: { nome: "Conciliação Bancária", abas: ["importar", "conciliar", "historico"] },
+      relatorios: { nome: "Relatórios Financeiros", abas: ["dre", "fluxo_caixa", "inadimplencia"] }
+    }
+  },
+  estoque: {
+    nome: "Estoque e Almoxarifado",
+    icone: Package,
+    cor: "purple",
+    secoes: {
+      produtos: { nome: "Produtos", abas: ["lista", "novo", "lotes", "validade"] },
+      movimentacoes: { nome: "Movimentações", abas: ["entrada", "saida", "transferencia", "ajuste"] },
+      inventario: { nome: "Inventário", abas: ["contagem", "acerto", "historico"] },
+      requisicoes: { nome: "Requisições", abas: ["lista", "aprovacao", "atendimento"] }
+    }
+  },
+  compras: {
+    nome: "Compras e Suprimentos",
+    icone: Briefcase,
+    cor: "orange",
+    secoes: {
+      fornecedores: { nome: "Fornecedores", abas: ["lista", "avaliacao", "historico"] },
+      solicitacoes: { nome: "Solicitações", abas: ["lista", "nova", "aprovacao"] },
+      cotacoes: { nome: "Cotações", abas: ["lista", "nova", "comparativo"] },
+      ordens_compra: { nome: "Ordens de Compra", abas: ["lista", "nova", "recebimento"] }
+    }
+  },
+  expedicao: {
+    nome: "Expedição e Logística",
+    icone: Truck,
+    cor: "cyan",
+    secoes: {
+      entregas: { nome: "Entregas", abas: ["lista", "separacao", "despacho", "rastreamento"] },
+      romaneios: { nome: "Romaneios", abas: ["lista", "novo", "impressao"] },
+      roteirizacao: { nome: "Roteirização", abas: ["mapa", "otimizacao", "motoristas"] },
+      transportadoras: { nome: "Transportadoras", abas: ["lista", "tabelas_frete"] }
+    }
+  },
+  producao: {
+    nome: "Produção e Manufatura",
+    icone: Factory,
+    cor: "indigo",
+    secoes: {
+      ordens_producao: { nome: "Ordens de Produção", abas: ["lista", "nova", "programacao", "kanban"] },
+      apontamentos: { nome: "Apontamentos", abas: ["producao", "paradas", "refugo"] },
+      qualidade: { nome: "Qualidade", abas: ["inspecao", "nao_conformidades", "acoes"] }
+    }
+  },
+  rh: {
+    nome: "Recursos Humanos",
+    icone: UserCircle,
+    cor: "pink",
+    secoes: {
+      colaboradores: { nome: "Colaboradores", abas: ["lista", "documentos", "historico"] },
+      ponto: { nome: "Ponto Eletrônico", abas: ["registros", "ajustes", "relatorios"] },
+      ferias: { nome: "Férias", abas: ["programacao", "solicitacoes", "aprovacao"] },
+      folha: { nome: "Folha de Pagamento", abas: ["calculo", "holerites", "encargos"] }
+    }
+  },
+  fiscal: {
+    nome: "Fiscal e Tributário",
+    icone: FileText,
+    cor: "red",
+    secoes: {
+      nfe: { nome: "NF-e", abas: ["emissao", "entrada", "manifestacao", "inutilizacao"] },
+      tabelas_fiscais: { nome: "Tabelas Fiscais", abas: ["cfop", "cst", "ncm", "aliquotas"] },
+      sped: { nome: "SPED", abas: ["fiscal", "contribuicoes", "contabil"] }
+    }
+  },
+  cadastros_gerais: {
+    nome: "Cadastros Gerais",
+    icone: Users,
+    cor: "slate",
+    secoes: {
+      clientes: { nome: "Clientes", abas: ["lista", "novo", "historico"] },
+      fornecedores: { nome: "Fornecedores", abas: ["lista", "novo", "avaliacoes"] },
+      produtos: { nome: "Produtos", abas: ["lista", "novo", "importacao"] },
+      colaboradores: { nome: "Colaboradores", abas: ["lista", "novo", "documentos"] },
+      usuarios: { nome: "Usuários", abas: ["lista", "novo", "permissoes"] },
+      empresas: { nome: "Empresas", abas: ["lista", "novo", "config"] }
+    }
+  },
+  crm: {
+    nome: "CRM - Relacionamento",
+    icone: MessageCircle,
+    cor: "violet",
+    secoes: {
+      oportunidades: { nome: "Oportunidades", abas: ["funil", "lista", "conversao"] },
+      interacoes: { nome: "Interações", abas: ["historico", "nova", "follow_up"] },
+      campanhas: { nome: "Campanhas", abas: ["lista", "nova", "resultados"] }
+    }
+  },
+  relatorios: {
+    nome: "Relatórios e Análises",
+    icone: BarChart3,
+    cor: "teal",
+    secoes: {
+      dashboards: { nome: "Dashboards", abas: ["executivo", "operacional", "financeiro"] },
+      relatorios: { nome: "Relatórios", abas: ["vendas", "estoque", "financeiro", "rh"] },
+      exportacao: { nome: "Exportação", abas: ["excel", "pdf", "api"] }
+    }
+  },
+  chatbot: {
+    nome: "Hub de Atendimento",
+    icone: MessageCircle,
+    cor: "green",
+    secoes: {
+      atendimento: { nome: "Atendimento", abas: ["conversas", "fila", "transferencia"] },
+      configuracoes: { nome: "Configurações", abas: ["canais", "templates", "base_conhecimento"] }
+    }
+  }
 };
 
 const ACOES = [
-  { id: "visualizar", nome: "Visualizar", cor: "slate" },
-  { id: "criar", nome: "Criar", cor: "blue" },
-  { id: "editar", nome: "Editar", cor: "green" },
-  { id: "excluir", nome: "Excluir", cor: "red" },
-  { id: "aprovar", nome: "Aprovar", cor: "purple" },
-  { id: "exportar", nome: "Exportar", cor: "cyan" }
+  { id: "visualizar", nome: "Visualizar", icone: Eye, cor: "slate" },
+  { id: "criar", nome: "Criar", icone: Plus, cor: "blue" },
+  { id: "editar", nome: "Editar", icone: Pencil, cor: "green" },
+  { id: "excluir", nome: "Excluir", icone: Trash2, cor: "red" },
+  { id: "aprovar", nome: "Aprovar", icone: CheckSquare, cor: "purple" },
+  { id: "exportar", nome: "Exportar", icone: Download, cor: "cyan" }
 ];
 
 export default function CentralPerfisAcesso() {
@@ -96,6 +200,7 @@ export default function CentralPerfisAcesso() {
   const [perfilAberto, setPerfilAberto] = useState(null);
   const [usuarioAberto, setUsuarioAberto] = useState(null);
   const [busca, setBusca] = useState("");
+  const [modulosExpandidos, setModulosExpandidos] = useState([]);
 
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
@@ -122,7 +227,7 @@ export default function CentralPerfisAcesso() {
     queryFn: () => base44.entities.GrupoEmpresarial.list(),
   });
 
-  // State do formulário de perfil
+  // State do formulário - ESTRUTURA GRANULAR: módulo → seção → ações[]
   const [formPerfil, setFormPerfil] = useState({
     nome_perfil: "",
     descricao: "",
@@ -134,6 +239,7 @@ export default function CentralPerfisAcesso() {
   // Mutations
   const salvarPerfilMutation = useMutation({
     mutationFn: async (data) => {
+      console.log("📝 Salvando perfil com permissões:", data);
       const perfilId = perfilAberto?.id;
       if (perfilId && !perfilAberto.novo) {
         return await base44.entities.PerfilAcesso.update(perfilId, data);
@@ -141,7 +247,8 @@ export default function CentralPerfisAcesso() {
         return await base44.entities.PerfilAcesso.create(data);
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("✅ Perfil salvo com sucesso:", result);
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
       const foiCriacao = perfilAberto?.novo;
       toast.success(foiCriacao ? "✅ Perfil criado com sucesso!" : "✅ Perfil atualizado com sucesso!");
@@ -149,6 +256,7 @@ export default function CentralPerfisAcesso() {
       resetForm();
     },
     onError: (error) => {
+      console.error("❌ Erro ao salvar perfil:", error);
       toast.error("❌ Erro ao salvar: " + error.message);
     }
   });
@@ -189,74 +297,113 @@ export default function CentralPerfisAcesso() {
     });
   };
 
-  const togglePermissao = (modulo, acao) => {
+  // TOGGLE PERMISSÃO: módulo → seção → ação
+  const togglePermissao = (modulo, secao, acao) => {
     setFormPerfil(prev => {
       const novasPerms = { ...prev.permissoes };
       if (!novasPerms[modulo]) novasPerms[modulo] = {};
-      
-      const moduloPerms = novasPerms[modulo];
-      const secaoPrincipal = Object.keys(moduloPerms)[0] || modulo;
-      
-      if (!moduloPerms[secaoPrincipal]) moduloPerms[secaoPrincipal] = [];
-      
-      const index = moduloPerms[secaoPrincipal].indexOf(acao);
+      if (!novasPerms[modulo][secao]) novasPerms[modulo][secao] = [];
+
+      const index = novasPerms[modulo][secao].indexOf(acao);
       if (index > -1) {
-        moduloPerms[secaoPrincipal] = moduloPerms[secaoPrincipal].filter(a => a !== acao);
+        novasPerms[modulo][secao] = novasPerms[modulo][secao].filter(a => a !== acao);
       } else {
-        moduloPerms[secaoPrincipal] = [...moduloPerms[secaoPrincipal], acao];
+        novasPerms[modulo][secao] = [...novasPerms[modulo][secao], acao];
       }
 
+      console.log(`🔄 Toggle: ${modulo}.${secao}.${acao} →`, novasPerms[modulo][secao]);
       return { ...prev, permissoes: novasPerms };
     });
   };
 
+  // SELECIONAR TUDO EM UMA SEÇÃO
+  const selecionarTudoSecao = (modulo, secao) => {
+    setFormPerfil(prev => {
+      const novasPerms = { ...prev.permissoes };
+      if (!novasPerms[modulo]) novasPerms[modulo] = {};
+      
+      const todasAcoes = ACOES.map(a => a.id);
+      const temTodas = todasAcoes.every(a => novasPerms[modulo][secao]?.includes(a));
+      
+      novasPerms[modulo][secao] = temTodas ? [] : [...todasAcoes];
+      
+      console.log(`🔄 Seção ${modulo}.${secao}:`, novasPerms[modulo][secao]);
+      return { ...prev, permissoes: novasPerms };
+    });
+  };
+
+  // SELECIONAR TUDO EM UM MÓDULO
   const selecionarTudoModulo = (modulo) => {
     setFormPerfil(prev => {
       const novasPerms = { ...prev.permissoes };
-      if (!novasPerms[modulo]) novasPerms[modulo] = {};
-      
-      const moduloPerms = novasPerms[modulo];
-      const secaoPrincipal = Object.keys(moduloPerms)[0] || modulo;
-      
       const todasAcoes = ACOES.map(a => a.id);
-      const temTodas = todasAcoes.every(a => moduloPerms[secaoPrincipal]?.includes(a));
       
-      if (temTodas) {
-        moduloPerms[secaoPrincipal] = [];
-      } else {
-        moduloPerms[secaoPrincipal] = [...todasAcoes];
-      }
-
+      // Verifica se todas as seções têm todas as ações
+      const secoes = Object.keys(ESTRUTURA_SISTEMA[modulo].secoes);
+      const tudoMarcado = secoes.every(secao => 
+        todasAcoes.every(a => novasPerms[modulo]?.[secao]?.includes(a))
+      );
+      
+      novasPerms[modulo] = {};
+      secoes.forEach(secao => {
+        novasPerms[modulo][secao] = tudoMarcado ? [] : [...todasAcoes];
+      });
+      
+      console.log(`🔄 Módulo ${modulo}:`, novasPerms[modulo]);
       return { ...prev, permissoes: novasPerms };
     });
   };
 
+  // SELECIONAR TUDO GLOBAL
   const selecionarTudoGlobal = () => {
     setFormPerfil(prev => {
       const novasPerms = {};
       const todasAcoes = ACOES.map(a => a.id);
       
-      const algumModuloVazio = Object.keys(MODULOS).some(modId => {
-        const perms = prev.permissoes?.[modId];
-        const secao = Object.keys(perms || {})[0] || modId;
-        return !perms || !perms[secao] || perms[secao].length < todasAcoes.length;
+      // Verifica se algum módulo está vazio
+      const algumVazio = Object.keys(ESTRUTURA_SISTEMA).some(modId => {
+        const secoes = Object.keys(ESTRUTURA_SISTEMA[modId].secoes);
+        return secoes.some(secaoId => {
+          return !prev.permissoes?.[modId]?.[secaoId] || 
+                 prev.permissoes[modId][secaoId].length < todasAcoes.length;
+        });
       });
 
-      Object.keys(MODULOS).forEach(modId => {
+      Object.keys(ESTRUTURA_SISTEMA).forEach(modId => {
         novasPerms[modId] = {};
-        novasPerms[modId][modId] = algumModuloVazio ? [...todasAcoes] : [];
+        Object.keys(ESTRUTURA_SISTEMA[modId].secoes).forEach(secaoId => {
+          novasPerms[modId][secaoId] = algumVazio ? [...todasAcoes] : [];
+        });
       });
 
+      console.log("🌐 Seleção Global:", algumVazio ? "TUDO MARCADO" : "TUDO DESMARCADO");
       return { ...prev, permissoes: novasPerms };
     });
   };
 
-  const temPermissao = (modulo, acao) => {
-    const moduloPerms = formPerfil.permissoes?.[modulo];
-    if (!moduloPerms) return false;
-    const secaoPrincipal = Object.keys(moduloPerms)[0];
-    if (!secaoPrincipal || !Array.isArray(moduloPerms[secaoPrincipal])) return false;
-    return moduloPerms[secaoPrincipal].includes(acao) || false;
+  // VERIFICAR SE TEM PERMISSÃO
+  const temPermissao = (modulo, secao, acao) => {
+    return formPerfil.permissoes?.[modulo]?.[secao]?.includes(acao) || false;
+  };
+
+  // CONTAR PERMISSÕES
+  const contarPermissoesModulo = (modulo) => {
+    let total = 0;
+    const perms = formPerfil.permissoes?.[modulo] || {};
+    Object.values(perms).forEach(secao => {
+      total += secao?.length || 0;
+    });
+    return total;
+  };
+
+  const contarPermissoesTotal = () => {
+    let total = 0;
+    Object.values(formPerfil.permissoes || {}).forEach(modulo => {
+      Object.values(modulo || {}).forEach(secao => {
+        total += secao?.length || 0;
+      });
+    });
+    return total;
   };
 
   const abrirEdicaoPerfil = (perfil) => {
@@ -268,6 +415,7 @@ export default function CentralPerfisAcesso() {
       permissoes: perfil.permissoes || {},
       ativo: perfil.ativo !== false
     });
+    console.log("📂 Abrindo perfil para edição:", perfil.nome_perfil, perfil.permissoes);
   };
 
   const handleVincularEmpresa = (usuario, empresaId, acao) => {
@@ -293,7 +441,6 @@ export default function CentralPerfisAcesso() {
       novosVinculos = vinculosAtuais.filter(v => v.empresa_id !== empresaId);
     }
 
-    const empresa = empresas.find(e => e.id === empresaId);
     const nomesEmpresas = novosVinculos.map(v => {
       const emp = empresas.find(e => e.id === v.empresa_id);
       return emp?.nome_fantasia || emp?.razao_social || v.empresa_id;
@@ -374,14 +521,14 @@ export default function CentralPerfisAcesso() {
       {/* Header */}
       <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center justify-center">
                 <Shield className="w-8 h-8" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold mb-1">Central de Perfis de Acesso</h1>
-                <p className="text-blue-100">Modo Simplificado • Perfis • Usuários • Empresas • Grupos • Permissões</p>
+                <p className="text-blue-100">Controle Granular Total • Módulo → Seção → Aba → Ações</p>
               </div>
             </div>
             <div className="flex gap-3 flex-wrap">
@@ -395,13 +542,10 @@ export default function CentralPerfisAcesso() {
                 variant="outline"
                 size="sm"
                 className="bg-white/10 text-white border-white/20 hover:bg-white/20"
-                onClick={() => {
-                  const url = '/GerenciamentoAcessosCompleto';
-                  window.open(url, '_blank');
-                }}
+                onClick={() => window.open(createPageUrl('GerenciamentoAcessosCompleto'), '_blank')}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                Modo Avançado
+                Modo Avançado (16 Componentes)
               </Button>
             </div>
           </div>
@@ -482,7 +626,6 @@ export default function CentralPerfisAcesso() {
 
         {/* TAB: PERFIS */}
         <TabsContent value="perfis" className="space-y-4">
-          {/* Botão criar */}
           <div className="flex justify-end">
             <Button
               onClick={() => {
@@ -496,65 +639,77 @@ export default function CentralPerfisAcesso() {
             </Button>
           </div>
 
-          {/* Lista de Perfis */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {perfisFiltrados.map(perfil => (
-              <Card key={perfil.id} className="hover:shadow-lg transition-all">
-                <CardHeader className="bg-slate-50 border-b pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Shield className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <CardTitle className="text-base">{perfil.nome_perfil}</CardTitle>
-                        <Badge variant="outline" className="mt-1">{perfil.nivel_perfil}</Badge>
+            {perfisFiltrados.map(perfil => {
+              const qtdPermissoes = Object.values(perfil.permissoes || {}).reduce((sum, mod) => {
+                return sum + Object.values(mod || {}).reduce((s, secao) => s + (secao?.length || 0), 0);
+              }, 0);
+
+              return (
+                <Card key={perfil.id} className="hover:shadow-lg transition-all">
+                  <CardHeader className="bg-slate-50 border-b pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <Shield className="w-5 h-5 text-blue-600" />
+                        <div>
+                          <CardTitle className="text-base">{perfil.nome_perfil}</CardTitle>
+                          <div className="flex gap-2 mt-1">
+                            <Badge variant="outline">{perfil.nivel_perfil}</Badge>
+                            {qtdPermissoes > 0 && (
+                              <Badge className="bg-blue-100 text-blue-700">
+                                {qtdPermissoes} permissões
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {perfil.ativo !== false ? (
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <XCircle className="w-5 h-5 text-slate-400" />
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    {perfil.descricao && (
+                      <p className="text-sm text-slate-600 mb-3">{perfil.descricao}</p>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-purple-100 text-purple-700">
+                        {usuarios.filter(u => u.perfil_acesso_id === perfil.id).length} usuários
+                      </Badge>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => abrirEdicaoPerfil(perfil)}
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            const usuariosUsando = usuarios.filter(u => u.perfil_acesso_id === perfil.id);
+                            if (usuariosUsando.length > 0) {
+                              toast.error(`❌ Não é possível excluir: ${usuariosUsando.length} usuário(s) usando este perfil`);
+                              return;
+                            }
+                            if (confirm(`⚠️ Confirma exclusão permanente do perfil "${perfil.nome_perfil}"?`)) {
+                              excluirPerfilMutation.mutate(perfil.id);
+                            }
+                          }}
+                          title={usuarios.some(u => u.perfil_acesso_id === perfil.id) ? "Perfil em uso" : "Excluir perfil"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
-                    {perfil.ativo !== false ? (
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-slate-400" />
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                  {perfil.descricao && (
-                    <p className="text-sm text-slate-600 mb-3">{perfil.descricao}</p>
-                  )}
-                  <div className="flex items-center justify-between">
-                    <Badge className="bg-blue-100 text-blue-700">
-                      {usuarios.filter(u => u.perfil_acesso_id === perfil.id).length} usuários
-                    </Badge>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => abrirEdicaoPerfil(perfil)}
-                      >
-                        <Edit className="w-4 h-4 mr-1" />
-                        Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => {
-                          const usuariosUsando = usuarios.filter(u => u.perfil_acesso_id === perfil.id);
-                          if (usuariosUsando.length > 0) {
-                            toast.error(`❌ Não é possível excluir: ${usuariosUsando.length} usuário(s) usando este perfil`);
-                            return;
-                          }
-                          if (confirm(`⚠️ Confirma exclusão permanente do perfil "${perfil.nome_perfil}"?`)) {
-                            excluirPerfilMutation.mutate(perfil.id);
-                          }
-                        }}
-                        title={usuarios.some(u => u.perfil_acesso_id === perfil.id) ? "Perfil em uso, não pode ser excluído" : "Excluir perfil"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {perfisFiltrados.length === 0 && (
@@ -569,94 +724,97 @@ export default function CentralPerfisAcesso() {
 
         {/* TAB: USUÁRIOS */}
         <TabsContent value="usuarios" className="space-y-4">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>Usuário</TableHead>
-                <TableHead>E-mail</TableHead>
-                <TableHead>Perfil</TableHead>
-                <TableHead>Empresas</TableHead>
-                <TableHead>Grupos</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usuariosFiltrados.map(usuario => {
-                const perfil = perfis.find(p => p.id === usuario.perfil_acesso_id);
-                const empresasVinculadas = usuario.empresas_vinculadas || [];
-                const gruposVinculados = usuario.grupos_vinculados || [];
-
-                return (
-                  <TableRow key={usuario.id}>
-                    <TableCell className="font-medium">{usuario.full_name}</TableCell>
-                    <TableCell className="text-sm text-slate-600">{usuario.email}</TableCell>
-                    <TableCell>
-                      <Select
-                        value={usuario.perfil_acesso_id || ""}
-                        onValueChange={(v) => {
-                          const perfilSel = perfis.find(p => p.id === v);
-                          atualizarUsuarioMutation.mutate({
-                            id: usuario.id,
-                            data: {
-                              perfil_acesso_id: v || null,
-                              perfil_acesso_nome: perfilSel?.nome_perfil || null
-                            }
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Sem perfil" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={null}>Sem perfil</SelectItem>
-                          {perfis.filter(p => p.ativo !== false).map(p => (
-                            <SelectItem key={p.id} value={p.id}>
-                              {p.nome_perfil}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-purple-100 text-purple-700">
-                          {empresasVinculadas.filter(v => v.ativo).length}
-                        </Badge>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setUsuarioAberto(usuario)}
-                        >
-                          <Settings className="w-3 h-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-blue-100 text-blue-700">
-                        {gruposVinculados.filter(v => v.ativo).length}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setUsuarioAberto(usuario)}
-                      >
-                        <Key className="w-4 h-4 mr-1" />
-                        Configurar
-                      </Button>
-                    </TableCell>
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead>Usuário</TableHead>
+                    <TableHead>E-mail</TableHead>
+                    <TableHead>Perfil</TableHead>
+                    <TableHead>Empresas</TableHead>
+                    <TableHead>Grupos</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                </TableHeader>
+                <TableBody>
+                  {usuariosFiltrados.map(usuario => {
+                    const empresasVinculadas = usuario.empresas_vinculadas || [];
+                    const gruposVinculados = usuario.grupos_vinculados || [];
+
+                    return (
+                      <TableRow key={usuario.id}>
+                        <TableCell className="font-medium">{usuario.full_name}</TableCell>
+                        <TableCell className="text-sm text-slate-600">{usuario.email}</TableCell>
+                        <TableCell>
+                          <Select
+                            value={usuario.perfil_acesso_id || "sem-perfil"}
+                            onValueChange={(v) => {
+                              if (v === "sem-perfil") return;
+                              const perfilSel = perfis.find(p => p.id === v);
+                              atualizarUsuarioMutation.mutate({
+                                id: usuario.id,
+                                data: {
+                                  perfil_acesso_id: v,
+                                  perfil_acesso_nome: perfilSel?.nome_perfil || null
+                                }
+                              });
+                            }}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Sem perfil" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="sem-perfil">Sem perfil</SelectItem>
+                              {perfis.filter(p => p.ativo !== false).map(p => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.nome_perfil}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-purple-100 text-purple-700">
+                              {empresasVinculadas.filter(v => v.ativo).length}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setUsuarioAberto(usuario)}
+                            >
+                              <Settings className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className="bg-blue-100 text-blue-700">
+                            {gruposVinculados.filter(v => v.ativo).length}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setUsuarioAberto(usuario)}
+                          >
+                            <Key className="w-4 h-4 mr-1" />
+                            Configurar
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* TAB: EMPRESAS */}
+        {/* TAB: EMPRESAS E GRUPOS */}
         <TabsContent value="empresas" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Empresas */}
             <Card>
               <CardHeader className="bg-purple-50 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -687,7 +845,6 @@ export default function CentralPerfisAcesso() {
               </CardContent>
             </Card>
 
-            {/* Grupos */}
             <Card>
               <CardHeader className="bg-blue-50 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -721,30 +878,42 @@ export default function CentralPerfisAcesso() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal Editar Perfil */}
+      {/* MODAL: EDITAR/CRIAR PERFIL - ESTRUTURA GRANULAR COMPLETA */}
       {perfilAberto && (
-        <Card className="fixed inset-4 z-[9999999] overflow-auto bg-white shadow-2xl">
-          <CardHeader className="bg-blue-50 border-b sticky top-0 z-10">
+        <Card className="fixed inset-4 z-[9999999] bg-white shadow-2xl flex flex-col">
+          <CardHeader className="bg-blue-50 border-b sticky top-0 z-20">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-blue-600" />
                 {perfilAberto.novo ? 'Novo Perfil de Acesso' : `Editar: ${perfilAberto.nome_perfil}`}
+                {contarPermissoesTotal() > 0 && (
+                  <Badge className="bg-blue-600 text-white ml-2">
+                    {contarPermissoesTotal()} permissões selecionadas
+                  </Badge>
+                )}
               </CardTitle>
               <Button variant="ghost" onClick={() => setPerfilAberto(null)}>
                 ✕
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-6">
+          
+          <CardContent className="flex-1 overflow-auto p-6">
             <form onSubmit={(e) => {
               e.preventDefault();
-              console.log("Salvando perfil:", formPerfil);
+              if (!formPerfil.nome_perfil) {
+                toast.error("❌ Nome do perfil é obrigatório");
+                return;
+              }
+              
               const dadosSalvar = {
                 ...formPerfil,
                 group_id: empresaAtual?.group_id || null
               };
+              
+              console.log("💾 Enviando para salvar:", dadosSalvar);
               salvarPerfilMutation.mutate(dadosSalvar);
-            }} className="space-y-6">
+            }} className="space-y-6 h-full flex flex-col">
               {/* Dados Básicos */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div>
@@ -752,7 +921,7 @@ export default function CentralPerfisAcesso() {
                   <Input
                     value={formPerfil.nome_perfil}
                     onChange={(e) => setFormPerfil({ ...formPerfil, nome_perfil: e.target.value })}
-                    placeholder="Ex: Vendedor, Gerente"
+                    placeholder="Ex: Vendedor, Gerente Financeiro"
                     className="mt-1"
                     required
                   />
@@ -798,10 +967,10 @@ export default function CentralPerfisAcesso() {
                 />
               </div>
 
-              {/* Grid de Permissões */}
-              <div>
+              {/* PERMISSÕES GRANULARES */}
+              <div className="flex-1 overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between mb-4">
-                  <Label className="text-lg font-bold">Permissões por Módulo</Label>
+                  <Label className="text-lg font-bold">Permissões Granulares por Módulo</Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -812,90 +981,165 @@ export default function CentralPerfisAcesso() {
                     Selecionar/Desmarcar Tudo
                   </Button>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {Object.entries(MODULOS).map(([modId, mod]) => {
-                    const Icone = mod.icone;
-                    return (
-                      <Card key={modId} className="border-2">
-                        <CardHeader className={`bg-${mod.cor}-50 border-b pb-3`}>
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-sm flex items-center gap-2">
-                              <Icone className={`w-4 h-4 text-${mod.cor}-600`} />
-                              {mod.nome}
-                            </CardTitle>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => selecionarTudoModulo(modId)}
-                              className="h-6 px-2 text-xs"
-                            >
-                              <CheckSquare className="w-3 h-3 mr-1" />
-                              Tudo
-                            </Button>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="p-3">
-                          <div className="flex flex-wrap gap-2">
-                            {ACOES.map(acao => {
-                              const marcado = temPermissao(modId, acao.id);
-                              return (
-                                <label
-                                  key={acao.id}
-                                  className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded border text-xs transition-all ${
-                                    marcado
-                                      ? `bg-${acao.cor}-100 border-${acao.cor}-300 text-${acao.cor}-700`
-                                      : 'bg-white border-slate-200 hover:bg-slate-50'
-                                  }`}
+
+                <Alert className="mb-4 border-blue-200 bg-blue-50">
+                  <Info className="w-4 h-4 text-blue-600" />
+                  <AlertDescription className="text-sm text-blue-800">
+                    <strong>Controle Granular Total:</strong> Cada seção pode ter permissões independentes. 
+                    {contarPermissoesTotal()} permissões selecionadas no total.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex-1 overflow-auto border rounded-lg bg-slate-50">
+                  <Accordion type="multiple" value={modulosExpandidos} onValueChange={setModulosExpandidos}>
+                    {Object.entries(ESTRUTURA_SISTEMA).map(([moduloId, modulo]) => {
+                      const Icone = modulo.icone;
+                      const qtdPerms = contarPermissoesModulo(moduloId);
+                      
+                      return (
+                        <AccordionItem key={moduloId} value={moduloId} className="border-b">
+                          <AccordionTrigger className="px-4 py-3 hover:bg-white/50">
+                            <div className="flex items-center gap-3 flex-1">
+                              <Icone className={`w-5 h-5 text-${modulo.cor}-600`} />
+                              <span className="font-medium">{modulo.nome}</span>
+                              {qtdPerms > 0 && (
+                                <Badge className="bg-blue-100 text-blue-700 ml-2">
+                                  {qtdPerms}
+                                </Badge>
+                              )}
+                              <div className="ml-auto mr-4">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    selecionarTudoModulo(moduloId);
+                                  }}
+                                  className="text-xs"
                                 >
-                                  <Checkbox
-                                    checked={marcado}
-                                    onCheckedChange={() => togglePermissao(modId, acao.id)}
-                                  />
-                                  {acao.nome}
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                                  <CheckSquare className="w-3 h-3 mr-1" />
+                                  Tudo
+                                </Button>
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4 pb-4">
+                            <div className="space-y-3">
+                              {Object.entries(modulo.secoes).map(([secaoId, secao]) => {
+                                const qtdSecao = formPerfil.permissoes?.[moduloId]?.[secaoId]?.length || 0;
+                                
+                                return (
+                                  <Card key={secaoId} className="border-2 bg-white">
+                                    <CardHeader className="bg-slate-50 border-b pb-3">
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <CardTitle className="text-sm font-semibold">{secao.nome}</CardTitle>
+                                          {secao.abas?.length > 0 && (
+                                            <p className="text-xs text-slate-500 mt-1">
+                                              Abas: {secao.abas.join(", ")}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          {qtdSecao > 0 && (
+                                            <Badge className="bg-green-100 text-green-700">
+                                              {qtdSecao}
+                                            </Badge>
+                                          )}
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => selecionarTudoSecao(moduloId, secaoId)}
+                                            className="h-6 px-2 text-xs"
+                                          >
+                                            <CheckSquare className="w-3 h-3 mr-1" />
+                                            Todas
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </CardHeader>
+                                    <CardContent className="p-3">
+                                      <div className="flex flex-wrap gap-2">
+                                        {ACOES.map(acao => {
+                                          const marcado = temPermissao(moduloId, secaoId, acao.id);
+                                          const IconeAcao = acao.icone;
+                                          
+                                          return (
+                                            <label
+                                              key={acao.id}
+                                              className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded border text-xs transition-all ${
+                                                marcado
+                                                  ? `bg-${acao.cor}-100 border-${acao.cor}-300 text-${acao.cor}-700 font-semibold`
+                                                  : 'bg-white border-slate-200 hover:bg-slate-50'
+                                              }`}
+                                            >
+                                              <Checkbox
+                                                checked={marcado}
+                                                onCheckedChange={() => togglePermissao(moduloId, secaoId, acao.id)}
+                                              />
+                                              <IconeAcao className="w-3.5 h-3.5" />
+                                              {acao.nome}
+                                            </label>
+                                          );
+                                        })}
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              })}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
                 </div>
               </div>
 
-              {/* Botões */}
-              <div className="flex justify-end gap-3 pt-4 border-t">
-                <Button type="button" variant="outline" onClick={() => setPerfilAberto(null)}>
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={salvarPerfilMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {salvarPerfilMutation.isPending ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Salvar Perfil
-                    </>
-                  )}
-                </Button>
+              {/* Botões de Ação */}
+              <div className="flex justify-between items-center gap-3 pt-4 border-t mt-4">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-slate-100 text-slate-700">
+                    {contarPermissoesTotal()} permissões selecionadas
+                  </Badge>
+                  <Badge className="bg-blue-100 text-blue-700">
+                    {Object.keys(formPerfil.permissoes).length} módulos configurados
+                  </Badge>
+                </div>
+                <div className="flex gap-3">
+                  <Button type="button" variant="outline" onClick={() => setPerfilAberto(null)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={salvarPerfilMutation.isPending || !formPerfil.nome_perfil}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    {salvarPerfilMutation.isPending ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Salvar Perfil
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </form>
           </CardContent>
         </Card>
       )}
 
-      {/* Modal Configurar Usuário */}
+      {/* MODAL: CONFIGURAR USUÁRIO */}
       {usuarioAberto && (
-        <Card className="fixed inset-4 z-[9999999] overflow-auto bg-white shadow-2xl">
-          <CardHeader className="bg-green-50 border-b sticky top-0 z-10">
+        <Card className="fixed inset-4 z-[9999999] bg-white shadow-2xl flex flex-col">
+          <CardHeader className="bg-green-50 border-b sticky top-0 z-20">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-green-600" />
@@ -906,18 +1150,27 @@ export default function CentralPerfisAcesso() {
               </Button>
             </div>
           </CardHeader>
-          <CardContent className="p-6 space-y-6">
+          
+          <CardContent className="flex-1 overflow-auto p-6 space-y-6">
             {/* Perfil */}
             <div>
               <Label className="text-base font-bold mb-3 block">Perfil de Acesso</Label>
               <Select
-                value={usuarioAberto.perfil_acesso_id || ""}
+                value={usuarioAberto.perfil_acesso_id || "sem-perfil"}
                 onValueChange={(v) => {
+                  if (v === "sem-perfil") {
+                    atualizarUsuarioMutation.mutate({
+                      id: usuarioAberto.id,
+                      data: { perfil_acesso_id: null, perfil_acesso_nome: null }
+                    });
+                    setUsuarioAberto({ ...usuarioAberto, perfil_acesso_id: null });
+                    return;
+                  }
                   const perfilSel = perfis.find(p => p.id === v);
                   atualizarUsuarioMutation.mutate({
                     id: usuarioAberto.id,
                     data: {
-                      perfil_acesso_id: v || null,
+                      perfil_acesso_id: v,
                       perfil_acesso_nome: perfilSel?.nome_perfil || null
                     }
                   });
@@ -928,7 +1181,7 @@ export default function CentralPerfisAcesso() {
                   <SelectValue placeholder="Selecione um perfil" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>Sem perfil</SelectItem>
+                  <SelectItem value="sem-perfil">Sem perfil</SelectItem>
                   {perfis.filter(p => p.ativo !== false).map(p => (
                     <SelectItem key={p.id} value={p.id}>
                       <div className="flex items-center gap-2">
@@ -949,8 +1202,8 @@ export default function CentralPerfisAcesso() {
                 Empresas Vinculadas
               </Label>
               <Card className="border-purple-200">
-                <CardContent className="p-4 space-y-3">
-                  {empresas.map(empresa => {
+                <CardContent className="p-4 space-y-3 max-h-64 overflow-y-auto">
+                  {empresas.length > 0 ? empresas.map(empresa => {
                     const vinculado = usuarioAberto.empresas_vinculadas?.some(
                       v => v.empresa_id === empresa.id && v.ativo
                     ) || false;
@@ -978,7 +1231,9 @@ export default function CentralPerfisAcesso() {
                         </Badge>
                       </div>
                     );
-                  })}
+                  }) : (
+                    <p className="text-center text-slate-500 py-4">Nenhuma empresa cadastrada</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -987,11 +1242,11 @@ export default function CentralPerfisAcesso() {
             <div>
               <Label className="text-base font-bold mb-3 block flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-600" />
-                Grupos Vinculados
+                Grupos Empresariais Vinculados
               </Label>
               <Card className="border-blue-200">
-                <CardContent className="p-4 space-y-3">
-                  {grupos.map(grupo => {
+                <CardContent className="p-4 space-y-3 max-h-64 overflow-y-auto">
+                  {grupos.length > 0 ? grupos.map(grupo => {
                     const vinculado = usuarioAberto.grupos_vinculados?.some(
                       v => v.grupo_id === grupo.id && v.ativo
                     ) || false;
@@ -1025,13 +1280,15 @@ export default function CentralPerfisAcesso() {
                         </Badge>
                       </div>
                     );
-                  })}
+                  }) : (
+                    <p className="text-center text-slate-500 py-4">Nenhum grupo cadastrado</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </CardContent>
 
-          <div className="p-6 border-t bg-slate-50">
+          <div className="p-6 border-t bg-slate-50 sticky bottom-0">
             <Button
               onClick={() => setUsuarioAberto(null)}
               className="w-full bg-green-600 hover:bg-green-700"

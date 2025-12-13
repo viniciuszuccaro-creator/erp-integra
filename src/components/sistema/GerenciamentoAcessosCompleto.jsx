@@ -94,7 +94,7 @@ import StatusControleAcesso from "./StatusControleAcesso";
 /**
  * V21.7 FINAL - GERENCIAMENTO DE ACESSOS COMPLETO E UNIFICADO 100% ✅ 🏆
  * 
- * INTEGRADO COM CentralPerfisAcesso - Modo Avançado com todas as funcionalidades:
+ * MODO AVANÇADO - Complementa CentralPerfisAcesso (modo simplificado) com:
  * ✅ Dashboard de Segurança com KPIs e métricas
  * ✅ Módulos, Seções e Abas do sistema
  * ✅ Ações granulares (visualizar, criar, editar, excluir, aprovar, exportar)
