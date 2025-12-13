@@ -232,24 +232,28 @@ export default function DashboardCorporativo() {
 
   if (!estaNoGrupo) {
     return (
-      <div className="p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          <Card className="border-orange-200 bg-orange-50">
-            <CardContent className="p-6 flex items-center gap-3">
-              <AlertCircle className="w-6 h-6 text-orange-600" />
-              <p className="text-orange-900">
-                Este dashboard é apenas para visão consolidada do grupo. Mude para o contexto de grupo no menu.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+        <Card className="border-2 border-orange-300 bg-orange-50 shadow-xl max-w-2xl">
+          <CardContent className="p-8 text-center">
+            <AlertCircle className="w-16 h-16 text-orange-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-orange-900 mb-3">
+              Dashboard Corporativo Indisponível
+            </h2>
+            <p className="text-orange-700 mb-4">
+              Este dashboard é exclusivo para visão consolidada do grupo empresarial.
+            </p>
+            <p className="text-sm text-orange-600">
+              Use o <strong>EmpresaSwitcher</strong> no header para mudar para o contexto de grupo.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <div className="w-full space-y-6">
+    <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="flex-1 overflow-auto p-6 space-y-6">
         {/* Header com Filtros */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
