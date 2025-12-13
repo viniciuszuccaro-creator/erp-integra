@@ -597,7 +597,8 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="p-6 lg:p-8 space-y-6"> {/* Changed space-y-8 to space-y-6 */}
+    <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="flex-1 overflow-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Executivo</h1>
