@@ -56,27 +56,42 @@ export default function EmpresaSwitcher() {
     enabled: !!user,
   });
 
-  // Buscar empresas disponíveis para o usuário
+  // V21.7 FIX: Buscar empresas disponíveis para o usuário - com tratamento robusto
   const { data: empresasDisponiveis = [] } = useQuery({
     queryKey: ['empresas-usuario', user?.id],
     queryFn: async () => {
-      if (!user?.empresas_vinculadas || user.empresas_vinculadas.length === 0) {
-        return [];
+      // Se admin, listar todas as empresas ativas
+      if (user?.role === 'admin') {
+        const todasEmpresas = await base44.entities.Empresa.list();
+        return todasEmpresas.filter(e => e.status === 'Ativa').map(e => ({
+          ...e,
+          nivel_acesso: 'Administrador'
+        }));
       }
-      
-      const empresas = [];
-      for (const vinculo of user.empresas_vinculadas) {
-        if (vinculo.ativo) {
-          const empresa = await base44.entities.Empresa.get(vinculo.empresa_id);
-          if (empresa && empresa.status === 'Ativa') {
-            empresas.push({
-              ...empresa,
-              nivel_acesso: vinculo.nivel_acesso
-            });
+
+      // Se usuário tem empresas_vinculadas
+      if (user?.empresas_vinculadas && user.empresas_vinculadas.length > 0) {
+        const empresas = [];
+        for (const vinculo of user.empresas_vinculadas) {
+          if (vinculo.ativo && vinculo.empresa_id) {
+            try {
+              const empresa = await base44.entities.Empresa.get(vinculo.empresa_id);
+              if (empresa && empresa.status === 'Ativa') {
+                empresas.push({
+                  ...empresa,
+                  nivel_acesso: vinculo.nivel_acesso || 'Operacional'
+                });
+              }
+            } catch (error) {
+              console.warn(`Empresa ${vinculo.empresa_id} não encontrada:`, error);
+            }
           }
         }
+        return empresas;
       }
-      return empresas;
+      
+      // Fallback: se não tem vínculos, retornar array vazio
+      return [];
     },
     enabled: !!user,
   });

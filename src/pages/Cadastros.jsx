@@ -59,6 +59,7 @@ import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Comp
 import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
 import GerenciamentoAcessosCompleto from "../components/sistema/GerenciamentoAcessosCompleto";
+import CentralPerfisAcesso from "../components/sistema/CentralPerfisAcesso";
 import FonteUnicaVerdade from "../components/sistema/FonteUnicaVerdade";
 import usePermissions from "../components/lib/usePermissions";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
@@ -4430,9 +4431,9 @@ export default function Cadastros() {
           <FonteUnicaVerdade />
         </TabsContent>
 
-        {/* ABA: CONTROLE DE ACESSO */}
+        {/* ABA: CONTROLE DE ACESSO - V21.7 MELHORADO */}
         <TabsContent value="acesso" className="mt-6">
-          <GerenciamentoAcessosCompleto />
+          <CentralPerfisAcesso />
         </TabsContent>
 
         {/* ABA: AUDIT LOG */}
