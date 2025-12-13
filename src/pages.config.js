@@ -24,10 +24,6 @@ import DemoMultitarefas from './pages/DemoMultitarefas';
 import Cadastros from './pages/Cadastros';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
 import HubAtendimento from './pages/HubAtendimento';
-import DashboardFechamentoPedidos from './pages/DashboardFechamentoPedidos';
-import statussistemav216 from './pages/StatusSistemaV21_6';
-import GuiaUsoSistema from './pages/GuiaUsoSistema';
-import ValidacaoFinal100 from './pages/ValidacaoFinal100';
 import __Layout from './Layout.jsx';
 
 
@@ -58,10 +54,6 @@ export const PAGES = {
     "Cadastros": Cadastros,
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
     "HubAtendimento": HubAtendimento,
-    "DashboardFechamentoPedidos": DashboardFechamentoPedidos,
-    "StatusSistemaV21_6": statussistemav216,
-    "GuiaUsoSistema": GuiaUsoSistema,
-    "ValidacaoFinal100": ValidacaoFinal100,
 }
 
 export const pagesConfig = {
