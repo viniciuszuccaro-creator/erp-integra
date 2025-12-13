@@ -211,6 +211,7 @@ export default function CentralPerfisAcesso() {
   const [modoComparador, setModoComparador] = useState(false);
   const [perfilComparar1, setPerfilComparar1] = useState(null);
   const [perfilComparar2, setPerfilComparar2] = useState(null);
+  const [perfilVisualizacao, setPerfilVisualizacao] = useState(null);
 
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
@@ -762,6 +763,15 @@ export default function CentralPerfisAcesso() {
                         {usuarios.filter(u => u.perfil_acesso_id === perfil.id).length} usuários
                       </Badge>
                       <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setPerfilVisualizacao(perfil)}
+                          className="bg-blue-50 hover:bg-blue-100"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Ver Permissões
+                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
@@ -1477,6 +1487,62 @@ export default function CentralPerfisAcesso() {
                 perfil2={perfis.find(p => p.id === perfilComparar2)}
               />
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* MODAL: VISUALIZAÇÃO COMPLETA DE PERMISSÕES */}
+      {perfilVisualizacao && (
+        <Card className="fixed inset-4 z-[9999999] bg-white shadow-2xl flex flex-col">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b sticky top-0 z-20">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-3">
+                <Shield className="w-6 h-6" />
+                <div>
+                  <div className="text-xl font-bold">{perfilVisualizacao.nome_perfil}</div>
+                  <p className="text-sm text-blue-100 font-normal">{perfilVisualizacao.descricao}</p>
+                </div>
+              </CardTitle>
+              <Button variant="ghost" onClick={() => setPerfilVisualizacao(null)} className="text-white hover:bg-white/20">
+                ✕
+              </Button>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="flex-1 overflow-auto p-6">
+            <div className="mb-4 flex gap-3">
+              <Badge className="bg-blue-100 text-blue-700 px-3 py-1.5">
+                {perfilVisualizacao.nivel_perfil}
+              </Badge>
+              <Badge className="bg-purple-100 text-purple-700 px-3 py-1.5">
+                {usuarios.filter(u => u.perfil_acesso_id === perfilVisualizacao.id).length} usuários usando
+              </Badge>
+            </div>
+
+            <VisualizadorPermissoesPerfil 
+              perfil={perfilVisualizacao} 
+              estruturaSistema={ESTRUTURA_SISTEMA}
+              compact={false}
+            />
+
+            <div className="mt-6 flex gap-3">
+              <Button
+                onClick={() => {
+                  setPerfilVisualizacao(null);
+                  abrirEdicaoPerfil(perfilVisualizacao);
+                }}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Editar Este Perfil
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setPerfilVisualizacao(null)}
+              >
+                Fechar
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
