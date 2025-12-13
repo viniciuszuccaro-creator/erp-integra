@@ -67,10 +67,10 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000) {
     ['kpis-realtime', empresaId],
     async () => {
       const [pedidos, contas, ops, entregas] = await Promise.all([
-        empresaId ? base44.entities.Pedido.filter({ empresa_id: empresaId }) : base44.entities.Pedido.list('-created_date', 100),
-        empresaId ? base44.entities.ContaReceber.filter({ empresa_id: empresaId }) : base44.entities.ContaReceber.list('-created_date', 100),
-        empresaId ? base44.entities.OrdemProducao.filter({ empresa_id: empresaId }) : base44.entities.OrdemProducao.list('-data_emissao', 100),
-        empresaId ? base44.entities.Entrega.filter({ empresa_id: empresaId }) : base44.entities.Entrega.list('-created_date', 100)
+        base44.entities.Pedido.filter({ empresa_id: empresaId }),
+        base44.entities.ContaReceber.filter({ empresa_id: empresaId }),
+        base44.entities.OrdemProducao.filter({ empresa_id: empresaId }),
+        base44.entities.Entrega.filter({ empresa_id: empresaId })
       ]);
 
       // Pedidos
@@ -159,12 +159,7 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000) {
 export function useRealtimePedidos(empresaId, limite = 10) {
   return useRealtimeData(
     ['pedidos-realtime', empresaId],
-    async () => {
-      if (!empresaId) {
-        return await base44.entities.Pedido.list('-created_date', limite);
-      }
-      return await base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', limite);
-    },
+    () => base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', limite),
     { 
       refetchInterval: 8000,
       onUpdate: (novos, anteriores) => {
@@ -189,9 +184,7 @@ export function useRealtimeEntregas(empresaId) {
   return useRealtimeData(
     ['entregas-realtime', empresaId],
     async () => {
-      const entregas = empresaId 
-        ? await base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 20)
-        : await base44.entities.Entrega.list('-created_date', 20);
+      const entregas = await base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 20);
       
       // Entregas ativas (não finalizadas)
       return entregas.filter(e => 
@@ -227,8 +220,6 @@ export function useRealtimeGPS(romaneioId) {
   return useRealtimeData(
     ['gps-realtime', romaneioId],
     async () => {
-      if (!romaneioId) return null;
-      
       const posicoes = await base44.entities.PosicaoVeiculo.filter({
         romaneio_id: romaneioId
       }, '-data_hora', 1);
@@ -236,7 +227,8 @@ export function useRealtimeGPS(romaneioId) {
       return posicoes[0] || null;
     },
     { 
-      refetchInterval: 15000
+      refetchInterval: 15000, // 15 segundos para GPS
+      enabled: !!romaneioId
     }
   );
 }
@@ -248,13 +240,12 @@ export function useRealtimeApontamentos(opId) {
   return useRealtimeData(
     ['apontamentos-realtime', opId],
     async () => {
-      if (!opId) return null;
-      
       const op = await base44.entities.OrdemProducao.filter({ id: opId });
       return op[0] || null;
     },
     { 
-      refetchInterval: 10000
+      refetchInterval: 10000,
+      enabled: !!opId
     }
   );
 }
