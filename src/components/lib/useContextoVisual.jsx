@@ -35,8 +35,10 @@ export function useContextoVisual() {
     const storedEmpresaId = localStorage.getItem('empresa_atual_id');
     if (storedEmpresaId) {
       setEmpresaAtualId(storedEmpresaId);
+    } else if (empresaContexto) {
+      setEmpresaAtualId(empresaContexto.id);
     }
-  }, []);
+  }, [empresaContexto]);
 
   const empresaAtual = empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || null;
   const empresasDoGrupo = empresas.filter(empresa => empresa.group_id === grupoAtual?.id);
@@ -178,13 +180,16 @@ export function useContextoVisual() {
     empresaAtual,
     empresasDoGrupo,
     estaNoGrupo: contexto === 'grupo',
+    grupoAtual,
     isLoading: loadingUser || loadingEmpresas,
     filtrarPorContexto,
     adicionarColunasContexto,
     alternarContexto,
     selecionarEmpresa,
     adaptarMenuPorContexto,
-    obterSugestoesNavegacao
+    obterSugestoesNavegacao,
+    filtroEmpresa,
+    setFiltroEmpresa
   };
 }
 

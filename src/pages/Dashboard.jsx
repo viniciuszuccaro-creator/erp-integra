@@ -59,7 +59,7 @@ import WidgetCanaisOrigem from "@/components/dashboard/WidgetCanaisOrigem";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, estaNoGrupo, grupoAtual } = useContextoVisual();
 
   const [periodo, setPeriodo] = useState(() => {
     try {
@@ -601,7 +601,12 @@ export default function Dashboard() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Executivo</h1>
-          <p className="text-slate-600">Visão geral das operações da empresa</p>
+          <p className="text-slate-600">
+            {estaNoGrupo 
+              ? `Visão Consolidada • ${grupoAtual?.nome_do_grupo || 'Grupo'}` 
+              : `${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || 'Empresa'}`
+            }
+          </p>
         </div>
         <div className="flex gap-3 items-center">
           {/* Removed visualizacao toggle buttons */}
