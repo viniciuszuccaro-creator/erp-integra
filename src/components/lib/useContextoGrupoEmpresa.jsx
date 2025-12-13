@@ -110,7 +110,6 @@ export function useContextoGrupoEmpresa() {
         status: 'Ativa'
       });
     },
-    enabled: !!grupoAtual,
   });
 
   const obterPoliticaPadrao = async (tipoDocumento) => {
