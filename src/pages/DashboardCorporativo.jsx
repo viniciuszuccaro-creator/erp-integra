@@ -32,6 +32,7 @@ export default function DashboardCorporativo() {
   const [abaAtiva, setAbaAtiva] = useState("visao-geral");
   const [comparacaoAtiva, setComparacaoAtiva] = useState(true);
 
+  // CRITICAL: ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURN
   // Calcular datas baseado no período
   const getDateRange = () => {
     const hoje = new Date();
@@ -68,6 +69,7 @@ export default function DashboardCorporativo() {
 
   const { dataInicio, dataFim } = getDateRange();
 
+  // ALL useQuery hooks MUST be called unconditionally
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos-dashboard-corp'],
     queryFn: () => base44.entities.Pedido.list('-created_date', 1000),
@@ -202,6 +204,7 @@ export default function DashboardCorporativo() {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+  // NOW we can do conditional rendering - all hooks are already called
   if (!estaNoGrupo) {
     return (
       <div className="p-6 lg:p-8 min-h-screen w-full bg-gradient-to-br from-slate-50 to-blue-50">
