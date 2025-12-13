@@ -94,7 +94,7 @@ import StatusControleAcesso from "./StatusControleAcesso";
 /**
  * V21.7 FINAL - GERENCIAMENTO DE ACESSOS COMPLETO E UNIFICADO 100% ✅ 🏆
  * 
- * Central única de controle de acesso com granularidade total:
+ * INTEGRADO COM CentralPerfisAcesso - Modo Avançado com todas as funcionalidades:
  * ✅ Dashboard de Segurança com KPIs e métricas
  * ✅ Módulos, Seções e Abas do sistema
  * ✅ Ações granulares (visualizar, criar, editar, excluir, aprovar, exportar)
@@ -114,6 +114,8 @@ import StatusControleAcesso from "./StatusControleAcesso";
  * ✅ Gráficos avançados (4 tipos)
  * ✅ Histórico de alterações por perfil
  * ✅ Validador automático com score
+ * ✅ Exclusão de perfis com validação
+ * ✅ Seleção em massa (módulo/global)
  * ✅ 100% responsivo com w-full e h-full
  * 
  * TOTAL: 16 componentes • 4.000+ linhas • 100% operacional
@@ -417,6 +419,19 @@ export default function GerenciamentoAcessosCompleto() {
     }
   });
 
+  const excluirPerfilMutation = useMutation({
+    mutationFn: async (id) => {
+      return await base44.entities.PerfilAcesso.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
+      toast.success("🗑️ Perfil excluído com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("❌ Erro ao excluir: " + error.message);
+    }
+  });
+
   // Reset form
   const resetFormPerfil = () => {
     setFormPerfil({
@@ -537,6 +552,32 @@ export default function GerenciamentoAcessosCompleto() {
       } else {
         novasPermissoes[modulo][secao] = [];
       }
+
+      validarSOD(novasPermissoes);
+      return { ...prev, permissoes: novasPermissoes };
+    });
+  };
+
+  // Selecionar tudo global
+  const selecionarTudoGlobal = () => {
+    const todasAcoes = ACOES.map(a => a.id);
+    const algumVazio = Object.keys(ESTRUTURA_SISTEMA).some(modId => {
+      const perms = formPerfil.permissoes?.[modId];
+      if (!perms) return true;
+      return Object.keys(ESTRUTURA_SISTEMA[modId].secoes).some(secaoId => {
+        return !perms[secaoId] || perms[secaoId].length < todasAcoes.length;
+      });
+    });
+
+    setFormPerfil(prev => {
+      const novasPermissoes = {};
+      
+      Object.keys(ESTRUTURA_SISTEMA).forEach(modId => {
+        novasPermissoes[modId] = {};
+        Object.keys(ESTRUTURA_SISTEMA[modId].secoes).forEach(secaoId => {
+          novasPermissoes[modId][secaoId] = algumVazio ? [...todasAcoes] : [];
+        });
+      });
 
       validarSOD(novasPermissoes);
       return { ...prev, permissoes: novasPermissoes };
@@ -1319,6 +1360,19 @@ Forneça recomendações práticas de segurança.`,
 
                     {/* Grid de Permissões */}
                     <div className="flex-1 overflow-auto border rounded-lg">
+                      <div className="p-3 bg-slate-100 border-b flex items-center justify-between sticky top-0 z-10">
+                        <span className="font-semibold text-sm">Permissões por Módulo</span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={selecionarTudoGlobal}
+                          className="bg-white"
+                        >
+                          <CheckSquare className="w-4 h-4 mr-2" />
+                          Selecionar/Desmarcar Tudo
+                        </Button>
+                      </div>
                       <Accordion type="multiple" value={moduloExpandido} onValueChange={setModuloExpandido}>
                         {Object.entries(ESTRUTURA_SISTEMA).map(([moduloId, modulo]) => {
                           const Icone = modulo.icone;
@@ -1569,6 +1623,24 @@ Forneça recomendações práticas de segurança.`,
                               title="Ver Histórico"
                             >
                               <History className="w-4 h-4 text-slate-600" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const usuariosUsando = usuarios.filter(u => u.perfil_acesso_id === perfil.id);
+                                if (usuariosUsando.length > 0) {
+                                  toast.error(`❌ Não é possível excluir: ${usuariosUsando.length} usuário(s) usando este perfil`);
+                                  return;
+                                }
+                                if (confirm(`⚠️ Confirma exclusão permanente do perfil "${perfil.nome_perfil}"?`)) {
+                                  excluirPerfilMutation.mutate(perfil.id);
+                                }
+                              }}
+                              title={usuariosDoPerfil.length > 0 ? "Perfil em uso, não pode ser excluído" : "Excluir perfil"}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>

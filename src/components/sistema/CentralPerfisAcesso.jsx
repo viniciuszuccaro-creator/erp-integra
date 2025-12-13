@@ -53,14 +53,18 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 
 /**
- * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% UNIFICADO
- * Gerencia TUDO em um só lugar:
- * - Perfis de Acesso
- * - Usuários e Atribuições
- * - Permissões por Empresa
- * - Vínculo de Empresas
+ * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% UNIFICADO E COMPLETO
  * 
- * Resolve o problema: "não tenho acesso à empresa"
+ * Versão SIMPLIFICADA e RÁPIDA para uso diário:
+ * ✅ Perfis de Acesso (criar, editar, EXCLUIR)
+ * ✅ Usuários e Atribuições
+ * ✅ Vínculo de Empresas E GRUPOS
+ * ✅ Seleção em massa (módulo/global)
+ * ✅ Integrado com GerenciamentoAcessosCompleto (modo avançado)
+ * 
+ * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar ✅
+ * 
+ * Para funcionalidades avançadas, usar GerenciamentoAcessosCompleto
  */
 
 const MODULOS = {
@@ -377,16 +381,28 @@ export default function CentralPerfisAcesso() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold mb-1">Central de Perfis de Acesso</h1>
-                <p className="text-blue-100">Gerenciamento completo • Perfis • Usuários • Empresas • Permissões</p>
+                <p className="text-blue-100">Modo Simplificado • Perfis • Usuários • Empresas • Grupos • Permissões</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
               <Badge className="bg-white/20 px-4 py-2">
                 {stats.totalPerfis} Perfis
               </Badge>
               <Badge className="bg-white/20 px-4 py-2">
                 {stats.totalUsuarios} Usuários
               </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-white/10 text-white border-white/20 hover:bg-white/20"
+                onClick={() => {
+                  const url = '/GerenciamentoAcessosCompleto';
+                  window.open(url, '_blank');
+                }}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Modo Avançado
+              </Button>
             </div>
           </div>
         </CardContent>
