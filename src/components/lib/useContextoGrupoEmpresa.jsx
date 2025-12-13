@@ -41,6 +41,14 @@ export function useContextoGrupoEmpresa() {
 
   const trocarParaGrupo = useMutation({
     mutationFn: async (grupoId) => {
+      // V21.7 FIX: Verificar se usuário tem acesso ao grupo
+      const temAcesso = user?.role === 'admin' || 
+        user?.grupos_vinculados?.some(v => v.grupo_id === grupoId && v.ativo);
+
+      if (!temAcesso) {
+        throw new Error("Você não tem acesso a este grupo. Configure os vínculos em Cadastros > Acesso.");
+      }
+
       await base44.auth.updateMe({
         contexto_atual: 'grupo',
         grupo_atual_id: grupoId
@@ -67,11 +75,24 @@ export function useContextoGrupoEmpresa() {
       setEmpresaAtual(null);
       queryClient.invalidateQueries();
       setTimeout(() => window.location.reload(), 500);
+    },
+    onError: (error) => {
+      // V21.7: Mostrar erro amigável
+      console.error("Erro ao trocar grupo:", error);
+      alert(error.message);
     }
   });
 
   const trocarParaEmpresa = useMutation({
     mutationFn: async (empresaId) => {
+      // V21.7 FIX: Verificar se usuário tem acesso à empresa
+      const temAcesso = user?.role === 'admin' || 
+        user?.empresas_vinculadas?.some(v => v.empresa_id === empresaId && v.ativo);
+
+      if (!temAcesso) {
+        throw new Error("Você não tem acesso a esta empresa. Configure os vínculos em Cadastros > Acesso.");
+      }
+
       await base44.auth.updateMe({
         contexto_atual: 'empresa',
         empresa_atual_id: empresaId
@@ -98,6 +119,11 @@ export function useContextoGrupoEmpresa() {
       setGrupoAtual(null);
       queryClient.invalidateQueries();
       setTimeout(() => window.location.reload(), 500);
+    },
+    onError: (error) => {
+      // V21.7: Mostrar erro amigável
+      console.error("Erro ao trocar empresa:", error);
+      alert(error.message);
     }
   });
 
