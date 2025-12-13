@@ -418,8 +418,11 @@ export default function CentralPerfisAcesso() {
   };
 
   const abrirEdicaoPerfil = (perfil) => {
-    setPerfilAberto(perfil);
     const permissoes = perfil.permissoes || {};
+    
+    // EXPANDIR TODOS OS MÓDULOS (não apenas os com permissões)
+    const todosModulos = Object.keys(ESTRUTURA_SISTEMA);
+    setModulosExpandidos(todosModulos);
     
     setFormPerfil({
       nome_perfil: perfil.nome_perfil || "",
@@ -429,15 +432,10 @@ export default function CentralPerfisAcesso() {
       ativo: perfil.ativo !== false
     });
     
-    // Auto-expandir módulos que têm permissões
-    const modulosComPermissoes = Object.keys(permissoes).filter(modId => {
-      const moduloPerms = permissoes[modId] || {};
-      return Object.values(moduloPerms).some(s => Array.isArray(s) && s.length > 0);
-    });
-    setModulosExpandidos(modulosComPermissoes);
-    
+    setPerfilAberto(perfil);
     setModoTemplate(false);
-    console.log("📂 Abrindo perfil:", perfil.nome_perfil, "Permissões:", permissoes, "Expandindo:", modulosComPermissoes);
+    
+    console.log("📂 Abrindo perfil:", perfil.nome_perfil, "Permissões:", permissoes, "EXPANDINDO TODOS:", todosModulos);
   };
 
   const aplicarTemplate = (template) => {
@@ -448,8 +446,10 @@ export default function CentralPerfisAcesso() {
       permissoes: template.permissoes,
       ativo: true
     });
+    // Expandir todos os módulos para ver o que foi aplicado
+    setModulosExpandidos(Object.keys(ESTRUTURA_SISTEMA));
     setModoTemplate(false);
-    toast.success(`✅ Template "${template.nome}" aplicado! Revise e salve.`);
+    toast.success(`✅ Template "${template.nome}" aplicado! Todos os módulos expandidos para visualização.`);
   };
 
   const abrirComparador = () => {
@@ -696,6 +696,8 @@ export default function CentralPerfisAcesso() {
               onClick={() => {
                 resetForm();
                 setPerfilAberto({ novo: true });
+                // Expandir todos os módulos ao criar novo perfil
+                setModulosExpandidos(Object.keys(ESTRUTURA_SISTEMA));
               }}
               className="bg-blue-600 hover:bg-blue-700"
             >
@@ -1087,9 +1089,18 @@ export default function CentralPerfisAcesso() {
 
                 <Alert className="mb-4 border-blue-200 bg-blue-50">
                   <Info className="w-4 h-4 text-blue-600" />
-                  <AlertDescription className="text-sm text-blue-800">
-                    <strong>Controle Granular Total:</strong> Cada seção pode ter permissões independentes. 
-                    {contarPermissoesTotal()} permissões selecionadas no total.
+                  <AlertDescription className="text-sm text-blue-800 space-y-1">
+                    <div>
+                      <strong>Controle Granular Total:</strong> Todos os {Object.keys(ESTRUTURA_SISTEMA).length} módulos estão expandidos abaixo ↓
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-600 text-white">
+                        {contarPermissoesTotal()} permissões ativas
+                      </Badge>
+                      <Badge className="bg-blue-100 text-blue-700">
+                        {Object.keys(formPerfil.permissoes).filter(m => contarPermissoesModulo(m) > 0).length}/{Object.keys(ESTRUTURA_SISTEMA).length} módulos configurados
+                      </Badge>
+                    </div>
                   </AlertDescription>
                 </Alert>
 
