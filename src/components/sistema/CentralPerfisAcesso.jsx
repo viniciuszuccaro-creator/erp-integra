@@ -394,14 +394,7 @@ export default function CentralPerfisAcesso() {
 
   // VERIFICAR SE TEM PERMISSÃO
   const temPermissao = (modulo, secao, acao) => {
-    const resultado = formPerfil.permissoes?.[modulo]?.[secao]?.includes(acao) || false;
-    
-    // Log detalhado apenas se estiver editando perfil existente
-    if (perfilAberto && !perfilAberto.novo && resultado) {
-      console.log(`✓ ${modulo}.${secao}.${acao} = MARCADO`);
-    }
-    
-    return resultado;
+    return formPerfil.permissoes?.[modulo]?.[secao]?.includes(acao) || false;
   };
 
   // CONTAR PERMISSÕES
@@ -432,23 +425,19 @@ export default function CentralPerfisAcesso() {
       nome_perfil: perfil.nome_perfil || "",
       descricao: perfil.descricao || "",
       nivel_perfil: perfil.nivel_perfil || "Operacional",
-      permissoes: JSON.parse(JSON.stringify(permissoes)), // Deep clone
+      permissoes: permissoes,
       ativo: perfil.ativo !== false
     });
     
-    // Auto-expandir TODOS os módulos para visualizar tudo
-    const todosModulos = Object.keys(ESTRUTURA_SISTEMA);
-    setModulosExpandidos(todosModulos);
+    // Auto-expandir módulos que têm permissões
+    const modulosComPermissoes = Object.keys(permissoes).filter(modId => {
+      const moduloPerms = permissoes[modId] || {};
+      return Object.values(moduloPerms).some(s => Array.isArray(s) && s.length > 0);
+    });
+    setModulosExpandidos(modulosComPermissoes);
     
     setModoTemplate(false);
-    
-    // Log detalhado para debug
-    console.log("═══════════════════════════════════════");
-    console.log("📂 ABRINDO PERFIL PARA EDIÇÃO:", perfil.nome_perfil);
-    console.log("🔍 Permissões do banco:", perfil.permissoes);
-    console.log("✅ Permissões carregadas no form:", permissoes);
-    console.log("🎯 Expandindo módulos:", todosModulos);
-    console.log("═══════════════════════════════════════");
+    console.log("📂 Abrindo perfil:", perfil.nome_perfil, "Permissões:", permissoes, "Expandindo:", modulosComPermissoes);
   };
 
   const aplicarTemplate = (template) => {
@@ -726,7 +715,7 @@ export default function CentralPerfisAcesso() {
             />
           )}
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {perfisFiltrados.map(perfil => {
               const qtdPermissoes = Object.values(perfil.permissoes || {}).reduce((sum, mod) => {
                 return sum + Object.values(mod || {}).reduce((s, secao) => s + (secao?.length || 0), 0);
@@ -743,8 +732,8 @@ export default function CentralPerfisAcesso() {
                           <div className="flex gap-2 mt-1">
                             <Badge variant="outline">{perfil.nivel_perfil}</Badge>
                             {qtdPermissoes > 0 && (
-                              <Badge className="bg-green-600 text-white shadow-md">
-                                ✓ {qtdPermissoes} permissões ativas
+                              <Badge className="bg-blue-100 text-blue-700">
+                                {qtdPermissoes} permissões
                               </Badge>
                             )}
                           </div>
@@ -759,61 +748,15 @@ export default function CentralPerfisAcesso() {
                   </CardHeader>
                   <CardContent className="p-4 space-y-3">
                     {perfil.descricao && (
-                      <p className="text-sm text-slate-600 mb-3 italic">{perfil.descricao}</p>
+                      <p className="text-sm text-slate-600">{perfil.descricao}</p>
                     )}
                     
-                    {/* VISUALIZAÇÃO EXPANDIDA DAS PERMISSÕES */}
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border-2 border-blue-200">
-                      <p className="text-xs font-bold text-blue-900 mb-3 flex items-center gap-2">
-                        <Eye className="w-4 h-4" />
-                        PERMISSÕES CONFIGURADAS:
-                      </p>
-                      <div className="space-y-2">
-                        {Object.entries(perfil.permissoes || {}).map(([moduloId, secoes]) => {
-                          const qtdModulo = Object.values(secoes || {}).reduce((s, sec) => s + (sec?.length || 0), 0);
-                          if (qtdModulo === 0) return null;
-                          
-                          return (
-                            <div key={moduloId} className="bg-white p-3 rounded border">
-                              <p className="font-bold text-sm text-slate-900 mb-2 uppercase tracking-wide">
-                                📌 {ESTRUTURA_SISTEMA[moduloId]?.nome || moduloId}
-                                <Badge className="ml-2 bg-green-600 text-white">{qtdModulo}</Badge>
-                              </p>
-                              <div className="space-y-2 ml-4">
-                                {Object.entries(secoes || {}).map(([secaoId, acoes]) => {
-                                  if (!Array.isArray(acoes) || acoes.length === 0) return null;
-                                  
-                                  return (
-                                    <div key={secaoId} className="bg-slate-50 p-2 rounded">
-                                      <p className="text-xs font-semibold text-slate-700 mb-1.5">
-                                        → {ESTRUTURA_SISTEMA[moduloId]?.secoes?.[secaoId]?.nome || secaoId}
-                                      </p>
-                                      <div className="flex flex-wrap gap-1.5 ml-4">
-                                        {acoes.map(acaoId => {
-                                          const acaoConfig = ACOES.find(a => a.id === acaoId);
-                                          const IconeAcao = acaoConfig?.icone || CheckCircle;
-                                          const corAcao = acaoConfig?.cor || 'blue';
-                                          
-                                          return (
-                                            <Badge
-                                              key={acaoId}
-                                              className={`bg-${corAcao}-100 text-${corAcao}-700 flex items-center gap-1 shadow-sm`}
-                                            >
-                                              <IconeAcao className="w-3 h-3" />
-                                              {acaoConfig?.nome || acaoId}
-                                            </Badge>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                    {/* Visualizador compacto de permissões */}
+                    <VisualizadorPermissoesPerfil 
+                      perfil={perfil} 
+                      estruturaSistema={ESTRUTURA_SISTEMA}
+                      compact={true}
+                    />
                     
                     <div className="flex items-center justify-between pt-2 border-t">
                       <Badge className="bg-purple-100 text-purple-700">
@@ -823,8 +766,16 @@ export default function CentralPerfisAcesso() {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => setPerfilVisualizacao(perfil)}
+                          className="bg-blue-50 hover:bg-blue-100"
+                        >
+                          <Eye className="w-4 h-4 mr-1" />
+                          Ver Permissões
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => abrirEdicaoPerfil(perfil)}
-                          className="bg-blue-600 text-white hover:bg-blue-700"
                         >
                           <Edit className="w-4 h-4 mr-1" />
                           Editar
@@ -1226,35 +1177,29 @@ export default function CentralPerfisAcesso() {
                                       </div>
                                     </CardHeader>
                                     <CardContent className={`p-3 ${temPermissoesSecao ? 'bg-white' : ''}`}>
-                                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                      <div className="flex flex-wrap gap-2">
                                         {ACOES.map(acao => {
                                           const marcado = temPermissao(moduloId, secaoId, acao.id);
                                           const IconeAcao = acao.icone;
                                           
                                           return (
-                                            <div
+                                            <label
                                               key={acao.id}
-                                              onClick={() => togglePermissao(moduloId, secaoId, acao.id)}
-                                              className={`flex items-center gap-2 cursor-pointer px-3 py-2.5 rounded-lg border-2 text-sm transition-all shadow-sm ${
+                                              className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border-2 text-xs transition-all shadow-sm ${
                                                 marcado
-                                                  ? `bg-gradient-to-r from-${acao.cor}-500 to-${acao.cor}-600 border-${acao.cor}-700 text-white font-bold shadow-lg`
-                                                  : 'bg-white border-slate-300 hover:bg-slate-50 hover:border-blue-400 hover:shadow-md'
+                                                  ? `bg-gradient-to-r from-${acao.cor}-500 to-${acao.cor}-600 border-${acao.cor}-400 text-white font-bold shadow-md scale-105`
+                                                  : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300'
                                               }`}
                                             >
                                               <Checkbox
                                                 checked={marcado}
-                                                onCheckedChange={(checked) => {
-                                                  console.log(`🔄 Checkbox ${moduloId}.${secaoId}.${acao.id}: ${checked}`);
-                                                  togglePermissao(moduloId, secaoId, acao.id);
-                                                }}
-                                                className={marcado ? 'border-white data-[state=checked]:bg-white data-[state=checked]:text-blue-600' : ''}
+                                                onCheckedChange={() => togglePermissao(moduloId, secaoId, acao.id)}
+                                                className={marcado ? 'border-white' : ''}
                                               />
                                               <IconeAcao className="w-4 h-4" />
-                                              <span className="font-semibold flex-1">{acao.nome}</span>
-                                              {marcado && (
-                                                <CheckCircle className="w-4 h-4 animate-pulse" />
-                                              )}
-                                            </div>
+                                              <span className="font-semibold">{acao.nome}</span>
+                                              {marcado && <CheckCircle className="w-3 h-3 ml-1" />}
+                                            </label>
                                           );
                                         })}
                                       </div>
