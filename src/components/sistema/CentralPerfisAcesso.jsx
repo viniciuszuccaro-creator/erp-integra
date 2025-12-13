@@ -32,6 +32,8 @@ import TemplatesPerfisInteligentes, { TEMPLATES_PERFIS } from "./TemplatesPerfis
 import ComparadorPerfisVisual from "./ComparadorPerfisVisual";
 import DashboardSegurancaPerfis from "./DashboardSegurancaPerfis";
 import VisualizadorPermissoesPerfil from "./VisualizadorPermissoesPerfil";
+import FormularioPerfilAcesso from "./FormularioPerfilAcesso";
+import { useWindow } from "@/components/lib/useWindow";
 
 /**
  * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% GRANULAR E COMPLETO
@@ -203,10 +205,8 @@ const ACOES = [
 
 export default function CentralPerfisAcesso() {
   const [activeTab, setActiveTab] = useState("perfis");
-  const [perfilAberto, setPerfilAberto] = useState(null);
   const [usuarioAberto, setUsuarioAberto] = useState(null);
   const [busca, setBusca] = useState("");
-  const [modulosExpandidos, setModulosExpandidos] = useState([]);
   const [modoTemplate, setModoTemplate] = useState(false);
   const [modoComparador, setModoComparador] = useState(false);
   const [perfilComparar1, setPerfilComparar1] = useState(null);
@@ -216,6 +216,7 @@ export default function CentralPerfisAcesso() {
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
   const { user } = usePermissions();
+  const { openWindow } = useWindow();
 
   // Queries
   const { data: perfis = [] } = useQuery({
@@ -238,21 +239,12 @@ export default function CentralPerfisAcesso() {
     queryFn: () => base44.entities.GrupoEmpresarial.list(),
   });
 
-  // State do formulário - ESTRUTURA GRANULAR: módulo → seção → ações[]
-  const [formPerfil, setFormPerfil] = useState({
-    nome_perfil: "",
-    descricao: "",
-    nivel_perfil: "Operacional",
-    permissoes: {},
-    ativo: true
-  });
-
   // Mutations
   const salvarPerfilMutation = useMutation({
-    mutationFn: async (data) => {
+    mutationFn: async ({ perfil, data }) => {
       console.log("📝 Salvando perfil com permissões:", data);
-      const perfilId = perfilAberto?.id;
-      if (perfilId && !perfilAberto.novo) {
+      const perfilId = perfil?.id;
+      if (perfilId && !perfil.novo) {
         return await base44.entities.PerfilAcesso.update(perfilId, data);
       } else {
         return await base44.entities.PerfilAcesso.create(data);
@@ -261,10 +253,7 @@ export default function CentralPerfisAcesso() {
     onSuccess: (result) => {
       console.log("✅ Perfil salvo com sucesso:", result);
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
-      const foiCriacao = perfilAberto?.novo;
-      toast.success(foiCriacao ? "✅ Perfil criado com sucesso!" : "✅ Perfil atualizado com sucesso!");
-      setPerfilAberto(null);
-      resetForm();
+      toast.success("✅ Perfil salvo com sucesso!");
     },
     onError: (error) => {
       console.error("❌ Erro ao salvar perfil:", error);
@@ -298,158 +287,64 @@ export default function CentralPerfisAcesso() {
     }
   });
 
-  const resetForm = () => {
-    setFormPerfil({
-      nome_perfil: "",
-      descricao: "",
-      nivel_perfil: "Operacional",
-      permissoes: {},
-      ativo: true
-    });
-  };
-
-  // TOGGLE PERMISSÃO: módulo → seção → ação
-  const togglePermissao = (modulo, secao, acao) => {
-    setFormPerfil(prev => {
-      const novasPerms = { ...prev.permissoes };
-      if (!novasPerms[modulo]) novasPerms[modulo] = {};
-      if (!novasPerms[modulo][secao]) novasPerms[modulo][secao] = [];
-
-      const index = novasPerms[modulo][secao].indexOf(acao);
-      if (index > -1) {
-        novasPerms[modulo][secao] = novasPerms[modulo][secao].filter(a => a !== acao);
-      } else {
-        novasPerms[modulo][secao] = [...novasPerms[modulo][secao], acao];
-      }
-
-      console.log(`🔄 Toggle: ${modulo}.${secao}.${acao} →`, novasPerms[modulo][secao]);
-      return { ...prev, permissoes: novasPerms };
-    });
-  };
-
-  // SELECIONAR TUDO EM UMA SEÇÃO
-  const selecionarTudoSecao = (modulo, secao) => {
-    setFormPerfil(prev => {
-      const novasPerms = { ...prev.permissoes };
-      if (!novasPerms[modulo]) novasPerms[modulo] = {};
-      
-      const todasAcoes = ACOES.map(a => a.id);
-      const temTodas = todasAcoes.every(a => novasPerms[modulo][secao]?.includes(a));
-      
-      novasPerms[modulo][secao] = temTodas ? [] : [...todasAcoes];
-      
-      console.log(`🔄 Seção ${modulo}.${secao}:`, novasPerms[modulo][secao]);
-      return { ...prev, permissoes: novasPerms };
-    });
-  };
-
-  // SELECIONAR TUDO EM UM MÓDULO
-  const selecionarTudoModulo = (modulo) => {
-    setFormPerfil(prev => {
-      const novasPerms = { ...prev.permissoes };
-      const todasAcoes = ACOES.map(a => a.id);
-      
-      // Verifica se todas as seções têm todas as ações
-      const secoes = Object.keys(ESTRUTURA_SISTEMA[modulo].secoes);
-      const tudoMarcado = secoes.every(secao => 
-        todasAcoes.every(a => novasPerms[modulo]?.[secao]?.includes(a))
-      );
-      
-      novasPerms[modulo] = {};
-      secoes.forEach(secao => {
-        novasPerms[modulo][secao] = tudoMarcado ? [] : [...todasAcoes];
-      });
-      
-      console.log(`🔄 Módulo ${modulo}:`, novasPerms[modulo]);
-      return { ...prev, permissoes: novasPerms };
-    });
-  };
-
-  // SELECIONAR TUDO GLOBAL
-  const selecionarTudoGlobal = () => {
-    setFormPerfil(prev => {
-      const novasPerms = {};
-      const todasAcoes = ACOES.map(a => a.id);
-      
-      // Verifica se algum módulo está vazio
-      const algumVazio = Object.keys(ESTRUTURA_SISTEMA).some(modId => {
-        const secoes = Object.keys(ESTRUTURA_SISTEMA[modId].secoes);
-        return secoes.some(secaoId => {
-          return !prev.permissoes?.[modId]?.[secaoId] || 
-                 prev.permissoes[modId][secaoId].length < todasAcoes.length;
-        });
-      });
-
-      Object.keys(ESTRUTURA_SISTEMA).forEach(modId => {
-        novasPerms[modId] = {};
-        Object.keys(ESTRUTURA_SISTEMA[modId].secoes).forEach(secaoId => {
-          novasPerms[modId][secaoId] = algumVazio ? [...todasAcoes] : [];
-        });
-      });
-
-      console.log("🌐 Seleção Global:", algumVazio ? "TUDO MARCADO" : "TUDO DESMARCADO");
-      return { ...prev, permissoes: novasPerms };
-    });
-  };
-
-  // VERIFICAR SE TEM PERMISSÃO
-  const temPermissao = (modulo, secao, acao) => {
-    return formPerfil.permissoes?.[modulo]?.[secao]?.includes(acao) || false;
-  };
-
-  // CONTAR PERMISSÕES
-  const contarPermissoesModulo = (modulo) => {
-    let total = 0;
-    const perms = formPerfil.permissoes?.[modulo] || {};
-    Object.values(perms).forEach(secao => {
-      total += secao?.length || 0;
-    });
-    return total;
-  };
-
-  const contarPermissoesTotal = () => {
-    let total = 0;
-    Object.values(formPerfil.permissoes || {}).forEach(modulo => {
-      Object.values(modulo || {}).forEach(secao => {
-        total += secao?.length || 0;
-      });
-    });
-    return total;
-  };
-
   const abrirEdicaoPerfil = (perfil) => {
-    const permissoes = perfil.permissoes || {};
-    
-    // EXPANDIR TODOS OS MÓDULOS (não apenas os com permissões)
-    const todosModulos = Object.keys(ESTRUTURA_SISTEMA);
-    setModulosExpandidos(todosModulos);
-    
-    setFormPerfil({
-      nome_perfil: perfil.nome_perfil || "",
-      descricao: perfil.descricao || "",
-      nivel_perfil: perfil.nivel_perfil || "Operacional",
-      permissoes: permissoes,
-      ativo: perfil.ativo !== false
+    openWindow({
+      id: `perfil-${perfil.id || 'novo'}`,
+      title: perfil.novo ? '✨ Novo Perfil de Acesso' : `✏️ Editar: ${perfil.nome_perfil}`,
+      component: FormularioPerfilAcesso,
+      props: {
+        perfil: perfil,
+        estruturaSistema: ESTRUTURA_SISTEMA,
+        onSalvar: async (dadosPerfil) => {
+          const dadosSalvar = {
+            ...dadosPerfil,
+            group_id: empresaAtual?.group_id || null
+          };
+          console.log("💾 Salvando perfil:", dadosSalvar);
+          await salvarPerfilMutation.mutateAsync({ perfil, data: dadosSalvar });
+          return true;
+        },
+        onCancelar: () => {}
+      },
+      defaultWidth: 1200,
+      defaultHeight: 800,
+      minWidth: 900,
+      minHeight: 600
     });
-    
-    setPerfilAberto(perfil);
-    setModoTemplate(false);
-    
-    console.log("📂 Abrindo perfil:", perfil.nome_perfil, "Permissões:", permissoes, "EXPANDINDO TODOS:", todosModulos);
   };
 
   const aplicarTemplate = (template) => {
-    setFormPerfil({
-      nome_perfil: template.nome,
-      descricao: template.descricao,
-      nivel_perfil: template.nivel,
-      permissoes: template.permissoes,
-      ativo: true
+    openWindow({
+      id: `perfil-template-${Date.now()}`,
+      title: `✨ Novo Perfil (Template: ${template.nome})`,
+      component: FormularioPerfilAcesso,
+      props: {
+        perfil: { 
+          novo: true,
+          nome_perfil: template.nome,
+          descricao: template.descricao,
+          nivel_perfil: template.nivel,
+          permissoes: template.permissoes,
+          ativo: true
+        },
+        estruturaSistema: ESTRUTURA_SISTEMA,
+        onSalvar: async (dadosPerfil) => {
+          const dadosSalvar = {
+            ...dadosPerfil,
+            group_id: empresaAtual?.group_id || null
+          };
+          await salvarPerfilMutation.mutateAsync({ perfil: { novo: true }, data: dadosSalvar });
+          return true;
+        },
+        onCancelar: () => {}
+      },
+      defaultWidth: 1200,
+      defaultHeight: 800,
+      minWidth: 900,
+      minHeight: 600
     });
-    // Expandir todos os módulos para ver o que foi aplicado
-    setModulosExpandidos(Object.keys(ESTRUTURA_SISTEMA));
     setModoTemplate(false);
-    toast.success(`✅ Template "${template.nome}" aplicado! Todos os módulos expandidos para visualização.`);
+    toast.success(`✅ Template "${template.nome}" aplicado em nova janela!`);
   };
 
   const abrirComparador = () => {
@@ -693,12 +588,7 @@ export default function CentralPerfisAcesso() {
               </Button>
             </div>
             <Button
-              onClick={() => {
-                resetForm();
-                setPerfilAberto({ novo: true });
-                // Expandir todos os módulos ao criar novo perfil
-                setModulosExpandidos(Object.keys(ESTRUTURA_SISTEMA));
-              }}
+              onClick={() => abrirEdicaoPerfil({ novo: true })}
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -708,13 +598,9 @@ export default function CentralPerfisAcesso() {
 
           {/* Templates Inteligentes */}
           {modoTemplate && (
-            <TemplatesPerfisInteligentes
-              onSelecionarTemplate={(template) => {
-                resetForm();
-                setPerfilAberto({ novo: true });
-                setTimeout(() => aplicarTemplate(template), 100);
-              }}
-            />
+           <TemplatesPerfisInteligentes
+             onSelecionarTemplate={aplicarTemplate}
+           />
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
