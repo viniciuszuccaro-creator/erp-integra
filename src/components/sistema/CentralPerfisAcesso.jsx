@@ -147,6 +147,19 @@ export default function CentralPerfisAcesso() {
     }
   });
 
+  const excluirPerfilMutation = useMutation({
+    mutationFn: async (id) => {
+      return await base44.entities.PerfilAcesso.delete(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
+      toast.success("🗑️ Perfil excluído!");
+    },
+    onError: (error) => {
+      toast.error("❌ Erro: " + error.message);
+    }
+  });
+
   const atualizarUsuarioMutation = useMutation({
     mutationFn: async ({ id, data }) => {
       return await base44.entities.User.update(id, data);
@@ -186,6 +199,47 @@ export default function CentralPerfisAcesso() {
       } else {
         moduloPerms[secaoPrincipal] = [...moduloPerms[secaoPrincipal], acao];
       }
+
+      return { ...prev, permissoes: novasPerms };
+    });
+  };
+
+  const selecionarTudoModulo = (modulo) => {
+    setFormPerfil(prev => {
+      const novasPerms = { ...prev.permissoes };
+      if (!novasPerms[modulo]) novasPerms[modulo] = {};
+      
+      const moduloPerms = novasPerms[modulo];
+      const secaoPrincipal = Object.keys(moduloPerms)[0] || modulo;
+      
+      const todasAcoes = ACOES.map(a => a.id);
+      const temTodas = todasAcoes.every(a => moduloPerms[secaoPrincipal]?.includes(a));
+      
+      if (temTodas) {
+        moduloPerms[secaoPrincipal] = [];
+      } else {
+        moduloPerms[secaoPrincipal] = [...todasAcoes];
+      }
+
+      return { ...prev, permissoes: novasPerms };
+    });
+  };
+
+  const selecionarTudoGlobal = () => {
+    setFormPerfil(prev => {
+      const novasPerms = {};
+      const todasAcoes = ACOES.map(a => a.id);
+      
+      const algumModuloVazio = Object.keys(MODULOS).some(modId => {
+        const perms = prev.permissoes?.[modId];
+        const secao = Object.keys(perms || {})[0] || modId;
+        return !perms || !perms[secao] || perms[secao].length < todasAcoes.length;
+      });
+
+      Object.keys(MODULOS).forEach(modId => {
+        novasPerms[modId] = {};
+        novasPerms[modId][modId] = algumModuloVazio ? [...todasAcoes] : [];
+      });
 
       return { ...prev, permissoes: novasPerms };
     });
@@ -452,14 +506,32 @@ export default function CentralPerfisAcesso() {
                     <Badge className="bg-blue-100 text-blue-700">
                       {usuarios.filter(u => u.perfil_acesso_id === perfil.id).length} usuários
                     </Badge>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => abrirEdicaoPerfil(perfil)}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Editar
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => abrirEdicaoPerfil(perfil)}
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          if (usuarios.some(u => u.perfil_acesso_id === perfil.id)) {
+                            toast.error("❌ Não é possível excluir: existem usuários usando este perfil");
+                            return;
+                          }
+                          if (confirm(`Confirma exclusão do perfil "${perfil.nome_perfil}"?`)) {
+                            excluirPerfilMutation.mutate(perfil.id);
+                          }
+                        }}
+                        disabled={usuarios.some(u => u.perfil_acesso_id === perfil.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -707,17 +779,40 @@ export default function CentralPerfisAcesso() {
 
               {/* Grid de Permissões */}
               <div>
-                <Label className="text-lg font-bold mb-4 block">Permissões por Módulo</Label>
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="text-lg font-bold">Permissões por Módulo</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={selecionarTudoGlobal}
+                    className="text-sm"
+                  >
+                    <CheckSquare className="w-4 h-4 mr-2" />
+                    Selecionar/Desmarcar Tudo
+                  </Button>
+                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {Object.entries(MODULOS).map(([modId, mod]) => {
                     const Icone = mod.icone;
                     return (
                       <Card key={modId} className="border-2">
                         <CardHeader className={`bg-${mod.cor}-50 border-b pb-3`}>
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <Icone className={`w-4 h-4 text-${mod.cor}-600`} />
-                            {mod.nome}
-                          </CardTitle>
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                              <Icone className={`w-4 h-4 text-${mod.cor}-600`} />
+                              {mod.nome}
+                            </CardTitle>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => selecionarTudoModulo(modId)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              <CheckSquare className="w-3 h-3 mr-1" />
+                              Tudo
+                            </Button>
+                          </div>
                         </CardHeader>
                         <CardContent className="p-3">
                           <div className="flex flex-wrap gap-2">
