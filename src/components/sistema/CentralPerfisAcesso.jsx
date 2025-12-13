@@ -45,7 +45,9 @@ import {
   UserCircle,
   FileText,
   BarChart3,
-  Download
+  Download,
+  MessageCircle,
+  Briefcase
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
