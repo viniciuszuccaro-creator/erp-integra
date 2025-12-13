@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -10,9 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Users, ChevronDown } from "lucide-react";
+import { Building2, Users, ChevronDown, TrendingUp, Zap, History, Star, Activity, Clock, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import useContextoGrupoEmpresa from "@/components/lib/useContextoGrupoEmpresa";
+import { useToast } from "@/components/ui/use-toast";
 
 /**
  * Componente seletor de contexto: GRUPO ou EMPRESA
