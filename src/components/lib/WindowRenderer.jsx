@@ -18,6 +18,17 @@ export default function WindowRenderer() {
         
         const Component = window.component;
         
+        // Suporte para lazy loading
+        if (typeof Component === 'function' && Component.constructor.name === 'AsyncFunction') {
+          return (
+            <WindowModal key={window.id} window={window}>
+              <React.Suspense fallback={<div className="flex items-center justify-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>}>
+                <LazyComponent importFn={Component} props={window.props} />
+              </React.Suspense>
+            </WindowModal>
+          );
+        }
+        
         return (
           <WindowModal key={window.id} window={window}>
             <Component {...window.props} />
@@ -26,4 +37,17 @@ export default function WindowRenderer() {
       })}
     </AnimatePresence>
   );
+}
+
+function LazyComponent({ importFn, props }) {
+  const [Component, setComponent] = React.useState(null);
+  
+  React.useEffect(() => {
+    importFn().then(mod => {
+      setComponent(() => mod.default || mod);
+    });
+  }, [importFn]);
+  
+  if (!Component) return null;
+  return <Component {...props} />;
 }

@@ -295,17 +295,12 @@ export default function CentralPerfisAcesso() {
     openWindow({
       id: `perfil-${perfil.id || 'novo'}`,
       title: perfil.novo ? '✨ Novo Perfil de Acesso' : `✏️ Editar: ${perfil.nome_perfil}`,
-      component: FormularioPerfilAcesso,
+      component: () => import('./FormularioPerfilAcesso'),
       props: {
         perfil: perfil,
         estruturaSistema: ESTRUTURA_SISTEMA,
         onSalvar: async (dadosPerfil) => {
-          const dadosSalvar = {
-            ...dadosPerfil,
-            group_id: empresaAtual?.group_id || null
-          };
-          console.log("💾 Salvando perfil:", dadosSalvar);
-          await salvarPerfilMutation.mutateAsync({ perfil, data: dadosSalvar });
+          await salvarPerfilMutation.mutateAsync({ perfil, data: dadosPerfil });
           return true;
         },
         onCancelar: () => {}
@@ -321,7 +316,7 @@ export default function CentralPerfisAcesso() {
     openWindow({
       id: `perfil-template-${Date.now()}`,
       title: `✨ Novo Perfil (Template: ${template.nome})`,
-      component: FormularioPerfilAcesso,
+      component: () => import('./FormularioPerfilAcesso'),
       props: {
         perfil: { 
           novo: true,
@@ -333,11 +328,7 @@ export default function CentralPerfisAcesso() {
         },
         estruturaSistema: ESTRUTURA_SISTEMA,
         onSalvar: async (dadosPerfil) => {
-          const dadosSalvar = {
-            ...dadosPerfil,
-            group_id: empresaAtual?.group_id || null
-          };
-          await salvarPerfilMutation.mutateAsync({ perfil: { novo: true }, data: dadosSalvar });
+          await salvarPerfilMutation.mutateAsync({ perfil: { novo: true }, data: dadosPerfil });
           return true;
         },
         onCancelar: () => {}
