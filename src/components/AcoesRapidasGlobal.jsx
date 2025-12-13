@@ -8,12 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Plus, ShoppingCart, Users, Package, DollarSign, FileText, Truck } from 'lucide-react';
+import { Plus, ShoppingCart, Users, Package, DollarSign, FileText, Truck, Calendar, Target, Factory, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useWindow } from '@/components/lib/useWindow';
+import { Badge } from '@/components/ui/badge';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import CadastroClienteCompleto from '@/components/cadastros/CadastroClienteCompleto';
 import CadastroFornecedorCompleto from '@/components/cadastros/CadastroFornecedorCompleto';
 import ProdutoFormV22_Completo from '@/components/cadastros/ProdutoFormV22_Completo';
@@ -29,11 +31,12 @@ import { toast } from 'sonner';
 /**
  * Ações Rápidas Globais - Botão + Novo
  * Acesso rápido às ações mais comuns do sistema
- * V21.0: Integrado com Sistema de Janelas Multitarefa
+ * V21.7: Integrado com Sistema de Janelas Multitarefa + Contexto Multiempresa
  */
 export default function AcoesRapidasGlobal() {
   const navigate = useNavigate();
   const { openWindow } = useWindow();
+  const { empresaAtual, estaNoGrupo } = useContextoVisual();
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
@@ -211,13 +214,21 @@ export default function AcoesRapidasGlobal() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700">
+        <Button className="bg-blue-600 hover:bg-blue-700 shadow-md">
           <Plus className="w-4 h-4 mr-2" />
           Novo
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Ações Rápidas</DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="flex items-center justify-between">
+          <span>Ações Rápidas</span>
+          {empresaAtual && (
+            <Badge variant="outline" className="text-xs">
+              <Building2 className="w-3 h-3 mr-1" />
+              {estaNoGrupo ? 'Grupo' : empresaAtual.nome_fantasia?.substring(0, 10) || 'Empresa'}
+            </Badge>
+          )}
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         {acoes.map((acao, idx) => {
           const Icon = acao.icon;

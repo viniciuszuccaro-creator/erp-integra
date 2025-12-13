@@ -12,20 +12,25 @@ import {
   FileText,
   Building2,
   DollarSign,
-  Loader2
+  Loader2,
+  Sparkles,
+  Target
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * Pesquisa Universal (Ctrl+K)
  * Busca em todas as entidades do sistema
+ * V21.7: Integrada com sistema multiempresa
  */
 export default function PesquisaUniversal({ open, onOpenChange }) {
   const [query, setQuery] = useState('');
   const [resultados, setResultados] = useState([]);
   const [buscando, setBuscando] = useState(false);
   const navigate = useNavigate();
+  const { filtrarPorContexto, estaNoGrupo, empresaAtual } = useContextoVisual();
 
   useEffect(() => {
     if (query.length >= 2) {
@@ -42,46 +47,55 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
       const q = query.toLowerCase();
 
       // Buscar em paralelo em múltiplas entidades
-      const [clientes, pedidos, produtos, entregas, fornecedores, ops] = await Promise.all([
-        base44.entities.Cliente.list().then(list => 
-          list.filter(c => 
-            c.nome?.toLowerCase().includes(q) ||
-            c.razao_social?.toLowerCase().includes(q) ||
-            c.cnpj?.includes(q) ||
-            c.cpf?.includes(q)
-          ).slice(0, 5)
-        ),
-        base44.entities.Pedido.list().then(list =>
-          list.filter(p =>
-            p.numero_pedido?.toLowerCase().includes(q) ||
-            p.cliente_nome?.toLowerCase().includes(q)
-          ).slice(0, 5)
-        ),
-        base44.entities.Produto.list().then(list =>
-          list.filter(p =>
-            p.descricao?.toLowerCase().includes(q) ||
-            p.codigo?.toLowerCase().includes(q)
-          ).slice(0, 5)
-        ),
-        base44.entities.Entrega.list().then(list =>
-          list.filter(e =>
-            e.cliente_nome?.toLowerCase().includes(q) ||
-            e.qr_code?.toLowerCase().includes(q)
-          ).slice(0, 3)
-        ),
-        base44.entities.Fornecedor.list().then(list =>
-          list.filter(f =>
-            f.nome?.toLowerCase().includes(q) ||
-            f.cnpj?.includes(q)
-          ).slice(0, 3)
-        ),
-        base44.entities.OrdemProducao.list().then(list =>
-          list.filter(op =>
-            op.numero_op?.toLowerCase().includes(q) ||
-            op.cliente_nome?.toLowerCase().includes(q)
-          ).slice(0, 3)
-        )
+      const [clientesRaw, pedidosRaw, produtosRaw, entregasRaw, fornecedoresRaw, opsRaw] = await Promise.all([
+        base44.entities.Cliente.list(),
+        base44.entities.Pedido.list(),
+        base44.entities.Produto.list(),
+        base44.entities.Entrega.list(),
+        base44.entities.Fornecedor.list(),
+        base44.entities.OrdemProducao.list()
       ]);
+
+      // Filtrar por contexto empresa/grupo
+      const clientesFiltrados = filtrarPorContexto(clientesRaw, 'empresa_id');
+      const pedidosFiltrados = filtrarPorContexto(pedidosRaw, 'empresa_id');
+      const produtosFiltrados = filtrarPorContexto(produtosRaw, 'empresa_id');
+      const entregasFiltradas = filtrarPorContexto(entregasRaw, 'empresa_id');
+      const fornecedoresFiltrados = filtrarPorContexto(fornecedoresRaw, 'empresa_dona_id');
+      const opsFiltradas = filtrarPorContexto(opsRaw, 'empresa_id');
+
+      // Aplicar busca textual
+      const clientes = clientesFiltrados.filter(c => 
+        c.nome?.toLowerCase().includes(q) ||
+        c.razao_social?.toLowerCase().includes(q) ||
+        c.cnpj?.includes(q) ||
+        c.cpf?.includes(q)
+      ).slice(0, 5);
+
+      const pedidos = pedidosFiltrados.filter(p =>
+        p.numero_pedido?.toLowerCase().includes(q) ||
+        p.cliente_nome?.toLowerCase().includes(q)
+      ).slice(0, 5);
+
+      const produtos = produtosFiltrados.filter(p =>
+        p.descricao?.toLowerCase().includes(q) ||
+        p.codigo?.toLowerCase().includes(q)
+      ).slice(0, 5);
+
+      const entregas = entregasFiltradas.filter(e =>
+        e.cliente_nome?.toLowerCase().includes(q) ||
+        e.qr_code?.toLowerCase().includes(q)
+      ).slice(0, 3);
+
+      const fornecedores = fornecedoresFiltrados.filter(f =>
+        f.nome?.toLowerCase().includes(q) ||
+        f.cnpj?.includes(q)
+      ).slice(0, 3);
+
+      const ops = opsFiltradas.filter(op =>
+        op.numero_op?.toLowerCase().includes(q) ||
+        op.cliente_nome?.toLowerCase().includes(q)
+      ).slice(0, 3);
 
       const todosResultados = [
         ...clientes.map(c => ({
@@ -231,7 +245,20 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
               <span>↵ Selecionar</span>
               <span>Esc Fechar</span>
             </div>
-            <span>{resultados.length} resultado(s)</span>
+            <div className="flex items-center gap-2">
+              {estaNoGrupo ? (
+                <Badge variant="outline" className="text-xs">
+                  <Target className="w-3 h-3 mr-1" />
+                  Todas Empresas
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-xs">
+                  <Building2 className="w-3 h-3 mr-1" />
+                  {empresaAtual?.nome_fantasia || 'Empresa Atual'}
+                </Badge>
+              )}
+              <span>{resultados.length} resultado(s)</span>
+            </div>
           </div>
         </div>
       </DialogContent>

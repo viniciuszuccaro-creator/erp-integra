@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, X, Check, AlertTriangle, Info, CheckCircle2, XCircle } from "lucide-react";
+import { Bell, X, Check, AlertTriangle, Info, CheckCircle2, XCircle, Zap, Target } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,16 +17,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { empresaAtual, estaNoGrupo } = useContextoVisual();
 
   const { data: notificacoes = [], refetch } = useQuery({
-    queryKey: ['notificacoes'],
+    queryKey: ['notificacoes', empresaAtual?.id],
     queryFn: async () => {
       const user = await base44.auth.me();
-      return await base44.entities.Notificacao.filter(
+      const todasNotificacoes = await base44.entities.Notificacao.filter(
         { destinatario_email: user.email, arquivada: false },
         '-created_date',
         50
       );
+
+      // Filtrar por empresa se não estiver no grupo
+      if (!estaNoGrupo && empresaAtual) {
+        return todasNotificacoes.filter(n => 
+          !n.empresa_id || n.empresa_id === empresaAtual.id
+        );
+      }
+
+      return todasNotificacoes;
     },
     refetchInterval: 30000, // Atualiza a cada 30 segundos
   });

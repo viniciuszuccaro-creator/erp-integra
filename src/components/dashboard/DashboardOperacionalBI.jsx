@@ -4,6 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   DollarSign, 
   Package, 
@@ -15,12 +16,17 @@ import {
   AlertTriangle,
   Zap,
   Factory,
-  CreditCard
+  CreditCard,
+  Target,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function DashboardOperacionalBI({ windowMode = false }) {
   const [periodoFiltro, setPeriodoFiltro] = useState("mes");
+  const { empresaAtual, estaNoGrupo, filtrarPorContexto } = useContextoVisual();
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ["pedidos"],
@@ -47,17 +53,59 @@ export default function DashboardOperacionalBI({ windowMode = false }) {
     queryFn: () => base44.entities.Produto.list(),
   });
 
-  const totalVendas = pedidos.reduce((acc, p) => acc + (p.valor_total || 0), 0);
-  const pedidosAbertos = pedidos.filter(p => 
+  const { data: clientes = [] } = useQuery({
+    queryKey: ["clientes"],
+    queryFn: () => base44.entities.Cliente.list(),
+  });
+
+  // Filtrar por contexto empresa/grupo
+  const pedidosFiltrados = filtrarPorContexto(pedidos, 'empresa_id');
+  const opsFiltradas = filtrarPorContexto(ops, 'empresa_id');
+  const entregasFiltradas = filtrarPorContexto(entregas, 'empresa_id');
+  const produtosFiltrados = filtrarPorContexto(produtos, 'empresa_id');
+  const clientesFiltrados = filtrarPorContexto(clientes, 'empresa_id');
+  const contasReceberFiltradas = filtrarPorContexto(contasReceber, 'empresa_id');
+
+  const totalVendas = pedidosFiltrados.reduce((acc, p) => acc + (p.valor_total || 0), 0);
+  const pedidosAbertos = pedidosFiltrados.filter(p => 
     p.status !== "Entregue" && p.status !== "Cancelado"
   ).length;
-  const opsEmProducao = ops.filter(op => 
+  const opsEmProducao = opsFiltradas.filter(op => 
     op.status !== "Concluída" && op.status !== "Cancelada"
   ).length;
-  const entregasPendentes = entregas.filter(e => 
+  const entregasPendentes = entregasFiltradas.filter(e => 
     e.status !== "Entregue"
   ).length;
-  const contasAtrasadas = contasReceber.filter(c => c.status === "Atrasado").length;
+  const contasAtrasadas = contasReceberFiltradas.filter(c => c.status === "Atrasado").length;
+
+  // IA: Análises Preditivas
+  const calcularTendenciaVendas = () => {
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth();
+    const pedidosMesAtual = pedidosFiltrados.filter(p => {
+      const dataPedido = new Date(p.data_pedido);
+      return dataPedido.getMonth() === mesAtual;
+    });
+    const pedidosMesAnterior = pedidosFiltrados.filter(p => {
+      const dataPedido = new Date(p.data_pedido);
+      return dataPedido.getMonth() === mesAtual - 1;
+    });
+
+    const valorAtual = pedidosMesAtual.reduce((s, p) => s + (p.valor_total || 0), 0);
+    const valorAnterior = pedidosMesAnterior.reduce((s, p) => s + (p.valor_total || 0), 0);
+
+    const crescimento = valorAnterior > 0 
+      ? ((valorAtual - valorAnterior) / valorAnterior * 100).toFixed(1)
+      : 0;
+
+    return { valorAtual, valorAnterior, crescimento: parseFloat(crescimento) };
+  };
+
+  const tendenciaVendas = calcularTendenciaVendas();
+
+  const clientesComRiscoChurn = clientesFiltrados.filter(c => 
+    c.risco_churn === 'Alto' || c.risco_churn === 'Crítico'
+  ).length;
 
   const dadosVendasMes = [
     { mes: "Jan", valor: 45000 },
@@ -75,32 +123,70 @@ export default function DashboardOperacionalBI({ windowMode = false }) {
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard Operacional BI</h1>
-          <p className="text-sm text-slate-600 mt-1">Visão consolidada com IA e análises preditivas</p>
+          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
+            <Sparkles className="w-8 h-8 text-purple-600" />
+            Dashboard Operacional BI
+          </h1>
+          <p className="text-sm text-slate-600 mt-1">
+            {estaNoGrupo ? 'Visão Consolidada do Grupo' : empresaAtual?.nome_fantasia || empresaAtual?.razao_social} • IA e Análises Preditivas
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <select
-            value={periodoFiltro}
-            onChange={(e) => setPeriodoFiltro(e.target.value)}
-            className="px-3 py-2 border rounded-lg"
-          >
-            <option value="hoje">Hoje</option>
-            <option value="semana">Esta Semana</option>
-            <option value="mes">Este Mês</option>
-            <option value="trimestre">Trimestre</option>
-            <option value="ano">Ano</option>
-          </select>
+          <Select value={periodoFiltro} onValueChange={setPeriodoFiltro}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="hoje">Hoje</SelectItem>
+              <SelectItem value="semana">Esta Semana</SelectItem>
+              <SelectItem value="mes">Este Mês</SelectItem>
+              <SelectItem value="trimestre">Trimestre</SelectItem>
+              <SelectItem value="ano">Ano</SelectItem>
+            </SelectContent>
+          </Select>
 
-          <Button className="bg-purple-600 hover:bg-purple-700">
+          <Badge className="bg-purple-600 px-3 py-2">
             <Zap className="w-4 h-4 mr-2" />
-            IA: Sugerir Ações
-          </Button>
+            IA Ativa
+          </Badge>
         </div>
       </div>
 
+      {/* IA: Tendência de Vendas */}
+      <Card className="border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-purple-600 rounded-xl">
+                <Sparkles className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-purple-900 mb-1">
+                  IA: Análise de Tendência de Vendas
+                </h3>
+                <p className="text-sm text-purple-700">
+                  Crescimento de {tendenciaVendas.crescimento > 0 ? '+' : ''}{tendenciaVendas.crescimento}% em relação ao mês anterior
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-purple-600 font-medium">Mês Atual</p>
+              <p className="text-2xl font-bold text-purple-900">
+                R$ {tendenciaVendas.valorAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </p>
+              {tendenciaVendas.crescimento !== 0 && (
+                <Badge className={tendenciaVendas.crescimento > 0 ? 'bg-green-600' : 'bg-red-600'}>
+                  {tendenciaVendas.crescimento > 0 ? '↗' : '↘'} {Math.abs(tendenciaVendas.crescimento)}%
+                </Badge>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="border-0 shadow-md bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -108,68 +194,87 @@ export default function DashboardOperacionalBI({ windowMode = false }) {
                 <p className="text-2xl font-bold">
                   R$ {(totalVendas / 1000).toFixed(0)}k
                 </p>
+                <p className="text-xs opacity-75 mt-1">{pedidosFiltrados.length} pedidos</p>
               </div>
               <DollarSign className="w-8 h-8 opacity-80" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-green-500 to-green-600 text-white">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-green-500 to-green-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs opacity-90">Pedidos Abertos</p>
                 <p className="text-2xl font-bold">{pedidosAbertos}</p>
+                <p className="text-xs opacity-75 mt-1">em andamento</p>
               </div>
               <ShoppingCart className="w-8 h-8 opacity-80" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs opacity-90">OPs Produção</p>
                 <p className="text-2xl font-bold">{opsEmProducao}</p>
+                <p className="text-xs opacity-75 mt-1">ativas</p>
               </div>
               <Factory className="w-8 h-8 opacity-80" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-orange-500 to-orange-600 text-white">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs opacity-90">Entregas Pend.</p>
                 <p className="text-2xl font-bold">{entregasPendentes}</p>
+                <p className="text-xs opacity-75 mt-1">em logística</p>
               </div>
               <Truck className="w-8 h-8 opacity-80" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-red-500 to-red-600 text-white">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-red-500 to-red-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs opacity-90">Contas Atrasadas</p>
                 <p className="text-2xl font-bold">{contasAtrasadas}</p>
+                <p className="text-xs opacity-75 mt-1">atenção urgente</p>
               </div>
               <AlertTriangle className="w-8 h-8 opacity-80" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
+        <Card className="border-0 shadow-md bg-gradient-to-br from-indigo-500 to-indigo-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs opacity-90">Produtos</p>
-                <p className="text-2xl font-bold">{produtos.length}</p>
+                <p className="text-2xl font-bold">{produtosFiltrados.length}</p>
+                <p className="text-xs opacity-75 mt-1">no catálogo</p>
               </div>
               <Package className="w-8 h-8 opacity-80" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-md bg-gradient-to-br from-cyan-500 to-cyan-600 text-white hover:shadow-xl transition-all">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs opacity-90">Clientes</p>
+                <p className="text-2xl font-bold">{clientesFiltrados.length}</p>
+                <p className="text-xs opacity-75 mt-1">cadastrados</p>
+              </div>
+              <Users className="w-8 h-8 opacity-80" />
             </div>
           </CardContent>
         </Card>
@@ -218,53 +323,132 @@ export default function DashboardOperacionalBI({ windowMode = false }) {
         </Card>
       </div>
 
-      <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-blue-50">
+      <Card className="border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-purple-600" />
-            Sugestões da IA de Decisão
+            Sugestões Inteligentes da IA
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
+            {/* Análise de Vendas */}
+            {tendenciaVendas.crescimento < -10 && (
+              <div className="p-4 bg-white rounded-lg border-2 border-red-300 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <TrendingDown className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-red-900">
+                      📉 Queda de {Math.abs(tendenciaVendas.crescimento)}% nas vendas
+                    </p>
+                    <p className="text-xs text-red-700 mt-1">
+                      <strong>Ação recomendada:</strong> Ativar campanhas promocionais, contatar clientes inativos, revisar estratégia comercial
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {tendenciaVendas.crescimento > 20 && (
+              <div className="p-4 bg-white rounded-lg border-2 border-green-300 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <TrendingUp className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-green-900">
+                      📈 Crescimento de {tendenciaVendas.crescimento}%!
+                    </p>
+                    <p className="text-xs text-green-700 mt-1">
+                      <strong>Oportunidade:</strong> Aumentar estoque de produtos mais vendidos, contratar mais pessoal
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Clientes em Risco */}
+            {clientesComRiscoChurn > 0 && (
+              <div className="p-4 bg-white rounded-lg border-2 border-orange-300 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Users className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-orange-900">
+                      ⚠️ {clientesComRiscoChurn} cliente(s) com risco de churn
+                    </p>
+                    <p className="text-xs text-orange-700 mt-1">
+                      <strong>Ação recomendada:</strong> Contato proativo, ofertas personalizadas, pesquisa de satisfação
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {contasAtrasadas > 0 && (
-              <div className="p-3 bg-white rounded-lg border border-orange-200">
-                <p className="font-semibold text-sm text-orange-900">
-                  💰 {contasAtrasadas} conta(s) atrasada(s)
-                </p>
-                <p className="text-xs text-orange-700 mt-1">
-                  Sugestão: Ativar régua de cobrança automatizada ou aplicar desconto para quitação imediata
-                </p>
+              <div className="p-4 bg-white rounded-lg border-2 border-red-300 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-red-900">
+                      💰 {contasAtrasadas} conta(s) atrasada(s)
+                    </p>
+                    <p className="text-xs text-red-700 mt-1">
+                      <strong>Ação imediata:</strong> Ativar régua de cobrança, negociar condições, aplicar juros/multa
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
             {opsEmProducao > 10 && (
-              <div className="p-3 bg-white rounded-lg border border-blue-200">
-                <p className="font-semibold text-sm text-blue-900">
-                  🏭 {opsEmProducao} OPs em produção
-                </p>
-                <p className="text-xs text-blue-700 mt-1">
-                  Sugestão: Verificar gargalos e redistribuir cargas entre turnos
-                </p>
+              <div className="p-4 bg-white rounded-lg border-2 border-blue-300 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Factory className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-blue-900">
+                      🏭 {opsEmProducao} OPs em produção simultâneas
+                    </p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      <strong>Otimização:</strong> Redistribuir cargas, verificar gargalos, considerar horas extras
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
             {entregasPendentes > 5 && (
-              <div className="p-3 bg-white rounded-lg border border-green-200">
-                <p className="font-semibold text-sm text-green-900">
-                  🚚 {entregasPendentes} entrega(s) pendente(s)
-                </p>
-                <p className="text-xs text-green-700 mt-1">
-                  Sugestão: Otimizar rotas com IA para reduzir custos de frete
-                </p>
+              <div className="p-4 bg-white rounded-lg border-2 border-green-300 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Truck className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-sm text-green-900">
+                      🚚 {entregasPendentes} entrega(s) em logística
+                    </p>
+                    <p className="text-xs text-green-700 mt-1">
+                      <strong>Otimização:</strong> Roteirização inteligente, consolidar entregas por região
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
-            {contasAtrasadas === 0 && opsEmProducao < 5 && entregasPendentes === 0 && (
+            {contasAtrasadas === 0 && opsEmProducao < 5 && entregasPendentes < 3 && clientesComRiscoChurn === 0 && (
               <div className="text-center py-8 text-slate-500">
-                <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p className="font-semibold">Tudo funcionando perfeitamente! 🎉</p>
-                <p className="text-xs mt-1">A IA não detectou ações urgentes no momento.</p>
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="w-8 h-8 text-green-600" />
+                </div>
+                <p className="font-semibold text-lg text-green-900">Tudo funcionando perfeitamente! 🎉</p>
+                <p className="text-sm text-slate-600 mt-1">A IA não detectou ações urgentes ou oportunidades de melhoria.</p>
               </div>
             )}
           </div>
