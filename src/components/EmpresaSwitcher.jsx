@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -112,7 +111,7 @@ export default function EmpresaSwitcher() {
 
   return (
     <div className="relative">
-      <Select value={valorAtual} onValueChange={handleSelecaoContexto}>
+      <Select value={valorAtual} onValueChange={handleSelecaoContexto} open={open} onOpenChange={setOpen}>
         <SelectTrigger className="w-[280px] bg-white border-slate-300 hover:bg-slate-50 transition-colors">
           <div className="flex items-center gap-2 w-full">
             {contexto === 'grupo' ? (
