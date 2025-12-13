@@ -195,7 +195,8 @@ export default function CentralPerfisAcesso() {
     const moduloPerms = formPerfil.permissoes?.[modulo];
     if (!moduloPerms) return false;
     const secaoPrincipal = Object.keys(moduloPerms)[0];
-    return moduloPerms[secaoPrincipal]?.includes(acao) || false;
+    if (!secaoPrincipal || !Array.isArray(moduloPerms[secaoPrincipal])) return false;
+    return moduloPerms[secaoPrincipal].includes(acao) || false;
   };
 
   const abrirEdicaoPerfil = (perfil) => {
