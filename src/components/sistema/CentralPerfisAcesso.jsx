@@ -130,20 +130,22 @@ export default function CentralPerfisAcesso() {
   // Mutations
   const salvarPerfilMutation = useMutation({
     mutationFn: async (data) => {
-      if (perfilAberto?.id) {
-        return await base44.entities.PerfilAcesso.update(perfilAberto.id, data);
+      const perfilId = perfilAberto?.id;
+      if (perfilId && !perfilAberto.novo) {
+        return await base44.entities.PerfilAcesso.update(perfilId, data);
       } else {
         return await base44.entities.PerfilAcesso.create(data);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
+      const foiCriacao = perfilAberto?.novo;
+      toast.success(foiCriacao ? "✅ Perfil criado com sucesso!" : "✅ Perfil atualizado com sucesso!");
       setPerfilAberto(null);
       resetForm();
-      toast.success(perfilAberto?.id ? "✅ Perfil atualizado!" : "✅ Perfil criado!");
     },
     onError: (error) => {
-      toast.error("❌ Erro: " + error.message);
+      toast.error("❌ Erro ao salvar: " + error.message);
     }
   });
 
@@ -519,15 +521,16 @@ export default function CentralPerfisAcesso() {
                         size="sm"
                         variant="destructive"
                         onClick={() => {
-                          if (usuarios.some(u => u.perfil_acesso_id === perfil.id)) {
-                            toast.error("❌ Não é possível excluir: existem usuários usando este perfil");
+                          const usuariosUsando = usuarios.filter(u => u.perfil_acesso_id === perfil.id);
+                          if (usuariosUsando.length > 0) {
+                            toast.error(`❌ Não é possível excluir: ${usuariosUsando.length} usuário(s) usando este perfil`);
                             return;
                           }
-                          if (confirm(`Confirma exclusão do perfil "${perfil.nome_perfil}"?`)) {
+                          if (confirm(`⚠️ Confirma exclusão permanente do perfil "${perfil.nome_perfil}"?`)) {
                             excluirPerfilMutation.mutate(perfil.id);
                           }
                         }}
-                        disabled={usuarios.some(u => u.perfil_acesso_id === perfil.id)}
+                        title={usuarios.some(u => u.perfil_acesso_id === perfil.id) ? "Perfil em uso, não pode ser excluído" : "Excluir perfil"}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -719,10 +722,12 @@ export default function CentralPerfisAcesso() {
           <CardContent className="p-6">
             <form onSubmit={(e) => {
               e.preventDefault();
-              salvarPerfilMutation.mutate({
+              console.log("Salvando perfil:", formPerfil);
+              const dadosSalvar = {
                 ...formPerfil,
-                group_id: empresaAtual?.group_id
-              });
+                group_id: empresaAtual?.group_id || null
+              };
+              salvarPerfilMutation.mutate(dadosSalvar);
             }} className="space-y-6">
               {/* Dados Básicos */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
