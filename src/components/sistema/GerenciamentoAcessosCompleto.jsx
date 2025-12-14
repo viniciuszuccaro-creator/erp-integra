@@ -444,7 +444,7 @@ export default function GerenciamentoAcessosCompleto() {
     setConflitosSOD([]);
   };
 
-  // Validar Segregação de Funções (SoD)
+  // Validar Segregação de Funções (SoD) - ALINHADO COM ESTRUTURA GRANULAR
   const validarSOD = (permissoes) => {
     const conflitos = [];
 
@@ -462,7 +462,8 @@ export default function GerenciamentoAcessosCompleto() {
     }
 
     // Regra 2: Criar Cliente + Aprovar Descontos
-    const podeCriarCliente = permissoes?.cadastros_gerais?.clientes?.includes("criar");
+    const podeCriarCliente = permissoes?.cadastros_gerais?.clientes?.includes("criar") ||
+                             permissoes?.cadastros_gerais?.pessoas?.includes("criar");
     const podeAprovarDesconto = permissoes?.comercial?.pedidos?.includes("aprovar");
     
     if (podeCriarCliente && podeAprovarDesconto) {
@@ -486,6 +487,19 @@ export default function GerenciamentoAcessosCompleto() {
         regra: "SoD-003",
         descricao: "Controle total de estoque E financeiro representa alto risco",
         severidade: "Crítica"
+      });
+    }
+
+    // Regra 4: Emitir NF-e + Cancelar NF-e
+    const podeEmitirNFe = permissoes?.fiscal?.nfe?.includes("criar");
+    const podeCancelarNFe = permissoes?.fiscal?.nfe?.includes("excluir");
+    
+    if (podeEmitirNFe && podeCancelarNFe) {
+      conflitos.push({
+        tipo: "Aviso",
+        regra: "SoD-004",
+        descricao: "Emitir e cancelar NF-e pode gerar risco fiscal",
+        severidade: "Média"
       });
     }
 
