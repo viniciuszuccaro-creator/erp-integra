@@ -12,6 +12,7 @@ import { DollarSign, Calendar, FileText, Building2, Users, Loader2, CheckCircle2
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 
 export default function ContaReceberForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
@@ -25,6 +26,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
     data_vencimento: new Date().toISOString().split('T')[0],
     status: 'Pendente',
     forma_recebimento: 'Boleto',
+    forma_recebimento_id: '',
     numero_documento: '',
     numero_parcela: '',
     centro_custo: '',
@@ -36,6 +38,8 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
     empresa_id: '',
     visivel_no_portal: true
   });
+
+  const { formasPagamento } = useFormasPagamento({ empresa_id: formData.empresa_id });
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
@@ -204,20 +208,25 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
             <div>
               <Label>Forma de Recebimento</Label>
               <Select
-                value={formData.forma_recebimento}
-                onValueChange={(v) => setFormData({...formData, forma_recebimento: v})}
+                value={formData.forma_recebimento_id || formData.forma_recebimento}
+                onValueChange={(formaId) => {
+                  const forma = formasPagamento.find(f => f.id === formaId);
+                  setFormData({
+                    ...formData, 
+                    forma_recebimento_id: formaId,
+                    forma_recebimento: forma?.descricao || formaId
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Dinheiro">💵 Dinheiro</SelectItem>
-                  <SelectItem value="Transferência">🏦 Transferência</SelectItem>
-                  <SelectItem value="Boleto">📄 Boleto</SelectItem>
-                  <SelectItem value="Cartão Crédito">💳 Cartão Crédito</SelectItem>
-                  <SelectItem value="Cartão Débito">💳 Cartão Débito</SelectItem>
-                  <SelectItem value="PIX">⚡ PIX</SelectItem>
-                  <SelectItem value="Cheque">📝 Cheque</SelectItem>
+                  {formasPagamento.map(forma => (
+                    <SelectItem key={forma.id} value={forma.id}>
+                      {forma.icone && `${forma.icone} `}{forma.descricao}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

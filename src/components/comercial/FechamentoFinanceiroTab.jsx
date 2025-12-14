@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DollarSign, Percent, FileText, Receipt, CheckCircle, AlertTriangle } from 'lucide-react';
 import GerarNFeModal from './GerarNFeModal';
+import { useFormasPagamento } from '@/components/lib/useFormasPagamento';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 /**
  * V21.1 - Aba 7: Fechamento Financeiro
@@ -16,6 +17,8 @@ import GerarNFeModal from './GerarNFeModal';
  */
 export default function FechamentoFinanceiroTab({ formData, setFormData, onNext }) {
   const [modalNFeOpen, setModalNFeOpen] = useState(false);
+  
+  const { formasPagamento, obterConfiguracao } = useFormasPagamento({ empresa_id: formData?.empresa_id });
 
   const valorProdutos = formData?.valor_produtos || 0;
   const descontoPercentual = formData?.desconto_geral_pedido_percentual || 0;
@@ -144,40 +147,60 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
         <CardContent className="space-y-4">
           <div>
             <Label>Forma de Pagamento</Label>
-            <select
-              value={formData?.forma_pagamento || 'À Vista'}
-              onChange={(e) => setFormData(prev => ({ ...prev, forma_pagamento: e.target.value }))}
-              className="w-full p-2 border rounded-lg"
+            <Select
+              value={formData?.forma_pagamento_id || formData?.forma_pagamento || ''}
+              onValueChange={(formaId) => {
+                const forma = formasPagamento.find(f => f.id === formaId);
+                const config = obterConfiguracao(formaId);
+                setFormData(prev => ({ 
+                  ...prev, 
+                  forma_pagamento_id: formaId,
+                  forma_pagamento: forma?.descricao || '',
+                  numero_parcelas: config?.permite_parcelar ? (prev.numero_parcelas || 2) : 1
+                }));
+              }}
             >
-              <option value="À Vista">À Vista</option>
-              <option value="PIX">PIX</option>
-              <option value="Boleto">Boleto</option>
-              <option value="Cartão de Crédito">Cartão de Crédito</option>
-              <option value="Parcelado">Parcelado</option>
-              <option value="Transferência">Transferência</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a forma de pagamento..." />
+              </SelectTrigger>
+              <SelectContent>
+                {formasPagamento.map(forma => {
+                  const config = obterConfiguracao(forma.id);
+                  return (
+                    <SelectItem key={forma.id} value={forma.id}>
+                      {forma.icone && `${forma.icone} `}{forma.descricao}
+                      {config?.percentual_desconto_padrao > 0 && ` (-${config.percentual_desconto_padrao}%)`}
+                      {config?.percentual_acrescimo_padrao > 0 && ` (+${config.percentual_acrescimo_padrao}%)`}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
           </div>
 
-          {formData?.forma_pagamento === 'Parcelado' && (
+          {formData?.forma_pagamento_id && obterConfiguracao(formData.forma_pagamento_id)?.permite_parcelar && (
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Número de Parcelas</Label>
                 <Input
                   type="number"
                   min="2"
-                  max="12"
+                  max={obterConfiguracao(formData.forma_pagamento_id)?.max_parcelas || 12}
                   value={formData?.numero_parcelas || 2}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
                     numero_parcelas: parseInt(e.target.value)
                   }))}
                 />
+                <p className="text-xs text-slate-500 mt-1">
+                  Máximo: {obterConfiguracao(formData.forma_pagamento_id)?.max_parcelas || 12}x
+                </p>
               </div>
               <div>
                 <Label>Intervalo (dias)</Label>
                 <Input
                   type="number"
-                  value={formData?.intervalo_parcelas || 30}
+                  value={formData?.intervalo_parcelas || obterConfiguracao(formData.forma_pagamento_id)?.intervalo_parcelas_dias || 30}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
                     intervalo_parcelas: parseInt(e.target.value)

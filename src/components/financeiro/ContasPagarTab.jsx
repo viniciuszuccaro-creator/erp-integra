@@ -21,12 +21,14 @@ import { ProtectedAction } from "@/components/ProtectedAction";
 import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
 import ContaPagarForm from "./ContaPagarForm";
 import { useWindow } from "@/components/lib/useWindow";
+import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 
 export default function ContasPagarTab({ contas }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
+  const { formasPagamento, obterBancoPorTipo } = useFormasPagamento();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -491,13 +493,11 @@ export default function ContasPagarTab({ contas }) {
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                    <SelectItem value="PIX">PIX</SelectItem>
-                    <SelectItem value="TED">TED</SelectItem>
-                    <SelectItem value="DOC">DOC</SelectItem>
-                    <SelectItem value="Boleto">Boleto</SelectItem>
-                    <SelectItem value="Cartão">Cartão</SelectItem>
-                    <SelectItem value="Cheque">Cheque</SelectItem>
+                    {formasPagamento.map(forma => (
+                      <SelectItem key={forma.id} value={forma.descricao}>
+                        {forma.icone && `${forma.icone} `}{forma.descricao}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

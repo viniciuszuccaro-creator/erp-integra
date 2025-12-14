@@ -45,12 +45,14 @@ import GerarLinkPagamentoModal from "./GerarLinkPagamentoModal";
 import ContaReceberForm from "./ContaReceberForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 
 export default function ContasReceberTab({ contas, empresas = [] }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
+  const { formasPagamento, obterBancoPorTipo } = useFormasPagamento();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
@@ -1073,12 +1075,11 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                    <SelectItem value="PIX">PIX</SelectItem>
-                    <SelectItem value="Transferência">Transferência</SelectItem>
-                    <SelectItem value="Boleto">Boleto</SelectItem>
-                    <SelectItem value="Cartão Crédito">Cartão Crédito</SelectItem>
-                    <SelectItem value="Cartão Débito">Cartão Débito</SelectItem>
+                    {formasPagamento.map(forma => (
+                      <SelectItem key={forma.id} value={forma.descricao}>
+                        {forma.icone && `${forma.icone} `}{forma.descricao}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

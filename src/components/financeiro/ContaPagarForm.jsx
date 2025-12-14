@@ -12,6 +12,7 @@ import { DollarSign, Calendar, FileText, Building2, Package, Loader2, TrendingDo
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 
 export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
@@ -25,6 +26,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
     status: 'Pendente',
     status_pagamento: 'Pendente',
     forma_pagamento: 'Boleto',
+    forma_pagamento_id: '',
     numero_documento: '',
     numero_parcela: '',
     centro_custo: '',
@@ -36,6 +38,8 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
     observacoes: '',
     empresa_id: ''
   });
+
+  const { formasPagamento } = useFormasPagamento({ empresa_id: formData.empresa_id });
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores'],
@@ -229,21 +233,25 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
             <div>
               <Label>Forma de Pagamento</Label>
               <Select
-                value={formData.forma_pagamento}
-                onValueChange={(v) => setFormData({...formData, forma_pagamento: v})}
+                value={formData.forma_pagamento_id || formData.forma_pagamento}
+                onValueChange={(formaId) => {
+                  const forma = formasPagamento.find(f => f.id === formaId);
+                  setFormData({
+                    ...formData,
+                    forma_pagamento_id: formaId,
+                    forma_pagamento: forma?.descricao || formaId
+                  });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Dinheiro">💵 Dinheiro</SelectItem>
-                  <SelectItem value="Transferência">🏦 Transferência</SelectItem>
-                  <SelectItem value="Boleto">📄 Boleto</SelectItem>
-                  <SelectItem value="Cartão">💳 Cartão</SelectItem>
-                  <SelectItem value="PIX">⚡ PIX</SelectItem>
-                  <SelectItem value="Cheque">📝 Cheque</SelectItem>
-                  <SelectItem value="TED">🏦 TED</SelectItem>
-                  <SelectItem value="DOC">🏦 DOC</SelectItem>
+                  {formasPagamento.map(forma => (
+                    <SelectItem key={forma.id} value={forma.id}>
+                      {forma.icone && `${forma.icone} `}{forma.descricao}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
