@@ -44,9 +44,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 export default function CaixaDiarioTab() {
   const [abaAtiva, setAbaAtiva] = useState("caixa-dia");
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().split('T')[0]);
-  const [operadorFiltro, setOperadorFiltro] = useState("todos");
-  const [aberturaCaixaDialog, setAberturaCaixaDialog] = useState(false);
-  const [fechamentoCaixaDialog, setFechamentoCaixaDialog] = useState(false);
+  const [abaOperador, setAbaOperador] = useState("todos");
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);
   const [ordemSelecionada, setOrdemSelecionada] = useState(null);
   const [formaPagamentoLiquidacao, setFormaPagamentoLiquidacao] = useState("");
@@ -111,9 +109,9 @@ export default function CaixaDiarioTab() {
   });
 
   const operadoresUnicos = [...new Set(movimentos.map(m => m.usuario_operador_nome).filter(Boolean))];
-  const movimentosFiltrados = operadorFiltro === "todos" 
+  const movimentosFiltrados = abaOperador === "todos" 
     ? movimentos 
-    : movimentos.filter(m => m.usuario_operador_nome === operadorFiltro);
+    : movimentos.filter(m => m.usuario_operador_nome === abaOperador);
 
   // Calcular totais
   const totalEntradas = movimentosFiltrados
@@ -312,17 +310,6 @@ export default function CaixaDiarioTab() {
               className="w-48"
             />
           </div>
-          <Select value={operadorFiltro} onValueChange={setOperadorFiltro}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Operador" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="todos">Todos os Operadores</SelectItem>
-              {operadoresUnicos.map(op => (
-                <SelectItem key={op} value={op}>{op}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           {caixaAberto ? (
             <Badge className="bg-green-100 text-green-700">
               <Unlock className="w-3 h-3 mr-1" />
