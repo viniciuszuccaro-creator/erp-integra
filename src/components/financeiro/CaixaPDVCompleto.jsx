@@ -406,9 +406,9 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
 
         {/* VENDA */}
         <TabsContent value="venda">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* PRODUTOS */}
-            <Card className="col-span-2">
+            <Card>
               <CardHeader className="pb-3">
                 <Input
                   placeholder="🔍 Buscar produto..."
@@ -416,7 +416,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                   onChange={(e) => setBuscaProduto(e.target.value)}
                 />
               </CardHeader>
-              <CardContent className="max-h-96 overflow-auto">
+              <CardContent className="max-h-[500px] overflow-auto">
                 <div className="grid grid-cols-2 gap-2">
                   {produtosFiltrados.map(p => (
                     <button
@@ -446,7 +446,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                 <p className="font-bold">🛒 Carrinho ({carrinho.length})</p>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="max-h-40 overflow-auto space-y-2">
+                <div className="max-h-[280px] overflow-auto space-y-2">
                   {carrinho.length === 0 ? (
                     <div className="text-center py-8 text-slate-400">
                       <ShoppingCart className="w-12 h-12 mx-auto mb-2" />
@@ -752,22 +752,38 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {movimentosHoje.map(m => (
-                    <TableRow key={m.id}>
-                      <TableCell>
-                        {new Date(m.data_movimento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={m.tipo_movimento === 'Entrada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
-                          {m.tipo_movimento}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{m.descricao}</TableCell>
-                      <TableCell className={`text-right font-bold ${m.tipo_movimento === 'Entrada' ? 'text-green-600' : 'text-red-600'}`}>
-                        {m.tipo_movimento === 'Entrada' ? '+' : '-'}R$ {(m.valor || 0).toFixed(2)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {movimentosHoje.map(m => {
+                    const pedidoVinculado = pedidos.find(p => p.id === m.pedido_id);
+                    const descricaoCompleta = m.descricao || '';
+                    
+                    return (
+                      <TableRow key={m.id}>
+                        <TableCell>
+                          {new Date(m.data_movimento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={m.tipo_movimento === 'Entrada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}>
+                            {m.tipo_movimento}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{descricaoCompleta}</p>
+                            {pedidoVinculado && (
+                              <div className="text-xs text-slate-600 mt-1 space-y-0.5">
+                                <p>📋 Pedido: <strong>{pedidoVinculado.numero_pedido}</strong></p>
+                                <p>👤 Cliente: <strong>{pedidoVinculado.cliente_nome}</strong></p>
+                                <p>💳 Pagto: <strong>{m.forma_pagamento}</strong></p>
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className={`text-right font-bold ${m.tipo_movimento === 'Entrada' ? 'text-green-600' : 'text-red-600'}`}>
+                          {m.tipo_movimento === 'Entrada' ? '+' : '-'}R$ {(m.valor || 0).toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
