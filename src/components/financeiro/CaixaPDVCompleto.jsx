@@ -327,16 +327,16 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
 
   if (!caixaAberto) {
     return (
-      <div className={windowMode ? "w-full h-full flex items-center justify-center p-4" : "p-6"}>
-        <Dialog open={dialogAbrir} onOpenChange={() => {}}>
-          <DialogContent className="sm:max-w-md" style={{ zIndex: 99999999 }}>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+      <>
+        <div className={windowMode ? "w-full h-full flex items-center justify-center p-4" : "p-6"}>
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-emerald-600" />
                 Abrir Caixa
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-3">
                   <p className="text-sm"><strong>Operador:</strong> {user?.full_name}</p>
@@ -363,10 +363,10 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 Abrir Caixa
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     );
   }
 
@@ -443,17 +443,17 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
           {/* VENDA */}
           <TabsContent value="venda" className="flex-1 overflow-hidden m-0 mt-2">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 h-full">
-              <Card className="lg:col-span-2 flex flex-col overflow-hidden">
-                <CardHeader className="p-2 flex-shrink-0">
+              <Card className="lg:col-span-2 flex flex-col overflow-hidden border">
+                <CardHeader className="p-2 flex-shrink-0 border-b">
                   <Input
-                    placeholder="Buscar produto..."
+                    placeholder="🔍 Buscar produto..."
                     value={buscaProduto}
                     onChange={(e) => setBuscaProduto(e.target.value)}
-                    className="h-7 text-xs"
+                    className="h-8 text-sm"
                   />
                 </CardHeader>
-                <CardContent className="p-2 overflow-y-auto flex-1">
-                  <div className="grid grid-cols-2 gap-1">
+                <CardContent className="p-2 overflow-y-auto flex-1" style={{ maxHeight: 'calc(100vh - 400px)' }}>
+                  <div className="grid grid-cols-2 gap-2">
                     {produtosFiltrados.map(p => (
                       <button
                         key={p.id}
@@ -465,35 +465,46 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                             setCarrinho([...carrinho, {...p, quantidade: 1}]);
                           }
                         }}
-                        className="p-2 border rounded hover:border-blue-500 bg-white text-left"
+                        className="p-3 border-2 rounded-lg hover:border-blue-500 hover:bg-blue-50 bg-white text-left transition-all"
                       >
-                        <p className="text-xs font-semibold truncate">{p.descricao}</p>
-                        <p className="text-xs font-bold text-blue-600">R$ {(p.preco_venda || 0).toFixed(2)}</p>
+                        <p className="text-sm font-semibold truncate">{p.descricao}</p>
+                        <p className="text-sm font-bold text-blue-600 mt-1">R$ {(p.preco_venda || 0).toFixed(2)}</p>
+                        <p className="text-xs text-slate-500">Estoque: {p.estoque_atual || 0}</p>
                       </button>
                     ))}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="flex flex-col overflow-hidden">
-                <CardHeader className="p-2 flex-shrink-0">
-                  <p className="text-xs font-bold">Carrinho ({carrinho.length})</p>
+              <Card className="flex flex-col overflow-hidden border">
+                <CardHeader className="p-2 flex-shrink-0 border-b bg-slate-50">
+                  <p className="text-sm font-bold">🛒 Carrinho ({carrinho.length} itens)</p>
                 </CardHeader>
-                <CardContent className="p-2 space-y-2 overflow-y-auto flex-1">
-                  <div className="space-y-1 max-h-24 overflow-auto">
-                    {carrinho.map(item => (
-                      <div key={item.id} className="flex items-center justify-between p-1 bg-slate-50 rounded">
-                        <div className="flex-1 min-w-0 mr-1">
-                          <p className="text-xs truncate">{item.descricao}</p>
-                          <div className="flex gap-1 mt-0.5">
-                            <Button size="sm" variant="outline" onClick={() => setCarrinho(carrinho.map(i => i.id === item.id ? {...i, quantidade: i.quantidade - 1} : i).filter(i => i.quantidade > 0))} className="h-4 w-4 p-0 text-xs">-</Button>
-                            <span className="text-xs w-6 text-center">{item.quantidade}</span>
-                            <Button size="sm" variant="outline" onClick={() => setCarrinho(carrinho.map(i => i.id === item.id ? {...i, quantidade: i.quantidade + 1} : i))} className="h-4 w-4 p-0 text-xs">+</Button>
+                <CardContent className="p-2 space-y-2 overflow-y-auto flex-1" style={{ maxHeight: 'calc(100vh - 400px)' }}>
+                  <div className="space-y-2 max-h-32 overflow-auto">
+                    {carrinho.length === 0 ? (
+                      <div className="text-center py-4 text-slate-400">
+                        <ShoppingCart className="w-8 h-8 mx-auto mb-2" />
+                        <p className="text-xs">Carrinho vazio</p>
+                      </div>
+                    ) : (
+                      carrinho.map(item => (
+                        <div key={item.id} className="flex items-center justify-between p-2 bg-white border rounded-lg">
+                          <div className="flex-1 min-w-0 mr-2">
+                            <p className="text-sm font-medium truncate">{item.descricao}</p>
+                            <div className="flex gap-2 mt-1 items-center">
+                              <Button size="sm" variant="outline" onClick={() => setCarrinho(carrinho.map(i => i.id === item.id ? {...i, quantidade: i.quantidade - 1} : i).filter(i => i.quantidade > 0))} className="h-6 w-6 p-0">-</Button>
+                              <span className="text-sm font-bold w-8 text-center">{item.quantidade}</span>
+                              <Button size="sm" variant="outline" onClick={() => setCarrinho(carrinho.map(i => i.id === item.id ? {...i, quantidade: i.quantidade + 1} : i))} className="h-6 w-6 p-0">+</Button>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-500">R$ {item.preco_venda.toFixed(2)}</p>
+                            <p className="text-sm font-bold text-blue-600">R$ {(item.preco_venda * item.quantidade).toFixed(2)}</p>
                           </div>
                         </div>
-                        <p className="text-xs font-bold text-blue-600">R$ {(item.preco_venda * item.quantidade).toFixed(2)}</p>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
 
                   <div className="border-t pt-2">
