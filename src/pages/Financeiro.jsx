@@ -43,8 +43,8 @@ import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
 import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
-const CaixaPDVCompleto = React.lazy(() => import("../components/financeiro/CaixaPDVCompleto"));
-const GestaoRemessaRetorno = React.lazy(() => import("../components/financeiro/GestaoRemessaRetorno"));
+import CaixaPDVCompleto from "../components/financeiro/CaixaPDVCompleto";
+import GestaoRemessaRetorno from "../components/financeiro/GestaoRemessaRetorno";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -393,7 +393,7 @@ export default function Financeiro() {
                 <Button
                   onClick={() => {
                     openWindow(
-                      require('../components/financeiro/CaixaPDVCompleto').default,
+                      CaixaPDVCompleto,
                       {
                         empresaAtual: empresaAtual,
                         windowMode: true
@@ -429,7 +429,7 @@ export default function Financeiro() {
                 <Button
                   onClick={() => {
                     openWindow(
-                      require('../components/financeiro/GestaoRemessaRetorno').default,
+                      GestaoRemessaRetorno,
                       { windowMode: true },
                       {
                         title: '🏦 Remessa e Retorno CNAB',
