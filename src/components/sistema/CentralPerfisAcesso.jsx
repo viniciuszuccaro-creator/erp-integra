@@ -27,6 +27,7 @@ import {
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { createPageUrl } from "@/utils";
+import DebugPermissoesWidget from "./DebugPermissoesWidget";
 
 /**
  * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% GRANULAR E COMPLETO
@@ -317,6 +318,7 @@ export default function CentralPerfisAcesso() {
   });
 
   const resetForm = () => {
+    console.log("🔄 Resetando formulário");
     setFormPerfil({
       nome_perfil: "",
       descricao: "",
@@ -324,6 +326,7 @@ export default function CentralPerfisAcesso() {
       permissoes: {},
       ativo: true
     });
+    setModulosExpandidos([]);
   };
 
   // TOGGLE PERMISSÃO: módulo → seção → ação
@@ -1026,24 +1029,61 @@ export default function CentralPerfisAcesso() {
               <div className="flex-1 overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <Label className="text-lg font-bold">Permissões Granulares por Módulo</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={selecionarTudoGlobal}
-                    className="text-sm"
-                  >
-                    <CheckSquare className="w-4 h-4 mr-2" />
-                    Selecionar/Desmarcar Tudo
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        console.log("🔍 DEBUG STATE ATUAL:");
+                        console.log("  formPerfil.permissoes:", formPerfil.permissoes);
+                        console.log("  Módulos:", Object.keys(formPerfil.permissoes || {}));
+                        console.log("  Total permissões:", contarPermissoesTotal());
+                        toast.info(`📊 ${contarPermissoesTotal()} permissões prontas para salvar`);
+                      }}
+                      className="text-sm bg-purple-50 border-purple-300"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ver Estado Atual
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={selecionarTudoGlobal}
+                      className="text-sm"
+                    >
+                      <CheckSquare className="w-4 h-4 mr-2" />
+                      Selecionar/Desmarcar Tudo
+                    </Button>
+                  </div>
                 </div>
 
+                {/* PAINEL DE VISUALIZAÇÃO EM TEMPO REAL */}
                 <Alert className="mb-4 border-blue-200 bg-blue-50">
                   <Info className="w-4 h-4 text-blue-600" />
                   <AlertDescription className="text-sm text-blue-800">
-                    <strong>Controle Granular Total:</strong> Cada seção pode ter permissões independentes. 
-                    {contarPermissoesTotal()} permissões selecionadas no total.
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <strong>Controle Granular Total:</strong> {contarPermissoesTotal()} permissões selecionadas
+                      </div>
+                      {contarPermissoesTotal() > 0 && (
+                        <Badge className="bg-green-600 text-white">
+                          ✅ Pronto para salvar
+                        </Badge>
+                      )}
+                    </div>
+                    {Object.keys(formPerfil.permissoes || {}).length > 0 && (
+                      <div className="mt-2 text-xs">
+                        <strong>Módulos configurados:</strong>{' '}
+                        {Object.keys(formPerfil.permissoes).map(mod => ESTRUTURA_SISTEMA[mod]?.nome).join(', ')}
+                      </div>
+                    )}
                   </AlertDescription>
                 </Alert>
+
+                {/* WIDGET DE DEBUG */}
+                <div className="mb-4">
+                  <DebugPermissoesWidget permissoes={formPerfil.permissoes} />
+                </div>
 
                 <div className="flex-1 overflow-auto border rounded-lg bg-slate-50">
                   <Accordion type="multiple" value={modulosExpandidos} onValueChange={setModulosExpandidos}>
@@ -1153,15 +1193,41 @@ export default function CentralPerfisAcesso() {
                 </div>
               </div>
 
+              {/* VALIDAÇÃO VISUAL EM TEMPO REAL */}
+              {contarPermissoesTotal() > 0 && (
+                <Alert className="border-green-300 bg-green-50">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <AlertDescription className="text-sm text-green-800">
+                    <strong>✅ {contarPermissoesTotal()} permissões prontas para salvar</strong>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                      {Object.entries(formPerfil.permissoes || {}).map(([modId, mod]) => {
+                        const totalMod = Object.values(mod || {}).reduce((s, sec) => s + (sec?.length || 0), 0);
+                        return totalMod > 0 ? (
+                          <div key={modId} className="flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3" />
+                            <span>{ESTRUTURA_SISTEMA[modId]?.nome}: {totalMod}</span>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Botões de Ação */}
-              <div className="flex justify-between items-center gap-3 pt-4 border-t mt-4">
+              <div className="flex justify-between items-center gap-3 pt-4 border-t mt-4 bg-slate-50 -mx-6 -mb-6 px-6 pb-6">
                 <div className="flex items-center gap-2">
-                  <Badge className="bg-slate-100 text-slate-700">
+                  <Badge className={contarPermissoesTotal() > 0 ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-700"}>
                     {contarPermissoesTotal()} permissões selecionadas
                   </Badge>
                   <Badge className="bg-blue-100 text-blue-700">
                     {Object.keys(formPerfil.permissoes).length} módulos configurados
                   </Badge>
+                  {contarPermissoesTotal() === 0 && (
+                    <Badge className="bg-orange-100 text-orange-700">
+                      ⚠️ Nenhuma permissão marcada
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex gap-3">
                   <Button type="button" variant="outline" onClick={() => setPerfilAberto(null)}>
@@ -1170,7 +1236,7 @@ export default function CentralPerfisAcesso() {
                   <Button
                     type="submit"
                     disabled={salvarPerfilMutation.isPending || !formPerfil.nome_perfil}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className={contarPermissoesTotal() > 0 ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}
                   >
                     {salvarPerfilMutation.isPending ? (
                       <>
@@ -1180,7 +1246,7 @@ export default function CentralPerfisAcesso() {
                     ) : (
                       <>
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Salvar Perfil
+                        Salvar Perfil {contarPermissoesTotal() > 0 && `(${contarPermissoesTotal()} permissões)`}
                       </>
                     )}
                   </Button>
