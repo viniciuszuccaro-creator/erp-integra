@@ -51,16 +51,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import DashboardEstruturantes from "../components/cadastros/DashboardEstruturantes";
 import CadastroClienteCompleto from "../components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "../components/cadastros/CadastroFornecedorCompleto";
 import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
 import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
 import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
-import GerenciamentoAcessosCompleto from "../components/sistema/GerenciamentoAcessosCompleto";
 import CentralPerfisAcesso from "../components/sistema/CentralPerfisAcesso";
-import FonteUnicaVerdade from "../components/sistema/FonteUnicaVerdade";
 import usePermissions from "../components/lib/usePermissions";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
 import { useWindow } from "../components/lib/useWindow";
@@ -512,18 +509,10 @@ export default function Cadastros() {
 
       {/* TABS: CADASTROS vs GERENCIAMENTO */}
       <Tabs value={abaGerenciamento} onValueChange={setAbaGerenciamento}>
-        <TabsList className="grid w-full grid-cols-5 bg-slate-100">
+        <TabsList className="grid w-full grid-cols-3 bg-slate-100">
           <TabsTrigger value="cadastros">
             <Database className="w-4 h-4 mr-2" />
             Cadastros
-          </TabsTrigger>
-          <TabsTrigger value="estruturantes">
-            <Stars className="w-4 h-4 mr-2" />
-            Estruturantes
-          </TabsTrigger>
-          <TabsTrigger value="fonte-unica">
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Fonte Única
           </TabsTrigger>
           <TabsTrigger value="acesso">
             <Shield className="w-4 h-4 mr-2" />
@@ -534,11 +523,6 @@ export default function Cadastros() {
             Auditoria
           </TabsTrigger>
         </TabsList>
-
-        {/* ABA: DASHBOARD ESTRUTURANTES - NOVO FASE 2 */}
-        <TabsContent value="estruturantes" className="mt-6">
-          <DashboardEstruturantes />
-        </TabsContent>
 
         {/* ABA: CADASTROS */}
         <TabsContent value="cadastros" className="space-y-6 mt-6">
@@ -4375,11 +4359,6 @@ export default function Cadastros() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* ABA: FONTE ÚNICA DE VERDADE */}
-        <TabsContent value="fonte-unica" className="mt-6">
-          <FonteUnicaVerdade />
         </TabsContent>
 
         {/* ABA: CONTROLE DE ACESSO - V21.7 MELHORADO */}
