@@ -277,445 +277,145 @@ export default function CaixaDiarioTab() {
         {/* ABA: CAIXA DO DIA */}
         <TabsContent value="caixa-dia">
           <div className="space-y-6">
-            {/* HEADER COM DATA E STATUS */}
+            {/* HEADER COM DATA */}
             <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold">Caixa Diário</h2>
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-slate-400" />
-            <Input
-              type="date"
-              value={dataFiltro}
-              onChange={(e) => setDataFiltro(e.target.value)}
-              className="w-48"
-            />
-          </div>
-          {caixaAberto ? (
-            <Badge className="bg-green-100 text-green-700">
-              <Unlock className="w-3 h-3 mr-1" />
-              Caixa Aberto
-            </Badge>
-          ) : (
-            <Badge className="bg-red-100 text-red-700">
-              <Lock className="w-3 h-3 mr-1" />
-              Caixa Fechado
-            </Badge>
-          )}
-        </div>
-
-        <div className="flex gap-2">
-          {!caixaAberto ? (
-            <Button
-              onClick={() => setAberturaCaixaDialog(true)}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              <Unlock className="w-4 h-4 mr-2" />
-              Abrir Caixa
-            </Button>
-          ) : (
-            <Button
-              onClick={() => setFechamentoCaixaDialog(true)}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <Lock className="w-4 h-4 mr-2" />
-              Fechar Caixa
-            </Button>
-          )}
-          
-          <Button variant="outline">
-            <Printer className="w-4 h-4 mr-2" />
-            Imprimir
-          </Button>
-        </div>
-      </div>
-
-      {/* TOTALIZADORES */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-md bg-blue-50">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm text-blue-700">Saldo Inicial</p>
-                <p className="text-2xl font-bold text-blue-900">
-                  R$ {(caixaAberto?.saldo_inicial || 0).toFixed(2)}
-                </p>
-              </div>
-              <DollarSign className="w-6 h-6 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md bg-green-50">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm text-green-700">Entradas</p>
-                <p className="text-2xl font-bold text-green-900">
-                  R$ {totalEntradas.toFixed(2)}
-                </p>
-                <p className="text-xs text-green-600 mt-1">
-                  {movimentosFiltrados.filter(m => m.tipo === 'entrada').length} movimentos
-                </p>
-              </div>
-              <TrendingUp className="w-6 h-6 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md bg-red-50">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm text-red-700">Saídas</p>
-                <p className="text-2xl font-bold text-red-900">
-                  R$ {totalSaidas.toFixed(2)}
-                </p>
-                <p className="text-xs text-red-600 mt-1">
-                  {movimentosFiltrados.filter(m => m.tipo === 'saida').length} movimentos
-                </p>
-              </div>
-              <TrendingDown className="w-6 h-6 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className={`border-0 shadow-md ${saldoCaixa >= 0 ? 'bg-emerald-50' : 'bg-orange-50'}`}>
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className={`text-sm ${saldoCaixa >= 0 ? 'text-emerald-700' : 'text-orange-700'}`}>
-                  Saldo Atual
-                </p>
-                <p className={`text-2xl font-bold ${saldoCaixa >= 0 ? 'text-emerald-900' : 'text-orange-900'}`}>
-                  R$ {saldoCaixa.toFixed(2)}
-                </p>
-                <p className={`text-xs mt-1 ${saldoCaixa >= 0 ? 'text-emerald-600' : 'text-orange-600'}`}>
-                  {saldoCaixa >= 0 ? 'Positivo' : 'Negativo'}
-                </p>
-              </div>
-              <DollarSign className={`w-6 h-6 ${saldoCaixa >= 0 ? 'text-emerald-600' : 'text-orange-600'}`} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* AÇÕES RÁPIDAS */}
-      {caixaAberto && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <p className="font-semibold text-blue-900">Ações Rápidas</p>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    openWindow(
-                      "AdicionarMovimentoForm",
-                      { 
-                        initialData: { tipo: 'entrada' },
-                        empresaAtual: empresaAtual,
-                        onSubmit: () => {
-                          queryClient.invalidateQueries({ queryKey: ['movimentos-caixa'] });
-                          queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
-                        },
-                        onCancel: () => {}
-                      },
-                      {
-                        title: '➕ Entrada de Caixa',
-                        width: 900,
-                        height: 700
-                      }
-                    );
-                  }}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <ArrowUpCircle className="w-4 h-4 mr-2" />
-                  + Entrada
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => {
-                    openWindow(
-                      "AdicionarMovimentoForm",
-                      { 
-                        initialData: { tipo: 'saida' },
-                        empresaAtual: empresaAtual,
-                        onSubmit: () => {
-                          queryClient.invalidateQueries({ queryKey: ['movimentos-caixa'] });
-                          queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
-                        },
-                        onCancel: () => {}
-                      },
-                      {
-                        title: '➖ Saída de Caixa',
-                        width: 900,
-                        height: 700
-                      }
-                    );
-                  }}
-                  className="bg-red-600 hover:bg-red-700"
-                >
-                  <ArrowDownCircle className="w-4 h-4 mr-2" />
-                  - Saída
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    openWindow(
-                      "AdicionarMovimentoForm",
-                      { 
-                        initialData: { tipo: 'saida', categoria: 'Sangria', descricao: 'Sangria de Caixa' },
-                        empresaAtual: empresaAtual,
-                        onSubmit: () => {
-                          queryClient.invalidateQueries({ queryKey: ['movimentos-caixa'] });
-                        },
-                        onCancel: () => {}
-                      },
-                      {
-                        title: '💸 Sangria de Caixa',
-                        width: 900,
-                        height: 700
-                      }
-                    );
-                  }}
-                >
-                  💰 Sangria
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    openWindow(
-                      "AdicionarMovimentoForm",
-                      { 
-                        initialData: { tipo: 'entrada', categoria: 'Reforço', descricao: 'Reforço de Caixa' },
-                        empresaAtual: empresaAtual,
-                        onSubmit: () => {
-                          queryClient.invalidateQueries({ queryKey: ['movimentos-caixa'] });
-                        },
-                        onCancel: () => {}
-                      },
-                      {
-                        title: '💵 Reforço de Caixa',
-                        width: 900,
-                        height: 700
-                      }
-                    );
-                  }}
-                >
-                  💵 Reforço
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* TABELA DE MOVIMENTOS */}
-      <Card className="border-0 shadow-md">
-        <Tabs value={abaOperador} onValueChange={setAbaOperador}>
-          <TabsList className="w-full justify-start border-b rounded-none bg-slate-50">
-            <TabsTrigger value="todos">
-              📊 Todos ({movimentos.length})
-            </TabsTrigger>
-            {operadoresUnicos.map(operador => {
-              const movsOperador = movimentos.filter(m => m.usuario_operador_nome === operador);
-              return (
-                <TabsTrigger key={operador} value={operador}>
-                  👤 {operador} ({movsOperador.length})
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-
-          <TabsContent value={abaOperador} className="mt-0">
-            <CardContent className="p-0">
-              {/* Resumo do Operador */}
-              <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 border-b">
-                <div>
-                  <p className="text-sm text-slate-600">Entradas</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    R$ {totalEntradas.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-green-600 mt-1">
-                    {movimentosFiltrados.filter(m => m.tipo === 'entrada').length} movimentos
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">Saídas</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    R$ {totalSaidas.toFixed(2)}
-                  </p>
-                  <p className="text-xs text-red-600 mt-1">
-                    {movimentosFiltrados.filter(m => m.tipo === 'saida').length} movimentos
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-600">Saldo</p>
-                  <p className={`text-2xl font-bold ${saldoCaixa >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                    R$ {saldoCaixa.toFixed(2)}
-                  </p>
+              <div className="flex items-center gap-4">
+                <h2 className="text-2xl font-bold">Caixa Diário - Controle PDV</h2>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  <Input
+                    type="date"
+                    value={dataFiltro}
+                    onChange={(e) => setDataFiltro(e.target.value)}
+                    className="w-48"
+                  />
                 </div>
               </div>
 
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
-                    <TableHead>Hora</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Cliente / Pedido</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Forma</TableHead>
-                    <TableHead>Valor</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {movimentosFiltrados.map((mov) => {
-                    const pedidoVinculado = pedidos.find(p => p.id === mov.pedido_id);
+              <Button variant="outline">
+                <Printer className="w-4 h-4 mr-2" />
+                Imprimir
+              </Button>
+            </div>
 
-                    return (
-                      <TableRow key={mov.id}>
-                        <TableCell className="text-sm">{mov.hora}</TableCell>
-                        <TableCell>
-                          {mov.tipo === 'entrada' ? (
-                            <Badge className="bg-green-100 text-green-700">
-                              <ArrowUpCircle className="w-3 h-3 mr-1" />
-                              Entrada
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-red-100 text-red-700">
-                              <ArrowDownCircle className="w-3 h-3 mr-1" />
-                              Saída
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {pedidoVinculado ? (
-                            <div>
-                              <p className="font-semibold">{pedidoVinculado.cliente_nome}</p>
-                              <p className="text-xs text-slate-500">📋 {pedidoVinculado.numero_pedido}</p>
-                            </div>
-                          ) : (
-                            <p>{mov.descricao || '-'}</p>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm">{mov.categoria}</TableCell>
-                        <TableCell className="text-sm">
-                          <Badge variant="outline" className="text-xs">
-                            {mov.forma_recebimento || mov.forma_pagamento}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className={`font-semibold ${mov.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
-                          {mov.tipo === 'entrada' ? '+' : '-'} R$ {mov.valor_movimento.toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+            {/* TABELA DE MOVIMENTOS POR OPERADOR */}
+            <Card className="border-0 shadow-md">
+              <CardHeader className="bg-slate-50 border-b">
+                <CardTitle>Movimentos por Operador PDV</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Tabs value={abaOperador} onValueChange={setAbaOperador}>
+                  <TabsList className="w-full justify-start border-b rounded-none bg-slate-50">
+                    <TabsTrigger value="todos">
+                      📊 Todos ({movimentos.length})
+                    </TabsTrigger>
+                    {operadoresUnicos.map(operador => {
+                      const movsOperador = movimentos.filter(m => m.usuario_operador_nome === operador);
+                      return (
+                        <TabsTrigger key={operador} value={operador}>
+                          👤 {operador} ({movsOperador.length})
+                        </TabsTrigger>
+                      );
+                    })}
+                  </TabsList>
 
-                  {movimentosFiltrados.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12 text-slate-500">
-                        <DollarSign className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                        <p>Nenhum movimento registrado</p>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </TabsContent>
-        </Tabs>
+                  <TabsContent value={abaOperador} className="mt-0">
+                    {/* Resumo do Operador */}
+                    <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 border-b">
+                      <div>
+                        <p className="text-sm text-slate-600">Entradas</p>
+                        <p className="text-2xl font-bold text-green-600">
+                          R$ {totalEntradas.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-green-600 mt-1">
+                          {movimentosFiltrados.filter(m => m.tipo === 'entrada').length} movimentos
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600">Saídas</p>
+                        <p className="text-2xl font-bold text-red-600">
+                          R$ {totalSaidas.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-red-600 mt-1">
+                          {movimentosFiltrados.filter(m => m.tipo === 'saida').length} movimentos
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600">Saldo</p>
+                        <p className={`text-2xl font-bold ${saldoCaixa >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                          R$ {saldoCaixa.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
 
-      {/* DIALOG ABERTURA CAIXA */}
-      <Dialog open={aberturaCaixaDialog} onOpenChange={setAberturaCaixaDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Abrir Caixa do Dia</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-4">
-                <p className="text-sm text-blue-700 mb-2">
-                  <strong>Data:</strong> {new Date(dataFiltro).toLocaleDateString('pt-BR')}
-                </p>
-                <p className="text-sm text-blue-700">
-                  Você está abrindo o caixa para o dia selecionado
-                </p>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-slate-50">
+                          <TableHead>Hora</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Cliente / Pedido</TableHead>
+                          <TableHead>Categoria</TableHead>
+                          <TableHead>Forma</TableHead>
+                          <TableHead>Valor</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {movimentosFiltrados.map((mov) => {
+                          const pedidoVinculado = pedidos.find(p => p.id === mov.pedido_id);
+
+                          return (
+                            <TableRow key={mov.id}>
+                              <TableCell className="text-sm">{mov.hora}</TableCell>
+                              <TableCell>
+                                {mov.tipo === 'entrada' ? (
+                                  <Badge className="bg-green-100 text-green-700">
+                                    <ArrowUpCircle className="w-3 h-3 mr-1" />
+                                    Entrada
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-red-100 text-red-700">
+                                    <ArrowDownCircle className="w-3 h-3 mr-1" />
+                                    Saída
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {pedidoVinculado ? (
+                                  <div>
+                                    <p className="font-semibold">{pedidoVinculado.cliente_nome}</p>
+                                    <p className="text-xs text-slate-500">📋 {pedidoVinculado.numero_pedido}</p>
+                                  </div>
+                                ) : (
+                                  <p>{mov.descricao || '-'}</p>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-sm">{mov.categoria}</TableCell>
+                              <TableCell className="text-sm">
+                                <Badge variant="outline" className="text-xs">
+                                  {mov.forma_recebimento || mov.forma_pagamento}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className={`font-semibold ${mov.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
+                                {mov.tipo === 'entrada' ? '+' : '-'} R$ {mov.valor_movimento.toFixed(2)}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+
+                        {movimentosFiltrados.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-12 text-slate-500">
+                              <DollarSign className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                              <p>Nenhum movimento registrado</p>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TabsContent>
+                </Tabs>
               </CardContent>
             </Card>
-
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setAberturaCaixaDialog(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleAbrirCaixa} className="bg-green-600 hover:bg-green-700">
-                <Unlock className="w-4 h-4 mr-2" />
-                Confirmar Abertura
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* DIALOG FECHAMENTO CAIXA */}
-      <Dialog open={fechamentoCaixaDialog} onOpenChange={setFechamentoCaixaDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Fechar Caixa do Dia</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Card className="border-slate-200">
-              <CardContent className="p-4 space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-slate-600">Saldo Inicial:</span>
-                  <span className="font-bold">R$ {(caixaAberto?.saldo_inicial || 0).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-green-600">+ Entradas:</span>
-                  <span className="font-bold text-green-600">R$ {totalEntradas.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-red-600">- Saídas:</span>
-                  <span className="font-bold text-red-600">R$ {totalSaidas.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between pt-3 border-t-2 border-slate-300">
-                  <span className="text-lg font-semibold">Saldo Final:</span>
-                  <span className={`text-lg font-bold ${saldoCaixa >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                    R$ {saldoCaixa.toFixed(2)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-orange-300 bg-orange-50">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-orange-900 font-semibold">Atenção!</p>
-                    <p className="text-sm text-orange-700">
-                      Ao fechar o caixa, não será mais possível adicionar movimentos para este dia.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setFechamentoCaixaDialog(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleFecharCaixa} className="bg-red-600 hover:bg-red-700">
-                <Lock className="w-4 h-4 mr-2" />
-                Confirmar Fechamento
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-
           </div>
         </TabsContent>
 
