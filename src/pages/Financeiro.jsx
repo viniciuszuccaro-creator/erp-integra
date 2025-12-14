@@ -43,6 +43,8 @@ import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFina
 import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
 import CaixaPDVCompleto from "../components/financeiro/CaixaPDVCompleto";
 import GestaoRemessaRetorno from "../components/financeiro/GestaoRemessaRetorno";
+import VendasMulticanal from "../components/financeiro/VendasMulticanal";
+import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -337,6 +339,13 @@ export default function Financeiro() {
               <Badge className="ml-2 bg-orange-500 text-white">{ordensLiquidacaoPendentes}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            💵 Caixa Diário • 💳 Cartões
+          </TabsTrigger>
+          <TabsTrigger value="vendas-multicanal" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <Globe className="w-4 h-4 mr-2" />
+            🌐 Vendas Multicanal
+          </TabsTrigger>
           <TabsTrigger value="remessa-retorno" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
             Remessa/Retorno CNAB
@@ -505,6 +514,14 @@ export default function Financeiro() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="caixa-diario">
+          <CaixaDiarioTab />
+        </TabsContent>
+
+        <TabsContent value="vendas-multicanal">
+          <VendasMulticanal />
         </TabsContent>
 
         <TabsContent value="contas-receber">
