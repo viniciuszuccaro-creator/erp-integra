@@ -1,16 +1,10 @@
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import StatusOrigemPedido100 from "@/components/sistema/StatusOrigemPedido100";
-import StatusFechamento100V21_6 from "@/components/sistema/STATUS_FECHAMENTO_100_V21_6";
-import CertificadoProducaoV21_6 from "@/components/sistema/CERTIFICADO_PRODUCAO_V21_6";
 import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
 import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_FINAL";
 import ValidacaoFinalTotalV21_6 from "@/components/sistema/VALIDACAO_FINAL_TOTAL_V21_6";
 import MasterDashboardV21_6 from "@/components/sistema/MASTER_DASHBOARD_V21_6";
-import GuiaFluxoCompletoV21_6 from "@/components/sistema/GuiaFluxoCompletoV21_6";
-import CertificacaoFinalV21_6_100 from "@/components/sistema/CERTIFICACAO_FINAL_V21_6_100";
-import StatusFinal100V21_6 from "@/components/sistema/STATUS_FINAL_100_V21_6";
-import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket, BookOpen, Trophy } from "lucide-react";
+import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
@@ -26,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function ConfiguracoesSistema() {
-  const [activeTab, setActiveTab] = useState("certificacao");
+  const [activeTab, setActiveTab] = useState("diagnostico");
   const { empresaAtual, estaNoGrupo } = useContextoVisual();
   const { openWindow } = useWindow();
 
@@ -44,38 +38,6 @@ export default function ConfiguracoesSistema() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
-          <TabsTrigger
-            value="certificacao"
-            className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-yellow-600 data-[state=active]:to-orange-600 data-[state=active]:text-white"
-          >
-            <Trophy className="w-4 h-4 mr-2" />
-            🏆 Certificação 100%
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="guia-uso"
-            className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white"
-          >
-            <BookOpen className="w-4 h-4 mr-2" />
-            📖 Guia de Uso
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="status-origem"
-            className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
-          >
-            <Zap className="w-4 h-4 mr-2" />
-            ✅ Status Origem
-          </TabsTrigger>
-
-          <TabsTrigger
-            value="status-fechamento"
-            className="data-[state=active]:bg-green-600 data-[state=active]:text-white"
-          >
-            <Rocket className="w-4 h-4 mr-2" />
-            🚀 Status Fechamento
-          </TabsTrigger>
-
           <TabsTrigger
             value="diagnostico"
             className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white"
@@ -106,65 +68,6 @@ export default function ConfiguracoesSistema() {
             Estoque Avançado
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="certificacao">
-          <div className="space-y-6">
-            <StatusFinal100V21_6 windowMode={false} />
-            <CertificacaoFinalV21_6_100 windowMode={false} />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="guia-uso">
-          <GuiaFluxoCompletoV21_6 windowMode={false} />
-        </TabsContent>
-
-        <TabsContent value="status-origem">
-          <div className="space-y-6">
-            <CertificadoProducaoV21_6 />
-            <StatusOrigemPedido100 />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="status-fechamento">
-          <div className="space-y-4">
-            <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-blue-900 flex items-center gap-2">
-                    <Rocket className="w-5 h-5" />
-                    🚀 Master Dashboard V21.6
-                  </p>
-                  <p className="text-sm text-blue-700">
-                    Central de comando unificada • Métricas + Validação + Ações Rápidas
-                  </p>
-                </div>
-                <Button
-                  onClick={() => openWindow(
-                    MasterDashboardV21_6,
-                    { windowMode: true, empresaId: empresaAtual?.id },
-                    {
-                      title: '🏆 Master Dashboard V21.6',
-                      width: 1400,
-                      height: 800
-                    }
-                  )}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                >
-                  <Rocket className="w-4 h-4 mr-2" />
-                  Abrir Master Dashboard
-                </Button>
-              </CardContent>
-            </Card>
-
-            <ValidacaoFinalTotalV21_6 windowMode={false} empresaId={empresaAtual?.id} />
-            
-            <ChecklistFinalV21_6 />
-            
-            <Sistema100CompletoFinal windowMode={false} empresaId={empresaAtual?.id} />
-            
-            <StatusFechamento100V21_6 windowMode={false} empresaId={empresaAtual?.id} />
-          </div>
-        </TabsContent>
 
         <TabsContent value="diagnostico">
           <div className="space-y-4">
