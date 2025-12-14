@@ -681,12 +681,12 @@ export default function CaixaPDVCompleto({
   });
 
   const containerClass = windowMode 
-    ? "w-full h-full flex flex-col overflow-hidden" 
-    : "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6";
+    ? "w-full h-full flex flex-col overflow-hidden bg-slate-50" 
+    : "min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4";
 
   const contentClass = windowMode 
-    ? "flex-1 overflow-y-auto p-4" 
-    : "";
+    ? "flex-1 overflow-y-auto p-2 space-y-2" 
+    : "space-y-3";
 
   // Se caixa não está aberto, mostrar dialog de abertura
   if (!caixaAberto) {
@@ -759,29 +759,26 @@ export default function CaixaPDVCompleto({
   return (
     <div className={containerClass}>
       <div className={contentClass}>
-        {/* HEADER PDV - COMPACTO */}
-        <div className="mb-3 p-3 bg-white rounded-lg shadow-sm border flex items-center justify-between flex-wrap gap-2">
+        {/* HEADER PDV - ULTRA COMPACTO */}
+        <div className="mb-2 p-2 bg-white rounded-lg shadow-sm border flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <div className="w-7 h-7 bg-gradient-to-br from-emerald-500 to-green-600 rounded flex items-center justify-center">
               <ShoppingCart className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900">Caixa PDV</h1>
-              <p className="text-xs text-slate-600">
-                {user?.full_name || 'Operador'} • {operador[0]?.nome_caixa || 'Caixa Principal'}
+              <h1 className="text-xs font-bold text-slate-900">Caixa PDV</h1>
+              <p className="text-xs text-slate-500">
+                {user?.full_name || 'Operador'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="text-right">
               <p className="text-xs text-slate-500">Saldo</p>
-              <p className="text-base font-bold text-emerald-600">
+              <p className="text-sm font-bold text-emerald-600">
                 R$ {saldoAtual.toFixed(2)}
               </p>
             </div>
-            <Badge className="bg-green-100 text-green-700 px-2 py-1 text-xs">
-              Aberto
-            </Badge>
             <Button
               onClick={() => {
                 const totalEntradas = movimentosCaixa.filter(m => m.tipo_movimento === 'Entrada').reduce((s, m) => s + (m.valor || 0), 0);
@@ -792,122 +789,93 @@ export default function CaixaPDVCompleto({
               }}
               variant="outline"
               size="sm"
-              className="border-red-300 text-red-600 hover:bg-red-50 h-7 text-xs"
+              className="border-red-300 text-red-600 hover:bg-red-50 h-6 text-xs px-2"
               disabled={fecharCaixaMutation.isPending}
             >
-              <Lock className="w-3 h-3 mr-1" />
-              Fechar
+              <Lock className="w-3 h-3" />
             </Button>
           </div>
         </div>
 
-        {/* INDICADORES RÁPIDOS - COMPACTOS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <Card className="border-0 shadow-sm bg-blue-50">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="w-6 h-6 text-blue-400" />
-                <div>
-                  <p className="text-xs text-blue-700">Vendas</p>
-                  <p className="text-lg font-bold text-blue-900">
-                    {movimentosCaixa.filter(m => m.origem === 'Venda PDV').length}
-                  </p>
-                </div>
-              </div>
+        {/* INDICADORES RÁPIDOS - ULTRA COMPACTOS */}
+        <div className="grid grid-cols-4 gap-2 mb-2">
+          <Card className="border shadow-sm bg-blue-50">
+            <CardContent className="p-2">
+              <p className="text-xs text-blue-700">Vendas</p>
+              <p className="text-base font-bold text-blue-900">
+                {movimentosCaixa.filter(m => m.origem === 'Venda PDV').length}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm bg-green-50">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-6 h-6 text-green-400" />
-                <div>
-                  <p className="text-xs text-green-700">Entradas</p>
-                  <p className="text-lg font-bold text-green-900">
-                    {movimentosCaixa.filter(m => m.tipo_movimento === 'Entrada').length}
-                  </p>
-                </div>
-              </div>
+          <Card className="border shadow-sm bg-green-50">
+            <CardContent className="p-2">
+              <p className="text-xs text-green-700">Entradas</p>
+              <p className="text-base font-bold text-green-900">
+                {movimentosCaixa.filter(m => m.tipo_movimento === 'Entrada').length}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm bg-red-50">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <TrendingDown className="w-6 h-6 text-red-400" />
-                <div>
-                  <p className="text-xs text-red-700">Saídas</p>
-                  <p className="text-lg font-bold text-red-900">
-                    {movimentosCaixa.filter(m => m.tipo_movimento === 'Saída').length}
-                  </p>
-                </div>
-              </div>
+          <Card className="border shadow-sm bg-red-50">
+            <CardContent className="p-2">
+              <p className="text-xs text-red-700">Saídas</p>
+              <p className="text-base font-bold text-red-900">
+                {movimentosCaixa.filter(m => m.tipo_movimento === 'Saída').length}
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border-0 shadow-sm bg-purple-50">
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2">
-                <Calculator className="w-6 h-6 text-purple-400" />
-                <div>
-                  <p className="text-xs text-purple-700">Ticket Médio</p>
-                  <p className="text-lg font-bold text-purple-900">
-                    R$ {(movimentosCaixa.filter(m => m.origem === 'Venda PDV').reduce((s, m) => s + (m.valor || 0), 0) / 
-                      (movimentosCaixa.filter(m => m.origem === 'Venda PDV').length || 1)).toFixed(2)}
-                  </p>
-                </div>
-              </div>
+          <Card className="border shadow-sm bg-purple-50">
+            <CardContent className="p-2">
+              <p className="text-xs text-purple-700">Ticket</p>
+              <p className="text-base font-bold text-purple-900">
+                R$ {(movimentosCaixa.filter(m => m.origem === 'Venda PDV').reduce((s, m) => s + (m.valor || 0), 0) / 
+                  (movimentosCaixa.filter(m => m.origem === 'Venda PDV').length || 1)).toFixed(2)}
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="space-y-3 flex-1 flex flex-col overflow-hidden">
-          <TabsList className="bg-white border shadow-sm grid grid-cols-5 flex-shrink-0">
-            <TabsTrigger value="venda" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs">
-              <ShoppingCart className="w-3 h-3 mr-1" />
-              Venda
+        <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="flex-1 flex flex-col overflow-hidden">
+          <TabsList className="bg-white border shadow-sm grid grid-cols-5 flex-shrink-0 h-9">
+            <TabsTrigger value="venda" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-xs p-1">
+              <ShoppingCart className="w-3 h-3" />
             </TabsTrigger>
-            <TabsTrigger value="receber-pedidos" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-xs">
-              <FileText className="w-3 h-3 mr-1" />
+            <TabsTrigger value="receber-pedidos" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-xs p-1">
               Pedidos ({pedidosReceber.length})
             </TabsTrigger>
-            <TabsTrigger value="liquidar-receber" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-xs">
-              <TrendingUp className="w-3 h-3 mr-1" />
+            <TabsTrigger value="liquidar-receber" className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-xs p-1">
               Receber ({contasReceberPendentes.length})
             </TabsTrigger>
-            <TabsTrigger value="liquidar-pagar" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs">
-              <TrendingDown className="w-3 h-3 mr-1" />
+            <TabsTrigger value="liquidar-pagar" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-xs p-1">
               Pagar ({contasPagarPendentes.length})
             </TabsTrigger>
-            <TabsTrigger value="movimentos" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white text-xs">
-              <Receipt className="w-3 h-3 mr-1" />
-              Movimentos ({movimentosCaixa.length})
+            <TabsTrigger value="movimentos" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white text-xs p-1">
+              Mov. ({movimentosCaixa.length})
             </TabsTrigger>
           </TabsList>
 
           {/* ABA: NOVA VENDA */}
-          <TabsContent value="venda" className="flex-1 overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
+          <TabsContent value="venda" className="flex-1 overflow-hidden m-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 h-full">
               {/* COLUNA 1: PRODUTOS */}
-              <Card className="lg:col-span-2 flex flex-col overflow-hidden">
-                <CardHeader className="bg-slate-50 border-b p-3 flex-shrink-0">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-sm">Produtos</CardTitle>
-                    <Input
-                      placeholder="🔍 Buscar..."
-                      value={buscaProduto}
-                      onChange={(e) => setBuscaProduto(e.target.value)}
-                      className="max-w-xs h-8 text-sm"
-                    />
-                  </div>
+              <Card className="lg:col-span-2 flex flex-col overflow-hidden h-full">
+                <CardHeader className="bg-slate-50 border-b p-2 flex-shrink-0">
+                  <Input
+                    placeholder="Buscar produto..."
+                    value={buscaProduto}
+                    onChange={(e) => setBuscaProduto(e.target.value)}
+                    className="h-7 text-xs"
+                  />
                 </CardHeader>
                 <CardContent className="p-2 overflow-y-auto flex-1">
-                  <div className="grid grid-cols-2 gap-2">
-                    {produtosFiltrados.slice(0, 30).map(produto => (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    {produtosFiltrados.slice(0, 50).map(produto => (
                       <button
                         key={produto.id}
                         onClick={() => adicionarProduto(produto)}
-                        className="p-2 border rounded hover:border-blue-500 hover:shadow transition-all text-left bg-white"
+                        className="p-2 border rounded hover:border-blue-500 transition-all text-left bg-white"
                       >
                         <p className="font-semibold text-xs truncate">{produto.descricao}</p>
                         <p className="text-xs font-bold text-blue-600">
@@ -917,20 +885,20 @@ export default function CaixaPDVCompleto({
                     ))}
                   </div>
                   {produtosFiltrados.length === 0 && (
-                    <p className="text-center text-slate-500 py-4 text-xs">Nenhum produto</p>
+                    <p className="text-center text-slate-400 py-8 text-xs">Nenhum produto</p>
                   )}
                 </CardContent>
               </Card>
 
               {/* COLUNA 2: CARRINHO E PAGAMENTO */}
-              <Card className="flex flex-col overflow-hidden">
-                <CardHeader className="bg-blue-50 border-b p-3 flex-shrink-0">
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <ShoppingCart className="w-4 h-4 text-blue-600" />
+              <Card className="flex flex-col overflow-hidden h-full">
+                <CardHeader className="bg-blue-50 border-b p-2 flex-shrink-0">
+                  <CardTitle className="flex items-center gap-1 text-xs">
+                    <ShoppingCart className="w-3 h-3 text-blue-600" />
                     Carrinho ({carrinho.length})
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-2 space-y-2 overflow-y-auto flex-1">
+                <CardContent className="p-2 space-y-2 overflow-y-auto flex-1" style={{ maxHeight: 'calc(100vh - 300px)' }}>
                   {/* Itens do carrinho */}
                   <div className="space-y-1 max-h-28 overflow-auto">
                     {carrinho.length === 0 && (
@@ -1226,15 +1194,15 @@ export default function CaixaPDVCompleto({
           </TabsContent>
 
           {/* ABA: RECEBER PEDIDOS (VENDAS CADASTRADAS) */}
-          <TabsContent value="receber-pedidos" className="overflow-hidden">
+          <TabsContent value="receber-pedidos" className="overflow-hidden m-0">
             <Card className="h-full flex flex-col overflow-hidden">
-              <CardHeader className="bg-purple-50 border-b p-3 flex-shrink-0">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <FileText className="w-4 h-4 text-purple-600" />
-                  Receber Vendas Cadastradas
+              <CardHeader className="bg-purple-50 border-b p-2 flex-shrink-0">
+                <CardTitle className="flex items-center gap-1 text-xs">
+                  <FileText className="w-3 h-3 text-purple-600" />
+                  Receber Vendas
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0 overflow-y-auto flex-1">
+              <CardContent className="p-0 overflow-y-auto flex-1" style={{ maxHeight: 'calc(100vh - 250px)' }}>
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50">
@@ -1302,15 +1270,15 @@ export default function CaixaPDVCompleto({
           </TabsContent>
 
           {/* ABA: LIQUIDAR RECEBER */}
-          <TabsContent value="liquidar-receber" className="overflow-hidden">
+          <TabsContent value="liquidar-receber" className="overflow-hidden m-0">
             <Card className="h-full flex flex-col overflow-hidden">
-              <CardHeader className="bg-green-50 border-b p-3 flex-shrink-0">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <TrendingUp className="w-4 h-4 text-green-600" />
-                  Liquidar Contas a Receber
+              <CardHeader className="bg-green-50 border-b p-2 flex-shrink-0">
+                <CardTitle className="flex items-center gap-1 text-xs">
+                  <TrendingUp className="w-3 h-3 text-green-600" />
+                  Contas a Receber
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0 overflow-y-auto flex-1">
+              <CardContent className="p-0 overflow-y-auto flex-1" style={{ maxHeight: 'calc(100vh - 250px)' }}>
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50">
@@ -1391,15 +1359,15 @@ export default function CaixaPDVCompleto({
           </TabsContent>
 
           {/* ABA: LIQUIDAR PAGAR */}
-          <TabsContent value="liquidar-pagar" className="overflow-hidden">
+          <TabsContent value="liquidar-pagar" className="overflow-hidden m-0">
             <Card className="h-full flex flex-col overflow-hidden">
-              <CardHeader className="bg-red-50 border-b p-3 flex-shrink-0">
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <TrendingDown className="w-4 h-4 text-red-600" />
-                  Liquidar Contas a Pagar
+              <CardHeader className="bg-red-50 border-b p-2 flex-shrink-0">
+                <CardTitle className="flex items-center gap-1 text-xs">
+                  <TrendingDown className="w-3 h-3 text-red-600" />
+                  Contas a Pagar
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-0 overflow-y-auto flex-1">
+              <CardContent className="p-0 overflow-y-auto flex-1" style={{ maxHeight: 'calc(100vh - 250px)' }}>
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50">
@@ -1474,28 +1442,23 @@ export default function CaixaPDVCompleto({
           </TabsContent>
 
           {/* ABA: MOVIMENTOS DO DIA */}
-          <TabsContent value="movimentos" className="overflow-hidden">
+          <TabsContent value="movimentos" className="overflow-hidden m-0">
             <Card className="h-full flex flex-col overflow-hidden">
-              <CardHeader className="bg-slate-50 border-b p-3 flex-shrink-0">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Receipt className="w-4 h-4 text-slate-600" />
-                    Movimentos
-                  </CardTitle>
-                  <div className="flex items-center gap-3">
+              <CardHeader className="bg-slate-50 border-b p-2 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xs">Movimentos</CardTitle>
+                  <div className="flex items-center gap-2">
                     <div className="text-right">
-                      <p className="text-xs text-slate-500">Entradas</p>
-                      <p className="text-sm font-bold text-green-600">
-                        R$ {movimentosCaixa
+                      <p className="text-xs text-green-600 font-bold">
+                        +R$ {movimentosCaixa
                           .filter(m => m.tipo_movimento === 'Entrada')
                           .reduce((sum, m) => sum + (m.valor || 0), 0)
                           .toFixed(2)}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-slate-500">Saídas</p>
-                      <p className="text-sm font-bold text-red-600">
-                        R$ {movimentosCaixa
+                      <p className="text-xs text-red-600 font-bold">
+                        -R$ {movimentosCaixa
                           .filter(m => m.tipo_movimento === 'Saída')
                           .reduce((sum, m) => sum + (m.valor || 0), 0)
                           .toFixed(2)}
@@ -1504,48 +1467,39 @@ export default function CaixaPDVCompleto({
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-0 overflow-y-auto flex-1">
+              <CardContent className="p-0 overflow-y-auto flex-1" style={{ maxHeight: 'calc(100vh - 250px)' }}>
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50">
-                      <TableHead className="text-xs">Hora</TableHead>
-                      <TableHead className="text-xs">Tipo</TableHead>
-                      <TableHead className="text-xs">Origem</TableHead>
-                      <TableHead className="text-xs">Forma</TableHead>
-                      <TableHead className="text-xs">Descrição</TableHead>
-                      <TableHead className="text-xs text-right">Valor</TableHead>
+                      <TableHead className="text-xs p-2">Hora</TableHead>
+                      <TableHead className="text-xs p-2">Tipo</TableHead>
+                      <TableHead className="text-xs p-2">Descrição</TableHead>
+                      <TableHead className="text-xs p-2 text-right">Valor</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {movimentosCaixa.map(mov => (
                       <TableRow key={mov.id}>
-                        <TableCell className="text-xs">
+                        <TableCell className="text-xs p-2">
                           {new Date(mov.data_movimento).toLocaleTimeString('pt-BR', { 
                             hour: '2-digit', 
                             minute: '2-digit' 
                           })}
                         </TableCell>
-                        <TableCell>
-                          <Badge className={`text-xs ${
+                        <TableCell className="p-2">
+                          <Badge className={`text-xs px-1 py-0 ${
                             mov.tipo_movimento === 'Entrada' ? 'bg-green-100 text-green-700' :
                             mov.tipo_movimento === 'Saída' ? 'bg-red-100 text-red-700' :
                             mov.tipo_movimento === 'Abertura' ? 'bg-blue-100 text-blue-700' :
-                            mov.tipo_movimento === 'Fechamento' ? 'bg-slate-100 text-slate-700' :
-                            'bg-orange-100 text-orange-700'
+                            'bg-slate-100 text-slate-700'
                           }`}>
                             {mov.tipo_movimento}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-xs">{mov.origem}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs">
-                            {mov.forma_pagamento}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate text-xs">
+                        <TableCell className="text-xs p-2 truncate max-w-[200px]">
                           {mov.descricao}
                         </TableCell>
-                        <TableCell className={`text-right font-bold text-xs ${
+                        <TableCell className={`text-right font-bold text-xs p-2 ${
                           mov.tipo_movimento === 'Entrada' ? 'text-green-600' : 'text-red-600'
                         }`}>
                           {mov.tipo_movimento === 'Entrada' ? '+' : '-'} R$ {(mov.valor || 0).toFixed(2)}
