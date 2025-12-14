@@ -95,16 +95,16 @@ export default function CaixaPDVCompleto({
     queryFn: () => base44.auth.me(),
   });
 
-  const { data: operador } = useQuery({
+  const { data: operador = [] } = useQuery({
     queryKey: ['operador-caixa', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user) return [];
       const ops = await base44.entities.OperadorCaixa.filter({ 
         usuario_id: user.id,
         empresa_id: empresaAtual?.id,
         ativo: true
       });
-      return ops.length > 0 ? ops : null;
+      return ops;
     },
     enabled: !!user && !!empresaAtual
   });
@@ -255,6 +255,22 @@ export default function CaixaPDVCompleto({
   // Abrir caixa
   const abrirCaixaMutation = useMutation({
     mutationFn: async (saldoInicialInput) => {
+      // Criar ou buscar operador de caixa
+      let operadorAtual = operador[0];
+      
+      if (!operadorAtual && user) {
+        // Criar operador se não existir
+        operadorAtual = await base44.entities.OperadorCaixa.create({
+          group_id: empresaAtual?.group_id,
+          empresa_id: empresaAtual?.id,
+          usuario_id: user.id,
+          usuario_nome: user.full_name,
+          nome_caixa: 'Caixa Principal',
+          status_caixa: 'Fechado',
+          ativo: true
+        });
+      }
+
       await base44.entities.CaixaMovimento.create({
         empresa_id: empresaAtual?.id,
         data_movimento: new Date().toISOString(),
@@ -263,13 +279,14 @@ export default function CaixaPDVCompleto({
         forma_pagamento: 'Dinheiro',
         valor: saldoInicialInput,
         descricao: 'Abertura de Caixa',
-        usuario_operador_id: operador?.[0]?.usuario_id,
-        usuario_operador_nome: operador?.[0]?.usuario_nome,
+        usuario_operador_id: user?.id,
+        usuario_operador_nome: user?.full_name,
+        operador_caixa_id: operadorAtual?.id,
         caixa_aberto: true
       });
 
-      if (operador?.[0]) {
-        await base44.entities.OperadorCaixa.update(operador[0].id, {
+      if (operadorAtual) {
+        await base44.entities.OperadorCaixa.update(operadorAtual.id, {
           status_caixa: 'Aberto',
           data_abertura: new Date().toISOString(),
           saldo_inicial: saldoInicialInput,
@@ -375,8 +392,9 @@ export default function CaixaPDVCompleto({
             descricao: `Venda ${pedido.numero_pedido} - ${clienteSelecionado?.nome || 'Cliente Avulso'} (${formaPgto.forma})`,
             pedido_id: pedido.id,
             conta_receber_id: contaReceber?.id,
-            usuario_operador_id: operador?.[0]?.usuario_id,
-            usuario_operador_nome: operador?.[0]?.usuario_nome,
+            usuario_operador_id: user?.id,
+            usuario_operador_nome: user?.full_name,
+            operador_caixa_id: operador[0]?.id,
             caixa_aberto: true
           });
         }
@@ -508,8 +526,9 @@ export default function CaixaPDVCompleto({
             descricao: `Recebimento Pedido ${pedido.numero_pedido} - ${pedido.cliente_nome} (${formaPgto.forma})`,
             pedido_id: pedidoId,
             conta_receber_id: contaReceber.id,
-            usuario_operador_id: operador?.[0]?.usuario_id,
-            usuario_operador_nome: operador?.[0]?.usuario_nome,
+            usuario_operador_id: user?.id,
+            usuario_operador_nome: user?.full_name,
+            operador_caixa_id: operador[0]?.id,
             caixa_aberto: true
           });
         }
@@ -576,8 +595,9 @@ export default function CaixaPDVCompleto({
           valor: titulo.valor,
           descricao: `Recebimento: ${titulo.cliente} - ${titulo.descricao}`,
           conta_receber_id: titulo.id,
-          usuario_operador_id: operador?.[0]?.usuario_id,
-          usuario_operador_nome: operador?.[0]?.usuario_nome,
+          usuario_operador_id: user?.id,
+          usuario_operador_nome: user?.full_name,
+          operador_caixa_id: operador[0]?.id,
           caixa_aberto: true
         });
       } else {
@@ -597,8 +617,9 @@ export default function CaixaPDVCompleto({
           valor: titulo.valor,
           descricao: `Pagamento: ${titulo.fornecedor} - ${titulo.descricao}`,
           conta_pagar_id: titulo.id,
-          usuario_operador_id: operador?.[0]?.usuario_id,
-          usuario_operador_nome: operador?.[0]?.usuario_nome,
+          usuario_operador_id: user?.id,
+          usuario_operador_nome: user?.full_name,
+          operador_caixa_id: operador[0]?.id,
           caixa_aberto: true
         });
       }
@@ -632,8 +653,9 @@ export default function CaixaPDVCompleto({
         forma_pagamento: 'Dinheiro',
         valor: saldoFinal,
         descricao: `Fechamento - Saldo Final: R$ ${saldoFinal.toFixed(2)}`,
-        usuario_operador_id: operador?.[0]?.usuario_id,
-        usuario_operador_nome: operador?.[0]?.usuario_nome,
+        usuario_operador_id: user?.id,
+        usuario_operador_nome: user?.full_name,
+        operador_caixa_id: operador[0]?.id,
         caixa_aberto: false
       });
 
@@ -670,7 +692,7 @@ export default function CaixaPDVCompleto({
   if (!caixaAberto) {
     return (
       <div className={containerClass}>
-        <Dialog open={dialogAberturaCaixa} onOpenChange={setDialogAberturaCaixa}>
+        <Dialog open={dialogAberturaCaixa} onOpenChange={() => {}}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
@@ -683,13 +705,13 @@ export default function CaixaPDVCompleto({
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="p-4">
                   <p className="text-sm text-blue-700 mb-2">
-                    <strong>Operador:</strong> {operador?.[0]?.usuario_nome || 'Sistema'}
+                    <strong>Operador:</strong> {user?.full_name || 'Sistema'}
                   </p>
                   <p className="text-sm text-blue-700 mb-2">
-                    <strong>Caixa:</strong> {operador?.[0]?.nome_caixa || 'Caixa Principal'}
+                    <strong>Caixa:</strong> {operador[0]?.nome_caixa || 'Caixa Principal'}
                   </p>
                   <p className="text-sm text-blue-700">
-                    <strong>Empresa:</strong> {empresaAtual?.nome_fantasia || empresaAtual?.razao_social}
+                    <strong>Empresa:</strong> {empresaAtual?.nome_fantasia || empresaAtual?.razao_social || 'Sistema'}
                   </p>
                 </CardContent>
               </Card>
@@ -738,38 +760,39 @@ export default function CaixaPDVCompleto({
     <div className={containerClass}>
       <div className={contentClass}>
         {/* HEADER PDV - COMPACTO */}
-        <div className="mb-4 flex items-center justify-between flex-wrap gap-3">
+        <div className="mb-3 p-3 bg-white rounded-lg shadow-sm border flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
-              <ShoppingCart className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <ShoppingCart className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-900">Caixa PDV</h1>
+              <h1 className="text-sm font-bold text-slate-900">Caixa PDV</h1>
               <p className="text-xs text-slate-600">
-                {operador?.[0]?.usuario_nome || 'Sistema'} • {operador?.[0]?.nome_caixa || 'Caixa Principal'}
+                {user?.full_name || 'Operador'} • {operador[0]?.nome_caixa || 'Caixa Principal'}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <div className="text-right">
               <p className="text-xs text-slate-500">Saldo</p>
-              <p className="text-lg font-bold text-emerald-600">
+              <p className="text-base font-bold text-emerald-600">
                 R$ {saldoAtual.toFixed(2)}
               </p>
             </div>
-            <Badge className="bg-green-100 text-green-700 px-2 py-1">
-              <Clock className="w-3 h-3 mr-1" />
+            <Badge className="bg-green-100 text-green-700 px-2 py-1 text-xs">
               Aberto
             </Badge>
             <Button
               onClick={() => {
-                if (confirm(`Fechar caixa?\n\nSaldo: R$ ${saldoAtual.toFixed(2)}`)) {
+                const totalEntradas = movimentosCaixa.filter(m => m.tipo_movimento === 'Entrada').reduce((s, m) => s + (m.valor || 0), 0);
+                const totalSaidas = movimentosCaixa.filter(m => m.tipo_movimento === 'Saída').reduce((s, m) => s + (m.valor || 0), 0);
+                if (confirm(`Fechar caixa?\n\nSaldo: R$ ${saldoAtual.toFixed(2)}\nEntradas: R$ ${totalEntradas.toFixed(2)}\nSaídas: R$ ${totalSaidas.toFixed(2)}`)) {
                   fecharCaixaMutation.mutate();
                 }
               }}
               variant="outline"
               size="sm"
-              className="border-red-300 text-red-600 hover:bg-red-50"
+              className="border-red-300 text-red-600 hover:bg-red-50 h-7 text-xs"
               disabled={fecharCaixaMutation.isPending}
             >
               <Lock className="w-3 h-3 mr-1" />
@@ -878,24 +901,23 @@ export default function CaixaPDVCompleto({
                     />
                   </div>
                 </CardHeader>
-                <CardContent className="p-3 overflow-y-auto flex-1">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {produtosFiltrados.slice(0, 20).map(produto => (
+                <CardContent className="p-2 overflow-y-auto flex-1">
+                  <div className="grid grid-cols-2 gap-2">
+                    {produtosFiltrados.slice(0, 30).map(produto => (
                       <button
                         key={produto.id}
                         onClick={() => adicionarProduto(produto)}
-                        className="p-3 border rounded-lg hover:border-blue-500 hover:shadow transition-all text-left bg-white"
+                        className="p-2 border rounded hover:border-blue-500 hover:shadow transition-all text-left bg-white"
                       >
                         <p className="font-semibold text-xs truncate">{produto.descricao}</p>
-                        <p className="text-xs text-slate-500">{produto.codigo}</p>
-                        <p className="text-sm font-bold text-blue-600">
+                        <p className="text-xs font-bold text-blue-600">
                           R$ {(produto.preco_venda || 0).toFixed(2)}
                         </p>
                       </button>
                     ))}
                   </div>
                   {produtosFiltrados.length === 0 && (
-                    <p className="text-center text-slate-500 py-8 text-sm">Nenhum produto encontrado</p>
+                    <p className="text-center text-slate-500 py-4 text-xs">Nenhum produto</p>
                   )}
                 </CardContent>
               </Card>
@@ -908,34 +930,37 @@ export default function CaixaPDVCompleto({
                     Carrinho ({carrinho.length})
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-3 space-y-3 overflow-y-auto flex-1">
+                <CardContent className="p-2 space-y-2 overflow-y-auto flex-1">
                   {/* Itens do carrinho */}
-                  <div className="space-y-2 max-h-32 overflow-auto">
+                  <div className="space-y-1 max-h-28 overflow-auto">
+                    {carrinho.length === 0 && (
+                      <p className="text-center text-slate-400 py-4 text-xs">Carrinho vazio</p>
+                    )}
                     {carrinho.map(item => (
-                      <div key={item.id} className="flex items-center justify-between p-2 bg-slate-50 rounded text-xs">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{item.descricao}</p>
-                          <div className="flex items-center gap-1 mt-1">
+                      <div key={item.id} className="flex items-center justify-between p-1.5 bg-slate-50 rounded text-xs">
+                        <div className="flex-1 min-w-0 mr-2">
+                          <p className="font-medium truncate text-xs">{item.descricao}</p>
+                          <div className="flex items-center gap-1 mt-0.5">
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => alterarQuantidade(item.id, item.quantidade - 1)}
-                              className="h-5 w-5 p-0"
+                              className="h-5 w-5 p-0 text-xs"
                             >
                               -
                             </Button>
-                            <span className="text-xs font-semibold w-6 text-center">{item.quantidade}</span>
+                            <span className="text-xs font-semibold w-8 text-center">{item.quantidade}</span>
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => alterarQuantidade(item.id, item.quantidade + 1)}
-                              className="h-5 w-5 p-0"
+                              className="h-5 w-5 p-0 text-xs"
                             >
                               +
                             </Button>
                           </div>
                         </div>
-                        <div className="text-right flex items-center gap-1">
+                        <div className="text-right flex items-center gap-1 flex-shrink-0">
                           <p className="font-bold text-blue-600 text-xs">
                             R$ {(item.preco_venda * item.quantidade).toFixed(2)}
                           </p>
@@ -943,7 +968,7 @@ export default function CaixaPDVCompleto({
                             size="sm"
                             variant="ghost"
                             onClick={() => removerProduto(item.id)}
-                            className="h-5 w-5 p-0 text-red-600"
+                            className="h-5 w-5 p-0 text-red-600 flex-shrink-0"
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>
@@ -1041,19 +1066,19 @@ export default function CaixaPDVCompleto({
                       </div>
 
                       {(desconto > 0 || acrescimo > 0) && (
-                        <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs space-y-1">
+                        <div className="bg-blue-50 border border-blue-200 rounded p-1.5 text-xs space-y-0.5">
                           <div className="flex justify-between">
                             <span>Subtotal:</span>
                             <span>R$ {subtotalCarrinho.toFixed(2)}</span>
                           </div>
                           {desconto > 0 && (
-                            <div className="flex justify-between text-green-600">
+                            <div className="flex justify-between text-green-600 font-semibold">
                               <span>- Desconto:</span>
                               <span>R$ {valorDesconto.toFixed(2)}</span>
                             </div>
                           )}
                           {acrescimo > 0 && (
-                            <div className="flex justify-between text-red-600">
+                            <div className="flex justify-between text-red-600 font-semibold">
                               <span>+ Acréscimo:</span>
                               <span>R$ {valorAcrescimo.toFixed(2)}</span>
                             </div>
@@ -1089,12 +1114,12 @@ export default function CaixaPDVCompleto({
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Dinheiro">💵 Dinheiro</SelectItem>
-                                <SelectItem value="PIX">⚡ PIX</SelectItem>
-                                <SelectItem value="Cartão Débito">💳 Débito</SelectItem>
-                                <SelectItem value="Cartão Crédito">💳 Crédito</SelectItem>
-                                <SelectItem value="Boleto">📄 Boleto</SelectItem>
-                                <SelectItem value="Transferência">🏦 Transfer.</SelectItem>
+                                <SelectItem value="Dinheiro">Dinheiro</SelectItem>
+                                <SelectItem value="PIX">PIX</SelectItem>
+                                <SelectItem value="Cartão Débito">Débito</SelectItem>
+                                <SelectItem value="Cartão Crédito">Crédito</SelectItem>
+                                <SelectItem value="Boleto">Boleto</SelectItem>
+                                <SelectItem value="Transferência">Transfer.</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -1122,20 +1147,20 @@ export default function CaixaPDVCompleto({
                         </div>
                       ))}
 
-                      <div className="bg-slate-50 rounded p-2 text-sm space-y-1">
+                      <div className="bg-slate-50 rounded p-1.5 text-xs space-y-0.5">
                         <div className="flex justify-between">
-                          <span>Total Pago:</span>
+                          <span>Pago:</span>
                           <span className="font-bold">R$ {totalPago.toFixed(2)}</span>
                         </div>
                         {totalPago > totalCarrinho && (
-                          <div className="flex justify-between text-green-600 font-semibold">
+                          <div className="flex justify-between text-green-600 font-bold">
                             <span>Troco:</span>
                             <span>R$ {troco.toFixed(2)}</span>
                           </div>
                         )}
                         {totalPago < totalCarrinho && (
-                          <div className="flex justify-between text-red-600 font-semibold">
-                            <span>Falta Pagar:</span>
+                          <div className="flex justify-between text-red-600 font-bold">
+                            <span>Falta:</span>
                             <span>R$ {(totalCarrinho - totalPago).toFixed(2)}</span>
                           </div>
                         )}
@@ -1150,10 +1175,10 @@ export default function CaixaPDVCompleto({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="recibo">📄 Recibo</SelectItem>
-                          <SelectItem value="nfe">📋 NF-e</SelectItem>
-                          <SelectItem value="boleto">📄 Boleto</SelectItem>
-                          <SelectItem value="completo">📋 Completo</SelectItem>
+                          <SelectItem value="recibo">Recibo</SelectItem>
+                          <SelectItem value="nfe">NF-e</SelectItem>
+                          <SelectItem value="boleto">Boleto</SelectItem>
+                          <SelectItem value="completo">Completo</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
