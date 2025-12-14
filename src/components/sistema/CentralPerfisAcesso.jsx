@@ -240,24 +240,52 @@ export default function CentralPerfisAcesso() {
   // Mutations
   const salvarPerfilMutation = useMutation({
     mutationFn: async (data) => {
-      console.log("📝 Salvando perfil com permissões:", data);
+      console.log("📝 SALVANDO PERFIL:");
+      console.log("  Nome:", data.nome_perfil);
+      console.log("  Nível:", data.nivel_perfil);
+      console.log("  Permissões (estrutura):", data.permissoes);
+      console.log("  Total módulos:", Object.keys(data.permissoes || {}).length);
+      
+      // Contar total de permissões
+      let totalPerms = 0;
+      Object.values(data.permissoes || {}).forEach(mod => {
+        Object.values(mod || {}).forEach(sec => {
+          totalPerms += sec?.length || 0;
+        });
+      });
+      console.log("  Total ações:", totalPerms);
+      
       const perfilId = perfilAberto?.id;
       if (perfilId && !perfilAberto.novo) {
-        return await base44.entities.PerfilAcesso.update(perfilId, data);
+        console.log("  Modo: ATUALIZAR perfil existente (ID:", perfilId, ")");
+        const resultado = await base44.entities.PerfilAcesso.update(perfilId, data);
+        console.log("✅ Atualização concluída:", resultado);
+        return resultado;
       } else {
-        return await base44.entities.PerfilAcesso.create(data);
+        console.log("  Modo: CRIAR novo perfil");
+        const resultado = await base44.entities.PerfilAcesso.create(data);
+        console.log("✅ Criação concluída:", resultado);
+        return resultado;
       }
     },
     onSuccess: (result) => {
-      console.log("✅ Perfil salvo com sucesso:", result);
+      console.log("✅✅✅ PERFIL SALVO COM SUCESSO!");
+      console.log("  Resultado do banco:", result);
+      
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
       const foiCriacao = perfilAberto?.novo;
       toast.success(foiCriacao ? "✅ Perfil criado com sucesso!" : "✅ Perfil atualizado com sucesso!");
-      setPerfilAberto(null);
-      resetForm();
+      
+      // Aguardar 300ms para garantir que query foi invalidada
+      setTimeout(() => {
+        setPerfilAberto(null);
+        resetForm();
+      }, 300);
     },
     onError: (error) => {
-      console.error("❌ Erro ao salvar perfil:", error);
+      console.error("❌❌❌ ERRO AO SALVAR PERFIL:", error);
+      console.error("  Mensagem:", error.message);
+      console.error("  Stack:", error.stack);
       toast.error("❌ Erro ao salvar: " + error.message);
     }
   });
@@ -301,7 +329,9 @@ export default function CentralPerfisAcesso() {
   // TOGGLE PERMISSÃO: módulo → seção → ação
   const togglePermissao = (modulo, secao, acao) => {
     setFormPerfil(prev => {
-      const novasPerms = { ...prev.permissoes };
+      // Deep copy de TODAS as permissões
+      const novasPerms = JSON.parse(JSON.stringify(prev.permissoes || {}));
+      
       if (!novasPerms[modulo]) novasPerms[modulo] = {};
       if (!novasPerms[modulo][secao]) novasPerms[modulo][secao] = [];
 
@@ -313,6 +343,8 @@ export default function CentralPerfisAcesso() {
       }
 
       console.log(`🔄 Toggle: ${modulo}.${secao}.${acao} →`, novasPerms[modulo][secao]);
+      console.log(`📊 Total permissões após toggle:`, Object.keys(novasPerms).length, "módulos");
+      
       return { ...prev, permissoes: novasPerms };
     });
   };
@@ -320,7 +352,8 @@ export default function CentralPerfisAcesso() {
   // SELECIONAR TUDO EM UMA SEÇÃO
   const selecionarTudoSecao = (modulo, secao) => {
     setFormPerfil(prev => {
-      const novasPerms = { ...prev.permissoes };
+      // Deep copy
+      const novasPerms = JSON.parse(JSON.stringify(prev.permissoes || {}));
       if (!novasPerms[modulo]) novasPerms[modulo] = {};
       
       const todasAcoes = ACOES.map(a => a.id);
@@ -329,6 +362,8 @@ export default function CentralPerfisAcesso() {
       novasPerms[modulo][secao] = temTodas ? [] : [...todasAcoes];
       
       console.log(`🔄 Seção ${modulo}.${secao}:`, novasPerms[modulo][secao]);
+      console.log(`📊 Total permissões:`, Object.keys(novasPerms).length, "módulos");
+      
       return { ...prev, permissoes: novasPerms };
     });
   };
@@ -336,7 +371,8 @@ export default function CentralPerfisAcesso() {
   // SELECIONAR TUDO EM UM MÓDULO
   const selecionarTudoModulo = (modulo) => {
     setFormPerfil(prev => {
-      const novasPerms = { ...prev.permissoes };
+      // Deep copy
+      const novasPerms = JSON.parse(JSON.stringify(prev.permissoes || {}));
       const todasAcoes = ACOES.map(a => a.id);
       
       // Verifica se todas as seções têm todas as ações
@@ -351,6 +387,8 @@ export default function CentralPerfisAcesso() {
       });
       
       console.log(`🔄 Módulo ${modulo}:`, novasPerms[modulo]);
+      console.log(`📊 Total permissões:`, Object.keys(novasPerms).length, "módulos");
+      
       return { ...prev, permissoes: novasPerms };
     });
   };
@@ -378,6 +416,9 @@ export default function CentralPerfisAcesso() {
       });
 
       console.log("🌐 Seleção Global:", algumVazio ? "TUDO MARCADO" : "TUDO DESMARCADO");
+      console.log("📊 Total de módulos:", Object.keys(novasPerms).length);
+      console.log("📊 Estrutura completa:", novasPerms);
+      
       return { ...prev, permissoes: novasPerms };
     });
   };
@@ -408,15 +449,17 @@ export default function CentralPerfisAcesso() {
   };
 
   const abrirEdicaoPerfil = (perfil) => {
+    const permissoesIniciais = perfil.permissoes || {};
+    console.log("📂 Abrindo perfil para edição:", perfil.nome_perfil, "Permissões carregadas:", permissoesIniciais);
+    
     setPerfilAberto(perfil);
     setFormPerfil({
       nome_perfil: perfil.nome_perfil || "",
       descricao: perfil.descricao || "",
       nivel_perfil: perfil.nivel_perfil || "Operacional",
-      permissoes: perfil.permissoes || {},
+      permissoes: JSON.parse(JSON.stringify(permissoesIniciais)), // Deep copy
       ativo: perfil.ativo !== false
     });
-    console.log("📂 Abrindo perfil para edição:", perfil.nome_perfil, perfil.permissoes);
   };
 
   const handleVincularEmpresa = (usuario, empresaId, acao) => {
@@ -907,12 +950,23 @@ export default function CentralPerfisAcesso() {
                 return;
               }
               
+              // GARANTIR que permissões são enviadas (deep copy para evitar mutação)
+              const permissoesFinal = JSON.parse(JSON.stringify(formPerfil.permissoes || {}));
+              
               const dadosSalvar = {
-                ...formPerfil,
+                nome_perfil: formPerfil.nome_perfil,
+                descricao: formPerfil.descricao || "",
+                nivel_perfil: formPerfil.nivel_perfil,
+                permissoes: permissoesFinal,
+                ativo: formPerfil.ativo,
                 group_id: empresaAtual?.group_id || null
               };
               
-              console.log("💾 Enviando para salvar:", dadosSalvar);
+              console.log("💾 Enviando para salvar:");
+              console.log("  - Nome:", dadosSalvar.nome_perfil);
+              console.log("  - Permissões:", dadosSalvar.permissoes);
+              console.log("  - Total de permissões:", Object.keys(dadosSalvar.permissoes).length, "módulos");
+              
               salvarPerfilMutation.mutate(dadosSalvar);
             }} className="space-y-6 h-full flex flex-col">
               {/* Dados Básicos */}
