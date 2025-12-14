@@ -380,20 +380,56 @@ export default function GerenciamentoAcessosCompleto() {
   // Mutations
   const salvarPerfilMutation = useMutation({
     mutationFn: async (data) => {
+      // Contar total de permissões
+      let totalAcoes = 0;
+      let totalSecoes = 0;
+      Object.values(data.permissoes || {}).forEach(mod => {
+        Object.values(mod || {}).forEach(sec => {
+          totalSecoes++;
+          totalAcoes += sec?.length || 0;
+        });
+      });
+
+      console.log("📝 SALVANDO PERFIL:");
+      console.log("  Nome:", data.nome_perfil);
+      console.log("  Módulos:", Object.keys(data.permissoes || {}).length);
+      console.log("  Seções:", totalSecoes);
+      console.log("  Ações:", totalAcoes);
+      console.log("  Estrutura:", JSON.stringify(data.permissoes, null, 2));
+
       if (editingPerfil?.id) {
-        return await base44.entities.PerfilAcesso.update(editingPerfil.id, data);
+        console.log("  Modo: UPDATE (ID:", editingPerfil.id, ")");
+        const resultado = await base44.entities.PerfilAcesso.update(editingPerfil.id, data);
+        console.log("✅ UPDATE concluído:", resultado);
+        return resultado;
       } else {
-        return await base44.entities.PerfilAcesso.create(data);
+        console.log("  Modo: CREATE");
+        const resultado = await base44.entities.PerfilAcesso.create(data);
+        console.log("✅ CREATE concluído:", resultado);
+        return resultado;
       }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      console.log("✅✅✅ PERFIL SALVO COM SUCESSO!");
+      console.log("  Resultado:", result);
+      
+      // Verificar quantas permissões foram salvas
+      let totalSalvo = 0;
+      Object.values(result.permissoes || {}).forEach(mod => {
+        Object.values(mod || {}).forEach(sec => {
+          totalSalvo += sec?.length || 0;
+        });
+      });
+      console.log("  Total ações salvas:", totalSalvo);
+      
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
       setPerfilDialogOpen(false);
       setEditingPerfil(null);
       resetFormPerfil();
-      toast.success(editingPerfil ? "Perfil atualizado!" : "Perfil criado!");
+      toast.success(editingPerfil ? "✅ Perfil atualizado!" : "✅ Perfil criado!");
     },
     onError: (error) => {
+      console.error("❌❌❌ ERRO AO SALVAR:", error);
       toast.error("Erro ao salvar perfil: " + error.message);
     }
   });
@@ -519,15 +555,21 @@ export default function GerenciamentoAcessosCompleto() {
         novasPermissoes[modulo][secao] = [];
       }
 
-      const index = novasPermissoes[modulo][secao].indexOf(acao);
+      const acoesAtuais = [...novasPermissoes[modulo][secao]];
+      const index = acoesAtuais.indexOf(acao);
+      
       if (index > -1) {
-        novasPermissoes[modulo][secao] = novasPermissoes[modulo][secao].filter(a => a !== acao);
+        acoesAtuais.splice(index, 1);
       } else {
-        novasPermissoes[modulo][secao] = [...novasPermissoes[modulo][secao], acao];
+        acoesAtuais.push(acao);
       }
+      
+      novasPermissoes[modulo][secao] = acoesAtuais;
 
       // Validar SoD após cada mudança
       validarSOD(novasPermissoes);
+
+      console.log(`🔄 Toggle: ${modulo}.${secao}.${acao} →`, novasPermissoes[modulo][secao]);
 
       return { ...prev, permissoes: novasPermissoes };
     });
@@ -539,14 +581,17 @@ export default function GerenciamentoAcessosCompleto() {
       const novasPermissoes = { ...prev.permissoes };
       
       if (marcar) {
-        novasPermissoes[modulo] = {};
+        if (!novasPermissoes[modulo]) novasPermissoes[modulo] = {};
         Object.keys(ESTRUTURA_SISTEMA[modulo].secoes).forEach(secao => {
-          novasPermissoes[modulo][secao] = ACOES.map(a => a.id);
+          novasPermissoes[modulo][secao] = [...ACOES.map(a => a.id)];
         });
       } else {
-        delete novasPermissoes[modulo];
+        if (novasPermissoes[modulo]) {
+          delete novasPermissoes[modulo];
+        }
       }
 
+      console.log(`🔄 marcarTodoModulo(${modulo}, ${marcar}):`, novasPermissoes[modulo]);
       validarSOD(novasPermissoes);
       return { ...prev, permissoes: novasPermissoes };
     });
@@ -561,12 +606,9 @@ export default function GerenciamentoAcessosCompleto() {
         novasPermissoes[modulo] = {};
       }
 
-      if (marcar) {
-        novasPermissoes[modulo][secao] = ACOES.map(a => a.id);
-      } else {
-        novasPermissoes[modulo][secao] = [];
-      }
+      novasPermissoes[modulo][secao] = marcar ? [...ACOES.map(a => a.id)] : [];
 
+      console.log(`🔄 marcarTodoSecao(${modulo}.${secao}, ${marcar}):`, novasPermissoes[modulo][secao]);
       validarSOD(novasPermissoes);
       return { ...prev, permissoes: novasPermissoes };
     });
@@ -574,24 +616,36 @@ export default function GerenciamentoAcessosCompleto() {
 
   // Selecionar tudo global
   const selecionarTudoGlobal = () => {
-    const todasAcoes = ACOES.map(a => a.id);
-    const algumVazio = Object.keys(ESTRUTURA_SISTEMA).some(modId => {
-      const perms = formPerfil.permissoes?.[modId];
-      if (!perms) return true;
-      return Object.keys(ESTRUTURA_SISTEMA[modId].secoes).some(secaoId => {
-        return !perms[secaoId] || perms[secaoId].length < todasAcoes.length;
-      });
-    });
-
+    const todasAcoes = [...ACOES.map(a => a.id)];
+    
     setFormPerfil(prev => {
+      // Verificar se está tudo marcado
+      const algumVazio = Object.keys(ESTRUTURA_SISTEMA).some(modId => {
+        const perms = prev.permissoes?.[modId];
+        if (!perms) return true;
+        return Object.keys(ESTRUTURA_SISTEMA[modId].secoes).some(secaoId => {
+          return !perms[secaoId] || perms[secaoId].length < todasAcoes.length;
+        });
+      });
+
       const novasPermissoes = {};
+      let totalAcoes = 0;
+      let totalSecoes = 0;
       
       Object.keys(ESTRUTURA_SISTEMA).forEach(modId => {
         novasPermissoes[modId] = {};
         Object.keys(ESTRUTURA_SISTEMA[modId].secoes).forEach(secaoId => {
           novasPermissoes[modId][secaoId] = algumVazio ? [...todasAcoes] : [];
+          totalSecoes++;
+          if (algumVazio) totalAcoes += todasAcoes.length;
         });
       });
+
+      console.log(`🌐 selecionarTudoGlobal: ${algumVazio ? 'MARCANDO TUDO' : 'DESMARCANDO TUDO'}`);
+      console.log(`📊 Total módulos: ${Object.keys(novasPermissoes).length}`);
+      console.log(`📊 Total seções: ${totalSecoes}`);
+      console.log(`📊 Total ações: ${totalAcoes}`);
+      console.log(`📊 Estrutura completa:`, novasPermissoes);
 
       validarSOD(novasPermissoes);
       return { ...prev, permissoes: novasPermissoes };
@@ -601,6 +655,8 @@ export default function GerenciamentoAcessosCompleto() {
   // Aplicar template de nível
   const aplicarTemplateNivel = (nivel) => {
     let permissoes = {};
+    let totalAcoes = 0;
+    let totalSecoes = 0;
 
     switch (nivel) {
       case "Administrador":
@@ -608,7 +664,9 @@ export default function GerenciamentoAcessosCompleto() {
         Object.keys(ESTRUTURA_SISTEMA).forEach(modulo => {
           permissoes[modulo] = {};
           Object.keys(ESTRUTURA_SISTEMA[modulo].secoes).forEach(secao => {
-            permissoes[modulo][secao] = ACOES.map(a => a.id);
+            permissoes[modulo][secao] = [...ACOES.map(a => a.id)];
+            totalSecoes++;
+            totalAcoes += ACOES.length;
           });
         });
         break;
@@ -619,6 +677,8 @@ export default function GerenciamentoAcessosCompleto() {
           permissoes[modulo] = {};
           Object.keys(ESTRUTURA_SISTEMA[modulo].secoes).forEach(secao => {
             permissoes[modulo][secao] = ["visualizar", "criar", "editar", "aprovar", "exportar"];
+            totalSecoes++;
+            totalAcoes += 5;
           });
         });
         break;
@@ -629,6 +689,8 @@ export default function GerenciamentoAcessosCompleto() {
           permissoes[modulo] = {};
           Object.keys(ESTRUTURA_SISTEMA[modulo].secoes).forEach(secao => {
             permissoes[modulo][secao] = ["visualizar", "criar", "editar"];
+            totalSecoes++;
+            totalAcoes += 3;
           });
         });
         break;
@@ -639,6 +701,8 @@ export default function GerenciamentoAcessosCompleto() {
           permissoes[modulo] = {};
           Object.keys(ESTRUTURA_SISTEMA[modulo].secoes).forEach(secao => {
             permissoes[modulo][secao] = ["visualizar"];
+            totalSecoes++;
+            totalAcoes++;
           });
         });
         break;
@@ -647,6 +711,11 @@ export default function GerenciamentoAcessosCompleto() {
         // Personalizado - sem template
         break;
     }
+
+    console.log(`🎨 Template ${nivel} aplicado:`);
+    console.log(`  Módulos: ${Object.keys(permissoes).length}`);
+    console.log(`  Seções: ${totalSecoes}`);
+    console.log(`  Ações: ${totalAcoes}`);
 
     setFormPerfil(prev => ({ ...prev, nivel_perfil: nivel, permissoes }));
     validarSOD(permissoes);
@@ -668,8 +737,21 @@ export default function GerenciamentoAcessosCompleto() {
       return;
     }
 
+    // Contar total antes de enviar
+    let totalAntes = 0;
+    Object.values(formPerfil.permissoes || {}).forEach(mod => {
+      Object.values(mod || {}).forEach(sec => {
+        totalAntes += sec?.length || 0;
+      });
+    });
+    console.log("💾 handleSubmitPerfil: Total ações antes de enviar:", totalAntes);
+
     const dados = {
-      ...formPerfil,
+      nome_perfil: formPerfil.nome_perfil,
+      descricao: formPerfil.descricao,
+      nivel_perfil: formPerfil.nivel_perfil,
+      permissoes: formPerfil.permissoes,
+      ativo: formPerfil.ativo,
       group_id: empresaAtual?.group_id,
       conflitos_sod_detectados: conflitosSOD
     };
@@ -679,6 +761,17 @@ export default function GerenciamentoAcessosCompleto() {
 
   // Abrir edição de perfil
   const abrirEdicaoPerfil = (perfil) => {
+    console.log("📂 Abrindo edição:", perfil.nome_perfil);
+    console.log("  Permissões carregadas:", perfil.permissoes);
+    
+    let totalCarregado = 0;
+    Object.values(perfil.permissoes || {}).forEach(mod => {
+      Object.values(mod || {}).forEach(sec => {
+        totalCarregado += sec?.length || 0;
+      });
+    });
+    console.log("  Total ações carregadas:", totalCarregado);
+    
     setEditingPerfil(perfil);
     setFormPerfil({
       nome_perfil: perfil.nome_perfil || "",

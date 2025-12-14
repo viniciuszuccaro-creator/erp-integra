@@ -393,8 +393,7 @@ export default function CentralPerfisAcesso() {
   // SELECIONAR TUDO GLOBAL
   const selecionarTudoGlobal = () => {
     setFormPerfil(prev => {
-      const novasPerms = {};
-      const todasAcoes = ACOES.map(a => a.id);
+      const todasAcoes = [...ACOES.map(a => a.id)];
       
       // Verifica se algum módulo está vazio
       const algumVazio = Object.keys(ESTRUTURA_SISTEMA).some(modId => {
@@ -405,16 +404,26 @@ export default function CentralPerfisAcesso() {
         });
       });
 
+      const novasPerms = {};
+      let totalAcoes = 0;
+      let totalSecoes = 0;
+      let totalModulos = 0;
+
       Object.keys(ESTRUTURA_SISTEMA).forEach(modId => {
         novasPerms[modId] = {};
+        totalModulos++;
         Object.keys(ESTRUTURA_SISTEMA[modId].secoes).forEach(secaoId => {
           novasPerms[modId][secaoId] = algumVazio ? [...todasAcoes] : [];
+          totalSecoes++;
+          if (algumVazio) totalAcoes += todasAcoes.length;
         });
       });
 
       console.log("🌐 Seleção Global:", algumVazio ? "TUDO MARCADO" : "TUDO DESMARCADO");
-      console.log("📊 Total de módulos:", Object.keys(novasPerms).length);
-      console.log("📊 Estrutura completa:", novasPerms);
+      console.log("📊 Total módulos:", totalModulos);
+      console.log("📊 Total seções:", totalSecoes);
+      console.log("📊 Total ações:", totalAcoes);
+      console.log("📊 Esperado (13 módulos × ~49 seções × 6 ações):", 13 * 49 * 6, "≈ 294 ações");
       
       return { ...prev, permissoes: novasPerms };
     });
