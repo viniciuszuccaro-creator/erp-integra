@@ -420,7 +420,7 @@ export default function CentralPerfisAcesso() {
   const abrirEdicaoPerfil = (perfil) => {
     const permissoes = perfil.permissoes || {};
     
-    // EXPANDIR TODOS OS MÓDULOS IMEDIATAMENTE
+    // EXPANDIR TODOS OS MÓDULOS (não apenas os com permissões)
     const todosModulos = Object.keys(ESTRUTURA_SISTEMA);
     setModulosExpandidos(todosModulos);
     
@@ -435,9 +435,7 @@ export default function CentralPerfisAcesso() {
     setPerfilAberto(perfil);
     setModoTemplate(false);
     
-    console.log("📂 ABRINDO PERFIL:", perfil.nome_perfil);
-    console.log("📦 PERMISSÕES CARREGADAS:", permissoes);
-    console.log("🔓 MÓDULOS EXPANDIDOS:", todosModulos);
+    console.log("📂 Abrindo perfil:", perfil.nome_perfil, "Permissões:", permissoes, "EXPANDINDO TODOS:", todosModulos);
   };
 
   const aplicarTemplate = (template) => {
@@ -1243,64 +1241,37 @@ export default function CentralPerfisAcesso() {
               {/* PERMISSÕES GRANULARES */}
               <div className="flex-1 overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <Label className="text-lg font-bold">Permissões Granulares por Módulo</Label>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {modulosExpandidos.length} de {Object.keys(ESTRUTURA_SISTEMA).length} módulos expandidos
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        const todosModulos = Object.keys(ESTRUTURA_SISTEMA);
-                        setModulosExpandidos(todosModulos);
-                        toast.success("✅ Todos os módulos expandidos!");
-                      }}
-                      className="text-sm bg-blue-50"
-                    >
-                      <Eye className="w-4 h-4 mr-2" />
-                      Expandir Todos
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={selecionarTudoGlobal}
-                      className="text-sm"
-                    >
-                      <CheckSquare className="w-4 h-4 mr-2" />
-                      Selecionar/Desmarcar Tudo
-                    </Button>
-                  </div>
+                  <Label className="text-lg font-bold">Permissões Granulares por Módulo</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={selecionarTudoGlobal}
+                    className="text-sm"
+                  >
+                    <CheckSquare className="w-4 h-4 mr-2" />
+                    Selecionar/Desmarcar Tudo
+                  </Button>
                 </div>
 
                 <Alert className="mb-4 border-blue-200 bg-blue-50">
                   <Info className="w-4 h-4 text-blue-600" />
                   <AlertDescription className="text-sm text-blue-800 space-y-1">
                     <div>
-                      <strong>✅ {modulosExpandidos.length} módulos visíveis</strong> - Clique em "Expandir Todos" se não visualizar todos
+                      <strong>✅ Todos os {Object.keys(ESTRUTURA_SISTEMA).length} módulos expandidos abaixo ↓</strong>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
                       <Badge className="bg-green-600 text-white">
                         {contarPermissoesTotal()} permissões ativas
                       </Badge>
                       <Badge className="bg-blue-100 text-blue-700">
                         {Object.keys(formPerfil.permissoes).filter(m => contarPermissoesModulo(m) > 0).length}/{Object.keys(ESTRUTURA_SISTEMA).length} módulos configurados
                       </Badge>
-                      <Badge className="bg-purple-100 text-purple-700">
-                        {modulosExpandidos.length}/{Object.keys(ESTRUTURA_SISTEMA).length} visíveis
-                      </Badge>
                     </div>
                   </AlertDescription>
                 </Alert>
 
                 <div className="flex-1 overflow-auto border rounded-lg bg-slate-50">
-                  <Accordion 
-                    type="multiple" 
-                    value={modulosExpandidos} 
-                    onValueChange={setModulosExpandidos}
-                  >
+                  <Accordion type="multiple" value={modulosExpandidos} onValueChange={setModulosExpandidos}>
                     {Object.entries(ESTRUTURA_SISTEMA).map(([moduloId, modulo]) => {
                       const Icone = modulo.icone;
                       const qtdPerms = contarPermissoesModulo(moduloId);
