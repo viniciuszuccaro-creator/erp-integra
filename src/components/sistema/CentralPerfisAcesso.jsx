@@ -329,8 +329,7 @@ export default function CentralPerfisAcesso() {
   // TOGGLE PERMISSÃO: módulo → seção → ação
   const togglePermissao = (modulo, secao, acao) => {
     setFormPerfil(prev => {
-      // Deep copy de TODAS as permissões
-      const novasPerms = JSON.parse(JSON.stringify(prev.permissoes || {}));
+      const novasPerms = { ...prev.permissoes };
       
       if (!novasPerms[modulo]) novasPerms[modulo] = {};
       if (!novasPerms[modulo][secao]) novasPerms[modulo][secao] = [];
@@ -352,8 +351,7 @@ export default function CentralPerfisAcesso() {
   // SELECIONAR TUDO EM UMA SEÇÃO
   const selecionarTudoSecao = (modulo, secao) => {
     setFormPerfil(prev => {
-      // Deep copy
-      const novasPerms = JSON.parse(JSON.stringify(prev.permissoes || {}));
+      const novasPerms = { ...prev.permissoes };
       if (!novasPerms[modulo]) novasPerms[modulo] = {};
       
       const todasAcoes = ACOES.map(a => a.id);
@@ -371,8 +369,7 @@ export default function CentralPerfisAcesso() {
   // SELECIONAR TUDO EM UM MÓDULO
   const selecionarTudoModulo = (modulo) => {
     setFormPerfil(prev => {
-      // Deep copy
-      const novasPerms = JSON.parse(JSON.stringify(prev.permissoes || {}));
+      const novasPerms = { ...prev.permissoes };
       const todasAcoes = ACOES.map(a => a.id);
       
       // Verifica se todas as seções têm todas as ações
@@ -449,15 +446,14 @@ export default function CentralPerfisAcesso() {
   };
 
   const abrirEdicaoPerfil = (perfil) => {
-    const permissoesIniciais = perfil.permissoes || {};
-    console.log("📂 Abrindo perfil para edição:", perfil.nome_perfil, "Permissões carregadas:", permissoesIniciais);
+    console.log("📂 Abrindo perfil para edição:", perfil.nome_perfil, "Permissões:", perfil.permissoes);
     
     setPerfilAberto(perfil);
     setFormPerfil({
       nome_perfil: perfil.nome_perfil || "",
       descricao: perfil.descricao || "",
       nivel_perfil: perfil.nivel_perfil || "Operacional",
-      permissoes: JSON.parse(JSON.stringify(permissoesIniciais)), // Deep copy
+      permissoes: perfil.permissoes || {},
       ativo: perfil.ativo !== false
     });
   };
@@ -950,22 +946,16 @@ export default function CentralPerfisAcesso() {
                 return;
               }
               
-              // GARANTIR que permissões são enviadas (deep copy para evitar mutação)
-              const permissoesFinal = JSON.parse(JSON.stringify(formPerfil.permissoes || {}));
-              
+              // SPREAD DIRETO COMO NO GerenciamentoAcessosCompleto
               const dadosSalvar = {
-                nome_perfil: formPerfil.nome_perfil,
-                descricao: formPerfil.descricao || "",
-                nivel_perfil: formPerfil.nivel_perfil,
-                permissoes: permissoesFinal,
-                ativo: formPerfil.ativo,
+                ...formPerfil,
                 group_id: empresaAtual?.group_id || null
               };
               
               console.log("💾 Enviando para salvar:");
               console.log("  - Nome:", dadosSalvar.nome_perfil);
               console.log("  - Permissões:", dadosSalvar.permissoes);
-              console.log("  - Total de permissões:", Object.keys(dadosSalvar.permissoes).length, "módulos");
+              console.log("  - Total de permissões:", Object.keys(dadosSalvar.permissoes || {}).length, "módulos");
               
               salvarPerfilMutation.mutate(dadosSalvar);
             }} className="space-y-6 h-full flex flex-col">
