@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import {
   DollarSign,
@@ -23,14 +24,23 @@ import {
   Wallet,
   TrendingUp,
   TrendingDown,
-  Lock
+  Lock,
+  Percent,
+  Printer
 } from "lucide-react";
 
 export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState("venda");
   const [carrinho, setCarrinho] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  const [formasPagamento, setFormasPagamento] = useState([{ forma: "Dinheiro", valor: 0 }]);
+  const [formasPagamento, setFormasPagamento] = useState([{ forma: "Dinheiro", valor: 0, parcelas: 1 }]);
+  const [desconto, setDesconto] = useState(0);
+  const [tipoDesconto, setTipoDesconto] = useState("valor");
+  const [acrescimo, setAcrescimo] = useState(0);
+  const [tipoAcrescimo, setTipoAcrescimo] = useState("valor");
+  const [emitirNFe, setEmitirNFe] = useState(false);
+  const [emitirRecibo, setEmitirRecibo] = useState(true);
+  const [emitirBoleto, setEmitirBoleto] = useState(false);
   const [buscaProduto, setBuscaProduto] = useState("");
   const [buscaCliente, setBuscaCliente] = useState("");
   const [caixaAberto, setCaixaAberto] = useState(false);
@@ -82,9 +92,24 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
     return data === hoje && !m.cancelado;
   });
 
-  const totalEntradas = movimentosHoje.filter(m => m.tipo_movimento === 'Entrada').reduce((s, m) => s + (m.valor || 0), 0);
-  const totalSaidas = movimentosHoje.filter(m => m.tipo_movimento === 'Saída').reduce((s, m) => s + (m.valor || 0), 0);
-  const saldoAtual = saldoInicial + totalEntradas - totalSaidas;
+  // SALDO SÓ ALTERA COM DINHEIRO
+  const totalEntradasDinheiro = movimentosHoje.filter(m => m.tipo_movimento === 'Entrada' && m.forma_pagamento === 'Dinheiro').reduce((s, m) => s + (m.valor || 0), 0);
+  const totalSaidasDinheiro = movimentosHoje.filter(m => m.tipo_movimento === 'Saída' && m.forma_pagamento === 'Dinheiro').reduce((s, m) => s + (m.valor || 0), 0);
+  const saldoAtual = saldoInicial + totalEntradasDinheiro - totalSaidasDinheiro;
+
+  // Somatória por tipo de pagamento
+  const somatoriaFormasPagamento = movimentosHoje.reduce((acc, m) => {
+    const forma = m.forma_pagamento || 'Outros';
+    if (!acc[forma]) acc[forma] = { entradas: 0, saidas: 0, total: 0 };
+    if (m.tipo_movimento === 'Entrada') {
+      acc[forma].entradas += m.valor || 0;
+      acc[forma].total += m.valor || 0;
+    } else if (m.tipo_movimento === 'Saída') {
+      acc[forma].saidas += m.valor || 0;
+      acc[forma].total -= m.valor || 0;
+    }
+    return acc;
+  }, {});
 
   const produtosFiltrados = produtos.filter(p =>
     p.descricao?.toLowerCase().includes(buscaProduto.toLowerCase())
@@ -99,8 +124,13 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
   const pedidosReceber = pedidos.filter(p => p.status === 'Aprovado' || p.status === 'Pronto para Faturar');
 
   const subtotal = carrinho.reduce((s, i) => s + (i.preco_venda * i.quantidade), 0);
+  
+  const valorDesconto = tipoDesconto === 'percentual' ? (subtotal * desconto / 100) : desconto;
+  const valorAcrescimo = tipoAcrescimo === 'percentual' ? (subtotal * acrescimo / 100) : acrescimo;
+  const totalVenda = subtotal - valorDesconto + valorAcrescimo;
+  
   const totalPago = formasPagamento.reduce((s, f) => s + (f.valor || 0), 0);
-  const troco = totalPago - subtotal;
+  const troco = totalPago - totalVenda;
 
   const abrirCaixa = useMutation({
     mutationFn: async (saldo) => {
@@ -143,10 +173,48 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
           valor_total: item.preco_venda * item.quantidade
         })),
         valor_produtos: subtotal,
-        valor_total: subtotal,
-        status: 'Faturado'
+        desconto_geral_pedido_valor: valorDesconto,
+        valor_total: totalVenda,
+        status: 'Faturado',
+        observacoes_publicas: valorAcrescimo > 0 ? `Acréscimo: R$ ${valorAcrescimo.toFixed(2)}` : ''
       });
 
+      // Criar conta a receber se tiver boleto ou pagamento não-dinheiro
+      let contaReceber = null;
+      if (emitirBoleto || formasPagamento.some(f => f.forma !== 'Dinheiro')) {
+        contaReceber = await base44.entities.ContaReceber.create({
+          empresa_id: empresaAtual?.id,
+          descricao: `Venda PDV ${pedido.numero_pedido}`,
+          cliente: clienteSelecionado?.nome || 'Cliente Avulso',
+          cliente_id: clienteSelecionado?.id,
+          pedido_id: pedido.id,
+          valor: totalVenda,
+          data_emissao: hoje,
+          data_vencimento: hoje,
+          status: emitirBoleto ? 'Pendente' : 'Recebido',
+          forma_recebimento: formasPagamento.map(f => f.forma).join(', '),
+          origem_tipo: 'pedido'
+        });
+      }
+
+      // Emitir NF-e se solicitado
+      if (emitirNFe && clienteSelecionado) {
+        await base44.entities.NotaFiscal.create({
+          empresa_faturamento_id: empresaAtual?.id,
+          numero: `${Date.now()}`,
+          serie: '1',
+          tipo: 'NF-e (Saída)',
+          cliente_fornecedor: clienteSelecionado.nome,
+          cliente_fornecedor_id: clienteSelecionado.id,
+          pedido_id: pedido.id,
+          data_emissao: hoje,
+          valor_produtos: subtotal,
+          valor_total: totalVenda,
+          status: 'Rascunho'
+        });
+      }
+
+      // Registrar movimentos
       for (const fp of formasPagamento) {
         if (fp.valor > 0) {
           await base44.entities.CaixaMovimento.create({
@@ -156,20 +224,32 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
             origem: 'Venda PDV',
             forma_pagamento: fp.forma,
             valor: fp.valor,
-            descricao: `Venda ${pedido.numero_pedido}`,
+            descricao: `Venda ${pedido.numero_pedido} - Cliente: ${clienteSelecionado?.nome || 'Avulso'} - Pagto: ${fp.forma}${fp.parcelas > 1 ? ` (${fp.parcelas}x)` : ''}`,
             pedido_id: pedido.id,
+            conta_receber_id: contaReceber?.id,
             usuario_operador_nome: user?.full_name,
             caixa_aberto: true
           });
         }
       }
+
+      return { pedido, contaReceber };
     },
-    onSuccess: () => {
+    onSuccess: ({ pedido }) => {
       setCarrinho([]);
-      setFormasPagamento([{ forma: "Dinheiro", valor: 0 }]);
+      setFormasPagamento([{ forma: "Dinheiro", valor: 0, parcelas: 1 }]);
       setClienteSelecionado(null);
+      setDesconto(0);
+      setAcrescimo(0);
+      setEmitirNFe(false);
+      setEmitirBoleto(false);
       queryClient.invalidateQueries();
-      toast.success("✅ Venda finalizada!");
+      
+      if (troco > 0) {
+        toast.success(`✅ Venda ${pedido.numero_pedido} finalizada!\n🟢 TROCO: R$ ${troco.toFixed(2)}`);
+      } else {
+        toast.success(`✅ Venda ${pedido.numero_pedido} finalizada!`);
+      }
     }
   });
 
@@ -249,26 +329,38 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
     return (
       <div className={windowMode ? "w-full h-full flex items-center justify-center p-4" : "p-6"}>
         <Dialog open={dialogAbrir} onOpenChange={() => {}}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-md" style={{ zIndex: 99999999 }}>
             <DialogHeader>
-              <DialogTitle>Abrir Caixa</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Wallet className="w-5 h-5 text-emerald-600" />
+                Abrir Caixa
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-3">
+                  <p className="text-sm"><strong>Operador:</strong> {user?.full_name}</p>
+                  <p className="text-sm"><strong>Empresa:</strong> {empresaAtual?.nome_fantasia || empresaAtual?.razao_social}</p>
+                </CardContent>
+              </Card>
               <div>
-                <Label>Saldo Inicial (R$)</Label>
+                <Label>Saldo Inicial em Dinheiro (R$) *</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={saldoInicial}
                   onChange={(e) => setSaldoInicial(parseFloat(e.target.value) || 0)}
                   placeholder="0.00"
+                  className="text-lg"
                 />
+                <p className="text-xs text-slate-500 mt-1">Digite o valor em dinheiro para iniciar</p>
               </div>
               <Button
                 onClick={() => abrirCaixa.mutate(saldoInicial)}
-                className="w-full bg-emerald-600"
+                className="w-full bg-emerald-600 h-10"
                 disabled={abrirCaixa.isPending}
               >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
                 Abrir Caixa
               </Button>
             </div>
@@ -321,14 +413,14 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
           </Card>
           <Card className="border">
             <CardContent className="p-2">
-              <p className="text-xs text-green-700">Entradas</p>
-              <p className="text-sm font-bold">R$ {totalEntradas.toFixed(2)}</p>
+              <p className="text-xs text-green-700">Entradas 💵</p>
+              <p className="text-sm font-bold">R$ {totalEntradasDinheiro.toFixed(2)}</p>
             </CardContent>
           </Card>
           <Card className="border">
             <CardContent className="p-2">
-              <p className="text-xs text-red-700">Saídas</p>
-              <p className="text-sm font-bold">R$ {totalSaidas.toFixed(2)}</p>
+              <p className="text-xs text-red-700">Saídas 💵</p>
+              <p className="text-sm font-bold">R$ {totalSaidasDinheiro.toFixed(2)}</p>
             </CardContent>
           </Card>
           <Card className="border">
@@ -424,29 +516,99 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                   </div>
 
                   <div className="border-t pt-2">
-                    <div className="flex justify-between mb-2">
-                      <span className="text-xs">TOTAL:</span>
-                      <span className="text-lg font-bold text-blue-600">R$ {subtotal.toFixed(2)}</span>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-xs">Subtotal:</span>
+                      <span className="text-sm font-bold">R$ {subtotal.toFixed(2)}</span>
+                    </div>
+
+                    {/* DESCONTO E ACRÉSCIMO */}
+                    <div className="grid grid-cols-2 gap-1 mb-2">
+                      <div>
+                        <Label className="text-xs">Desconto</Label>
+                        <div className="flex gap-1">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={desconto}
+                            onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
+                            className="h-6 text-xs"
+                          />
+                          <Select value={tipoDesconto} onValueChange={setTipoDesconto}>
+                            <SelectTrigger className="h-6 w-12 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="valor">R$</SelectItem>
+                              <SelectItem value="percentual">%</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Acréscimo</Label>
+                        <div className="flex gap-1">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={acrescimo}
+                            onChange={(e) => setAcrescimo(parseFloat(e.target.value) || 0)}
+                            className="h-6 text-xs"
+                          />
+                          <Select value={tipoAcrescimo} onValueChange={setTipoAcrescimo}>
+                            <SelectTrigger className="h-6 w-12 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="valor">R$</SelectItem>
+                              <SelectItem value="percentual">%</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between mb-2 pb-2 border-b">
+                      <span className="text-sm font-semibold">TOTAL:</span>
+                      <span className="text-xl font-bold text-blue-600">R$ {totalVenda.toFixed(2)}</span>
+                    </div>
+
+                    {/* OPÇÕES DE EMISSÃO */}
+                    <div className="space-y-1 mb-2 p-2 bg-slate-50 rounded">
+                      <div className="flex items-center gap-2">
+                        <Checkbox checked={emitirRecibo} onCheckedChange={setEmitirRecibo} id="recibo" />
+                        <Label htmlFor="recibo" className="text-xs">Emitir Recibo</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox checked={emitirNFe} onCheckedChange={setEmitirNFe} id="nfe" />
+                        <Label htmlFor="nfe" className="text-xs">Emitir NF-e</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox checked={emitirBoleto} onCheckedChange={setEmitirBoleto} id="boleto" />
+                        <Label htmlFor="boleto" className="text-xs">Gerar Boleto</Label>
+                      </div>
                     </div>
 
                     <div className="space-y-1">
                       {formasPagamento.map((fp, idx) => (
-                        <div key={idx} className="flex gap-1">
-                          <Select value={fp.forma} onValueChange={(v) => {
-                            const novas = [...formasPagamento];
-                            novas[idx].forma = v;
-                            setFormasPagamento(novas);
-                          }}>
-                            <SelectTrigger className="h-6 text-xs flex-1">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Dinheiro">Dinheiro</SelectItem>
-                              <SelectItem value="PIX">PIX</SelectItem>
-                              <SelectItem value="Cartão Débito">Débito</SelectItem>
-                              <SelectItem value="Cartão Crédito">Crédito</SelectItem>
-                            </SelectContent>
-                          </Select>
+                        <div key={idx} className="flex gap-1 items-end">
+                          <div className="flex-1">
+                            <Select value={fp.forma} onValueChange={(v) => {
+                              const novas = [...formasPagamento];
+                              novas[idx].forma = v;
+                              setFormasPagamento(novas);
+                            }}>
+                              <SelectTrigger className="h-6 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Dinheiro">💵 Dinheiro</SelectItem>
+                                <SelectItem value="PIX">⚡ PIX</SelectItem>
+                                <SelectItem value="Cartão Débito">💳 Débito</SelectItem>
+                                <SelectItem value="Cartão Crédito">💳 Crédito</SelectItem>
+                                <SelectItem value="Boleto">📄 Boleto</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                           <Input
                             type="number"
                             step="0.01"
@@ -456,31 +618,67 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                               novas[idx].valor = parseFloat(e.target.value) || 0;
                               setFormasPagamento(novas);
                             }}
-                            className="h-6 w-20 text-xs"
+                            placeholder="Valor"
+                            className="h-6 w-16 text-xs"
                           />
+                          {(fp.forma === 'Cartão Crédito' || fp.forma === 'Cartão Débito') && (
+                            <Input
+                              type="number"
+                              min="1"
+                              value={fp.parcelas || 1}
+                              onChange={(e) => {
+                                const novas = [...formasPagamento];
+                                novas[idx].parcelas = parseInt(e.target.value) || 1;
+                                setFormasPagamento(novas);
+                              }}
+                              placeholder="Parc."
+                              className="h-6 w-12 text-xs"
+                            />
+                          )}
+                          {formasPagamento.length > 1 && (
+                            <Button size="sm" variant="ghost" onClick={() => setFormasPagamento(formasPagamento.filter((_, i) => i !== idx))} className="h-6 w-6 p-0">
+                              <Trash2 className="w-3 h-3 text-red-600" />
+                            </Button>
+                          )}
                         </div>
                       ))}
-                      <Button size="sm" variant="outline" onClick={() => setFormasPagamento([...formasPagamento, { forma: "PIX", valor: 0 }])} className="h-6 text-xs w-full">
-                        + Forma
+                      <Button size="sm" variant="outline" onClick={() => setFormasPagamento([...formasPagamento, { forma: "PIX", valor: 0, parcelas: 1 }])} className="h-6 text-xs w-full">
+                        <Plus className="w-3 h-3 mr-1" />
+                        Adicionar Forma
                       </Button>
                     </div>
 
-                    {totalPago !== subtotal && (
+                    {totalPago !== totalVenda && (
                       <div className="bg-slate-100 rounded p-1 text-xs mt-1">
-                        {totalPago > subtotal ? (
-                          <p className="text-green-600 font-bold">Troco: R$ {troco.toFixed(2)}</p>
+                        {totalPago > totalVenda ? (
+                          <p className="text-green-600 font-bold">🟢 TROCO: R$ {troco.toFixed(2)}</p>
                         ) : (
-                          <p className="text-red-600 font-bold">Falta: R$ {(subtotal - totalPago).toFixed(2)}</p>
+                          <p className="text-red-600 font-bold">🔴 FALTA: R$ {(totalVenda - totalPago).toFixed(2)}</p>
                         )}
                       </div>
                     )}
 
                     <Button
                       onClick={() => finalizarVenda.mutate()}
-                      disabled={carrinho.length === 0 || totalPago < subtotal}
+                      disabled={carrinho.length === 0 || totalPago < totalVenda}
                       className="w-full bg-emerald-600 h-8 text-xs mt-2"
                     >
-                      Finalizar
+                      <CheckCircle2 className="w-3 h-3 mr-1" />
+                      Finalizar Venda
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setCarrinho([]);
+                        setClienteSelecionado(null);
+                        setFormasPagamento([{ forma: "Dinheiro", valor: 0, parcelas: 1 }]);
+                        setDesconto(0);
+                        setAcrescimo(0);
+                      }}
+                      variant="outline"
+                      className="w-full h-6 text-xs mt-1"
+                    >
+                      <Trash2 className="w-3 h-3 mr-1" />
+                      Limpar
                     </Button>
                   </div>
                 </CardContent>
@@ -597,9 +795,33 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
           </TabsContent>
 
           {/* MOVIMENTOS */}
-          <TabsContent value="movimentos" className="overflow-hidden m-0 mt-2">
-            <Card className="h-full flex flex-col overflow-hidden">
-              <CardContent className="p-0 overflow-auto">
+          <TabsContent value="movimentos" className="overflow-hidden m-0 mt-2 flex flex-col h-full">
+            <Card className="flex flex-col overflow-hidden mb-2">
+              <CardHeader className="p-2">
+                <CardTitle className="text-xs">Somatória por Forma de Pagamento</CardTitle>
+              </CardHeader>
+              <CardContent className="p-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(somatoriaFormasPagamento).map(([forma, valores]) => (
+                    <Card key={forma} className="border">
+                      <CardContent className="p-2">
+                        <p className="text-xs font-semibold">{forma}</p>
+                        <div className="flex justify-between text-xs mt-1">
+                          <span className="text-green-600">+R$ {valores.entradas.toFixed(2)}</span>
+                          <span className="text-red-600">-R$ {valores.saidas.toFixed(2)}</span>
+                        </div>
+                        <p className={`text-xs font-bold mt-1 ${valores.total >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          Total: R$ {valores.total.toFixed(2)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="flex-1 flex flex-col overflow-hidden">
+              <CardContent className="p-0 overflow-auto flex-1">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -620,7 +842,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                             {m.tipo_movimento}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-xs p-2 truncate max-w-[200px]">{m.descricao}</TableCell>
+                        <TableCell className="text-xs p-2">{m.descricao}</TableCell>
                         <TableCell className={`text-xs p-2 text-right font-bold ${m.tipo_movimento === 'Entrada' ? 'text-green-600' : 'text-red-600'}`}>
                           {m.tipo_movimento === 'Entrada' ? '+' : '-'}R$ {(m.valor || 0).toFixed(2)}
                         </TableCell>
