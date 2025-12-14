@@ -381,18 +381,20 @@ export default function VisualizadorUniversalEntidade({
             </div>
             
             {/* ✅ NOVA ORDENAÇÃO AVANÇADA */}
-            <Select value={ordenacao} onValueChange={setOrdenacao}>
-              <SelectTrigger className="w-full sm:w-64">
-                <SelectValue placeholder="Organizar por..." />
-              </SelectTrigger>
-              <SelectContent>
-                {opcoesOrdenacao.map(opcao => (
-                  <SelectItem key={opcao.value} value={opcao.value}>
-                    {opcao.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-64">
+              <Select value={ordenacao} onValueChange={setOrdenacao}>
+                <SelectTrigger>
+                  <SelectValue placeholder="📊 Organizar por..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {opcoesOrdenacao.map(opcao => (
+                    <SelectItem key={opcao.value} value={opcao.value}>
+                      {opcao.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
               <Button
