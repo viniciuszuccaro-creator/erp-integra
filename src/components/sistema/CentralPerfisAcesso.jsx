@@ -420,10 +420,6 @@ export default function CentralPerfisAcesso() {
   const abrirEdicaoPerfil = (perfil) => {
     const permissoes = perfil.permissoes || {};
     
-    // EXPANDIR TODOS OS MÓDULOS (não apenas os com permissões)
-    const todosModulos = Object.keys(ESTRUTURA_SISTEMA);
-    setModulosExpandidos(todosModulos);
-    
     setFormPerfil({
       nome_perfil: perfil.nome_perfil || "",
       descricao: perfil.descricao || "",
@@ -435,7 +431,12 @@ export default function CentralPerfisAcesso() {
     setPerfilAberto(perfil);
     setModoTemplate(false);
     
-    console.log("📂 Abrindo perfil:", perfil.nome_perfil, "Permissões:", permissoes, "EXPANDINDO TODOS:", todosModulos);
+    // EXPANDIR TODOS OS MÓDULOS APÓS ABRIR (garante que o modal renderize primeiro)
+    setTimeout(() => {
+      const todosModulos = Object.keys(ESTRUTURA_SISTEMA);
+      setModulosExpandidos(todosModulos);
+      console.log("📂 Perfil aberto, EXPANDINDO TODOS:", todosModulos);
+    }, 50);
   };
 
   const aplicarTemplate = (template) => {
@@ -1271,7 +1272,12 @@ export default function CentralPerfisAcesso() {
                 </Alert>
 
                 <div className="flex-1 overflow-auto border rounded-lg bg-slate-50">
-                  <Accordion type="multiple" value={modulosExpandidos} onValueChange={setModulosExpandidos}>
+                  <Accordion 
+                    type="multiple" 
+                    value={modulosExpandidos.length > 0 ? modulosExpandidos : Object.keys(ESTRUTURA_SISTEMA)} 
+                    onValueChange={setModulosExpandidos}
+                    defaultValue={Object.keys(ESTRUTURA_SISTEMA)}
+                  >
                     {Object.entries(ESTRUTURA_SISTEMA).map(([moduloId, modulo]) => {
                       const Icone = modulo.icone;
                       const qtdPerms = contarPermissoesModulo(moduloId);
