@@ -43,6 +43,8 @@ import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
 import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
+const CaixaPDVCompleto = React.lazy(() => import("../components/financeiro/CaixaPDVCompleto"));
+const GestaoRemessaRetorno = React.lazy(() => import("../components/financeiro/GestaoRemessaRetorno"));
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -330,12 +332,20 @@ export default function Financeiro() {
             <BarChart3 className="w-4 h-4 mr-2" />
             Dashboard Realtime
           </TabsTrigger>
-          <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+          <TabsTrigger value="caixa-pdv" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
             <Wallet className="w-4 h-4 mr-2" />
+            💰 Caixa PDV
+          </TabsTrigger>
+          <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <DollarSign className="w-4 h-4 mr-2" />
             Caixa e Liquidação
             {ordensLiquidacaoPendentes > 0 && (
               <Badge className="ml-2 bg-orange-500 text-white">{ordensLiquidacaoPendentes}</Badge>
             )}
+          </TabsTrigger>
+          <TabsTrigger value="remessa-retorno" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <FileText className="w-4 h-4 mr-2" />
+            Remessa/Retorno CNAB
           </TabsTrigger>
           <TabsTrigger value="contas-receber" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
@@ -375,8 +385,69 @@ export default function Financeiro() {
           <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} />
         </TabsContent>
 
+        <TabsContent value="caixa-pdv">
+          <Card className="border-0 shadow-md">
+            <CardContent className="p-6">
+              <div className="text-center space-y-4">
+                <p className="text-slate-600 mb-4">Abra o PDV em janela dedicada para melhor experiência</p>
+                <Button
+                  onClick={() => {
+                    openWindow(
+                      require('../components/financeiro/CaixaPDVCompleto').default,
+                      {
+                        empresaAtual: empresaAtual,
+                        windowMode: true
+                      },
+                      {
+                        title: '💰 Caixa PDV - ' + (empresaAtual?.nome_fantasia || 'Sistema'),
+                        width: 1400,
+                        height: 800,
+                        uniqueKey: `caixa-pdv-${empresaAtual?.id}`
+                      }
+                    );
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                  size="lg"
+                >
+                  <Wallet className="w-5 h-5 mr-2" />
+                  Abrir Caixa PDV
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="caixa-diario">
           <CaixaDiarioTab />
+        </TabsContent>
+
+        <TabsContent value="remessa-retorno">
+          <Card className="border-0 shadow-md">
+            <CardContent className="p-6">
+              <div className="text-center space-y-4">
+                <p className="text-slate-600 mb-4">Abra a gestão de Remessa/Retorno em janela dedicada</p>
+                <Button
+                  onClick={() => {
+                    openWindow(
+                      require('../components/financeiro/GestaoRemessaRetorno').default,
+                      { windowMode: true },
+                      {
+                        title: '🏦 Remessa e Retorno CNAB',
+                        width: 1400,
+                        height: 800,
+                        uniqueKey: 'gestao-remessa-retorno'
+                      }
+                    );
+                  }}
+                  className="bg-purple-600 hover:bg-purple-700"
+                  size="lg"
+                >
+                  <FileText className="w-5 h-5 mr-2" />
+                  Abrir Gestão CNAB
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="contas-receber">

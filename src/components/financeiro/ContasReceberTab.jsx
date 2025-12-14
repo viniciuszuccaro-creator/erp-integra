@@ -764,6 +764,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Canal Origem</TableHead>
                   <TableHead>Cobrança</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
@@ -813,6 +814,16 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                         <Badge className={statusColors[conta.status] || 'bg-gray-100 text-gray-800 border-gray-300'}>
                           {conta.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {conta.canal_origem || 'Manual'}
+                        </Badge>
+                        {conta.marketplace_origem && conta.marketplace_origem !== 'Nenhum' && (
+                          <Badge className="ml-1 bg-purple-100 text-purple-700 text-xs">
+                            {conta.marketplace_origem}
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
                         {conta.status_cobranca === "gerada_simulada" || conta.status_cobranca === "gerada" ? (
