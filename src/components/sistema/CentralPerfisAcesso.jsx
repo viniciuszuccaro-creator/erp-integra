@@ -27,13 +27,11 @@ import {
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { createPageUrl } from "@/utils";
-import { useWindow } from "@/components/lib/useWindow";
 import IAAnaliseSegurancaPerfis from "./IAAnaliseSegurancaPerfis";
 import TemplatesPerfisInteligentes, { TEMPLATES_PERFIS } from "./TemplatesPerfisInteligentes";
 import ComparadorPerfisVisual from "./ComparadorPerfisVisual";
 import DashboardSegurancaPerfis from "./DashboardSegurancaPerfis";
 import VisualizadorPermissoesPerfil from "./VisualizadorPermissoesPerfil";
-import FormularioPerfilAcessoCompleto from "./FormularioPerfilAcessoCompleto";
 
 /**
  * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% GRANULAR E COMPLETO
@@ -218,7 +216,6 @@ export default function CentralPerfisAcesso() {
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
   const { user } = usePermissions();
-  const { openWindow } = useWindow();
 
   // Queries
   const { data: perfis = [] } = useQuery({
@@ -421,43 +418,38 @@ export default function CentralPerfisAcesso() {
   };
 
   const abrirEdicaoPerfil = (perfil) => {
-    openWindow({
-      id: `perfil-${perfil.id || 'novo'}`,
-      title: perfil.id ? `Editar: ${perfil.nome_perfil}` : 'Novo Perfil de Acesso',
-      component: FormularioPerfilAcessoCompleto,
-      props: {
-        perfil: perfil,
-        empresaAtual: empresaAtual,
-        onSalvar: async (dados) => {
-          const perfilId = perfil.id;
-          if (perfilId && !perfil.novo) {
-            await base44.entities.PerfilAcesso.update(perfilId, dados);
-            toast.success("✅ Perfil atualizado com sucesso!");
-          } else {
-            await base44.entities.PerfilAcesso.create(dados);
-            toast.success("✅ Perfil criado com sucesso!");
-          }
-          queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
-        },
-        onCancelar: () => {}
-      },
-      defaultSize: { width: 1400, height: 900 }
+    const permissoes = perfil.permissoes || {};
+    
+    // EXPANDIR TODOS OS MÓDULOS (não apenas os com permissões)
+    const todosModulos = Object.keys(ESTRUTURA_SISTEMA);
+    setModulosExpandidos(todosModulos);
+    
+    setFormPerfil({
+      nome_perfil: perfil.nome_perfil || "",
+      descricao: perfil.descricao || "",
+      nivel_perfil: perfil.nivel_perfil || "Operacional",
+      permissoes: permissoes,
+      ativo: perfil.ativo !== false
     });
     
-    console.log("📂 Abrindo perfil em janela multitarefa:", perfil.nome_perfil);
+    setPerfilAberto(perfil);
+    setModoTemplate(false);
+    
+    console.log("📂 Abrindo perfil:", perfil.nome_perfil, "Permissões:", permissoes, "EXPANDINDO TODOS:", todosModulos);
   };
 
   const aplicarTemplate = (template) => {
-    abrirEdicaoPerfil({
-      novo: true,
+    setFormPerfil({
       nome_perfil: template.nome,
       descricao: template.descricao,
       nivel_perfil: template.nivel,
       permissoes: template.permissoes,
       ativo: true
     });
+    // Expandir todos os módulos para ver o que foi aplicado
+    setModulosExpandidos(Object.keys(ESTRUTURA_SISTEMA));
     setModoTemplate(false);
-    toast.success(`✅ Template "${template.nome}" aplicado! Configure e salve.`);
+    toast.success(`✅ Template "${template.nome}" aplicado! Todos os módulos expandidos para visualização.`);
   };
 
   const abrirComparador = () => {
@@ -702,7 +694,10 @@ export default function CentralPerfisAcesso() {
             </div>
             <Button
               onClick={() => {
-                abrirEdicaoPerfil({ novo: true });
+                resetForm();
+                setPerfilAberto({ novo: true });
+                // Expandir todos os módulos ao criar novo perfil
+                setModulosExpandidos(Object.keys(ESTRUTURA_SISTEMA));
               }}
               className="bg-blue-600 hover:bg-blue-700"
             >
@@ -1146,6 +1141,300 @@ export default function CentralPerfisAcesso() {
               Concluir Configuração
             </Button>
           </div>
+        </Card>
+      )}
+
+      {/* MODAL: EDITAR/CRIAR PERFIL - TELA COMPLETA MULTITAREFA */}
+      {perfilAberto && (
+        <Card className="fixed inset-4 z-[9999999] bg-white shadow-2xl flex flex-col">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-b sticky top-0 z-20">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="w-6 h-6" />
+                {perfilAberto.novo ? 'Novo Perfil de Acesso' : `Editar: ${perfilAberto.nome_perfil}`}
+                {contarPermissoesTotal() > 0 && (
+                  <Badge className="bg-white/20 text-white ml-2">
+                    {contarPermissoesTotal()} permissões selecionadas
+                  </Badge>
+                )}
+              </CardTitle>
+              <Button variant="ghost" onClick={() => setPerfilAberto(null)} className="text-white hover:bg-white/20">
+                ✕
+              </Button>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="flex-1 overflow-auto p-6">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!formPerfil.nome_perfil) {
+                toast.error("❌ Nome do perfil é obrigatório");
+                return;
+              }
+              
+              const dadosSalvar = {
+                ...formPerfil,
+                group_id: empresaAtual?.group_id || null
+              };
+              
+              console.log("💾 Enviando para salvar:", dadosSalvar);
+              salvarPerfilMutation.mutate(dadosSalvar);
+            }} className="space-y-6 h-full flex flex-col">
+              {/* Dados Básicos */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div>
+                  <Label>Nome do Perfil *</Label>
+                  <Input
+                    value={formPerfil.nome_perfil}
+                    onChange={(e) => setFormPerfil({ ...formPerfil, nome_perfil: e.target.value })}
+                    placeholder="Ex: Vendedor, Gerente Financeiro"
+                    className="mt-1"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>Nível</Label>
+                  <Select
+                    value={formPerfil.nivel_perfil}
+                    onValueChange={(v) => setFormPerfil({ ...formPerfil, nivel_perfil: v })}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Administrador">Administrador</SelectItem>
+                      <SelectItem value="Gerencial">Gerencial</SelectItem>
+                      <SelectItem value="Operacional">Operacional</SelectItem>
+                      <SelectItem value="Consulta">Consulta</SelectItem>
+                      <SelectItem value="Personalizado">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Switch
+                      checked={formPerfil.ativo}
+                      onCheckedChange={(v) => setFormPerfil({ ...formPerfil, ativo: v })}
+                    />
+                    <span className="text-sm">{formPerfil.ativo ? 'Ativo' : 'Inativo'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label>Descrição</Label>
+                <Textarea
+                  value={formPerfil.descricao}
+                  onChange={(e) => setFormPerfil({ ...formPerfil, descricao: e.target.value })}
+                  placeholder="Descreva as responsabilidades deste perfil"
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+
+              {/* IA de Análise de Segurança */}
+              {!perfilAberto?.novo && perfilAberto?.id && (
+                <IAAnaliseSegurancaPerfis perfil={perfilAberto} usuarios={usuarios} />
+              )}
+
+              {/* PERMISSÕES GRANULARES */}
+              <div className="flex-1 overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between mb-4">
+                  <Label className="text-lg font-bold">Permissões Granulares por Módulo</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={selecionarTudoGlobal}
+                    className="text-sm"
+                  >
+                    <CheckSquare className="w-4 h-4 mr-2" />
+                    Selecionar/Desmarcar Tudo
+                  </Button>
+                </div>
+
+                <Alert className="mb-4 border-blue-200 bg-blue-50">
+                  <Info className="w-4 h-4 text-blue-600" />
+                  <AlertDescription className="text-sm text-blue-800 space-y-1">
+                    <div>
+                      <strong>✅ Todos os {Object.keys(ESTRUTURA_SISTEMA).length} módulos expandidos abaixo ↓</strong>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-600 text-white">
+                        {contarPermissoesTotal()} permissões ativas
+                      </Badge>
+                      <Badge className="bg-blue-100 text-blue-700">
+                        {Object.keys(formPerfil.permissoes).filter(m => contarPermissoesModulo(m) > 0).length}/{Object.keys(ESTRUTURA_SISTEMA).length} módulos configurados
+                      </Badge>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex-1 overflow-auto border rounded-lg bg-slate-50">
+                  <Accordion type="multiple" value={modulosExpandidos} onValueChange={setModulosExpandidos}>
+                    {Object.entries(ESTRUTURA_SISTEMA).map(([moduloId, modulo]) => {
+                      const Icone = modulo.icone;
+                      const qtdPerms = contarPermissoesModulo(moduloId);
+                      const temPermissoes = qtdPerms > 0;
+                      
+                      return (
+                        <AccordionItem key={moduloId} value={moduloId} className={`border-b ${temPermissoes ? 'bg-blue-50/30' : ''}`}>
+                          <AccordionTrigger className={`px-4 py-3 hover:bg-white/50 ${temPermissoes ? 'font-bold' : ''}`}>
+                            <div className="flex items-center gap-3 flex-1">
+                              <Icone className={`w-5 h-5 text-${modulo.cor}-600`} />
+                              <span className={temPermissoes ? 'font-bold' : 'font-medium'}>{modulo.nome}</span>
+                              {temPermissoes ? (
+                                <Badge className="bg-green-600 text-white ml-2 shadow-md">
+                                  ✓ {qtdPerms} ativas
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-slate-200 text-slate-500 ml-2">
+                                  0
+                                </Badge>
+                              )}
+                              <div className="ml-auto mr-4">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    selecionarTudoModulo(moduloId);
+                                  }}
+                                  className="text-xs"
+                                >
+                                  <CheckSquare className="w-3 h-3 mr-1" />
+                                  Tudo
+                                </Button>
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4 pb-4">
+                            <div className="space-y-3">
+                              {Object.entries(modulo.secoes).map(([secaoId, secao]) => {
+                                const qtdSecao = formPerfil.permissoes?.[moduloId]?.[secaoId]?.length || 0;
+                                const temPermissoesSecao = qtdSecao > 0;
+                                
+                                return (
+                                  <Card key={secaoId} className={`border-2 ${temPermissoesSecao ? 'bg-green-50/50 border-green-300' : 'bg-white'}`}>
+                                    <CardHeader className={`${temPermissoesSecao ? 'bg-green-100/50' : 'bg-slate-50'} border-b pb-3`}>
+                                      <div className="flex items-center justify-between">
+                                        <div>
+                                          <CardTitle className={`text-sm ${temPermissoesSecao ? 'font-bold' : 'font-semibold'}`}>
+                                            {temPermissoesSecao && <CheckCircle className="w-3.5 h-3.5 text-green-600 inline mr-1" />}
+                                            {secao.nome}
+                                          </CardTitle>
+                                          {secao.abas?.length > 0 && (
+                                            <p className="text-xs text-slate-500 mt-1">
+                                              Abas: {secao.abas.join(", ")}
+                                            </p>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          {temPermissoesSecao ? (
+                                            <Badge className="bg-green-600 text-white shadow-sm">
+                                              ✓ {qtdSecao}/{ACOES.length}
+                                            </Badge>
+                                          ) : (
+                                            <Badge className="bg-slate-200 text-slate-500">
+                                              0/{ACOES.length}
+                                            </Badge>
+                                          )}
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => selecionarTudoSecao(moduloId, secaoId)}
+                                            className="h-6 px-2 text-xs"
+                                          >
+                                            <CheckSquare className="w-3 h-3 mr-1" />
+                                            Todas
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </CardHeader>
+                                    <CardContent className={`p-3 ${temPermissoesSecao ? 'bg-white' : ''}`}>
+                                      <div className="flex flex-wrap gap-2">
+                                        {ACOES.map(acao => {
+                                          const marcado = temPermissao(moduloId, secaoId, acao.id);
+                                          const IconeAcao = acao.icone;
+                                          
+                                          return (
+                                            <label
+                                              key={acao.id}
+                                              className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg border-2 text-xs transition-all shadow-sm ${
+                                                marcado
+                                                  ? `bg-gradient-to-r from-${acao.cor}-500 to-${acao.cor}-600 border-${acao.cor}-400 text-white font-bold shadow-md scale-105`
+                                                  : 'bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                                              }`}
+                                            >
+                                              <Checkbox
+                                                checked={marcado}
+                                                onCheckedChange={() => togglePermissao(moduloId, secaoId, acao.id)}
+                                                className={marcado ? 'border-white' : ''}
+                                              />
+                                              <IconeAcao className="w-4 h-4" />
+                                              <span className="font-semibold">{acao.nome}</span>
+                                              {marcado && <CheckCircle className="w-3 h-3 ml-1" />}
+                                            </label>
+                                          );
+                                        })}
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                );
+                              })}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
+                </div>
+              </div>
+
+              {/* Botões de Ação */}
+              <div className="flex justify-between items-center gap-3 pt-4 border-t mt-4 bg-white sticky bottom-0 pb-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge className="bg-gradient-to-r from-green-600 to-green-700 text-white shadow-md px-3 py-1.5">
+                    <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                    {contarPermissoesTotal()} permissões ativas
+                  </Badge>
+                  <Badge className="bg-blue-100 text-blue-700 px-3 py-1.5">
+                    {Object.keys(formPerfil.permissoes).filter(m => contarPermissoesModulo(m) > 0).length}/{Object.keys(ESTRUTURA_SISTEMA).length} módulos
+                  </Badge>
+                  {contarPermissoesTotal() === 0 && (
+                    <Badge className="bg-orange-100 text-orange-700 px-3 py-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 mr-1" />
+                      Nenhuma permissão selecionada
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex gap-3">
+                  <Button type="button" variant="outline" onClick={() => setPerfilAberto(null)}>
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={salvarPerfilMutation.isPending || !formPerfil.nome_perfil}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                  >
+                    {salvarPerfilMutation.isPending ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Salvar Perfil
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </CardContent>
         </Card>
       )}
 
