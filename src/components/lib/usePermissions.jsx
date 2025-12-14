@@ -15,47 +15,56 @@ export default function usePermissions() {
     enabled: !!user?.perfil_acesso_id
   });
 
-  const hasPermission = (module, action = "visualizar") => {
+  const hasPermission = (module, section, action = "visualizar") => {
     if (!user) return false;
     if (user.role === "admin") return true;
 
     if (!perfilAcesso?.permissoes) return false;
 
+    // ESTRUTURA GRANULAR: módulo → seção → [ações]
     const moduloPermissoes = perfilAcesso.permissoes[module];
     if (!moduloPermissoes) return false;
 
-    // Verifica permissão específica
-    if (action in moduloPermissoes) {
-      return moduloPermissoes[action] === true;
+    // Se não especificar seção, verifica se tem a ação em QUALQUER seção
+    if (!section) {
+      return Object.values(moduloPermissoes).some(secao => 
+        Array.isArray(secao) && secao.includes(action)
+      );
     }
 
-    // Fallback para permissão genérica
-    return moduloPermissoes.visualizar === true;
+    // Verifica permissão na seção específica
+    const secaoPermissoes = moduloPermissoes[section];
+    if (!Array.isArray(secaoPermissoes)) return false;
+
+    return secaoPermissoes.includes(action);
   };
 
-  const hasGranularPermission = (module, granularAction) => {
-    if (!user) return false;
-    if (user.role === "admin") return true;
-
-    if (!perfilAcesso?.permissoes) return false;
-
-    const moduloPermissoes = perfilAcesso.permissoes[module];
-    if (!moduloPermissoes) return false;
-
-    // Verifica permissão granular específica
-    return moduloPermissoes[granularAction] === true;
+  const hasGranularPermission = (module, section, action) => {
+    return hasPermission(module, section, action);
   };
 
   const isAdmin = () => {
     return user?.role === "admin";
   };
 
-  const canApprove = (module) => {
-    return hasPermission(module, 'aprovar');
+  const canApprove = (module, section = null) => {
+    return hasPermission(module, section, 'aprovar');
   };
 
-  const canDelete = (module) => {
-    return hasPermission(module, 'excluir');
+  const canDelete = (module, section = null) => {
+    return hasPermission(module, section, 'excluir');
+  };
+
+  const canCreate = (module, section = null) => {
+    return hasPermission(module, section, 'criar');
+  };
+
+  const canEdit = (module, section = null) => {
+    return hasPermission(module, section, 'editar');
+  };
+
+  const canExport = (module, section = null) => {
+    return hasPermission(module, section, 'exportar');
   };
 
   return {
@@ -64,6 +73,9 @@ export default function usePermissions() {
     isAdmin,
     canApprove,
     canDelete,
+    canCreate,
+    canEdit,
+    canExport,
     isLoading: loadingUser || loadingPerfil,
     user,
     perfilAcesso
