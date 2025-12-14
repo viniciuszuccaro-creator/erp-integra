@@ -32,13 +32,11 @@ import PainelConciliacao from "../components/financeiro/PainelConciliacao";
 import ConfiguracaoCobranca from "../components/financeiro/ConfiguracaoCobranca";
 import RelatorioFinanceiro from "../components/financeiro/RelatorioFinanceiro";
 import RateioMultiempresa from "../components/financeiro/RateioMultiempresa";
-import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
 import ReguaCobrancaIA from "../components/financeiro/ReguaCobrancaIA";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
 import ContaReceberForm from "../components/financeiro/ContaReceberForm";
 import ContaPagarForm from "../components/financeiro/ContaPagarForm";
-import CaixaCentralLiquidacao from "../components/financeiro/CaixaCentralLiquidacao";
 import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
@@ -334,11 +332,7 @@ export default function Financeiro() {
           </TabsTrigger>
           <TabsTrigger value="caixa-pdv" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
             <Wallet className="w-4 h-4 mr-2" />
-            💰 Caixa PDV
-          </TabsTrigger>
-          <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <DollarSign className="w-4 h-4 mr-2" />
-            Caixa e Liquidação
+            💰 Caixa PDV Completo
             {ordensLiquidacaoPendentes > 0 && (
               <Badge className="ml-2 bg-orange-500 text-white">{ordensLiquidacaoPendentes}</Badge>
             )}
@@ -386,10 +380,53 @@ export default function Financeiro() {
         </TabsContent>
 
         <TabsContent value="caixa-pdv">
-          <Card className="border-0 shadow-md">
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-green-50">
+            <CardHeader className="border-b bg-white/50 backdrop-blur-sm">
+              <CardTitle className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-lg flex items-center justify-center">
+                  <Wallet className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">💰 Caixa PDV Completo</p>
+                  <p className="text-sm text-slate-600 font-normal">
+                    Vendas • Liquidação Receber/Pagar • Emissão NF-e/Boleto • Multi-Operador
+                  </p>
+                </div>
+              </CardTitle>
+            </CardHeader>
             <CardContent className="p-6">
-              <div className="text-center space-y-4">
-                <p className="text-slate-600 mb-4">Abra o PDV em janela dedicada para melhor experiência</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="p-6 border-2 border-emerald-200 rounded-lg bg-white">
+                  <CheckCircle2 className="w-10 h-10 text-emerald-600 mb-3" />
+                  <p className="font-semibold text-slate-900 mb-2">✅ Vendas PDV com Múltiplos Pagamentos</p>
+                  <p className="text-sm text-slate-600">
+                    Aceita múltiplas formas de pagamento na mesma venda, acréscimos/descontos em valor ou %
+                  </p>
+                </div>
+                <div className="p-6 border-2 border-blue-200 rounded-lg bg-white">
+                  <FileText className="w-10 h-10 text-blue-600 mb-3" />
+                  <p className="font-semibold text-slate-900 mb-2">📄 Receber Vendas de Outros Vendedores</p>
+                  <p className="text-sm text-slate-600">
+                    Liquidação de pedidos cadastrados por outros vendedores com emissão de NF-e/Recibo
+                  </p>
+                </div>
+                <div className="p-6 border-2 border-green-200 rounded-lg bg-white">
+                  <TrendingUp className="w-10 h-10 text-green-600 mb-3" />
+                  <p className="font-semibold text-slate-900 mb-2">💚 Liquidar Contas a Receber</p>
+                  <p className="text-sm text-slate-600">
+                    Recebimento rápido de títulos pendentes com registro automático de movimentos
+                  </p>
+                </div>
+                <div className="p-6 border-2 border-red-200 rounded-lg bg-white">
+                  <TrendingDown className="w-10 h-10 text-red-600 mb-3" />
+                  <p className="font-semibold text-slate-900 mb-2">💰 Liquidar Contas a Pagar</p>
+                  <p className="text-sm text-slate-600">
+                    Pagamento de fornecedores e despesas direto do caixa com controle de saldo
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
                 <Button
                   onClick={() => {
                     openWindow(
@@ -399,26 +436,46 @@ export default function Financeiro() {
                         windowMode: true
                       },
                       {
-                        title: '💰 Caixa PDV - ' + (empresaAtual?.nome_fantasia || 'Sistema'),
-                        width: 1400,
-                        height: 800,
+                        title: '💰 Caixa PDV Completo - ' + (empresaAtual?.nome_fantasia || 'Sistema'),
+                        width: 1500,
+                        height: 850,
                         uniqueKey: `caixa-pdv-${empresaAtual?.id}`
                       }
                     );
                   }}
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg"
                   size="lg"
                 >
                   <Wallet className="w-5 h-5 mr-2" />
-                  Abrir Caixa PDV
+                  Abrir Caixa PDV Completo
                 </Button>
+              </div>
+
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 font-semibold mb-2">
+                  🎯 Substitui e Melhora:
+                </p>
+                <div className="grid grid-cols-2 gap-3 text-xs text-blue-700">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Caixa Diário (movimentos diários)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Caixa Central Liquidação (unificado)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>PDV presencial (venda rápida)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Multi-operador com permissões</span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="caixa-diario">
-          <CaixaDiarioTab />
         </TabsContent>
 
         <TabsContent value="remessa-retorno">

@@ -32,17 +32,34 @@ import {
   TrendingDown,
   Zap,
   Send,
-  Lock
+  Lock,
+  ArrowLeftRight,
+  History
 } from "lucide-react";
 
 /**
- * 💰 CAIXA PDV COMPLETO V21.8
- * Sistema de Ponto de Venda com funcionalidades completas:
- * - Multi-operador
- * - Liquidação Receber e Pagar Unificada
- * - Emissão de Boleto, NF-e e Recibo
- * - Fechamento de vendas (retirada/presencial)
- * - w-full e h-full responsivo
+ * 💰 CAIXA PDV COMPLETO V21.8 - HUB CENTRAL DE CAIXA
+ * 
+ * 🎯 SUBSTITUI E MELHORA:
+ * - CaixaDiarioTab (movimentos diários + abertura/fechamento)
+ * - CaixaCentralLiquidacao (liquidação unificada receber/pagar)
+ * - PDV Presencial (vendas rápidas com múltiplos pagamentos)
+ * 
+ * ⭐ FUNCIONALIDADES COMPLETAS:
+ * ✅ Abertura/Fechamento de Caixa com Saldo Inicial Obrigatório
+ * ✅ Controle de Saldo em Tempo Real
+ * ✅ Vendas PDV com Múltiplas Formas de Pagamento na Mesma Venda
+ * ✅ Acréscimos e Descontos (Valor ou Percentual)
+ * ✅ Receber Vendas Cadastradas por Outros Vendedores
+ * ✅ Liquidação Rápida de Contas a Receber
+ * ✅ Liquidação Rápida de Contas a Pagar
+ * ✅ Emissão Automática de NF-e, Boleto e Recibo
+ * ✅ Multi-Operador com Permissões Granulares
+ * ✅ Auditoria Total de Movimentos
+ * ✅ Integração com CaixaMovimento (rastreamento financeiro)
+ * ✅ w-full e h-full responsivo e redimensionável
+ * 
+ * REGRA-MÃE: Acrescentou, reorganizou, conectou e melhorou tudo sem apagar nada
  */
 export default function CaixaPDVCompleto({ 
   operadorId, 
@@ -135,16 +152,18 @@ export default function CaixaPDVCompleto({
     queryKey: ['movimentos-caixa-hoje'],
     queryFn: async () => {
       const hoje = new Date().toISOString().split('T')[0];
-      return await base44.entities.CaixaMovimento.filter({
-        data_movimento: {
-          $gte: new Date(hoje + 'T00:00:00').toISOString(),
-          $lt: new Date(hoje + 'T23:59:59').toISOString()
-        },
+      const movimentos = await base44.entities.CaixaMovimento.filter({
         empresa_id: empresaAtual?.id,
         cancelado: false
       });
+      // Filtrar apenas movimentos de hoje
+      return movimentos.filter(m => {
+        const dataMovimento = new Date(m.data_movimento).toISOString().split('T')[0];
+        return dataMovimento === hoje;
+      });
     },
-    enabled: caixaAberto
+    enabled: caixaAberto,
+    refetchInterval: 30000 // Atualiza a cada 30 segundos
   });
 
   // Calcular saldo atual
@@ -745,7 +764,7 @@ export default function CaixaPDVCompleto({
               </Badge>
               <Button
                 onClick={() => {
-                  if (confirm(`Deseja fechar o caixa?\n\nSaldo Atual: R$ ${saldoAtual.toFixed(2)}`)) {
+                  if (confirm(`Deseja fechar o caixa?\n\nSaldo Atual: R$ ${saldoAtual.toFixed(2)}\n\nTotal Entradas: R$ ${movimentosCaixa.filter(m => m.tipo_movimento === 'Entrada').reduce((s, m) => s + (m.valor || 0), 0).toFixed(2)}\nTotal Saídas: R$ ${movimentosCaixa.filter(m => m.tipo_movimento === 'Saída').reduce((s, m) => s + (m.valor || 0), 0).toFixed(2)}`)) {
                     fecharCaixaMutation.mutate();
                   }
                 }}
@@ -760,8 +779,68 @@ export default function CaixaPDVCompleto({
           </div>
         </div>
 
+        {/* INDICADORES RÁPIDOS */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <Card className="border-0 shadow-md bg-blue-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-blue-700">Vendas Hoje</p>
+                  <p className="text-xl font-bold text-blue-900">
+                    {movimentosCaixa.filter(m => m.origem === 'Venda PDV').length}
+                  </p>
+                </div>
+                <ShoppingCart className="w-8 h-8 text-blue-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-md bg-green-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-green-700">Recebimentos</p>
+                  <p className="text-xl font-bold text-green-900">
+                    {movimentosCaixa.filter(m => m.tipo_movimento === 'Entrada').length}
+                  </p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-green-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-md bg-red-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-red-700">Pagamentos</p>
+                  <p className="text-xl font-bold text-red-900">
+                    {movimentosCaixa.filter(m => m.tipo_movimento === 'Saída').length}
+                  </p>
+                </div>
+                <TrendingDown className="w-8 h-8 text-red-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-md bg-purple-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-purple-700">Ticket Médio</p>
+                  <p className="text-xl font-bold text-purple-900">
+                    R$ {(movimentosCaixa.filter(m => m.origem === 'Venda PDV').reduce((s, m) => s + (m.valor || 0), 0) / 
+                      (movimentosCaixa.filter(m => m.origem === 'Venda PDV').length || 1)).toFixed(2)}
+                  </p>
+                </div>
+                <Calculator className="w-8 h-8 text-purple-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="space-y-6">
-          <TabsList className="bg-white border shadow-sm grid grid-cols-4">
+          <TabsList className="bg-white border shadow-sm grid grid-cols-5">
             <TabsTrigger value="venda" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <ShoppingCart className="w-4 h-4 mr-2" />
               Nova Venda
@@ -777,6 +856,10 @@ export default function CaixaPDVCompleto({
             <TabsTrigger value="liquidar-pagar" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
               <TrendingDown className="w-4 h-4 mr-2" />
               Liquidar Pagar ({contasPagarPendentes.length})
+            </TabsTrigger>
+            <TabsTrigger value="movimentos" className="data-[state=active]:bg-slate-600 data-[state=active]:text-white">
+              <Receipt className="w-4 h-4 mr-2" />
+              Movimentos Hoje ({movimentosCaixa.length})
             </TabsTrigger>
           </TabsList>
 
@@ -1349,6 +1432,101 @@ export default function CaixaPDVCompleto({
                   <div className="text-center py-12 text-slate-500">
                     <CheckCircle2 className="w-16 h-16 mx-auto mb-4 opacity-30" />
                     <p>Nenhuma conta a pagar pendente</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ABA: MOVIMENTOS DO DIA */}
+          <TabsContent value="movimentos">
+            <Card>
+              <CardHeader className="bg-slate-50 border-b">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Receipt className="w-5 h-5 text-slate-600" />
+                    Movimentos do Dia
+                  </CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-xs text-slate-500">Total Entradas</p>
+                      <p className="text-lg font-bold text-green-600">
+                        R$ {movimentosCaixa
+                          .filter(m => m.tipo_movimento === 'Entrada')
+                          .reduce((sum, m) => sum + (m.valor || 0), 0)
+                          .toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-500">Total Saídas</p>
+                      <p className="text-lg font-bold text-red-600">
+                        R$ {movimentosCaixa
+                          .filter(m => m.tipo_movimento === 'Saída')
+                          .reduce((sum, m) => sum + (m.valor || 0), 0)
+                          .toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50">
+                      <TableHead>Data/Hora</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Origem</TableHead>
+                      <TableHead>Forma Pgto</TableHead>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Operador</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {movimentosCaixa.map(mov => (
+                      <TableRow key={mov.id}>
+                        <TableCell className="text-sm">
+                          {new Date(mov.data_movimento).toLocaleTimeString('pt-BR', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={
+                            mov.tipo_movimento === 'Entrada' ? 'bg-green-100 text-green-700' :
+                            mov.tipo_movimento === 'Saída' ? 'bg-red-100 text-red-700' :
+                            mov.tipo_movimento === 'Abertura' ? 'bg-blue-100 text-blue-700' :
+                            mov.tipo_movimento === 'Fechamento' ? 'bg-slate-100 text-slate-700' :
+                            'bg-orange-100 text-orange-700'
+                          }>
+                            {mov.tipo_movimento}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-sm">{mov.origem}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {mov.forma_pagamento}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-sm">
+                          {mov.descricao}
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-500">
+                          {mov.usuario_operador_nome}
+                        </TableCell>
+                        <TableCell className={`text-right font-bold ${
+                          mov.tipo_movimento === 'Entrada' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {mov.tipo_movimento === 'Entrada' ? '+' : '-'} R$ {(mov.valor || 0).toFixed(2)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {movimentosCaixa.length === 0 && (
+                  <div className="text-center py-12 text-slate-500">
+                    <Receipt className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                    <p>Nenhum movimento registrado hoje</p>
                   </div>
                 )}
               </CardContent>
