@@ -507,55 +507,6 @@ export default function Cadastros() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      {/* HEADER */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-            <Stars className="w-8 h-8 text-purple-600" />
-            Cadastros Gerais V21.4
-          </h1>
-          <p className="text-slate-600 flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-blue-600">Hub Central Unificado</span>
-            <span>•</span>
-            <span>6 Blocos + Integrações</span>
-            <span>•</span>
-            <span>Multiempresa Total</span>
-            <span>•</span>
-            <span>28 IAs + Chatbot + Jobs</span>
-            <span>•</span>
-            <span className="font-semibold text-green-600">Zero Duplicação</span>
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Badge className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 shadow-lg">
-            <Stars className="w-4 h-4 mr-2" />
-            28 IAs Ativas
-          </Badge>
-        </div>
-      </div>
-
-      {/* ALERT DE REGRA-MÃE */}
-      <Alert className="border-purple-400 bg-gradient-to-r from-purple-50 via-blue-50 to-cyan-50 shadow-lg">
-        <Stars className="w-5 h-5 text-purple-600 animate-pulse" />
-        <AlertDescription className="text-sm text-purple-900">
-          <div className="flex items-center gap-2 flex-wrap">
-            <strong className="text-base">REGRA-MÃE V21.3:</strong>
-            <Badge className="bg-green-600 text-white">Acrescentar</Badge>
-            <span>•</span>
-            <Badge className="bg-blue-600 text-white">Reorganizar</Badge>
-            <span>•</span>
-            <Badge className="bg-purple-600 text-white">Conectar</Badge>
-            <span>•</span>
-            <Badge className="bg-amber-600 text-white">Melhorar</Badge>
-            <span className="mx-2">→</span>
-            <Badge className="bg-red-600 text-white">NUNCA APAGAR</Badge>
-          </div>
-          <div className="mt-2 text-xs text-slate-700">
-            47 Entidades • Multiempresa 100% • 6 Blocos + Integrações Unificadas • w-full/h-full total
-          </div>
-        </AlertDescription>
-      </Alert>
-
       {/* GERENCIADOR DE JANELAS ABERTAS */}
       <GerenciadorJanelas />
 
