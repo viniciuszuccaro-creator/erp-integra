@@ -122,12 +122,11 @@ export default function WindowModal({ window, children }) {
         isResizing ? 'cursor-se-resize transition-none' : ''
       } ${
         !isDragging && !isResizing ? 'transition-all duration-200' : ''
-      } ${
-        window.id === window.id && !window.isMinimized
-          ? 'border-blue-500 ring-4 ring-blue-200/50'
-          : 'border-slate-300'
       }`}
-      onClick={() => bringToFront(window.id)}
+      onClick={(e) => {
+        e.stopPropagation();
+        bringToFront(window.id);
+      }}
     >
       {/* Header - CURSOR MOVE VISÍVEL */}
       <div
@@ -138,14 +137,20 @@ export default function WindowModal({ window, children }) {
         <h3 className="font-semibold text-sm truncate flex-1 pointer-events-none">{window.title}</h3>
         <div className="window-controls flex items-center gap-1">
           <button
-            onClick={() => minimizeWindow(window.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              minimizeWindow(window.id);
+            }}
             className="p-1.5 hover:bg-blue-800 rounded transition-colors"
             title="Minimizar"
           >
             <Minus className="w-4 h-4" />
           </button>
           <button
-            onClick={() => toggleMaximize(window.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleMaximize(window.id);
+            }}
             className="p-1.5 hover:bg-blue-800 rounded transition-colors"
             title={window.isMaximized ? 'Restaurar' : 'Maximizar'}
           >
@@ -156,7 +161,10 @@ export default function WindowModal({ window, children }) {
             )}
           </button>
           <button
-            onClick={() => closeWindow(window.id)}
+            onClick={(e) => {
+              e.stopPropagation();
+              closeWindow(window.id);
+            }}
             className="p-1.5 hover:bg-red-600 rounded transition-colors"
             title="Fechar"
           >
