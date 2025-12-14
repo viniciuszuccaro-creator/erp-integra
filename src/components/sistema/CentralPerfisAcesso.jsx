@@ -295,7 +295,7 @@ export default function CentralPerfisAcesso() {
     openWindow({
       id: `perfil-${perfil.id || 'novo'}`,
       title: perfil.novo ? '✨ Novo Perfil de Acesso' : `✏️ Editar: ${perfil.nome_perfil}`,
-      component: () => import('./FormularioPerfilAcesso'),
+      component: FormularioPerfilAcesso,
       props: {
         perfil: perfil,
         estruturaSistema: ESTRUTURA_SISTEMA,
@@ -316,7 +316,7 @@ export default function CentralPerfisAcesso() {
     openWindow({
       id: `perfil-template-${Date.now()}`,
       title: `✨ Novo Perfil (Template: ${template.nome})`,
-      component: () => import('./FormularioPerfilAcesso'),
+      component: FormularioPerfilAcesso,
       props: {
         perfil: { 
           novo: true,
