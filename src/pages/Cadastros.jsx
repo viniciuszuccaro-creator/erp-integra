@@ -96,6 +96,7 @@ import ModeloDocumentoForm from "../components/cadastros/ModeloDocumentoForm";
 import SegmentoClienteForm from "../components/cadastros/SegmentoClienteForm";
 import CondicaoComercialForm from "../components/cadastros/CondicaoComercialForm";
 import UnidadeMedidaForm from "../components/cadastros/UnidadeMedidaForm";
+import OperadorCaixaForm from "../components/cadastros/OperadorCaixaForm";
 import PlanoContasForm from "../components/cadastros/PlanoContasForm";
 import TipoDespesaForm from "../components/cadastros/TipoDespesaForm";
 import ParametroPortalClienteForm from "../components/cadastros/ParametroPortalClienteForm";
@@ -245,6 +246,11 @@ export default function Cadastros() {
   const { data: formasPagamento = [] } = useQuery({
     queryKey: ['formas-pagamento'],
     queryFn: () => base44.entities.FormaPagamento.list(),
+  });
+
+  const { data: operadoresCaixa = [] } = useQuery({
+    queryKey: ['operadores-caixa'],
+    queryFn: () => base44.entities.OperadorCaixa.list(),
   });
 
   const { data: planoContas = [] } = useQuery({
@@ -2130,6 +2136,124 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                    </CardContent>
+                  </Card>
+
+                  {/* OPERADORES DE CAIXA - V21.8 NOVO */}
+                  <Card className="border-emerald-200 lg:col-span-2">
+                    <CardHeader className="bg-gradient-to-r from-emerald-50 to-green-50 border-b border-emerald-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-emerald-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'OperadorCaixa',
+                              tituloDisplay: 'Operadores de Caixa',
+                              icone: Wallet,
+                              camposPrincipais: ['usuario_nome', 'nome_caixa', 'status_caixa', 'saldo_atual', 'ativo'],
+                              componenteEdicao: OperadorCaixaForm,
+                              windowMode: true
+                            },
+                            { title: '💰 Todos os Operadores de Caixa', width: 1400, height: 800, zIndex: 50000 }
+                          )}
+                        >
+                          <Wallet className="w-5 h-5 text-emerald-600" />
+                          💰 Operadores de Caixa PDV ({operadoresCaixa.length})
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            openWindow(OperadorCaixaForm, {
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('OperadorCaixa', 'operadores-caixa')
+                            }, {
+                              title: '💰 Novo Operador de Caixa',
+                              width: 900,
+                              height: 700
+                            });
+                          }}
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                          disabled={!hasPermission('financeiro', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo Operador
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <p className="text-sm text-slate-600 mb-4">
+                        Configure operadores para o Caixa PDV com permissões específicas, limites de desconto e controle de acesso
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-4 border-2 border-emerald-200 rounded-lg bg-emerald-50">
+                          <Wallet className="w-8 h-8 text-emerald-600 mb-2" />
+                          <p className="font-semibold text-emerald-900">Multi-Operador</p>
+                          <p className="text-xs text-emerald-700">Vários caixas simultâneos</p>
+                        </div>
+                        <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
+                          <Shield className="w-8 h-8 text-blue-600 mb-2" />
+                          <p className="font-semibold text-blue-900">Controle Granular</p>
+                          <p className="text-xs text-blue-700">Permissões por operador</p>
+                        </div>
+                        <div className="p-4 border-2 border-purple-200 rounded-lg bg-purple-50">
+                          <CheckCircle2 className="w-8 h-8 text-purple-600 mb-2" />
+                          <p className="font-semibold text-purple-900">Auditoria Total</p>
+                          <p className="text-xs text-purple-700">Todas ações rastreadas</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* OPERADORES DE CAIXA - LISTA */}
+                  <Card className="border-emerald-200">
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {operadoresCaixa.map(op => (
+                        <div key={op.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{op.usuario_nome}</p>
+                            <div className="flex gap-2 mt-1 flex-wrap">
+                              <Badge variant="outline" className="text-xs">{op.nome_caixa}</Badge>
+                              <Badge className={
+                                op.status_caixa === 'Aberto' ? 'bg-green-100 text-green-700' :
+                                op.status_caixa === 'Fechado' ? 'bg-slate-100 text-slate-700' :
+                                'bg-orange-100 text-orange-700'
+                              }>
+                                {op.status_caixa}
+                              </Badge>
+                              {op.saldo_atual > 0 && (
+                                <Badge className="bg-emerald-100 text-emerald-700 text-xs">
+                                  R$ {op.saldo_atual.toFixed(2)}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(OperadorCaixaForm, {
+                              operador: op,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('OperadorCaixa', 'operadores-caixa')
+                            }, {
+                              title: `💰 Editar: ${op.usuario_nome}`,
+                              width: 900,
+                              height: 700,
+                              uniqueKey: `edit-OperadorCaixa-${op.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
+                            })}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-4 h-4 text-emerald-600" />
+                          </Button>
+                        </div>
+                      ))}
+                      {operadoresCaixa.length === 0 && (
+                        <p className="text-center text-slate-500 py-8 text-sm">
+                          Nenhum operador cadastrado
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
 

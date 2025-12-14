@@ -31,7 +31,8 @@ import {
   TrendingUp,
   TrendingDown,
   Zap,
-  Send
+  Send,
+  Lock
 } from "lucide-react";
 
 /**
@@ -752,7 +753,7 @@ export default function CaixaPDVCompleto({
                 className="border-red-300 text-red-600 hover:bg-red-50"
                 disabled={fecharCaixaMutation.isPending}
               >
-                <DollarSign className="w-4 h-4 mr-2" />
+                <Lock className="w-4 h-4 mr-2" />
                 Fechar Caixa
               </Button>
             </div>

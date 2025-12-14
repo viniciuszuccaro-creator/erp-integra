@@ -11,8 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Wallet, Save, X } from "lucide-react";
 import { toast } from "sonner";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function OperadorCaixaForm({ operador, onSubmit, onCancel, windowMode = false }) {
+  const { empresaAtual } = useContextoVisual();
   const [formData, setFormData] = useState({
     usuario_id: "",
     usuario_nome: "",
@@ -29,7 +31,7 @@ export default function OperadorCaixaForm({ operador, onSubmit, onCancel, window
     limite_valor_venda: 0,
     observacoes: "",
     ativo: true,
-    empresa_id: ""
+    empresa_id: empresaAtual?.id || ""
   });
 
   const { data: colaboradores = [] } = useQuery({
