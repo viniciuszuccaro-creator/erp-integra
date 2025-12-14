@@ -27,11 +27,13 @@ import {
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { createPageUrl } from "@/utils";
+import { useWindow } from "@/components/lib/useWindow";
 import IAAnaliseSegurancaPerfis from "./IAAnaliseSegurancaPerfis";
 import TemplatesPerfisInteligentes, { TEMPLATES_PERFIS } from "./TemplatesPerfisInteligentes";
 import ComparadorPerfisVisual from "./ComparadorPerfisVisual";
 import DashboardSegurancaPerfis from "./DashboardSegurancaPerfis";
 import VisualizadorPermissoesPerfil from "./VisualizadorPermissoesPerfil";
+import FormularioPerfilAcessoCompleto from "./FormularioPerfilAcessoCompleto";
 
 /**
  * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% GRANULAR E COMPLETO
@@ -216,6 +218,7 @@ export default function CentralPerfisAcesso() {
   const queryClient = useQueryClient();
   const { empresaAtual, empresasDoGrupo, estaNoGrupo } = useContextoVisual();
   const { user } = usePermissions();
+  const { openWindow } = useWindow();
 
   // Queries
   const { data: perfis = [] } = useQuery({
@@ -418,38 +421,43 @@ export default function CentralPerfisAcesso() {
   };
 
   const abrirEdicaoPerfil = (perfil) => {
-    const permissoes = perfil.permissoes || {};
-    
-    // EXPANDIR TODOS OS MÓDULOS (não apenas os com permissões)
-    const todosModulos = Object.keys(ESTRUTURA_SISTEMA);
-    setModulosExpandidos(todosModulos);
-    
-    setFormPerfil({
-      nome_perfil: perfil.nome_perfil || "",
-      descricao: perfil.descricao || "",
-      nivel_perfil: perfil.nivel_perfil || "Operacional",
-      permissoes: permissoes,
-      ativo: perfil.ativo !== false
+    openWindow({
+      id: `perfil-${perfil.id || 'novo'}`,
+      title: perfil.id ? `Editar: ${perfil.nome_perfil}` : 'Novo Perfil de Acesso',
+      component: FormularioPerfilAcessoCompleto,
+      props: {
+        perfil: perfil,
+        empresaAtual: empresaAtual,
+        onSalvar: async (dados) => {
+          const perfilId = perfil.id;
+          if (perfilId && !perfil.novo) {
+            await base44.entities.PerfilAcesso.update(perfilId, dados);
+            toast.success("✅ Perfil atualizado com sucesso!");
+          } else {
+            await base44.entities.PerfilAcesso.create(dados);
+            toast.success("✅ Perfil criado com sucesso!");
+          }
+          queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
+        },
+        onCancelar: () => {}
+      },
+      defaultSize: { width: 1400, height: 900 }
     });
     
-    setPerfilAberto(perfil);
-    setModoTemplate(false);
-    
-    console.log("📂 Abrindo perfil:", perfil.nome_perfil, "Permissões:", permissoes, "EXPANDINDO TODOS:", todosModulos);
+    console.log("📂 Abrindo perfil em janela multitarefa:", perfil.nome_perfil);
   };
 
   const aplicarTemplate = (template) => {
-    setFormPerfil({
+    abrirEdicaoPerfil({
+      novo: true,
       nome_perfil: template.nome,
       descricao: template.descricao,
       nivel_perfil: template.nivel,
       permissoes: template.permissoes,
       ativo: true
     });
-    // Expandir todos os módulos para ver o que foi aplicado
-    setModulosExpandidos(Object.keys(ESTRUTURA_SISTEMA));
     setModoTemplate(false);
-    toast.success(`✅ Template "${template.nome}" aplicado! Todos os módulos expandidos para visualização.`);
+    toast.success(`✅ Template "${template.nome}" aplicado! Configure e salve.`);
   };
 
   const abrirComparador = () => {
@@ -694,10 +702,7 @@ export default function CentralPerfisAcesso() {
             </div>
             <Button
               onClick={() => {
-                resetForm();
-                setPerfilAberto({ novo: true });
-                // Expandir todos os módulos ao criar novo perfil
-                setModulosExpandidos(Object.keys(ESTRUTURA_SISTEMA));
+                abrirEdicaoPerfil({ novo: true });
               }}
               className="bg-blue-600 hover:bg-blue-700"
             >
