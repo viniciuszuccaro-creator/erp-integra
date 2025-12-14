@@ -12,12 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Wallet, ShoppingCart, CheckCircle2, Trash2, Plus } from "lucide-react";
+import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 
 export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState("venda");
   const [carrinho, setCarrinho] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  const [formasPagamento, setFormasPagamento] = useState([{ forma: "Dinheiro", valor: 0, parcelas: 1 }]);
+  const [formasPagamentoVenda, setFormasPagamentoVenda] = useState([{ forma_id: null, forma_descricao: "Selecione", valor: 0, parcelas: 1 }]);
   const [desconto, setDesconto] = useState(0);
   const [tipoDesconto, setTipoDesconto] = useState("valor");
   const [acrescimo, setAcrescimo] = useState(0);
@@ -31,6 +32,10 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
   const [saldoInicial, setSaldoInicial] = useState(0);
   
   const queryClient = useQueryClient();
+  
+  // Hook centralizado de formas de pagamento
+  const { formasPagamento, obterFormasPorContexto, obterConfiguracao, isLoading: loadingFormas } = useFormasPagamento({ empresa_id: empresaAtual?.id });
+  const formasPDV = obterFormasPorContexto('pdv');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -96,6 +101,8 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
     return acc;
   }, {});
 
+  const totalPago = formasPagamentoVenda.reduce((s, f) => s + (f.valor || 0), 0);
+
   const produtosFiltrados = produtos.filter(p =>
     p.descricao?.toLowerCase().includes(buscaProduto.toLowerCase())
   ).slice(0, 30);
@@ -112,7 +119,6 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
   const valorDesconto = tipoDesconto === 'percentual' ? (subtotal * desconto / 100) : desconto;
   const valorAcrescimo = tipoAcrescimo === 'percentual' ? (subtotal * acrescimo / 100) : acrescimo;
   const totalVenda = subtotal - valorDesconto + valorAcrescimo;
-  const totalPago = formasPagamento.reduce((s, f) => s + (f.valor || 0), 0);
   const troco = totalPago - totalVenda;
 
   const abrirCaixa = useMutation({
@@ -141,6 +147,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
       const pedido = await base44.entities.Pedido.create({
         empresa_id: empresaAtual?.id,
         numero_pedido: `PDV-${Date.now()}`,
+        forma_pagamento: formasPagamentoVenda.map(f => f.forma_descricao).join(', '),
         tipo: 'Pedido',
         origem_pedido: 'PDV Presencial',
         data_pedido: hoje,
@@ -194,16 +201,16 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
         });
       }
 
-      for (const fp of formasPagamento) {
-        if (fp.valor > 0) {
+      for (const fp of formasPagamentoVenda) {
+        if (fp.valor > 0 && fp.forma_id) {
           await base44.entities.CaixaMovimento.create({
             empresa_id: empresaAtual?.id,
             data_movimento: new Date().toISOString(),
             tipo_movimento: 'Entrada',
             origem: 'Venda PDV',
-            forma_pagamento: fp.forma,
+            forma_pagamento: fp.forma_descricao,
             valor: fp.valor,
-            descricao: `Venda ${pedido.numero_pedido} - Cliente: ${clienteSelecionado?.nome || 'Avulso'} - Pagto: ${fp.forma}${fp.parcelas > 1 ? ` (${fp.parcelas}x)` : ''}`,
+            descricao: `Venda ${pedido.numero_pedido} - Cliente: ${clienteSelecionado?.nome || 'Avulso'} - Pagto: ${fp.forma_descricao}${fp.parcelas > 1 ? ` (${fp.parcelas}x)` : ''}`,
             pedido_id: pedido.id,
             conta_receber_id: contaReceber?.id,
             usuario_operador_nome: user?.full_name,
@@ -216,7 +223,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
     },
     onSuccess: ({ pedido }) => {
       setCarrinho([]);
-      setFormasPagamento([{ forma: "Dinheiro", valor: 0, parcelas: 1 }]);
+      setFormasPagamentoVenda([{ forma_id: null, forma_descricao: "Selecione", valor: 0, parcelas: 1 }]);
       setClienteSelecionado(null);
       setDesconto(0);
       setAcrescimo(0);
@@ -548,42 +555,78 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                   </div>
 
                   <div className="space-y-2">
-                    {formasPagamento.map((fp, idx) => (
-                      <div key={idx} className="flex gap-1">
-                        <Select value={fp.forma} onValueChange={(v) => {
-                          const novas = [...formasPagamento];
-                          novas[idx].forma = v;
-                          setFormasPagamento(novas);
-                        }}>
-                          <SelectTrigger className="h-8 flex-1"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Dinheiro">💵 Dinheiro</SelectItem>
-                            <SelectItem value="PIX">⚡ PIX</SelectItem>
-                            <SelectItem value="Cartão Débito">💳 Débito</SelectItem>
-                            <SelectItem value="Cartão Crédito">💳 Crédito</SelectItem>
-                            <SelectItem value="Boleto">📄 Boleto</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Input type="number" step="0.01" value={fp.valor} onChange={(e) => {
-                          const novas = [...formasPagamento];
-                          novas[idx].valor = parseFloat(e.target.value) || 0;
-                          setFormasPagamento(novas);
-                        }} placeholder="Valor" className="h-8 w-24" />
-                        {(fp.forma === 'Cartão Crédito' || fp.forma === 'Cartão Débito') && (
-                          <Input type="number" min="1" value={fp.parcelas || 1} onChange={(e) => {
-                            const novas = [...formasPagamento];
-                            novas[idx].parcelas = parseInt(e.target.value) || 1;
-                            setFormasPagamento(novas);
-                          }} placeholder="Parc" className="h-8 w-16" />
-                        )}
-                        {formasPagamento.length > 1 && (
-                          <Button size="sm" variant="ghost" onClick={() => setFormasPagamento(formasPagamento.filter((_, i) => i !== idx))} className="h-8 w-8 p-0">
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    <Button size="sm" variant="outline" onClick={() => setFormasPagamento([...formasPagamento, { forma: "PIX", valor: 0, parcelas: 1 }])} className="w-full">
+                    {formasPagamentoVenda.map((fp, idx) => {
+                      const configForma = fp.forma_id ? obterConfiguracao(fp.forma_id) : null;
+                      const permiteParcelar = configForma?.permite_parcelar;
+
+                      return (
+                        <div key={idx} className="flex gap-1">
+                          <Select 
+                            value={fp.forma_id || ""} 
+                            onValueChange={(formaId) => {
+                              const forma = formasPDV.find(f => f.id === formaId);
+                              const novas = [...formasPagamentoVenda];
+                              novas[idx].forma_id = formaId;
+                              novas[idx].forma_descricao = forma?.descricao || "";
+                              novas[idx].parcelas = 1;
+                              setFormasPagamentoVenda(novas);
+                            }}
+                          >
+                            <SelectTrigger className="h-8 flex-1"><SelectValue placeholder="Forma" /></SelectTrigger>
+                            <SelectContent>
+                              {formasPDV.map(forma => (
+                                <SelectItem key={forma.id} value={forma.id}>
+                                  {forma.icone && `${forma.icone} `}{forma.descricao}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            value={fp.valor} 
+                            onChange={(e) => {
+                              const novas = [...formasPagamentoVenda];
+                              novas[idx].valor = parseFloat(e.target.value) || 0;
+                              setFormasPagamentoVenda(novas);
+                            }} 
+                            placeholder="Valor" 
+                            className="h-8 w-24" 
+                          />
+                          {permiteParcelar && (
+                            <Input 
+                              type="number" 
+                              min="1" 
+                              max={configForma?.max_parcelas || 12}
+                              value={fp.parcelas || 1} 
+                              onChange={(e) => {
+                                const novas = [...formasPagamentoVenda];
+                                novas[idx].parcelas = parseInt(e.target.value) || 1;
+                                setFormasPagamentoVenda(novas);
+                              }} 
+                              placeholder="Parc" 
+                              className="h-8 w-16" 
+                            />
+                          )}
+                          {formasPagamentoVenda.length > 1 && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost" 
+                              onClick={() => setFormasPagamentoVenda(formasPagamentoVenda.filter((_, i) => i !== idx))} 
+                              className="h-8 w-8 p-0"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => setFormasPagamentoVenda([...formasPagamentoVenda, { forma_id: null, forma_descricao: "Selecione", valor: 0, parcelas: 1 }])} 
+                      className="w-full"
+                    >
                       <Plus className="w-4 h-4 mr-1" /> Adicionar Forma
                     </Button>
                   </div>
