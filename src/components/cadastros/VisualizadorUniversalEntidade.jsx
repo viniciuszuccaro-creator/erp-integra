@@ -383,10 +383,7 @@ export default function VisualizadorUniversalEntidade({
             {/* ✅ NOVA ORDENAÇÃO AVANÇADA */}
             <Select value={ordenacao} onValueChange={setOrdenacao}>
               <SelectTrigger className="w-full sm:w-64">
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="w-4 h-4" />
-                  <SelectValue placeholder="Organizar por..." />
-                </div>
+                <SelectValue placeholder="Organizar por..." />
               </SelectTrigger>
               <SelectContent>
                 {opcoesOrdenacao.map(opcao => (
