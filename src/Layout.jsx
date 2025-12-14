@@ -55,7 +55,6 @@ import ZIndexGuard from "@/components/lib/ZIndexFix";
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
   { title: "Dashboard Corporativo", url: createPageUrl("DashboardCorporativo"), icon: BarChart3, group: "principal" },
-  { title: "📖 Guia de Uso", url: createPageUrl("GuiaUsoSistema"), icon: BookOpen, group: "principal" },
   { title: "Relatórios e Análises", url: createPageUrl("Relatorios"), icon: BarChart3, group: "principal" },
   { title: "Agenda e Calendário", url: createPageUrl("Agenda"), icon: Calendar, group: "principal" },
   { title: "CRM - Relacionamento", url: createPageUrl("CRM"), icon: Users, group: "principal" },
@@ -184,19 +183,7 @@ function LayoutContent({ children, currentPageName }) {
     return true;
   });
 
-  // Adicionar item de Validador do Sistema para admins
-  if (user?.role === 'admin') {
-    const temValidador = itemsFiltrados.some(item => item.title === 'Validador do Sistema');
-    if (!temValidador) {
-      itemsFiltrados.push({
-        title: '🔍 Validador do Sistema',
-        url: createPageUrl('ValidadorSistema'),
-        icon: Shield,
-        group: 'sistema',
-        adminOnly: true
-      });
-    }
-  }
+
 
   const groupedItems = {
     principal: itemsFiltrados.filter(item => item.group === "principal"),

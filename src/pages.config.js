@@ -24,8 +24,6 @@ import DemoMultitarefas from './pages/DemoMultitarefas';
 import Cadastros from './pages/Cadastros';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
 import HubAtendimento from './pages/HubAtendimento';
-import ValidadorSistema from './pages/ValidadorSistema';
-import GuiaUsoSistema from './pages/GuiaUsoSistema';
 import GerenciamentoAcessosCompleto from './pages/GerenciamentoAcessosCompleto';
 import __Layout from './Layout.jsx';
 
@@ -57,8 +55,6 @@ export const PAGES = {
     "Cadastros": Cadastros,
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
     "HubAtendimento": HubAtendimento,
-    "ValidadorSistema": ValidadorSistema,
-    "GuiaUsoSistema": GuiaUsoSistema,
     "GerenciamentoAcessosCompleto": GerenciamentoAcessosCompleto,
 }
 
