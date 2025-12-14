@@ -18,6 +18,8 @@ import usePermissions from "@/components/lib/usePermissions";
 import CentralAprovacoesManager from "../components/comercial/CentralAprovacoesManager";
 import PedidosEntregaTab from "../components/comercial/PedidosEntregaTab";
 import PedidosRetiradaTab from "../components/comercial/PedidosRetiradaTab";
+import VisualizadorUniversalEntidade from '../components/cadastros/VisualizadorUniversalEntidade';
+import CadastroClienteCompleto from '../components/cadastros/CadastroClienteCompleto';
 
 import { useKeyboardShortcuts } from '@/components/lib/keyboardShortcuts';
 import { Skeleton, TableSkeleton } from '@/components/ui/loading-skeleton';
@@ -225,7 +227,21 @@ export default function Comercial() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-md">
+        <Card 
+          className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer hover:scale-105"
+          onClick={() => openWindow(
+            VisualizadorUniversalEntidade,
+            {
+              nomeEntidade: 'Cliente',
+              tituloDisplay: 'Clientes',
+              icone: Users,
+              camposPrincipais: ['nome', 'razao_social', 'cnpj', 'cpf', 'status', 'email'],
+              componenteEdicao: CadastroClienteCompleto,
+              windowMode: true
+            },
+            { title: '👥 Todos os Clientes', width: 1400, height: 800, zIndex: 50000 }
+          )}
+        >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-slate-600">Clientes</CardTitle>
             <Users className="w-5 h-5 text-blue-600" />
