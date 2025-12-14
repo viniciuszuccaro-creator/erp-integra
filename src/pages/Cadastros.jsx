@@ -641,24 +641,24 @@ export default function Cadastros() {
               <AccordionContent className="p-6 bg-white">
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {/* CLIENTES */}
-                  <Card className="border-blue-200">
+                  <Card 
+                    className="border-blue-200 cursor-pointer hover:shadow-lg transition-all"
+                    onClick={() => openWindow(
+                      VisualizadorUniversalEntidade,
+                      {
+                        nomeEntidade: 'Cliente',
+                        tituloDisplay: 'Clientes',
+                        icone: Users,
+                        camposPrincipais: ['nome', 'razao_social', 'cnpj', 'cpf', 'status', 'email'],
+                        componenteEdicao: CadastroClienteCompleto,
+                        windowMode: true
+                      },
+                      { title: '👥 Todos os Clientes', width: 1400, height: 800, zIndex: 50000 }
+                    )}
+                  >
                     <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
-                        <CardTitle 
-                          className="text-base flex items-center gap-2 cursor-pointer hover:text-blue-700 transition-colors"
-                          onClick={() => openWindow(
-                            VisualizadorUniversalEntidade,
-                            {
-                              nomeEntidade: 'Cliente',
-                              tituloDisplay: 'Clientes',
-                              icone: Users,
-                              camposPrincipais: ['nome', 'razao_social', 'cnpj', 'cpf', 'status', 'email'],
-                              componenteEdicao: CadastroClienteCompleto,
-                              windowMode: true
-                            },
-                            { title: '👥 Todos os Clientes', width: 1400, height: 800, zIndex: 50000 }
-                          )}
-                        >
+                        <CardTitle className="text-base flex items-center gap-2">
                           <Users className="w-5 h-5 text-blue-600" />
                           Clientes ({clientesFiltrados.length})
                         </CardTitle>
