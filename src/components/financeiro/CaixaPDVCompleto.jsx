@@ -51,13 +51,23 @@ export default function CaixaPDVCompleto({
   const [abaAtiva, setAbaAtiva] = useState("venda");
   const [carrinho, setCarrinho] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  const [formaPagamento, setFormaPagamento] = useState("Dinheiro");
+  const [formasPagamentoVenda, setFormasPagamentoVenda] = useState([
+    { forma: "Dinheiro", valor: 0 }
+  ]);
+  const [acrescimo, setAcrescimo] = useState(0);
+  const [desconto, setDesconto] = useState(0);
+  const [tipoDesconto, setTipoDesconto] = useState("valor"); // valor ou percentual
+  const [tipoAcrescimo, setTipoAcrescimo] = useState("valor");
   const [valorPago, setValorPago] = useState(0);
   const [buscaProduto, setBuscaProduto] = useState("");
   const [buscaCliente, setBuscaCliente] = useState("");
   const [documentoFinal, setDocumentoFinal] = useState(null);
   const [dialogFinalizacao, setDialogFinalizacao] = useState(false);
   const [tipoDocumento, setTipoDocumento] = useState("recibo");
+  const [caixaAberto, setCaixaAberto] = useState(false);
+  const [saldoInicial, setSaldoInicial] = useState(0);
+  const [dialogAberturaCaixa, setDialogAberturaCaixa] = useState(true);
+  const [saldoAtual, setSaldoAtual] = useState(0);
   
   const queryClient = useQueryClient();
 
@@ -96,6 +106,48 @@ export default function CaixaPDVCompleto({
     queryFn: () => base44.entities.FormaPagamento.list(),
   });
 
+  const { data: pedidosReceber = [] } = useQuery({
+    queryKey: ['pedidos-receber'],
+    queryFn: async () => {
+      const pedidos = await base44.entities.Pedido.list();
+      return pedidos.filter(p => 
+        (p.status === 'Aprovado' || p.status === 'Pronto para Faturar') &&
+        p.forma_pagamento !== 'Dinheiro'
+      );
+    },
+  });
+
+  const { data: movimentosCaixa = [] } = useQuery({
+    queryKey: ['movimentos-caixa-hoje'],
+    queryFn: async () => {
+      const hoje = new Date().toISOString().split('T')[0];
+      return await base44.entities.CaixaMovimento.filter({
+        data_movimento: {
+          $gte: new Date(hoje + 'T00:00:00').toISOString(),
+          $lt: new Date(hoje + 'T23:59:59').toISOString()
+        },
+        empresa_id: empresaAtual?.id,
+        cancelado: false
+      });
+    },
+    enabled: caixaAberto
+  });
+
+  // Calcular saldo atual
+  useEffect(() => {
+    if (caixaAberto && movimentosCaixa) {
+      const totalEntradas = movimentosCaixa
+        .filter(m => m.tipo_movimento === 'Entrada')
+        .reduce((sum, m) => sum + (m.valor || 0), 0);
+      
+      const totalSaidas = movimentosCaixa
+        .filter(m => m.tipo_movimento === 'Saída')
+        .reduce((sum, m) => sum + (m.valor || 0), 0);
+      
+      setSaldoAtual(saldoInicial + totalEntradas - totalSaidas);
+    }
+  }, [movimentosCaixa, saldoInicial, caixaAberto]);
+
   // Filtros
   const produtosFiltrados = produtos.filter(p =>
     p.descricao?.toLowerCase().includes(buscaProduto.toLowerCase()) ||
@@ -117,11 +169,22 @@ export default function CaixaPDVCompleto({
   );
 
   // Cálculos do carrinho
-  const totalCarrinho = carrinho.reduce((sum, item) => 
+  const subtotalCarrinho = carrinho.reduce((sum, item) => 
     sum + (item.preco_venda * item.quantidade), 0
   );
 
-  const troco = valorPago - totalCarrinho;
+  const valorDesconto = tipoDesconto === 'percentual' 
+    ? (subtotalCarrinho * desconto / 100)
+    : desconto;
+
+  const valorAcrescimo = tipoAcrescimo === 'percentual'
+    ? (subtotalCarrinho * acrescimo / 100)
+    : acrescimo;
+
+  const totalCarrinho = subtotalCarrinho - valorDesconto + valorAcrescimo;
+
+  const totalPago = formasPagamentoVenda.reduce((sum, f) => sum + (f.valor || 0), 0);
+  const troco = totalPago - totalCarrinho;
 
   // Adicionar produto ao carrinho
   const adicionarProduto = (produto) => {
@@ -156,6 +219,61 @@ export default function CaixaPDVCompleto({
     }
   };
 
+  // Abrir caixa
+  const abrirCaixaMutation = useMutation({
+    mutationFn: async (saldoInicialInput) => {
+      await base44.entities.CaixaMovimento.create({
+        empresa_id: empresaAtual?.id,
+        data_movimento: new Date().toISOString(),
+        tipo_movimento: 'Abertura',
+        origem: 'Abertura Caixa',
+        forma_pagamento: 'Dinheiro',
+        valor: saldoInicialInput,
+        descricao: 'Abertura de Caixa',
+        usuario_operador_id: operador?.[0]?.usuario_id,
+        usuario_operador_nome: operador?.[0]?.usuario_nome,
+        caixa_aberto: true
+      });
+
+      if (operador?.[0]) {
+        await base44.entities.OperadorCaixa.update(operador[0].id, {
+          status_caixa: 'Aberto',
+          data_abertura: new Date().toISOString(),
+          saldo_inicial: saldoInicialInput,
+          saldo_atual: saldoInicialInput
+        });
+      }
+
+      return saldoInicialInput;
+    },
+    onSuccess: (saldoInicialInput) => {
+      setCaixaAberto(true);
+      setSaldoInicial(saldoInicialInput);
+      setSaldoAtual(saldoInicialInput);
+      setDialogAberturaCaixa(false);
+      queryClient.invalidateQueries({ queryKey: ['operador-caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['movimentos-caixa-hoje'] });
+      toast.success(`✅ Caixa aberto com saldo inicial de R$ ${saldoInicialInput.toFixed(2)}`);
+    }
+  });
+
+  // Adicionar forma de pagamento
+  const adicionarFormaPagamento = () => {
+    setFormasPagamentoVenda([...formasPagamentoVenda, { forma: "PIX", valor: 0 }]);
+  };
+
+  const removerFormaPagamento = (index) => {
+    if (formasPagamentoVenda.length > 1) {
+      setFormasPagamentoVenda(formasPagamentoVenda.filter((_, i) => i !== index));
+    }
+  };
+
+  const atualizarFormaPagamento = (index, campo, valor) => {
+    const novasFormas = [...formasPagamentoVenda];
+    novasFormas[index] = { ...novasFormas[index], [campo]: valor };
+    setFormasPagamentoVenda(novasFormas);
+  };
+
   // Finalizar venda
   const finalizarVendaMutation = useMutation({
     mutationFn: async ({ emitirNFe, emitirBoleto, gerarRecibo }) => {
@@ -181,16 +299,20 @@ export default function CaixaPDVCompleto({
           valor_unitario: item.preco_venda,
           valor_total: item.preco_venda * item.quantidade
         })),
-        valor_produtos: totalCarrinho,
+        valor_produtos: subtotalCarrinho,
+        desconto_geral_pedido_valor: valorDesconto,
         valor_total: totalCarrinho,
-        forma_pagamento: formaPagamento,
+        forma_pagamento: formasPagamentoVenda.map(f => f.forma).join(', '),
         status: 'Aprovado',
-        tipo_frete: 'Retirada'
+        tipo_frete: 'Retirada',
+        observacoes_publicas: valorAcrescimo > 0 ? `Acréscimo: R$ ${valorAcrescimo.toFixed(2)}` : ''
       });
 
       // 2. Criar conta a receber (se necessário)
       let contaReceber = null;
-      if (formaPagamento !== 'Dinheiro') {
+      const temPagamentoNaoDinheiro = formasPagamentoVenda.some(f => f.forma !== 'Dinheiro');
+      
+      if (temPagamentoNaoDinheiro) {
         contaReceber = await base44.entities.ContaReceber.create({
           empresa_id: empresaAtual?.id,
           descricao: `Venda PDV ${pedido.numero_pedido}`,
@@ -200,28 +322,32 @@ export default function CaixaPDVCompleto({
           valor: totalCarrinho,
           data_emissao: new Date().toISOString().split('T')[0],
           data_vencimento: new Date().toISOString().split('T')[0],
-          status: formaPagamento === 'Dinheiro' ? 'Recebido' : 'Pendente',
-          forma_recebimento: formaPagamento,
+          status: 'Recebido',
+          forma_recebimento: formasPagamentoVenda.map(f => f.forma).join(', '),
           canal_origem: 'PDV Presencial',
           origem_tipo: 'pedido'
         });
       }
 
-      // 3. Registrar movimento de caixa
-      await base44.entities.CaixaMovimento.create({
-        empresa_id: empresaAtual?.id,
-        data_movimento: new Date().toISOString(),
-        tipo_movimento: 'Entrada',
-        origem: 'Venda PDV',
-        forma_pagamento: formaPagamento,
-        valor: totalCarrinho,
-        descricao: `Venda ${pedido.numero_pedido} - ${clienteSelecionado?.nome || 'Cliente Avulso'}`,
-        pedido_id: pedido.id,
-        conta_receber_id: contaReceber?.id,
-        usuario_operador_id: operador?.[0]?.usuario_id,
-        usuario_operador_nome: operador?.[0]?.usuario_nome,
-        caixa_aberto: true
-      });
+      // 3. Registrar movimentos de caixa (um para cada forma de pagamento)
+      for (const formaPgto of formasPagamentoVenda) {
+        if (formaPgto.valor > 0) {
+          await base44.entities.CaixaMovimento.create({
+            empresa_id: empresaAtual?.id,
+            data_movimento: new Date().toISOString(),
+            tipo_movimento: 'Entrada',
+            origem: 'Venda PDV',
+            forma_pagamento: formaPgto.forma,
+            valor: formaPgto.valor,
+            descricao: `Venda ${pedido.numero_pedido} - ${clienteSelecionado?.nome || 'Cliente Avulso'} (${formaPgto.forma})`,
+            pedido_id: pedido.id,
+            conta_receber_id: contaReceber?.id,
+            usuario_operador_id: operador?.[0]?.usuario_id,
+            usuario_operador_nome: operador?.[0]?.usuario_nome,
+            caixa_aberto: true
+          });
+        }
+      }
 
       // 4. Emitir NF-e (se solicitado)
       let nfe = null;
@@ -279,15 +405,121 @@ export default function CaixaPDVCompleto({
       setDocumentoFinal({ pedido, nfe, boleto, gerarRecibo });
       setDialogFinalizacao(true);
       
-      // Limpar carrinho
+      // Limpar carrinho e formas de pagamento
       setCarrinho([]);
       setClienteSelecionado(null);
+      setFormasPagamentoVenda([{ forma: "Dinheiro", valor: 0 }]);
+      setDesconto(0);
+      setAcrescimo(0);
       setValorPago(0);
+      
+      queryClient.invalidateQueries({ queryKey: ['movimentos-caixa-hoje'] });
       
       toast.success("✅ Venda finalizada com sucesso!");
     },
     onError: (error) => {
       toast.error("Erro ao finalizar venda: " + error.message);
+    }
+  });
+
+  // Liquidar pedido existente (receber venda de outro vendedor)
+  const liquidarPedidoMutation = useMutation({
+    mutationFn: async ({ pedidoId, emitirNFe, gerarRecibo, formasPgto }) => {
+      const pedido = pedidosReceber.find(p => p.id === pedidoId);
+
+      // Atualizar pedido
+      await base44.entities.Pedido.update(pedidoId, {
+        status: 'Faturado',
+        forma_pagamento: formasPgto.map(f => f.forma).join(', ')
+      });
+
+      // Criar/atualizar conta a receber
+      let contaReceber = contasReceber.find(c => c.pedido_id === pedidoId);
+      
+      if (!contaReceber) {
+        contaReceber = await base44.entities.ContaReceber.create({
+          empresa_id: pedido.empresa_id,
+          descricao: `Liquidação Pedido ${pedido.numero_pedido}`,
+          cliente: pedido.cliente_nome,
+          cliente_id: pedido.cliente_id,
+          pedido_id: pedidoId,
+          valor: pedido.valor_total,
+          data_emissao: new Date().toISOString().split('T')[0],
+          data_vencimento: new Date().toISOString().split('T')[0],
+          status: 'Recebido',
+          data_recebimento: new Date().toISOString(),
+          valor_recebido: pedido.valor_total,
+          forma_recebimento: formasPgto.map(f => f.forma).join(', '),
+          canal_origem: pedido.origem_pedido || 'Manual',
+          origem_tipo: 'pedido'
+        });
+      } else {
+        await base44.entities.ContaReceber.update(contaReceber.id, {
+          status: 'Recebido',
+          data_recebimento: new Date().toISOString(),
+          valor_recebido: pedido.valor_total,
+          forma_recebimento: formasPgto.map(f => f.forma).join(', ')
+        });
+      }
+
+      // Registrar movimentos de caixa
+      for (const formaPgto of formasPgto) {
+        if (formaPgto.valor > 0) {
+          await base44.entities.CaixaMovimento.create({
+            empresa_id: pedido.empresa_id,
+            data_movimento: new Date().toISOString(),
+            tipo_movimento: 'Entrada',
+            origem: 'Liquidação Pedido',
+            forma_pagamento: formaPgto.forma,
+            valor: formaPgto.valor,
+            descricao: `Recebimento Pedido ${pedido.numero_pedido} - ${pedido.cliente_nome} (${formaPgto.forma})`,
+            pedido_id: pedidoId,
+            conta_receber_id: contaReceber.id,
+            usuario_operador_id: operador?.[0]?.usuario_id,
+            usuario_operador_nome: operador?.[0]?.usuario_nome,
+            caixa_aberto: true
+          });
+        }
+      }
+
+      // Emitir NF-e se solicitado
+      let nfe = null;
+      if (emitirNFe && pedido.cliente_id) {
+        nfe = await base44.entities.NotaFiscal.create({
+          empresa_faturamento_id: pedido.empresa_id,
+          numero: `${Date.now()}`,
+          serie: '1',
+          tipo: 'NF-e (Saída)',
+          cliente_fornecedor: pedido.cliente_nome,
+          cliente_fornecedor_id: pedido.cliente_id,
+          cliente_cpf_cnpj: pedido.cliente_cpf_cnpj,
+          pedido_id: pedidoId,
+          data_emissao: new Date().toISOString().split('T')[0],
+          valor_produtos: pedido.valor_produtos,
+          valor_total: pedido.valor_total,
+          itens: pedido.itens_revenda?.map((item, idx) => ({
+            numero_item: idx + 1,
+            produto_id: item.produto_id,
+            descricao: item.produto_descricao,
+            quantidade: item.quantidade,
+            unidade: item.unidade,
+            valor_unitario: item.valor_unitario,
+            valor_total: item.valor_total
+          })) || [],
+          status: 'Rascunho'
+        });
+      }
+
+      return { pedido, contaReceber, nfe, gerarRecibo };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos-receber'] });
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      queryClient.invalidateQueries({ queryKey: ['movimentos-caixa-hoje'] });
+      toast.success("✅ Pedido liquidado com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao liquidar pedido: " + error.message);
     }
   });
 
@@ -354,6 +586,74 @@ export default function CaixaPDVCompleto({
     ? "flex-1 overflow-auto p-6" 
     : "";
 
+  // Se caixa não está aberto, mostrar dialog de abertura
+  if (!caixaAberto) {
+    return (
+      <div className={containerClass}>
+        <Dialog open={dialogAberturaCaixa} onOpenChange={setDialogAberturaCaixa}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Wallet className="w-6 h-6 text-emerald-600" />
+                Abrir Caixa
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-4">
+                  <p className="text-sm text-blue-700 mb-2">
+                    <strong>Operador:</strong> {operador?.[0]?.usuario_nome || 'Sistema'}
+                  </p>
+                  <p className="text-sm text-blue-700 mb-2">
+                    <strong>Caixa:</strong> {operador?.[0]?.nome_caixa || 'Caixa Principal'}
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    <strong>Empresa:</strong> {empresaAtual?.nome_fantasia || empresaAtual?.razao_social}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <div>
+                <Label>Saldo Inicial do Caixa *</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={saldoInicial}
+                  onChange={(e) => setSaldoInicial(parseFloat(e.target.value) || 0)}
+                  placeholder="0.00"
+                  className="text-lg"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Digite o valor em dinheiro disponível para iniciar o caixa
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  onClick={() => {
+                    if (saldoInicial >= 0) {
+                      abrirCaixaMutation.mutate(saldoInicial);
+                    } else {
+                      toast.error("Saldo inicial deve ser maior ou igual a zero");
+                    }
+                  }}
+                  disabled={abrirCaixaMutation.isPending}
+                  className="bg-emerald-600 hover:bg-emerald-700 w-full"
+                  size="lg"
+                >
+                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  {abrirCaixaMutation.isPending ? 'Abrindo...' : 'Abrir Caixa'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
   return (
     <div className={containerClass}>
       <div className={contentClass}>
@@ -371,18 +671,30 @@ export default function CaixaPDVCompleto({
                 </p>
               </div>
             </div>
-            <Badge className="bg-green-100 text-green-700 px-4 py-2">
-              <Clock className="w-4 h-4 mr-2" />
-              Caixa Aberto
-            </Badge>
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-xs text-slate-500">Saldo do Caixa</p>
+                <p className="text-2xl font-bold text-emerald-600">
+                  R$ {saldoAtual.toFixed(2)}
+                </p>
+              </div>
+              <Badge className="bg-green-100 text-green-700 px-4 py-2">
+                <Clock className="w-4 h-4 mr-2" />
+                Caixa Aberto
+              </Badge>
+            </div>
           </div>
         </div>
 
         <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="space-y-6">
-          <TabsList className="bg-white border shadow-sm grid grid-cols-3">
+          <TabsList className="bg-white border shadow-sm grid grid-cols-4">
             <TabsTrigger value="venda" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <ShoppingCart className="w-4 h-4 mr-2" />
               Nova Venda
+            </TabsTrigger>
+            <TabsTrigger value="receber-pedidos" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+              <FileText className="w-4 h-4 mr-2" />
+              Receber Pedidos ({pedidosReceber.length})
             </TabsTrigger>
             <TabsTrigger value="liquidar-receber" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
               <TrendingUp className="w-4 h-4 mr-2" />
@@ -520,46 +832,154 @@ export default function CaixaPDVCompleto({
                       </span>
                     </div>
 
-                    {/* Forma de Pagamento */}
-                    <div className="space-y-3">
-                      <div>
-                        <Label>Forma de Pagamento</Label>
-                        <Select value={formaPagamento} onValueChange={setFormaPagamento}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Dinheiro">💵 Dinheiro</SelectItem>
-                            <SelectItem value="PIX">⚡ PIX</SelectItem>
-                            <SelectItem value="Cartão Débito">💳 Débito</SelectItem>
-                            <SelectItem value="Cartão Crédito">💳 Crédito</SelectItem>
-                            <SelectItem value="Boleto">📄 Boleto</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {formaPagamento === 'Dinheiro' && (
-                        <>
-                          <div>
-                            <Label>Valor Pago</Label>
+                    {/* Acréscimos e Descontos */}
+                    <div className="space-y-3 border-t pt-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Desconto</Label>
+                          <div className="flex gap-1">
                             <Input
                               type="number"
                               step="0.01"
-                              value={valorPago}
-                              onChange={(e) => setValorPago(parseFloat(e.target.value) || 0)}
-                              placeholder="0.00"
+                              value={desconto}
+                              onChange={(e) => setDesconto(parseFloat(e.target.value) || 0)}
+                              placeholder="0"
+                              className="text-sm"
                             />
+                            <Select value={tipoDesconto} onValueChange={setTipoDesconto}>
+                              <SelectTrigger className="w-16">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="valor">R$</SelectItem>
+                                <SelectItem value="percentual">%</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
-                          {valorPago > totalCarrinho && (
-                            <div className="bg-green-50 border border-green-200 rounded p-3">
-                              <p className="text-sm text-green-700">Troco:</p>
-                              <p className="text-2xl font-bold text-green-600">
-                                R$ {troco.toFixed(2)}
-                              </p>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Acréscimo</Label>
+                          <div className="flex gap-1">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={acrescimo}
+                              onChange={(e) => setAcrescimo(parseFloat(e.target.value) || 0)}
+                              placeholder="0"
+                              className="text-sm"
+                            />
+                            <Select value={tipoAcrescimo} onValueChange={setTipoAcrescimo}>
+                              <SelectTrigger className="w-16">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="valor">R$</SelectItem>
+                                <SelectItem value="percentual">%</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+
+                      {(desconto > 0 || acrescimo > 0) && (
+                        <div className="bg-blue-50 border border-blue-200 rounded p-2 text-xs space-y-1">
+                          <div className="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>R$ {subtotalCarrinho.toFixed(2)}</span>
+                          </div>
+                          {desconto > 0 && (
+                            <div className="flex justify-between text-green-600">
+                              <span>- Desconto:</span>
+                              <span>R$ {valorDesconto.toFixed(2)}</span>
                             </div>
                           )}
-                        </>
+                          {acrescimo > 0 && (
+                            <div className="flex justify-between text-red-600">
+                              <span>+ Acréscimo:</span>
+                              <span>R$ {valorAcrescimo.toFixed(2)}</span>
+                            </div>
+                          )}
+                        </div>
                       )}
+                    </div>
+
+                    {/* Formas de Pagamento */}
+                    <div className="space-y-3 border-t pt-3">
+                      <div className="flex items-center justify-between">
+                        <Label>Formas de Pagamento</Label>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={adicionarFormaPagamento}
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Adicionar
+                        </Button>
+                      </div>
+
+                      {formasPagamentoVenda.map((formaPgto, idx) => (
+                        <div key={idx} className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            <Select
+                              value={formaPgto.forma}
+                              onValueChange={(v) => atualizarFormaPagamento(idx, 'forma', v)}
+                            >
+                              <SelectTrigger className="h-9">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Dinheiro">💵 Dinheiro</SelectItem>
+                                <SelectItem value="PIX">⚡ PIX</SelectItem>
+                                <SelectItem value="Cartão Débito">💳 Débito</SelectItem>
+                                <SelectItem value="Cartão Crédito">💳 Crédito</SelectItem>
+                                <SelectItem value="Boleto">📄 Boleto</SelectItem>
+                                <SelectItem value="Transferência">🏦 Transferência</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="w-32">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={formaPgto.valor}
+                              onChange={(e) => atualizarFormaPagamento(idx, 'valor', parseFloat(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="h-9"
+                            />
+                          </div>
+                          {formasPagamentoVenda.length > 1 && (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removerFormaPagamento(idx)}
+                              className="h-9"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+
+                      <div className="bg-slate-50 rounded p-2 text-sm space-y-1">
+                        <div className="flex justify-between">
+                          <span>Total Pago:</span>
+                          <span className="font-bold">R$ {totalPago.toFixed(2)}</span>
+                        </div>
+                        {totalPago > totalCarrinho && (
+                          <div className="flex justify-between text-green-600 font-semibold">
+                            <span>Troco:</span>
+                            <span>R$ {troco.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {totalPago < totalCarrinho && (
+                          <div className="flex justify-between text-red-600 font-semibold">
+                            <span>Falta Pagar:</span>
+                            <span>R$ {(totalCarrinho - totalPago).toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Tipo de Documento */}
@@ -580,12 +1000,18 @@ export default function CaixaPDVCompleto({
 
                     {/* Botão Finalizar */}
                     <Button
-                      onClick={() => finalizarVendaMutation.mutate({
-                        emitirNFe: tipoDocumento === 'nfe' || tipoDocumento === 'completo',
-                        emitirBoleto: tipoDocumento === 'boleto' || tipoDocumento === 'completo',
-                        gerarRecibo: true
-                      })}
-                      disabled={carrinho.length === 0 || finalizarVendaMutation.isPending}
+                      onClick={() => {
+                        if (totalPago < totalCarrinho) {
+                          toast.error("Valor pago insuficiente!");
+                          return;
+                        }
+                        finalizarVendaMutation.mutate({
+                          emitirNFe: tipoDocumento === 'nfe' || tipoDocumento === 'completo',
+                          emitirBoleto: tipoDocumento === 'boleto' || tipoDocumento === 'completo',
+                          gerarRecibo: true
+                        });
+                      }}
+                      disabled={carrinho.length === 0 || finalizarVendaMutation.isPending || totalPago < totalCarrinho}
                       className="w-full bg-emerald-600 hover:bg-emerald-700 mt-4 h-14 text-lg"
                     >
                       <CheckCircle2 className="w-5 h-5 mr-2" />
@@ -605,6 +1031,82 @@ export default function CaixaPDVCompleto({
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* ABA: RECEBER PEDIDOS (VENDAS CADASTRADAS) */}
+          <TabsContent value="receber-pedidos">
+            <Card>
+              <CardHeader className="bg-purple-50 border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-purple-600" />
+                  Receber Vendas Cadastradas
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-slate-50">
+                      <TableHead>Pedido</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Vendedor</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Origem</TableHead>
+                      <TableHead>Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pedidosReceber.map(pedido => (
+                      <TableRow key={pedido.id}>
+                        <TableCell className="font-medium">{pedido.numero_pedido}</TableCell>
+                        <TableCell>{pedido.cliente_nome}</TableCell>
+                        <TableCell className="text-sm text-slate-600">{pedido.vendedor}</TableCell>
+                        <TableCell className="text-sm">
+                          {new Date(pedido.data_pedido).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell className="font-bold text-purple-600">
+                          R$ {(pedido.valor_total || 0).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="text-xs">
+                            {pedido.origem_pedido}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              // Abrir dialog para receber este pedido
+                              const formas = [{ forma: "Dinheiro", valor: pedido.valor_total }];
+                              if (confirm(`Receber pedido ${pedido.numero_pedido}?\n\nValor: R$ ${pedido.valor_total.toFixed(2)}\n\nDeseja emitir NF-e?`)) {
+                                const emitirNFe = true;
+                                liquidarPedidoMutation.mutate({
+                                  pedidoId: pedido.id,
+                                  emitirNFe,
+                                  gerarRecibo: true,
+                                  formasPgto: formas
+                                });
+                              }
+                            }}
+                            disabled={liquidarPedidoMutation.isPending}
+                            className="bg-purple-600 hover:bg-purple-700"
+                          >
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
+                            Receber
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {pedidosReceber.length === 0 && (
+                  <div className="text-center py-12 text-slate-500">
+                    <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                    <p>Nenhum pedido aguardando recebimento</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* ABA: LIQUIDAR RECEBER */}
@@ -643,8 +1145,8 @@ export default function CaixaPDVCompleto({
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
-                            {formasPagamento.slice(0, 3).map(forma => (
+                          <div className="flex gap-2 flex-wrap">
+                            {formasPagamento.slice(0, 4).map(forma => (
                               <Button
                                 key={forma.id}
                                 size="sm"
@@ -654,7 +1156,7 @@ export default function CaixaPDVCompleto({
                                   forma: forma.nome
                                 })}
                                 disabled={liquidarTituloMutation.isPending}
-                                className="bg-green-600 hover:bg-green-700"
+                                className="bg-green-600 hover:bg-green-700 text-xs"
                               >
                                 {forma.nome}
                               </Button>
@@ -705,8 +1207,8 @@ export default function CaixaPDVCompleto({
                           R$ {(conta.valor || 0).toFixed(2)}
                         </TableCell>
                         <TableCell>
-                          <div className="flex gap-2">
-                            {formasPagamento.slice(0, 3).map(forma => (
+                          <div className="flex gap-2 flex-wrap">
+                            {formasPagamento.slice(0, 4).map(forma => (
                               <Button
                                 key={forma.id}
                                 size="sm"
@@ -716,7 +1218,7 @@ export default function CaixaPDVCompleto({
                                   forma: forma.nome
                                 })}
                                 disabled={liquidarTituloMutation.isPending}
-                                className="bg-red-600 hover:bg-red-700"
+                                className="bg-red-600 hover:bg-red-700 text-xs"
                               >
                                 {forma.nome}
                               </Button>
@@ -795,8 +1297,23 @@ export default function CaixaPDVCompleto({
                       Imprimir Boleto
                     </Button>
                   )}
+                  {troco > 0 && (
+                    <Card className="col-span-2 bg-orange-50 border-orange-200">
+                      <CardContent className="p-4">
+                        <div className="text-center">
+                          <p className="text-sm text-orange-700">Troco a devolver:</p>
+                          <p className="text-3xl font-bold text-orange-600">
+                            R$ {troco.toFixed(2)}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                   <Button 
-                    onClick={() => setDialogFinalizacao(false)}
+                    onClick={() => {
+                      setDialogFinalizacao(false);
+                      setAbaAtiva("venda");
+                    }}
                     className="bg-blue-600 hover:bg-blue-700 col-span-2"
                   >
                     <CheckCircle2 className="w-4 h-4 mr-2" />
