@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Search, 
   Filter, 
@@ -16,22 +17,81 @@ import {
   Grid3x3,
   List,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
- * V21.6 - VISUALIZADOR UNIVERSAL DE ENTIDADES
+ * V21.7 - VISUALIZADOR UNIVERSAL DE ENTIDADES - REAL-TIME + ORGANIZAÇÃO AVANÇADA
  * 
  * Componente genérico que lista qualquer entidade com:
- * - Busca universal em todos os campos
- * - Filtros multi-empresa
- * - Grid/Lista view
- * - Ações de editar/visualizar/excluir
- * - Exportação
- * - w-full/h-full responsivo
+ * - ✅ Real-time: Auto-refresh a cada 30s
+ * - ✅ Organização avançada específica por entidade
+ * - ✅ Busca universal em todos os campos
+ * - ✅ Filtros multi-empresa
+ * - ✅ Grid/Lista view
+ * - ✅ Ações de editar/visualizar/excluir
+ * - ✅ Exportação
+ * - ✅ w-full/h-full responsivo
  */
+
+// CONFIGURAÇÕES DE ORDENAÇÃO POR TIPO DE ENTIDADE
+const OPCOES_ORDENACAO = {
+  Cliente: [
+    { value: 'nome', label: 'Nome (A-Z)', sortFn: (a, b) => (a.nome || '').localeCompare(b.nome || '') },
+    { value: 'nome_desc', label: 'Nome (Z-A)', sortFn: (a, b) => (b.nome || '').localeCompare(a.nome || '') },
+    { value: 'cidade', label: 'Cidade (A-Z)', sortFn: (a, b) => (a.endereco_principal?.cidade || '').localeCompare(b.endereco_principal?.cidade || '') },
+    { value: 'limite_credito', label: 'Limite de Crédito (Maior)', sortFn: (a, b) => (b.condicao_comercial?.limite_credito || 0) - (a.condicao_comercial?.limite_credito || 0) },
+    { value: 'limite_credito_menor', label: 'Limite de Crédito (Menor)', sortFn: (a, b) => (a.condicao_comercial?.limite_credito || 0) - (b.condicao_comercial?.limite_credito || 0) },
+    { value: 'mais_compras', label: 'Que Mais Compra', sortFn: (a, b) => (b.valor_compras_12meses || 0) - (a.valor_compras_12meses || 0) },
+    { value: 'menos_compras', label: 'Que Menos Compra', sortFn: (a, b) => (a.valor_compras_12meses || 0) - (b.valor_compras_12meses || 0) },
+    { value: 'status', label: 'Status', sortFn: (a, b) => (a.status || '').localeCompare(b.status || '') },
+    { value: 'recent', label: 'Mais Recentes', sortFn: (a, b) => new Date(b.created_date) - new Date(a.created_date) }
+  ],
+  Fornecedor: [
+    { value: 'nome', label: 'Nome (A-Z)', sortFn: (a, b) => (a.nome || '').localeCompare(b.nome || '') },
+    { value: 'nome_desc', label: 'Nome (Z-A)', sortFn: (a, b) => (b.nome || '').localeCompare(a.nome || '') },
+    { value: 'cidade', label: 'Cidade (A-Z)', sortFn: (a, b) => (a.endereco_principal?.cidade || '').localeCompare(b.endereco_principal?.cidade || '') },
+    { value: 'nota_media', label: 'Melhor Avaliação', sortFn: (a, b) => (b.nota_media || 0) - (a.nota_media || 0) },
+    { value: 'mais_compras', label: 'Mais Comprado', sortFn: (a, b) => (b.valor_total_compras || 0) - (a.valor_total_compras || 0) },
+    { value: 'recent', label: 'Mais Recentes', sortFn: (a, b) => new Date(b.created_date) - new Date(a.created_date) }
+  ],
+  Transportadora: [
+    { value: 'razao_social', label: 'Razão Social (A-Z)', sortFn: (a, b) => (a.razao_social || '').localeCompare(b.razao_social || '') },
+    { value: 'cidade', label: 'Cidade (A-Z)', sortFn: (a, b) => (a.cidade || '').localeCompare(b.cidade || '') },
+    { value: 'nota_media', label: 'Melhor Avaliação', sortFn: (a, b) => (b.nota_media || 0) - (a.nota_media || 0) },
+    { value: 'entregas_prazo', label: 'Entregas no Prazo (%)', sortFn: (a, b) => (b.percentual_entregas_prazo || 0) - (a.percentual_entregas_prazo || 0) },
+    { value: 'recent', label: 'Mais Recentes', sortFn: (a, b) => new Date(b.created_date) - new Date(a.created_date) }
+  ],
+  Produto: [
+    { value: 'descricao', label: 'Descrição (A-Z)', sortFn: (a, b) => (a.descricao || '').localeCompare(b.descricao || '') },
+    { value: 'descricao_desc', label: 'Descrição (Z-A)', sortFn: (a, b) => (b.descricao || '').localeCompare(a.descricao || '') },
+    { value: 'setor', label: 'Setor de Atividade', sortFn: (a, b) => (a.setor_atividade_nome || '').localeCompare(b.setor_atividade_nome || '') },
+    { value: 'grupo', label: 'Grupo/Linha', sortFn: (a, b) => (a.grupo_produto_nome || '').localeCompare(b.grupo_produto_nome || '') },
+    { value: 'marca', label: 'Marca', sortFn: (a, b) => (a.marca_nome || '').localeCompare(b.marca_nome || '') },
+    { value: 'mais_vendidos', label: 'Mais Vendidos', sortFn: (a, b) => (b.quantidade_vendida_12meses || 0) - (a.quantidade_vendida_12meses || 0) },
+    { value: 'menos_vendidos', label: 'Menos Vendidos', sortFn: (a, b) => (a.quantidade_vendida_12meses || 0) - (b.quantidade_vendida_12meses || 0) },
+    { value: 'estoque_baixo', label: 'Estoque Baixo', sortFn: (a, b) => (a.estoque_disponivel || 0) - (b.estoque_disponivel || 0) },
+    { value: 'preco', label: 'Preço (Maior)', sortFn: (a, b) => (b.preco_venda || 0) - (a.preco_venda || 0) },
+    { value: 'recent', label: 'Mais Recentes', sortFn: (a, b) => new Date(b.created_date) - new Date(a.created_date) }
+  ],
+  Colaborador: [
+    { value: 'nome', label: 'Nome (A-Z)', sortFn: (a, b) => (a.nome_completo || '').localeCompare(b.nome_completo || '') },
+    { value: 'cargo', label: 'Cargo', sortFn: (a, b) => (a.cargo || '').localeCompare(b.cargo || '') },
+    { value: 'departamento', label: 'Departamento', sortFn: (a, b) => (a.departamento || '').localeCompare(b.departamento || '') },
+    { value: 'admissao', label: 'Data Admissão', sortFn: (a, b) => new Date(b.data_admissao || 0) - new Date(a.data_admissao || 0) },
+    { value: 'salario', label: 'Salário (Maior)', sortFn: (a, b) => (b.salario || 0) - (a.salario || 0) }
+  ],
+  // Genérico para outras entidades
+  default: [
+    { value: 'recent', label: 'Mais Recentes', sortFn: (a, b) => new Date(b.created_date) - new Date(a.created_date) },
+    { value: 'oldest', label: 'Mais Antigos', sortFn: (a, b) => new Date(a.created_date) - new Date(b.created_date) }
+  ]
+};
 export default function VisualizadorUniversalEntidade({ 
   nomeEntidade,
   tituloDisplay,
@@ -42,23 +102,30 @@ export default function VisualizadorUniversalEntidade({
   windowMode = false 
 }) {
   const [busca, setBusca] = useState('');
-  const [visualizacao, setVisualizacao] = useState('grid'); // 'grid' ou 'list'
+  const [visualizacao, setVisualizacao] = useState('grid');
   const [expandidos, setExpandidos] = useState({});
+  const [ordenacao, setOrdenacao] = useState('recent');
   const { openWindow } = useWindow();
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
 
-  // Buscar dados da entidade
+  // Obter opções de ordenação específicas da entidade
+  const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
+
+  // ✅ REAL-TIME: Buscar dados com auto-refresh a cada 30s
   const { data: dados = [], isLoading, refetch } = useQuery({
     queryKey: [nomeEntidade.toLowerCase()],
     queryFn: async () => {
       try {
-        return await base44.entities[nomeEntidade].list('-created_date', 500);
+        return await base44.entities[nomeEntidade].list('-created_date', 1000);
       } catch (error) {
         console.error(`Erro ao carregar ${nomeEntidade}:`, error);
         return [];
       }
     },
     staleTime: 30000,
+    refetchInterval: 30000, // ✅ Auto-refresh a cada 30 segundos
+    refetchIntervalInBackground: true, // ✅ Continua atualizando mesmo em background
+    refetchOnWindowFocus: true, // ✅ Atualiza quando volta para a aba
     initialData: []
   });
 
@@ -67,24 +134,34 @@ export default function VisualizadorUniversalEntidade({
     return filtrarPorContexto(dados, 'empresa_id');
   }, [dados, empresaAtual]);
 
-  // Busca universal em todos os campos
-  const dadosBuscados = useMemo(() => {
-    if (!busca.trim()) return dadosFiltrados;
-
-    const termoBusca = busca.toLowerCase();
-    return dadosFiltrados.filter(item => {
-      // Buscar em todos os valores do objeto
-      return Object.values(item).some(valor => {
-        if (valor === null || valor === undefined) return false;
-        return String(valor).toLowerCase().includes(termoBusca);
+  // Busca universal em todos os campos + ✅ ORDENAÇÃO AVANÇADA
+  const dadosBuscadosEOrdenados = useMemo(() => {
+    // 1️⃣ Aplicar busca
+    let resultado = dadosFiltrados;
+    
+    if (busca.trim()) {
+      const termoBusca = busca.toLowerCase();
+      resultado = resultado.filter(item => {
+        return Object.values(item).some(valor => {
+          if (valor === null || valor === undefined) return false;
+          return String(valor).toLowerCase().includes(termoBusca);
+        });
       });
-    });
-  }, [dadosFiltrados, busca]);
+    }
+
+    // 2️⃣ Aplicar ordenação específica
+    const opcaoSelecionada = opcoesOrdenacao.find(op => op.value === ordenacao);
+    if (opcaoSelecionada?.sortFn) {
+      resultado = [...resultado].sort(opcaoSelecionada.sortFn);
+    }
+
+    return resultado;
+  }, [dadosFiltrados, busca, ordenacao, opcoesOrdenacao]);
 
   // Determinar campos a exibir
   const camposExibicao = camposPrincipais.length > 0 
     ? camposPrincipais 
-    : Object.keys(dadosBuscados[0] || {}).filter(k => 
+    : Object.keys(dadosBuscadosEOrdenados[0] || {}).filter(k => 
         !['id', 'created_date', 'updated_date', 'created_by'].includes(k)
       ).slice(0, 6);
 
@@ -92,7 +169,7 @@ export default function VisualizadorUniversalEntidade({
   const exportarDados = () => {
     const csv = [
       camposExibicao.join(','),
-      ...dadosBuscados.map(item => 
+      ...dadosBuscadosEOrdenados.map(item => 
         camposExibicao.map(campo => 
           JSON.stringify(item[campo] || '')
         ).join(',')
@@ -258,9 +335,14 @@ export default function VisualizadorUniversalEntidade({
             <div className="flex items-center gap-3">
               {Icone && <Icone className="w-6 h-6 text-blue-600" />}
               <div>
-                <CardTitle className="text-xl">{tituloDisplay}</CardTitle>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  {tituloDisplay}
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 animate-pulse">
+                    ⚡ Real-Time
+                  </Badge>
+                </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
-                  {dadosBuscados.length} {dadosBuscados.length === 1 ? 'registro' : 'registros'}
+                  {dadosBuscadosEOrdenados.length} {dadosBuscadosEOrdenados.length === 1 ? 'registro' : 'registros'}
                   {busca && ` (filtrado de ${dadosFiltrados.length})`}
                 </p>
               </div>
@@ -286,8 +368,8 @@ export default function VisualizadorUniversalEntidade({
             </div>
           </div>
 
-          {/* Barra de Busca e Filtros */}
-          <div className="flex items-center gap-3 mt-4">
+          {/* Barra de Busca, Ordenação e Filtros */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
@@ -297,6 +379,24 @@ export default function VisualizadorUniversalEntidade({
                 className="pl-10"
               />
             </div>
+            
+            {/* ✅ NOVA ORDENAÇÃO AVANÇADA */}
+            <Select value={ordenacao} onValueChange={setOrdenacao}>
+              <SelectTrigger className="w-full sm:w-64">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4" />
+                  <SelectValue placeholder="Organizar por..." />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {opcoesOrdenacao.map(opcao => (
+                  <SelectItem key={opcao.value} value={opcao.value}>
+                    {opcao.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
               <Button
                 variant={visualizacao === 'grid' ? 'default' : 'ghost'}
@@ -324,7 +424,7 @@ export default function VisualizadorUniversalEntidade({
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando dados...</p>
             </div>
-          ) : dadosBuscados.length === 0 ? (
+          ) : dadosBuscadosEOrdenados.length === 0 ? (
             <div className="text-center py-12">
               <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
               <p className="text-slate-600 font-medium">
@@ -341,7 +441,7 @@ export default function VisualizadorUniversalEntidade({
               {/* Visualização em Grid */}
               {visualizacao === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {dadosBuscados.map((item) => (
+                  {dadosBuscadosEOrdenados.map((item) => (
                     <Card key={item.id} className="border-2 hover:border-blue-400 transition-all hover:shadow-lg">
                       <CardContent className="p-4">
                         <div className="space-y-2">
@@ -392,7 +492,7 @@ export default function VisualizadorUniversalEntidade({
               {/* Visualização em Lista */}
               {visualizacao === 'list' && (
                 <div className="space-y-2">
-                  {dadosBuscados.map((item) => (
+                  {dadosBuscadosEOrdenados.map((item) => (
                     <Card key={item.id} className="border hover:border-blue-400 transition-all">
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
