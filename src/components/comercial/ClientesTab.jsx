@@ -2,20 +2,22 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UserCircle, Building2, ExternalLink } from "lucide-react";
+import { UserCircle, Building2, ExternalLink, Users } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import SearchInput from "@/components/ui/SearchInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { useWindow } from "@/components/lib/useWindow";
+import VisualizadorUniversalEntidade from '../VisualizadorUniversalEntidade';
+import CadastroClienteCompleto from '../CadastroClienteCompleto';
 
 export default function ClientesTab({ clientes }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
 
   const { estaNoGrupo, empresasDoGrupo } = useContextoVisual();
+  const { openWindow } = useWindow();
 
   const filteredClientes = clientes.filter(c => {
     const matchSearch = c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -36,12 +38,24 @@ export default function ClientesTab({ clientes }) {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Clientes</h2>
-        <Link to={createPageUrl('Cadastros') + '?tab=clientes'}>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Gerenciar em Cadastros Gerais
-          </Button>
-        </Link>
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700"
+          onClick={() => openWindow(
+            VisualizadorUniversalEntidade,
+            {
+              nomeEntidade: 'Cliente',
+              tituloDisplay: 'Clientes',
+              icone: Users,
+              camposPrincipais: ['nome', 'razao_social', 'cnpj', 'cpf', 'status', 'email', 'telefone', 'cidade'],
+              componenteEdicao: CadastroClienteCompleto,
+              windowMode: true
+            },
+            { title: '👥 Todos os Clientes', width: 1400, height: 800, zIndex: 50000 }
+          )}
+        >
+          <ExternalLink className="w-4 h-4 mr-2" />
+          Gerenciar em Cadastros Gerais
+        </Button>
       </div>
 
       <Card className="border-0 shadow-md bg-blue-50 border-blue-200">
