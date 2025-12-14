@@ -72,10 +72,23 @@ export default function CaixaPDVCompleto({
   const queryClient = useQueryClient();
 
   // Queries
+  const { data: user } = useQuery({
+    queryKey: ['user'],
+    queryFn: () => base44.auth.me(),
+  });
+
   const { data: operador } = useQuery({
-    queryKey: ['operador-caixa', operadorId],
-    queryFn: () => operadorId ? base44.entities.OperadorCaixa.filter({ id: operadorId }) : null,
-    enabled: !!operadorId
+    queryKey: ['operador-caixa', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const ops = await base44.entities.OperadorCaixa.filter({ 
+        usuario_id: user.id,
+        empresa_id: empresaAtual?.id,
+        ativo: true
+      });
+      return ops.length > 0 ? ops : null;
+    },
+    enabled: !!user && !!empresaAtual
   });
 
   const { data: produtos = [] } = useQuery({
@@ -573,8 +586,55 @@ export default function CaixaPDVCompleto({
     onSuccess: (_, { tipo }) => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
-      queryClient.invalidateQueries({ queryKey: ['movimentos-caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['movimentos-caixa-hoje'] });
       toast.success(`✅ Título ${tipo === 'receber' ? 'recebido' : 'pago'}!`);
+    }
+  });
+
+  // Fechar caixa
+  const fecharCaixaMutation = useMutation({
+    mutationFn: async () => {
+      const totalEntradas = movimentosCaixa
+        .filter(m => m.tipo_movimento === 'Entrada')
+        .reduce((sum, m) => sum + (m.valor || 0), 0);
+      
+      const totalSaidas = movimentosCaixa
+        .filter(m => m.tipo_movimento === 'Saída')
+        .reduce((sum, m) => sum + (m.valor || 0), 0);
+
+      const saldoFinal = saldoInicial + totalEntradas - totalSaidas;
+
+      await base44.entities.CaixaMovimento.create({
+        empresa_id: empresaAtual?.id,
+        data_movimento: new Date().toISOString(),
+        tipo_movimento: 'Fechamento',
+        origem: 'Fechamento Caixa',
+        forma_pagamento: 'Dinheiro',
+        valor: saldoFinal,
+        descricao: `Fechamento - Saldo Final: R$ ${saldoFinal.toFixed(2)}`,
+        usuario_operador_id: operador?.[0]?.usuario_id,
+        usuario_operador_nome: operador?.[0]?.usuario_nome,
+        caixa_aberto: false
+      });
+
+      if (operador?.[0]) {
+        await base44.entities.OperadorCaixa.update(operador[0].id, {
+          status_caixa: 'Fechado',
+          data_fechamento: new Date().toISOString(),
+          saldo_atual: saldoFinal,
+          total_entradas: totalEntradas,
+          total_saidas: totalSaidas
+        });
+      }
+
+      return { saldoFinal, totalEntradas, totalSaidas };
+    },
+    onSuccess: ({ saldoFinal }) => {
+      toast.success(`✅ Caixa fechado! Saldo final: R$ ${saldoFinal.toFixed(2)}`);
+      setCaixaAberto(false);
+      setDialogAberturaCaixa(true);
+      queryClient.invalidateQueries({ queryKey: ['operador-caixa'] });
+      queryClient.invalidateQueries({ queryKey: ['movimentos-caixa-hoje'] });
     }
   });
 
@@ -682,6 +742,19 @@ export default function CaixaPDVCompleto({
                 <Clock className="w-4 h-4 mr-2" />
                 Caixa Aberto
               </Badge>
+              <Button
+                onClick={() => {
+                  if (confirm(`Deseja fechar o caixa?\n\nSaldo Atual: R$ ${saldoAtual.toFixed(2)}`)) {
+                    fecharCaixaMutation.mutate();
+                  }
+                }}
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+                disabled={fecharCaixaMutation.isPending}
+              >
+                <DollarSign className="w-4 h-4 mr-2" />
+                Fechar Caixa
+              </Button>
             </div>
           </div>
         </div>
@@ -1146,21 +1219,42 @@ export default function CaixaPDVCompleto({
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2 flex-wrap">
-                            {formasPagamento.slice(0, 4).map(forma => (
-                              <Button
-                                key={forma.id}
-                                size="sm"
-                                onClick={() => liquidarTituloMutation.mutate({
-                                  titulo: conta,
-                                  tipo: 'receber',
-                                  forma: forma.nome
-                                })}
-                                disabled={liquidarTituloMutation.isPending}
-                                className="bg-green-600 hover:bg-green-700 text-xs"
-                              >
-                                {forma.nome}
-                              </Button>
-                            ))}
+                            <Button
+                              size="sm"
+                              onClick={() => liquidarTituloMutation.mutate({
+                                titulo: conta,
+                                tipo: 'receber',
+                                forma: 'Dinheiro'
+                              })}
+                              disabled={liquidarTituloMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700 text-xs"
+                            >
+                              💵 Dinheiro
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => liquidarTituloMutation.mutate({
+                                titulo: conta,
+                                tipo: 'receber',
+                                forma: 'PIX'
+                              })}
+                              disabled={liquidarTituloMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700 text-xs"
+                            >
+                              ⚡ PIX
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => liquidarTituloMutation.mutate({
+                                titulo: conta,
+                                tipo: 'receber',
+                                forma: 'Cartão Débito'
+                              })}
+                              disabled={liquidarTituloMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700 text-xs"
+                            >
+                              💳 Débito
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -1208,21 +1302,42 @@ export default function CaixaPDVCompleto({
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2 flex-wrap">
-                            {formasPagamento.slice(0, 4).map(forma => (
-                              <Button
-                                key={forma.id}
-                                size="sm"
-                                onClick={() => liquidarTituloMutation.mutate({
-                                  titulo: conta,
-                                  tipo: 'pagar',
-                                  forma: forma.nome
-                                })}
-                                disabled={liquidarTituloMutation.isPending}
-                                className="bg-red-600 hover:bg-red-700 text-xs"
-                              >
-                                {forma.nome}
-                              </Button>
-                            ))}
+                            <Button
+                              size="sm"
+                              onClick={() => liquidarTituloMutation.mutate({
+                                titulo: conta,
+                                tipo: 'pagar',
+                                forma: 'Dinheiro'
+                              })}
+                              disabled={liquidarTituloMutation.isPending}
+                              className="bg-red-600 hover:bg-red-700 text-xs"
+                            >
+                              💵 Dinheiro
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => liquidarTituloMutation.mutate({
+                                titulo: conta,
+                                tipo: 'pagar',
+                                forma: 'PIX'
+                              })}
+                              disabled={liquidarTituloMutation.isPending}
+                              className="bg-red-600 hover:bg-red-700 text-xs"
+                            >
+                              ⚡ PIX
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => liquidarTituloMutation.mutate({
+                                titulo: conta,
+                                tipo: 'pagar',
+                                forma: 'Transferência'
+                              })}
+                              disabled={liquidarTituloMutation.isPending}
+                              className="bg-red-600 hover:bg-red-700 text-xs"
+                            >
+                              🏦 Transfer.
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
