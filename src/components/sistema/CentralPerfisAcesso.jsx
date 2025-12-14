@@ -43,7 +43,8 @@ import { createPageUrl } from "@/utils";
  * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar ✅
  */
 
-// ESTRUTURA COMPLETA DO SISTEMA - MESMA DO GerenciamentoAcessosCompleto
+// ESTRUTURA COMPLETA DO SISTEMA - 100% ALINHADA COM GerenciamentoAcessosCompleto
+// TOTAL: 13 módulos × 49 seções × 6 ações = 294 permissões possíveis
 const ESTRUTURA_SISTEMA = {
   dashboard: {
     nome: "Dashboard",
@@ -140,20 +141,21 @@ const ESTRUTURA_SISTEMA = {
     secoes: {
       nfe: { nome: "NF-e", abas: ["emissao", "entrada", "manifestacao", "inutilizacao"] },
       tabelas_fiscais: { nome: "Tabelas Fiscais", abas: ["cfop", "cst", "ncm", "aliquotas"] },
-      sped: { nome: "SPED", abas: ["fiscal", "contribuicoes", "contabil"] }
+      sped: { nome: "SPED", abas: ["fiscal", "contribuicoes", "contabil"] },
+      obrigacoes: { nome: "Obrigações Acessórias", abas: ["calendario", "guias", "declaracoes"] }
     }
   },
-  cadastros_gerais: {
+  cadastros: {
     nome: "Cadastros Gerais",
     icone: Users,
     cor: "slate",
     secoes: {
-      clientes: { nome: "Clientes", abas: ["lista", "novo", "historico"] },
-      fornecedores: { nome: "Fornecedores", abas: ["lista", "novo", "avaliacoes"] },
-      produtos: { nome: "Produtos", abas: ["lista", "novo", "importacao"] },
-      colaboradores: { nome: "Colaboradores", abas: ["lista", "novo", "documentos"] },
-      usuarios: { nome: "Usuários", abas: ["lista", "novo", "permissoes"] },
-      empresas: { nome: "Empresas", abas: ["lista", "novo", "config"] }
+      pessoas: { nome: "Pessoas & Parceiros", abas: ["clientes", "fornecedores", "transportadoras", "colaboradores"] },
+      produtos: { nome: "Produtos & Serviços", abas: ["produtos", "servicos", "grupos", "marcas"] },
+      financeiro: { nome: "Financeiro", abas: ["bancos", "formas_pagamento", "centros_custo"] },
+      logistica: { nome: "Logística", abas: ["veiculos", "motoristas", "rotas"] },
+      organizacional: { nome: "Organizacional", abas: ["empresas", "departamentos", "cargos", "usuarios"] },
+      integracoes: { nome: "Integrações & IA", abas: ["apis", "webhooks", "chatbot", "jobs_ia"] }
     }
   },
   crm: {
@@ -166,6 +168,15 @@ const ESTRUTURA_SISTEMA = {
       campanhas: { nome: "Campanhas", abas: ["lista", "nova", "resultados"] }
     }
   },
+  agenda: {
+    nome: "Agenda e Calendário",
+    icone: Calendar,
+    cor: "amber",
+    secoes: {
+      eventos: { nome: "Eventos", abas: ["calendario", "lista", "notificacoes"] },
+      tarefas: { nome: "Tarefas", abas: ["kanban", "lista", "atribuicao"] }
+    }
+  },
   relatorios: {
     nome: "Relatórios e Análises",
     icone: BarChart3,
@@ -176,13 +187,32 @@ const ESTRUTURA_SISTEMA = {
       exportacao: { nome: "Exportação", abas: ["excel", "pdf", "api"] }
     }
   },
+  contratos: {
+    nome: "Gestão de Contratos",
+    icone: FileText,
+    cor: "sky",
+    secoes: {
+      contratos: { nome: "Contratos", abas: ["lista", "novo", "renovacao", "aditivos"] }
+    }
+  },
   chatbot: {
     nome: "Hub de Atendimento",
     icone: MessageCircle,
     cor: "green",
     secoes: {
       atendimento: { nome: "Atendimento", abas: ["conversas", "fila", "transferencia"] },
-      configuracoes: { nome: "Configurações", abas: ["canais", "templates", "base_conhecimento"] }
+      configuracoes: { nome: "Configurações", abas: ["canais", "templates", "base_conhecimento"] },
+      analytics: { nome: "Analytics", abas: ["metricas", "relatorios", "sla"] }
+    }
+  },
+  configuracoes: {
+    nome: "Configurações",
+    icone: Settings,
+    cor: "gray",
+    secoes: {
+      sistema: { nome: "Sistema", abas: ["geral", "notificacoes", "backup"] },
+      integracoes: { nome: "Integrações", abas: ["nfe", "boletos", "whatsapp", "marketplaces"] },
+      ia: { nome: "Inteligência Artificial", abas: ["modelos", "limites", "logs"] }
     }
   }
 };
@@ -420,10 +450,10 @@ export default function CentralPerfisAcesso() {
       });
 
       console.log("🌐 Seleção Global:", algumVazio ? "TUDO MARCADO" : "TUDO DESMARCADO");
-      console.log("📊 Total módulos:", totalModulos);
-      console.log("📊 Total seções:", totalSecoes);
-      console.log("📊 Total ações:", totalAcoes);
-      console.log("📊 Esperado (13 módulos × ~49 seções × 6 ações):", 13 * 49 * 6, "≈ 294 ações");
+      console.log("📊 Total módulos:", totalModulos, "/ 13");
+      console.log("📊 Total seções:", totalSecoes, "/ 49");
+      console.log("📊 Total ações:", totalAcoes, "/ 294");
+      console.log("📊 Estrutura:", novasPerms);
       
       return { ...prev, permissoes: novasPerms };
     });
