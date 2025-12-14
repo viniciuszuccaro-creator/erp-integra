@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
-import VisualizadorUniversalEntidade from '../VisualizadorUniversalEntidade';
-import CadastroClienteCompleto from '../CadastroClienteCompleto';
+import VisualizadorUniversalEntidade from '../cadastros/VisualizadorUniversalEntidade';
+import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
 
 export default function ClientesTab({ clientes }) {
   const [searchTerm, setSearchTerm] = useState("");
