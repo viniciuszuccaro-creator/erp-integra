@@ -44,6 +44,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 export default function CaixaDiarioTab() {
   const [abaAtiva, setAbaAtiva] = useState("caixa-dia");
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().split('T')[0]);
+  const [operadorFiltro, setOperadorFiltro] = useState("todos");
   const [aberturaCaixaDialog, setAberturaCaixaDialog] = useState(false);
   const [fechamentoCaixaDialog, setFechamentoCaixaDialog] = useState(false);
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);
@@ -104,12 +105,22 @@ export default function CaixaDiarioTab() {
     queryFn: () => base44.entities.ContaPagar.list('-data_vencimento'),
   });
 
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ['pedidos'],
+    queryFn: () => base44.entities.Pedido.list(),
+  });
+
+  const operadoresUnicos = [...new Set(movimentos.map(m => m.usuario_operador_nome).filter(Boolean))];
+  const movimentosFiltrados = operadorFiltro === "todos" 
+    ? movimentos 
+    : movimentos.filter(m => m.usuario_operador_nome === operadorFiltro);
+
   // Calcular totais
-  const totalEntradas = movimentos
+  const totalEntradas = movimentosFiltrados
     .filter(m => m.tipo === 'entrada')
     .reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
 
-  const totalSaidas = movimentos
+  const totalSaidas = movimentosFiltrados
     .filter(m => m.tipo === 'saida')
     .reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
 
@@ -301,6 +312,17 @@ export default function CaixaDiarioTab() {
               className="w-48"
             />
           </div>
+          <Select value={operadorFiltro} onValueChange={setOperadorFiltro}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Operador" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os Operadores</SelectItem>
+              {operadoresUnicos.map(op => (
+                <SelectItem key={op} value={op}>{op}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {caixaAberto ? (
             <Badge className="bg-green-100 text-green-700">
               <Unlock className="w-3 h-3 mr-1" />
@@ -365,7 +387,7 @@ export default function CaixaDiarioTab() {
                   R$ {totalEntradas.toFixed(2)}
                 </p>
                 <p className="text-xs text-green-600 mt-1">
-                  {movimentos.filter(m => m.tipo === 'entrada').length} movimentos
+                  {movimentosFiltrados.filter(m => m.tipo === 'entrada').length} movimentos
                 </p>
               </div>
               <TrendingUp className="w-6 h-6 text-green-600" />
@@ -382,7 +404,7 @@ export default function CaixaDiarioTab() {
                   R$ {totalSaidas.toFixed(2)}
                 </p>
                 <p className="text-xs text-red-600 mt-1">
-                  {movimentos.filter(m => m.tipo === 'saida').length} movimentos
+                  {movimentosFiltrados.filter(m => m.tipo === 'saida').length} movimentos
                 </p>
               </div>
               <TrendingDown className="w-6 h-6 text-red-600" />
@@ -527,7 +549,8 @@ export default function CaixaDiarioTab() {
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle>
-            Movimentos do Dia ({movimentos.length})
+            Movimentos do Dia ({movimentosFiltrados.length})
+            {operadorFiltro !== "todos" && <span className="text-sm font-normal text-slate-600 ml-2">• {operadorFiltro}</span>}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -536,10 +559,10 @@ export default function CaixaDiarioTab() {
               <TableRow className="bg-slate-50">
                 <TableHead>Hora</TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead>Descrição</TableHead>
+                <TableHead>Cliente / Pedido</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Forma</TableHead>
-                <TableHead>Documento</TableHead>
+                <TableHead>Operador</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Saldo</TableHead>
               </TableRow>
@@ -563,11 +586,13 @@ export default function CaixaDiarioTab() {
               )}
 
               {/* Movimentos */}
-              {movimentos.map((mov, idx) => {
+              {movimentosFiltrados.map((mov, idx) => {
                 const saldoAcumulado = (caixaAberto?.saldo_inicial || 0) + 
-                  movimentos.slice(0, idx + 1).reduce((sum, m) => 
+                  movimentosFiltrados.slice(0, idx + 1).reduce((sum, m) => 
                     sum + (m.tipo === 'entrada' ? m.valor_movimento : -m.valor_movimento), 0
                   );
+
+                const pedidoVinculado = pedidos.find(p => p.id === mov.pedido_id);
 
                 return (
                   <TableRow key={mov.id}>
@@ -585,14 +610,23 @@ export default function CaixaDiarioTab() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-sm">{mov.descricao}</TableCell>
+                    <TableCell className="text-sm">
+                      {pedidoVinculado ? (
+                        <div>
+                          <p className="font-semibold">{pedidoVinculado.cliente_nome}</p>
+                          <p className="text-xs text-slate-500">📋 {pedidoVinculado.numero_pedido}</p>
+                        </div>
+                      ) : (
+                        <p>{mov.descricao || '-'}</p>
+                      )}
+                    </TableCell>
                     <TableCell className="text-sm">{mov.categoria}</TableCell>
                     <TableCell className="text-sm">
                       <Badge variant="outline" className="text-xs">
                         {mov.forma_recebimento || mov.forma_pagamento}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-sm">{mov.numero_documento || '-'}</TableCell>
+                    <TableCell className="text-sm">{mov.usuario_operador_nome || '-'}</TableCell>
                     <TableCell className={`font-semibold ${mov.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'}`}>
                       {mov.tipo === 'entrada' ? '+' : '-'} R$ {mov.valor_movimento.toFixed(2)}
                     </TableCell>
@@ -618,7 +652,7 @@ export default function CaixaDiarioTab() {
             </TableBody>
           </Table>
 
-          {movimentos.length === 0 && !caixaAberto && (
+          {movimentosFiltrados.length === 0 && !caixaAberto && (
             <div className="text-center py-12">
               <DollarSign className="w-16 h-16 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-500 mb-4">Nenhum movimento registrado hoje</p>
