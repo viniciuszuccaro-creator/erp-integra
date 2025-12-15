@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -46,6 +47,7 @@ import {
   MapPin,
   Settings,
   Wallet,
+  RefreshCw,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -81,7 +83,7 @@ import CentroCustoForm from "../components/cadastros/CentroCustoForm";
 import GrupoProdutoForm from "../components/cadastros/GrupoProdutoForm";
 import MarcaForm from "../components/cadastros/MarcaForm";
 import ServicoForm from "../components/cadastros/ServicoForm";
-import RepresentanteForm from "../components/cadastros/RepresentanteForm";
+import RepresentanteForm from "../components/cadastros/RepresentantesTab";
 import RepresentantesTab from "../components/cadastros/RepresentantesTab";
 import RepresentanteFormCompleto from "../components/cadastros/RepresentanteFormCompleto";
 import DashboardRepresentantes from "../components/relatorios/DashboardRepresentantes";
@@ -129,8 +131,11 @@ import IALeituraProjeto from "../components/integracoes/IALeituraProjeto";
 import SincronizacaoMarketplacesAtiva from '@/components/integracoes/SincronizacaoMarketplacesAtiva';
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
+import GatewayPagamentoForm from "../components/cadastros/GatewayPagamentoForm";
+import ConfiguracaoDespesaRecorrenteForm from "../components/cadastros/ConfiguracaoDespesaRecorrenteForm";
+
 /**
- * ⭐⭐⭐ CADASTROS GERAIS V21.3 - FASE 3: 100% COMPLETA ⭐⭐⭐
+ * ⭐⭐⭐ CADASTROS GERAIS V22 - FINANCEIRO AVANÇADO ⭐⭐⭐
  * Hub Central de Dados Mestre • 6 Blocos • 23 Entidades • Multiempresa Total
  *
  * REGRA-MÃE: Acrescentar • Reorganizar • Conectar • Melhorar – NUNCA APAGAR
@@ -152,6 +157,16 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * - Jobs agendados de IA (DIFAL, Churn, PriceBrain, Monitoramento, KYC, Governança)
  * - Validador e Status Widget Fase 3 integrados ao Dashboard
  * - 100% multiempresa, w-full/h-full, janelas multitarefa, controle acesso granular
+ *
+ * ✅ V22 - NOVAS ENTIDADES FINANCEIRAS:
+ * - GatewayPagamento (processadores externos)
+ * - ConfiguracaoDespesaRecorrente (automação despesas)
+ * - EmprestimoFuncionario (empréstimos internos)
+ *
+ * ✅ INTEGRAÇÃO TOTAL:
+ * - FormaPagamento vinculada a Gateway
+ * - Despesas recorrentes gerando ContaPagar
+ * - Conciliação bancária automatizada
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -283,6 +298,21 @@ export default function Cadastros() {
   const { data: condicoesComerciais = [] } = useQuery({
     queryKey: ['condicoes-comerciais'],
     queryFn: () => base44.entities.CondicaoComercial.list(),
+  });
+
+  const { data: gatewaysPagamento = [] } = useQuery({
+    queryKey: ['gateways-pagamento'],
+    queryFn: () => base44.entities.GatewayPagamento.list(),
+  });
+
+  const { data: despesasRecorrentes = [] } = useQuery({
+    queryKey: ['despesas-recorrentes'],
+    queryFn: () => base44.entities.ConfiguracaoDespesaRecorrente.list(),
+  });
+
+  const { data: emprestimos = [] } = useQuery({
+    queryKey: ['emprestimos-funcionario'],
+    queryFn: () => base44.entities.EmprestimoFuncionario.list(),
   });
 
   // FASE 3: Queries adicionais
@@ -452,7 +482,7 @@ export default function Cadastros() {
   // Cálculo de totais por bloco
   const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
   const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
-  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
+  const totalBloco3 = bancos.length + formasPagamento.length + operadoresCaixa.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length + gatewaysPagamento.length + despesasRecorrentes.length;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
   const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + apisExternas.length + jobsAgendados.length + parametrosPortal.length + parametrosOrigemPedido.length + parametrosRecebimentoNFe.length + parametrosRoteirizacao.length + parametrosConciliacao.length + parametrosCaixa.length;
@@ -2320,6 +2350,183 @@ export default function Cadastros() {
                     </CardContent>
                   </Card>
 
+                  {/* GATEWAYS DE PAGAMENTO - V22 */}
+                  <Card className="border-purple-200 lg:col-span-2">
+                    <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-purple-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'GatewayPagamento',
+                              tituloDisplay: 'Gateways de Pagamento',
+                              icone: Wallet,
+                              camposPrincipais: ['nome', 'provedor', 'ambiente', 'status_integracao', 'tipos_pagamento_suportados'],
+                              componenteEdicao: GatewayPagamentoForm,
+                              windowMode: true
+                            },
+                            { title: '🔌 Todos os Gateways', width: 1400, height: 800, zIndex: 50000 }
+                          )}
+                        >
+                          <Wallet className="w-5 h-5 text-purple-600" />
+                          🔌 Gateways de Pagamento ({gatewaysPagamento.length})
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(
+                            GatewayPagamentoForm,
+                            {
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('GatewayPagamento', 'gateways-pagamento')
+                            },
+                            { title: '🔌 Novo Gateway', width: 1000, height: 700 }
+                          )}
+                          className="bg-purple-600 hover:bg-purple-700"
+                          disabled={!hasPermission('financeiro', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Novo Gateway
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {gatewaysPagamento.map(gateway => (
+                          <div key={gateway.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-all">
+                            <div className="flex-1">
+                              <p className="font-semibold text-sm">{gateway.nome}</p>
+                              <div className="flex gap-2 mt-1 flex-wrap">
+                                <Badge variant="outline" className="text-xs">{gateway.provedor}</Badge>
+                                <Badge className={
+                                  gateway.status_integracao === 'Ativo' ? 'bg-green-100 text-green-700' :
+                                  gateway.status_integracao === 'Em Teste' ? 'bg-yellow-100 text-yellow-700' :
+                                  'bg-gray-100 text-gray-700'
+                                }>
+                                  {gateway.status_integracao}
+                                </Badge>
+                                <Badge className="bg-blue-100 text-blue-700 text-xs">
+                                  {gateway.ambiente}
+                                </Badge>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openWindow(
+                                GatewayPagamentoForm,
+                                {
+                                  gateway,
+                                  windowMode: true,
+                                  onSubmit: handleSubmitGenerico('GatewayPagamento', 'gateways-pagamento')
+                                },
+                                {
+                                  title: `🔌 Editar: ${gateway.nome}`,
+                                  width: 1000,
+                                  height: 700,
+                                  uniqueKey: `edit-GatewayPagamento-${gateway.id}-${Date.now()}`,
+                                  zIndex: 999999,
+                                  bringToFront: true
+                                }
+                              )}
+                              disabled={!hasPermission('financeiro', 'editar')}
+                            >
+                              <Edit className="w-4 h-4 text-purple-600" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      {gatewaysPagamento.length === 0 && (
+                        <p className="text-center text-slate-500 py-8 text-sm">
+                          Nenhum gateway configurado
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* DESPESAS RECORRENTES - V22 */}
+                  <Card className="border-teal-200">
+                    <CardHeader className="bg-teal-50 border-b border-teal-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-teal-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'ConfiguracaoDespesaRecorrente',
+                              tituloDisplay: 'Despesas Recorrentes',
+                              icone: RefreshCw,
+                              camposPrincipais: ['descricao', 'tipo_despesa', 'valor_fixo', 'periodicidade', 'ativa'],
+                              componenteEdicao: ConfiguracaoDespesaRecorrenteForm,
+                              windowMode: true
+                            },
+                            { title: '♻️ Todas as Despesas Recorrentes', width: 1400, height: 800, zIndex: 50000 }
+                          )}
+                        >
+                          <RefreshCw className="w-5 h-5 text-teal-600" />
+                          ♻️ Despesas Recorrentes ({despesasRecorrentes.length})
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          onClick={() => openWindow(
+                            ConfiguracaoDespesaRecorrenteForm,
+                            {
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('ConfiguracaoDespesaRecorrente', 'despesas-recorrentes')
+                            },
+                            { title: '♻️ Nova Despesa Recorrente', width: 900, height: 700 }
+                          )}
+                          className="bg-teal-600 hover:bg-teal-700"
+                          disabled={!hasPermission('financeiro', 'criar')}
+                        >
+                          <Plus className="w-4 h-4 mr-1" />
+                          Nova
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {despesasRecorrentes.map(desp => (
+                        <div key={desp.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{desp.descricao}</p>
+                            <div className="flex gap-2 mt-1 flex-wrap">
+                              <Badge variant="outline" className="text-xs">{desp.tipo_despesa}</Badge>
+                              <Badge className="bg-teal-100 text-teal-700 text-xs">
+                                R$ {desp.valor_fixo?.toFixed(2)}
+                              </Badge>
+                              <Badge className={desp.ativa ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                                {desp.ativa ? 'Ativa' : 'Inativa'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(
+                              ConfiguracaoDespesaRecorrenteForm,
+                              {
+                                despesa: desp,
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('ConfiguracaoDespesaRecorrente', 'despesas-recorrentes')
+                              },
+                              {
+                                title: `♻️ Editar: ${desp.descricao}`,
+                                width: 900,
+                                height: 700,
+                                uniqueKey: `edit-ConfiguracaoDespesaRecorrente-${desp.id}-${Date.now()}`,
+                                zIndex: 999999,
+                                bringToFront: true
+                              }
+                            )}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-teal-600" />
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
                   {/* CENTROS DE CUSTO */}
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
@@ -3251,7 +3458,7 @@ export default function Cadastros() {
                           disabled={!hasPermission('cadastros', 'criar')}
                         >
                           <Plus className="w-4 h-4 mr-1" />
-                          Nova
+                          Novo
                         </Button>
                       </div>
                     </CardHeader>
