@@ -7,6 +7,7 @@ export function ProtectedAction({
   children, 
   module, 
   action = "editar",
+  permission,
   fallback = null 
 }) {
   const { hasPermission, isLoading } = usePermissions();
@@ -15,7 +16,9 @@ export function ProtectedAction({
     return null;
   }
 
-  if (!hasPermission(module, action)) {
+  const permissionKey = permission || `${module}_${action}`;
+  
+  if (!hasPermission(permissionKey)) {
     if (fallback) return fallback;
     
     return (
