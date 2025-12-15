@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,17 +8,35 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import {
-  Search, DollarSign, Calendar, CheckCircle2, AlertCircle, Clock, Filter,
-  CreditCard, FileText, MessageSquare, TrendingUp, Trash2, Eye, Download,
-  Plus, Edit, QrCode, Building2, Zap, Send, Wallet, Printer, ShoppingCart,
-  Link2, TrendingDown, BarChart3, Package
+  Search,
+  DollarSign,
+  Calendar,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Filter,
+  CreditCard,
+  FileText,
+  MessageSquare,
+  TrendingUp,
+  Trash2,
+  Eye,
+  Download,
+  Plus,
+  Edit,
+  QrCode,
+  Building2,
+  Zap,
+  Send,
+  Wallet,
+  Printer
 } from "lucide-react";
 import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
 import GerarCobrancaModal from "./GerarCobrancaModal";
@@ -28,21 +46,19 @@ import ContaReceberForm from "./ContaReceberForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
-import useContextoVisual from "@/components/lib/useContextoVisual";
-import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
 
 export default function ContasReceberTab({ contas, empresas = [] }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
-  const { formasPagamento, calcularValorFinal, recomendarMelhorForma } = useFormasPagamento();
-  const { filtrarPorContexto, estaNoGrupo, empresaAtual, filtroEmpresa, setFiltroEmpresa } = useContextoVisual();
+  const { formasPagamento, obterBancoPorTipo } = useFormasPagamento();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
-  const [canalFilter, setCanalFilter] = useState("todos");
-  const [marketplaceFilter, setMarketplaceFilter] = useState("todos");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingConta, setEditingConta] = useState(null);
+  const [selectedConta, setSelectedConta] = useState(null);
   const [gerarCobrancaDialogOpen, setGerarCobrancaDialogOpen] = useState(false);
   const [simularPagamentoDialogOpen, setSimularPagamentoDialogOpen] = useState(false);
   const [gerarLinkDialogOpen, setGerarLinkDialogOpen] = useState(false);
@@ -50,8 +66,23 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
   const [contaParaSimulacao, setContaParaSimulacao] = useState(null);
   const [contaParaLink, setContaParaLink] = useState(null);
 
+  const [formData, setFormData] = useState({
+    descricao: "",
+    cliente: "",
+    cliente_id: "",
+    pedido_id: "",
+    valor: 0,
+    data_emissao: new Date().toISOString().split('T')[0],
+    data_vencimento: new Date().toISOString().split('T')[0],
+    status: "Pendente",
+    forma_recebimento: "Boleto",
+    numero_documento: "",
+    centro_custo: "",
+    observacoes: "",
+    empresa_id: ""
+  });
+
   const [dialogBaixaOpen, setDialogBaixaOpen] = useState(false);
-  const [dialogBaixaMultiplaOpen, setDialogBaixaMultiplaOpen] = useState(false);
   const [contasSelecionadas, setContasSelecionadas] = useState([]);
   const [contaAtual, setContaAtual] = useState(null);
 
@@ -63,11 +94,6 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     multa: 0,
     desconto: 0,
     observacoes: ""
-  });
-
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: () => base44.auth.me(),
   });
 
   const { data: empresasQuery = [] } = useQuery({
@@ -92,7 +118,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     queryFn: () => base44.entities.ConfiguracaoCobrancaEmpresa.list(),
   });
 
-  // Mutation para enviar títulos para o Caixa
+  // ETAPA 4: Mutation para enviar títulos para o Caixa
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async (titulos) => {
       const ordens = await Promise.all(titulos.map(async (titulo) => {
@@ -108,12 +134,9 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
             tipo_titulo: 'ContaReceber',
             numero_titulo: titulo.numero_documento || titulo.descricao,
             cliente_fornecedor_nome: titulo.cliente,
-            valor_titulo: titulo.valor,
-            canal_origem: titulo.canal_origem,
-            marketplace_origem: titulo.marketplace_origem
+            valor_titulo: titulo.valor
           }],
-          data_ordem: new Date().toISOString(),
-          usuario_operador_nome: user?.full_name
+          data_ordem: new Date().toISOString()
         });
       }));
       return ordens;
@@ -122,6 +145,64 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
       toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
       setContasSelecionadas([]);
+    }
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.ContaReceber.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Sucesso!",
+        description: "Conta a receber criada com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao criar conta: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ContaReceber.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Sucesso!",
+        description: "Conta a receber atualizada com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao atualizar conta: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.ContaReceber.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      toast({
+        title: "Sucesso!",
+        description: "Conta a receber excluída com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao excluir conta: ${error.message}`,
+        variant: "destructive",
+      });
     }
   });
 
@@ -139,24 +220,6 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       });
 
       const conta = contas.find(c => c.id === id);
-      
-      // Registrar movimento de caixa
-      if (conta) {
-        await base44.entities.CaixaMovimento.create({
-          group_id: conta.group_id,
-          empresa_id: conta.empresa_id,
-          data_movimento: new Date().toISOString(),
-          tipo_movimento: "Entrada",
-          origem: "Liquidação Conta a Receber",
-          forma_pagamento: dados.forma_recebimento,
-          valor: dados.valor_recebido,
-          descricao: `Recebimento: ${conta.descricao} - Cliente: ${conta.cliente}`,
-          conta_receber_id: id,
-          usuario_operador_nome: user?.full_name
-        });
-      }
-
-      // Registrar histórico do cliente
       if (conta?.cliente_id) {
         await base44.entities.HistoricoCliente.create({
           group_id: conta.group_id,
@@ -168,8 +231,8 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
           referencia_tipo: "ContaReceber",
           tipo_evento: "Recebimento",
           titulo_evento: `Recebimento de R$ ${dados.valor_recebido.toFixed(2)}`,
-          descricao_detalhada: `Título ${conta.descricao} recebido via ${dados.forma_recebimento}${conta.canal_origem ? ` • Canal: ${conta.canal_origem}` : ''}${conta.marketplace_origem && conta.marketplace_origem !== 'Nenhum' ? ` • Marketplace: ${conta.marketplace_origem}` : ''}`,
-          usuario_responsavel: user?.full_name || "Sistema",
+          descricao_detalhada: `Título ${conta.descricao} recebido via ${dados.forma_recebimento}`,
+          usuario_responsavel: "Sistema",
           data_evento: new Date().toISOString(),
           valor_relacionado: dados.valor_recebido,
           resolvido: true
@@ -180,7 +243,6 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
-      queryClient.invalidateQueries({ queryKey: ['caixa-movimentos'] });
       setDialogBaixaOpen(false);
       setContaAtual(null);
       toast({ title: "✅ Título baixado com sucesso!" });
@@ -199,12 +261,11 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       const baixaPromises = contasSelecionadas.map(async (contaId) => {
         const conta = contas.find(c => c.id === contaId);
         if (conta) {
-          const valorAjustado = (conta.valor || 0) + (dados.juros || 0) + (dados.multa || 0) - (dados.desconto || 0);
           await baixarTituloMutation.mutateAsync({
             id: contaId,
             dados: {
               ...dados,
-              valor_recebido: valorAjustado
+              valor_recebido: conta.valor
             }
           });
         }
@@ -213,7 +274,6 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     },
     onSuccess: () => {
       setContasSelecionadas([]);
-      setDialogBaixaMultiplaOpen(false);
       toast({ title: `✅ ${contasSelecionadas.length} título(s) baixado(s)!` });
     },
     onError: (error) => {
@@ -271,7 +331,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
         id_cobranca_externa: retornoMock.id,
         linha_digitavel: retornoMock.identificationField,
         url_boleto: retornoMock.bankSlipUrl,
-        usuario_nome: user?.full_name || "Sistema"
+        usuario_nome: "Sistema"
       });
 
       await base44.entities.ContaReceber.update(contaId, {
@@ -350,7 +410,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
         id_cobranca_externa: retornoMock.id,
         pix_copia_cola: pixCopiaCola,
         pix_qrcode_base64: qrCodeBase64,
-        usuario_nome: user?.full_name || "Sistema"
+        usuario_nome: "Sistema"
       });
 
       await base44.entities.ContaReceber.update(contaId, {
@@ -401,7 +461,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
         retorno_recebido: { simulado: true },
         status_operacao: "simulado",
         mensagem: "WhatsApp enviado (simulação)",
-        usuario_nome: user?.full_name || "Sistema"
+        usuario_nome: "Sistema"
       });
 
       await base44.entities.ContaReceber.update(contaId, {
@@ -421,6 +481,46 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       });
     }
   });
+
+  const resetForm = () => {
+    setFormData({
+      descricao: "",
+      cliente: "",
+      cliente_id: "",
+      pedido_id: "",
+      valor: 0,
+      data_emissao: new Date().toISOString().split('T')[0],
+      data_vencimento: new Date().toISOString().split('T')[0],
+      status: "Pendente",
+      forma_recebimento: "Boleto",
+      numero_documento: "",
+      centro_custo: "",
+      observacoes: "",
+      empresa_id: ""
+    });
+    setEditingConta(null);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editingConta) {
+      updateMutation.mutate({ id: editingConta.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (conta) => {
+    setEditingConta(conta);
+    setFormData({ ...conta });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id) => {
+    if (confirm("Tem certeza que deseja excluir esta conta?")) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   const handleBaixar = (conta) => {
     setContaAtual(conta);
@@ -444,26 +544,12 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       });
       return;
     }
-    setDadosBaixa({
-      data_recebimento: new Date().toISOString().split('T')[0],
-      valor_recebido: 0,
-      forma_recebimento: "PIX",
-      juros: 0,
-      multa: 0,
-      desconto: 0,
-      observacoes: ""
-    });
-    setDialogBaixaMultiplaOpen(true);
+    baixarMultiplaMutation.mutate(dadosBaixa);
   };
 
   const handleSubmitBaixa = (e) => {
     e.preventDefault();
     baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
-  };
-
-  const handleSubmitBaixaMultipla = (e) => {
-    e.preventDefault();
-    baixarMultiplaMutation.mutate(dadosBaixa);
   };
 
   const toggleSelecao = (contaId) => {
@@ -474,13 +560,8 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     );
   };
 
-  // Filtros avançados
-  let filteredContas = filtrarPorContexto(contas, 'empresa_id');
-
-  filteredContas = filteredContas
+  const filteredContas = contas
     .filter(c => statusFilter === "todas" || c.status === statusFilter)
-    .filter(c => canalFilter === "todos" || (c.canal_origem || 'Manual') === canalFilter)
-    .filter(c => marketplaceFilter === "todos" || (c.marketplace_origem || 'Nenhum') === marketplaceFilter)
     .filter(c =>
       c.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -512,193 +593,100 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     vencido: filteredContas.filter(c => c.status === 'Atrasado').reduce((sum, c) => sum + (c.valor || 0), 0)
   };
 
-  // Análise de canais
-  const canaisUnicos = [...new Set(contas.map(c => c.canal_origem || 'Manual'))];
-  const marketplacesUnicos = [...new Set(contas.map(c => c.marketplace_origem || 'Nenhum'))].filter(m => m !== 'Nenhum');
-
-  const analiseCanais = canaisUnicos.map(canal => ({
-    canal,
-    quantidade: filteredContas.filter(c => (c.canal_origem || 'Manual') === canal).length,
-    valor: filteredContas.filter(c => (c.canal_origem || 'Manual') === canal).reduce((sum, c) => sum + (c.valor || 0), 0)
-  })).sort((a, b) => b.valor - a.valor);
-
-  const analiseMarketplaces = marketplacesUnicos.map(marketplace => ({
-    marketplace,
-    quantidade: filteredContas.filter(c => c.marketplace_origem === marketplace).length,
-    valor: filteredContas.filter(c => c.marketplace_origem === marketplace).reduce((sum, c) => sum + (c.valor || 0), 0)
-  })).sort((a, b) => b.valor - a.valor);
-
-  // Auto-calcular valor ajustado ao mudar juros/multa/desconto
-  useEffect(() => {
-    if (contaAtual && dialogBaixaOpen) {
-      const valorAjustado = (contaAtual.valor || 0) + (dadosBaixa.juros || 0) + (dadosBaixa.multa || 0) - (dadosBaixa.desconto || 0);
-      setDadosBaixa(prev => ({ ...prev, valor_recebido: valorAjustado }));
-    }
-  }, [dadosBaixa.juros, dadosBaixa.multa, dadosBaixa.desconto, contaAtual, dialogBaixaOpen]);
-
   return (
-    <div className="space-y-6 w-full h-full">
-      {/* KPI Cards - Multi-Empresa */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div className="space-y-6">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total a Receber</CardTitle>
-            <DollarSign className="h-4 w-4 text-emerald-600" />
+            <CardTitle className="text-sm font-medium">
+              Total a Receber
+            </CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-emerald-600">R$ {totais.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">{filteredContas.length} contas filtradas</p>
+            <div className="text-2xl font-bold">R$ {totais.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            <p className="text-xs text-muted-foreground">
+              Total de contas filtradas
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+            <CardTitle className="text-sm font-medium">
+              Contas Pendentes
+            </CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">R$ {totais.pendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">Aguardando recebimento</p>
+            <div className="text-2xl font-bold">R$ {totais.pendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            <p className="text-xs text-muted-foreground">
+              Contas ainda não recebidas
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recebidas</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-medium">Contas Pagas</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">R$ {totais.pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">Já recebidas</p>
+            <div className="text-2xl font-bold">R$ {totais.pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            <p className="text-xs text-muted-foreground">
+              Contas já recebidas
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vencidas</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-600" />
+            <CardTitle className="text-sm font-medium">Contas Vencidas</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">R$ {totais.vencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">Em atraso</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Canais Ativos</CardTitle>
-            <BarChart3 className="h-4 w-4 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{canaisUnicos.length}</div>
-            <p className="text-xs text-muted-foreground">{marketplacesUnicos.length} marketplaces</p>
+            <div className="text-2xl font-bold">R$ {totais.vencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            <p className="text-xs text-muted-foreground">
+              Contas em atraso
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Análise Multicanal */}
-      {(analiseCanais.length > 1 || analiseMarketplaces.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-blue-600" />
-                Análise por Canal de Origem
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                {analiseCanais.slice(0, 5).map(item => (
-                  <div key={item.canal} className="flex items-center justify-between p-2 bg-slate-50 rounded">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">{item.canal}</Badge>
-                      <span className="text-xs text-slate-600">{item.quantidade} títulos</span>
-                    </div>
-                    <span className="font-semibold text-sm">R$ {item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {analiseMarketplaces.length > 0 && (
-            <Card>
-              <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100 border-b">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <Package className="w-4 h-4 text-purple-600" />
-                  Análise por Marketplace
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  {analiseMarketplaces.map(item => (
-                    <div key={item.marketplace} className="flex items-center justify-between p-2 bg-slate-50 rounded">
-                      <div className="flex items-center gap-2">
-                        <Badge className="bg-purple-100 text-purple-700 text-xs">{item.marketplace}</Badge>
-                        <span className="text-xs text-slate-600">{item.quantidade} títulos</span>
-                      </div>
-                      <span className="font-semibold text-sm">R$ {item.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-
-      {/* Alerta de Seleção */}
+      {/* ETAPA 4: ALERTA DE ENVIO PARA CAIXA */}
       {contasSelecionadas.length > 0 && (
         <Alert className="border-emerald-300 bg-emerald-50">
-          <AlertDescription className="flex items-center justify-between flex-wrap gap-3">
+          <AlertDescription className="flex items-center justify-between">
             <div>
               <p className="font-semibold text-emerald-900">💰 {contasSelecionadas.length} título(s) selecionado(s)</p>
               <p className="text-xs text-emerald-700">Total: R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
-                  enviarParaCaixaMutation.mutate(titulos);
-                }}
-                disabled={enviarParaCaixaMutation.isPending}
-                size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Enviar para Caixa
-              </Button>
-              <ProtectedAction permission="financeiro_receber_baixar_multiplos">
-                <Button
-                  onClick={handleBaixarMultipla}
-                  disabled={baixarMultiplaMutation.isPending}
-                  size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Baixar Múltiplos
-                </Button>
-              </ProtectedAction>
-            </div>
+            <Button
+              onClick={() => {
+                const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
+                enviarParaCaixaMutation.mutate(titulos);
+              }}
+              disabled={enviarParaCaixaMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Enviar para Caixa
+            </Button>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Filtros Avançados */}
+      {/* Filtros */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-3">
-            <FiltroEmpresaContexto 
-              filtroEmpresa={filtroEmpresa}
-              setFiltroEmpresa={setFiltroEmpresa}
-            />
-            
             <Input
-              placeholder="🔍 Buscar por cliente, descrição, nº documento..."
+              placeholder="Buscar por cliente, descrição, nº documento..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="max-w-xs"
             />
-            
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Status" />
+              <SelectTrigger className="w-48">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas</SelectItem>
@@ -709,81 +697,63 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
               </SelectContent>
             </Select>
 
-            <Select value={canalFilter} onValueChange={setCanalFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Canal" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos Canais</SelectItem>
-                {canaisUnicos.map(canal => (
-                  <SelectItem key={canal} value={canal}>{canal}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {marketplacesUnicos.length > 0 && (
-              <Select value={marketplaceFilter} onValueChange={setMarketplaceFilter}>
-                <SelectTrigger className="w-44">
-                  <SelectValue placeholder="Marketplace" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos Marketplaces</SelectItem>
-                  {marketplacesUnicos.map(marketplace => (
-                    <SelectItem key={marketplace} value={marketplace}>{marketplace}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
             {contasSelecionadas.length > 0 && (
               <Badge className="bg-blue-100 text-blue-700 px-4 py-2">
                 {contasSelecionadas.length} selecionado(s) - R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </Badge>
             )}
 
-            <div className="ml-auto">
-              <ProtectedAction permission="financeiro_receber_criar">
-                <Button onClick={() => openWindow(ContaReceberForm, {
-                  windowMode: true,
-                  onSubmit: async (data) => {
-                    try {
-                      await base44.entities.ContaReceber.create(data);
-                      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
-                      toast({ title: "✅ Conta criada!" });
-                    } catch (error) {
-                      toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
-                    }
-                  }
-                }, {
-                  title: '💰 Nova Conta a Receber',
-                  width: 900,
-                  height: 600
-                })}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Adicionar Conta
+            {contasSelecionadas.length > 0 && (
+              <ProtectedAction permission="financeiro_receber_baixar_multiplos">
+                <Button
+                  variant="outline"
+                  onClick={handleBaixarMultipla}
+                  disabled={baixarMultiplaMutation.isPending}
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Baixar Múltiplos
                 </Button>
               </ProtectedAction>
-            </div>
+            )}
+
+            <ProtectedAction permission="financeiro_receber_criar">
+              <Button onClick={() => openWindow(ContaReceberForm, {
+                windowMode: true,
+                onSubmit: async (data) => {
+                  try {
+                    await base44.entities.ContaReceber.create(data);
+                    queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+                    toast({ title: "✅ Conta criada!" });
+                  } catch (error) {
+                    toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                  }
+                }
+              }, {
+                title: '💰 Nova Conta a Receber',
+                width: 900,
+                height: 600
+              })}>
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Conta
+              </Button>
+            </ProtectedAction>
           </div>
         </CardContent>
       </Card>
 
-      {/* Tabela Responsiva */}
-      <Card className="border-0 shadow-md w-full">
+      {/* Tabela */}
+      <Card className="border-0 shadow-md">
         <CardHeader className="bg-slate-50 border-b">
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-emerald-600" />
-            Contas a Receber
-          </CardTitle>
+          <CardTitle>Contas a Receber</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto w-full">
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={contasSelecionadas.length === filteredContas.filter(c => c.status === "Pendente" || c.status === "Atrasado").length && filteredContas.filter(c => c.status === "Pendente" || c.status === "Atrasado").length > 0}
+                      checked={contasSelecionadas.length === filteredContas.filter(c => c.status === "Pendente" || c.status === "Atrasado").length}
                       onCheckedChange={(checked) => {
                         const pendentesOuAtrasadas = filteredContas.filter(c => c.status === "Pendente" || c.status === "Atrasado");
                         setContasSelecionadas(checked ? pendentesOuAtrasadas.map(c => c.id) : []);
@@ -796,8 +766,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Canal</TableHead>
-                  <TableHead>Marketplace</TableHead>
+                  <TableHead>Canal Origem</TableHead>
                   <TableHead>Cobrança</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
@@ -811,11 +780,9 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   const diasAtraso = vencida
                     ? Math.floor((new Date() - new Date(conta.data_vencimento)) / (1000 * 60 * 60 * 24))
                     : 0;
-                  
-                  const pedidoVinculado = pedidos.find(p => p.id === conta.pedido_id);
 
                   return (
-                    <TableRow key={conta.id} className={vencida ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-slate-50'}>
+                    <TableRow key={conta.id} className={vencida ? 'bg-red-50' : ''}>
                       <TableCell>
                         {(conta.status === "Pendente" || conta.status === "Atrasado") && (
                           <Checkbox
@@ -823,22 +790,9 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                             onCheckedChange={() => toggleSelecao(conta.id)}
                           />
                         )}
-                        {conta.e_replicado && (
-                          <Badge variant="outline" className="text-xs ml-1" title="Vindo de rateio do grupo">
-                            📊
-                          </Badge>
-                        )}
                       </TableCell>
                       <TableCell className="font-medium">{conta.cliente}</TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="truncate">{conta.descricao}</div>
-                        {pedidoVinculado && (
-                          <Badge variant="outline" className="text-xs mt-1">
-                            <Link2 className="w-3 h-3 mr-1" />
-                            Pedido {pedidoVinculado.numero_pedido}
-                          </Badge>
-                        )}
-                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{conta.descricao}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Building2 className="w-3 h-3 text-purple-600" />
@@ -849,8 +803,8 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                         <div>
                           <p className="text-sm">{new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}</p>
                           {vencida && (
-                            <Badge variant="destructive" className="text-xs mt-1">
-                              ⚠️ {diasAtraso} dia(s)
+                            <Badge variant="destructive" className="text-xs">
+                              {diasAtraso} dia(s) atraso
                             </Badge>
                           )}
                         </div>
@@ -867,23 +821,19 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                         <Badge variant="outline" className="text-xs">
                           {conta.canal_origem || 'Manual'}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {conta.marketplace_origem && conta.marketplace_origem !== 'Nenhum' ? (
-                          <Badge className="bg-purple-100 text-purple-700 text-xs">
+                        {conta.marketplace_origem && conta.marketplace_origem !== 'Nenhum' && (
+                          <Badge className="ml-1 bg-purple-100 text-purple-700 text-xs">
                             {conta.marketplace_origem}
                           </Badge>
-                        ) : (
-                          <span className="text-xs text-slate-400">-</span>
                         )}
                       </TableCell>
                       <TableCell>
                         {conta.status_cobranca === "gerada_simulada" || conta.status_cobranca === "gerada" ? (
-                          <Badge className="bg-green-100 text-green-700 text-xs">
+                          <Badge className="bg-green-100 text-green-700">
                             {conta.forma_cobranca}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-xs">Não Gerada</Badge>
+                          <Badge variant="outline">Não Gerada</Badge>
                         )}
                       </TableCell>
 
@@ -907,15 +857,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => openWindow(ContaReceberForm, {
-                                conta,
-                                windowMode: true,
-                                readOnly: true
-                              }, {
-                                title: `👁️ Ver: ${conta.cliente}`,
-                                width: 900,
-                                height: 600
-                              })}
+                              onClick={() => handleEdit(conta)}
                               className="justify-start h-7 px-2"
                               title="Ver Detalhes"
                             >
@@ -1025,7 +967,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
 
                               {!temConfig && !conta.status_cobranca && (
                                 <Badge variant="outline" className="text-xs text-orange-700">
-                                  ⚠️ Sem config
+                                  Sem config
                                 </Badge>
                               )}
                               <ProtectedAction permission="financeiro_receber_baixar">
@@ -1083,38 +1025,26 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
             <div className="text-center py-12 text-slate-500">
               <DollarSign className="w-16 h-16 mx-auto mb-4 opacity-30" />
               <p>Nenhuma conta a receber encontrada</p>
-              <p className="text-xs mt-2">Ajuste os filtros ou adicione uma nova conta</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Dialog Baixa Individual */}
+      {/* Dialog Baixa */}
       <Dialog open={dialogBaixaOpen} onOpenChange={setDialogBaixaOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              Baixar Conta a Receber
-            </DialogTitle>
+            <DialogTitle>Baixar Conta a Receber</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitBaixa} className="space-y-4">
             <div>
               <Label>Cliente</Label>
               <Input value={contaAtual?.cliente || ''} disabled />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Valor Original</Label>
-                <Input value={`R$ ${contaAtual?.valor?.toFixed(2) || 0}`} disabled className="font-semibold" />
-              </div>
-              <div>
-                <Label className="text-green-600">Valor Total a Receber (Ajustado)</Label>
-                <Input
-                  value={`R$ ${((contaAtual?.valor || 0) + (dadosBaixa.juros || 0) + (dadosBaixa.multa || 0) - (dadosBaixa.desconto || 0)).toFixed(2)}`}
-                  disabled
-                  className="font-bold text-green-600 border-green-300 bg-green-50"
-                />
+                <Input value={`R$ ${contaAtual?.valor?.toFixed(2) || 0}`} disabled />
               </div>
               <div>
                 <Label>Valor Recebido *</Label>
@@ -1124,7 +1054,6 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   value={dadosBaixa.valor_recebido}
                   onChange={(e) => setDadosBaixa({ ...dadosBaixa, valor_recebido: parseFloat(e.target.value) })}
                   required
-                  className="font-semibold"
                 />
               </div>
             </div>
@@ -1157,157 +1086,39 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label>Juros (R$)</Label>
+                <Label>Juros</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={dadosBaixa.juros}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) || 0 })}
-                  className="text-red-600"
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) })}
                 />
               </div>
               <div>
-                <Label>Multa (R$)</Label>
+                <Label>Multa</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={dadosBaixa.multa}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) || 0 })}
-                  className="text-red-600"
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) })}
                 />
               </div>
               <div>
-                <Label>Desconto (R$)</Label>
+                <Label>Desconto</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={dadosBaixa.desconto}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) || 0 })}
-                  className="text-green-600"
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) })}
                 />
               </div>
-            </div>
-            <div>
-              <Label>Observações</Label>
-              <Textarea
-                value={dadosBaixa.observacoes}
-                onChange={(e) => setDadosBaixa({ ...dadosBaixa, observacoes: e.target.value })}
-                placeholder="Observações sobre o recebimento..."
-                rows={3}
-              />
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={baixarTituloMutation.isPending} className="bg-green-600 hover:bg-green-700">
+              <Button type="submit" disabled={baixarTituloMutation.isPending} className="bg-green-600">
                 {baixarTituloMutation.isPending ? 'Baixando...' : 'Confirmar Baixa'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Baixa Múltipla */}
-      <Dialog open={dialogBaixaMultiplaOpen} onOpenChange={setDialogBaixaMultiplaOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-              Baixar Múltiplos Títulos ({contasSelecionadas.length})
-            </DialogTitle>
-          </DialogHeader>
-          <Alert className="border-blue-300 bg-blue-50">
-            <AlertDescription className="text-sm text-blue-900">
-              <strong>Baixa em Massa:</strong> Serão baixados <strong>{contasSelecionadas.length} títulos</strong> com valor total de <strong>R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>. Configure a forma de recebimento, juros, multas e descontos para aplicar a todos.
-            </AlertDescription>
-          </Alert>
-          <form onSubmit={handleSubmitBaixaMultipla} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>Data Recebimento *</Label>
-                <Input
-                  type="date"
-                  value={dadosBaixa.data_recebimento}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, data_recebimento: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <Label>Forma de Recebimento *</Label>
-                <Select
-                  value={dadosBaixa.forma_recebimento}
-                  onValueChange={(v) => setDadosBaixa({ ...dadosBaixa, forma_recebimento: v })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {formasPagamento.map(forma => (
-                      <SelectItem key={forma.id} value={forma.descricao}>
-                        {forma.icone && `${forma.icone} `}{forma.descricao}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Juros (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={dadosBaixa.juros}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) || 0 })}
-                  placeholder="0,00"
-                  className="text-red-600"
-                />
-              </div>
-              <div>
-                <Label>Multa (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={dadosBaixa.multa}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) || 0 })}
-                  placeholder="0,00"
-                  className="text-red-600"
-                />
-              </div>
-              <div>
-                <Label>Desconto (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={dadosBaixa.desconto}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) || 0 })}
-                  placeholder="0,00"
-                  className="text-green-600"
-                />
-              </div>
-            </div>
-            <Alert className="border-green-300 bg-green-50">
-              <AlertDescription className="text-sm">
-                <p className="font-semibold text-green-900">💰 Total a Receber (com ajustes):</p>
-                <p className="text-lg font-bold text-green-700">
-                  R$ {(totalSelecionado + (dadosBaixa.juros || 0) + (dadosBaixa.multa || 0) - (dadosBaixa.desconto || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </AlertDescription>
-            </Alert>
-            <div>
-              <Label>Observações</Label>
-              <Textarea
-                value={dadosBaixa.observacoes}
-                onChange={(e) => setDadosBaixa({ ...dadosBaixa, observacoes: e.target.value })}
-                placeholder="Observações sobre o recebimento em massa..."
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setDialogBaixaMultiplaOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={baixarMultiplaMutation.isPending} className="bg-green-600 hover:bg-green-700">
-                {baixarMultiplaMutation.isPending ? 'Baixando...' : `Confirmar Baixa de ${contasSelecionadas.length} Títulos`}
               </Button>
             </div>
           </form>
