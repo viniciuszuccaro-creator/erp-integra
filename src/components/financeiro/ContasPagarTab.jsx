@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, DollarSign, Building2, Shield, Plus, Edit2, CheckCircle2, AlertCircle, Send, Printer, Copy, RefreshCw, ShoppingBag } from "lucide-react";
+import { CheckCircle, DollarSign, Building2, Shield, Plus, Edit2, CheckCircle2, AlertCircle, Send, Printer, Copy, RefreshCw, ShoppingBag, Edit } from "lucide-react";
 import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
 import StatusBadge from "../StatusBadge";
 import usePermissions from "@/components/lib/usePermissions";
