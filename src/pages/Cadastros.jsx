@@ -2080,7 +2080,7 @@ export default function Cadastros() {
                         <CardTitle 
                           className="text-base flex items-center gap-2 cursor-pointer hover:text-blue-700 transition-colors"
                           onClick={() => openWindow(
-                            () => import('./GestorFormasPagamento').then(m => m.default),
+                            GestorFormasPagamento,
                             { windowMode: true },
                             { title: '🏦 Gestão Completa - Formas de Pagamento', width: 1400, height: 800, zIndex: 50000 }
                           )}
@@ -2093,19 +2093,19 @@ export default function Cadastros() {
                             size="sm"
                             variant="outline"
                             onClick={() => openWindow(
-                              () => import('./GestorFormasPagamento').then(m => m.default),
+                              GestorFormasPagamento,
                               { windowMode: true },
                               { title: '🏦 Gestor Completo', width: 1400, height: 800 }
                             )}
                             className="border-blue-300 text-blue-700"
                           >
-                            <Eye className="w-4 h-4 mr-1" />
+                            <CheckCircle2 className="w-4 h-4 mr-1" />
                             Gestor Completo
                           </Button>
                           <Button
                             size="sm"
                             onClick={() => openWindow(
-                              () => import('./FormaPagamentoFormCompleto').then(m => m.default),
+                              FormaPagamentoFormCompleto,
                               {
                                 windowMode: true,
                                 onSubmit: handleSubmitGenerico('FormaPagamento', 'formas-pagamento')
