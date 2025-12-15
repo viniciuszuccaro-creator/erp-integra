@@ -2071,71 +2071,132 @@ export default function Cadastros() {
                     </CardContent>
                   </Card>
 
-                  {/* FORMAS DE PAGAMENTO */}
-                  <Card className="border-blue-200">
-                    <CardHeader className="bg-blue-50 border-b border-blue-200 pb-3">
+                  {/* FORMAS DE PAGAMENTO - V21.8 COMPLETO */}
+                  <Card className="border-blue-200 lg:col-span-2">
+                    <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle 
                           className="text-base flex items-center gap-2 cursor-pointer hover:text-blue-700 transition-colors"
                           onClick={() => openWindow(
-                            VisualizadorUniversalEntidade,
-                            {
-                              nomeEntidade: 'FormaPagamento',
-                              tituloDisplay: 'Formas de Pagamento',
-                              icone: CreditCard,
-                              camposPrincipais: ['descricao', 'tipo', 'prazo_dias', 'taxa_percentual'],
-                              componenteEdicao: FormaPagamentoForm,
-                              windowMode: true
-                            },
-                            { title: '💳 Todas as Formas de Pagamento', width: 1400, height: 800, zIndex: 50000 }
+                            () => import('./GestorFormasPagamento').then(m => m.default),
+                            { windowMode: true },
+                            { title: '🏦 Gestão Completa - Formas de Pagamento', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
                           <CreditCard className="w-5 h-5 text-blue-600" />
-                          Formas de Pagamento ({formasPagamento.length})
+                          🏦 Formas de Pagamento - Fonte Única ({formasPagamento.length})
                         </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(FormaPagamentoForm, {
-                            windowMode: true,
-                            onSubmit: handleSubmitGenerico('FormaPagamento', 'formas-pagamento')
-                          }, {
-                            title: '💳 Nova Forma de Pagamento',
-                            width: 800,
-                            height: 600
-                          })}
-                          className="bg-blue-600 hover:bg-blue-700"
-                          disabled={!hasPermission('financeiro', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Nova
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {formasPagamento.map(forma => (
-                        <div key={forma.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                          <p className="font-semibold text-sm flex-1">{forma.descricao || forma.tipo}</p>
+                        <div className="flex gap-2">
                           <Button
-                            variant="ghost"
                             size="sm"
-                            onClick={() => openWindow(FormaPagamentoForm, {
-                              formaPagamento: forma,
-                              windowMode: true,
-                              onSubmit: handleSubmitGenerico('FormaPagamento', 'formas-pagamento')
-                            }, {
-                              title: `💳 Editar: ${forma.descricao || forma.tipo}`,
-                              width: 800,
-                              height: 600,
-                              uniqueKey: `edit-FormaPagamento-${forma.id}-${Date.now()}`,
-                              zIndex: 999999,
-                              bringToFront: true
-                            })}
-                            disabled={!hasPermission('financeiro', 'editar')}
+                            variant="outline"
+                            onClick={() => openWindow(
+                              () => import('./GestorFormasPagamento').then(m => m.default),
+                              { windowMode: true },
+                              { title: '🏦 Gestor Completo', width: 1400, height: 800 }
+                            )}
+                            className="border-blue-300 text-blue-700"
                           >
-                            <Edit className="w-3 h-3 text-blue-600" />
+                            <Eye className="w-4 h-4 mr-1" />
+                            Gestor Completo
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => openWindow(
+                              () => import('./FormaPagamentoFormCompleto').then(m => m.default),
+                              {
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('FormaPagamento', 'formas-pagamento')
+                              },
+                              { title: '💳 Nova Forma de Pagamento', width: 900, height: 700 }
+                            )}
+                            className="bg-blue-600 hover:bg-blue-700"
+                            disabled={!hasPermission('financeiro', 'criar')}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Nova Forma
                           </Button>
                         </div>
-                      ))}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
+                          <CheckCircle2 className="w-8 h-8 text-blue-600 mb-2" />
+                          <p className="font-semibold text-blue-900">Integração Total</p>
+                          <p className="text-xs text-blue-700">PDV • Pedidos • Contas a Receber/Pagar</p>
+                        </div>
+                        <div className="p-4 border-2 border-green-200 rounded-lg bg-green-50">
+                          <Zap className="w-8 h-8 text-green-600 mb-2" />
+                          <p className="font-semibold text-green-900">Descontos Automáticos</p>
+                          <p className="text-xs text-green-700">Por forma de pagamento</p>
+                        </div>
+                        <div className="p-4 border-2 border-purple-200 rounded-lg bg-purple-50">
+                          <Landmark className="w-8 h-8 text-purple-600 mb-2" />
+                          <p className="font-semibold text-purple-900">Vinculado a Bancos</p>
+                          <p className="text-xs text-purple-700">Boleto/PIX integrados</p>
+                        </div>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto">
+                        {formasPagamento.sort((a, b) => (a.ordem_exibicao || 0) - (b.ordem_exibicao || 0)).map(forma => (
+                          <div key={forma.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-all">
+                            <div className="flex items-center gap-3 flex-1">
+                              <span className="text-2xl">{forma.icone}</span>
+                              <div className="flex-1">
+                                <p className="font-semibold text-sm">{forma.descricao}</p>
+                                <div className="flex gap-2 mt-1 flex-wrap">
+                                  <Badge variant="outline" className="text-xs">{forma.tipo}</Badge>
+                                  {forma.percentual_desconto_padrao > 0 && (
+                                    <Badge className="bg-green-100 text-green-700 text-xs">
+                                      -{forma.percentual_desconto_padrao}%
+                                    </Badge>
+                                  )}
+                                  {forma.percentual_acrescimo_padrao > 0 && (
+                                    <Badge className="bg-orange-100 text-orange-700 text-xs">
+                                      +{forma.percentual_acrescimo_padrao}%
+                                    </Badge>
+                                  )}
+                                  {forma.permite_parcelamento && (
+                                    <Badge className="bg-purple-100 text-purple-700 text-xs">
+                                      Até {forma.maximo_parcelas}x
+                                    </Badge>
+                                  )}
+                                  {forma.disponivel_pdv && <Badge className="bg-blue-100 text-blue-700 text-xs">PDV</Badge>}
+                                  {forma.disponivel_ecommerce && <Badge className="bg-cyan-100 text-cyan-700 text-xs">Web</Badge>}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2 items-center">
+                              <Badge className={forma.ativa ? 'bg-green-600' : 'bg-red-600'}>
+                                {forma.ativa ? 'Ativa' : 'Inativa'}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openWindow(
+                                  () => import('./FormaPagamentoFormCompleto').then(m => m.default),
+                                  {
+                                    formaPagamento: forma,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('FormaPagamento', 'formas-pagamento')
+                                  },
+                                  {
+                                    title: `💳 Editar: ${forma.descricao}`,
+                                    width: 900,
+                                    height: 700,
+                                    uniqueKey: `edit-FormaPagamento-${forma.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
+                                  }
+                                )}
+                                disabled={!hasPermission('financeiro', 'editar')}
+                              >
+                                <Edit className="w-4 h-4 text-blue-600" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </CardContent>
                   </Card>
 
