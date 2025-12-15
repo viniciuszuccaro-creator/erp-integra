@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Wallet, ShoppingCart, CheckCircle2, Trash2, Plus } from "lucide-react";
+import { Wallet, ShoppingCart, CheckCircle2, Trash2, Plus, Truck, Store } from "lucide-react";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 
 export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
@@ -26,6 +26,8 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
   const [emitirNFe, setEmitirNFe] = useState(false);
   const [emitirRecibo, setEmitirRecibo] = useState(true);
   const [emitirBoleto, setEmitirBoleto] = useState(false);
+  const [tipoEntrega, setTipoEntrega] = useState("Retirada"); // "Retirada" ou "Entrega"
+  const [enderecoEntrega, setEnderecoEntrega] = useState("");
   const [buscaProduto, setBuscaProduto] = useState("");
   const [buscaCliente, setBuscaCliente] = useState("");
   const [caixaAberto, setCaixaAberto] = useState(false);
@@ -149,6 +151,7 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
         numero_pedido: `PDV-${Date.now()}`,
         forma_pagamento: formasPagamentoVenda.map(f => f.forma_descricao).join(', '),
         tipo: 'Pedido',
+        tipo_frete: tipoEntrega === "Retirada" ? "Retirada" : "CIF",
         origem_pedido: 'PDV Presencial',
         data_pedido: hoje,
         cliente_nome: clienteSelecionado?.nome || 'Cliente Avulso',
@@ -165,8 +168,34 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
         desconto_geral_pedido_valor: valorDesconto,
         valor_total: totalVenda,
         status: 'Faturado',
-        observacoes_publicas: valorAcrescimo > 0 ? `Acréscimo: R$ ${valorAcrescimo.toFixed(2)}` : ''
+        observacoes_publicas: `${tipoEntrega === "Retirada" ? "🏪 RETIRADA NO LOCAL" : "🚚 ENTREGA"}${valorAcrescimo > 0 ? ` | Acréscimo: R$ ${valorAcrescimo.toFixed(2)}` : ''}`
       });
+
+      // Se for entrega, criar registro na entidade Entrega
+      if (tipoEntrega === "Entrega" && clienteSelecionado) {
+        const enderecoCliente = clienteSelecionado.endereco_principal || {};
+        await base44.entities.Entrega.create({
+          empresa_id: empresaAtual?.id,
+          pedido_id: pedido.id,
+          numero_pedido: pedido.numero_pedido,
+          cliente_id: clienteSelecionado.id,
+          cliente_nome: clienteSelecionado.nome,
+          endereco_entrega_completo: {
+            logradouro: enderecoCliente.logradouro || enderecoEntrega,
+            numero: enderecoCliente.numero || "",
+            complemento: enderecoCliente.complemento || "",
+            bairro: enderecoCliente.bairro || "",
+            cidade: enderecoCliente.cidade || "",
+            estado: enderecoCliente.estado || "",
+            cep: enderecoCliente.cep || ""
+          },
+          data_previsao: hoje,
+          status: "Aguardando Separação",
+          tipo_frete: "CIF",
+          valor_mercadoria: totalVenda,
+          observacoes: `Criado pelo PDV - Venda: ${pedido.numero_pedido}`
+        });
+      }
 
       let contaReceber = null;
       if (emitirBoleto || formasPagamento.some(f => f.forma !== 'Dinheiro')) {
@@ -229,12 +258,16 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
       setAcrescimo(0);
       setEmitirNFe(false);
       setEmitirBoleto(false);
+      setTipoEntrega("Retirada");
+      setEnderecoEntrega("");
       queryClient.invalidateQueries();
       
+      const mensagemTipo = tipoEntrega === "Retirada" ? "🏪 RETIRADA NO LOCAL" : "🚚 ENTREGA CRIADA";
+      
       if (troco > 0) {
-        toast.success(`✅ Venda ${pedido.numero_pedido} finalizada!\n🟢 TROCO: R$ ${troco.toFixed(2)}`);
+        toast.success(`✅ Venda ${pedido.numero_pedido} finalizada!\n${mensagemTipo}\n🟢 TROCO: R$ ${troco.toFixed(2)}`);
       } else {
-        toast.success(`✅ Venda ${pedido.numero_pedido} finalizada!`);
+        toast.success(`✅ Venda ${pedido.numero_pedido} finalizada!\n${mensagemTipo}`);
       }
     }
   });
@@ -538,6 +571,46 @@ export default function CaixaPDVCompleto({ empresaAtual, windowMode = false }) {
                     <span className="font-semibold">TOTAL:</span>
                     <span className="text-2xl font-bold text-blue-600">R$ {totalVenda.toFixed(2)}</span>
                   </div>
+
+                  {/* TIPO DE ENTREGA - RETIRADA OU ENTREGA */}
+                  <Card className="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300">
+                    <CardContent className="p-3 space-y-2">
+                      <Label className="text-sm font-semibold text-blue-900 flex items-center gap-2">
+                        <Truck className="w-4 h-4" />
+                        Tipo de Entrega
+                      </Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          variant={tipoEntrega === "Retirada" ? "default" : "outline"}
+                          onClick={() => setTipoEntrega("Retirada")}
+                          className={`h-16 flex-col gap-1 ${tipoEntrega === "Retirada" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+                        >
+                          <Store className="w-6 h-6" />
+                          <span className="text-xs font-semibold">RETIRADA</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={tipoEntrega === "Entrega" ? "default" : "outline"}
+                          onClick={() => setTipoEntrega("Entrega")}
+                          className={`h-16 flex-col gap-1 ${tipoEntrega === "Entrega" ? "bg-blue-600 hover:bg-blue-700" : ""}`}
+                        >
+                          <Truck className="w-6 h-6" />
+                          <span className="text-xs font-semibold">ENTREGA</span>
+                        </Button>
+                      </div>
+                      {tipoEntrega === "Entrega" && !clienteSelecionado && (
+                        <div className="bg-yellow-100 border border-yellow-300 rounded p-2 text-xs text-yellow-900">
+                          ⚠️ Selecione um cliente para criar a entrega automaticamente
+                        </div>
+                      )}
+                      {tipoEntrega === "Entrega" && clienteSelecionado && (
+                        <div className="bg-green-100 border border-green-300 rounded p-2 text-xs text-green-900">
+                          ✅ Entrega será criada automaticamente com endereço do cliente
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
 
                   <div className="space-y-1 p-2 bg-slate-50 rounded">
                     <div className="flex items-center gap-2">
