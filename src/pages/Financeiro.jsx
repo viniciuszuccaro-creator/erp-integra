@@ -334,6 +334,10 @@ export default function Financeiro() {
             <BarChart3 className="w-4 h-4 mr-2" />
             Dashboard Realtime
           </TabsTrigger>
+          <TabsTrigger value="formas-pagamento" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <Sparkles className="w-4 h-4 mr-2" />
+            🏦 Formas de Pagamento
+          </TabsTrigger>
           <TabsTrigger value="caixa-pdv" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
             <Wallet className="w-4 h-4 mr-2" />
             💰 Caixa PDV Completo
@@ -388,6 +392,10 @@ export default function Financeiro() {
 
         <TabsContent value="dashboard-realtime">
           <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} />
+        </TabsContent>
+
+        <TabsContent value="formas-pagamento">
+          <DashboardFormasPagamento />
         </TabsContent>
 
         <TabsContent value="caixa-pdv">
