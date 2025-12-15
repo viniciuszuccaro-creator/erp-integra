@@ -9,12 +9,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { DollarSign, CreditCard, Settings, Zap, CheckCircle2, Percent, Calendar } from 'lucide-react';
+import { DollarSign, CreditCard, Settings, Zap, CheckCircle2, Percent, Calendar, Landmark, Building2, Globe } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { base44 } from '@/api/base44Client';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import { toast } from 'sonner';
 
 export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState('geral');
+  const { empresaAtual, contextoAtual } = useContextoVisual();
+  
+  const { data: bancos = [] } = useQuery({
+    queryKey: ['bancos'],
+    queryFn: () => base44.entities.Banco.list(),
+  });
+
   const [formData, setFormData] = useState(() => formaPagamento || {
+    group_id: contextoAtual === 'grupo' ? empresaAtual?.group_id : undefined,
+    empresa_id: contextoAtual === 'empresa' ? empresaAtual?.id : undefined,
     codigo: '',
     descricao: '',
     tipo: 'Dinheiro',
@@ -316,6 +328,19 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
 
         {/* ABA 4: CONFIGURAÇÕES */}
         <TabsContent value="config" className="space-y-4 mt-4">
+          {/* ESCOPO MULTIEMPRESA */}
+          <Card className="border-purple-200 bg-purple-50">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Building2 className="w-4 h-4 text-purple-600" />
+                <Label className="font-semibold">Escopo Multiempresa</Label>
+              </div>
+              <p className="text-xs text-slate-600 mb-3">
+                Contexto: {contextoAtual === 'grupo' ? '🏢 Grupo Empresarial' : '🏪 Empresa Individual'}
+              </p>
+            </CardContent>
+          </Card>
+
           <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div>
               <Label className="font-semibold">Gerar Cobrança Online</Label>
@@ -326,6 +351,26 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
               onCheckedChange={(v) => setFormData({...formData, gerar_cobranca_online: v})}
             />
           </div>
+
+          {formData.gerar_cobranca_online && bancos.length > 0 && (
+            <div>
+              <Label>Banco Vinculado (Boleto/PIX)</Label>
+              <Select
+                value={formData.banco_vinculado_id || ''}
+                onValueChange={(v) => setFormData({...formData, banco_vinculado_id: v})}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecione o banco..." /></SelectTrigger>
+                <SelectContent>
+                  {bancos.map(banco => (
+                    <SelectItem key={banco.id} value={banco.id}>
+                      <Landmark className="w-4 h-4 inline mr-2" />
+                      {banco.nome_banco} - Ag: {banco.agencia}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
             <div>
