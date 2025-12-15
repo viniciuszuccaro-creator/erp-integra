@@ -65,6 +65,8 @@ import ColaboradorForm from "../components/rh/ColaboradorForm";
 import GerenciadorJanelas from "../components/sistema/GerenciadorJanelas";
 import BancoForm from "../components/cadastros/BancoForm";
 import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
+import FormaPagamentoFormCompleto from "../components/cadastros/FormaPagamentoFormCompleto";
+import GestorFormasPagamento from "../components/cadastros/GestorFormasPagamento";
 import VeiculoForm from "../components/cadastros/VeiculoForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
@@ -2174,7 +2176,7 @@ export default function Cadastros() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openWindow(
-                                  () => import('./FormaPagamentoFormCompleto').then(m => m.default),
+                                  FormaPagamentoFormCompleto,
                                   {
                                     formaPagamento: forma,
                                     windowMode: true,
