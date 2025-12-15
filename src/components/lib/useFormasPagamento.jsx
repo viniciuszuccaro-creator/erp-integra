@@ -112,6 +112,90 @@ export function useFormasPagamento(filtros = {}) {
     return valorFinal;
   };
 
+  // Calcular parcelas com juros
+  const calcularParcelas = (valorBase, formaPagamentoId, numeroParcelas) => {
+    const config = obterConfiguracao(formaPagamentoId);
+    if (!config || !config.permite_parcelar) {
+      return null;
+    }
+
+    const maxParcelas = Math.min(numeroParcelas, config.max_parcelas);
+    const valorComAjustes = calcularValorFinal(valorBase, formaPagamentoId);
+    const parcelas = [];
+
+    for (let i = 1; i <= maxParcelas; i++) {
+      const valorParcela = valorComAjustes / i;
+      const taxaParcela = config.taxa_por_parcela || 0;
+      const valorComJuros = valorParcela * (1 + (taxaParcela / 100));
+      const valorTotal = valorComJuros * i;
+
+      parcelas.push({
+        numero_parcelas: i,
+        valor_parcela: valorComJuros,
+        valor_total: valorTotal,
+        taxa_aplicada: taxaParcela,
+        intervalo_dias: config.intervalo_parcelas_dias || 30,
+        economia_vs_avista: valorBase - valorTotal
+      });
+    }
+
+    return parcelas;
+  };
+
+  // Recomendar melhor forma de pagamento (IA)
+  const recomendarMelhorForma = (valorCompra, contexto = 'pdv') => {
+    const formasDisponiveis = obterFormasPorContexto(contexto);
+    
+    const analise = formasDisponiveis.map(forma => {
+      const config = obterConfiguracao(forma.id);
+      const valorFinal = calcularValorFinal(valorCompra, forma.id);
+      const economia = valorCompra - valorFinal;
+      
+      return {
+        forma,
+        valor_final: valorFinal,
+        economia,
+        percentual_economia: (economia / valorCompra) * 100,
+        prazo_compensacao: config.prazo_dias,
+        score_cliente: economia * 10 - (config.prazo_dias * 0.5) // Mais economia = melhor
+      };
+    });
+
+    return analise.sort((a, b) => b.score_cliente - a.score_cliente);
+  };
+
+  // Sugerir parcelamento ideal
+  const sugerirParcelamentoIdeal = (valorCompra, capacidadePagamentoMensal) => {
+    const formasParcelaveis = formasPagamento.filter(f => f.permite_parcelamento && f.ativa);
+    
+    const sugestoes = formasParcelaveis.map(forma => {
+      const config = obterConfiguracao(forma.id);
+      let parcelasIdeais = 1;
+      
+      // Calcular quantas parcelas cabem no orçamento
+      for (let i = 1; i <= config.max_parcelas; i++) {
+        const valorParcela = calcularValorFinal(valorCompra, forma.id) / i;
+        const taxaParcela = config.taxa_por_parcela || 0;
+        const valorComJuros = valorParcela * (1 + (taxaParcela / 100));
+        
+        if (valorComJuros <= capacidadePagamentoMensal) {
+          parcelasIdeais = i;
+        } else {
+          break;
+        }
+      }
+
+      return {
+        forma,
+        parcelas_ideais: parcelasIdeais,
+        valor_parcela: (calcularValorFinal(valorCompra, forma.id) / parcelasIdeais) * (1 + ((config.taxa_por_parcela || 0) / 100)),
+        valor_total: calcularValorFinal(valorCompra, forma.id) * (1 + ((config.taxa_por_parcela || 0) / 100) * parcelasIdeais)
+      };
+    });
+
+    return sugestoes.filter(s => s.parcelas_ideais > 1);
+  };
+
   return {
     formasPagamento,
     bancos,
@@ -121,7 +205,10 @@ export function useFormasPagamento(filtros = {}) {
     obterConfiguracao,
     obterFormaPorDescricao,
     validarFormaPagamento,
-    calcularValorFinal
+    calcularValorFinal,
+    calcularParcelas,
+    recomendarMelhorForma,
+    sugerirParcelamentoIdeal
   };
 }
 
