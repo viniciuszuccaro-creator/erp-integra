@@ -8,20 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  AlertCircle,
-  FileText,
-  BarChart3,
-  Building2,
-  Split,
-  GitBranch,
-  CheckCircle2,
-  Link2,
-  Sparkles,
-  Wallet,
-  Globe,
+  TrendingUp, TrendingDown, DollarSign, AlertCircle, FileText, BarChart3,
+  Building2, Split, GitBranch, CheckCircle2, Link2, Sparkles, Wallet, Globe,
+  Brain, Shield, Upload, LineChart, Package
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -47,17 +36,20 @@ import CaixaPDVCompleto from "../components/financeiro/CaixaPDVCompleto";
 import GestaoRemessaRetorno from "../components/financeiro/GestaoRemessaRetorno";
 import VendasMulticanal from "../components/financeiro/VendasMulticanal";
 import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
+import AnalisadorRecebimentosIA from "../components/financeiro/AnalisadorRecebimentosIA";
+import AnalisadorPagamentosIA from "../components/financeiro/AnalisadorPagamentosIA";
+import PrevisaoFluxoCaixaIA from "../components/financeiro/PrevisaoFluxoCaixaIA";
+import ConciliadorAutomaticoFinanceiro from "../components/financeiro/ConciliadorAutomaticoFinanceiro";
+import DetectorAnomaliasFiscais from "../components/financeiro/DetectorAnomaliasFiscais";
+import ImportadorContasEmMassa from "../components/financeiro/ImportadorContasEmMassa";
+import RelatorioFinanceiroAvancado from "../components/financeiro/RelatorioFinanceiroAvancado";
+import DashboardFinanceiroCompleto from "../components/financeiro/DashboardFinanceiroCompleto";
 
 export default function Financeiro() {
-  const [activeTab, setActiveTab] = useState("contas-receber");
+  const [activeTab, setActiveTab] = useState("dashboard-ia");
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
   const [conciliacaoDialogOpen, setConciliacaoDialogOpen] = useState(false);
-  const [relatorioPeriodo, setRelatorioPeriodo] = useState({
-    dataInicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    dataFim: new Date().toISOString().split('T')[0]
-  });
-  const [relatorioTipo, setRelatorioTipo] = useState("geral");
 
   const { toast } = useToast();
 
@@ -170,14 +162,17 @@ export default function Financeiro() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-6 lg:p-8 space-y-6 w-full h-full overflow-auto">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Financeiro Multi-Empresa</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
+            <DollarSign className="w-8 h-8 text-blue-600" />
+            Financeiro Multi-Empresa V21.9
+          </h1>
           <p className="text-slate-600">
             {estaNoGrupo
-              ? 'Visão consolidada • Caixa Central • Conciliação • Omnichannel'
-              : `Gestão financeira completa - ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || ''}`
+              ? '🌐 Visão consolidada • IA Total • Caixa Central • Conciliação • Omnichannel'
+              : `💼 Gestão financeira completa - ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || ''}`
             }
           </p>
         </div>
@@ -188,10 +183,24 @@ export default function Financeiro() {
               Visão Consolidada
             </Badge>
           )}
-
+          <Button
+            onClick={() => openWindow(DashboardFinanceiroCompleto, {
+              windowMode: true
+            }, {
+              title: '📊 Dashboard Financeiro Completo - IA',
+              width: 1600,
+              height: 900,
+              uniqueKey: 'dashboard-financeiro-ia'
+            })}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          >
+            <Sparkles className="w-4 h-4 mr-2" />
+            Abrir Dashboard IA Completo
+          </Button>
         </div>
       </div>
 
+      {/* KPIs Principais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -203,7 +212,7 @@ export default function Financeiro() {
               R$ {receberPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             {contasReceberVencidas > 0 && (
-              <p className="text-xs text-red-600 mt-1">{contasReceberVencidas} vencidas</p>
+              <p className="text-xs text-red-600 mt-1">⚠️ {contasReceberVencidas} vencidas</p>
             )}
           </CardContent>
         </Card>
@@ -218,7 +227,7 @@ export default function Financeiro() {
               R$ {pagarPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
             {contasPagarVencidas > 0 && (
-              <p className="text-xs text-red-600 mt-1">{contasPagarVencidas} vencidas</p>
+              <p className="text-xs text-red-600 mt-1">⚠️ {contasPagarVencidas} vencidas</p>
             )}
           </CardContent>
         </Card>
@@ -249,6 +258,7 @@ export default function Financeiro() {
         </Card>
       </div>
 
+      {/* KPIs Secundários - Integração e IA */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="border-0 shadow-md bg-blue-50 border-blue-200">
           <CardContent className="p-4">
@@ -322,39 +332,18 @@ export default function Financeiro() {
         </Card>
       </div>
 
-      {/* DASHBOARD UNIFICADO ETAPA 4 */}
+      {/* DASHBOARD UNIFICADO */}
       <DashboardFinanceiroUnificado empresaId={empresaAtual?.id} />
 
-      {/* NOVO: Régua de Cobrança IA */}
+      {/* RÉGUA DE COBRANÇA IA */}
       <ReguaCobrancaIA empresaId={empresaAtual?.id} />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
-          <TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Dashboard Realtime
-          </TabsTrigger>
-          <TabsTrigger value="formas-pagamento" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+      {/* ABAS PRINCIPAIS */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full">
+        <TabsList className="bg-white border shadow-sm flex-wrap h-auto w-full">
+          <TabsTrigger value="dashboard-ia" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
             <Sparkles className="w-4 h-4 mr-2" />
-            🏦 Formas de Pagamento
-          </TabsTrigger>
-          <TabsTrigger value="caixa-pdv" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-            <Wallet className="w-4 h-4 mr-2" />
-            💰 Caixa PDV Completo
-            {ordensLiquidacaoPendentes > 0 && (
-              <Badge className="ml-2 bg-orange-500 text-white">{ordensLiquidacaoPendentes}</Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            💵 Caixa Diário • 💳 Cartões
-          </TabsTrigger>
-          <TabsTrigger value="vendas-multicanal" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Globe className="w-4 h-4 mr-2" />
-            🌐 Vendas Multicanal
-          </TabsTrigger>
-          <TabsTrigger value="remessa-retorno" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-            <FileText className="w-4 h-4 mr-2" />
-            Remessa/Retorno CNAB
+            🤖 Dashboard IA
           </TabsTrigger>
           <TabsTrigger value="contas-receber" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
@@ -363,6 +352,56 @@ export default function Financeiro() {
           <TabsTrigger value="contas-pagar" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
             <TrendingDown className="w-4 h-4 mr-2" />
             Contas a Pagar
+          </TabsTrigger>
+          <TabsTrigger value="analise-receber" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            <Brain className="w-4 h-4 mr-2" />
+            Análise Receber IA
+          </TabsTrigger>
+          <TabsTrigger value="analise-pagar" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
+            <Brain className="w-4 h-4 mr-2" />
+            Análise Pagar IA
+          </TabsTrigger>
+          <TabsTrigger value="previsao-ia" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <LineChart className="w-4 h-4 mr-2" />
+            Previsão Fluxo IA
+          </TabsTrigger>
+          <TabsTrigger value="conciliador-ia" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
+            <Link2 className="w-4 h-4 mr-2" />
+            Conciliador IA
+          </TabsTrigger>
+          <TabsTrigger value="anomalias-ia" className="data-[state=active]:bg-red-600 data-[state=active]:text-white">
+            <Shield className="w-4 h-4 mr-2" />
+            Anomalias IA
+          </TabsTrigger>
+          <TabsTrigger value="importador" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <Upload className="w-4 h-4 mr-2" />
+            Importar Lote
+          </TabsTrigger>
+          <TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Dashboard Realtime
+          </TabsTrigger>
+          <TabsTrigger value="formas-pagamento" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <Wallet className="w-4 h-4 mr-2" />
+            Formas de Pagamento
+          </TabsTrigger>
+          <TabsTrigger value="caixa-pdv" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+            <Wallet className="w-4 h-4 mr-2" />
+            Caixa PDV
+            {ordensLiquidacaoPendentes > 0 && (
+              <Badge className="ml-2 bg-orange-500 text-white">{ordensLiquidacaoPendentes}</Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="caixa-diario" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            💵 Caixa Diário
+          </TabsTrigger>
+          <TabsTrigger value="vendas-multicanal" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <Globe className="w-4 h-4 mr-2" />
+            Vendas Multicanal
+          </TabsTrigger>
+          <TabsTrigger value="remessa-retorno" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <FileText className="w-4 h-4 mr-2" />
+            Remessa/Retorno CNAB
           </TabsTrigger>
           <TabsTrigger value="aprovacoes" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
             <AlertCircle className="w-4 h-4 mr-2" />
@@ -373,7 +412,7 @@ export default function Financeiro() {
           </TabsTrigger>
           <TabsTrigger value="conciliacao" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
-            Conciliação
+            Conciliação Bancária
             {pagamentosOmnichannelPendentes > 0 && (
               <Badge className="ml-2 bg-yellow-500 text-white">{pagamentosOmnichannelPendentes}</Badge>
             )}
@@ -390,15 +429,187 @@ export default function Financeiro() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard-realtime">
+        {/* NOVA ABA: Dashboard IA Completo (Padrão) */}
+        <TabsContent value="dashboard-ia" className="w-full">
+          <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
+            <CardHeader className="border-b bg-white/50">
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-6 h-6 text-purple-600" />
+                Hub de Inteligência Financeira
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <p className="text-slate-700 mb-6">
+                Acesse todas as ferramentas de IA para análise financeira avançada, previsões, conciliação automática e detecção de anomalias.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button
+                  onClick={() => openWindow(AnalisadorRecebimentosIA, {}, {
+                    title: '📊 Análise de Recebimentos - IA',
+                    width: 1400,
+                    height: 800
+                  })}
+                  className="bg-emerald-600 hover:bg-emerald-700 h-20 flex-col"
+                >
+                  <Brain className="w-8 h-8 mb-2" />
+                  <span>Análise Recebimentos IA</span>
+                </Button>
+
+                <Button
+                  onClick={() => openWindow(AnalisadorPagamentosIA, {}, {
+                    title: '📊 Análise de Pagamentos - IA',
+                    width: 1400,
+                    height: 800
+                  })}
+                  className="bg-red-600 hover:bg-red-700 h-20 flex-col"
+                >
+                  <Brain className="w-8 h-8 mb-2" />
+                  <span>Análise Pagamentos IA</span>
+                </Button>
+
+                <Button
+                  onClick={() => openWindow(PrevisaoFluxoCaixaIA, {}, {
+                    title: '🔮 Previsão de Fluxo de Caixa - IA',
+                    width: 1400,
+                    height: 800
+                  })}
+                  className="bg-indigo-600 hover:bg-indigo-700 h-20 flex-col"
+                >
+                  <LineChart className="w-8 h-8 mb-2" />
+                  <span>Previsão Fluxo de Caixa</span>
+                </Button>
+
+                <Button
+                  onClick={() => openWindow(ConciliadorAutomaticoFinanceiro, {}, {
+                    title: '🔗 Conciliador Automático - IA',
+                    width: 1400,
+                    height: 800
+                  })}
+                  className="bg-cyan-600 hover:bg-cyan-700 h-20 flex-col"
+                >
+                  <Link2 className="w-8 h-8 mb-2" />
+                  <span>Conciliador Automático</span>
+                </Button>
+
+                <Button
+                  onClick={() => openWindow(DetectorAnomaliasFiscais, {}, {
+                    title: '🛡️ Detector de Anomalias - IA',
+                    width: 1400,
+                    height: 800
+                  })}
+                  className="bg-orange-600 hover:bg-orange-700 h-20 flex-col"
+                >
+                  <Shield className="w-8 h-8 mb-2" />
+                  <span>Detector de Anomalias</span>
+                </Button>
+
+                <Button
+                  onClick={() => openWindow(ImportadorContasEmMassa, { tipo: 'receber' }, {
+                    title: '📥 Importador em Massa - Receber',
+                    width: 1000,
+                    height: 700
+                  })}
+                  className="bg-blue-600 hover:bg-blue-700 h-20 flex-col"
+                >
+                  <Upload className="w-8 h-8 mb-2" />
+                  <span>Importar Contas</span>
+                </Button>
+
+                <Button
+                  onClick={() => openWindow(RelatorioFinanceiroAvancado, {}, {
+                    title: '📈 Relatórios Avançados',
+                    width: 1400,
+                    height: 800
+                  })}
+                  className="bg-slate-600 hover:bg-slate-700 h-20 flex-col"
+                >
+                  <BarChart3 className="w-8 h-8 mb-2" />
+                  <span>Relatórios Avançados</span>
+                </Button>
+
+                <Button
+                  onClick={() => openWindow(DashboardFinanceiroCompleto, { windowMode: true }, {
+                    title: '🎯 Dashboard Completo - Todas IAs',
+                    width: 1600,
+                    height: 900
+                  })}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 h-20 flex-col"
+                >
+                  <Sparkles className="w-8 h-8 mb-2" />
+                  <span>Dashboard Completo</span>
+                </Button>
+
+                <Button
+                  onClick={() => openWindow(CaixaPDVCompleto, {
+                    empresaAtual: empresaAtual,
+                    windowMode: true
+                  }, {
+                    title: '💰 Caixa PDV Completo',
+                    width: 1500,
+                    height: 850
+                  })}
+                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 h-20 flex-col"
+                >
+                  <Wallet className="w-8 h-8 mb-2" />
+                  <span>Caixa PDV Completo</span>
+                </Button>
+              </div>
+
+              <Card className="border-blue-300 bg-blue-50 mt-6">
+                <CardContent className="p-4">
+                  <p className="text-sm text-blue-900 font-semibold mb-2">
+                    ✨ Recursos de IA Disponíveis:
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-blue-800">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span>Previsão de Fluxo de Caixa (3 cenários)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span>Análise de Inadimplência com Score</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span>Conciliação Automática (90%+ confiança)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span>Detecção de Duplicidades e Anomalias</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span>Recomendação de Melhor Forma de Pagamento</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span>Importação Inteligente (CSV/Excel/PDF)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span>Análise Multicanal e Multi-Marketplace</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      <span>Alertas Preditivos e Insights Automáticos</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="dashboard-realtime" className="w-full">
           <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} />
         </TabsContent>
 
-        <TabsContent value="formas-pagamento">
+        <TabsContent value="formas-pagamento" className="w-full">
           <DashboardFormasPagamento />
         </TabsContent>
 
-        <TabsContent value="caixa-pdv">
+        <TabsContent value="caixa-pdv" className="w-full">
           <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-green-50">
             <CardHeader className="border-b bg-white/50 backdrop-blur-sm">
               <CardTitle className="flex items-center gap-3">
@@ -469,35 +680,11 @@ export default function Financeiro() {
                   Abrir Caixa PDV Completo
                 </Button>
               </div>
-
-              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800 font-semibold mb-2">
-                  🎯 Substitui e Melhora:
-                </p>
-                <div className="grid grid-cols-2 gap-3 text-xs text-blue-700">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Caixa Diário (movimentos diários)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Caixa Central Liquidação (unificado)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>PDV presencial (venda rápida)</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Multi-operador com permissões</span>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="remessa-retorno">
+        <TabsContent value="remessa-retorno" className="w-full">
           <Card className="border-0 shadow-md">
             <CardContent className="p-6">
               <div className="text-center space-y-4">
@@ -526,32 +713,56 @@ export default function Financeiro() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="caixa-diario">
+        <TabsContent value="caixa-diario" className="w-full">
           <CaixaDiarioTab />
         </TabsContent>
 
-        <TabsContent value="vendas-multicanal">
+        <TabsContent value="vendas-multicanal" className="w-full">
           <VendasMulticanal />
         </TabsContent>
 
-        <TabsContent value="contas-receber">
+        <TabsContent value="contas-receber" className="w-full">
           <ContasReceberTab contas={contasReceberComContexto} empresas={empresas} />
         </TabsContent>
 
-        <TabsContent value="contas-pagar">
+        <TabsContent value="contas-pagar" className="w-full">
           <ContasPagarTab contas={contasPagarComContexto} empresas={empresas} />
         </TabsContent>
 
-        <TabsContent value="aprovacoes">
+        <TabsContent value="analise-receber" className="w-full">
+          <AnalisadorRecebimentosIA />
+        </TabsContent>
+
+        <TabsContent value="analise-pagar" className="w-full">
+          <AnalisadorPagamentosIA />
+        </TabsContent>
+
+        <TabsContent value="previsao-ia" className="w-full">
+          <PrevisaoFluxoCaixaIA />
+        </TabsContent>
+
+        <TabsContent value="conciliador-ia" className="w-full">
+          <ConciliadorAutomaticoFinanceiro />
+        </TabsContent>
+
+        <TabsContent value="anomalias-ia" className="w-full">
+          <DetectorAnomaliasFiscais />
+        </TabsContent>
+
+        <TabsContent value="importador" className="w-full">
+          <ImportadorContasEmMassa tipo="receber" />
+        </TabsContent>
+
+        <TabsContent value="aprovacoes" className="w-full">
           <AprovacaoDescontosManager windowMode={false} />
         </TabsContent>
 
-        <TabsContent value="conciliacao">
+        <TabsContent value="conciliacao" className="w-full">
           <ConciliacaoBancaria windowMode={false} />
         </TabsContent>
 
         {estaNoGrupo && (
-          <TabsContent value="rateios">
+          <TabsContent value="rateios" className="w-full">
             <div className="space-y-6">
               <RateioMultiempresa
                 empresas={empresasDoGrupo}
@@ -563,52 +774,54 @@ export default function Financeiro() {
                   <CardTitle>Histórico de Rateios</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-slate-50">
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Valor Total</TableHead>
-                        <TableHead>Empresas</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Data</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rateios.map(rateio => (
-                        <TableRow key={rateio.id}>
-                          <TableCell className="font-medium">{rateio.descricao}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{rateio.tipo_documento}</Badge>
-                          </TableCell>
-                          <TableCell className="font-bold">
-                            R$ {rateio.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              {rateio.distribuicao?.map((d, idx) => (
-                                <Badge key={idx} variant="outline" className="text-xs">
-                                  {d.empresa_nome?.substring(0, 10)} ({d.percentual}%)
-                                </Badge>
-                              ))}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={
-                              rateio.status_consolidacao === 'completo' ? 'bg-green-100 text-green-700' :
-                              rateio.status_consolidacao === 'parcial' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-slate-100 text-slate-700'
-                            }>
-                              {rateio.status_consolidacao}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-sm">
-                            {new Date(rateio.created_date).toLocaleDateString('pt-BR')}
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-slate-50">
+                          <TableHead>Descrição</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Valor Total</TableHead>
+                          <TableHead>Empresas</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Data</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {rateios.map(rateio => (
+                          <TableRow key={rateio.id}>
+                            <TableCell className="font-medium">{rateio.descricao}</TableCell>
+                            <TableCell>
+                              <Badge variant="outline">{rateio.tipo_documento}</Badge>
+                            </TableCell>
+                            <TableCell className="font-bold">
+                              R$ {rateio.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {rateio.distribuicao?.map((d, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-xs">
+                                    {d.empresa_nome?.substring(0, 10)} ({d.percentual}%)
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={
+                                rateio.status_consolidacao === 'completo' ? 'bg-green-100 text-green-700' :
+                                rateio.status_consolidacao === 'parcial' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-slate-100 text-slate-700'
+                              }>
+                                {rateio.status_consolidacao}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-sm">
+                              {new Date(rateio.created_date).toLocaleDateString('pt-BR')}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
 
                   {rateios.length === 0 && (
                     <div className="text-center py-12 text-slate-500">
@@ -623,7 +836,7 @@ export default function Financeiro() {
           </TabsContent>
         )}
 
-        <TabsContent value="relatorios">
+        <TabsContent value="relatorios" className="w-full">
           <RelatorioFinanceiro empresaId={empresaAtual?.id} />
         </TabsContent>
       </Tabs>
