@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeftRight, CheckCircle2, Sparkles, Search, Filter, Calendar, DollarSign, TrendingUp, AlertCircle, Link2, Unlink } from "lucide-react";
+import { ArrowLeftRight, CheckCircle2, Sparkles, Search, Filter, Calendar, DollarSign, TrendingUp, AlertCircle, Link2, Unlink, Upload } from "lucide-react";
 import ImportarExtratoBancario from "./ImportarExtratoBancario";
 
 export default function ConciliacaoBancariaAvancada({ empresaId }) {
