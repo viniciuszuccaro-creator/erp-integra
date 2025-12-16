@@ -539,7 +539,7 @@ export default function Financeiro() {
         </TabsContent>
 
         <TabsContent value="contas-pagar">
-          <ContasPagarTab contas={contasPagarComContexto} empresas={empresas} />
+          <ContasPagarTab contas={contasPagarComContexto} />
         </TabsContent>
 
         <TabsContent value="aprovacoes">
