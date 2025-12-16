@@ -199,76 +199,96 @@ export default function GestorDespesasUnificado({ windowMode = false }) {
     },
   });
 
-  // Análises e métricas inteligentes
-  const tiposFiltrados = tipos.filter(t =>
-    t.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const isLoading = loadingTipos || loadingConfigs;
 
-  const configsFiltradas = configuracoes.filter(c =>
-    c.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.tipo_despesa_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Análises e métricas inteligentes - com guards para dados
+  const tiposFiltrados = React.useMemo(() => {
+    if (!Array.isArray(tipos)) return [];
+    return tipos.filter(t =>
+      t?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t?.codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t?.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [tipos, searchTerm]);
 
-  // KPIs consolidados
-  const totalTipos = tipos.length;
-  const tiposAtivos = tipos.filter(t => t.ativo !== false).length;
-  const tiposRecorrentes = tipos.filter(t => t.pode_ser_recorrente).length;
-  const tiposComAprovacao = tipos.filter(t => t.exige_aprovacao).length;
+  const configsFiltradas = React.useMemo(() => {
+    if (!Array.isArray(configuracoes)) return [];
+    return configuracoes.filter(c =>
+      c?.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c?.tipo_despesa_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c?.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [configuracoes, searchTerm]);
 
-  const totalConfigs = configuracoes.length;
-  const configsAtivas = configuracoes.filter(c => c.ativa).length;
-  const configsComRateio = configuracoes.filter(c => c.rateio_automatico).length;
-  const configsComAjusteInflacao = configuracoes.filter(c => c.ajuste_inflacao).length;
+  // KPIs consolidados - com guards
+  const totalTipos = Array.isArray(tipos) ? tipos.length : 0;
+  const tiposAtivos = Array.isArray(tipos) ? tipos.filter(t => t?.ativo !== false).length : 0;
+  const tiposRecorrentes = Array.isArray(tipos) ? tipos.filter(t => t?.pode_ser_recorrente).length : 0;
+  const tiposComAprovacao = Array.isArray(tipos) ? tipos.filter(t => t?.exige_aprovacao).length : 0;
 
-  const valorMensalRecorrente = configuracoes
-    .filter(c => c.ativa && c.periodicidade === 'Mensal')
-    .reduce((sum, c) => sum + (c.valor_base || 0), 0);
+  const totalConfigs = Array.isArray(configuracoes) ? configuracoes.length : 0;
+  const configsAtivas = Array.isArray(configuracoes) ? configuracoes.filter(c => c?.ativa).length : 0;
+  const configsComRateio = Array.isArray(configuracoes) ? configuracoes.filter(c => c?.rateio_automatico).length : 0;
+  const configsComAjusteInflacao = Array.isArray(configuracoes) ? configuracoes.filter(c => c?.ajuste_inflacao).length : 0;
 
-  const valorAnualProjetado = configuracoes
-    .filter(c => c.ativa)
-    .reduce((sum, c) => {
-      const fator = c.periodicidade === 'Mensal' ? 12 : 
-                    c.periodicidade === 'Bimestral' ? 6 :
-                    c.periodicidade === 'Trimestral' ? 4 :
-                    c.periodicidade === 'Semestral' ? 2 :
-                    c.periodicidade === 'Anual' ? 1 : 12;
-      return sum + (c.valor_base || 0) * fator;
-    }, 0);
+  const valorMensalRecorrente = React.useMemo(() => {
+    if (!Array.isArray(configuracoes)) return 0;
+    return configuracoes
+      .filter(c => c?.ativa && c?.periodicidade === 'Mensal')
+      .reduce((sum, c) => sum + (c?.valor_base || 0), 0);
+  }, [configuracoes]);
+
+  const valorAnualProjetado = React.useMemo(() => {
+    if (!Array.isArray(configuracoes)) return 0;
+    return configuracoes
+      .filter(c => c?.ativa)
+      .reduce((sum, c) => {
+        const fator = c?.periodicidade === 'Mensal' ? 12 : 
+                      c?.periodicidade === 'Bimestral' ? 6 :
+                      c?.periodicidade === 'Trimestral' ? 4 :
+                      c?.periodicidade === 'Semestral' ? 2 :
+                      c?.periodicidade === 'Anual' ? 1 : 12;
+        return sum + (c?.valor_base || 0) * fator;
+      }, 0);
+  }, [configuracoes]);
 
   // Análise de uso por tipo
-  const analisePorTipo = tipos.map(tipo => {
-    const configsVinculadas = configuracoes.filter(c => c.tipo_despesa_id === tipo.id);
-    const valorTotal = configsVinculadas.reduce((sum, c) => sum + (c.valor_base || 0), 0);
-    const empresasImpactadas = [...new Set(configsVinculadas.map(c => c.empresa_id))].length;
-    
-    return {
-      tipo,
-      total_configs: configsVinculadas.length,
-      valor_mensal_total: valorTotal,
-      empresas_impactadas: empresasImpactadas,
-      tem_rateio: configsVinculadas.some(c => c.rateio_automatico)
-    };
-  }).filter(a => a.total_configs > 0)
-    .sort((a, b) => b.valor_mensal_total - a.valor_mensal_total);
+  const analisePorTipo = React.useMemo(() => {
+    if (!Array.isArray(tipos) || !Array.isArray(configuracoes)) return [];
+    return tipos.map(tipo => {
+      const configsVinculadas = configuracoes.filter(c => c?.tipo_despesa_id === tipo?.id);
+      const valorTotal = configsVinculadas.reduce((sum, c) => sum + (c?.valor_base || 0), 0);
+      const empresasImpactadas = [...new Set(configsVinculadas.map(c => c?.empresa_id).filter(Boolean))].length;
+      
+      return {
+        tipo,
+        total_configs: configsVinculadas.length,
+        valor_mensal_total: valorTotal,
+        empresas_impactadas: empresasImpactadas,
+        tem_rateio: configsVinculadas.some(c => c?.rateio_automatico)
+      };
+    }).filter(a => a.total_configs > 0)
+      .sort((a, b) => b.valor_mensal_total - a.valor_mensal_total);
+  }, [tipos, configuracoes]);
 
   // Análise por empresa
-  const analisePorEmpresa = empresas.map(emp => {
-    const configsEmpresa = configuracoes.filter(c => c.empresa_id === emp.id && c.ativa);
-    const valorMensal = configsEmpresa
-      .filter(c => c.periodicidade === 'Mensal')
-      .reduce((sum, c) => sum + (c.valor_base || 0), 0);
-    
-    return {
-      empresa: emp,
-      total_configs: configsEmpresa.length,
-      valor_mensal: valorMensal,
-      com_rateio: configsEmpresa.filter(c => c.rateio_automatico).length
-    };
-  }).filter(a => a.total_configs > 0)
-    .sort((a, b) => b.valor_mensal - a.valor_mensal);
+  const analisePorEmpresa = React.useMemo(() => {
+    if (!Array.isArray(empresas) || !Array.isArray(configuracoes)) return [];
+    return empresas.map(emp => {
+      const configsEmpresa = configuracoes.filter(c => c?.empresa_id === emp?.id && c?.ativa);
+      const valorMensal = configsEmpresa
+        .filter(c => c?.periodicidade === 'Mensal')
+        .reduce((sum, c) => sum + (c?.valor_base || 0), 0);
+      
+      return {
+        empresa: emp,
+        total_configs: configsEmpresa.length,
+        valor_mensal: valorMensal,
+        com_rateio: configsEmpresa.filter(c => c?.rateio_automatico).length
+      };
+    }).filter(a => a.total_configs > 0)
+      .sort((a, b) => b.valor_mensal - a.valor_mensal);
+  }, [empresas, configuracoes]);
 
   // Handlers
   const handleSubmitTipo = (data) => {
@@ -286,8 +306,6 @@ export default function GestorDespesasUnificado({ windowMode = false }) {
       createConfig.mutate(data);
     }
   };
-
-  const isLoading = loadingTipos || loadingConfigs;
 
   return (
     <div className="w-full h-full flex flex-col space-y-6 p-6 overflow-auto">
