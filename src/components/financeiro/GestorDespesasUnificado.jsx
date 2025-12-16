@@ -1048,7 +1048,7 @@ export default function GestorDespesasUnificado() {
                 </div>
               </CardContent>
             </Card>
-          </CardContent>
+          </div>
         </TabsContent>
       </Tabs>
 
