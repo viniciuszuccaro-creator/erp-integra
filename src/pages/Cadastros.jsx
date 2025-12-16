@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -3668,7 +3669,17 @@ export default function Cadastros() {
             </AccordionItem>
 
             {/* BLOCO 6: INTEGRAÇÕES & IA */}
-            <AccordionItem value="bloco6" className="border-2 border-cyan-200 rounded-lg overflow-hidden shadow-md">
+            <Card className="border-2 border-cyan-200 bg-cyan-50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">Integrações & IA centralizadas</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                <p className="text-sm text-slate-700">Gerencie integrações, IA e parâmetros operacionais em Configurações do Sistema.</p>
+                <Button className="bg-cyan-600 hover:bg-cyan-700" onClick={() => (window.location.href = createPageUrl('ConfiguracoesSistema'))}>
+                  Abrir Configurações do Sistema
+                </Button>
+              </CardContent>
+            </Card>
               <AccordionTrigger className="bg-gradient-to-r from-cyan-50 to-cyan-100 px-6 py-4 hover:from-cyan-100 hover:to-cyan-200">
                 <div className="flex items-center gap-3 flex-1">
                   <Cpu className="w-6 h-6 text-cyan-600" />

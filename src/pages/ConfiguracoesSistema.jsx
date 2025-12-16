@@ -51,7 +51,7 @@ export default function ConfiguracoesSistema() {
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
           >
             <Sparkles className="w-4 h-4 mr-2" />
-            Configuração IA
+            Integrações & IA
           </TabsTrigger>
 
           <TabsTrigger value="config-global" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
