@@ -8,16 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { useWindow } from "@/components/lib/useWindow";
-import { Repeat, Plus, Edit2, Trash2, Play, Pause, TrendingUp, Calendar, Building2, DollarSign, Zap, BarChart3, CheckCircle2 } from "lucide-react";
+import { Repeat, Plus, Edit2, Trash2, Play, Pause, TrendingUp, Calendar } from "lucide-react";
 import ConfiguracaoDespesaRecorrenteForm from "./ConfiguracaoDespesaRecorrenteForm";
-import GestorDespesasUnificado from "../financeiro/GestorDespesasUnificado";
 
 /**
- * GESTOR DE DESPESAS RECORRENTES V21.9 - MELHORADO
+ * GESTOR DE DESPESAS RECORRENTES V21.8
  * 
- * Gerencia configurações de despesas recorrentes
- * Integrado com GestorDespesasUnificado para visão completa
- * Seguindo Regra-Mãe: Acrescentar • Reorganizar • Conectar • Melhorar
+ * Gerencia configurações de despesas que se repetem
+ * (aluguel, salários, tarifas, etc)
  */
 export default function GestorDespesasRecorrentes() {
   const { toast } = useToast();
@@ -28,11 +26,6 @@ export default function GestorDespesasRecorrentes() {
   const { data: configuracoes = [] } = useQuery({
     queryKey: ['configuracoes-despesas-recorrentes'],
     queryFn: () => base44.entities.ConfiguracaoDespesaRecorrente.list(),
-  });
-
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
   });
 
   const toggleAtivaMutation = useMutation({
@@ -62,35 +55,10 @@ export default function GestorDespesasRecorrentes() {
   const totalValorMensal = configuracoes
     .filter(c => c.ativa && c.periodicidade === 'Mensal')
     .reduce((sum, c) => sum + (c.valor_base || 0), 0);
-  const totalComRateio = configuracoes.filter(c => c.rateio_automatico).length;
 
   return (
-    <div className="w-full h-full space-y-4 p-4 overflow-auto">
-      {/* Link para Gestor Unificado */}
-      <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-green-50 border-2 border-purple-200 rounded-lg p-4 mb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Zap className="w-8 h-8 text-purple-600" />
-            <div>
-              <p className="font-bold text-purple-900">💡 Novo: Gestão Unificada de Despesas</p>
-              <p className="text-sm text-purple-700">Tipos + Recorrentes + Análises IA em um único lugar</p>
-            </div>
-          </div>
-          <Button
-            onClick={() => openWindow(
-              GestorDespesasUnificado,
-              { windowMode: true },
-              { title: '🎯 Gestão Unificada de Despesas', width: 1600, height: 900 }
-            )}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-          >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Abrir Gestor Completo
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4">
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Total de Configurações</CardTitle>
@@ -105,14 +73,6 @@ export default function GestorDespesasRecorrentes() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-green-600">{totalAtivas}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Com Rateio Multiempresa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-purple-600">{totalComRateio}</p>
           </CardContent>
         </Card>
         <Card>
@@ -170,13 +130,11 @@ export default function GestorDespesasRecorrentes() {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
-                <TableHead>Tipo de Despesa</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead>Empresa</TableHead>
-                <TableHead>Valor Base</TableHead>
                 <TableHead>Periodicidade</TableHead>
-                <TableHead>Rateio</TableHead>
+                <TableHead>Valor Base</TableHead>
+                <TableHead>Dia Vencimento</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-center">Ações</TableHead>
               </TableRow>
@@ -184,33 +142,15 @@ export default function GestorDespesasRecorrentes() {
             <TableBody>
               {configsFiltradas.map((config) => (
                 <TableRow key={config.id}>
-                  <TableCell>
-                    <div className="font-medium text-purple-600 text-sm">
-                      {config.tipo_despesa_nome || 'Não vinculado'}
-                    </div>
-                  </TableCell>
                   <TableCell className="font-medium">{config.descricao}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{config.categoria || 'N/A'}</Badge>
+                    <Badge variant="outline">{config.categoria}</Badge>
                   </TableCell>
-                  <TableCell className="text-sm text-slate-600">
-                    {empresas.find(e => e.id === config.empresa_id)?.nome_fantasia || 'N/A'}
-                  </TableCell>
+                  <TableCell className="text-sm">{config.periodicidade}</TableCell>
                   <TableCell className="font-semibold">
                     R$ {config.valor_base?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </TableCell>
-                  <TableCell>
-                    <Badge className="bg-blue-100 text-blue-700 text-xs">{config.periodicidade}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    {config.rateio_automatico ? (
-                      <Badge className="bg-purple-100 text-purple-700 text-xs">
-                        {config.empresas_rateio?.length || 0} empresas
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-slate-400">-</span>
-                    )}
-                  </TableCell>
+                  <TableCell className="text-sm">Dia {config.dia_vencimento}</TableCell>
                   <TableCell>
                     {config.ativa ? (
                       <Badge className="bg-green-100 text-green-700">Ativa</Badge>

@@ -70,8 +70,6 @@ import FormaPagamentoFormCompleto from "../components/cadastros/FormaPagamentoFo
 import GestorFormasPagamento from "../components/cadastros/GestorFormasPagamento";
 import GestorGatewaysPagamento from "../components/cadastros/GestorGatewaysPagamento";
 import GestorDespesasRecorrentes from "../components/cadastros/GestorDespesasRecorrentes";
-import GestorTiposDespesa from "../components/cadastros/GestorTiposDespesa";
-import GestorDespesasUnificado from "../components/financeiro/GestorDespesasUnificado";
 import VeiculoForm from "../components/cadastros/VeiculoForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
@@ -2258,91 +2256,52 @@ export default function Cadastros() {
                     </CardContent>
                   </Card>
 
-                  {/* GESTÃO UNIFICADA DE DESPESAS - V21.9 CONSOLIDADO */}
-                  <Card className="border-purple-200 lg:col-span-3">
-                    <CardHeader className="bg-gradient-to-r from-rose-50 via-purple-50 to-blue-50 border-b border-purple-200 pb-3">
+                  {/* DESPESAS RECORRENTES - V21.8 NOVO */}
+                  <Card className="border-purple-200 lg:col-span-2">
+                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle 
                           className="text-base flex items-center gap-2 cursor-pointer hover:text-purple-700 transition-colors"
                           onClick={() => openWindow(
-                            GestorDespesasUnificado,
+                            GestorDespesasRecorrentes,
                             { windowMode: true },
-                            { title: '🎯 Gestão Unificada de Despesas', width: 1600, height: 900, zIndex: 50000 }
+                            { title: '🔄 Gestão de Despesas Recorrentes', width: 1400, height: 800, zIndex: 50000 }
                           )}
                         >
-                          <Receipt className="w-5 h-5 text-rose-600" />
                           <Calendar className="w-5 h-5 text-purple-600" />
-                          🎯 Gestão Unificada de Despesas - Tipos + Recorrentes + Rateio IA
+                          🔄 Despesas Recorrentes - Automação Total
                         </CardTitle>
                         <Button
                           size="sm"
+                          variant="outline"
                           onClick={() => openWindow(
-                            GestorDespesasUnificado,
+                            GestorDespesasRecorrentes,
                             { windowMode: true },
-                            { title: '🎯 Gestor Completo de Despesas', width: 1600, height: 900 }
+                            { title: '🔄 Gestor de Despesas', width: 1400, height: 800 }
                           )}
-                          className="bg-gradient-to-r from-rose-600 via-purple-600 to-blue-600 hover:from-rose-700 hover:via-purple-700 hover:to-blue-700"
+                          className="border-purple-300 text-purple-700"
                         >
-                          <Zap className="w-4 h-4 mr-1" />
-                          Abrir Gestor Completo
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          Gestor Completo
                         </Button>
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                        <div className="p-4 border-2 border-rose-200 rounded-lg bg-rose-50">
-                          <Receipt className="w-8 h-8 text-rose-600 mb-2" />
-                          <p className="font-semibold text-rose-900">Tipos Mestre</p>
-                          <p className="text-xs text-rose-700">Classificação + Vínculos Contábeis</p>
-                          <div className="mt-2 flex gap-2">
-                            <Badge className="bg-rose-600 text-white">{totalTipos}</Badge>
-                            <Badge className="bg-green-100 text-green-700 text-xs">{tiposAtivos} ativos</Badge>
-                          </div>
-                        </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div className="p-4 border-2 border-purple-200 rounded-lg bg-purple-50">
                           <Calendar className="w-8 h-8 text-purple-600 mb-2" />
-                          <p className="font-semibold text-purple-900">Recorrentes</p>
-                          <p className="text-xs text-purple-700">Geração Automática</p>
-                          <div className="mt-2 flex gap-2">
-                            <Badge className="bg-purple-600 text-white">{totalConfigs}</Badge>
-                            <Badge className="bg-green-100 text-green-700 text-xs">{configsAtivas} ativas</Badge>
-                          </div>
+                          <p className="font-semibold text-purple-900">Geração Automática</p>
+                          <p className="text-xs text-purple-700">Despesas mensais/anuais</p>
+                        </div>
+                        <div className="p-4 border-2 border-green-200 rounded-lg bg-green-50">
+                          <TrendingUp className="w-8 h-8 text-green-600 mb-2" />
+                          <p className="font-semibold text-green-900">Ajuste por Inflação</p>
+                          <p className="text-xs text-green-700">IPCA • IGP-M • CDI</p>
                         </div>
                         <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
                           <Building2 className="w-8 h-8 text-blue-600 mb-2" />
                           <p className="font-semibold text-blue-900">Rateio Multiempresa</p>
-                          <p className="text-xs text-blue-700">Distribuição Inteligente</p>
-                          <div className="mt-2">
-                            <Badge className="bg-blue-600 text-white">{configsComRateio} configs</Badge>
-                          </div>
-                        </div>
-                        <div className="p-4 border-2 border-green-200 rounded-lg bg-green-50">
-                          <TrendingUp className="w-8 h-8 text-green-600 mb-2" />
-                          <p className="font-semibold text-green-900">Ajuste IA</p>
-                          <p className="text-xs text-green-700">IPCA • IGP-M • CDI</p>
-                          <div className="mt-2">
-                            <Badge className="bg-green-600 text-white">{configsComAjusteInflacao} ajustes</Badge>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="p-4 border-2 border-emerald-300 rounded-lg bg-gradient-to-r from-emerald-50 to-green-50">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-emerald-900 mb-1">Impacto Financeiro Total</p>
-                            <p className="text-xs text-emerald-700">Despesas recorrentes projetadas</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-emerald-900">
-                              R$ {valorMensalRecorrente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                            <p className="text-xs text-emerald-600">mensal</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-2xl font-bold text-blue-900">
-                              R$ {valorAnualProjetado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                            <p className="text-xs text-blue-600">anual projetado</p>
-                          </div>
+                          <p className="text-xs text-blue-700">Distribuição automática</p>
                         </div>
                       </div>
                     </CardContent>
@@ -2659,7 +2618,66 @@ export default function Cadastros() {
                     </CardContent>
                   </Card>
 
-
+                  {/* TIPOS DESPESA */}
+                  <Card className="border-rose-200">
+                    <CardHeader className="bg-rose-50 border-b border-rose-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle 
+                          className="text-base cursor-pointer hover:text-rose-700 transition-colors"
+                          onClick={() => openWindow(
+                            VisualizadorUniversalEntidade,
+                            {
+                              nomeEntidade: 'TipoDespesa',
+                              tituloDisplay: 'Tipos de Despesa',
+                              icone: Receipt,
+                              camposPrincipais: ['nome', 'categoria', 'descricao'],
+                              componenteEdicao: TipoDespesaForm,
+                              windowMode: true
+                            },
+                            { title: '💳 Todos os Tipos de Despesa', width: 1400, height: 800, zIndex: 50000 }
+                          )}
+                        >
+                          💳 Tipos Despesa ({tiposDespesa.length})
+                        </CardTitle>
+                        <Button size="sm" onClick={() => openWindow(TipoDespesaForm, {
+                          windowMode: true,
+                          onSubmit: handleSubmitGenerico('TipoDespesa', 'tipos-despesa')
+                        }, { title: '💳 Novo Tipo', width: 700, height: 500 })}
+                          className="bg-rose-600 hover:bg-rose-700"
+                          disabled={!hasPermission('financeiro', 'criar')}>
+                          <Plus className="w-4 h-4 mr-1" />Novo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4 max-h-60 overflow-y-auto">
+                      {tiposDespesa.map(td => (
+                        <div key={td.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{td.nome}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openWindow(TipoDespesaForm, {
+                              tipoDespesa: td,
+                              windowMode: true,
+                              onSubmit: handleSubmitGenerico('TipoDespesa', 'tipos-despesa')
+                            }, {
+                              title: `💳 Editar: ${td.nome}`,
+                              width: 700,
+                              height: 500,
+                              uniqueKey: `edit-TipoDespesa-${td.id}-${Date.now()}`,
+                              zIndex: 999999,
+                              bringToFront: true
+                            })}
+                            disabled={!hasPermission('financeiro', 'editar')}
+                          >
+                            <Edit className="w-3 h-3 text-rose-600" />
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
 
                   {/* MOEDAS E ÍNDICES */}
                   <Card className="border-emerald-200">

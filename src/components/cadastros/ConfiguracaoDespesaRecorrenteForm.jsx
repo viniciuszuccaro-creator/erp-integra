@@ -12,20 +12,14 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Repeat, DollarSign, Calendar, Bell, Users } from "lucide-react";
-import { toast } from "sonner";
 
 export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode = false, onSubmit }) {
   const [formData, setFormData] = useState(config || {
-    tipo_despesa_id: "",
-    tipo_despesa_nome: "",
     descricao: "",
-    categoria: "",
+    categoria: "Outros",
+    tipo_despesa: "Fixa",
     fornecedor_id: "",
     fornecedor_nome: "",
-    conta_contabil_id: "",
-    conta_contabil_nome: "",
-    centro_resultado_id: "",
-    centro_resultado_nome: "",
     valor_base: 0,
     ajuste_inflacao: false,
     indice_ajuste: "Nenhum",
@@ -70,43 +64,8 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
     queryFn: () => base44.entities.Empresa.list(),
   });
 
-  const { data: tiposDespesa = [] } = useQuery({
-    queryKey: ['tipos-despesa'],
-    queryFn: () => base44.entities.TipoDespesa.filter({ pode_ser_recorrente: true }),
-  });
-
-  const { data: planoContas = [] } = useQuery({
-    queryKey: ['plano-contas'],
-    queryFn: () => base44.entities.PlanoDeContas.list(),
-  });
-
-  const { data: centrosResultado = [] } = useQuery({
-    queryKey: ['centros-resultado'],
-    queryFn: () => base44.entities.CentroResultado.list(),
-  });
-
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!formData.tipo_despesa_id) {
-      toast.error("Selecione um Tipo de Despesa.");
-      return;
-    }
-    if (!formData.descricao) {
-      toast.error("Preencha a descrição da despesa.");
-      return;
-    }
-    if (formData.valor_base <= 0) {
-      toast.error("O valor base deve ser maior que zero.");
-      return;
-    }
-    if (!formData.periodicidade) {
-      toast.error("Selecione a periodicidade da despesa.");
-      return;
-    }
-    if (!formData.empresa_id && formData.origem === 'empresa') {
-      toast.error("Selecione a empresa para a despesa.");
-      return;
-    }
     onSubmit?.(formData);
   };
 
@@ -151,37 +110,6 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
 
             <TabsContent value="geral" className="space-y-4 mt-4">
               <div>
-                <Label>Tipo de Despesa *</Label>
-                <Select
-                  value={formData.tipo_despesa_id}
-                  onValueChange={(v) => {
-                    const tipo = tiposDespesa.find(td => td.id === v);
-                    setFormData({
-                      ...formData,
-                      tipo_despesa_id: v,
-                      tipo_despesa_nome: tipo?.nome || '',
-                      categoria: tipo?.categoria || '',
-                      conta_contabil_id: tipo?.conta_contabil_padrao_id || '',
-                      conta_contabil_nome: tipo?.conta_contabil_padrao_nome || '',
-                      centro_resultado_id: tipo?.centro_resultado_padrao_id || '',
-                      centro_resultado_nome: tipo?.centro_resultado_padrao_nome || '',
-                    });
-                  }}
-                  required
-                >
-                  <SelectTrigger><SelectValue placeholder="Selecione um tipo..." /></SelectTrigger>
-                  <SelectContent>
-                    {tiposDespesa.map(td => (
-                      <SelectItem key={td.id} value={td.id}>{td.nome} ({td.categoria})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-slate-500 mt-1">
-                  O tipo de despesa define categoria, conta contábil e centro de resultado padrão
-                </p>
-              </div>
-
-              <div>
                 <Label>Descrição da Despesa *</Label>
                 <Input
                   value={formData.descricao}
@@ -193,29 +121,45 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Categoria (herdada do Tipo)</Label>
-                  <Input value={formData.categoria || 'Não definido'} disabled className="bg-slate-100" />
-                </div>
-                <div>
-                  <Label>Empresa Proprietária *</Label>
+                  <Label>Categoria *</Label>
                   <Select
-                    value={formData.empresa_id || ''}
-                    onValueChange={(v) => setFormData({ ...formData, empresa_id: v, origem: 'empresa' })}
-                    disabled={formData.rateio_automatico}
-                    required
+                    value={formData.categoria}
+                    onValueChange={(v) => setFormData({ ...formData, categoria: v })}
                   >
-                    <SelectTrigger><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {empresas.map(emp => (
-                        <SelectItem key={emp.id} value={emp.id}>{emp.nome_fantasia || emp.razao_social}</SelectItem>
-                      ))}
+                      <SelectItem value="Aluguel">Aluguel</SelectItem>
+                      <SelectItem value="Salários">Salários</SelectItem>
+                      <SelectItem value="Impostos">Impostos</SelectItem>
+                      <SelectItem value="Energia">Energia</SelectItem>
+                      <SelectItem value="Água">Água</SelectItem>
+                      <SelectItem value="Telefone">Telefone</SelectItem>
+                      <SelectItem value="Internet">Internet</SelectItem>
+                      <SelectItem value="Tarifas Bancárias">Tarifas Bancárias</SelectItem>
+                      <SelectItem value="Taxa de Cartão">Taxa de Cartão</SelectItem>
+                      <SelectItem value="Manutenção">Manutenção</SelectItem>
+                      <SelectItem value="Seguro">Seguro</SelectItem>
+                      <SelectItem value="Contabilidade">Contabilidade</SelectItem>
+                      <SelectItem value="Assessoria Jurídica">Assessoria Jurídica</SelectItem>
+                      <SelectItem value="Marketing">Marketing</SelectItem>
+                      <SelectItem value="Software/SaaS">Software/SaaS</SelectItem>
+                      <SelectItem value="Outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
-                  {formData.rateio_automatico && (
-                    <p className="text-xs text-amber-600 mt-1">
-                      ⚠️ Rateio automático ativo - será distribuído entre empresas configuradas
-                    </p>
-                  )}
+                </div>
+                <div>
+                  <Label>Tipo de Despesa</Label>
+                  <Select
+                    value={formData.tipo_despesa}
+                    onValueChange={(v) => setFormData({ ...formData, tipo_despesa: v })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Fixa">Fixa</SelectItem>
+                      <SelectItem value="Variável">Variável</SelectItem>
+                      <SelectItem value="Taxa Automática">Taxa Automática</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -223,7 +167,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
                 <div>
                   <Label>Fornecedor</Label>
                   <Select
-                    value={formData.fornecedor_id || ''}
+                    value={formData.fornecedor_id}
                     onValueChange={(v) => {
                       const fornecedor = fornecedores.find(f => f.id === v);
                       setFormData({
@@ -244,7 +188,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
                 <div>
                   <Label>Centro de Custo</Label>
                   <Select
-                    value={formData.centro_custo_id || ''}
+                    value={formData.centro_custo_id}
                     onValueChange={(v) => {
                       const cc = centrosCusto.find(c => c.id === v);
                       setFormData({
@@ -266,51 +210,6 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Conta Contábil (Opcional)</Label>
-                  <Select
-                    value={formData.conta_contabil_id || ''}
-                    onValueChange={(v) => {
-                      const conta = planoContas.find(pc => pc.id === v);
-                      setFormData({
-                        ...formData,
-                        conta_contabil_id: v,
-                        conta_contabil_nome: conta?.nome || ''
-                      });
-                    }}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Herda do Tipo ou selecione..." /></SelectTrigger>
-                    <SelectContent>
-                      {planoContas.map(pc => (
-                        <SelectItem key={pc.id} value={pc.id}>{pc.codigo} - {pc.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Centro de Resultado (Opcional)</Label>
-                  <Select
-                    value={formData.centro_resultado_id || ''}
-                    onValueChange={(v) => {
-                      const centro = centrosResultado.find(cr => cr.id === v);
-                      setFormData({
-                        ...formData,
-                        centro_resultado_id: v,
-                        centro_resultado_nome: centro?.nome || ''
-                      });
-                    }}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Herda do Tipo ou selecione..." /></SelectTrigger>
-                    <SelectContent>
-                      {centrosResultado.map(cr => (
-                        <SelectItem key={cr.id} value={cr.id}>{cr.codigo} - {cr.nome}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
                   <Label>Valor Base *</Label>
                   <Input
                     type="number"
@@ -323,7 +222,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
                 <div>
                   <Label>Forma de Pagamento Padrão</Label>
                   <Select
-                    value={formData.forma_pagamento_id || ''}
+                    value={formData.forma_pagamento_id}
                     onValueChange={(v) => {
                       const forma = formasPagamento.find(f => f.id === v);
                       setFormData({
@@ -509,10 +408,10 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
             </TabsContent>
 
             <TabsContent value="rateio" className="space-y-4 mt-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
+              <div className="flex items-center justify-between">
                 <div>
-                  <Label className="font-semibold">Rateio Automático entre Empresas</Label>
-                  <p className="text-xs text-slate-500">Distribuir despesa automaticamente entre empresas filhas do grupo</p>
+                  <Label>Rateio Automático entre Empresas</Label>
+                  <p className="text-xs text-slate-500">Distribuir despesa entre filiais</p>
                 </div>
                 <Switch
                   checked={formData.rateio_automatico}
@@ -521,17 +420,12 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
               </div>
 
               {formData.rateio_automatico && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="font-semibold">Empresas para Rateio</Label>
-                    <Badge variant="outline" className="text-xs">
-                      Total: {formData.empresas_rateio?.reduce((acc, e) => acc + (e.percentual || 0), 0).toFixed(2)}%
-                    </Badge>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Empresas para Rateio</Label>
                   {empresas.map((empresa) => {
                     const rateio = formData.empresas_rateio?.find(e => e.empresa_id === empresa.id);
                     return (
-                      <div key={empresa.id} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-50 transition-colors">
+                      <div key={empresa.id} className="flex items-center gap-3 p-2 border rounded">
                         <Checkbox
                           checked={!!rateio}
                           onCheckedChange={(checked) => {
@@ -540,7 +434,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
                                 ...formData,
                                 empresas_rateio: [
                                   ...(formData.empresas_rateio || []),
-                                  { empresa_id: empresa.id, empresa_nome: empresa.nome_fantasia || empresa.razao_social, percentual: 0 }
+                                  { empresa_id: empresa.id, empresa_nome: empresa.nome_fantasia, percentual: 0 }
                                 ]
                               });
                             } else {
@@ -551,39 +445,29 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
                             }
                           }}
                         />
-                        <span className="flex-1 text-sm font-medium">{empresa.nome_fantasia || empresa.razao_social}</span>
+                        <span className="flex-1 text-sm">{empresa.nome_fantasia}</span>
                         {rateio && (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              max="100"
-                              placeholder="0.00"
-                              className="w-24"
-                              value={rateio.percentual}
-                              onChange={(e) => {
-                                setFormData({
-                                  ...formData,
-                                  empresas_rateio: formData.empresas_rateio.map(er =>
-                                    er.empresa_id === empresa.id
-                                      ? { ...er, percentual: parseFloat(e.target.value) || 0 }
-                                      : er
-                                  )
-                                });
-                              }}
-                            />
-                            <span className="text-xs text-slate-500">%</span>
-                          </div>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="%"
+                            className="w-20"
+                            value={rateio.percentual}
+                            onChange={(e) => {
+                              setFormData({
+                                ...formData,
+                                empresas_rateio: formData.empresas_rateio.map(er =>
+                                  er.empresa_id === empresa.id
+                                    ? { ...er, percentual: parseFloat(e.target.value) }
+                                    : er
+                                )
+                              });
+                            }}
+                          />
                         )}
                       </div>
                     );
                   })}
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-xs text-blue-700">
-                      💡 A soma dos percentuais deve ser 100%. A despesa será automaticamente distribuída entre as empresas selecionadas.
-                    </p>
-                  </div>
                 </div>
               )}
             </TabsContent>
