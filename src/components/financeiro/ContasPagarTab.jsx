@@ -75,6 +75,16 @@ export default function ContasPagarTab({ contas }) {
     queryFn: () => base44.entities.Fornecedor.list(),
   });
 
+  const { data: tiposDespesa = [] } = useQuery({
+    queryKey: ['tipos-despesa'],
+    queryFn: () => base44.entities.TipoDespesa.list(),
+  });
+
+  const { data: configsRecorrentes = [] } = useQuery({
+    queryKey: ['configs-recorrentes'],
+    queryFn: () => base44.entities.ConfiguracaoDespesaRecorrente.list(),
+  });
+
   // ETAPA 4: Mutation para enviar títulos para o Caixa
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async (titulos) => {

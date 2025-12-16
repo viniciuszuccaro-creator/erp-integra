@@ -17,7 +17,7 @@ import GatewayPagamentoForm from "./GatewayPagamentoForm";
  * Gerencia integrações com processadores de pagamento
  * (Pagar.me, Stripe, Asaas, etc)
  */
-export default function GestorGatewaysPagamento() {
+export default function GestorGatewaysPagamento({ windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
@@ -55,7 +55,7 @@ export default function GestorGatewaysPagamento() {
   const totalProcessado = gateways.reduce((sum, g) => sum + (g.estatisticas?.total_valor_processado || 0), 0);
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6' : ''}`}>
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">

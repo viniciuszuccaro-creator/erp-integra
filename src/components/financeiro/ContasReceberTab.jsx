@@ -108,6 +108,11 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     queryFn: () => base44.entities.Cliente.list(),
   });
 
+  const { data: gateways = [] } = useQuery({
+    queryKey: ['gateways-pagamento-ativos'],
+    queryFn: () => base44.entities.GatewayPagamento.filter({ ativo: true }),
+  });
+
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
     queryFn: () => base44.entities.Pedido.list(),

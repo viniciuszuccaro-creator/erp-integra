@@ -17,7 +17,7 @@ import ConfiguracaoDespesaRecorrenteForm from "./ConfiguracaoDespesaRecorrenteFo
  * Gerencia configurações de despesas que se repetem
  * (aluguel, salários, tarifas, etc)
  */
-export default function GestorDespesasRecorrentes() {
+export default function GestorDespesasRecorrentes({ windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
@@ -57,7 +57,7 @@ export default function GestorDespesasRecorrentes() {
     .reduce((sum, c) => sum + (c.valor_base || 0), 0);
 
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6' : ''}`}>
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
