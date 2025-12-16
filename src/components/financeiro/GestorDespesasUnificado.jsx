@@ -41,7 +41,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * 
  * Seguindo Regra-Mãe: Acrescentar • Reorganizar • Conectar • Melhorar
  */
-export default function GestorDespesasUnificado() {
+export default function GestorDespesasUnificado({ windowMode = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [abaAtiva, setAbaAtiva] = useState("visao-geral");
   const queryClient = useQueryClient();
@@ -51,37 +51,86 @@ export default function GestorDespesasUnificado() {
   // Queries unificadas
   const { data: tipos = [], isLoading: loadingTipos } = useQuery({
     queryKey: ['tipos-despesa'],
-    queryFn: () => base44.entities.TipoDespesa.list(),
+    queryFn: async () => {
+      try {
+        return await base44.entities.TipoDespesa.list();
+      } catch (error) {
+        console.error('Erro ao carregar tipos:', error);
+        return [];
+      }
+    },
   });
 
   const { data: configuracoes = [], isLoading: loadingConfigs } = useQuery({
     queryKey: ['configuracoes-despesas-recorrentes'],
-    queryFn: () => base44.entities.ConfiguracaoDespesaRecorrente.list(),
+    queryFn: async () => {
+      try {
+        return await base44.entities.ConfiguracaoDespesaRecorrente.list();
+      } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+        return [];
+      }
+    },
   });
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: async () => {
+      try {
+        return await base44.entities.Empresa.list();
+      } catch (error) {
+        console.error('Erro ao carregar empresas:', error);
+        return [];
+      }
+    },
   });
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
+    queryFn: async () => {
+      try {
+        return await base44.entities.Fornecedor.list();
+      } catch (error) {
+        console.error('Erro ao carregar fornecedores:', error);
+        return [];
+      }
+    },
   });
 
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['contas-pagar'],
-    queryFn: () => base44.entities.ContaPagar.list(),
+    queryFn: async () => {
+      try {
+        return await base44.entities.ContaPagar.list();
+      } catch (error) {
+        console.error('Erro ao carregar contas a pagar:', error);
+        return [];
+      }
+    },
   });
 
   const { data: planoContas = [] } = useQuery({
     queryKey: ['plano-contas'],
-    queryFn: () => base44.entities.PlanoDeContas.list(),
+    queryFn: async () => {
+      try {
+        return await base44.entities.PlanoDeContas.list();
+      } catch (error) {
+        console.error('Erro ao carregar plano de contas:', error);
+        return [];
+      }
+    },
   });
 
   const { data: centrosResultado = [] } = useQuery({
     queryKey: ['centros-resultado'],
-    queryFn: () => base44.entities.CentroResultado.list(),
+    queryFn: async () => {
+      try {
+        return await base44.entities.CentroResultado.list();
+      } catch (error) {
+        console.error('Erro ao carregar centros de resultado:', error);
+        return [];
+      }
+    },
   });
 
   // Mutations - Tipos de Despesa
