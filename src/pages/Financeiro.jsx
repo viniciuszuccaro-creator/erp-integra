@@ -43,6 +43,7 @@ import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
 import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
+import DashboardFinanceiroMestre from "../components/sistema/DashboardFinanceiroMestre";
 import CaixaPDVCompleto from "../components/financeiro/CaixaPDVCompleto";
 import GestaoRemessaRetorno from "../components/financeiro/GestaoRemessaRetorno";
 import VendasMulticanal from "../components/financeiro/VendasMulticanal";
@@ -332,9 +333,13 @@ export default function Financeiro() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
+          <TabsTrigger value="dashboard-mestre" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <BarChart3 className="w-4 h-4 mr-2" />
+            🏆 Dashboard Mestre
+          </TabsTrigger>
           <TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
             <BarChart3 className="w-4 h-4 mr-2" />
-            Dashboard Realtime
+            Realtime
           </TabsTrigger>
           <TabsTrigger value="formas-pagamento" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Sparkles className="w-4 h-4 mr-2" />
@@ -395,6 +400,10 @@ export default function Financeiro() {
             Alertas por Empresa
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="dashboard-mestre">
+          <DashboardFinanceiroMestre windowMode={false} />
+        </TabsContent>
 
         <TabsContent value="dashboard-realtime">
           <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} />

@@ -288,6 +288,6 @@ export default function DashboardFormasPagamento({ windowMode = false }) {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div></div>
   );
 }

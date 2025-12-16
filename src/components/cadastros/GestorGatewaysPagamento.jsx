@@ -55,7 +55,7 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
   const totalProcessado = gateways.reduce((sum, g) => sum + (g.estatisticas?.total_valor_processado || 0), 0);
 
   return (
-    <div className={`space-y-4 ${windowMode ? 'w-full h-full overflow-auto p-6' : ''}`}>
+    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-4"}><div className={windowMode ? "p-6 space-y-4 flex-1" : "space-y-4"}>
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-2">
@@ -242,6 +242,6 @@ export default function GestorGatewaysPagamento({ windowMode = false }) {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div></div>
   );
 }

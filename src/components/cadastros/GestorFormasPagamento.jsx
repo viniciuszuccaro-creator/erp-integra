@@ -122,7 +122,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
   return (
-    <div className={`space-y-6 ${windowMode ? 'w-full h-full p-6 overflow-auto' : ''}`}>
+    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6"}><div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <Alert className="border-blue-300 bg-blue-50">
         <AlertDescription>
           <strong>🏦 Gestão Centralizada V21.8:</strong> Formas configuradas aqui aparecem em PDV, Pedidos, Contas a Receber/Pagar, Portal e E-commerce
@@ -559,6 +559,6 @@ export default function GestorFormasPagamento({ windowMode = false }) {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </div></div>
   );
 }
