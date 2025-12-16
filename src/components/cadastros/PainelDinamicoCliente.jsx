@@ -430,9 +430,7 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
                   <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
                 </TabsContent>
 
-                <TabsContent value="historico_produtos" className="mt-4">
-                  <HistoricoProdutosCliente clienteId={cliente.id} />
-                </TabsContent>
+
               </Tabs>
 
               {/* Últimos Pedidos */}
@@ -476,6 +474,13 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
             </Card>
           </div>
         </div>
+
+        {activeTab === 'historico_produtos' && (
+          <div className="px-6 -mt-2">
+            <HistoricoProdutosCliente clienteId={cliente.id} />
+          </div>
+        )}
+
       </div>
     </>
   );
