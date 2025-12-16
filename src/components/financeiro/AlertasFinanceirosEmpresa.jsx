@@ -107,7 +107,8 @@ export default function AlertasFinanceirosEmpresa({ empresaId, groupId, windowMo
   ];
 
   return (
-    <div className="w-full h-full space-y-4 overflow-auto p-6">
+    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-4"}>
+      <div className={windowMode ? "p-6 space-y-4 flex-1" : "space-y-4 p-6"}>
       <div className="flex items-center gap-3 mb-4">
         <AlertTriangle className="w-6 h-6 text-orange-600" />
         <h2 className="text-2xl font-bold text-slate-900">Alertas Financeiros</h2>
@@ -162,6 +163,6 @@ export default function AlertasFinanceirosEmpresa({ empresaId, groupId, windowMo
           </CardContent>
         </Card>
       )}
-    </div>
+    </div></div>
   );
 }

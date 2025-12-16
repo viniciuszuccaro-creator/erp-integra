@@ -74,6 +74,7 @@ export default function DashboardFormasPagamento({ windowMode = false }) {
 
   return (
     <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6 p-6"}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Dashboard Formas de Pagamento</h2>
@@ -288,6 +289,6 @@ export default function DashboardFormasPagamento({ windowMode = false }) {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div></div>
   );
 }
