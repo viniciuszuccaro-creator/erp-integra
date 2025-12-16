@@ -4,17 +4,17 @@ import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
 import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_FINAL";
 import ValidacaoFinalTotalV21_6 from "@/components/sistema/VALIDACAO_FINAL_TOTAL_V21_6";
 import MasterDashboardV21_6 from "@/components/sistema/MASTER_DASHBOARD_V21_6";
-import { Shield, FileText, Settings, Zap, Sparkles, Wrench, Rocket } from "lucide-react";
+import { Shield, FileText, Settings, Wrench } from "lucide-react";
 
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
-import ConfigGlobal from "@/components/sistema/ConfigGlobal";
+
 import DiagnosticoBackend from "@/components/sistema/DiagnosticoBackend";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useWindow } from "@/components/lib/useWindow";
 import DashboardFechamentoPedidos from "@/components/comercial/DashboardFechamentoPedidos";
-import { useQuery } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
+
+
 import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,10 +25,7 @@ export default function ConfiguracoesSistema() {
   const { empresaAtual, estaNoGrupo } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: configsIA = [] } = useQuery({
-    queryKey: ['configs-ia'],
-    queryFn: () => base44.entities.IAConfig.list(),
-  });
+
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
