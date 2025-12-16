@@ -47,6 +47,8 @@ import CaixaPDVCompleto from "../components/financeiro/CaixaPDVCompleto";
 import GestaoRemessaRetorno from "../components/financeiro/GestaoRemessaRetorno";
 import VendasMulticanal from "../components/financeiro/VendasMulticanal";
 import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
+import VisaoConsolidadaGrupo from "../components/financeiro/VisaoConsolidadaGrupo";
+import AlertasFinanceirosEmpresa from "../components/financeiro/AlertasFinanceirosEmpresa";
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
