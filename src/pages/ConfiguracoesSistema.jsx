@@ -15,6 +15,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import DashboardFechamentoPedidos from "@/components/comercial/DashboardFechamentoPedidos";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,20 @@ export default function ConfiguracoesSistema() {
         <p className="text-slate-600">Gerenciamento de acessos, auditoria, integrações e controles</p>
       </div>
 
+      <Card className="border-blue-200 bg-blue-50">
+        <CardHeader>
+          <CardTitle className="text-blue-900">Configurações centralizadas em Cadastros Gerais</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          <p className="text-sm text-blue-700">
+            Integrações, IA e Configurações Globais agora estão no módulo Cadastros Gerais ▸ Bloco 6 ▸ Integrações & IA.
+          </p>
+          <Button className="w-fit bg-blue-600 hover:bg-blue-700" onClick={() => (window.location.href = createPageUrl('Cadastros'))}>
+            Ir para Cadastros Gerais
+          </Button>
+        </CardContent>
+      </Card>
+
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger
@@ -46,18 +61,9 @@ export default function ConfiguracoesSistema() {
             🔧 Diagnóstico
           </TabsTrigger>
 
-          <TabsTrigger
-            value="ia"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Configuração IA
-          </TabsTrigger>
 
-          <TabsTrigger value="config-global" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Zap className="w-4 h-4 mr-2" />
-            Configurações Globais
-          </TabsTrigger>
+
+
           
           <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
@@ -83,48 +89,9 @@ export default function ConfiguracoesSistema() {
           </div>
         </TabsContent>
 
-        <TabsContent value="ia">
-          <Card>
-            <CardHeader className="bg-purple-50 border-b">
-              <CardTitle>Configuração de Inteligência Artificial</CardTitle>
-              <p className="text-sm text-slate-600 mt-1">
-                Configure modelos e limites de IA por módulo
-              </p>
-            </CardHeader>
-            <CardContent className="p-6">
-              {configsIA.length > 0 ? (
-                <div className="space-y-3">
-                  {configsIA.map((config) => (
-                    <div key={config.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <p className="font-semibold">{config.modulo} - {config.funcionalidade}</p>
-                        <p className="text-sm text-slate-600">
-                          Modelo: {config.modelo_base} | Limite: {config.limite_tokens} tokens
-                        </p>
-                      </div>
-                      <Badge className={config.ativo ? 'bg-green-600' : 'bg-slate-600'}>
-                        {config.ativo ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-slate-500">
-                  <Sparkles className="w-16 h-16 mx-auto mb-3 opacity-30" />
-                  <p>Nenhuma configuração de IA cadastrada</p>
-                  <p className="text-sm mt-2">As configurações são criadas automaticamente ao usar funcionalidades IA</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="config-global">
-          <ConfigGlobal
-            empresaId={empresaAtual?.id}
-            grupoId={estaNoGrupo ? empresaAtual?.grupo_id : null}
-          />
-        </TabsContent>
+
+
 
         
 
