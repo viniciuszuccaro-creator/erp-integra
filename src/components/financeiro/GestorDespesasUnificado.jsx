@@ -199,8 +199,6 @@ export default function GestorDespesasUnificado({ windowMode = false }) {
     },
   });
 
-  const isLoading = loadingTipos || loadingConfigs;
-
   // Análises e métricas inteligentes - com guards para dados
   const tiposFiltrados = React.useMemo(() => {
     if (!Array.isArray(tipos)) return [];
@@ -306,6 +304,8 @@ export default function GestorDespesasUnificado({ windowMode = false }) {
       createConfig.mutate(data);
     }
   };
+
+  const isLoading = loadingTipos || loadingConfigs;
 
   return (
     <div className="w-full h-full flex flex-col space-y-6 p-6 overflow-auto">
