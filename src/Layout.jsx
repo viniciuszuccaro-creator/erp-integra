@@ -74,7 +74,8 @@ const navigationItems = [
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "💬 Hub de Atendimento", url: createPageUrl("HubAtendimento"), icon: MessageCircle, group: "principal" },
   { title: "🌐 Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico", public: true },
-];
+  { title: "🏆 Certificação V21.8", url: createPageUrl("CertificacaoV21_8"), icon: Trophy, group: "sistema", adminOnly: true },
+  ];
 
 function LayoutContent({ children, currentPageName }) {
   const location = useLocation();

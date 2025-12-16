@@ -26,6 +26,7 @@ import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
 import HubAtendimento from './pages/HubAtendimento';
 import GerenciamentoAcessosCompleto from './pages/GerenciamentoAcessosCompleto';
 import validadorv218 from './pages/ValidadorV21_8';
+import certificacaov218 from './pages/CertificacaoV21_8';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "HubAtendimento": HubAtendimento,
     "GerenciamentoAcessosCompleto": GerenciamentoAcessosCompleto,
     "ValidadorV21_8": validadorv218,
+    "CertificacaoV21_8": certificacaov218,
 }
 
 export const pagesConfig = {

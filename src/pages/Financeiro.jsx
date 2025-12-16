@@ -401,12 +401,12 @@ export default function Financeiro() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard-mestre">
+        <TabsContent value="dashboard-mestre" className="mt-6">
           <DashboardFinanceiroMestre windowMode={false} />
         </TabsContent>
 
-        <TabsContent value="dashboard-realtime">
-          <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} />
+        <TabsContent value="dashboard-realtime" className="mt-6">
+          <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} windowMode={false} />
         </TabsContent>
 
         <TabsContent value="formas-pagamento">
@@ -545,11 +545,11 @@ export default function Financeiro() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="caixa-diario">
+        <TabsContent value="caixa-diario" className="mt-6">
           <CaixaDiarioTab />
         </TabsContent>
 
-        <TabsContent value="vendas-multicanal">
+        <TabsContent value="vendas-multicanal" className="mt-6">
           <VendasMulticanal />
         </TabsContent>
 
