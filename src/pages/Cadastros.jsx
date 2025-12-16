@@ -70,6 +70,7 @@ import FormaPagamentoFormCompleto from "../components/cadastros/FormaPagamentoFo
 import GestorFormasPagamento from "../components/cadastros/GestorFormasPagamento";
 import GestorGatewaysPagamento from "../components/cadastros/GestorGatewaysPagamento";
 import GestorDespesasRecorrentes from "../components/cadastros/GestorDespesasRecorrentes";
+import GestorTiposDespesa from "../components/cadastros/GestorTiposDespesa";
 import VeiculoForm from "../components/cadastros/VeiculoForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
@@ -2625,7 +2626,7 @@ export default function Cadastros() {
                         <CardTitle 
                           className="text-base flex items-center gap-2 cursor-pointer hover:text-rose-700 transition-colors"
                           onClick={() => openWindow(
-                            () => import('./GestorTiposDespesa').then(m => m.default),
+                            GestorTiposDespesa,
                             {},
                             { title: '💳 Gestão Completa - Tipos de Despesa', width: 1400, height: 800, zIndex: 50000 }
                           )}
@@ -2638,7 +2639,7 @@ export default function Cadastros() {
                             size="sm"
                             variant="outline"
                             onClick={() => openWindow(
-                              () => import('./GestorTiposDespesa').then(m => m.default),
+                              GestorTiposDespesa,
                               {},
                               { title: '💳 Gestor de Tipos', width: 1400, height: 800 }
                             )}
