@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Copy, Calendar, CheckCircle2 } from "lucide-react";
@@ -20,6 +22,8 @@ export default function DuplicarMesAnterior({ empresaId }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [empresaSelecionada, setEmpresaSelecionada] = useState(empresaId || '');
+  const [incluirRecorrentes, setIncluirRecorrentes] = useState(false);
   const [mesReferencia, setMesReferencia] = useState(() => {
     const hoje = new Date();
     const mesAnterior = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
@@ -31,21 +35,38 @@ export default function DuplicarMesAnterior({ empresaId }) {
   });
   const [contasSelecionadas, setContasSelecionadas] = useState([]);
 
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
+  });
+
+  const { data: configsRecorrentes = [] } = useQuery({
+    queryKey: ['configs-recorrentes'],
+    queryFn: () => base44.entities.ConfiguracaoDespesaRecorrente.list(),
+    enabled: dialogOpen && !incluirRecorrentes
+  });
+
   const { data: contasMesAnterior = [] } = useQuery({
-    queryKey: ['contas-pagar-mes-anterior', empresaId, mesReferencia],
+    queryKey: ['contas-pagar-mes-anterior', empresaSelecionada, mesReferencia, incluirRecorrentes],
     queryFn: async () => {
       const [ano, mes] = mesReferencia.split('-');
       const inicio = new Date(parseInt(ano), parseInt(mes) - 1, 1);
       const fim = new Date(parseInt(ano), parseInt(mes), 0);
 
-      const list = await base44.entities.ContaPagar.filter({
-        empresa_id: empresaId
-      });
+      const filtro = empresaSelecionada ? { empresa_id: empresaSelecionada } : {};
+      const list = await base44.entities.ContaPagar.filter(filtro);
 
-      return list.filter(c => {
+      let contasFiltradas = list.filter(c => {
         const dataVenc = new Date(c.data_vencimento);
         return dataVenc >= inicio && dataVenc <= fim;
       });
+
+      if (!incluirRecorrentes) {
+        const descricoesRecorrentes = configsRecorrentes.map(cr => cr.descricao);
+        contasFiltradas = contasFiltradas.filter(c => !descricoesRecorrentes.includes(c.descricao));
+      }
+
+      return contasFiltradas;
     },
     enabled: dialogOpen
   });
@@ -98,6 +119,21 @@ export default function DuplicarMesAnterior({ empresaId }) {
         </DialogHeader>
 
         <div className="space-y-4 flex-1 overflow-auto">
+          <div>
+            <Label>Empresa (Opcional)</Label>
+            <Select value={empresaSelecionada} onValueChange={setEmpresaSelecionada}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todas as empresas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={null}>Todas as empresas</SelectItem>
+                {empresas.map(emp => (
+                  <SelectItem key={emp.id} value={emp.id}>{emp.nome_fantasia || emp.razao_social}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Mês de Referência (Origem)</Label>
@@ -115,6 +151,17 @@ export default function DuplicarMesAnterior({ empresaId }) {
                 onChange={(e) => setMesDestino(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="flex items-center space-x-2 p-3 border rounded bg-slate-50">
+            <Checkbox
+              id="incluir-recorrentes"
+              checked={incluirRecorrentes}
+              onCheckedChange={setIncluirRecorrentes}
+            />
+            <label htmlFor="incluir-recorrentes" className="text-sm">
+              Incluir despesas recorrentes (já geradas automaticamente)
+            </label>
           </div>
 
           <Alert className="bg-blue-50 border-blue-200">

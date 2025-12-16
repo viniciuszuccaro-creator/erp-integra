@@ -388,6 +388,10 @@ export default function Financeiro() {
             <BarChart3 className="w-4 h-4 mr-2" />
             Relatórios
           </TabsTrigger>
+          <TabsTrigger value="alertas" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
+            <AlertCircle className="w-4 h-4 mr-2" />
+            Alertas por Empresa
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard-realtime">
@@ -396,6 +400,10 @@ export default function Financeiro() {
 
         <TabsContent value="formas-pagamento">
           <DashboardFormasPagamento />
+        </TabsContent>
+
+        <TabsContent value="visao-grupo">
+          <VisaoConsolidadaGrupo groupId={empresasDoGrupo[0]?.group_id} />
         </TabsContent>
 
         <TabsContent value="caixa-pdv">
@@ -625,6 +633,10 @@ export default function Financeiro() {
 
         <TabsContent value="relatorios">
           <RelatorioFinanceiro empresaId={empresaAtual?.id} />
+        </TabsContent>
+
+        <TabsContent value="alertas">
+          <AlertasFinanceirosEmpresa empresaId={empresaAtual?.id} groupId={empresasDoGrupo[0]?.group_id} />
         </TabsContent>
       </Tabs>
     </div>
