@@ -130,6 +130,10 @@ import TesteTransportadoras from "../components/integracoes/TesteTransportadoras
 import TesteGoogleMaps from "../components/integracoes/TesteGoogleMaps";
 import IALeituraProjeto from "../components/integracoes/IALeituraProjeto";
 import SincronizacaoMarketplacesAtiva from '@/components/integracoes/SincronizacaoMarketplacesAtiva';
+import ConfigGlobal from "@/components/sistema/ConfigGlobal";
+import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
+import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
+import DashboardCliente from "@/components/portal/DashboardCliente";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
@@ -327,6 +331,11 @@ export default function Cadastros() {
   const { data: jobsAgendados = [] } = useQuery({
     queryKey: ['jobs-agendados'],
     queryFn: () => base44.entities.JobAgendado.list(),
+  });
+
+  const { data: configsIA = [] } = useQuery({
+    queryKey: ['configs-ia'],
+    queryFn: () => base44.entities.IAConfig.list(),
   });
 
   // PARÂMETROS OPERACIONAIS - FASE 3
@@ -3723,6 +3732,10 @@ export default function Cadastros() {
                       <ShoppingCart className="w-4 h-4 mr-2" />
                       Marketplaces
                     </TabsTrigger>
+                    <TabsTrigger value="apps">
+                      <Cpu className="w-4 h-4 mr-2" />
+                      Apps & Portais
+                    </TabsTrigger>
                   </TabsList>
 
                   {/* ABA: GERENCIAMENTO - CADASTROS BASE */}
@@ -4595,12 +4608,142 @@ export default function Cadastros() {
 
                   {/* ABA: IA E AUTOMAÇÕES */}
                   <TabsContent value="ia">
-                    <IALeituraProjeto configuracao={configuracao} />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader className="bg-purple-50 border-b">
+                          <CardTitle>Configurações de IA por Módulo</CardTitle>
+                          <p className="text-sm text-slate-600 mt-1">Modelos e limites ativos</p>
+                        </CardHeader>
+                        <CardContent className="p-4 max-h-80 overflow-y-auto">
+                          {configsIA.length > 0 ? (
+                            <div className="space-y-2">
+                              {configsIA.map((cfg) => (
+                                <div key={cfg.id} className="flex items-center justify-between p-3 border rounded-lg">
+                                  <div>
+                                    <p className="font-semibold text-sm">{cfg.modulo} • {cfg.funcionalidade}</p>
+                                    <p className="text-xs text-slate-500">Modelo: {cfg.modelo_base} • Limite: {cfg.limite_tokens} tokens</p>
+                                  </div>
+                                  <Badge className={cfg.ativo ? 'bg-green-600' : 'bg-slate-600'}>
+                                    {cfg.ativo ? 'Ativo' : 'Inativo'}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-center py-10 text-slate-500">
+                              <Zap className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                              <p>Nenhuma configuração de IA cadastrada ainda.</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader className="bg-slate-50 border-b">
+                          <CardTitle>Configurações Globais</CardTitle>
+                          <p className="text-sm text-slate-600 mt-1">Preferências e parâmetros do sistema</p>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <Button
+                            onClick={() => openWindow(ConfigGlobal, { windowMode: true }, { title: 'Configurações Globais', width: 1000, height: 700 })}
+                            className="bg-slate-800 hover:bg-slate-900"
+                          >
+                            Abrir Configurações Globais
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <div className="mt-6">
+                      <IALeituraProjeto configuracao={configuracao} />
+                    </div>
                   </TabsContent>
 
                   {/* ABA: MARKETPLACES */}
                   <TabsContent value="marketplaces">
                     <SincronizacaoMarketplacesAtiva />
+                  </TabsContent>
+
+                  {/* ABA: APPS & PORTAIS */}
+                  <TabsContent value="apps">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                      <Card className="border-emerald-200">
+                        <CardHeader className="bg-emerald-50 border-b border-emerald-200">
+                          <CardTitle className="flex items-center gap-2">
+                            <Truck className="w-5 h-5 text-emerald-600" /> App Entregas (Motorista)
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <p className="text-sm text-slate-600 mb-3">Rastreamento e comprovação de entrega em tempo real.</p>
+                          <Button onClick={() => openWindow(AppEntregasMotorista, { windowMode: true }, { title: 'App Entregas (Motorista)', width: 420, height: 800 })} className="bg-emerald-600 hover:bg-emerald-700">
+                            Abrir App
+                          </Button>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-blue-200">
+                        <CardHeader className="bg-blue-50 border-b border-blue-200">
+                          <CardTitle className="flex items-center gap-2">
+                            <Users className="w-5 h-5 text-blue-600" /> Portal do Cliente
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <p className="text-sm text-slate-600 mb-3">Área do cliente com pedidos, documentos e comunicação.</p>
+                          <Button onClick={() => openWindow(DashboardCliente, { windowMode: true }, { title: 'Portal do Cliente', width: 1200, height: 800 })} className="bg-blue-600 hover:bg-blue-700">
+                            Abrir Portal
+                          </Button>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-purple-200">
+                        <CardHeader className="bg-purple-50 border-b border-purple-200">
+                          <CardTitle className="flex items-center gap-2">
+                            <MessageCircle className="w-5 h-5 text-purple-600" /> Chatbot • Atendimento
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <p className="text-sm text-slate-600 mb-3">Painel para monitorar e configurar o chatbot.</p>
+                          <Button onClick={() => openWindow(ChatbotDashboard, { windowMode: true }, { title: 'Chatbot • Dashboard', width: 1200, height: 800 })} className="bg-purple-600 hover:bg-purple-700">
+                            Abrir Chatbot
+                          </Button>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-cyan-200">
+                        <CardHeader className="bg-cyan-50 border-b border-cyan-200">
+                          <CardTitle className="flex items-center gap-2">
+                            <Globe className="w-5 h-5 text-cyan-600" /> Catálogo Web (Site)
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <p className="text-sm text-slate-600 mb-3">Gerencie catálogos exibidos no site institucional.</p>
+                          <Button onClick={() => openWindow(VisualizadorUniversalEntidade, {
+                            nomeEntidade: 'CatalogoWeb',
+                            tituloDisplay: 'Catálogo Web',
+                            icone: Globe,
+                            camposPrincipais: ['nome_catalogo', 'descricao', 'url', 'ativo'],
+                            componenteEdicao: CatalogoWebForm,
+                            windowMode: true
+                          }, { title: 'Catálogo Web', width: 1200, height: 800 })} className="bg-cyan-600 hover:bg-cyan-700">
+                            Abrir Catálogo
+                          </Button>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border-slate-200">
+                        <CardHeader className="bg-slate-50 border-b border-slate-200">
+                          <CardTitle className="flex items-center gap-2">
+                            <ShoppingCart className="w-5 h-5 text-slate-700" /> Central de Marketplaces
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <p className="text-sm text-slate-600 mb-3">Sincronização ativa com marketplaces e hubs.</p>
+                          <Button onClick={() => openWindow(SincronizacaoMarketplacesAtiva, { windowMode: true }, { title: 'Marketplaces • Sincronização', width: 1200, height: 800 })} className="bg-slate-800 hover:bg-slate-900">
+                            Abrir Central
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </TabsContent>
                 </Tabs>
 
