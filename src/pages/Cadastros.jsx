@@ -67,6 +67,8 @@ import BancoForm from "../components/cadastros/BancoForm";
 import FormaPagamentoForm from "../components/cadastros/FormaPagamentoForm";
 import FormaPagamentoFormCompleto from "../components/cadastros/FormaPagamentoFormCompleto";
 import GestorFormasPagamento from "../components/cadastros/GestorFormasPagamento";
+import GestorGatewaysPagamento from "../components/cadastros/GestorGatewaysPagamento";
+import GestorDespesasRecorrentes from "../components/cadastros/GestorDespesasRecorrentes";
 import VeiculoForm from "../components/cadastros/VeiculoForm";
 import MotoristaForm from "../components/cadastros/MotoristaForm";
 import TipoFreteForm from "../components/cadastros/TipoFreteForm";
@@ -2198,6 +2200,108 @@ export default function Cadastros() {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* GATEWAYS DE PAGAMENTO - V21.8 NOVO */}
+                  <Card className="border-blue-200 lg:col-span-2">
+                    <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-blue-700 transition-colors"
+                          onClick={() => openWindow(
+                            GestorGatewaysPagamento,
+                            { windowMode: true },
+                            { title: '💳 Gestão Completa - Gateways de Pagamento', width: 1400, height: 800, zIndex: 50000 }
+                          )}
+                        >
+                          <CreditCard className="w-5 h-5 text-blue-600" />
+                          💳 Gateways de Pagamento - Processadores Online
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openWindow(
+                            GestorGatewaysPagamento,
+                            { windowMode: true },
+                            { title: '💳 Gestor de Gateways', width: 1400, height: 800 }
+                          )}
+                          className="border-blue-300 text-blue-700"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          Gestor Completo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
+                          <CreditCard className="w-8 h-8 text-blue-600 mb-2" />
+                          <p className="font-semibold text-blue-900">Multi-Gateway</p>
+                          <p className="text-xs text-blue-700">Pagar.me • Stripe • Asaas • Juno</p>
+                        </div>
+                        <div className="p-4 border-2 border-green-200 rounded-lg bg-green-50">
+                          <Zap className="w-8 h-8 text-green-600 mb-2" />
+                          <p className="font-semibold text-green-900">Integração Dinâmica</p>
+                          <p className="text-xs text-green-700">Configuração por ambiente</p>
+                        </div>
+                        <div className="p-4 border-2 border-purple-200 rounded-lg bg-purple-50">
+                          <Shield className="w-8 h-8 text-purple-600 mb-2" />
+                          <p className="font-semibold text-purple-900">Seguro e Escalável</p>
+                          <p className="text-xs text-purple-700">Credenciais criptografadas</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* DESPESAS RECORRENTES - V21.8 NOVO */}
+                  <Card className="border-purple-200 lg:col-span-2">
+                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-200 pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle 
+                          className="text-base flex items-center gap-2 cursor-pointer hover:text-purple-700 transition-colors"
+                          onClick={() => openWindow(
+                            GestorDespesasRecorrentes,
+                            { windowMode: true },
+                            { title: '🔄 Gestão de Despesas Recorrentes', width: 1400, height: 800, zIndex: 50000 }
+                          )}
+                        >
+                          <Calendar className="w-5 h-5 text-purple-600" />
+                          🔄 Despesas Recorrentes - Automação Total
+                        </CardTitle>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openWindow(
+                            GestorDespesasRecorrentes,
+                            { windowMode: true },
+                            { title: '🔄 Gestor de Despesas', width: 1400, height: 800 }
+                          )}
+                          className="border-purple-300 text-purple-700"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          Gestor Completo
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="p-4 border-2 border-purple-200 rounded-lg bg-purple-50">
+                          <Calendar className="w-8 h-8 text-purple-600 mb-2" />
+                          <p className="font-semibold text-purple-900">Geração Automática</p>
+                          <p className="text-xs text-purple-700">Despesas mensais/anuais</p>
+                        </div>
+                        <div className="p-4 border-2 border-green-200 rounded-lg bg-green-50">
+                          <TrendingUp className="w-8 h-8 text-green-600 mb-2" />
+                          <p className="font-semibold text-green-900">Ajuste por Inflação</p>
+                          <p className="text-xs text-green-700">IPCA • IGP-M • CDI</p>
+                        </div>
+                        <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
+                          <Building2 className="w-8 h-8 text-blue-600 mb-2" />
+                          <p className="font-semibold text-blue-900">Rateio Multiempresa</p>
+                          <p className="text-xs text-blue-700">Distribuição automática</p>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

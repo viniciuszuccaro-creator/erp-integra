@@ -52,16 +52,30 @@ export function useFormasPagamento(filtros = {}) {
     return null;
   };
 
+  // Buscar gateways de pagamento
+  const { data: gateways = [] } = useQuery({
+    queryKey: ['gateways-pagamento'],
+    queryFn: async () => {
+      return await base44.entities.GatewayPagamento.filter({ ativo: true });
+    },
+    staleTime: 300000,
+  });
+
   // Obter configuração completa de uma forma de pagamento
   const obterConfiguracao = (formaPagamentoId) => {
     const forma = formasPagamento.find(f => f.id === formaPagamentoId);
     if (!forma) return null;
 
     const banco = obterBancoPorTipo(forma.tipo);
+    const gateway = forma.usa_gateway && forma.gateway_pagamento_id 
+      ? gateways.find(g => g.id === forma.gateway_pagamento_id)
+      : null;
     
     return {
       ...forma,
       banco: banco,
+      gateway: gateway,
+      usa_gateway: forma.usa_gateway || false,
       requer_integracao: forma.integracao_obrigatoria,
       permite_desconto: forma.aceita_desconto,
       desconto_padrao: forma.percentual_desconto_padrao || 0,
@@ -199,6 +213,7 @@ export function useFormasPagamento(filtros = {}) {
   return {
     formasPagamento,
     bancos,
+    gateways,
     isLoading: loadingFormas || loadingBancos,
     obterFormasPorContexto,
     obterBancoPorTipo,
