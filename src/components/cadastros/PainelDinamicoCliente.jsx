@@ -31,6 +31,9 @@ import TimelineCliente, { ResumoHistorico } from "@/components/cliente/TimelineC
 import Top10ProdutosCliente from "@/components/comercial/Top10ProdutosCliente";
 import HistoricoOrigemCliente from "@/components/comercial/HistoricoOrigemCliente";
 import { Link } from "react-router-dom";
+import { useWindow } from "@/components/lib/useWindow";
+import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
+import HistoricoProdutosCliente from "@/components/comercial/HistoricoProdutosCliente";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -39,6 +42,7 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
   const [activeTab, setActiveTab] = useState("enderecos");
   const navigate = useNavigate();
   const { hasPermission } = usePermissions();
+  const { openWindow } = useWindow();
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos-cliente', cliente?.id],
@@ -61,8 +65,16 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
   if (!cliente) return null;
 
   const handleEditarCadastro = () => {
-    navigate(createPageUrl('Cadastros') + '?tab=clientes&edit=' + cliente.id);
-    onClose();
+    openWindow(
+      CadastroClienteCompleto,
+      { cliente, windowMode: true },
+      {
+        title: `Editar Cliente: ${cliente.nome || cliente.razao_social}`,
+        width: 1100,
+        height: 650,
+      }
+    );
+    if (onClose) onClose();
   };
 
   const totalEmAberto = contasReceber
@@ -295,7 +307,7 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
             {/* COLUNA 3: Endereços e Top Produtos */}
             <div className="space-y-4">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger value="enderecos" className="text-xs">
                     <MapPin className="w-3 h-3 mr-1" />
                     Endereços
@@ -307,6 +319,10 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
                   <TabsTrigger value="canais" className="text-xs">
                     <Activity className="w-3 h-3 mr-1" />
                     Canais
+                  </TabsTrigger>
+                  <TabsTrigger value="historico_produtos" className="text-xs">
+                    <Package className="w-3 h-3 mr-1" />
+                    Histórico Produtos
                   </TabsTrigger>
                 </TabsList>
 
@@ -412,6 +428,10 @@ export default function PainelDinamicoCliente({ cliente, isOpen, onClose, window
 
                 <TabsContent value="canais" className="mt-4">
                   <HistoricoOrigemCliente clienteId={cliente.id} compact={false} />
+                </TabsContent>
+
+                <TabsContent value="historico_produtos" className="mt-4">
+                  <HistoricoProdutosCliente clienteId={cliente.id} />
                 </TabsContent>
               </Tabs>
 
