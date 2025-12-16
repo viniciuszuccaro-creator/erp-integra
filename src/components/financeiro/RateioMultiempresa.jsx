@@ -14,7 +14,7 @@ import { Split, Shuffle, Building2, DollarSign, Percent } from "lucide-react";
 /**
  * Componente de rateio automático de despesas/receitas do GRUPO para as empresas
  */
-export default function RateioMultiempresa({ empresas, grupoId }) {
+export default function RateioMultiempresa({ empresas, grupoId, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -171,7 +171,7 @@ export default function RateioMultiempresa({ empresas, grupoId }) {
     criarRateioMutation.mutate(formRateio);
   };
 
-  return (
+  const content = (
     <Card className="border-2 border-purple-200">
       <CardHeader className="bg-purple-50 border-b">
         <CardTitle className="flex items-center gap-2">
@@ -396,4 +396,16 @@ export default function RateioMultiempresa({ empresas, grupoId }) {
       </CardContent>
     </Card>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col overflow-auto">
+        <div className="p-6 flex-1">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return content;
 }

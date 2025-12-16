@@ -14,7 +14,7 @@ import { CreditCard, DollarSign, Building2, CheckCircle, AlertCircle } from "luc
 /**
  * Configuração de Cobrança (Boletos/PIX) por Empresa
  */
-export default function ConfiguracaoCobranca({ empresas }) {
+export default function ConfiguracaoCobranca({ empresas, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -90,7 +90,8 @@ export default function ConfiguracaoCobranca({ empresas }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6"}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* Seleção de Empresa */}
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-blue-50 border-b">
@@ -428,6 +429,6 @@ export default function ConfiguracaoCobranca({ empresas }) {
           </CardContent>
         </Card>
       )}
-    </div>
+    </div></div>
   );
 }

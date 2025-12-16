@@ -409,15 +409,15 @@ export default function Financeiro() {
           <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} windowMode={false} />
         </TabsContent>
 
-        <TabsContent value="formas-pagamento">
-          <DashboardFormasPagamento />
+        <TabsContent value="formas-pagamento" className="mt-6">
+          <DashboardFormasPagamento windowMode={false} />
         </TabsContent>
 
-        <TabsContent value="visao-grupo">
-          <VisaoConsolidadaGrupo groupId={empresasDoGrupo[0]?.group_id} />
+        <TabsContent value="visao-grupo" className="mt-6">
+          <VisaoConsolidadaGrupo groupId={empresasDoGrupo[0]?.group_id} windowMode={false} />
         </TabsContent>
 
-        <TabsContent value="caixa-pdv">
+        <TabsContent value="caixa-pdv" className="mt-6">
           <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-green-50">
             <CardHeader className="border-b bg-white/50 backdrop-blur-sm">
               <CardTitle className="flex items-center gap-3">
@@ -516,7 +516,7 @@ export default function Financeiro() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="remessa-retorno">
+        <TabsContent value="remessa-retorno" className="mt-6">
           <Card className="border-0 shadow-md">
             <CardContent className="p-6">
               <div className="text-center space-y-4">
@@ -553,24 +553,24 @@ export default function Financeiro() {
           <VendasMulticanal />
         </TabsContent>
 
-        <TabsContent value="contas-receber">
+        <TabsContent value="contas-receber" className="mt-6">
           <ContasReceberTab contas={contasReceberComContexto} empresas={empresas} />
         </TabsContent>
 
-        <TabsContent value="contas-pagar">
+        <TabsContent value="contas-pagar" className="mt-6">
           <ContasPagarTab contas={contasPagarComContexto} />
         </TabsContent>
 
-        <TabsContent value="aprovacoes">
+        <TabsContent value="aprovacoes" className="mt-6">
           <AprovacaoDescontosManager windowMode={false} />
         </TabsContent>
 
-        <TabsContent value="conciliacao">
+        <TabsContent value="conciliacao" className="mt-6">
           <ConciliacaoBancaria windowMode={false} />
         </TabsContent>
 
         {estaNoGrupo && (
-          <TabsContent value="rateios">
+          <TabsContent value="rateios" className="mt-6">
             <div className="space-y-6">
               <RateioMultiempresa
                 empresas={empresasDoGrupo}
@@ -642,12 +642,12 @@ export default function Financeiro() {
           </TabsContent>
         )}
 
-        <TabsContent value="relatorios">
-          <RelatorioFinanceiro empresaId={empresaAtual?.id} />
+        <TabsContent value="relatorios" className="mt-6">
+          <RelatorioFinanceiro empresaId={empresaAtual?.id} windowMode={false} />
         </TabsContent>
 
-        <TabsContent value="alertas">
-          <AlertasFinanceirosEmpresa empresaId={empresaAtual?.id} groupId={empresasDoGrupo[0]?.group_id} />
+        <TabsContent value="alertas" className="mt-6">
+          <AlertasFinanceirosEmpresa empresaId={empresaAtual?.id} groupId={empresasDoGrupo[0]?.group_id} windowMode={false} />
         </TabsContent>
       </Tabs>
     </div>

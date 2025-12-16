@@ -25,7 +25,7 @@ import {
 import { toast } from "sonner";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
-export default function VendasMulticanal() {
+export default function VendasMulticanal({ windowMode = false }) {
   const [canalFiltro, setCanalFiltro] = useState("todos");
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [busca, setBusca] = useState("");
@@ -119,7 +119,8 @@ export default function VendasMulticanal() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6"}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -369,6 +370,6 @@ export default function VendasMulticanal() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </div></div>
   );
 }

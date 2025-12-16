@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -14,7 +13,7 @@ import NotificacoesAutomaticas from '../sistema/NotificacoesAutomaticas';
  * Régua de Cobrança Inteligente
  * Envia cobranças automáticas baseadas em dias de atraso
  */
-export default function ReguaCobrancaIA({ empresaId }) {
+export default function ReguaCobrancaIA({ empresaId, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [executando, setExecutando] = useState(false);
@@ -232,7 +231,7 @@ export default function ReguaCobrancaIA({ empresaId }) {
     return dias > 10;
   });
 
-  return (
+  const content = (
     <Card className="border-purple-200 bg-purple-50">
       <CardHeader className="bg-white/80 border-b">
         <div className="flex items-center justify-between">
@@ -338,4 +337,16 @@ export default function ReguaCobrancaIA({ empresaId }) {
       </CardContent>
     </Card>
   );
+
+  if (windowMode) {
+    return (
+      <div className="w-full h-full flex flex-col overflow-auto">
+        <div className="p-6 flex-1">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return content;
 }

@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { CheckCircle, XCircle, Link as LinkIcon, Search, Filter } from "lucide-react";
 
-export default function PainelConciliacao({ empresaId }) {
+export default function PainelConciliacao({ empresaId, windowMode = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -127,7 +127,8 @@ export default function PainelConciliacao({ empresaId }) {
   const extratosConciliados = extratosFiltrados.filter(e => e.conciliado);
 
   return (
-    <div className="space-y-6">
+    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6"}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* Header com Ações */}
       <div className="flex justify-between items-center">
         <div>
@@ -303,6 +304,6 @@ export default function PainelConciliacao({ empresaId }) {
           </CardContent>
         </Card>
       )}
-    </div>
+    </div></div>
   );
 }
