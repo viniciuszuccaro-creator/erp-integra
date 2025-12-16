@@ -261,11 +261,12 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       const baixaPromises = contasSelecionadas.map(async (contaId) => {
         const conta = contas.find(c => c.id === contaId);
         if (conta) {
+          const valorTotal = conta.valor + (dados.juros || 0) + (dados.multa || 0) - (dados.desconto || 0);
           await baixarTituloMutation.mutateAsync({
             id: contaId,
             dados: {
               ...dados,
-              valor_recebido: conta.valor
+              valor_recebido: valorTotal
             }
           });
         }
@@ -274,6 +275,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     },
     onSuccess: () => {
       setContasSelecionadas([]);
+      setDialogBaixaOpen(false);
       toast({ title: `✅ ${contasSelecionadas.length} título(s) baixado(s)!` });
     },
     onError: (error) => {
@@ -544,12 +546,26 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       });
       return;
     }
-    baixarMultiplaMutation.mutate(dadosBaixa);
+    setContaAtual(null);
+    setDadosBaixa({
+      data_recebimento: new Date().toISOString().split('T')[0],
+      valor_recebido: 0,
+      forma_recebimento: "PIX",
+      juros: 0,
+      multa: 0,
+      desconto: 0,
+      observacoes: ""
+    });
+    setDialogBaixaOpen(true);
   };
 
   const handleSubmitBaixa = (e) => {
     e.preventDefault();
-    baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
+    if (contaAtual) {
+      baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
+    } else {
+      baixarMultiplaMutation.mutate(dadosBaixa);
+    }
   };
 
   const toggleSelecao = (contaId) => {
@@ -767,6 +783,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Canal Origem</TableHead>
+                  <TableHead>Marketplace</TableHead>
                   <TableHead>Cobrança</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
@@ -821,10 +838,14 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                         <Badge variant="outline" className="text-xs">
                           {conta.canal_origem || 'Manual'}
                         </Badge>
-                        {conta.marketplace_origem && conta.marketplace_origem !== 'Nenhum' && (
-                          <Badge className="ml-1 bg-purple-100 text-purple-700 text-xs">
+                      </TableCell>
+                      <TableCell>
+                        {conta.marketplace_origem && conta.marketplace_origem !== 'Nenhum' ? (
+                          <Badge className="bg-purple-100 text-purple-700 text-xs">
                             {conta.marketplace_origem}
                           </Badge>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -1032,33 +1053,37 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
 
       {/* Dialog Baixa */}
       <Dialog open={dialogBaixaOpen} onOpenChange={setDialogBaixaOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Baixar Conta a Receber</DialogTitle>
+            <DialogTitle>
+              {contaAtual ? 'Baixar Conta a Receber' : `Baixar Múltiplos Títulos (${contasSelecionadas.length})`}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitBaixa} className="space-y-4">
-            <div>
-              <Label>Cliente</Label>
-              <Input value={contaAtual?.cliente || ''} disabled />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+            {contaAtual ? (
               <div>
-                <Label>Valor Original</Label>
-                <Input value={`R$ ${contaAtual?.valor?.toFixed(2) || 0}`} disabled />
+                <Label>Cliente</Label>
+                <Input value={contaAtual?.cliente || ''} disabled />
               </div>
-              <div>
-                <Label>Valor Recebido *</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={dadosBaixa.valor_recebido}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, valor_recebido: parseFloat(e.target.value) })}
-                  required
-                />
-              </div>
-            </div>
+            ) : (
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertDescription>
+                  <p className="font-semibold text-blue-900">Baixando {contasSelecionadas.length} título(s)</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Os valores de juros, multa e desconto serão aplicados individualmente a cada título
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              {contaAtual && (
+                <div>
+                  <Label>Valor Original</Label>
+                  <Input value={`R$ ${contaAtual?.valor?.toFixed(2) || 0}`} disabled />
+                </div>
+              )}
+              <div className={contaAtual ? '' : 'col-span-2'}>
                 <Label>Data Recebimento *</Label>
                 <Input
                   type="date"
@@ -1067,58 +1092,86 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   required
                 />
               </div>
-              <div>
-                <Label>Forma de Recebimento *</Label>
-                <Select
-                  value={dadosBaixa.forma_recebimento}
-                  onValueChange={(v) => setDadosBaixa({ ...dadosBaixa, forma_recebimento: v })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {formasPagamento.map(forma => (
-                      <SelectItem key={forma.id} value={forma.descricao}>
-                        {forma.icone && `${forma.icone} `}{forma.descricao}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
+
+            <div>
+              <Label>Forma de Recebimento *</Label>
+              <Select
+                value={dadosBaixa.forma_recebimento}
+                onValueChange={(v) => setDadosBaixa({ ...dadosBaixa, forma_recebimento: v })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {formasPagamento.map(forma => (
+                    <SelectItem key={forma.id} value={forma.descricao}>
+                      {forma.icone && `${forma.icone} `}{forma.descricao}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label>Juros</Label>
+                <Label>Juros (R$)</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={dadosBaixa.juros}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) })}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) || 0 })}
                 />
               </div>
               <div>
-                <Label>Multa</Label>
+                <Label>Multa (R$)</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={dadosBaixa.multa}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) })}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) || 0 })}
                 />
               </div>
               <div>
-                <Label>Desconto</Label>
+                <Label>Desconto (R$)</Label>
                 <Input
                   type="number"
                   step="0.01"
                   value={dadosBaixa.desconto}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) })}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) || 0 })}
                 />
               </div>
             </div>
+
+            {contaAtual && (
+              <div className="bg-slate-50 p-4 rounded-lg border">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Valor Total a Receber (Ajustado):</span>
+                  <span className="text-xl font-bold text-green-700">
+                    R$ {(
+                      (contaAtual?.valor || 0) + 
+                      (dadosBaixa.juros || 0) + 
+                      (dadosBaixa.multa || 0) - 
+                      (dadosBaixa.desconto || 0)
+                    ).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <Label>Observações</Label>
+              <Input
+                value={dadosBaixa.observacoes}
+                onChange={(e) => setDadosBaixa({ ...dadosBaixa, observacoes: e.target.value })}
+                placeholder="Observações sobre o recebimento..."
+              />
+            </div>
+
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={baixarTituloMutation.isPending} className="bg-green-600">
-                {baixarTituloMutation.isPending ? 'Baixando...' : 'Confirmar Baixa'}
+              <Button type="submit" disabled={baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600">
+                {(baixarTituloMutation.isPending || baixarMultiplaMutation.isPending) ? 'Baixando...' : 'Confirmar Baixa'}
               </Button>
             </div>
           </form>

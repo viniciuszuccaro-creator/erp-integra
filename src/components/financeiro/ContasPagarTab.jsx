@@ -22,6 +22,7 @@ import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
 import ContaPagarForm from "./ContaPagarForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
+import DuplicarMesAnterior from "./DuplicarMesAnterior";
 
 export default function ContasPagarTab({ contas }) {
   const { toast } = useToast();
@@ -106,10 +107,31 @@ export default function ContasPagarTab({ contas }) {
 
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
+      const conta = contas.find(c => c.id === id);
+      const valorTotal = (conta?.valor || 0) + (dados.juros || 0) + (dados.multa || 0) - (dados.desconto || 0);
+      
+      await base44.entities.CaixaMovimento.create({
+        empresa_id: conta.empresa_id,
+        group_id: conta.group_id,
+        tipo_movimento: 'Saída',
+        categoria: 'Pagamento Fornecedor',
+        subcategoria: conta.categoria,
+        descricao: `Pagamento: ${conta.descricao}`,
+        valor: valorTotal,
+        forma_pagamento: dados.forma_pagamento,
+        data_movimento: dados.data_pagamento,
+        conta_pagar_id: id,
+        favorecido: conta.fornecedor,
+        documento_numero: conta.numero_documento,
+        centro_custo_id: conta.centro_custo_id,
+        observacoes: dados.observacoes,
+        usuario_responsavel: "Sistema"
+      });
+
       return await base44.entities.ContaPagar.update(id, {
         status: "Pago",
         data_pagamento: dados.data_pagamento,
-        valor_pago: dados.valor_pago,
+        valor_pago: valorTotal,
         forma_pagamento: dados.forma_pagamento,
         juros: dados.juros,
         multa: dados.multa,
@@ -119,9 +141,10 @@ export default function ContasPagarTab({ contas }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
+      queryClient.invalidateQueries({ queryKey: ['caixa-movimentos'] });
       setDialogBaixaOpen(false);
       setContaAtual(null);
-      toast({ title: "✅ Título pago!" });
+      toast({ title: "✅ Título pago e registrado no caixa!" });
     },
   });
 
@@ -210,9 +233,54 @@ export default function ContasPagarTab({ contas }) {
     setDialogBaixaOpen(true);
   };
 
+  const baixarMultiplaMutation = useMutation({
+    mutationFn: async (dados) => {
+      const baixaPromises = contasSelecionadas.map(async (contaId) => {
+        const conta = contas.find(c => c.id === contaId);
+        if (conta) {
+          await baixarTituloMutation.mutateAsync({
+            id: contaId,
+            dados: dados
+          });
+        }
+      });
+      await Promise.all(baixaPromises);
+    },
+    onSuccess: () => {
+      setContasSelecionadas([]);
+      setDialogBaixaOpen(false);
+      toast({ title: `✅ ${contasSelecionadas.length} título(s) pago(s)!` });
+    },
+  });
+
   const handleSubmitBaixa = (e) => {
     e.preventDefault();
-    baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
+    if (contaAtual) {
+      baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
+    } else {
+      baixarMultiplaMutation.mutate(dadosBaixa);
+    }
+  };
+
+  const handleBaixarMultipla = () => {
+    if (contasSelecionadas.length === 0) {
+      toast({
+        title: "⚠️ Selecione pelo menos um título",
+        variant: "destructive"
+      });
+      return;
+    }
+    setContaAtual(null);
+    setDadosBaixa({
+      data_pagamento: new Date().toISOString().split('T')[0],
+      valor_pago: 0,
+      forma_pagamento: "PIX",
+      juros: 0,
+      multa: 0,
+      desconto: 0,
+      observacoes: ""
+    });
+    setDialogBaixaOpen(true);
   };
 
   const toggleSelecao = (contaId) => {
@@ -450,33 +518,37 @@ export default function ContasPagarTab({ contas }) {
 
       {/* Dialog Baixa */}
       <Dialog open={dialogBaixaOpen} onOpenChange={setDialogBaixaOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Registrar Pagamento</DialogTitle>
+            <DialogTitle>
+              {contaAtual ? 'Registrar Pagamento' : `Pagar Múltiplos Títulos (${contasSelecionadas.length})`}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitBaixa} className="space-y-4">
-            <div>
-              <Label>Fornecedor</Label>
-              <Input value={contaAtual?.fornecedor || ''} disabled />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+            {contaAtual ? (
               <div>
-                <Label>Valor Original</Label>
-                <Input value={`R$ ${contaAtual?.valor?.toFixed(2) || 0}`} disabled />
+                <Label>Fornecedor</Label>
+                <Input value={contaAtual?.fornecedor || ''} disabled />
               </div>
-              <div>
-                <Label>Valor Pago *</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={dadosBaixa.valor_pago}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, valor_pago: parseFloat(e.target.value) })}
-                  required
-                />
-              </div>
-            </div>
+            ) : (
+              <Alert className="bg-blue-50 border-blue-200">
+                <AlertDescription>
+                  <p className="font-semibold text-blue-900">Pagando {contasSelecionadas.length} título(s)</p>
+                  <p className="text-xs text-blue-700 mt-1">
+                    Os valores de juros, multa e desconto serão aplicados individualmente a cada título
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="grid grid-cols-2 gap-4">
-              <div>
+              {contaAtual && (
+                <div>
+                  <Label>Valor Original</Label>
+                  <Input value={`R$ ${contaAtual?.valor?.toFixed(2) || 0}`} disabled />
+                </div>
+              )}
+              <div className={contaAtual ? '' : 'col-span-2'}>
                 <Label>Data Pagamento *</Label>
                 <Input
                   type="date"
@@ -485,29 +557,86 @@ export default function ContasPagarTab({ contas }) {
                   required
                 />
               </div>
+            </div>
+
+            <div>
+              <Label>Forma de Pagamento *</Label>
+              <Select
+                value={dadosBaixa.forma_pagamento}
+                onValueChange={(v) => setDadosBaixa({ ...dadosBaixa, forma_pagamento: v })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {formasPagamento.map(forma => (
+                    <SelectItem key={forma.id} value={forma.descricao}>
+                      {forma.icone && `${forma.icone} `}{forma.descricao}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
               <div>
-                <Label>Forma de Pagamento *</Label>
-                <Select
-                  value={dadosBaixa.forma_pagamento}
-                  onValueChange={(v) => setDadosBaixa({ ...dadosBaixa, forma_pagamento: v })}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {formasPagamento.map(forma => (
-                      <SelectItem key={forma.id} value={forma.descricao}>
-                        {forma.icone && `${forma.icone} `}{forma.descricao}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Juros (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={dadosBaixa.juros}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <div>
+                <Label>Multa (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={dadosBaixa.multa}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+              <div>
+                <Label>Desconto (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={dadosBaixa.desconto}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) || 0 })}
+                />
               </div>
             </div>
+
+            {contaAtual && (
+              <div className="bg-slate-50 p-4 rounded-lg border">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Valor Total a Pagar (Ajustado):</span>
+                  <span className="text-xl font-bold text-red-700">
+                    R$ {(
+                      (contaAtual?.valor || 0) + 
+                      (dadosBaixa.juros || 0) + 
+                      (dadosBaixa.multa || 0) - 
+                      (dadosBaixa.desconto || 0)
+                    ).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <Label>Observações</Label>
+              <Input
+                value={dadosBaixa.observacoes}
+                onChange={(e) => setDadosBaixa({ ...dadosBaixa, observacoes: e.target.value })}
+                placeholder="Observações sobre o pagamento..."
+              />
+            </div>
+
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={baixarTituloMutation.isPending} className="bg-green-600">
-                {baixarTituloMutation.isPending ? 'Registrando...' : 'Confirmar Pagamento'}
+              <Button type="submit" disabled={baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600">
+                {(baixarTituloMutation.isPending || baixarMultiplaMutation.isPending) ? 'Registrando...' : 'Confirmar Pagamento'}
               </Button>
             </div>
           </form>
