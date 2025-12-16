@@ -8,14 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { useWindow } from "@/components/lib/useWindow";
-import { Repeat, Plus, Edit2, Trash2, Play, Pause, TrendingUp, Calendar } from "lucide-react";
+import { Repeat, Plus, Edit2, Trash2, Play, Pause, TrendingUp, Calendar, Building2, DollarSign, Zap, BarChart3, CheckCircle2 } from "lucide-react";
 import ConfiguracaoDespesaRecorrenteForm from "./ConfiguracaoDespesaRecorrenteForm";
+import GestorDespesasUnificado from "../financeiro/GestorDespesasUnificado";
 
 /**
- * GESTOR DE DESPESAS RECORRENTES V21.8
+ * GESTOR DE DESPESAS RECORRENTES V21.9 - MELHORADO
  * 
- * Gerencia configurações de despesas que se repetem
- * (aluguel, salários, tarifas, etc)
+ * Gerencia configurações de despesas recorrentes
+ * Integrado com GestorDespesasUnificado para visão completa
+ * Seguindo Regra-Mãe: Acrescentar • Reorganizar • Conectar • Melhorar
  */
 export default function GestorDespesasRecorrentes() {
   const { toast } = useToast();
@@ -63,7 +65,31 @@ export default function GestorDespesasRecorrentes() {
   const totalComRateio = configuracoes.filter(c => c.rateio_automatico).length;
 
   return (
-    <div className="space-y-4">
+    <div className="w-full h-full space-y-4 p-4 overflow-auto">
+      {/* Link para Gestor Unificado */}
+      <div className="bg-gradient-to-r from-purple-50 via-blue-50 to-green-50 border-2 border-purple-200 rounded-lg p-4 mb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Zap className="w-8 h-8 text-purple-600" />
+            <div>
+              <p className="font-bold text-purple-900">💡 Novo: Gestão Unificada de Despesas</p>
+              <p className="text-sm text-purple-700">Tipos + Recorrentes + Análises IA em um único lugar</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => openWindow(
+              GestorDespesasUnificado,
+              { windowMode: true },
+              { title: '🎯 Gestão Unificada de Despesas', width: 1600, height: 900 }
+            )}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          >
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Abrir Gestor Completo
+          </Button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">

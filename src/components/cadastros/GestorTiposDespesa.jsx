@@ -7,17 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, Plus, Edit, Trash2, CheckCircle2, XCircle, TrendingUp, FileText, DollarSign, Calendar } from "lucide-react";
+import { Receipt, Plus, Edit, Trash2, CheckCircle2, XCircle, TrendingUp, FileText, DollarSign, Calendar, Zap } from "lucide-react";
 import { toast } from "sonner";
 import TipoDespesaForm from "./TipoDespesaForm";
 import { useWindow } from "@/components/lib/useWindow";
+import GestorDespesasUnificado from "../financeiro/GestorDespesasUnificado";
 
 /**
- * GESTOR DE TIPOS DE DESPESA V21.9
+ * GESTOR DE TIPOS DE DESPESA V21.9 - MELHORADO
  * 
  * Gerencia tipos de despesa que são a FONTE MESTRE para classificação financeira
  * Define vínculos com Plano de Contas e Centros de Resultado
  * Controla quais tipos podem ser recorrentes
+ * Integrado com GestorDespesasUnificado
  */
 export default function GestorTiposDespesa() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -92,7 +94,31 @@ export default function GestorTiposDespesa() {
   const tiposComAprovacao = tipos.filter(t => t.exige_aprovacao).length;
 
   return (
-    <div className="w-full h-full space-y-4 p-6">
+    <div className="w-full h-full space-y-4 p-6 overflow-auto">
+      {/* Link para Gestor Unificado */}
+      <div className="bg-gradient-to-r from-rose-50 via-purple-50 to-blue-50 border-2 border-rose-200 rounded-lg p-4 mb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Zap className="w-8 h-8 text-rose-600" />
+            <div>
+              <p className="font-bold text-rose-900">💡 Novo: Gestão Unificada de Despesas</p>
+              <p className="text-sm text-rose-700">Tipos + Recorrentes + Análises IA em um único lugar</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => openWindow(
+              GestorDespesasUnificado,
+              { windowMode: true },
+              { title: '🎯 Gestão Unificada de Despesas', width: 1600, height: 900 }
+            )}
+            className="bg-gradient-to-r from-rose-600 via-purple-600 to-blue-600 hover:from-rose-700 hover:via-purple-700 hover:to-blue-700"
+          >
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            Abrir Gestor Completo
+          </Button>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-rose-600 rounded-lg flex items-center justify-center shadow-lg">

@@ -74,6 +74,16 @@ export default function GestorDespesasUnificado() {
     queryFn: () => base44.entities.ContaPagar.list(),
   });
 
+  const { data: planoContas = [] } = useQuery({
+    queryKey: ['plano-contas'],
+    queryFn: () => base44.entities.PlanoDeContas.list(),
+  });
+
+  const { data: centrosResultado = [] } = useQuery({
+    queryKey: ['centros-resultado'],
+    queryFn: () => base44.entities.CentroResultado.list(),
+  });
+
   // Mutations - Tipos de Despesa
   const createTipo = useMutation({
     mutationFn: (data) => base44.entities.TipoDespesa.create(data),
@@ -232,16 +242,41 @@ export default function GestorDespesasUnificado() {
 
   return (
     <div className="w-full h-full flex flex-col space-y-6 p-6 overflow-auto">
-      {/* Header */}
+      {/* Header Aprimorado */}
       <div className="flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-14 h-14 bg-gradient-to-br from-rose-500 via-purple-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
             <Receipt className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-slate-900">Gestão Unificada de Despesas</h2>
-            <p className="text-sm text-slate-500">Tipos de Despesa • Configurações Recorrentes • Rateio Multiempresa • IA de Ajuste</p>
+            <h2 className="text-3xl font-bold text-slate-900">🎯 Gestão Unificada de Despesas</h2>
+            <p className="text-sm text-slate-500">Tipos Mestre • Recorrentes • Rateio Multiempresa • Ajuste Inflação IA • Análises Preditivas</p>
           </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => openWindow(
+              TipoDespesaForm,
+              { windowMode: true, onSubmit: handleSubmitTipo },
+              { title: '💳 Novo Tipo Mestre', width: 850, height: 650 }
+            )}
+            variant="outline"
+            className="border-rose-300 text-rose-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Tipo Mestre
+          </Button>
+          <Button
+            onClick={() => openWindow(
+              ConfiguracaoDespesaRecorrenteForm,
+              { windowMode: true, onSubmit: handleSubmitConfig },
+              { title: '🔄 Nova Recorrente', width: 950, height: 700 }
+            )}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Despesa Recorrente
+          </Button>
         </div>
       </div>
 
@@ -374,6 +409,10 @@ export default function GestorDespesasUnificado() {
           <TabsTrigger value="analises">
             <TrendingUp className="w-4 h-4 mr-2" />
             Análises IA
+          </TabsTrigger>
+          <TabsTrigger value="vinculos">
+            <Link2 className="w-4 h-4 mr-2" />
+            Vínculos Contábeis
           </TabsTrigger>
         </TabsList>
 
@@ -1045,6 +1084,87 @@ export default function GestorDespesasUnificado() {
                       </p>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* ABA: VÍNCULOS CONTÁBEIS */}
+        <TabsContent value="vinculos" className="flex-1 overflow-auto space-y-6 mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Tipos com vínculos completos */}
+            <Card className="border-green-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  Tipos com Vínculos Completos ({tipos.filter(t => t.conta_contabil_padrao_id && t.centro_resultado_padrao_id).length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {tipos.filter(t => t.conta_contabil_padrao_id && t.centro_resultado_padrao_id).map(tipo => (
+                    <div key={tipo.id} className="p-3 border rounded-lg bg-green-50">
+                      <p className="font-semibold text-sm mb-2">{tipo.nome}</p>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-blue-100 text-blue-700">
+                            {tipo.conta_contabil_padrao_nome}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-purple-100 text-purple-700">
+                            {tipo.centro_resultado_padrao_nome}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tipos precisando configuração */}
+            <Card className="border-amber-200">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-amber-600" />
+                  Tipos Precisando Configuração ({tipos.filter(t => !t.conta_contabil_padrao_id || !t.centro_resultado_padrao_id).length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {tipos.filter(t => !t.conta_contabil_padrao_id || !t.centro_resultado_padrao_id).map(tipo => (
+                    <div key={tipo.id} className="p-3 border rounded-lg bg-amber-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-semibold text-sm">{tipo.nome}</p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openWindow(
+                            TipoDespesaForm,
+                            { tipoDespesa: tipo, windowMode: true, onSubmit: handleSubmitTipo },
+                            { title: `💳 Editar: ${tipo.nome}`, width: 850, height: 650 }
+                          )}
+                        >
+                          <Edit className="w-3 h-3 mr-1" />
+                          Configurar
+                        </Button>
+                      </div>
+                      <div className="flex gap-2 text-xs">
+                        {!tipo.conta_contabil_padrao_id && (
+                          <Badge variant="outline" className="text-amber-700">
+                            Sem Conta Contábil
+                          </Badge>
+                        )}
+                        {!tipo.centro_resultado_padrao_id && (
+                          <Badge variant="outline" className="text-amber-700">
+                            Sem Centro Resultado
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
