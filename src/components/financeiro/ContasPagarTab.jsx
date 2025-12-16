@@ -349,6 +349,26 @@ export default function ContasPagarTab({ contas }) {
                 <SelectItem value="Cancelado">Cancelado</SelectItem>
               </SelectContent>
             </Select>
+
+            {contasSelecionadas.length > 0 && (
+              <>
+                <Badge className="bg-blue-100 text-blue-700 px-4 py-2">
+                  {contasSelecionadas.length} selecionado(s) - R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </Badge>
+                <ProtectedAction permission="financeiro_pagar_baixar_multiplos">
+                  <Button
+                    variant="outline"
+                    onClick={handleBaixarMultipla}
+                    disabled={baixarMultiplaMutation.isPending}
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Pagar Múltiplos
+                  </Button>
+                </ProtectedAction>
+              </>
+            )}
+
+            <DuplicarMesAnterior empresaId={empresas[0]?.id} />
             
             <Button 
               className="bg-red-600 hover:bg-red-700" 
