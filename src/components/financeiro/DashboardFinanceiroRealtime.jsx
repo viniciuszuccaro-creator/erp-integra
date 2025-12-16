@@ -251,7 +251,6 @@ export default function DashboardFinanceiroRealtime({ empresaId, windowMode = fa
           </ResponsiveContainer>
         </CardContent>
       </Card>
-      </div>
-    </div>
+    </div></div>
   );
 }
