@@ -28,6 +28,11 @@ export default function GestorDespesasRecorrentes() {
     queryFn: () => base44.entities.ConfiguracaoDespesaRecorrente.list(),
   });
 
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
+  });
+
   const toggleAtivaMutation = useMutation({
     mutationFn: async ({ id, ativa }) => {
       await base44.entities.ConfiguracaoDespesaRecorrente.update(id, { ativa: !ativa });
@@ -55,10 +60,11 @@ export default function GestorDespesasRecorrentes() {
   const totalValorMensal = configuracoes
     .filter(c => c.ativa && c.periodicidade === 'Mensal')
     .reduce((sum, c) => sum + (c.valor_base || 0), 0);
+  const totalComRateio = configuracoes.filter(c => c.rateio_automatico).length;
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Total de Configurações</CardTitle>
@@ -73,6 +79,14 @@ export default function GestorDespesasRecorrentes() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-green-600">{totalAtivas}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Com Rateio Multiempresa</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-purple-600">{totalComRateio}</p>
           </CardContent>
         </Card>
         <Card>
@@ -130,11 +144,13 @@ export default function GestorDespesasRecorrentes() {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
+                <TableHead>Tipo de Despesa</TableHead>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Categoria</TableHead>
-                <TableHead>Periodicidade</TableHead>
+                <TableHead>Empresa</TableHead>
                 <TableHead>Valor Base</TableHead>
-                <TableHead>Dia Vencimento</TableHead>
+                <TableHead>Periodicidade</TableHead>
+                <TableHead>Rateio</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-center">Ações</TableHead>
               </TableRow>
@@ -142,15 +158,33 @@ export default function GestorDespesasRecorrentes() {
             <TableBody>
               {configsFiltradas.map((config) => (
                 <TableRow key={config.id}>
+                  <TableCell>
+                    <div className="font-medium text-purple-600 text-sm">
+                      {config.tipo_despesa_nome || 'Não vinculado'}
+                    </div>
+                  </TableCell>
                   <TableCell className="font-medium">{config.descricao}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{config.categoria}</Badge>
+                    <Badge variant="outline">{config.categoria || 'N/A'}</Badge>
                   </TableCell>
-                  <TableCell className="text-sm">{config.periodicidade}</TableCell>
+                  <TableCell className="text-sm text-slate-600">
+                    {empresas.find(e => e.id === config.empresa_id)?.nome_fantasia || 'N/A'}
+                  </TableCell>
                   <TableCell className="font-semibold">
                     R$ {config.valor_base?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </TableCell>
-                  <TableCell className="text-sm">Dia {config.dia_vencimento}</TableCell>
+                  <TableCell>
+                    <Badge className="bg-blue-100 text-blue-700 text-xs">{config.periodicidade}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {config.rateio_automatico ? (
+                      <Badge className="bg-purple-100 text-purple-700 text-xs">
+                        {config.empresas_rateio?.length || 0} empresas
+                      </Badge>
+                    ) : (
+                      <span className="text-xs text-slate-400">-</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {config.ativa ? (
                       <Badge className="bg-green-100 text-green-700">Ativa</Badge>
