@@ -46,6 +46,7 @@ import {
   MapPin,
   Settings,
   Wallet,
+  Calendar,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
