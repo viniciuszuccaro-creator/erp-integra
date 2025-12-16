@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Receipt } from 'lucide-react';
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMode = false }) {
   const dadosIniciais = tipoDespesa || tipo;
@@ -13,10 +15,24 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMod
     codigo: '',
     nome: '',
     categoria: 'Operacional',
+    conta_contabil_padrao_id: '',
+    conta_contabil_padrao_nome: '',
+    centro_resultado_padrao_id: '',
+    centro_resultado_padrao_nome: '',
     exige_aprovacao: false,
     limite_aprovacao_automatica: 0,
-    recorrente: false,
+    pode_ser_recorrente: false,
     ativo: true
+  });
+
+  const { data: contasContabeis = [] } = useQuery({
+    queryKey: ['plano-contas'],
+    queryFn: () => base44.entities.PlanoDeContas.list(),
+  });
+
+  const { data: centrosResultado = [] } = useQuery({
+    queryKey: ['centros-resultado'],
+    queryFn: () => base44.entities.CentroResultado.list(),
   });
 
   const handleSubmit = (e) => {
@@ -59,7 +75,45 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMod
             <SelectItem value="Administrativa">Administrativa</SelectItem>
             <SelectItem value="Comercial">Comercial</SelectItem>
             <SelectItem value="Fiscal">Fiscal</SelectItem>
-            <SelectItem value="Financeira">Financeira</SelectItem>
+            <SelectItem value="Investimento">Investimento</SelectItem>
+            <SelectItem value="Utilidades">Utilidades</SelectItem>
+            <SelectItem value="Outros">Outros</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Conta Contábil Padrão</Label>
+        <Select
+          value={formData.conta_contabil_padrao_id || ''}
+          onValueChange={(v) => {
+            const conta = contasContabeis.find(c => c.id === v);
+            setFormData({ ...formData, conta_contabil_padrao_id: v, conta_contabil_padrao_nome: conta?.nome || '' });
+          }}
+        >
+          <SelectTrigger><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
+          <SelectContent>
+            {contasContabeis.map(c => (
+              <SelectItem key={c.id} value={c.id}>{c.codigo} - {c.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Centro de Resultado Padrão</Label>
+        <Select
+          value={formData.centro_resultado_padrao_id || ''}
+          onValueChange={(v) => {
+            const centro = centrosResultado.find(c => c.id === v);
+            setFormData({ ...formData, centro_resultado_padrao_id: v, centro_resultado_padrao_nome: centro?.nome || '' });
+          }}
+        >
+          <SelectTrigger><SelectValue placeholder="Selecione o centro..." /></SelectTrigger>
+          <SelectContent>
+            {centrosResultado.map(c => (
+              <SelectItem key={c.id} value={c.id}>{c.codigo} - {c.nome}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
@@ -74,33 +128,33 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMod
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="flex items-center justify-between p-3 border rounded">
+        <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
           <Label>Exige Aprovação</Label>
           <Switch
             checked={formData.exige_aprovacao}
             onCheckedChange={(v) => setFormData({ ...formData, exige_aprovacao: v })}
           />
         </div>
-        <div className="flex items-center justify-between p-3 border rounded">
-          <Label>Despesa Recorrente</Label>
-          <Switch
-            checked={formData.recorrente}
-            onCheckedChange={(v) => setFormData({ ...formData, recorrente: v })}
-          />
-        </div>
+        {formData.exige_aprovacao && (
+          <div>
+            <Label>Limite para Aprovação Automática (R$)</Label>
+            <Input
+              type="number"
+              step="0.01"
+              value={formData.limite_aprovacao_automatica || 0}
+              onChange={(e) => setFormData({ ...formData, limite_aprovacao_automatica: parseFloat(e.target.value) || 0 })}
+            />
+          </div>
+        )}
       </div>
 
-      {formData.exige_aprovacao && (
-        <div>
-          <Label>Limite para Aprovação Automática (R$)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={formData.limite_aprovacao_automatica}
-            onChange={(e) => setFormData({ ...formData, limite_aprovacao_automatica: parseFloat(e.target.value) })}
-          />
-        </div>
-      )}
+      <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
+        <Label>Pode ser Recorrente</Label>
+        <Switch
+          checked={formData.pode_ser_recorrente}
+          onCheckedChange={(v) => setFormData({ ...formData, pode_ser_recorrente: v })}
+        />
+      </div>
 
       <div className="flex items-center justify-between p-3 border rounded bg-slate-50">
         <Label className="font-semibold">Tipo Ativo</Label>

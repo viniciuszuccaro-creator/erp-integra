@@ -12,14 +12,20 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Repeat, DollarSign, Calendar, Bell, Users } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode = false, onSubmit }) {
   const [formData, setFormData] = useState(config || {
+    tipo_despesa_id: "",
+    tipo_despesa_nome: "",
     descricao: "",
-    categoria: "Outros",
-    tipo_despesa: "Fixa",
+    categoria: "",
     fornecedor_id: "",
     fornecedor_nome: "",
+    conta_contabil_id: "",
+    conta_contabil_nome: "",
+    centro_resultado_id: "",
+    centro_resultado_nome: "",
     valor_base: 0,
     ajuste_inflacao: false,
     indice_ajuste: "Nenhum",
@@ -64,8 +70,43 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
     queryFn: () => base44.entities.Empresa.list(),
   });
 
+  const { data: tiposDespesa = [] } = useQuery({
+    queryKey: ['tipos-despesa'],
+    queryFn: () => base44.entities.TipoDespesa.filter({ pode_ser_recorrente: true, ativo: true }),
+  });
+
+  const { data: planoContas = [] } = useQuery({
+    queryKey: ['plano-contas'],
+    queryFn: () => base44.entities.PlanoDeContas.list(),
+  });
+
+  const { data: centrosResultado = [] } = useQuery({
+    queryKey: ['centros-resultado'],
+    queryFn: () => base44.entities.CentroResultado.list(),
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!formData.tipo_despesa_id) {
+      toast.error("Selecione um Tipo de Despesa.");
+      return;
+    }
+    if (!formData.descricao) {
+      toast.error("Preencha a descrição da despesa.");
+      return;
+    }
+    if (!formData.valor_base || formData.valor_base <= 0) {
+      toast.error("O valor base deve ser maior que zero.");
+      return;
+    }
+    if (!formData.periodicidade) {
+      toast.error("Selecione a periodicidade da despesa.");
+      return;
+    }
+    if (!formData.empresa_id && formData.origem === 'empresa' && !formData.rateio_automatico) {
+      toast.error("Selecione a empresa para a despesa ou configure o rateio.");
+      return;
+    }
     onSubmit?.(formData);
   };
 
@@ -110,6 +151,37 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
 
             <TabsContent value="geral" className="space-y-4 mt-4">
               <div>
+                <Label>Tipo de Despesa *</Label>
+                <Select
+                  value={formData.tipo_despesa_id}
+                  onValueChange={(v) => {
+                    const tipo = tiposDespesa.find(td => td.id === v);
+                    setFormData({
+                      ...formData,
+                      tipo_despesa_id: v,
+                      tipo_despesa_nome: tipo?.nome || '',
+                      categoria: tipo?.categoria || '',
+                      conta_contabil_id: tipo?.conta_contabil_padrao_id || '',
+                      conta_contabil_nome: tipo?.conta_contabil_padrao_nome || '',
+                      centro_resultado_id: tipo?.centro_resultado_padrao_id || '',
+                      centro_resultado_nome: tipo?.centro_resultado_padrao_nome || '',
+                    });
+                  }}
+                  required
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione um tipo..." /></SelectTrigger>
+                  <SelectContent>
+                    {tiposDespesa.map(td => (
+                      <SelectItem key={td.id} value={td.id}>{td.nome} ({td.categoria})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500 mt-1">
+                  A categoria e contas contábeis serão herdadas do Tipo de Despesa
+                </p>
+              </div>
+
+              <div>
                 <Label>Descrição da Despesa *</Label>
                 <Input
                   value={formData.descricao}
@@ -119,55 +191,30 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Categoria *</Label>
-                  <Select
-                    value={formData.categoria}
-                    onValueChange={(v) => setFormData({ ...formData, categoria: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Aluguel">Aluguel</SelectItem>
-                      <SelectItem value="Salários">Salários</SelectItem>
-                      <SelectItem value="Impostos">Impostos</SelectItem>
-                      <SelectItem value="Energia">Energia</SelectItem>
-                      <SelectItem value="Água">Água</SelectItem>
-                      <SelectItem value="Telefone">Telefone</SelectItem>
-                      <SelectItem value="Internet">Internet</SelectItem>
-                      <SelectItem value="Tarifas Bancárias">Tarifas Bancárias</SelectItem>
-                      <SelectItem value="Taxa de Cartão">Taxa de Cartão</SelectItem>
-                      <SelectItem value="Manutenção">Manutenção</SelectItem>
-                      <SelectItem value="Seguro">Seguro</SelectItem>
-                      <SelectItem value="Contabilidade">Contabilidade</SelectItem>
-                      <SelectItem value="Assessoria Jurídica">Assessoria Jurídica</SelectItem>
-                      <SelectItem value="Marketing">Marketing</SelectItem>
-                      <SelectItem value="Software/SaaS">Software/SaaS</SelectItem>
-                      <SelectItem value="Outros">Outros</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Tipo de Despesa</Label>
-                  <Select
-                    value={formData.tipo_despesa}
-                    onValueChange={(v) => setFormData({ ...formData, tipo_despesa: v })}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Fixa">Fixa</SelectItem>
-                      <SelectItem value="Variável">Variável</SelectItem>
-                      <SelectItem value="Taxa Automática">Taxa Automática</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label>Empresa Proprietária *</Label>
+                <Select
+                  value={formData.empresa_id || ''}
+                  onValueChange={(v) => setFormData({ ...formData, empresa_id: v, origem: 'empresa' })}
+                  required={!formData.rateio_automatico}
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
+                  <SelectContent>
+                    {empresas.map(emp => (
+                      <SelectItem key={emp.id} value={emp.id}>{emp.nome_fantasia || emp.razao_social}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-500 mt-1">
+                  Se usar rateio automático, selecione a empresa-mãe do grupo
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Fornecedor</Label>
                   <Select
-                    value={formData.fornecedor_id}
+                    value={formData.fornecedor_id || ''}
                     onValueChange={(v) => {
                       const fornecedor = fornecedores.find(f => f.id === v);
                       setFormData({
@@ -188,7 +235,7 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
                 <div>
                   <Label>Centro de Custo</Label>
                   <Select
-                    value={formData.centro_custo_id}
+                    value={formData.centro_custo_id || ''}
                     onValueChange={(v) => {
                       const cc = centrosCusto.find(c => c.id === v);
                       setFormData({
@@ -210,19 +257,70 @@ export default function ConfiguracaoDespesaRecorrenteForm({ config, windowMode =
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <Label>Conta Contábil (Opcional)</Label>
+                  <Select
+                    value={formData.conta_contabil_id || ''}
+                    onValueChange={(v) => {
+                      const conta = planoContas.find(pc => pc.id === v);
+                      setFormData({
+                        ...formData,
+                        conta_contabil_id: v,
+                        conta_contabil_nome: conta?.nome || ''
+                      });
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Herda do Tipo ou selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {planoContas.map(pc => (
+                        <SelectItem key={pc.id} value={pc.id}>{pc.codigo} - {pc.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Deixe vazio para usar a conta contábil padrão do Tipo de Despesa
+                  </p>
+                </div>
+                <div>
+                  <Label>Centro de Resultado (Opcional)</Label>
+                  <Select
+                    value={formData.centro_resultado_id || ''}
+                    onValueChange={(v) => {
+                      const centro = centrosResultado.find(cr => cr.id === v);
+                      setFormData({
+                        ...formData,
+                        centro_resultado_id: v,
+                        centro_resultado_nome: centro?.nome || ''
+                      });
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Herda do Tipo ou selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {centrosResultado.map(cr => (
+                        <SelectItem key={cr.id} value={cr.id}>{cr.codigo} - {cr.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Deixe vazio para usar o centro de resultado padrão do Tipo de Despesa
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <Label>Valor Base *</Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formData.valor_base}
-                    onChange={(e) => setFormData({ ...formData, valor_base: parseFloat(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, valor_base: parseFloat(e.target.value) || 0 })}
                     required
                   />
                 </div>
                 <div>
                   <Label>Forma de Pagamento Padrão</Label>
                   <Select
-                    value={formData.forma_pagamento_id}
+                    value={formData.forma_pagamento_id || ''}
                     onValueChange={(v) => {
                       const forma = formasPagamento.find(f => f.id === v);
                       setFormData({
