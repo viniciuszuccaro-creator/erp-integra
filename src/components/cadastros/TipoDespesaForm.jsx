@@ -41,7 +41,7 @@ export default function TipoDespesaForm({ tipo, tipoDespesa, onSubmit, windowMod
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
+    <form onSubmit={handleSubmit} className={windowMode ? "space-y-4 p-4 h-full overflow-auto" : "space-y-4 p-4"}>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Código</Label>

@@ -101,7 +101,7 @@ export default function DashboardFinanceiroUnificado({ empresaId, windowMode = f
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981'];
 
-  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+  const containerClass = windowMode ? "w-full h-full flex flex-col" : "space-y-6";
 
   return (
     <div className={containerClass}>
