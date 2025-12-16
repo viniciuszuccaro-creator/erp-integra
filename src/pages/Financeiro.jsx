@@ -40,6 +40,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import ContaReceberForm from "../components/financeiro/ContaReceberForm";
 import ContaPagarForm from "../components/financeiro/ContaPagarForm";
 import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
+import GestorDespesasUnificado from "../components/financeiro/GestorDespesasUnificado";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
 import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
@@ -364,6 +365,9 @@ export default function Financeiro() {
             <TrendingDown className="w-4 h-4 mr-2" />
             Contas a Pagar
           </TabsTrigger>
+          <TabsTrigger value="despesas" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            💳 Gestão de Despesas
+          </TabsTrigger>
           <TabsTrigger value="aprovacoes" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
             <AlertCircle className="w-4 h-4 mr-2" />
             Aprovações
@@ -540,6 +544,10 @@ export default function Financeiro() {
 
         <TabsContent value="contas-pagar">
           <ContasPagarTab contas={contasPagarComContexto} />
+        </TabsContent>
+
+        <TabsContent value="despesas">
+          <GestorDespesasUnificado />
         </TabsContent>
 
         <TabsContent value="aprovacoes">
