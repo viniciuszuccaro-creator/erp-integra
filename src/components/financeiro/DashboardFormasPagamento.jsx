@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
  * DASHBOARD FORMAS DE PAGAMENTO V21.8 - 100% COMPLETO
  * Analytics avançado de uso, tendências e recomendações IA
  */
-export default function DashboardFormasPagamento() {
+export default function DashboardFormasPagamento({ windowMode = false }) {
   const { data: formasPagamento = [] } = useQuery({
     queryKey: ['formas-pagamento'],
     queryFn: () => base44.entities.FormaPagamento.list(),
@@ -73,7 +73,7 @@ export default function DashboardFormasPagamento() {
   const totalIntegradas = formasPagamento.filter(f => f.gerar_cobranca_online).length;
 
   return (
-    <div className="space-y-6 p-6">
+    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6 p-6"}>
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Dashboard Formas de Pagamento</h2>

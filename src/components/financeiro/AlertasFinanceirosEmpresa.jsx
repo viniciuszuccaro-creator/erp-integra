@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, CheckCircle2, Clock, DollarSign } from 'lucide-react';
 
-export default function AlertasFinanceirosEmpresa({ empresaId, groupId }) {
+export default function AlertasFinanceirosEmpresa({ empresaId, groupId, windowMode = false }) {
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['alertas-pagar', empresaId],
     queryFn: () => base44.entities.ContaPagar.filter(

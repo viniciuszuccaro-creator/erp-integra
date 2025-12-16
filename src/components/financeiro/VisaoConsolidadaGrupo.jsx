@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Building2, TrendingUp, TrendingDown, DollarSign, AlertTriangle } from 'lucide-react';
 
-export default function VisaoConsolidadaGrupo({ groupId }) {
+export default function VisaoConsolidadaGrupo({ groupId, windowMode = false }) {
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-grupo', groupId],
     queryFn: () => base44.entities.Empresa.filter({ group_id: groupId }),
