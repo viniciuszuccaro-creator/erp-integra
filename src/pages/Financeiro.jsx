@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   TrendingUp,
   TrendingDown,
@@ -14,28 +16,30 @@ import {
   BarChart3,
   Building2,
   Split,
+  GitBranch,
   CheckCircle2,
   Link2,
   Sparkles,
   Wallet,
   Globe,
-  ArrowLeftRight,
-  RefreshCw,
-  Receipt,
-  Plus,
-  Edit
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import ContasReceberTab from "../components/financeiro/ContasReceberTab";
 import ContasPagarTab from "../components/financeiro/ContasPagarTab";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import PainelConciliacao from "../components/financeiro/PainelConciliacao";
+import ConfiguracaoCobranca from "../components/financeiro/ConfiguracaoCobranca";
 import RelatorioFinanceiro from "../components/financeiro/RelatorioFinanceiro";
 import RateioMultiempresa from "../components/financeiro/RateioMultiempresa";
 import ReguaCobrancaIA from "../components/financeiro/ReguaCobrancaIA";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
+import ContaReceberForm from "../components/financeiro/ContaReceberForm";
+import ContaPagarForm from "../components/financeiro/ContaPagarForm";
+import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
 import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
 import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
 import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
@@ -43,33 +47,18 @@ import CaixaPDVCompleto from "../components/financeiro/CaixaPDVCompleto";
 import GestaoRemessaRetorno from "../components/financeiro/GestaoRemessaRetorno";
 import VendasMulticanal from "../components/financeiro/VendasMulticanal";
 import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
-import ConciliacaoBancariaAvancada from "../components/financeiro/ConciliacaoBancariaAvancada";
-import GatewayPagamentoForm from "../components/cadastros/GatewayPagamentoForm";
-import ConfiguracaoDespesaRecorrenteForm from "../components/cadastros/ConfiguracaoDespesaRecorrenteForm";
 
-/**
- * 💰 FINANCEIRO V22 - MULTICANAL COMPLETO
- * 
- * ✅ NOVAS FUNCIONALIDADES V22:
- * - Contas Receber/Pagar com filtros multicanal e marketplace
- * - Baixa múltipla com juros/multas/descontos
- * - Despesas recorrentes automatizadas
- * - Duplicação de mês anterior
- * - Gateway de Pagamento centralizado
- * - Conciliação Bancária com IA
- * - Importação de extratos
- * - Integração CaixaMovimento em todas as baixas
- * 
- * ✅ INTEGRAÇÕES:
- * - CaixaOrdemLiquidacao (envio para caixa)
- * - CaixaMovimento (rastreamento completo)
- * - HistoricoCliente (timeline)
- * - FormaPagamento > GatewayPagamento > Banco
- */
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
+  const [conciliacaoDialogOpen, setConciliacaoDialogOpen] = useState(false);
+  const [relatorioPeriodo, setRelatorioPeriodo] = useState({
+    dataInicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+    dataFim: new Date().toISOString().split('T')[0]
+  });
+  const [relatorioTipo, setRelatorioTipo] = useState("geral");
+
   const { toast } = useToast();
 
   const {
@@ -91,6 +80,11 @@ export default function Financeiro() {
     queryFn: () => base44.entities.ContaPagar.list('-data_vencimento'),
   });
 
+  const { data: centrosCusto = [] } = useQuery({
+    queryKey: ['centrosCusto'],
+    queryFn: () => base44.entities.CentroCusto.list(),
+  });
+
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
     queryFn: () => base44.entities.Empresa.list(),
@@ -104,6 +98,11 @@ export default function Financeiro() {
   const { data: extratosBancarios = [] } = useQuery({
     queryKey: ['extratos'],
     queryFn: () => base44.entities.ExtratoBancario.list('-data_movimento', 100),
+  });
+
+  const { data: configsGateway = [] } = useQuery({
+    queryKey: ['configs-gateway'],
+    queryFn: () => base44.entities.ConfiguracaoGatewayPagamento.list(),
   });
 
   const { data: ordensLiquidacao = [] } = useQuery({
@@ -122,16 +121,6 @@ export default function Financeiro() {
       const pedidos = await base44.entities.Pedido.list();
       return pedidos.filter(p => p.status_aprovacao === "pendente");
     },
-  });
-
-  const { data: gatewaysPagamento = [] } = useQuery({
-    queryKey: ['gateways-pagamento'],
-    queryFn: () => base44.entities.GatewayPagamento.list(),
-  });
-
-  const { data: despesasRecorrentes = [] } = useQuery({
-    queryKey: ['despesas-recorrentes'],
-    queryFn: () => base44.entities.ConfiguracaoDespesaRecorrente.list(),
   });
 
   const contasReceberFiltradas = filtrarPorContexto(contasReceber, 'empresa_id');
@@ -159,16 +148,18 @@ export default function Financeiro() {
     c.status === 'Pendente' && new Date(c.data_vencimento) < hoje
   ).length;
 
-  const extratosNaoConciliados = extratosBancarios.filter(e => e.status_conciliacao === "Pendente").length;
+  const titulosComBoleto = contasReceberFiltradas.filter(c => c.boleto_id_integracao).length;
+  const titulosComPix = contasReceberFiltradas.filter(c => c.pix_id_integracao).length;
+  const empresasComGateway = configsGateway.filter(c => c.ativo).length;
+
+  const extratosNaoConciliados = extratosBancarios.filter(e => !e.conciliado).length;
   const valorNaoConciliado = extratosBancarios
-    .filter(e => e.status_conciliacao === "Pendente")
+    .filter(e => !e.conciliado)
     .reduce((sum, e) => sum + Math.abs(e.valor || 0), 0);
 
-  const ordensLiquidacaoPendentes = ordensLiquidacao.filter(o => o.status === "Pendente").length;
+  const ordensLiquidacaoPendentes = ordensLiquidacao.filter(o => o.status_ordem === "Pendente").length;
   const pagamentosOmnichannelPendentes = pagamentosOmnichannel.filter(p => p.status_conferencia === "Pendente").length;
   const totalPendentesAprovacao = pedidosPendentesAprovacao.length;
-  const gatewaysAtivos = gatewaysPagamento.filter(g => g.status_integracao === "Ativo").length;
-  const despesasRecorrentesAtivas = despesasRecorrentes.filter(d => d.ativa).length;
 
   if (loadingPermissions) {
     return (
@@ -179,13 +170,13 @@ export default function Financeiro() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 w-full h-full">
+    <div className="p-6 lg:p-8 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">💰 Financeiro Multi-Empresa V22</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Financeiro Multi-Empresa</h1>
           <p className="text-slate-600">
             {estaNoGrupo
-              ? 'Visão consolidada • Despesas Recorrentes • Gateways • Conciliação IA'
+              ? 'Visão consolidada • Caixa Central • Conciliação • Omnichannel'
               : `Gestão financeira completa - ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || ''}`
             }
           </p>
@@ -197,10 +188,10 @@ export default function Financeiro() {
               Visão Consolidada
             </Badge>
           )}
+
         </div>
       </div>
 
-      {/* KPIs Principais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-0 shadow-md">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -258,17 +249,20 @@ export default function Financeiro() {
         </Card>
       </div>
 
-      {/* V22: KPIs Expandidos */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="border-0 shadow-md bg-blue-50 border-blue-200">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-700">Gateways Ativos</p>
-                <p className="text-2xl font-bold text-blue-900">{gatewaysAtivos}</p>
-                <p className="text-xs text-blue-600 mt-1">Pagamento online</p>
+                <p className="text-sm text-blue-700">Integração Boleto/PIX</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {titulosComBoleto + titulosComPix}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  {empresasComGateway} empresa(s) configurada(s)
+                </p>
               </div>
-              <Sparkles className="w-8 h-8 text-blue-400" />
+              <Link2 className="w-8 h-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -279,7 +273,7 @@ export default function Financeiro() {
               <div>
                 <p className="text-sm text-purple-700">Rateios Criados</p>
                 <p className="text-2xl font-bold text-purple-900">{rateios.length}</p>
-                <p className="text-xs text-purple-600 mt-1">Multi-empresa</p>
+                <p className="text-xs text-purple-600 mt-1">Total distribuído</p>
               </div>
               <Split className="w-8 h-8 text-purple-400" />
             </div>
@@ -296,7 +290,7 @@ export default function Financeiro() {
                   R$ {valorNaoConciliado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
               </div>
-              <ArrowLeftRight className="w-8 h-8 text-orange-400" />
+              <CheckCircle2 className="w-8 h-8 text-orange-400" />
             </div>
           </CardContent>
         </Card>
@@ -305,11 +299,11 @@ export default function Financeiro() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-green-700">Despesas Recorrentes</p>
-                <p className="text-2xl font-bold text-green-900">{despesasRecorrentesAtivas}</p>
-                <p className="text-xs text-green-600 mt-1">Automatizadas</p>
+                <p className="text-sm text-green-700">Caixa - Liquidações</p>
+                <p className="text-2xl font-bold text-green-900">{ordensLiquidacaoPendentes}</p>
+                <p className="text-xs text-green-600 mt-1">Ordens pendentes</p>
               </div>
-              <RefreshCw className="w-8 h-8 text-green-400" />
+              <DollarSign className="w-8 h-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -328,10 +322,10 @@ export default function Financeiro() {
         </Card>
       </div>
 
-      {/* DASHBOARD UNIFICADO */}
+      {/* DASHBOARD UNIFICADO ETAPA 4 */}
       <DashboardFinanceiroUnificado empresaId={empresaAtual?.id} />
 
-      {/* RÉGUA DE COBRANÇA IA */}
+      {/* NOVO: Régua de Cobrança IA */}
       <ReguaCobrancaIA empresaId={empresaAtual?.id} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -343,14 +337,6 @@ export default function Financeiro() {
           <TabsTrigger value="formas-pagamento" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Sparkles className="w-4 h-4 mr-2" />
             🏦 Formas de Pagamento
-          </TabsTrigger>
-          <TabsTrigger value="gateways-pagamento" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-            <Wallet className="w-4 h-4 mr-2" />
-            🔌 Gateways Pagamento
-          </TabsTrigger>
-          <TabsTrigger value="despesas-recorrentes" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white">
-            <RefreshCw className="w-4 h-4 mr-2" />
-            ♻️ Despesas Recorrentes
           </TabsTrigger>
           <TabsTrigger value="caixa-pdv" className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
             <Wallet className="w-4 h-4 mr-2" />
@@ -378,13 +364,6 @@ export default function Financeiro() {
             <TrendingDown className="w-4 h-4 mr-2" />
             Contas a Pagar
           </TabsTrigger>
-          <TabsTrigger value="conciliacao-bancaria" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
-            <ArrowLeftRight className="w-4 h-4 mr-2" />
-            Conciliação Bancária
-            {extratosNaoConciliados > 0 && (
-              <Badge className="ml-2 bg-yellow-500 text-white">{extratosNaoConciliados}</Badge>
-            )}
-          </TabsTrigger>
           <TabsTrigger value="aprovacoes" className="data-[state=active]:bg-orange-600 data-[state=active]:text-white">
             <AlertCircle className="w-4 h-4 mr-2" />
             Aprovações
@@ -394,7 +373,7 @@ export default function Financeiro() {
           </TabsTrigger>
           <TabsTrigger value="conciliacao" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
-            Conciliação Cartões
+            Conciliação
             {pagamentosOmnichannelPendentes > 0 && (
               <Badge className="ml-2 bg-yellow-500 text-white">{pagamentosOmnichannelPendentes}</Badge>
             )}
@@ -419,185 +398,6 @@ export default function Financeiro() {
           <DashboardFormasPagamento />
         </TabsContent>
 
-        {/* V22: Nova Aba Gateways de Pagamento */}
-        <TabsContent value="gateways-pagamento">
-          <Card className="border-0 shadow-md">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50 border-b">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <Wallet className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-900">🔌 Gateways de Pagamento</p>
-                    <p className="text-sm text-slate-600 font-normal">
-                      Configure processadores externos (Pagar.me, Stripe, Asaas, etc)
-                    </p>
-                  </div>
-                </CardTitle>
-                <Button
-                  onClick={() => openWindow(GatewayPagamentoForm, {
-                    windowMode: true,
-                    onSubmit: async (data) => {
-                      try {
-                        await base44.entities.GatewayPagamento.create({ ...data, empresa_id: empresaAtual?.id });
-                        queryClient.invalidateQueries({ queryKey: ['gateways-pagamento'] });
-                        toast({ title: "✅ Gateway criado!" });
-                      } catch (error) {
-                        toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
-                      }
-                    }
-                  }, {
-                    title: '🔌 Novo Gateway de Pagamento',
-                    width: 1000,
-                    height: 700
-                  })}
-                  className="bg-purple-600"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Novo Gateway
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {gatewaysPagamento.map(gateway => (
-                  <Card key={gateway.id} className="border-2 hover:shadow-lg transition-all">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <p className="font-semibold">{gateway.nome}</p>
-                        <Badge className={gateway.status_integracao === "Ativo" ? 'bg-green-600' : 'bg-gray-600'}>
-                          {gateway.status_integracao}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">{gateway.provedor}</Badge>
-                          <Badge variant="outline">{gateway.ambiente}</Badge>
-                        </div>
-                        <p className="text-xs text-slate-600">
-                          Suporta: {gateway.tipos_pagamento_suportados?.join(', ')}
-                        </p>
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openWindow(GatewayPagamentoForm, {
-                              gateway,
-                              windowMode: true,
-                              onSubmit: async (data) => {
-                                try {
-                                  await base44.entities.GatewayPagamento.update(gateway.id, data);
-                                  queryClient.invalidateQueries({ queryKey: ['gateways-pagamento'] });
-                                  toast({ title: "✅ Gateway atualizado!" });
-                                } catch (error) {
-                                  toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
-                                }
-                              }
-                            }, {
-                              title: `✏️ Editar: ${gateway.nome}`,
-                              width: 1000,
-                              height: 700
-                            })}
-                          >
-                            <Edit className="w-3 h-3 mr-1" />
-                            Editar
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              {gatewaysPagamento.length === 0 && (
-                <div className="text-center py-12 text-slate-500">
-                  <Wallet className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p>Nenhum gateway configurado</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* V22: Nova Aba Despesas Recorrentes */}
-        <TabsContent value="despesas-recorrentes">
-          <Card className="border-0 shadow-md">
-            <CardHeader className="bg-gradient-to-r from-teal-50 to-green-50 border-b">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-green-600 rounded-lg flex items-center justify-center">
-                    <RefreshCw className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-slate-900">♻️ Despesas Recorrentes</p>
-                    <p className="text-sm text-slate-600 font-normal">
-                      Geração automática de Contas a Pagar mensais
-                    </p>
-                  </div>
-                </CardTitle>
-                <Button
-                  onClick={() => openWindow(ConfiguracaoDespesaRecorrenteForm, {
-                    windowMode: true,
-                    onSubmit: async (data) => {
-                      try {
-                        await base44.entities.ConfiguracaoDespesaRecorrente.create({ ...data, empresa_id: empresaAtual?.id });
-                        queryClient.invalidateQueries({ queryKey: ['despesas-recorrentes'] });
-                        toast({ title: "✅ Despesa recorrente criada!" });
-                      } catch (error) {
-                        toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
-                      }
-                    }
-                  }, {
-                    title: '♻️ Nova Despesa Recorrente',
-                    width: 900,
-                    height: 700
-                  })}
-                  className="bg-teal-600"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nova Despesa Recorrente
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="p-6 border-2 border-teal-200 rounded-lg bg-white">
-                  <RefreshCw className="w-10 h-10 text-teal-600 mb-3" />
-                  <p className="font-semibold text-slate-900 mb-2">Automação Total</p>
-                  <p className="text-sm text-slate-600">
-                    Gera Contas a Pagar automaticamente nos vencimentos configurados
-                  </p>
-                </div>
-                <div className="p-6 border-2 border-blue-200 rounded-lg bg-white">
-                  <Receipt className="w-10 h-10 text-blue-600 mb-3" />
-                  <p className="font-semibold text-slate-900 mb-2">Flexibilidade Total</p>
-                  <p className="text-sm text-slate-600">
-                    Aluguel, Energia, Tarifas, Impostos, Software, etc
-                  </p>
-                </div>
-                <div className="p-6 border-2 border-green-200 rounded-lg bg-white">
-                  <CheckCircle2 className="w-10 h-10 text-green-600 mb-3" />
-                  <p className="font-semibold text-slate-900 mb-2">Controle Inteligente</p>
-                  <p className="text-sm text-slate-600">
-                    Valores fixos ou variáveis, aprovações, notificações
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800 font-semibold mb-2">
-                  ✨ {despesasRecorrentesAtivas} despesas recorrentes ativas gerando contas automaticamente
-                </p>
-                <p className="text-xs text-blue-700">
-                  Economize tempo configurando uma vez e deixe o sistema gerar as contas para você
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="caixa-pdv">
           <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-green-50">
             <CardHeader className="border-b bg-white/50 backdrop-blur-sm">
@@ -619,28 +419,28 @@ export default function Financeiro() {
                   <CheckCircle2 className="w-10 h-10 text-emerald-600 mb-3" />
                   <p className="font-semibold text-slate-900 mb-2">✅ Vendas PDV com Múltiplos Pagamentos</p>
                   <p className="text-sm text-slate-600">
-                    Aceita múltiplas formas de pagamento na mesma venda
+                    Aceita múltiplas formas de pagamento na mesma venda, acréscimos/descontos em valor ou %
                   </p>
                 </div>
                 <div className="p-6 border-2 border-blue-200 rounded-lg bg-white">
                   <FileText className="w-10 h-10 text-blue-600 mb-3" />
-                  <p className="font-semibold text-slate-900 mb-2">📄 Liquidação de Pedidos</p>
+                  <p className="font-semibold text-slate-900 mb-2">📄 Receber Vendas de Outros Vendedores</p>
                   <p className="text-sm text-slate-600">
-                    Receba vendas de outros vendedores com NF-e/Recibo
+                    Liquidação de pedidos cadastrados por outros vendedores com emissão de NF-e/Recibo
                   </p>
                 </div>
                 <div className="p-6 border-2 border-green-200 rounded-lg bg-white">
                   <TrendingUp className="w-10 h-10 text-green-600 mb-3" />
                   <p className="font-semibold text-slate-900 mb-2">💚 Liquidar Contas a Receber</p>
                   <p className="text-sm text-slate-600">
-                    Recebimento rápido de títulos com registro automático
+                    Recebimento rápido de títulos pendentes com registro automático de movimentos
                   </p>
                 </div>
                 <div className="p-6 border-2 border-red-200 rounded-lg bg-white">
                   <TrendingDown className="w-10 h-10 text-red-600 mb-3" />
                   <p className="font-semibold text-slate-900 mb-2">💰 Liquidar Contas a Pagar</p>
                   <p className="text-sm text-slate-600">
-                    Pagar fornecedores direto do caixa
+                    Pagamento de fornecedores e despesas direto do caixa com controle de saldo
                   </p>
                 </div>
               </div>
@@ -650,7 +450,10 @@ export default function Financeiro() {
                   onClick={() => {
                     openWindow(
                       CaixaPDVCompleto,
-                      { empresaAtual: empresaAtual, windowMode: true },
+                      {
+                        empresaAtual: empresaAtual,
+                        windowMode: true
+                      },
                       {
                         title: '💰 Caixa PDV Completo - ' + (empresaAtual?.nome_fantasia || 'Sistema'),
                         width: 1500,
@@ -666,6 +469,30 @@ export default function Financeiro() {
                   Abrir Caixa PDV Completo
                 </Button>
               </div>
+
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 font-semibold mb-2">
+                  🎯 Substitui e Melhora:
+                </p>
+                <div className="grid grid-cols-2 gap-3 text-xs text-blue-700">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Caixa Diário (movimentos diários)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Caixa Central Liquidação (unificado)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>PDV presencial (venda rápida)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Multi-operador com permissões</span>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -674,7 +501,7 @@ export default function Financeiro() {
           <Card className="border-0 shadow-md">
             <CardContent className="p-6">
               <div className="text-center space-y-4">
-                <p className="text-slate-600 mb-4">Gestão de Remessa/Retorno CNAB</p>
+                <p className="text-slate-600 mb-4">Abra a gestão de Remessa/Retorno em janela dedicada</p>
                 <Button
                   onClick={() => {
                     openWindow(
@@ -712,12 +539,7 @@ export default function Financeiro() {
         </TabsContent>
 
         <TabsContent value="contas-pagar">
-          <ContasPagarTab contas={contasPagarComContexto} empresaId={empresaAtual?.id} />
-        </TabsContent>
-
-        {/* V22: Nova Aba Conciliação Bancária Avançada */}
-        <TabsContent value="conciliacao-bancaria">
-          <ConciliacaoBancariaAvancada empresaId={empresaAtual?.id} />
+          <ContasPagarTab contas={contasPagarComContexto} empresas={empresas} />
         </TabsContent>
 
         <TabsContent value="aprovacoes">
@@ -725,12 +547,79 @@ export default function Financeiro() {
         </TabsContent>
 
         <TabsContent value="conciliacao">
-          <PainelConciliacao windowMode={false} />
+          <ConciliacaoBancaria windowMode={false} />
         </TabsContent>
 
         {estaNoGrupo && (
           <TabsContent value="rateios">
-            <RateioMultiempresa empresas={empresasDoGrupo} grupoId={empresasDoGrupo[0]?.grupo_id} />
+            <div className="space-y-6">
+              <RateioMultiempresa
+                empresas={empresasDoGrupo}
+                grupoId={empresasDoGrupo[0]?.grupo_id}
+              />
+
+              <Card className="border-0 shadow-md">
+                <CardHeader className="bg-slate-50 border-b">
+                  <CardTitle>Histórico de Rateios</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-slate-50">
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Valor Total</TableHead>
+                        <TableHead>Empresas</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Data</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rateios.map(rateio => (
+                        <TableRow key={rateio.id}>
+                          <TableCell className="font-medium">{rateio.descricao}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{rateio.tipo_documento}</Badge>
+                          </TableCell>
+                          <TableCell className="font-bold">
+                            R$ {rateio.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {rateio.distribuicao?.map((d, idx) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {d.empresa_nome?.substring(0, 10)} ({d.percentual}%)
+                                </Badge>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={
+                              rateio.status_consolidacao === 'completo' ? 'bg-green-100 text-green-700' :
+                              rateio.status_consolidacao === 'parcial' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-slate-100 text-slate-700'
+                            }>
+                              {rateio.status_consolidacao}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {new Date(rateio.created_date).toLocaleDateString('pt-BR')}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {rateios.length === 0 && (
+                    <div className="text-center py-12 text-slate-500">
+                      <Split className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                      <p>Nenhum rateio criado ainda</p>
+                      <p className="text-sm mt-2">Use o formulário acima para criar o primeiro rateio</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         )}
 

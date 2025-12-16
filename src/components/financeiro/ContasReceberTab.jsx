@@ -36,11 +36,7 @@ import {
   Zap,
   Send,
   Wallet,
-  Printer,
-  ShoppingCart,
-  Store,
-  Smartphone,
-  Globe
+  Printer
 } from "lucide-react";
 import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
 import GerarCobrancaModal from "./GerarCobrancaModal";
@@ -51,44 +47,40 @@ import { useWindow } from "@/components/lib/useWindow";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 
-/**
- * 💰 CONTAS A RECEBER V22 - MULTICANAL COMPLETO
- * 
- * ✅ Lançamentos Automáticos de:
- * - Pedidos (E-commerce, Marketplace, Portal, Chatbot, WhatsApp, PDV)
- * - Contratos (parcelas mensais)
- * - Empréstimos de Funcionários
- * 
- * ✅ Baixa em Massa com:
- * - Juros/Multas/Descontos configuráveis
- * - Registro automático em CaixaMovimento
- * - Histórico do Cliente
- * 
- * ✅ Integração Gateway de Pagamento:
- * - Boleto, PIX, Cartão via FormaPagamento > GatewayPagamento
- * - Link de pagamento omnichannel
- * 
- * ✅ Envio para Caixa PDV:
- * - Liquidação de recebíveis no caixa
- * - Integração total com CaixaOrdemLiquidacao
- */
 export default function ContasReceberTab({ contas, empresas = [] }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
-  const { formasPagamento } = useFormasPagamento();
+  const { formasPagamento, obterBancoPorTipo } = useFormasPagamento();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
-  const [canalFilter, setCanalFilter] = useState("todos");
-  const [marketplaceFilter, setMarketplaceFilter] = useState("todos");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingConta, setEditingConta] = useState(null);
+  const [selectedConta, setSelectedConta] = useState(null);
   const [gerarCobrancaDialogOpen, setGerarCobrancaDialogOpen] = useState(false);
   const [simularPagamentoDialogOpen, setSimularPagamentoDialogOpen] = useState(false);
   const [gerarLinkDialogOpen, setGerarLinkDialogOpen] = useState(false);
   const [contaParaCobranca, setContaParaCobranca] = useState(null);
   const [contaParaSimulacao, setContaParaSimulacao] = useState(null);
   const [contaParaLink, setContaParaLink] = useState(null);
+
+  const [formData, setFormData] = useState({
+    descricao: "",
+    cliente: "",
+    cliente_id: "",
+    pedido_id: "",
+    valor: 0,
+    data_emissao: new Date().toISOString().split('T')[0],
+    data_vencimento: new Date().toISOString().split('T')[0],
+    status: "Pendente",
+    forma_recebimento: "Boleto",
+    numero_documento: "",
+    centro_custo: "",
+    observacoes: "",
+    empresa_id: ""
+  });
 
   const [dialogBaixaOpen, setDialogBaixaOpen] = useState(false);
   const [contasSelecionadas, setContasSelecionadas] = useState([]);
@@ -126,12 +118,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     queryFn: () => base44.entities.ConfiguracaoCobrancaEmpresa.list(),
   });
 
-  const { data: user } = useQuery({
-    queryKey: ['user'],
-    queryFn: () => base44.auth.me(),
-  });
-
-  // V22: Mutation para enviar títulos para o Caixa
+  // ETAPA 4: Mutation para enviar títulos para o Caixa
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async (titulos) => {
       const ordens = await Promise.all(titulos.map(async (titulo) => {
@@ -149,8 +136,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
             cliente_fornecedor_nome: titulo.cliente,
             valor_titulo: titulo.valor
           }],
-          data_ordem: new Date().toISOString(),
-          usuario_operador_nome: user?.full_name
+          data_ordem: new Date().toISOString()
         });
       }));
       return ordens;
@@ -162,7 +148,64 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     }
   });
 
-  // V22: Baixar título com registro de CaixaMovimento
+  const createMutation = useMutation({
+    mutationFn: (data) => base44.entities.ContaReceber.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Sucesso!",
+        description: "Conta a receber criada com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao criar conta: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => base44.entities.ContaReceber.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      setIsDialogOpen(false);
+      resetForm();
+      toast({
+        title: "Sucesso!",
+        description: "Conta a receber atualizada com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao atualizar conta: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.ContaReceber.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      toast({
+        title: "Sucesso!",
+        description: "Conta a receber excluída com sucesso.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao excluir conta: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
       const titulo = await base44.entities.ContaReceber.update(id, {
@@ -177,22 +220,6 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       });
 
       const conta = contas.find(c => c.id === id);
-      
-      // V22: Registrar movimento de caixa (Entrada)
-      await base44.entities.CaixaMovimento.create({
-        group_id: conta.group_id,
-        empresa_id: conta.empresa_id,
-        data_movimento: new Date().toISOString(),
-        tipo_movimento: "Entrada",
-        origem: "Recebimento Conta a Receber",
-        forma_pagamento: dados.forma_recebimento,
-        valor: dados.valor_recebido,
-        descricao: `Recebimento: ${conta.descricao} - Cliente: ${conta.cliente}`,
-        conta_receber_id: id,
-        usuario_operador_nome: user?.full_name
-      });
-
-      // Histórico do cliente
       if (conta?.cliente_id) {
         await base44.entities.HistoricoCliente.create({
           group_id: conta.group_id,
@@ -205,7 +232,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
           tipo_evento: "Recebimento",
           titulo_evento: `Recebimento de R$ ${dados.valor_recebido.toFixed(2)}`,
           descricao_detalhada: `Título ${conta.descricao} recebido via ${dados.forma_recebimento}`,
-          usuario_responsavel: user?.full_name || "Sistema",
+          usuario_responsavel: "Sistema",
           data_evento: new Date().toISOString(),
           valor_relacionado: dados.valor_recebido,
           resolvido: true
@@ -216,25 +243,29 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
-      queryClient.invalidateQueries({ queryKey: ['caixa-movimentos'] });
       setDialogBaixaOpen(false);
       setContaAtual(null);
       toast({ title: "✅ Título baixado com sucesso!" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao baixar título: ${error.message}`,
+        variant: "destructive",
+      });
     }
   });
 
-  // V22: Baixa múltipla com ajuste de valores
   const baixarMultiplaMutation = useMutation({
     mutationFn: async (dados) => {
       const baixaPromises = contasSelecionadas.map(async (contaId) => {
         const conta = contas.find(c => c.id === contaId);
         if (conta) {
-          const valorAjustado = (conta.valor || 0) + (dados.juros || 0) + (dados.multa || 0) - (dados.desconto || 0);
           await baixarTituloMutation.mutateAsync({
             id: contaId,
             dados: {
               ...dados,
-              valor_recebido: valorAjustado
+              valor_recebido: conta.valor
             }
           });
         }
@@ -244,6 +275,167 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     onSuccess: () => {
       setContasSelecionadas([]);
       toast({ title: `✅ ${contasSelecionadas.length} título(s) baixado(s)!` });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro",
+        description: `Erro ao baixar múltiplos títulos: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const gerarBoletoMutation = useMutation({
+    mutationFn: async (contaId) => {
+      const conta = contas.find(c => c.id === contaId);
+      const config = configsCobranca.find(c => c.empresa_id === conta.empresa_id);
+
+      if (!config || !config.ativo) {
+        throw new Error("Empresa sem configuração de cobrança ativa");
+      }
+
+      if (!config.habilitar_boleto) {
+        throw new Error("Boleto não habilitado para esta empresa");
+      }
+
+      const payload = {
+        customer: conta.cliente,
+        value: conta.valor,
+        dueDate: conta.data_vencimento,
+        description: conta.descricao,
+        billingType: "BOLETO",
+        fine: { value: config.multa_pos_vencimento_percent },
+        interest: { value: config.juros_ao_dia_percent }
+      };
+
+      const retornoMock = {
+        id: `bol_${Date.now()}`,
+        status: "PENDING",
+        invoiceUrl: `https://boleto.simulado.com/${conta.id}`,
+        bankSlipUrl: `https://boleto.simulado.com/pdf/${conta.id}`,
+        identificationField: "34191.09008 12345.678901 12345.678901 1 99990000012345",
+        nossoNumero: String(Date.now()).substring(0, 10)
+      };
+
+      await base44.entities.LogCobranca.create({
+        group_id: conta.group_id,
+        empresa_id: conta.empresa_id,
+        conta_receber_id: contaId,
+        tipo_operacao: "gerar_boleto",
+        provedor: config.provedor_cobranca,
+        data_hora: new Date().toISOString(),
+        payload_enviado: payload,
+        retorno_recebido: retornoMock,
+        status_operacao: "simulado",
+        mensagem: "Boleto gerado em modo simulação",
+        id_cobranca_externa: retornoMock.id,
+        linha_digitavel: retornoMock.identificationField,
+        url_boleto: retornoMock.bankSlipUrl,
+        usuario_nome: "Sistema"
+      });
+
+      await base44.entities.ContaReceber.update(contaId, {
+        forma_cobranca: "Boleto",
+        id_cobranca_externa: retornoMock.id,
+        boleto_id_integracao: retornoMock.id,
+        linha_digitavel: retornoMock.identificationField,
+        codigo_barras: retornoMock.identificationField,
+        url_boleto_pdf: retornoMock.bankSlipUrl,
+        boleto_url: retornoMock.bankSlipUrl,
+        boleto_linha_digitavel: retornoMock.identificationField,
+        status_cobranca: "gerada_simulada",
+        status_integracao: "gerado",
+        provedor_pagamento: config.provedor_cobranca
+      });
+
+      return retornoMock;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      toast({ title: "✅ Boleto gerado (simulação)!" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao gerar boleto",
+        description: error.message || "Ocorreu um erro ao gerar o boleto.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const gerarPixMutation = useMutation({
+    mutationFn: async (contaId) => {
+      const conta = contas.find(c => c.id === contaId);
+      const config = configsCobranca.find(c => c.empresa_id === conta.empresa_id);
+
+      if (!config || !config.ativo) {
+        throw new Error("Empresa sem configuração de cobrança ativa");
+      }
+
+      if (!config.habilitar_pix) {
+        throw new Error("PIX não habilitado para esta empresa");
+      }
+
+      const payload = {
+        customer: conta.cliente,
+        value: conta.valor,
+        dueDate: conta.data_vencimento,
+        description: conta.descricao,
+        billingType: "PIX",
+        expirationDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      const pixCopiaCola = `00020126580014br.gov.bcb.pix0136${conta.id}52040000530398654${conta.valor.toFixed(2)}5802BR6009SAO PAULO`;
+      const qrCodeBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+      const retornoMock = {
+        id: `pix_${Date.now()}`,
+        status: "PENDING",
+        encodedImage: qrCodeBase64,
+        payload: pixCopiaCola,
+        expirationDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      await base44.entities.LogCobranca.create({
+        group_id: conta.group_id,
+        empresa_id: conta.empresa_id,
+        conta_receber_id: contaId,
+        tipo_operacao: "gerar_pix",
+        provedor: config.provedor_cobranca,
+        data_hora: new Date().toISOString(),
+        payload_enviado: payload,
+        retorno_recebido: retornoMock,
+        status_operacao: "simulado",
+        mensagem: "PIX gerado em modo simulação",
+        id_cobranca_externa: retornoMock.id,
+        pix_copia_cola: pixCopiaCola,
+        pix_qrcode_base64: qrCodeBase64,
+        usuario_nome: "Sistema"
+      });
+
+      await base44.entities.ContaReceber.update(contaId, {
+        forma_cobranca: "PIX",
+        id_cobranca_externa: retornoMock.id,
+        pix_id_integracao: retornoMock.id,
+        pix_qrcode: qrCodeBase64,
+        pix_copia_cola: pixCopiaCola,
+        status_cobranca: "gerada_simulada",
+        status_integracao: "gerado",
+        provedor_pagamento: config.provedor_cobranca
+      });
+
+      return retornoMock;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+      toast({ title: "✅ PIX gerado (simulação)!" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao gerar PIX",
+        description: error.message || "Ocorreu um erro ao gerar o PIX.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -269,7 +461,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
         retorno_recebido: { simulado: true },
         status_operacao: "simulado",
         mensagem: "WhatsApp enviado (simulação)",
-        usuario_nome: user?.full_name || "Sistema"
+        usuario_nome: "Sistema"
       });
 
       await base44.entities.ContaReceber.update(contaId, {
@@ -280,8 +472,55 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     },
     onSuccess: () => {
       toast({ title: "✅ WhatsApp enviado (simulação)!" });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erro ao enviar WhatsApp",
+        description: error.message || "Ocorreu um erro ao enviar a mensagem.",
+        variant: "destructive"
+      });
     }
   });
+
+  const resetForm = () => {
+    setFormData({
+      descricao: "",
+      cliente: "",
+      cliente_id: "",
+      pedido_id: "",
+      valor: 0,
+      data_emissao: new Date().toISOString().split('T')[0],
+      data_vencimento: new Date().toISOString().split('T')[0],
+      status: "Pendente",
+      forma_recebimento: "Boleto",
+      numero_documento: "",
+      centro_custo: "",
+      observacoes: "",
+      empresa_id: ""
+    });
+    setEditingConta(null);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editingConta) {
+      updateMutation.mutate({ id: editingConta.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const handleEdit = (conta) => {
+    setEditingConta(conta);
+    setFormData({ ...conta });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id) => {
+    if (confirm("Tem certeza que deseja excluir esta conta?")) {
+      deleteMutation.mutate(id);
+    }
+  };
 
   const handleBaixar = (conta) => {
     setContaAtual(conta);
@@ -299,32 +538,30 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
 
   const handleBaixarMultipla = () => {
     if (contasSelecionadas.length === 0) {
-      toast({ title: "⚠️ Selecione pelo menos um título", variant: "destructive" });
+      toast({
+        title: "⚠️ Selecione pelo menos um título",
+        variant: "destructive"
+      });
       return;
     }
-    setContaAtual(null);
-    setDialogBaixaOpen(true);
+    baixarMultiplaMutation.mutate(dadosBaixa);
   };
 
   const handleSubmitBaixa = (e) => {
     e.preventDefault();
-    if (contaAtual) {
-      baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
-    } else {
-      baixarMultiplaMutation.mutate(dadosBaixa);
-    }
+    baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
   };
 
   const toggleSelecao = (contaId) => {
     setContasSelecionadas(prev =>
-      prev.includes(contaId) ? prev.filter(id => id !== contaId) : [...prev, contaId]
+      prev.includes(contaId)
+        ? prev.filter(id => id !== contaId)
+        : [...prev, contaId]
     );
   };
 
   const filteredContas = contas
     .filter(c => statusFilter === "todas" || c.status === statusFilter)
-    .filter(c => canalFilter === "todos" || c.canal_origem === canalFilter)
-    .filter(c => marketplaceFilter === "todos" || c.marketplace_origem === marketplaceFilter)
     .filter(c =>
       c.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -356,56 +593,65 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     vencido: filteredContas.filter(c => c.status === 'Atrasado').reduce((sum, c) => sum + (c.valor || 0), 0)
   };
 
-  const canaisOrigem = [...new Set(contas.map(c => c.canal_origem).filter(Boolean))];
-  const marketplaces = [...new Set(contas.map(c => c.marketplace_origem).filter(m => m && m !== 'Nenhum'))];
-
   return (
-    <div className="space-y-6 w-full h-full">
+    <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total a Receber</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total a Receber
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ {totais.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">{filteredContas.length} títulos</p>
+            <p className="text-xs text-muted-foreground">
+              Total de contas filtradas
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Contas Pendentes
+            </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ {totais.pendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">A receber</p>
+            <p className="text-xs text-muted-foreground">
+              Contas ainda não recebidas
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recebidas</CardTitle>
+            <CardTitle className="text-sm font-medium">Contas Pagas</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ {totais.pago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">Já recebidas</p>
+            <p className="text-xs text-muted-foreground">
+              Contas já recebidas
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vencidas</CardTitle>
+            <CardTitle className="text-sm font-medium">Contas Vencidas</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ {totais.vencido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground">Em atraso</p>
+            <p className="text-xs text-muted-foreground">
+              Contas em atraso
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* V22: Alerta de Seleção */}
+      {/* ETAPA 4: ALERTA DE ENVIO PARA CAIXA */}
       {contasSelecionadas.length > 0 && (
         <Alert className="border-emerald-300 bg-emerald-50">
           <AlertDescription className="flex items-center justify-between">
@@ -413,34 +659,22 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
               <p className="font-semibold text-emerald-900">💰 {contasSelecionadas.length} título(s) selecionado(s)</p>
               <p className="text-xs text-emerald-700">Total: R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
             </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => {
-                  const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
-                  enviarParaCaixaMutation.mutate(titulos);
-                }}
-                disabled={enviarParaCaixaMutation.isPending}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Enviar para Caixa
-              </Button>
-              <ProtectedAction permission="financeiro_receber_baixar_multiplos">
-                <Button
-                  onClick={handleBaixarMultipla}
-                  disabled={baixarMultiplaMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Baixar Múltiplos
-                </Button>
-              </ProtectedAction>
-            </div>
+            <Button
+              onClick={() => {
+                const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
+                enviarParaCaixaMutation.mutate(titulos);
+              }}
+              disabled={enviarParaCaixaMutation.isPending}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              Enviar para Caixa
+            </Button>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* V22: Filtros Avançados Multicanal */}
+      {/* Filtros */}
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-3">
@@ -451,11 +685,11 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
               className="max-w-xs"
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
+              <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todos Status</SelectItem>
+                <SelectItem value="todas">Todas</SelectItem>
                 <SelectItem value="Pendente">Pendente</SelectItem>
                 <SelectItem value="Atrasado">Atrasado</SelectItem>
                 <SelectItem value="Recebido">Recebido</SelectItem>
@@ -463,29 +697,24 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
               </SelectContent>
             </Select>
 
-            <Select value={canalFilter} onValueChange={setCanalFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Canal Origem" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos Canais</SelectItem>
-                {canaisOrigem.map(canal => (
-                  <SelectItem key={canal} value={canal}>{canal}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {contasSelecionadas.length > 0 && (
+              <Badge className="bg-blue-100 text-blue-700 px-4 py-2">
+                {contasSelecionadas.length} selecionado(s) - R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </Badge>
+            )}
 
-            <Select value={marketplaceFilter} onValueChange={setMarketplaceFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Marketplace" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos Marketplaces</SelectItem>
-                {marketplaces.map(mp => (
-                  <SelectItem key={mp} value={mp}>{mp}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {contasSelecionadas.length > 0 && (
+              <ProtectedAction permission="financeiro_receber_baixar_multiplos">
+                <Button
+                  variant="outline"
+                  onClick={handleBaixarMultipla}
+                  disabled={baixarMultiplaMutation.isPending}
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Baixar Múltiplos
+                </Button>
+              </ProtectedAction>
+            )}
 
             <ProtectedAction permission="financeiro_receber_criar">
               <Button onClick={() => openWindow(ContaReceberForm, {
@@ -503,19 +732,19 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                 title: '💰 Nova Conta a Receber',
                 width: 900,
                 height: 600
-              })} className="ml-auto">
+              })}>
                 <Plus className="w-4 h-4 mr-2" />
-                Nova Conta
+                Adicionar Conta
               </Button>
             </ProtectedAction>
           </div>
         </CardContent>
       </Card>
 
-      {/* V22: Tabela Multicanal */}
+      {/* Tabela */}
       <Card className="border-0 shadow-md">
         <CardHeader className="bg-slate-50 border-b">
-          <CardTitle>Contas a Receber - Multicanal</CardTitle>
+          <CardTitle>Contas a Receber</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -524,22 +753,20 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                 <TableRow className="bg-slate-50">
                   <TableHead className="w-12">
                     <Checkbox
-                      checked={contasSelecionadas.length === filteredContas.filter(c => c.status === "Pendente" || c.status === "Atrasado").length && filteredContas.filter(c => c.status === "Pendente" || c.status === "Atrasado").length > 0}
+                      checked={contasSelecionadas.length === filteredContas.filter(c => c.status === "Pendente" || c.status === "Atrasado").length}
                       onCheckedChange={(checked) => {
-                        const pendentes = filteredContas.filter(c => c.status === "Pendente" || c.status === "Atrasado");
-                        setContasSelecionadas(checked ? pendentes.map(c => c.id) : []);
+                        const pendentesOuAtrasadas = filteredContas.filter(c => c.status === "Pendente" || c.status === "Atrasado");
+                        setContasSelecionadas(checked ? pendentesOuAtrasadas.map(c => c.id) : []);
                       }}
                     />
                   </TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Pedido</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Empresa</TableHead>
                   <TableHead>Vencimento</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Canal</TableHead>
-                  <TableHead>Marketplace</TableHead>
+                  <TableHead>Canal Origem</TableHead>
                   <TableHead>Cobrança</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
@@ -547,7 +774,6 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
               <TableBody>
                 {filteredContas.map((conta) => {
                   const empresa = empresasData.find(e => e.id === conta.empresa_id);
-                  const pedido = pedidos.find(p => p.id === conta.pedido_id);
                   const config = obterConfigEmpresa(conta.empresa_id);
                   const temConfig = config && config.ativo;
                   const vencida = (conta.status === "Pendente" || conta.status === "Atrasado") && new Date(conta.data_vencimento) < new Date();
@@ -566,14 +792,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                         )}
                       </TableCell>
                       <TableCell className="font-medium">{conta.cliente}</TableCell>
-                      <TableCell>
-                        {pedido ? (
-                          <Badge variant="outline" className="text-xs">
-                            {pedido.numero_pedido}
-                          </Badge>
-                        ) : '-'}
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate text-sm">{conta.descricao}</TableCell>
+                      <TableCell className="max-w-xs truncate">{conta.descricao}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Building2 className="w-3 h-3 text-purple-600" />
@@ -584,7 +803,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                         <div>
                           <p className="text-sm">{new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}</p>
                           {vencida && (
-                            <Badge variant="destructive" className="text-xs mt-1">
+                            <Badge variant="destructive" className="text-xs">
                               {diasAtraso} dia(s) atraso
                             </Badge>
                           )}
@@ -594,27 +813,18 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                         R$ {conta.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
                       <TableCell>
-                        <Badge className={statusColors[conta.status] || 'bg-gray-100'}>
+                        <Badge className={statusColors[conta.status] || 'bg-gray-100 text-gray-800 border-gray-300'}>
                           {conta.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs flex items-center gap-1 w-fit">
-                          {conta.canal_origem === 'E-commerce' && <ShoppingCart className="w-3 h-3" />}
-                          {conta.canal_origem === 'Portal do Cliente' && <Eye className="w-3 h-3" />}
-                          {conta.canal_origem === 'WhatsApp' && <MessageSquare className="w-3 h-3" />}
-                          {conta.canal_origem === 'Marketplace' && <Store className="w-3 h-3" />}
-                          {conta.canal_origem === 'App Mobile' && <Smartphone className="w-3 h-3" />}
+                        <Badge variant="outline" className="text-xs">
                           {conta.canal_origem || 'Manual'}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {conta.marketplace_origem && conta.marketplace_origem !== 'Nenhum' ? (
-                          <Badge className="bg-purple-100 text-purple-700 text-xs">
+                        {conta.marketplace_origem && conta.marketplace_origem !== 'Nenhum' && (
+                          <Badge className="ml-1 bg-purple-100 text-purple-700 text-xs">
                             {conta.marketplace_origem}
                           </Badge>
-                        ) : (
-                          <span className="text-xs text-slate-400">-</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -636,11 +846,25 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                               const empresaData = empresasData.find(e => e.id === conta.empresa_id);
                               ImprimirBoleto({ conta, empresa: empresaData, tipo: 'receber' });
                             }}
+                            title="Imprimir Boleto/Recibo"
                             className="justify-start h-7 px-2 text-slate-600"
                           >
                             <Printer className="w-3 h-3 mr-1" />
                             <span className="text-xs">Imprimir</span>
                           </Button>
+
+                          <ProtectedAction permission="financeiro_receber_visualizar">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(conta)}
+                              className="justify-start h-7 px-2"
+                              title="Ver Detalhes"
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              <span className="text-xs">Detalhes</span>
+                            </Button>
+                          </ProtectedAction>
 
                           {conta.status === "Pendente" && (
                             <>
@@ -654,6 +878,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                                         setContaParaCobranca(conta);
                                         setGerarCobrancaDialogOpen(true);
                                       }}
+                                      title="Gerar Cobrança"
                                       className="justify-start h-7 px-2 text-xs"
                                     >
                                       <CreditCard className="w-3 h-3 mr-1" />
@@ -668,6 +893,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                                         setContaParaLink(conta);
                                         setGerarLinkDialogOpen(true);
                                       }}
+                                      title="Gerar Link Pagamento"
                                       className="justify-start h-7 px-2 text-xs text-purple-600"
                                     >
                                       <Wallet className="w-3 h-3 mr-1" />
@@ -683,12 +909,12 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                                   size="sm"
                                   onClick={() => window.open(conta.boleto_url, '_blank')}
                                   className="justify-start h-7 px-2"
+                                  title="Ver Boleto"
                                 >
                                   <FileText className="w-3 h-3 mr-1 text-orange-600" />
                                   <span className="text-xs">Ver Boleto</span>
                                 </Button>
                               )}
-
                               {conta.pix_copia_cola && (
                                 <Button
                                   variant="ghost"
@@ -698,6 +924,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                                     toast({ title: "📋 PIX copiado!" });
                                   }}
                                   className="justify-start h-7 px-2"
+                                  title="Copiar PIX"
                                 >
                                   <QrCode className="w-3 h-3 mr-1 text-green-600" />
                                   <span className="text-xs">Copiar PIX</span>
@@ -712,6 +939,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                                     onClick={() => enviarWhatsAppMutation.mutate(conta.id)}
                                     disabled={enviarWhatsAppMutation.isPending}
                                     className="justify-start h-7 px-2 text-xs"
+                                    title="Enviar por WhatsApp"
                                   >
                                     <MessageSquare className="w-3 h-3 mr-1 text-green-600" />
                                     WhatsApp
@@ -719,12 +947,36 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                                 </ProtectedAction>
                               )}
 
+                              {conta.status_cobranca === "gerada_simulada" && (
+                                <ProtectedAction permission="financeiro_receber_simular_pagamento">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setContaParaSimulacao(conta);
+                                      setSimularPagamentoDialogOpen(true);
+                                    }}
+                                    title="Simular Pagamento"
+                                    className="justify-start h-7 px-2 text-xs text-green-600 hover:text-green-700"
+                                  >
+                                    <Zap className="w-3 h-3 mr-1" />
+                                    Simular Pgto
+                                  </Button>
+                                </ProtectedAction>
+                              )}
+
+                              {!temConfig && !conta.status_cobranca && (
+                                <Badge variant="outline" className="text-xs text-orange-700">
+                                  Sem config
+                                </Badge>
+                              )}
                               <ProtectedAction permission="financeiro_receber_baixar">
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleBaixar(conta)}
                                   className="justify-start h-7 px-2 text-xs"
+                                  title="Baixar Título"
                                 >
                                   <CheckCircle2 className="w-3 h-3 mr-1 text-green-600" />
                                   Baixar
@@ -732,7 +984,6 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                               </ProtectedAction>
                             </>
                           )}
-                          
                           <ProtectedAction permission="financeiro_receber_editar">
                             <Button
                               variant="ghost"
@@ -755,6 +1006,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                                 height: 600
                               })}
                               className="justify-start h-7 px-2"
+                              title="Editar Conta"
                             >
                               <Edit className="w-3 h-3 mr-1 text-blue-600" />
                               <span className="text-xs">Editar</span>
@@ -778,50 +1030,32 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
         </CardContent>
       </Card>
 
-      {/* V22: Dialog Baixa Melhorado */}
+      {/* Dialog Baixa */}
       <Dialog open={dialogBaixaOpen} onOpenChange={setDialogBaixaOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>{contaAtual ? "Baixar Conta a Receber" : "Baixar Múltiplas Contas"}</DialogTitle>
+            <DialogTitle>Baixar Conta a Receber</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitBaixa} className="space-y-4">
-            {contaAtual && (
-              <div>
-                <Label>Cliente</Label>
-                <Input value={contaAtual?.cliente || ''} disabled />
-              </div>
-            )}
-            {!contaAtual && (
-              <Alert className="border-blue-300 bg-blue-50">
-                <AlertDescription className="text-xs text-blue-900">
-                  Serão baixados <strong>{contasSelecionadas.length} títulos</strong>. Configure a forma de recebimento, juros, multas e descontos.
-                </AlertDescription>
-              </Alert>
-            )}
-            
+            <div>
+              <Label>Cliente</Label>
+              <Input value={contaAtual?.cliente || ''} disabled />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Valor Original</Label>
                 <Input value={`R$ ${contaAtual?.valor?.toFixed(2) || 0}`} disabled />
               </div>
               <div>
-                <Label>Valor Total a Receber (Ajustado)</Label>
+                <Label>Valor Recebido *</Label>
                 <Input
-                  value={`R$ ${((contaAtual?.valor || 0) + (dadosBaixa.juros || 0) + (dadosBaixa.multa || 0) - (dadosBaixa.desconto || 0)).toFixed(2)}`}
-                  disabled
-                  className="font-bold text-green-600"
+                  type="number"
+                  step="0.01"
+                  value={dadosBaixa.valor_recebido}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, valor_recebido: parseFloat(e.target.value) })}
+                  required
                 />
               </div>
-            </div>
-            <div>
-              <Label>Valor Recebido *</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={dadosBaixa.valor_recebido}
-                onChange={(e) => setDadosBaixa({ ...dadosBaixa, valor_recebido: parseFloat(e.target.value) })}
-                required
-              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -857,7 +1091,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   type="number"
                   step="0.01"
                   value={dadosBaixa.juros}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) })}
                 />
               </div>
               <div>
@@ -866,7 +1100,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   type="number"
                   step="0.01"
                   value={dadosBaixa.multa}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) })}
                 />
               </div>
               <div>
@@ -875,7 +1109,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   type="number"
                   step="0.01"
                   value={dadosBaixa.desconto}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) })}
                 />
               </div>
             </div>
@@ -883,8 +1117,8 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
               <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600">
-                {(baixarTituloMutation.isPending || baixarMultiplaMutation.isPending) ? 'Baixando...' : 'Confirmar Baixa'}
+              <Button type="submit" disabled={baixarTituloMutation.isPending} className="bg-green-600">
+                {baixarTituloMutation.isPending ? 'Baixando...' : 'Confirmar Baixa'}
               </Button>
             </div>
           </form>

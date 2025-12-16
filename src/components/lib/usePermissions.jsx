@@ -15,30 +15,14 @@ export default function usePermissions() {
     enabled: !!user?.perfil_acesso_id
   });
 
-  const hasPermission = (moduleOrKey, section, action = "visualizar") => {
+  const hasPermission = (module, section, action = "visualizar") => {
     if (!user) return false;
     if (user.role === "admin") return true;
 
     if (!perfilAcesso?.permissoes) return false;
 
-    // Se passar uma string tipo "financeiro_receber_baixar", parsear
-    if (typeof moduleOrKey === 'string' && moduleOrKey.includes('_') && !section) {
-      const parts = moduleOrKey.split('_');
-      const module = parts[0];
-      const sectionOrAction = parts.slice(1).join('_');
-      
-      // Tentar encontrar o módulo
-      const moduloPermissoes = perfilAcesso.permissoes[module];
-      if (!moduloPermissoes) return false;
-
-      // Verificar se tem em qualquer seção
-      return Object.values(moduloPermissoes).some(secao => 
-        Array.isArray(secao) && secao.includes(sectionOrAction)
-      );
-    }
-
     // ESTRUTURA GRANULAR: módulo → seção → [ações]
-    const moduloPermissoes = perfilAcesso.permissoes[moduleOrKey];
+    const moduloPermissoes = perfilAcesso.permissoes[module];
     if (!moduloPermissoes) return false;
 
     // Se não especificar seção, verifica se tem a ação em QUALQUER seção
