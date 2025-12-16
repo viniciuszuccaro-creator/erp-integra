@@ -29,6 +29,11 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
     queryFn: () => base44.entities.GatewayPagamento.filter({ ativo: true }),
   });
 
+  const { data: gateways = [] } = useQuery({
+    queryKey: ['gateways-pagamento'],
+    queryFn: () => base44.entities.GatewayPagamento.filter({ ativo: true }),
+  });
+
   const [formData, setFormData] = useState(() => formaPagamento || {
     group_id: contextoAtual === 'grupo' ? empresaAtual?.group_id : undefined,
     empresa_id: contextoAtual === 'empresa' ? empresaAtual?.id : undefined,
