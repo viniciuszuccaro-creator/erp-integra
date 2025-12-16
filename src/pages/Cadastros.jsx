@@ -4689,7 +4689,7 @@ export default function Cadastros() {
                         </CardHeader>
                         <CardContent className="p-4">
                           <p className="text-sm text-slate-600 mb-3">Área do cliente com pedidos, documentos e comunicação.</p>
-                          <Button onClick={() => openWindow(DashboardCliente, { windowMode: true }, { title: 'Portal do Cliente', width: 1200, height: 800 })} className="bg-blue-600 hover:bg-blue-700">
+                          <Button onClick={() => openWindow(DashboardCliente, { windowMode: true, adminMode: true, clienteId: (clientes && clientes[0]?.id) }, { title: 'Portal do Cliente', width: 1200, height: 800 })} className="bg-blue-600 hover:bg-blue-700">
                             Abrir Portal
                           </Button>
                         </CardContent>

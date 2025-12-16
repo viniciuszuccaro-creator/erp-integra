@@ -17,22 +17,33 @@ import { createPageUrl } from '@/utils';
  * Dashboard do Portal do Cliente
  * V12.0 - Completo e funcional
  */
-export default function DashboardCliente() {
+export default function DashboardCliente({ clienteId: propClienteId, adminMode = false }) {
   const { user } = useUser();
   const [cliente, setCliente] = useState(null);
+
+  // Carrega cliente via prop (modo admin)
+  useEffect(() => {
+    const loadCliente = async () => {
+      if (propClienteId) {
+        const res = await base44.entities.Cliente.filter({ id: propClienteId });
+        setCliente(res[0] || null);
+      }
+    };
+    loadCliente();
+  }, [propClienteId]);
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['meu-cliente', user?.id],
     queryFn: () => base44.entities.Cliente.filter({ portal_usuario_id: user?.id }),
-    enabled: !!user,
+    enabled: !propClienteId && !!user,
     staleTime: Infinity,
   });
 
   useEffect(() => {
-    if (clientes.length > 0) {
+    if (!propClienteId && clientes.length > 0) {
       setCliente(clientes[0]);
     }
-  }, [clientes]);
+  }, [clientes, propClienteId]);
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['meus-pedidos', cliente?.id],
@@ -102,6 +113,19 @@ export default function DashboardCliente() {
   );
 
   if (!cliente) {
+    if (adminMode) {
+      return (
+        <div className="min-h-[400px] flex items-center justify-center">
+          <Card className="max-w-md w-full">
+            <CardContent className="p-8 text-center">
+              <AlertCircle className="w-10 h-10 text-blue-600 mx-auto mb-3" />
+              <p className="font-semibold text-slate-900 mb-1">Portal do Cliente (Pré-visualização)</p>
+              <p className="text-sm text-slate-600">Selecione um cliente em Cadastros ▸ Pessoas & Parceiros para pré-visualizar, ou vincule um usuário ao cliente.</p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
