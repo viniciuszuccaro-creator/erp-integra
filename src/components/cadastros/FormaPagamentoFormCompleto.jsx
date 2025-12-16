@@ -24,6 +24,11 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
     queryFn: () => base44.entities.Banco.list(),
   });
 
+  const { data: gateways = [] } = useQuery({
+    queryKey: ['gateways-pagamento'],
+    queryFn: () => base44.entities.GatewayPagamento.filter({ ativo: true }),
+  });
+
   const [formData, setFormData] = useState(() => formaPagamento || {
     group_id: contextoAtual === 'grupo' ? empresaAtual?.group_id : undefined,
     empresa_id: contextoAtual === 'empresa' ? empresaAtual?.id : undefined,
@@ -511,24 +516,74 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
             />
           </div>
 
-          {formData.gerar_cobranca_online && bancos.length > 0 && (
-            <div>
-              <Label>Banco Vinculado (Boleto/PIX)</Label>
-              <Select
-                value={formData.banco_vinculado_id || ''}
-                onValueChange={(v) => setFormData({...formData, banco_vinculado_id: v})}
-              >
-                <SelectTrigger><SelectValue placeholder="Selecione o banco..." /></SelectTrigger>
-                <SelectContent>
-                  {bancos.map(banco => (
-                    <SelectItem key={banco.id} value={banco.id}>
-                      <Landmark className="w-4 h-4 inline mr-2" />
-                      {banco.nome_banco} - Ag: {banco.agencia}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {formData.gerar_cobranca_online && (
+            <>
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
+                <div>
+                  <Label className="font-semibold">Usar Gateway de Pagamento</Label>
+                  <p className="text-xs text-slate-500">Processador externo (Pagar.me, Stripe) ao invés de banco direto</p>
+                </div>
+                <Switch
+                  checked={formData.usa_gateway || false}
+                  onCheckedChange={(v) => setFormData({
+                    ...formData,
+                    usa_gateway: v,
+                    banco_vinculado_id: v ? '' : formData.banco_vinculado_id,
+                    gateway_pagamento_id: v ? formData.gateway_pagamento_id : ''
+                  })}
+                />
+              </div>
+
+              {formData.usa_gateway ? (
+                <div>
+                  <Label>Gateway de Pagamento *</Label>
+                  <Select
+                    value={formData.gateway_pagamento_id || ''}
+                    onValueChange={(v) => {
+                      const gateway = gateways.find(g => g.id === v);
+                      setFormData({
+                        ...formData,
+                        gateway_pagamento_id: v,
+                        gateway_pagamento_nome: gateway?.nome || ''
+                      });
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Selecione o gateway..." /></SelectTrigger>
+                    <SelectContent>
+                      {gateways.map(g => (
+                        <SelectItem key={g.id} value={g.id}>
+                          <CreditCard className="w-4 h-4 inline mr-2" />
+                          {g.nome} ({g.provedor}) - {g.ambiente}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Configure gateways em Cadastros → Financeiro → Gateways de Pagamento
+                  </p>
+                </div>
+              ) : (
+                bancos.length > 0 && (
+                  <div>
+                    <Label>Banco Vinculado (Boleto/PIX Bancário)</Label>
+                    <Select
+                      value={formData.banco_vinculado_id || ''}
+                      onValueChange={(v) => setFormData({...formData, banco_vinculado_id: v})}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Selecione o banco..." /></SelectTrigger>
+                      <SelectContent>
+                        {bancos.map(banco => (
+                          <SelectItem key={banco.id} value={banco.id}>
+                            <Landmark className="w-4 h-4 inline mr-2" />
+                            {banco.nome_banco} - Ag: {banco.agencia} Conta: {banco.numero_conta}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )
+              )}
+            </>
           )}
 
           <div className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-200">
