@@ -325,8 +325,7 @@ export default function Financeiro() {
         </Card>
       </div>
 
-      {/* DASHBOARD UNIFICADO ETAPA 4 */}
-      <DashboardFinanceiroUnificado empresaId={empresaAtual?.id} />
+
 
       {/* NOVO: Régua de Cobrança IA */}
       <ReguaCobrancaIA empresaId={empresaAtual?.id} />
@@ -337,10 +336,7 @@ export default function Financeiro() {
             <BarChart3 className="w-4 h-4 mr-2" />
             🏆 Dashboard Mestre
           </TabsTrigger>
-          <TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Realtime
-          </TabsTrigger>
+
           <TabsTrigger value="formas-pagamento" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Sparkles className="w-4 h-4 mr-2" />
             🏦 Formas de Pagamento
@@ -405,17 +401,13 @@ export default function Financeiro() {
           <DashboardFinanceiroMestre windowMode={false} />
         </TabsContent>
 
-        <TabsContent value="dashboard-realtime" className="mt-6">
-          <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} windowMode={false} />
-        </TabsContent>
+
 
         <TabsContent value="formas-pagamento" className="mt-6">
           <DashboardFormasPagamento windowMode={false} />
         </TabsContent>
 
-        <TabsContent value="visao-grupo" className="mt-6">
-          <VisaoConsolidadaGrupo groupId={empresasDoGrupo[0]?.group_id} windowMode={false} />
-        </TabsContent>
+
 
         <TabsContent value="caixa-pdv" className="mt-6">
           <Card className="border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-green-50">

@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import DashboardFinanceiroRealtime from '../financeiro/DashboardFinanceiroRealtime';
+import DashboardFinanceiroUnificado from '../financeiro/DashboardFinanceiroUnificado';
 
 /**
  * DASHBOARD FINANCEIRO MESTRE V21.8 - 100% COMPLETO
