@@ -25,7 +25,6 @@ import Cadastros from './pages/Cadastros';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
 import HubAtendimento from './pages/HubAtendimento';
 import GerenciamentoAcessosCompleto from './pages/GerenciamentoAcessosCompleto';
-import validadorv218 from './pages/ValidadorV21_8';
 import __Layout from './Layout.jsx';
 
 
@@ -57,7 +56,6 @@ export const PAGES = {
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
     "HubAtendimento": HubAtendimento,
     "GerenciamentoAcessosCompleto": GerenciamentoAcessosCompleto,
-    "ValidadorV21_8": validadorv218,
 }
 
 export const pagesConfig = {
