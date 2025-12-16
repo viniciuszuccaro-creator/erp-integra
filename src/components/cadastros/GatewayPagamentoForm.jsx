@@ -10,8 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CreditCard, Globe, Lock, BarChart3, Settings } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 export default function GatewayPagamentoForm({ gateway, windowMode = false, onSubmit }) {
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
+  });
+
   const [formData, setFormData] = useState(gateway || {
     nome: "",
     provedor: "Pagar.me",
@@ -86,6 +93,24 @@ export default function GatewayPagamentoForm({ gateway, windowMode = false, onSu
             </TabsList>
 
             <TabsContent value="geral" className="space-y-4 mt-4">
+              <div>
+                <Label>Empresa *</Label>
+                <Select
+                  value={formData.empresa_id || ''}
+                  onValueChange={(v) => setFormData({ ...formData, empresa_id: v })}
+                  required
+                >
+                  <SelectTrigger><SelectValue placeholder="Selecione a empresa..." /></SelectTrigger>
+                  <SelectContent>
+                    {empresas.map(emp => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.nome_fantasia || emp.razao_social}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Nome do Gateway *</Label>

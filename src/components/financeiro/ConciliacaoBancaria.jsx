@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Building2,
   CheckCircle2,
@@ -13,10 +17,13 @@ import {
   ArrowUpCircle,
   Link2,
   X,
-  FileText
+  FileText,
+  Sparkles,
+  Upload
 } from "lucide-react";
 import { useUser } from "@/components/lib/UserContext";
 import { toast } from "sonner";
+import ConciliacaoAutomaticaIA from "./ConciliacaoAutomaticaIA";
 
 /**
  * ETAPA 4 - Conciliação Bancária Avançada
@@ -30,34 +37,35 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
     data_inicio: "",
     data_fim: ""
   });
+  const [empresaSelecionada, setEmpresaSelecionada] = useState("");
+  const [tabAtiva, setTabAtiva] = useState("pendentes");
   const [lancamentoSelecionado, setLancamentoSelecionado] = useState(null);
   const [movimentoParaConciliar, setMovimentoParaConciliar] = useState(null);
 
-  // Buscar extratos bancários (simulação)
-  const { data: extrato = [] } = useQuery({
-    queryKey: ['extrato-bancario', filtros],
-    queryFn: async () => {
-      // Em produção, importaria OFX/CNAB ou API bancária
-      return [];
-    }
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
   });
 
-  // Buscar pagamentos omnichannel pendentes
-  const { data: pagamentosOmnichannel = [] } = useQuery({
-    queryKey: ['pagamentos-omnichannel-pendentes'],
-    queryFn: async () => {
-      const pagamentos = await base44.entities.PagamentoOmnichannel.list();
-      return pagamentos.filter(p => p.status_conferencia === "Pendente");
-    }
+  const { data: extratos = [] } = useQuery({
+    queryKey: ['extratos-bancarios', empresaSelecionada],
+    queryFn: () => empresaSelecionada 
+      ? base44.entities.ExtratoBancario.filter({ empresa_id: empresaSelecionada })
+      : base44.entities.ExtratoBancario.list('-data_movimento'),
   });
 
-  // Buscar ordens de liquidação
-  const { data: ordensLiquidacao = [] } = useQuery({
-    queryKey: ['caixa-ordens-liquidadas'],
-    queryFn: async () => {
-      const ordens = await base44.entities.CaixaOrdemLiquidacao.list();
-      return ordens.filter(o => o.status === "Liquidado");
-    }
+  const { data: conciliacoes = [] } = useQuery({
+    queryKey: ['conciliacoes-bancarias', empresaSelecionada],
+    queryFn: () => empresaSelecionada
+      ? base44.entities.ConciliacaoBancaria.filter({ empresa_id: empresaSelecionada })
+      : base44.entities.ConciliacaoBancaria.list('-created_date'),
+  });
+
+  const { data: movimentos = [] } = useQuery({
+    queryKey: ['caixa-movimentos', empresaSelecionada],
+    queryFn: () => empresaSelecionada
+      ? base44.entities.CaixaMovimento.filter({ empresa_id: empresaSelecionada })
+      : base44.entities.CaixaMovimento.list('-data_movimento'),
   });
 
   // Mutation para conciliar
@@ -100,110 +108,245 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
     }
   });
 
+  const extratosPendentes = extratos.filter(e => !e.conciliado);
+  const extratosConciliados = extratos.filter(e => e.conciliado);
+  const extratosComDivergencia = conciliacoes.filter(c => c.tem_divergencia && c.status !== 'resolvido');
+
   const content = (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             <Building2 className="w-6 h-6 text-blue-600" />
-            Conciliação Bancária
+            Conciliação Bancária Inteligente
           </h2>
           <p className="text-sm text-slate-600 mt-1">
-            Pareamento automático de extratos com movimentos do Caixa • ETAPA 4
+            Pareamento automático de extratos com movimentos do Caixa • ETAPA 4 + IA
           </p>
-        </div>
-        <div className="flex gap-2">
-          <Badge className="bg-orange-100 text-orange-800">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            {pagamentosOmnichannel.length} pendentes
-          </Badge>
-          <Badge className="bg-green-100 text-green-800">
-            <CheckCircle2 className="w-3 h-3 mr-1" />
-            Conciliados hoje: 0
-          </Badge>
         </div>
       </div>
 
-      {/* Filtros */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <p className="text-sm text-blue-700">Extratos Pendentes</p>
+            <p className="text-2xl font-bold text-blue-900">{extratosPendentes.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="p-4">
+            <p className="text-sm text-green-700">Conciliados</p>
+            <p className="text-2xl font-bold text-green-900">{extratosConciliados.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-orange-50 border-orange-200">
+          <CardContent className="p-4">
+            <p className="text-sm text-orange-700">Divergências</p>
+            <p className="text-2xl font-bold text-orange-900">{extratosComDivergencia.length}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-purple-50 border-purple-200">
+          <CardContent className="p-4">
+            <p className="text-sm text-purple-700">IA Ativada</p>
+            <p className="text-2xl font-bold text-purple-900">
+              <Sparkles className="w-6 h-6 inline" />
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Importar Extrato</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Input type="file" accept=".ofx,.cnab,.csv" />
+        <CardContent className="p-4">
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Label>Empresa</Label>
+              <Select value={empresaSelecionada} onValueChange={setEmpresaSelecionada}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as empresas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>Todas as empresas</SelectItem>
+                  {empresas.map(emp => (
+                    <SelectItem key={emp.id} value={emp.id}>
+                      {emp.nome_fantasia || emp.razao_social}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <Input type="date" placeholder="Data Início" />
-            </div>
-            <div>
-              <Input type="date" placeholder="Data Fim" />
+              <Label>&nbsp;</Label>
+              <Button variant="outline" className="w-full">
+                <Upload className="w-4 h-4 mr-2" />
+                Importar Extrato
+              </Button>
             </div>
           </div>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <FileText className="w-4 h-4 mr-2" />
-            Importar Extrato
-          </Button>
         </CardContent>
       </Card>
 
-      {/* Pagamentos Omnichannel Pendentes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Pagamentos Omnichannel Pendentes de Conciliação</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {pagamentosOmnichannel.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <CheckCircle2 className="w-12 h-12 mx-auto mb-3 text-green-500" />
-              <p>Todos os pagamentos estão conciliados</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {pagamentosOmnichannel.map(pag => (
-                <div 
-                  key={pag.id}
-                  className="flex items-center justify-between p-4 bg-orange-50 border border-orange-200 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline">{pag.origem_pagamento}</Badge>
-                      <Badge className="bg-orange-100 text-orange-800">
-                        {pag.forma_pagamento}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-slate-600">
-                      Cliente: {pag.cliente_nome} • 
-                      Gateway: {pag.gateway_utilizado} • 
-                      ID: {pag.id_transacao_gateway}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Transação: {new Date(pag.data_transacao).toLocaleString('pt-BR')}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-green-600">
-                      R$ {pag.valor_liquido.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Bruto: R$ {pag.valor_bruto.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={() => setMovimentoParaConciliar({...pag, tipo: 'pagamento_omnichannel', valor: pag.valor_liquido})}
-                    size="sm"
-                    className="ml-4"
-                  >
-                    <Link2 className="w-4 h-4 mr-1" />
-                    Conciliar
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <Tabs value={tabAtiva} onValueChange={setTabAtiva}>
+        <TabsList className="grid grid-cols-4 w-full">
+          <TabsTrigger value="pendentes">
+            Pendentes ({extratosPendentes.length})
+          </TabsTrigger>
+          <TabsTrigger value="conciliados">
+            Conciliados ({extratosConciliados.length})
+          </TabsTrigger>
+          <TabsTrigger value="divergencias">
+            Divergências ({extratosComDivergencia.length})
+          </TabsTrigger>
+          <TabsTrigger value="ia">
+            <Sparkles className="w-4 h-4 mr-1" />
+            IA Automática
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pendentes" className="mt-4">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {extratosPendentes.map(extrato => (
+                    <TableRow key={extrato.id}>
+                      <TableCell className="text-sm">
+                        {new Date(extrato.data_movimento || Date.now()).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="font-medium">{extrato.descricao || 'Sem descrição'}</TableCell>
+                      <TableCell className={extrato.tipo === 'entrada' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+                        {extrato.tipo === 'entrada' ? '+' : '-'} R$ {Math.abs(extrato.valor || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{extrato.tipo || 'N/A'}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="outline">
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          Conciliar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {extratosPendentes.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                        <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                        <p>Nenhum extrato pendente</p>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="conciliados" className="mt-4">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {extratosConciliados.map(extrato => (
+                    <TableRow key={extrato.id}>
+                      <TableCell className="text-sm">
+                        {new Date(extrato.data_movimento || Date.now()).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="font-medium">{extrato.descricao || 'Sem descrição'}</TableCell>
+                      <TableCell className="font-semibold">
+                        R$ {Math.abs(extrato.valor || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className="bg-green-100 text-green-700">
+                          <CheckCircle2 className="w-3 h-3 mr-1" />
+                          Conciliado
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {extratosConciliados.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8 text-slate-500">
+                        Nenhum extrato conciliado ainda
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="divergencias" className="mt-4">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Diferença</TableHead>
+                    <TableHead>Tipo Divergência</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {extratosComDivergencia.map(conc => (
+                    <TableRow key={conc.id}>
+                      <TableCell className="text-sm">
+                        {new Date(conc.data_conciliacao || Date.now()).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="font-medium">{conc.descricao || 'N/A'}</TableCell>
+                      <TableCell className="text-red-600 font-bold">
+                        R$ {Math.abs(conc.valor_diferenca || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className="bg-orange-100 text-orange-700">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          {conc.tipo_divergencia || 'Não identificado'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="outline">
+                          Resolver
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {extratosComDivergencia.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                        <CheckCircle2 className="w-12 h-12 mx-auto mb-2 text-green-500" />
+                        <p>Nenhuma divergência encontrada</p>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="ia" className="mt-4">
+          <ConciliacaoAutomaticaIA empresaId={empresaSelecionada} />
+        </TabsContent>
+      </Tabs>
 
       {/* Modal de Conciliação Manual */}
       {movimentoParaConciliar && (

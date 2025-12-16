@@ -7,9 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useWindow } from '@/components/lib/useWindow';
-import { Plus, Edit, Trash2, CreditCard, DollarSign, Zap, CheckCircle2, XCircle, ArrowUpDown, TrendingUp, AlertTriangle, BarChart3 } from 'lucide-react';
+import { Plus, Edit, Trash2, CreditCard, DollarSign, Zap, CheckCircle2, XCircle, ArrowUpDown, TrendingUp, AlertTriangle, BarChart3, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import FormaPagamentoFormCompleto from './FormaPagamentoFormCompleto';
+import GestorGatewaysPagamento from './GestorGatewaysPagamento';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
@@ -129,7 +130,7 @@ export default function GestorFormasPagamento({ windowMode = false }) {
       </Alert>
 
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-        <TabsList className="grid grid-cols-3 w-full bg-slate-100">
+        <TabsList className="grid grid-cols-4 w-full bg-slate-100">
           <TabsTrigger value="gestao">
             <CreditCard className="w-4 h-4 mr-2" />
             Gestão
@@ -137,6 +138,10 @@ export default function GestorFormasPagamento({ windowMode = false }) {
           <TabsTrigger value="analytics">
             <BarChart3 className="w-4 h-4 mr-2" />
             Analytics
+          </TabsTrigger>
+          <TabsTrigger value="gateways">
+            <Sparkles className="w-4 h-4 mr-2" />
+            Gateways
           </TabsTrigger>
           <TabsTrigger value="integracao">
             <Zap className="w-4 h-4 mr-2" />
@@ -482,6 +487,11 @@ export default function GestorFormasPagamento({ windowMode = false }) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ABA: GATEWAYS */}
+        <TabsContent value="gateways" className="space-y-6 mt-6">
+          <GestorGatewaysPagamento windowMode={false} />
         </TabsContent>
 
         {/* ABA: INTEGRAÇÃO */}
