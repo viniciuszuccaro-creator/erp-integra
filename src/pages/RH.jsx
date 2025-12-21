@@ -382,9 +382,29 @@ export default function RH() {
                   </ProtectedAction>
                 </div>
 
+                {selectedFerias.length > 0 && (
+                  <Alert className="border-blue-300 bg-blue-50">
+                    <AlertDescription className="flex items-center justify-between">
+                      <div className="text-blue-900 font-semibold">{selectedFerias.length} solicitação(ões) selecionada(s)</div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => exportarFeriasCSV(ferias.filter(f => selectedFerias.includes(f.id)))}>
+                          <Download className="w-4 h-4 mr-2" /> Exportar CSV
+                        </Button>
+                        <Button variant="ghost" onClick={() => setSelectedFerias([])}>Limpar Seleção</Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={selectedFerias.length === ferias.length && ferias.length > 0}
+                          onCheckedChange={(checked) => toggleAllFerias(checked, ferias)}
+                        />
+                      </TableHead>
                       <TableHead>Colaborador</TableHead>
                       <TableHead>Período</TableHead>
                       <TableHead>Dias</TableHead>
@@ -395,6 +415,12 @@ export default function RH() {
                   <TableBody>
                     {ferias.map((feria) => (
                       <TableRow key={feria.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedFerias.includes(feria.id)}
+                            onCheckedChange={() => toggleFerias(feria.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{feria.colaborador_nome}</TableCell>
                         <TableCell>
                           {new Date(feria.data_inicio).toLocaleDateString('pt-BR')} - {new Date(feria.data_fim).toLocaleDateString('pt-BR')}

@@ -113,6 +113,42 @@ export default function Expedicao() {
     URL.revokeObjectURL(url);
   };
 
+  // Seleção em massa de romaneios e rotas + export
+  const [selectedRomaneios, setSelectedRomaneios] = useState([]);
+  const [selectedRotas, setSelectedRotas] = useState([]);
+  const toggleRomaneio = (id) => setSelectedRomaneios(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllRomaneios = (checked, lista) => setSelectedRomaneios(checked ? lista.map(r => r.id) : []);
+  const toggleRota = (id) => setSelectedRotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllRotas = (checked, lista) => setSelectedRotas(checked ? lista.map(r => r.id) : []);
+  const exportarRomaneiosCSV = (lista) => {
+    const headers = ['numero_romaneio','data_romaneio','motorista','veiculo','empresa_id','quantidade_entregas','peso_total_kg','status'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(r => headers.map(h => JSON.stringify((r[h] ?? '') || '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `romaneios_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  const exportarRotasCSV = (lista) => {
+    const headers = ['nome_rota','data_rota','motorista','empresa_id','pontos_entrega.length','distancia_total_km','tempo_total_previsto_minutos','status'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(r => headers.map(h => JSON.stringify((h.includes('pontos_entrega') ? (r.pontos_entrega?.length || 0) : (r[h] ?? '')))).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rotas_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -1112,6 +1148,12 @@ export default function Expedicao() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50">
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={selectedRomaneios.length === romaneiosFiltrados.length && romaneiosFiltrados.length > 0}
+                          onCheckedChange={(checked) => toggleAllRomaneios(checked, romaneiosFiltrados)}
+                        />
+                      </TableHead>
                       <TableHead>Número</TableHead>
                       <TableHead>Data</TableHead>
                       <TableHead>Motorista</TableHead>
@@ -1126,6 +1168,12 @@ export default function Expedicao() {
                   <TableBody>
                     {romaneiosFiltrados.map(rom => (
                       <TableRow key={rom.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedRomaneios.includes(rom.id)}
+                            onCheckedChange={() => toggleRomaneio(rom.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{rom.numero_romaneio}</TableCell>
                         <TableCell>{new Date(rom.data_romaneio).toLocaleDateString('pt-BR')}</TableCell>
                         <TableCell>{rom.motorista}</TableCell>
@@ -1184,6 +1232,12 @@ export default function Expedicao() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50">
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={selectedRotas.length === rotasFiltradas.length && rotasFiltradas.length > 0}
+                          onCheckedChange={(checked) => toggleAllRotas(checked, rotasFiltradas)}
+                        />
+                      </TableHead>
                       <TableHead>Nome</TableHead>
                       <TableHead>Data</TableHead>
                       <TableHead>Motorista</TableHead>
@@ -1198,6 +1252,12 @@ export default function Expedicao() {
                   <TableBody>
                     {rotasFiltradas.map(rota => (
                       <TableRow key={rota.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedRotas.includes(rota.id)}
+                            onCheckedChange={() => toggleRota(rota.id)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium">{rota.nome_rota}</TableCell>
                         <TableCell>{new Date(rota.data_rota).toLocaleDateString('pt-BR')}</TableCell>
                         <TableCell>{rota.motorista || '-'}</TableCell>
