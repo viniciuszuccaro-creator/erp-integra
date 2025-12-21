@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea"; // Added Textarea
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -40,6 +42,24 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedNF, setSelectedNF] = useState(null);
   const [viewingDetails, setViewingDetails] = useState(null);
+  // Seleção em massa + exportação
+  const [selectedNotas, setSelectedNotas] = useState([]);
+  const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
+  const exportarNotasCSV = (lista) => {
+    const headers = ['numero','serie','tipo','cliente_fornecedor','empresa_id','data_emissao','valor_total','status'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(n => headers.map(h => JSON.stringify(n[h] ?? '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `notas_fiscais_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -400,6 +420,19 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
           <CardTitle>Notas Fiscais Emitidas</CardTitle>
         </CardHeader>
         <CardContent>
+          {selectedNotas.length > 0 && (
+            <Alert className="mb-3 border-blue-300 bg-blue-50">
+              <AlertDescription className="flex items-center justify-between">
+                <div className="text-blue-900 font-semibold">{selectedNotas.length} NF selecionada(s)</div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => exportarNotasCSV(filteredNotas.filter(n => selectedNotas.includes(n.id)))}>
+                    <Download className="w-4 h-4 mr-2" /> Exportar CSV
+                  </Button>
+                  <Button variant="ghost" onClick={() => setSelectedNotas([])}>Limpar Seleção</Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -417,6 +450,12 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
               <TableBody>
                 {filteredNotas.map((nota) => (
                   <TableRow key={nota.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedNotas.includes(nota.id)}
+                        onCheckedChange={() => toggleNota(nota.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{nota.numero}</TableCell>
                     <TableCell>{nota.serie}</TableCell>
                     <TableCell>{nota.tipo}</TableCell> {/* Display Type */}

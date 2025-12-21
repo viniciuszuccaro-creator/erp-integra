@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import BadgeOrigemPedido from "./BadgeOrigemPedido";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Plus, 
   Edit2, 
@@ -39,6 +40,25 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow, closeWindow } = useWindow();
+
+  // Seleção em massa + exportação
+  const [selectedPedidos, setSelectedPedidos] = useState([]);
+  const togglePedido = (id) => setSelectedPedidos(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllPedidos = (checked, lista) => setSelectedPedidos(checked ? lista.map(p => p.id) : []);
+  const exportarPedidosCSV = (lista) => {
+    const headers = ['numero_pedido','cliente_nome','empresa_id','data_pedido','valor_total','status','status_aprovacao'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(p => headers.map(h => JSON.stringify(p[h] ?? '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pedidos_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Pedido.delete(id),
@@ -168,6 +188,19 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
           <CardTitle>Lista de Pedidos ({filteredPedidos.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          {selectedPedidos.length > 0 && (
+            <Alert className="m-4 border-blue-300 bg-blue-50">
+              <AlertDescription className="flex items-center justify-between">
+                <div className="text-blue-900 font-semibold">{selectedPedidos.length} pedido(s) selecionado(s)</div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => exportarPedidosCSV(filteredPedidos.filter(p => selectedPedidos.includes(p.id)))}>
+                    <Download className="w-4 h-4 mr-2" /> Exportar CSV
+                  </Button>
+                  <Button variant="ghost" onClick={() => setSelectedPedidos([])}>Limpar Seleção</Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -185,6 +218,12 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
               <TableBody>
                 {filteredPedidos.map((pedido) => (
                   <TableRow key={pedido.id} className="hover:bg-slate-50">
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedPedidos.includes(pedido.id)}
+                        onCheckedChange={() => togglePedido(pedido.id)}
+                      />
+                    </TableCell>
                     <TableCell className="font-semibold">{pedido.numero_pedido}</TableCell>
                     <TableCell>{pedido.cliente_nome}</TableCell>
                     <TableCell className="text-sm">

@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Plus, 
   FileText, 
@@ -29,6 +31,24 @@ export default function SolicitacoesCompraTab({ solicitacoes }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const { openWindow } = useWindow();
+  // Seleção em massa + exportação
+  const [selectedSolicitacoes, setSelectedSolicitacoes] = useState([]);
+  const toggleSolicitacao = (id) => setSelectedSolicitacoes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllSolicitacoes = (checked, lista) => setSelectedSolicitacoes(checked ? lista.map(s => s.id) : []);
+  const exportarSolicitacoesCSV = (lista) => {
+    const headers = ['numero_solicitacao','produto_descricao','quantidade_solicitada','unidade_medida','solicitante','data_solicitacao','prioridade','status'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(s => headers.map(h => JSON.stringify(s[h] ?? '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `solicitacoes_compra_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const [formData, setFormData] = useState({
     numero_solicitacao: `SC-${Date.now()}`,
     data_solicitacao: new Date().toISOString().split('T')[0],
@@ -449,6 +469,19 @@ Retorne JSON com:
           <CardTitle>Lista de Solicitações ({solicitacoes.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          {selectedSolicitacoes.length > 0 && (
+            <Alert className="m-4 border-blue-300 bg-blue-50">
+              <AlertDescription className="flex items-center justify-between">
+                <div className="text-blue-900 font-semibold">{selectedSolicitacoes.length} solicita e7 e3o(ões) selecionada(s)</div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => exportarSolicitacoesCSV(solicitacoes.filter(s => selectedSolicitacoes.includes(s.id)))}>
+                    <Download className="w-4 h-4 mr-2" /> Exportar CSV
+                  </Button>
+                  <Button variant="ghost" onClick={() => setSelectedSolicitacoes([])}>Limpar Seleção</Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
@@ -465,7 +498,13 @@ Retorne JSON com:
             <TableBody>
               {solicitacoes.map((sol) => (
                 <TableRow key={sol.id}>
-                  <TableCell className="font-medium">{sol.numero_solicitacao}</TableCell>
+                  <TableCell>
+                  <Checkbox
+                    checked={selectedSolicitacoes.includes(sol.id)}
+                    onCheckedChange={() => toggleSolicitacao(sol.id)}
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{sol.numero_solicitacao}</TableCell>
                   <TableCell>{sol.produto_descricao}</TableCell>
                   <TableCell>
                     {sol.quantidade_solicitada} {sol.unidade_medida}

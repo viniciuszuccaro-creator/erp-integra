@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight } from "lucide-react";
+import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import SearchInput from "@/components/ui/SearchInput";
 import SolicitarCompraRapidoModal from "../compras/SolicitarCompraRapidoModal";
@@ -26,6 +28,25 @@ export default function ProdutosTab({ produtos, isLoading }) {
   const [editingProduto, setEditingProduto] = useState(null);
   const [solicitacaoModal, setSolicitacaoModal] = useState(null);
   const { openWindow } = useWindow();
+
+  // Seleção em massa + exportação
+  const [selectedProdutos, setSelectedProdutos] = useState([]);
+  const toggleProduto = (id) => setSelectedProdutos(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllProdutos = (checked, lista) => setSelectedProdutos(checked ? lista.map(p => p.id) : []);
+  const exportarProdutosCSV = (lista) => {
+    const headers = ['codigo','descricao','grupo','unidade_medida','estoque_atual','estoque_disponivel','estoque_minimo','preco_venda','status'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(p => headers.map(h => JSON.stringify((p[h] ?? '')).toString()).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `produtos_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const [formData, setFormData] = useState({
     codigo: "",
     descricao: "",
@@ -320,6 +341,19 @@ export default function ProdutosTab({ produtos, isLoading }) {
           <CardTitle>Lista de Produtos ({filteredProdutos.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          {selectedProdutos.length > 0 && (
+            <Alert className="m-4 border-blue-300 bg-blue-50">
+              <AlertDescription className="flex items-center justify-between">
+                <div className="text-blue-900 font-semibold">{selectedProdutos.length} produto(s) selecionado(s)</div>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => exportarProdutosCSV(filteredProdutos.filter(p => selectedProdutos.includes(p.id)))}>
+                    <Download className="w-4 h-4 mr-2" /> Exportar CSV
+                  </Button>
+                  <Button variant="ghost" onClick={() => setSelectedProdutos([])}>Limpar Seleção</Button>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -345,6 +379,12 @@ export default function ProdutosTab({ produtos, isLoading }) {
                   
                   return (
                     <TableRow key={produto.id} className={`hover:bg-slate-50 ${estoqueBaixo ? 'bg-red-50/50' : ''}`}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedProdutos.includes(produto.id)}
+                          onCheckedChange={() => toggleProduto(produto.id)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{produto.codigo}</TableCell>
                       <TableCell>
                         <div>

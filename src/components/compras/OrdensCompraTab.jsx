@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Edit, CheckCircle2, Send, Star, Printer, Eye } from "lucide-react";
+import { Plus, Search, Edit, CheckCircle2, Send, Star, Printer, Eye, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
@@ -27,6 +29,24 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const [isAvaliacaoDialogOpen, setIsAvaliacaoDialogOpen] = useState(false);
   const [ocSelecionada, setOcSelecionada] = useState(null);
   const [isRecebimentoDialogOpen, setIsRecebimentoDialogOpen] = useState(false);
+  // Seleção em massa + exportação
+  const [selectedOCs, setSelectedOCs] = useState([]);
+  const toggleOC = (id) => setSelectedOCs(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllOCs = (checked, lista) => setSelectedOCs(checked ? lista.map(o => o.id) : []);
+  const exportarOCsCSV = (lista) => {
+    const headers = ['numero_oc','fornecedor_nome','empresa_id','data_solicitacao','valor_total','status','lead_time_real'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(o => headers.map(h => JSON.stringify(o[h] ?? '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ordens_compra_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const [formData, setFormData] = useState({
     numero_oc: "",
@@ -565,6 +585,19 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       </div>
 
       <Card className="border-0 shadow-md">
+        {selectedOCs.length > 0 && (
+          <Alert className="m-4 border-blue-300 bg-blue-50">
+            <AlertDescription className="flex items-center justify-between">
+              <div className="text-blue-900 font-semibold">{selectedOCs.length} OC selecionada(s)</div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => exportarOCsCSV(filteredOCs.filter(o => selectedOCs.includes(o.id)))}>
+                  <Download className="w-4 h-4 mr-2" /> Exportar CSV
+                </Button>
+                <Button variant="ghost" onClick={() => setSelectedOCs([])}>Limpar Seleção</Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -581,7 +614,13 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             <TableBody>
               {filteredOCs.map((oc) => (
                 <TableRow key={oc.id} className="hover:bg-slate-50">
-                  <TableCell className="font-medium">{oc.numero_oc}</TableCell>
+                  <TableCell>
+                  <Checkbox
+                    checked={selectedOCs.includes(oc.id)}
+                    onCheckedChange={() => toggleOC(oc.id)}
+                  />
+                </TableCell>
+                <TableCell className="font-medium">{oc.numero_oc}</TableCell>
                   <TableCell>{oc.fornecedor_nome}</TableCell>
                   <TableCell>{new Date(oc.data_solicitacao).toLocaleDateString('pt-BR')}</TableCell>
                   <TableCell className="font-semibold">
