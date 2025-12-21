@@ -38,6 +38,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
@@ -92,6 +94,24 @@ export default function Expedicao() {
   const [assinaturaModal, setAssinaturaModal] = useState(null);
   const [seletorEnderecoOpen, setSeletorEnderecoOpen] = useState(false);
   const [clienteParaEndereco, setClienteParaEndereco] = useState(null);
+  // Seleção em massa de entregas
+  const [selectedEntregas, setSelectedEntregas] = useState([]);
+  const toggleEntrega = (id) => setSelectedEntregas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllEntregas = (checked, lista) => setSelectedEntregas(checked ? lista.map(e => e.id) : []);
+  const exportarEntregasCSV = (lista) => {
+    const headers = ['numero_pedido','cliente_nome','empresa_id','status','data_previsao','prioridade'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(e => headers.map(h => JSON.stringify((e[h] ?? '') || '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `entregas_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -777,10 +797,31 @@ export default function Expedicao() {
                 <CardTitle>Lista de Entregas</CardTitle>
               </CardHeader>
               <CardContent>
+                {selectedEntregas.length > 0 && (
+                   <Alert className="mb-3 border-blue-300 bg-blue-50">
+                     <AlertDescription className="flex items-center justify-between">
+                       <div>
+                         <p className="font-semibold text-blue-900">{selectedEntregas.length} entrega(s) selecionada(s)</p>
+                       </div>
+                       <div className="flex gap-2">
+                         <Button variant="outline" onClick={() => exportarEntregasCSV(entregasFiltradas.filter(e => selectedEntregas.includes(e.id)))}>
+                           <Download className="w-4 h-4 mr-2" /> Exportar CSV
+                         </Button>
+                         <Button variant="ghost" onClick={() => setSelectedEntregas([])}>Limpar Seleção</Button>
+                       </div>
+                     </AlertDescription>
+                   </Alert>
+                 )}
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-slate-50">
+                        <TableHead className="w-10">
+                          <Checkbox
+                            checked={selectedEntregas.length === filteredEntregas.length && filteredEntregas.length > 0}
+                            onCheckedChange={(checked) => toggleAllEntregas(checked, filteredEntregas)}
+                          />
+                        </TableHead>
                         <TableHead>Pedido</TableHead>
                         <TableHead>Cliente</TableHead>
                         {estaNoGrupo && <TableHead>Empresa</TableHead>}
@@ -803,6 +844,12 @@ export default function Expedicao() {
 
                         return (
                           <TableRow key={entrega.id} className="hover:bg-slate-50">
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedEntregas.includes(entrega.id)}
+                                onCheckedChange={() => toggleEntrega(entrega.id)}
+                              />
+                            </TableCell>
                             <TableCell className="font-medium">{entrega.numero_pedido || '-'}</TableCell>
                             <TableCell>
                               {cliente ? (

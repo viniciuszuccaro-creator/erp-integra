@@ -28,6 +28,8 @@ import {
   Activity
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +51,23 @@ import DashboardRHRealtime from "../components/rh/DashboardRHRealtime";
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
   const [search, setSearch] = useState("");
+  const [selectedColaboradores, setSelectedColaboradores] = useState([]);
+  const toggleColab = (id) => setSelectedColaboradores(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const limparSelecaoColab = () => setSelectedColaboradores([]);
+  const exportarColaboradoresCSV = (lista) => {
+    const headers = ['nome_completo','email','cargo','departamento','status'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(c => headers.map(h => JSON.stringify(c[h] ?? '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `colaboradores_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
 
   const { toast } = useToast();
@@ -240,12 +259,32 @@ export default function RH() {
                   </CardContent>
                 </Card>
 
+                {selectedColaboradores.length > 0 && (
+                  <Alert className="border-blue-300 bg-blue-50">
+                    <AlertDescription className="flex items-center justify-between">
+                      <div className="text-blue-900 font-semibold">{selectedColaboradores.length} colaborador(es) selecionado(s)</div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => exportarColaboradoresCSV(filteredColaboradores.filter(c => selectedColaboradores.includes(c.id)))}>
+                          <Download className="w-4 h-4 mr-2" /> Exportar CSV
+                        </Button>
+                        <Button variant="ghost" onClick={limparSelecaoColab}>Limpar Seleção</Button>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {loadingColaboradores ? (
                   <div className="text-center py-12">Carregando...</div>
                 ) : (
                   <div className="grid gap-4">
                     {filteredColaboradores.map((colaborador) => (
                       <Card key={colaborador.id} className="hover:shadow-md transition-shadow">
+                        <div className="p-2">
+                          <Checkbox
+                            checked={selectedColaboradores.includes(colaborador.id)}
+                            onCheckedChange={() => toggleColab(colaborador.id)}
+                          />
+                        </div>
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between">
                             <div className="flex items-start gap-4 flex-1">

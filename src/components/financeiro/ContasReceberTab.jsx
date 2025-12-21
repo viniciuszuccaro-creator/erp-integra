@@ -699,6 +699,31 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       <Card className="border-0 shadow-sm">
         <CardContent className="p-4">
           <div className="flex flex-wrap items-center gap-3">
+           {/* Exportar CSV */}
+           <ProtectedAction permission="financeiro_receber_exportar">
+             <Button
+               variant="outline"
+               onClick={() => {
+                 const itens = (contasSelecionadas.length > 0)
+                   ? contas.filter(c => contasSelecionadas.includes(c.id))
+                   : filteredContas;
+                 const headers = ['cliente','descricao','numero_documento','empresa_id','data_vencimento','valor','status'];
+                 const csv = [
+                   headers.join(','),
+                   ...itens.map(c => headers.map(h => JSON.stringify(c[h] ?? '')).join(','))
+                 ].join('\n');
+                 const blob = new Blob([csv], { type: 'text/csv' });
+                 const url = URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.href = url;
+                 a.download = `contas_receber_${new Date().toISOString().slice(0,10)}.csv`;
+                 a.click();
+                 URL.revokeObjectURL(url);
+               }}
+             >
+               <Download className="w-4 h-4 mr-2" /> Exportar CSV
+             </Button>
+           </ProtectedAction>
             <Input
               placeholder="Buscar por cliente, descrição, nº documento..."
               value={searchTerm}
