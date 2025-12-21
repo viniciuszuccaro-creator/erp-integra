@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
 
 /**
  * V21.7 - VISUALIZADOR UNIVERSAL DE ENTIDADES - REAL-TIME + ORGANIZAÇÃO AVANÇADA
@@ -108,6 +109,19 @@ export default function VisualizadorUniversalEntidade({
   const [selectedIds, setSelectedIds] = useState(new Set());
   const { openWindow } = useWindow();
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
+  const moduloPermissao = React.useMemo(() => {
+    const estoque = ['Produto','UnidadeMedida','LocalEstoque','GrupoProduto','Marca'];
+    const financeiro = ['Banco','FormaPagamento','PlanoDeContas','CentroCusto','CentroResultado','TipoDespesa','MoedaIndice','CondicaoComercial','TabelaFiscal'];
+    const expedicao = ['Transportadora','Veiculo','Motorista','TipoFrete','RotaPadrao','ModeloDocumento'];
+    const rh = ['Colaborador','Departamento','Cargo','Turno'];
+    if (estoque.includes(nomeEntidade)) return 'estoque';
+    if (financeiro.includes(nomeEntidade)) return 'financeiro';
+    if (expedicao.includes(nomeEntidade)) return 'expedicao';
+    if (rh.includes(nomeEntidade)) return 'rh';
+    return 'cadastros';
+  }, [nomeEntidade]);
 
   // Obter opções de ordenação específicas da entidade
   const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
@@ -397,7 +411,7 @@ export default function VisualizadorUniversalEntidade({
                 variant="outline"
                 size="sm"
                 onClick={excluirSelecionados}
-                disabled={selectedIds.size === 0}
+                disabled={selectedIds.size === 0 || !hasPermission(moduloPermissao, 'deletar')}
                 className="border-red-300 text-red-700"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
