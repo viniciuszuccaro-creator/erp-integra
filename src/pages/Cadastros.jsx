@@ -184,6 +184,29 @@ export default function Cadastros() {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
 
+  // Exclusão em massa
+  const handleDeleteClientesSelecionados = async () => {
+    if (selectedClientes.size === 0) return;
+    await Promise.all(Array.from(selectedClientes).map(id => base44.entities.Cliente.delete(id)));
+    setSelectedClientes(new Set());
+    queryClient.invalidateQueries({ queryKey: ['clientes'] });
+    toast({ title: '🗑️ Clientes excluídos' });
+  };
+  const handleDeleteFornecedoresSelecionados = async () => {
+    if (selectedFornecedores.size === 0) return;
+    await Promise.all(Array.from(selectedFornecedores).map(id => base44.entities.Fornecedor.delete(id)));
+    setSelectedFornecedores(new Set());
+    queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
+    toast({ title: '🗑️ Fornecedores excluídos' });
+  };
+  const handleDeleteProdutosSelecionados = async () => {
+    if (selectedProdutos.size === 0) return;
+    await Promise.all(Array.from(selectedProdutos).map(id => base44.entities.Produto.delete(id)));
+    setSelectedProdutos(new Set());
+    queryClient.invalidateQueries({ queryKey: ['produtos'] });
+    toast({ title: '🗑️ Produtos excluídos' });
+  };
+
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
