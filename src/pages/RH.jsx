@@ -25,8 +25,9 @@ import {
   Mail,
   Phone,
   ExternalLink,
-  Activity
-} from "lucide-react";
+  Activity,
+  Download
+  } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -65,6 +66,25 @@ export default function RH() {
     const a = document.createElement('a');
     a.href = url;
     a.download = `colaboradores_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Seleção e exportação de férias
+  const [selectedFerias, setSelectedFerias] = useState([]);
+  const toggleFerias = (id) => setSelectedFerias(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllFerias = (checked, lista) => setSelectedFerias(checked ? lista.map(f => f.id) : []);
+  const exportarFeriasCSV = (lista) => {
+    const headers = ['colaborador_nome','data_inicio','data_fim','dias_solicitados','status'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(f => headers.map(h => JSON.stringify(f[h] ?? '')).join('\n'))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ferias_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
