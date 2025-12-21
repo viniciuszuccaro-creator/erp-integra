@@ -1,61 +1,63 @@
-import Dashboard from './pages/Dashboard';
+import Agenda from './pages/Agenda';
+import CRM from './pages/CRM';
+import Cadastros from './pages/Cadastros';
+import ChatbotAtendimento from './pages/ChatbotAtendimento';
 import Comercial from './pages/Comercial';
+import Compras from './pages/Compras';
+import ConfiguracoesSistema from './pages/ConfiguracoesSistema';
+import ConfiguracoesUsuario from './pages/ConfiguracoesUsuario';
+import Contratos from './pages/Contratos';
+import Dashboard from './pages/Dashboard';
+import DashboardCorporativo from './pages/DashboardCorporativo';
+import DemoMultitarefas from './pages/DemoMultitarefas';
+import Documentacao from './pages/Documentacao';
+import Empresas from './pages/Empresas';
+import Estoque from './pages/Estoque';
 import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
-import Compras from './pages/Compras';
-import RH from './pages/RH';
-import Estoque from './pages/Estoque';
 import Fiscal from './pages/Fiscal';
-import CRM from './pages/CRM';
-import Agenda from './pages/Agenda';
-import Relatorios from './pages/Relatorios';
-import ConfiguracoesUsuario from './pages/ConfiguracoesUsuario';
-import ConfiguracoesSistema from './pages/ConfiguracoesSistema';
-import Contratos from './pages/Contratos';
-import Producao from './pages/Producao';
-import Empresas from './pages/Empresas';
-import DashboardCorporativo from './pages/DashboardCorporativo';
-import ProducaoMobile from './pages/ProducaoMobile';
-import PortalCliente from './pages/PortalCliente';
-import Documentacao from './pages/Documentacao';
-import Seguranca from './pages/Seguranca';
-import ChatbotAtendimento from './pages/ChatbotAtendimento';
-import DemoMultitarefas from './pages/DemoMultitarefas';
-import Cadastros from './pages/Cadastros';
-import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
-import HubAtendimento from './pages/HubAtendimento';
 import GerenciamentoAcessosCompleto from './pages/GerenciamentoAcessosCompleto';
+import Home from './pages/Home';
+import HubAtendimento from './pages/HubAtendimento';
+import PortalCliente from './pages/PortalCliente';
+import Producao from './pages/Producao';
+import ProducaoMobile from './pages/ProducaoMobile';
+import RH from './pages/RH';
+import Relatorios from './pages/Relatorios';
+import Seguranca from './pages/Seguranca';
+import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
+    "Agenda": Agenda,
+    "CRM": CRM,
+    "Cadastros": Cadastros,
+    "ChatbotAtendimento": ChatbotAtendimento,
     "Comercial": Comercial,
+    "Compras": Compras,
+    "ConfiguracoesSistema": ConfiguracoesSistema,
+    "ConfiguracoesUsuario": ConfiguracoesUsuario,
+    "Contratos": Contratos,
+    "Dashboard": Dashboard,
+    "DashboardCorporativo": DashboardCorporativo,
+    "DemoMultitarefas": DemoMultitarefas,
+    "Documentacao": Documentacao,
+    "Empresas": Empresas,
+    "Estoque": Estoque,
     "Expedicao": Expedicao,
     "Financeiro": Financeiro,
-    "Compras": Compras,
-    "RH": RH,
-    "Estoque": Estoque,
     "Fiscal": Fiscal,
-    "CRM": CRM,
-    "Agenda": Agenda,
-    "Relatorios": Relatorios,
-    "ConfiguracoesUsuario": ConfiguracoesUsuario,
-    "ConfiguracoesSistema": ConfiguracoesSistema,
-    "Contratos": Contratos,
-    "Producao": Producao,
-    "Empresas": Empresas,
-    "DashboardCorporativo": DashboardCorporativo,
-    "ProducaoMobile": ProducaoMobile,
-    "PortalCliente": PortalCliente,
-    "Documentacao": Documentacao,
-    "Seguranca": Seguranca,
-    "ChatbotAtendimento": ChatbotAtendimento,
-    "DemoMultitarefas": DemoMultitarefas,
-    "Cadastros": Cadastros,
-    "ValidadorEtapas24Final": ValidadorEtapas24Final,
-    "HubAtendimento": HubAtendimento,
     "GerenciamentoAcessosCompleto": GerenciamentoAcessosCompleto,
+    "Home": Home,
+    "HubAtendimento": HubAtendimento,
+    "PortalCliente": PortalCliente,
+    "Producao": Producao,
+    "ProducaoMobile": ProducaoMobile,
+    "RH": RH,
+    "Relatorios": Relatorios,
+    "Seguranca": Seguranca,
+    "ValidadorEtapas24Final": ValidadorEtapas24Final,
 }
 
 export const pagesConfig = {

@@ -56,6 +56,7 @@ import CadastroClienteCompleto from "../components/cadastros/CadastroClienteComp
 import CadastroFornecedorCompleto from "../components/cadastros/CadastroFornecedorCompleto";
 import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
 import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
+import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoProduto";
 import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
 import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
 import CentralPerfisAcesso from "../components/sistema/CentralPerfisAcesso";
