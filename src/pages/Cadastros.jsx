@@ -173,10 +173,6 @@ export default function Cadastros() {
   const [selectedFornecedores, setSelectedFornecedores] = useState(new Set());
   const [selectedProdutos, setSelectedProdutos] = useState(new Set());
 
-  const allSelectedClientes = clientesFiltrados.length > 0 && selectedClientes.size === clientesFiltrados.length;
-  const allSelectedFornecedores = fornecedoresFiltrados.length > 0 && selectedFornecedores.size === fornecedoresFiltrados.length;
-  const allSelectedProdutos = produtosFiltrados.length > 0 && selectedProdutos.size === produtosFiltrados.length;
-
   // FASE 1 DEFINITIVO-100%: ZERO estados de dialog - TUDO é window
 
   const queryClient = useQueryClient();
@@ -517,6 +513,11 @@ export default function Cadastros() {
   const produtosFiltrados = filtrarPorBusca(produtos, ['descricao', 'codigo']);
   const colaboradoresFiltrados = filtrarPorBusca(colaboradores, ['nome_completo', 'cpf']);
   const transportadorasFiltradas = filtrarPorBusca(transportadoras, ['razao_social', 'cnpj']);
+
+  // Seleção total calculada após filtros
+  const allSelectedClientes = clientesFiltrados.length > 0 && selectedClientes.size === clientesFiltrados.length;
+  const allSelectedFornecedores = fornecedoresFiltrados.length > 0 && selectedFornecedores.size === fornecedoresFiltrados.length;
+  const allSelectedProdutos = produtosFiltrados.length > 0 && selectedProdutos.size === produtosFiltrados.length;
 
   const statusColors = {
     'Ativo': 'bg-green-100 text-green-700 border-green-300',
