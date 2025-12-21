@@ -396,6 +396,7 @@ export default function VisualizadorUniversalEntidade({
                 variant="outline"
                 size="sm"
                 onClick={exportarDados}
+                disabled={!hasPermission(moduloPermissao, 'exportar')}
               >
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
@@ -537,6 +538,7 @@ export default function VisualizadorUniversalEntidade({
                               size="sm"
                               onClick={() => abrirEdicao(item)}
                               className="flex-1"
+                              disabled={!hasPermission(moduloPermissao, 'editar')}
                             >
                               <Edit2 className="w-3 h-3 mr-1" />
                               Editar
@@ -603,6 +605,7 @@ export default function VisualizadorUniversalEntidade({
                               <Button
                                 size="sm"
                                 onClick={() => abrirEdicao(item)}
+                                disabled={!hasPermission(moduloPermissao, 'editar')}
                               >
                                 <Edit2 className="w-4 h-4" />
                               </Button>
