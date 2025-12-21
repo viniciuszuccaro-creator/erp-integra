@@ -105,6 +105,7 @@ export default function VisualizadorUniversalEntidade({
   const [visualizacao, setVisualizacao] = useState('grid');
   const [expandidos, setExpandidos] = useState({});
   const [ordenacao, setOrdenacao] = useState('recent');
+  const [selectedIds, setSelectedIds] = useState(new Set());
   const { openWindow } = useWindow();
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
 
@@ -157,6 +158,26 @@ export default function VisualizadorUniversalEntidade({
 
     return resultado;
   }, [dadosFiltrados, busca, ordenacao, opcoesOrdenacao]);
+
+  // Seleção em massa + exclusão
+  const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
+  const toggleSelectAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(dadosBuscadosEOrdenados.map(i => i.id)));
+  };
+  const toggleItem = (id) => {
+    setSelectedIds(prev => {
+      const ns = new Set(prev);
+      if (ns.has(id)) ns.delete(id); else ns.add(id);
+      return ns;
+    });
+  };
+  const excluirSelecionados = async () => {
+    if (selectedIds.size === 0) return;
+    await Promise.all(Array.from(selectedIds).map(id => base44.entities[nomeEntidade].delete(id)));
+    setSelectedIds(new Set());
+    refetch();
+  };
 
   // Determinar campos a exibir
   const camposExibicao = camposPrincipais.length > 0 
@@ -365,6 +386,23 @@ export default function VisualizadorUniversalEntidade({
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
               </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleSelectAll}
+              >
+                {allSelected ? 'Limpar Seleção' : 'Selecionar Todos'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={excluirSelecionados}
+                disabled={selectedIds.size === 0}
+                className="border-red-300 text-red-700"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir Selecionados
+              </Button>
             </div>
           </div>
 
@@ -444,6 +482,14 @@ export default function VisualizadorUniversalEntidade({
                   {dadosBuscadosEOrdenados.map((item) => (
                     <Card key={item.id} className="border-2 hover:border-blue-400 transition-all hover:shadow-lg">
                       <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={selectedIds.has(item.id)}
+                            onChange={() => toggleItem(item.id)}
+                          />
+                        </div>
                         <div className="space-y-2">
                           {camposExibicao.slice(0, 3).map((campo) => {
                             const valor = item[campo];
@@ -496,6 +542,12 @@ export default function VisualizadorUniversalEntidade({
                     <Card key={item.id} className="border hover:border-blue-400 transition-all">
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
+                          <input
+                            type="checkbox"
+                            className="mr-3 h-4 w-4"
+                            checked={selectedIds.has(item.id)}
+                            onChange={() => toggleItem(item.id)}
+                          />
                           <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
                             {camposExibicao.slice(0, 4).map((campo) => {
                               const valor = item[campo];
