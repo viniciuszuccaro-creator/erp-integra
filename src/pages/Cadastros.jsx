@@ -1353,19 +1353,22 @@ export default function Cadastros() {
                           <Package className="w-5 h-5 text-purple-600" />
                           Produtos ({produtos.length})
                         </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
-                            title: 'Novo Produto',
-                            width: 1200,
-                            height: 700
-                          })}
-                          className="bg-purple-600 hover:bg-purple-700"
-                          disabled={!hasPermission('estoque', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <BotoesImportacaoProduto onProdutosCriados={() => queryClient.invalidateQueries({ queryKey: ['produtos'] })} />
+                          <Button
+                            size="sm"
+                            onClick={() => openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
+                              title: 'Novo Produto',
+                              width: 1200,
+                              height: 700
+                            })}
+                            className="bg-purple-600 hover:bg-purple-700"
+                            disabled={!hasPermission('estoque', 'criar')}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Novo
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
