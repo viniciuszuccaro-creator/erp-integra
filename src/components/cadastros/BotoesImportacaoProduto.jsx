@@ -81,6 +81,24 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Modal ERP Mapeado */}
+      <Dialog open={modalAberto === 'erp'} onOpenChange={(open) => !open && setModalAberto(null)}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="w-6 h-6 text-indigo-600" />
+              Importação ERP (Mapeado)
+            </DialogTitle>
+          </DialogHeader>
+          <ImportacaoProdutoERP 
+            onConcluido={() => {
+              if (onProdutosCriados) onProdutosCriados();
+              setModalAberto(null);
+            }} 
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
