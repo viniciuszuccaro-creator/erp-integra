@@ -35,6 +35,15 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
           <Upload className="w-4 h-4 mr-2" />
           Importar em Lote
         </Button>
+
+        <Button
+          variant="outline"
+          onClick={() => setModalAberto('erp')}
+          className="border-indigo-300 hover:bg-indigo-50"
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Importar do ERP (Mapeado)
+        </Button>
       </div>
 
       {/* Modal de NF-e */}
