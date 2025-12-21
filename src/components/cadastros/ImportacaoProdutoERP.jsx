@@ -17,7 +17,10 @@ import { toast } from "sonner";
  */
 export default function ImportacaoProdutoERP({ onConcluido }) {
   const [empresas, setEmpresas] = useState([]);
+  const [grupos, setGrupos] = useState([]);
+  const [escopo, setEscopo] = useState("empresa"); // 'empresa' | 'grupo'
   const [empresaId, setEmpresaId] = useState("");
+  const [grupoId, setGrupoId] = useState("");
   const [arquivo, setArquivo] = useState(null);
   const [processando, setProcessando] = useState(false);
   const [relatorio, setRelatorio] = useState(null);
@@ -44,9 +47,14 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
   useEffect(() => {
     (async () => {
       try {
-        const lista = await base44.entities.Empresa.list();
-        setEmpresas(lista || []);
-        if (lista?.length) setEmpresaId(lista[0].id);
+        const [listaEmpresas, listaGrupos] = await Promise.all([
+          base44.entities.Empresa.list(),
+          base44.entities.GrupoEmpresarial.list(),
+        ]);
+        setEmpresas(listaEmpresas || []);
+        setGrupos(listaGrupos || []);
+        if (listaEmpresas?.length) setEmpresaId(listaEmpresas[0].id);
+        if (listaGrupos?.length) setGrupoId(listaGrupos[0].id);
       } catch (e) {
         // silencioso
       }
@@ -58,8 +66,12 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
       toast.error("Selecione um arquivo (.xlsx/.xls/.csv)");
       return;
     }
-    if (!empresaId) {
+    if (escopo === "empresa" && !empresaId) {
       toast.error("Selecione a empresa de destino");
+      return;
+    }
+    if (escopo === "grupo" && !grupoId) {
+      toast.error("Selecione o grupo de destino");
       return;
     }
 
@@ -71,12 +83,17 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
       const { file_url } = await base44.integrations.Core.UploadFile({ file: arquivo });
 
       // 2) Invoca função backend
-      const { data } = await base44.functions.invoke("importProdutos", {
+      const payload = {
         file_url,
-        empresa_id: empresaId,
         mapping: defaultMapping,
         dryRun,
-      });
+      };
+      if (escopo === "grupo") {
+        payload.group_id = grupoId;
+      } else {
+        payload.empresa_id = empresaId;
+      }
+      const { data } = await base44.functions.invoke("importProdutos", payload);
 
       setRelatorio(data);
 
@@ -111,19 +128,50 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
         <CardContent className="p-4 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="text-sm font-semibold">Empresa de destino</label>
-              <Select value={empresaId} onValueChange={setEmpresaId}>
+              <label className="text-sm font-semibold">Escopo</label>
+              <Select value={escopo} onValueChange={setEscopo}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione a empresa" />
+                  <SelectValue placeholder="Selecione o escopo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {empresas.map((e) => (
-                    <SelectItem key={e.id} value={e.id}>
-                      {e.nome_fantasia || e.razao_social || e.id}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="empresa">Empresa</SelectItem>
+                  <SelectItem value="grupo">Grupo</SelectItem>
                 </SelectContent>
               </Select>
+
+              {escopo === "empresa" ? (
+                <div className="mt-3">
+                  <label className="text-sm font-semibold">Empresa de destino</label>
+                  <Select value={empresaId} onValueChange={setEmpresaId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {empresas.map((e) => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {e.nome_fantasia || e.razao_social || e.id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <label className="text-sm font-semibold">Grupo de destino</label>
+                  <Select value={grupoId} onValueChange={setGrupoId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o grupo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {grupos.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>
+                          {g.nome_do_grupo || g.razao_social_holding || g.id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div>
