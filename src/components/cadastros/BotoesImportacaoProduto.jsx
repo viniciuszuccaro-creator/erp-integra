@@ -17,7 +17,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
 
   return (
     <>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <Button
           variant="outline"
           onClick={() => setModalAberto('nfe')}
