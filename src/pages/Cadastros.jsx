@@ -1368,7 +1368,11 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                    <CardContent className="p-4">
+                      <div className="mb-3">
+                        <BotoesImportacaoProduto onProdutosCriados={() => queryClient.invalidateQueries({ queryKey: ['produtos'] })} />
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
                       {produtosFiltrados.map(produto => (
                         <div key={produto.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
                           <div className="flex-1">
