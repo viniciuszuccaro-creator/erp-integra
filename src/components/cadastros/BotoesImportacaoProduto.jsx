@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { FileText, Upload, Package } from "lucide-react";
 import ImportacaoProdutoNFe from "./ImportacaoProdutoNFe";
 import ImportacaoProdutoLote from "./ImportacaoProdutoLote";
+import ImportacaoProdutoERP from "./ImportacaoProdutoERP";
 
 /**
  * V21.1.2-R2 - Botões de Importação de Produtos
