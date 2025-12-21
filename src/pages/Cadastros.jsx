@@ -168,6 +168,15 @@ export default function Cadastros() {
   const [abaIntegracoes, setAbaIntegracoes] = useState("gerenciamento");
   const { empresaAtual } = useContextoVisual();
 
+  // Seleções em massa (Clientes, Fornecedores, Produtos)
+  const [selectedClientes, setSelectedClientes] = useState(new Set());
+  const [selectedFornecedores, setSelectedFornecedores] = useState(new Set());
+  const [selectedProdutos, setSelectedProdutos] = useState(new Set());
+
+  const allSelectedClientes = clientesFiltrados.length > 0 && selectedClientes.size === clientesFiltrados.length;
+  const allSelectedFornecedores = fornecedoresFiltrados.length > 0 && selectedFornecedores.size === fornecedoresFiltrados.length;
+  const allSelectedProdutos = produtosFiltrados.length > 0 && selectedProdutos.size === produtosFiltrados.length;
+
   // FASE 1 DEFINITIVO-100%: ZERO estados de dialog - TUDO é window
 
   const queryClient = useQueryClient();
@@ -683,24 +692,55 @@ export default function Cadastros() {
                           <Users className="w-5 h-5 text-blue-600" />
                           Clientes ({clientesFiltrados.length})
                         </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(CadastroClienteCompleto, { windowMode: true }, {
-                            title: 'Novo Cliente',
-                            width: 1100,
-                            height: 650
-                          })}
-                          className="bg-blue-600 hover:bg-blue-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (allSelectedClientes) {
+                                setSelectedClientes(new Set());
+                              } else {
+                                setSelectedClientes(new Set(clientesFiltrados.map(c => c.id)));
+                              }
+                            }}
+                            className="border-blue-300 text-blue-700"
+                          >
+                            {allSelectedClientes ? 'Limpar Seleção' : 'Selecionar Todos'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleDeleteClientesSelecionados}
+                            disabled={selectedClientes.size === 0 || !hasPermission('cadastros','deletar')}
+                            className="border-red-300 text-red-700"
+                          >
+                            Excluir Selecionados
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => openWindow(CadastroClienteCompleto, { windowMode: true }, {
+                              title: 'Novo Cliente',
+                              width: 1100,
+                              height: 650
+                            })}
+                            className="bg-blue-600 hover:bg-blue-700"
+                            disabled={!hasPermission('cadastros', 'criar')}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Novo
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {clientesFiltrados.slice(0, 10).map(cliente => (
                         <div key={cliente.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
+                          <input
+                            type="checkbox"
+                            className="mr-3 h-4 w-4"
+                            checked={selectedClientes.has(cliente.id)}
+                            onChange={() => setSelectedClientes(prev => { const ns = new Set(prev); if (ns.has(cliente.id)) ns.delete(cliente.id); else ns.add(cliente.id); return ns; })}
+                          />
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{cliente.nome || cliente.razao_social}</p>
                             <div className="flex gap-2 mt-1">
@@ -760,24 +800,55 @@ export default function Cadastros() {
                           <Building2 className="w-5 h-5 text-cyan-600" />
                           Fornecedores ({fornecedoresFiltrados.length})
                         </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(CadastroFornecedorCompleto, { windowMode: true }, {
-                            title: 'Novo Fornecedor',
-                            width: 1100,
-                            height: 650
-                          })}
-                          className="bg-cyan-600 hover:bg-cyan-700"
-                          disabled={!hasPermission('cadastros', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (allSelectedFornecedores) {
+                                setSelectedFornecedores(new Set());
+                              } else {
+                                setSelectedFornecedores(new Set(fornecedoresFiltrados.map(f => f.id)));
+                              }
+                            }}
+                            className="border-cyan-300 text-cyan-700"
+                          >
+                            {allSelectedFornecedores ? 'Limpar Seleção' : 'Selecionar Todos'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleDeleteFornecedoresSelecionados}
+                            disabled={selectedFornecedores.size === 0 || !hasPermission('cadastros','deletar')}
+                            className="border-red-300 text-red-700"
+                          >
+                            Excluir Selecionados
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => openWindow(CadastroFornecedorCompleto, { windowMode: true }, {
+                              title: 'Novo Fornecedor',
+                              width: 1100,
+                              height: 650
+                            })}
+                            className="bg-cyan-600 hover:bg-cyan-700"
+                            disabled={!hasPermission('cadastros', 'criar')}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Novo
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {fornecedoresFiltrados.slice(0, 10).map(fornecedor => (
                         <div key={fornecedor.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
+                          <input
+                            type="checkbox"
+                            className="mr-3 h-4 w-4"
+                            checked={selectedFornecedores.has(fornecedor.id)}
+                            onChange={() => setSelectedFornecedores(prev => { const ns = new Set(prev); if (ns.has(fornecedor.id)) ns.delete(fornecedor.id); else ns.add(fornecedor.id); return ns; })}
+                          />
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{fornecedor.nome}</p>
                             <div className="flex gap-2 mt-1">
@@ -1353,19 +1424,44 @@ export default function Cadastros() {
                           <Package className="w-5 h-5 text-purple-600" />
                           Produtos ({produtos.length})
                         </CardTitle>
-                        <Button
-                          size="sm"
-                          onClick={() => openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
-                            title: 'Novo Produto',
-                            width: 1200,
-                            height: 700
-                          })}
-                          className="bg-purple-600 hover:bg-purple-700"
-                          disabled={!hasPermission('estoque', 'criar')}
-                        >
-                          <Plus className="w-4 h-4 mr-1" />
-                          Novo
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (allSelectedProdutos) {
+                                setSelectedProdutos(new Set());
+                              } else {
+                                setSelectedProdutos(new Set(produtosFiltrados.map(p => p.id)));
+                              }
+                            }}
+                            className="border-purple-300 text-purple-700"
+                          >
+                            {allSelectedProdutos ? 'Limpar Seleção' : 'Selecionar Todos'}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleDeleteProdutosSelecionados}
+                            disabled={selectedProdutos.size === 0 || !hasPermission('estoque','deletar')}
+                            className="border-red-300 text-red-700"
+                          >
+                            Excluir Selecionados
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
+                              title: 'Novo Produto',
+                              width: 1200,
+                              height: 700
+                            })}
+                            className="bg-purple-600 hover:bg-purple-700"
+                            disabled={!hasPermission('estoque', 'criar')}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Novo
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
@@ -1375,6 +1471,12 @@ export default function Cadastros() {
                       <div className="max-h-80 overflow-y-auto">
                       {produtosFiltrados.map(produto => (
                         <div key={produto.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
+                          <input
+                            type="checkbox"
+                            className="mr-3 h-4 w-4"
+                            checked={selectedProdutos.has(produto.id)}
+                            onChange={() => setSelectedProdutos(prev => { const ns = new Set(prev); if (ns.has(produto.id)) ns.delete(produto.id); else ns.add(produto.id); return ns; })}
+                          />
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{produto.descricao}</p>
                             <div className="flex gap-2 mt-1 flex-wrap">
