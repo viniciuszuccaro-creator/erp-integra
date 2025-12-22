@@ -132,24 +132,35 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Upsert por codigo + empresa_id
-        const existing = await base44.entities.Produto.filter({ codigo: produto.codigo, empresa_id }, undefined, 1);
-        if (dryRun) {
-          // Simulação
-          report.details.push({ index: idx, status: existing.length ? 'would_update' : 'would_create', codigo: produto.codigo });
-          if (existing.length) report.updated += 1; else report.created += 1;
-          continue;
-        }
+        // Upsert por codigo + empresa_id (quando houver código); sem código criamos direto
+        if (produto.codigo) {
+          const existing = await base44.entities.Produto.filter({ codigo: produto.codigo, empresa_id }, undefined, 1);
+          if (dryRun) {
+            // Simulação
+            report.details.push({ index: idx, status: existing.length ? 'would_update' : 'would_create', codigo: produto.codigo });
+            if (existing.length) report.updated += 1; else report.created += 1;
+            continue;
+          }
 
-        if (existing.length) {
-          const current = existing[0];
-          await base44.entities.Produto.update(current.id, produto);
-          report.updated += 1;
-          report.details.push({ index: idx, status: 'updated', id: current.id, codigo: produto.codigo });
+          if (existing.length) {
+            const current = existing[0];
+            await base44.entities.Produto.update(current.id, produto);
+            report.updated += 1;
+            report.details.push({ index: idx, status: 'updated', id: current.id, codigo: produto.codigo });
+          } else {
+            const created = await base44.entities.Produto.create(produto);
+            report.created += 1;
+            report.details.push({ index: idx, status: 'created', id: created.id, codigo: produto.codigo });
+          }
         } else {
+          if (dryRun) {
+            report.created += 1;
+            report.details.push({ index: idx, status: 'would_create' });
+            continue;
+          }
           const created = await base44.entities.Produto.create(produto);
           report.created += 1;
-          report.details.push({ index: idx, status: 'created', id: created.id, codigo: produto.codigo });
+          report.details.push({ index: idx, status: 'created', id: created.id });
         }
       } catch (e) {
         report.errors += 1;
