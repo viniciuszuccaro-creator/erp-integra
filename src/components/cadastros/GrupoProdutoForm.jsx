@@ -10,7 +10,7 @@ import { Loader2, Package, Trash2, Power, PowerOff } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function GrupoProdutoForm({ grupo, grupoProduto, onSubmit, isSubmitting, windowMode = false }) {
+export default function GrupoProdutoForm({ grupo, grupoProduto, onSubmit, isSubmitting, windowMode = false, closeSelf }) {
   const dadosIniciais = grupoProduto || grupo;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome_grupo: '',
@@ -28,6 +28,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, onSubmit, isSubm
       return;
     }
     onSubmit(formData);
+    if (typeof closeSelf === 'function') closeSelf();
   };
 
   const handleExcluir = () => {
@@ -36,6 +37,7 @@ export default function GrupoProdutoForm({ grupo, grupoProduto, onSubmit, isSubm
     }
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
+    if (typeof closeSelf === 'function') closeSelf();
     }
   };
 

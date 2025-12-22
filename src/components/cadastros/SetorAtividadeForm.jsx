@@ -10,7 +10,7 @@ import { Loader2, Factory, Trash2, Power, PowerOff } from "lucide-react";
 /**
  * V21.1.2 - WINDOW MODE READY
  */
-export default function SetorAtividadeForm({ setor, setorAtividade, onSubmit, isSubmitting, windowMode = false }) {
+export default function SetorAtividadeForm({ setor, setorAtividade, onSubmit, isSubmitting, windowMode = false, closeSelf }) {
   const dadosIniciais = setorAtividade || setor;
   const [formData, setFormData] = useState(dadosIniciais || {
     nome: '',
@@ -24,6 +24,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, onSubmit, is
   const handleSubmit = (e) => {
     e.preventDefault();
     onSubmit(formData);
+    if (typeof closeSelf === 'function') closeSelf();
   };
 
   const handleExcluir = () => {
@@ -32,6 +33,7 @@ export default function SetorAtividadeForm({ setor, setorAtividade, onSubmit, is
     }
     if (onSubmit) {
       onSubmit({ ...formData, _action: 'delete' });
+    if (typeof closeSelf === 'function') closeSelf();
     }
   };
 
