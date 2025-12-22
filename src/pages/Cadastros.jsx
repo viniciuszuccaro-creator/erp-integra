@@ -170,8 +170,7 @@ export default function Cadastros() {
   const { empresaAtual } = useContextoVisual();
 
   // Seleções em massa (Clientes, Fornecedores, Produtos)
-  const [selectedClientes, setSelectedClientes] = useState(new Set());
-  const [selectedFornecedores, setSelectedFornecedores] = useState(new Set());
+
  
 
   // FASE 1 DEFINITIVO-100%: ZERO estados de dialog - TUDO é window
@@ -181,21 +180,7 @@ export default function Cadastros() {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
 
-  // Exclusão em massa
-  const handleDeleteClientesSelecionados = async () => {
-    if (selectedClientes.size === 0) return;
-    await Promise.all(Array.from(selectedClientes).map(id => base44.entities.Cliente.delete(id)));
-    setSelectedClientes(new Set());
-    queryClient.invalidateQueries({ queryKey: ['clientes'] });
-    toast({ title: '🗑️ Clientes excluídos' });
-  };
-  const handleDeleteFornecedoresSelecionados = async () => {
-    if (selectedFornecedores.size === 0) return;
-    await Promise.all(Array.from(selectedFornecedores).map(id => base44.entities.Fornecedor.delete(id)));
-    setSelectedFornecedores(new Set());
-    queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
-    toast({ title: '🗑️ Fornecedores excluídos' });
-  };
+
  
 
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
@@ -509,9 +494,7 @@ export default function Cadastros() {
   const colaboradoresFiltrados = filtrarPorBusca(colaboradores, ['nome_completo', 'cpf']);
   const transportadorasFiltradas = filtrarPorBusca(transportadoras, ['razao_social', 'cnpj']);
 
-  // Seleção total calculada após filtros
-  const allSelectedClientes = clientesFiltrados.length > 0 && selectedClientes.size === clientesFiltrados.length;
-  const allSelectedFornecedores = fornecedoresFiltrados.length > 0 && selectedFornecedores.size === fornecedoresFiltrados.length;
+
  
 
   const statusColors = {
@@ -714,29 +697,6 @@ export default function Cadastros() {
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              if (allSelectedClientes) {
-                                setSelectedClientes(new Set());
-                              } else {
-                                setSelectedClientes(new Set(clientesFiltrados.map(c => c.id)));
-                              }
-                            }}
-                            className="border-blue-300 text-blue-700"
-                          >
-                            {allSelectedClientes ? 'Limpar Seleção' : 'Selecionar Todos'}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleDeleteClientesSelecionados}
-                            disabled={selectedClientes.size === 0 || !hasPermission('cadastros','deletar')}
-                            className="border-red-300 text-red-700"
-                          >
-                            Excluir Selecionados
-                          </Button>
-                          <Button
-                            size="sm"
                             onClick={() => openWindow(CadastroClienteCompleto, { windowMode: true }, {
                               title: 'Novo Cliente',
                               width: 1100,
@@ -754,12 +714,6 @@ export default function Cadastros() {
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {clientesFiltrados.slice(0, 10).map(cliente => (
                         <div key={cliente.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
-                          <input
-                            type="checkbox"
-                            className="mr-3 h-4 w-4"
-                            checked={selectedClientes.has(cliente.id)}
-                            onChange={() => setSelectedClientes(prev => { const ns = new Set(prev); if (ns.has(cliente.id)) ns.delete(cliente.id); else ns.add(cliente.id); return ns; })}
-                          />
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{cliente.nome || cliente.razao_social}</p>
                             <div className="flex gap-2 mt-1">
@@ -822,29 +776,6 @@ export default function Cadastros() {
                         <div className="flex items-center gap-2">
                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              if (allSelectedFornecedores) {
-                                setSelectedFornecedores(new Set());
-                              } else {
-                                setSelectedFornecedores(new Set(fornecedoresFiltrados.map(f => f.id)));
-                              }
-                            }}
-                            className="border-cyan-300 text-cyan-700"
-                          >
-                            {allSelectedFornecedores ? 'Limpar Seleção' : 'Selecionar Todos'}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleDeleteFornecedoresSelecionados}
-                            disabled={selectedFornecedores.size === 0 || !hasPermission('cadastros','deletar')}
-                            className="border-red-300 text-red-700"
-                          >
-                            Excluir Selecionados
-                          </Button>
-                          <Button
-                            size="sm"
                             onClick={() => openWindow(CadastroFornecedorCompleto, { windowMode: true }, {
                               title: 'Novo Fornecedor',
                               width: 1100,
@@ -862,12 +793,6 @@ export default function Cadastros() {
                     <CardContent className="p-4 max-h-80 overflow-y-auto">
                       {fornecedoresFiltrados.slice(0, 10).map(fornecedor => (
                         <div key={fornecedor.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
-                          <input
-                            type="checkbox"
-                            className="mr-3 h-4 w-4"
-                            checked={selectedFornecedores.has(fornecedor.id)}
-                            onChange={() => setSelectedFornecedores(prev => { const ns = new Set(prev); if (ns.has(fornecedor.id)) ns.delete(fornecedor.id); else ns.add(fornecedor.id); return ns; })}
-                          />
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{fornecedor.nome}</p>
                             <div className="flex gap-2 mt-1">
