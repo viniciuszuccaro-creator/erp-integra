@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -110,6 +110,7 @@ export default function VisualizadorUniversalEntidade({
   const { openWindow } = useWindow();
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
+  const queryClient = useQueryClient();
 
   const moduloPermissao = React.useMemo(() => {
     const estoque = ['Produto','UnidadeMedida','LocalEstoque','GrupoProduto','Marca'];
@@ -127,8 +128,10 @@ export default function VisualizadorUniversalEntidade({
   const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
 
   // ✅ REAL-TIME: Buscar dados com auto-refresh a cada 30s
+  const queryKey = [nomeEntidade.toLowerCase()];
+
   const { data: dados = [], isLoading, refetch } = useQuery({
-    queryKey: [nomeEntidade.toLowerCase()],
+    queryKey: queryKey,
     queryFn: async () => {
       try {
         return await base44.entities[nomeEntidade].list('-created_date', 1000);
@@ -386,7 +389,7 @@ export default function VisualizadorUniversalEntidade({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => refetch()}
+                onClick={() => queryClient.invalidateQueries({ queryKey: queryKey })}
                 disabled={isLoading}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
