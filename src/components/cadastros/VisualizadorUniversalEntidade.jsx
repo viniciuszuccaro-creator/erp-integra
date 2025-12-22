@@ -112,6 +112,7 @@ const ALIAS_QUERY_KEYS = {
   KitProduto: ['kits-produto'],
   Banco: ['bancos'],
   FormaPagamento: ['formas-pagamento'],
+  OperadorCaixa: ['operadores-caixa'],
   PlanoDeContas: ['plano-contas'],
   CentroCusto: ['centrosCusto'],
   CentroResultado: ['centros-resultado'],
