@@ -450,12 +450,16 @@ export default function VisualizadorUniversalEntidade({
                 variant="outline"
                 size="sm"
                 onClick={async () => {
-                  queryClient.invalidateQueries({ queryKey });
                   const aliases = ALIAS_QUERY_KEYS[nomeEntidade] || [];
-                  aliases.forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }));
-                  refetch();
+                  await Promise.all([
+                    queryClient.invalidateQueries({ queryKey }),
+                    queryClient.refetchQueries({ queryKey }),
+                    ...aliases.map((k) => queryClient.invalidateQueries({ queryKey: [k] })),
+                    ...aliases.map((k) => queryClient.refetchQueries({ queryKey: [k] })),
+                  ]);
+                  await refetch();
                 }}
-                disabled={false}
+                disabled={isFetching}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
                 Atualizar
