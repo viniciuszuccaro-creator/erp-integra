@@ -20,8 +20,9 @@ import {
   ChevronUp,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
-} from 'lucide-react';
+  ArrowDown,
+  Plus
+  } from 'lucide-react';
 import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
