@@ -31,7 +31,7 @@ import HistoricoProduto from "./HistoricoProduto";
  * ✅ Aba 6: Estoque Avançado (NOVO)
  * ✅ Aba 7: Histórico (se edição)
  */
-export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, windowMode = false }) {
+export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, isSubmitting, windowMode = false, closeSelf }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [user, setUser] = useState(null);
   
@@ -489,6 +489,7 @@ Caso contrário, sugira:
       
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(dadosSubmit);
+      if (typeof closeSelf === 'function') closeSelf();
     } catch (error) {
       toast.error('❌ Erro ao salvar produto: ' + error.message);
     }

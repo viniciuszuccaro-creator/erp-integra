@@ -384,7 +384,13 @@ export default function VisualizadorUniversalEntidade({
 
       let winId;
       const closeSelf = () => closeWindow(winId);
-      const finalProps = { ...props, closeWindow: closeSelf, closeSelf };
+      const finalProps = {
+        ...props,
+        closeWindow: closeSelf,
+        closeSelf,
+        onSuccess: () => { refetch(); closeSelf(); },
+        onSubmit: () => { refetch(); closeSelf(); },
+      };
       winId = openWindow(
         componenteEdicao,
         finalProps,
@@ -476,7 +482,7 @@ export default function VisualizadorUniversalEntidade({
                   ]);
                   await refetch();
                 }}
-                disabled={isFetching}
+                disabled={false}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
                 Atualizar
