@@ -7,7 +7,7 @@ const Dialog = DialogPrimitive.Root;
 const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = ({ className, children, container }) => (
   <DialogPrimitive.Portal container={typeof document !== 'undefined' ? (container || document.body) : undefined}>
-    <div className={cn("fixed inset-0 z-[999999] flex items-start md:items-center justify-center", className)}>
+    <div className={cn("fixed inset-0 z-[999999999] flex items-start md:items-center justify-center", className)}>
       {children}
     </div>
   </DialogPrimitive.Portal>
@@ -18,7 +18,7 @@ const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-[999998] bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[999999998] bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -32,7 +32,7 @@ const DialogContent = React.forwardRef(({ className, children, container, ...pro
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "relative z-[999999] grid w-full gap-4 rounded-lg border bg-white p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "relative z-[999999999] grid w-full gap-4 rounded-lg border bg-white p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         "max-h-[85vh] overflow-auto",
         className
       )}
