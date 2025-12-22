@@ -157,7 +157,9 @@ export default function VisualizadorUniversalEntidade({
   camposPrincipais = [],
   componenteEdicao,
   componenteVisualizacao,
-  windowMode = false 
+  windowMode = false,
+  queryKeyOverride,
+  queryKey: legacyQueryKey
 }) {
   const [busca, setBusca] = useState('');
   const [visualizacao, setVisualizacao] = useState('grid');
@@ -185,7 +187,8 @@ export default function VisualizadorUniversalEntidade({
   const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
 
   // ✅ REAL-TIME: Buscar dados com auto-refresh a cada 30s
-  const queryKey = [nomeEntidade.toLowerCase()];
+  const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
+  const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
   const { data: dados = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: queryKey,
@@ -452,7 +455,7 @@ export default function VisualizadorUniversalEntidade({
                   aliases.forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }));
                   refetch();
                 }}
-                disabled={isFetching}
+                disabled={false}
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
                 Atualizar
