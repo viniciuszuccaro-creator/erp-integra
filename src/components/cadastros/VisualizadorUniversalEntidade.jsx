@@ -25,6 +25,7 @@ import {
 import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
+import { useToast } from "@/components/ui/use-toast";
 
 /**
  * V21.7 - VISUALIZADOR UNIVERSAL DE ENTIDADES - REAL-TIME + ORGANIZAÇÃO AVANÇADA
@@ -172,6 +173,7 @@ export default function VisualizadorUniversalEntidade({
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const moduloPermissao = React.useMemo(() => {
     const estoque = ['Produto','UnidadeMedida','LocalEstoque','GrupoProduto','Marca'];
@@ -265,10 +267,7 @@ export default function VisualizadorUniversalEntidade({
   };
   
   // Utilitário para forçar fechamento de janela após sucesso do form interno
-  const fecharJanelaSeInterna = async () => {
-    // Se o form filho chamar onSuccess/onSubmit, garantimos atualizar todas as visões relacionadas
-    await invalidateAllRelated();
-  };
+
   const excluirSelecionados = async () => {
     if (selectedIds.size === 0) return;
     await Promise.all(Array.from(selectedIds).map(id => base44.entities[nomeEntidade].delete(id)));
@@ -306,12 +305,10 @@ export default function VisualizadorUniversalEntidade({
   const abrirEdicao = (item) => {
     if (componenteEdicao) {
       const propName = nomeEntidade.charAt(0).toLowerCase() + nomeEntidade.slice(1);
-      
+
       const props = {
-        // TODOS os formatos possíveis de props (50+ variações)
         [propName]: item,
         [nomeEntidade]: item,
-        // Variações específicas por entidade
         cliente: item,
         fornecedor: item,
         transportadora: item,
@@ -386,28 +383,53 @@ export default function VisualizadorUniversalEntidade({
         seg: item,
         regiaoAtendimento: item,
         regiao: item,
-        onSuccess: () => refetch(),
-        onSubmit: () => refetch(),
         windowMode: true
       };
 
       let winId;
       const closeSelf = () => closeWindow(winId);
-      const finalProps = {
-      ...props,
-      closeWindow: closeSelf,
-      closeSelf,
-      onSuccess: async () => { await invalidateAllRelated(); closeSelf(); },
-      onSubmit: async () => { await invalidateAllRelated(); closeSelf(); },
+
+      const handleSubmitForm = async (formData) => {
+        const entityName = nomeEntidade;
+        try {
+            if (formData._action === 'delete') {
+                await base44.entities[entityName].delete(formData.id);
+                toast({ title: `✅ ${entityName} excluído com sucesso!` });
+            } else if (formData.id) {
+                await base44.entities[entityName].update(formData.id, formData);
+                toast({ title: `✅ ${entityName} atualizado com sucesso!` });
+            } else {
+                await base44.entities[entityName].create(formData);
+                toast({ title: `✅ ${entityName} criado com sucesso!` });
+            }
+            await invalidateAllRelated();
+            closeSelf();
+        } catch(err) {
+            toast({ title: `❌ Erro ao salvar ${entityName}`, description: err.message, variant: "destructive" });
+        }
       };
+
+      const handleSuccess = async () => {
+        await invalidateAllRelated();
+        closeSelf();
+      };
+
+      const finalProps = {
+        ...props,
+        closeWindow: closeSelf,
+        closeSelf,
+        onSuccess: handleSuccess,
+        onSubmit: handleSubmitForm,
+      };
+
       winId = openWindow(
         componenteEdicao,
         finalProps,
         {
-          title: `✏️ Editar ${tituloDisplay}`,
+          title: item ? `✏️ Editar ${tituloDisplay}`: `✨ Novo ${tituloDisplay}`,
           width: 1000,
           height: 700,
-          uniqueKey: `edit-${nomeEntidade}-${item.id}-${Date.now()}`,
+          uniqueKey: `edit-${nomeEntidade}-${item?.id || 'new'}-${Date.now()}`,
           zIndex: 99999999,
           bringToFront: true,
           forceTop: true,
