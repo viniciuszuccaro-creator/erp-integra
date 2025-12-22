@@ -94,6 +94,9 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
       }
       const { data } = await base44.functions.invoke("importProdutos", payload);
 
+      if (!data || typeof data !== 'object') {
+        throw new Error('Resposta inesperada do servidor');
+      }
       setRelatorio(data);
 
       // Atualiza listas na UI ao terminar
@@ -110,7 +113,9 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
         onConcluido && onConcluido();
       }
     } catch (error) {
-      toast.error(error?.message || "Erro ao importar");
+      const msg = error?.response?.data?.error || error?.message || "Erro ao importar";
+      try { setRelatorio(error?.response?.data || { error: msg }); } catch {}
+      toast.error(msg);
     } finally {
       setProcessando(false);
     }
