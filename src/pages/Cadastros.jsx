@@ -124,6 +124,7 @@ import RegiaoAtendimentoForm from "../components/cadastros/RegiaoAtendimentoForm
 import StatusIntegracoes from '../components/integracoes/StatusIntegracoes';
 import ConfiguracaoNotificacoes from '../components/sistema/ConfiguracaoNotificacoes';
 import VisualizadorUniversalEntidade from '../components/cadastros/VisualizadorUniversalEntidade';
+import VisualizadorProdutos from '../components/cadastros/VisualizadorProdutos';
 import TesteNFe from "../components/integracoes/TesteNFe";
 import TesteBoletos from "../components/integracoes/TesteBoletos";
 import ConfigWhatsAppBusiness from '@/components/integracoes/ConfigWhatsAppBusiness';
@@ -171,7 +172,7 @@ export default function Cadastros() {
   // Seleções em massa (Clientes, Fornecedores, Produtos)
   const [selectedClientes, setSelectedClientes] = useState(new Set());
   const [selectedFornecedores, setSelectedFornecedores] = useState(new Set());
-  const [selectedProdutos, setSelectedProdutos] = useState(new Set());
+ 
 
   // FASE 1 DEFINITIVO-100%: ZERO estados de dialog - TUDO é window
 
@@ -195,13 +196,7 @@ export default function Cadastros() {
     queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
     toast({ title: '🗑️ Fornecedores excluídos' });
   };
-  const handleDeleteProdutosSelecionados = async () => {
-    if (selectedProdutos.size === 0) return;
-    await Promise.all(Array.from(selectedProdutos).map(id => base44.entities.Produto.delete(id)));
-    setSelectedProdutos(new Set());
-    queryClient.invalidateQueries({ queryKey: ['produtos'] });
-    toast({ title: '🗑️ Produtos excluídos' });
-  };
+ 
 
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
@@ -517,7 +512,7 @@ export default function Cadastros() {
   // Seleção total calculada após filtros
   const allSelectedClientes = clientesFiltrados.length > 0 && selectedClientes.size === clientesFiltrados.length;
   const allSelectedFornecedores = fornecedoresFiltrados.length > 0 && selectedFornecedores.size === fornecedoresFiltrados.length;
-  const allSelectedProdutos = produtosFiltrados.length > 0 && selectedProdutos.size === produtosFiltrados.length;
+ 
 
   const statusColors = {
     'Ativo': 'bg-green-100 text-green-700 border-green-300',
@@ -1433,48 +1428,18 @@ export default function Cadastros() {
                         <CardTitle 
                           className="text-base flex items-center gap-2 cursor-pointer hover:text-purple-700 transition-colors"
                           onClick={() => openWindow(
-                            VisualizadorUniversalEntidade,
-                            {
-                              nomeEntidade: 'Produto',
-                              tituloDisplay: 'Produtos',
-                              icone: Package,
-                              camposPrincipais: ['descricao', 'codigo', 'setor_atividade_nome', 'grupo_produto_nome', 'marca_nome', 'status'],
-                              componenteEdicao: ProdutoFormV22_Completo,
-                              windowMode: true
-                            },
-                            { title: '📦 Todos os Produtos', width: 1400, height: 800, zIndex: 50000 }
+                            VisualizadorProdutos,
+                            { windowMode: true },
+                            { title: '📦 Todos os Produtos', width: 1400, height: 800 }
                           )}
                         >
                           <Package className="w-5 h-5 text-purple-600" />
                           Produtos ({produtos.length})
                         </CardTitle>
                         <div className="flex items-center gap-2">
-                          <Button
+                           <Button
                             size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              if (allSelectedProdutos) {
-                                setSelectedProdutos(new Set());
-                              } else {
-                                setSelectedProdutos(new Set(produtosFiltrados.map(p => p.id)));
-                              }
-                            }}
-                            className="border-purple-300 text-purple-700"
-                          >
-                            {allSelectedProdutos ? 'Limpar Seleção' : 'Selecionar Todos'}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleDeleteProdutosSelecionados}
-                            disabled={selectedProdutos.size === 0 || !hasPermission('estoque','deletar')}
-                            className="border-red-300 text-red-700"
-                          >
-                            Excluir Selecionados
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
+                            onClick={() => openWindow(ProdutoFormV22_Completo, { windowMode: true, onSuccess: () => queryClient.invalidateQueries({ queryKey: ['produtos'] }) }, {
                               title: 'Novo Produto',
                               width: 1200,
                               height: 700
@@ -1489,18 +1454,9 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="mb-3">
-                        <BotoesImportacaoProduto onProdutosCriados={() => queryClient.invalidateQueries({ queryKey: ['produtos'] })} />
-                      </div>
                       <div className="max-h-80 overflow-y-auto">
-                      {produtosFiltrados.map(produto => (
+                      {produtosFiltrados.slice(0, 10).map(produto => (
                         <div key={produto.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
-                          <input
-                            type="checkbox"
-                            className="mr-3 h-4 w-4"
-                            checked={selectedProdutos.has(produto.id)}
-                            onChange={() => setSelectedProdutos(prev => { const ns = new Set(prev); if (ns.has(produto.id)) ns.delete(produto.id); else ns.add(produto.id); return ns; })}
-                          />
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{produto.descricao}</p>
                             <div className="flex gap-2 mt-1 flex-wrap">
@@ -1517,12 +1473,6 @@ export default function Cadastros() {
                                   {produto.grupo_produto_nome}
                                 </Badge>
                               )}
-                              {produto.marca_nome && (
-                                <Badge className="bg-orange-100 text-orange-700 text-xs">
-                                  <Award className="w-3 h-3 mr-1" />
-                                  {produto.marca_nome}
-                                </Badge>
-                              )}
                             </div>
                           </div>
                           <Button
@@ -1536,9 +1486,7 @@ export default function Cadastros() {
                               title: `Editar Produto: ${produto.descricao}`,
                               width: 1200,
                               height: 700,
-                              uniqueKey: `edit-Produto-${produto.id}-${Date.now()}`,
-                              zIndex: 999999,
-                              bringToFront: true
+                              uniqueKey: `edit-Produto-${produto.id}-${Date.now()}`
                             })}
                             disabled={!hasPermission('estoque', 'editar')}
                           >
