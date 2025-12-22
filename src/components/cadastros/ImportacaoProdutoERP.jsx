@@ -206,7 +206,7 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={enviar} disabled={processando || !arquivo || !empresaId} className="gap-2">
+            <Button onClick={enviar} disabled={processando || !arquivo || (escopo === 'empresa' ? !empresaId : !grupoId)} className="gap-2">
               {processando ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
