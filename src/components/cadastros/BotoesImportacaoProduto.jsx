@@ -48,7 +48,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
 
       {/* Modal de NF-e */}
       <Dialog open={modalAberto === 'nfe'} onOpenChange={(open) => !open && setModalAberto(null)}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl z-[999999999]" style={{ zIndex: 999999999 }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-6 h-6 text-purple-600" />
@@ -66,7 +66,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
 
       {/* Modal de Lote */}
       <Dialog open={modalAberto === 'lote'} onOpenChange={(open) => !open && setModalAberto(null)}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-4xl z-[999999999]" style={{ zIndex: 999999999 }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Upload className="w-6 h-6 text-green-600" />
@@ -84,7 +84,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
 
       {/* Modal ERP Mapeado */}
       <Dialog open={modalAberto === 'erp'} onOpenChange={(open) => !open && setModalAberto(null)}>
-        <DialogContent className="max-w-5xl">
+        <DialogContent className="max-w-5xl z-[999999999]" style={{ zIndex: 999999999 }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Upload className="w-6 h-6 text-indigo-600" />
