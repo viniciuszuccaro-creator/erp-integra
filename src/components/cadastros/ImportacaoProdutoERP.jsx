@@ -97,6 +97,11 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
 
       setRelatorio(data);
 
+      // Atualiza listas na UI ao terminar
+      try { await Promise.all([
+        base44.entities.Produto.list(),
+      ]);} catch {}
+
       if (data?.errors > 0) {
         toast.error(`Importação finalizada com ${data.errors} erro(s)`);
       } else if (dryRun) {
