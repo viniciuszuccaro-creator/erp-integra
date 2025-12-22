@@ -302,7 +302,11 @@ export default function VisualizadorUniversalEntidade({
   };
 
   // Abrir edição - V21.6.2 CORREÇÃO TOTAL: Passar TODOS os nomes possíveis + Z-index MÁXIMO
-  const abrirEdicao = (item) => {
+          const handleAbrirNovo = () => {
+          abrirEdicao(null);
+        }
+
+        const abrirEdicao = (item) => {
     if (componenteEdicao) {
       const propName = nomeEntidade.charAt(0).toLowerCase() + nomeEntidade.slice(1);
 
@@ -429,6 +433,7 @@ export default function VisualizadorUniversalEntidade({
           title: item ? `✏️ Editar ${tituloDisplay}`: `✨ Novo ${tituloDisplay}`,
           width: 1000,
           height: 700,
+onClose: invalidateAllRelated,
           uniqueKey: `edit-${nomeEntidade}-${item?.id || 'new'}-${Date.now()}`,
           zIndex: 99999999,
           bringToFront: true,
@@ -452,6 +457,7 @@ export default function VisualizadorUniversalEntidade({
           title: `👁️ Detalhes de ${tituloDisplay}`,
           width: 900,
           height: 600,
+onClose: invalidateAllRelated,
           uniqueKey: `view-${nomeEntidade}-${item.id}-${Date.now()}`,
           zIndex: 99999999,
           bringToFront: true
@@ -528,10 +534,20 @@ export default function VisualizadorUniversalEntidade({
                 Exportar
               </Button>
               <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleSelectAll}
-              >
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleAbrirNovo}
+                                    disabled={!hasPermission(moduloPermissao, 'criar')}
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Novo {tituloDisplay}
+                                  </Button>
+
+                                  <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={toggleSelectAll}
+                                >
                 {allSelected ? 'Limpar Seleção' : 'Selecionar Todos'}
               </Button>
               <Button
