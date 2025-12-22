@@ -160,14 +160,15 @@ export default function VisualizadorUniversalEntidade({
   componenteVisualizacao,
   windowMode = false,
   queryKeyOverride,
-  queryKey: legacyQueryKey
+  queryKey: legacyQueryKey,
+  onSelectionChange
 }) {
   const [busca, setBusca] = useState('');
   const [visualizacao, setVisualizacao] = useState('grid');
   const [expandidos, setExpandidos] = useState({});
   const [ordenacao, setOrdenacao] = useState('recent');
   const [selectedIds, setSelectedIds] = useState(new Set());
-  const { openWindow } = useWindow();
+  const { openWindow, closeWindow } = useWindow();
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
   const queryClient = useQueryClient();
@@ -240,8 +241,9 @@ export default function VisualizadorUniversalEntidade({
   // Seleção em massa + exclusão
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   const toggleSelectAll = () => {
-    if (allSelected) setSelectedIds(new Set());
-    else setSelectedIds(new Set(dadosBuscadosEOrdenados.map(i => i.id)));
+    const ns = allSelected ? new Set() : new Set(dadosBuscadosEOrdenados.map(i => i.id));
+    setSelectedIds(ns);
+    if (typeof onSelectionChange === 'function') onSelectionChange(ns);
   };
   const toggleItem = (id) => {
     setSelectedIds(prev => {
