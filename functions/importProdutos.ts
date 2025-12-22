@@ -126,9 +126,9 @@ Deno.serve(async (req) => {
       try {
         const produto = buildProdutoFromRow(row, mapping, { empresa_id, group_id });
 
-        if (!produto.codigo || !produto.descricao) {
+        if (!produto.descricao || !produto.unidade_medida) {
           report.skipped += 1;
-          report.details.push({ index: idx, status: 'skipped', reason: 'Sem codigo/descricao' });
+          report.details.push({ index: idx, status: 'skipped', reason: 'Sem descricao/unidade_medida' });
           continue;
         }
 
