@@ -209,6 +209,16 @@ export default function VisualizadorUniversalEntidade({
     initialData: []
   });
 
+  const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
+  const invalidateAllRelated = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey }),
+      queryClient.refetchQueries({ queryKey }),
+      ...aliasKeys.map((k) => queryClient.invalidateQueries({ queryKey: [k] })),
+      ...aliasKeys.map((k) => queryClient.refetchQueries({ queryKey: [k] })),
+    ]);
+  };
+
   // Aplicar filtro multi-empresa
   const dadosFiltrados = useMemo(() => {
     return filtrarPorContexto(dados, 'empresa_id');
@@ -255,16 +265,15 @@ export default function VisualizadorUniversalEntidade({
   };
   
   // Utilitário para forçar fechamento de janela após sucesso do form interno
-  const fecharJanelaSeInterna = () => {
-    // Se o form filho chamar onSuccess/onSubmit, fazemos apenas o refetch aqui;
-    // o fechamento é controlado pelo próprio form via useWindow (padrão dos formulários já usam windowMode=true)
-    refetch();
+  const fecharJanelaSeInterna = async () => {
+    // Se o form filho chamar onSuccess/onSubmit, garantimos atualizar todas as visões relacionadas
+    await invalidateAllRelated();
   };
   const excluirSelecionados = async () => {
     if (selectedIds.size === 0) return;
     await Promise.all(Array.from(selectedIds).map(id => base44.entities[nomeEntidade].delete(id)));
     setSelectedIds(new Set());
-    refetch();
+    await invalidateAllRelated();
   };
 
   // Determinar campos a exibir
@@ -385,11 +394,11 @@ export default function VisualizadorUniversalEntidade({
       let winId;
       const closeSelf = () => closeWindow(winId);
       const finalProps = {
-        ...props,
-        closeWindow: closeSelf,
-        closeSelf,
-        onSuccess: () => { refetch(); closeSelf(); },
-        onSubmit: () => { refetch(); closeSelf(); },
+      ...props,
+      closeWindow: closeSelf,
+      closeSelf,
+      onSuccess: async () => { await invalidateAllRelated(); closeSelf(); },
+      onSubmit: async () => { await invalidateAllRelated(); closeSelf(); },
       };
       winId = openWindow(
         componenteEdicao,
