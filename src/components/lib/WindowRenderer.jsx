@@ -20,11 +20,40 @@ export default function WindowRenderer() {
         
         return (
           <WindowModal key={window.id} window={window}>
-            <Component
-              {...window.props}
-              windowId={window.id}
-              closeSelf={() => closeWindow(window.id)}
-            />
+            {(() => {
+              const injectedProps = { ...window.props };
+              if (typeof injectedProps.onSubmit === 'function') {
+                const originalOnSubmit = injectedProps.onSubmit;
+                injectedProps.onSubmit = (...args) => {
+                  const result = originalOnSubmit(...args);
+                  if (result && typeof result.then === 'function') {
+                    result.finally(() => closeWindow(window.id));
+                  } else {
+                    closeWindow(window.id);
+                  }
+                  return result;
+                };
+              }
+              if (typeof injectedProps.onSuccess === 'function') {
+                const originalOnSuccess = injectedProps.onSuccess;
+                injectedProps.onSuccess = (...args) => {
+                  const result = originalOnSuccess(...args);
+                  if (result && typeof result.then === 'function') {
+                    result.finally(() => closeWindow(window.id));
+                  } else {
+                    closeWindow(window.id);
+                  }
+                  return result;
+                };
+              }
+              return (
+                <Component
+                  {...injectedProps}
+                  windowId={window.id}
+                  closeSelf={() => closeWindow(window.id)}
+                />
+              );
+            })()}
           </WindowModal>
         );
       })}
