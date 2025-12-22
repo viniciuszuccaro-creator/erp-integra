@@ -490,8 +490,6 @@ Caso contrário, sugira:
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(dadosSubmit);
       if (typeof closeSelf === 'function') closeSelf();
-      if (typeof closeSelf === 'function') closeSelf();
-      if (typeof closeSelf === 'function') closeSelf();
     } catch (error) {
       toast.error('❌ Erro ao salvar produto: ' + error.message);
     }
