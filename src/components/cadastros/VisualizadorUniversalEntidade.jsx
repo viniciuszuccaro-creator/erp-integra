@@ -249,8 +249,16 @@ export default function VisualizadorUniversalEntidade({
     setSelectedIds(prev => {
       const ns = new Set(prev);
       if (ns.has(id)) ns.delete(id); else ns.add(id);
+      if (typeof onSelectionChange === 'function') onSelectionChange(ns);
       return ns;
     });
+  };
+  
+  // Utilitário para forçar fechamento de janela após sucesso do form interno
+  const fecharJanelaSeInterna = () => {
+    // Se o form filho chamar onSuccess/onSubmit, fazemos apenas o refetch aqui;
+    // o fechamento é controlado pelo próprio form via useWindow (padrão dos formulários já usam windowMode=true)
+    refetch();
   };
   const excluirSelecionados = async () => {
     if (selectedIds.size === 0) return;
