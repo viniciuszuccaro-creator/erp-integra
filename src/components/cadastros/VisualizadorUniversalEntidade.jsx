@@ -93,6 +93,63 @@ const OPCOES_ORDENACAO = {
     { value: 'oldest', label: 'Mais Antigos', sortFn: (a, b) => new Date(a.created_date) - new Date(b.created_date) }
   ]
 };
+
+// Mapeamento de chaves de cache (aliases) para manter atualização consistente entre módulos
+const ALIAS_QUERY_KEYS = {
+  Cliente: ['clientes'],
+  Fornecedor: ['fornecedores'],
+  Transportadora: ['transportadoras'],
+  Colaborador: ['colaboradores'],
+  Representante: ['representantes'],
+  ContatoB2B: ['contatos-b2b'],
+  Produto: ['produtos'],
+  Servico: ['servicos'],
+  SetorAtividade: ['setores-atividade'],
+  GrupoProduto: ['grupos-produto'],
+  Marca: ['marcas'],
+  TabelaPreco: ['tabelas-preco'],
+  CatalogoWeb: ['catalogo-web'],
+  KitProduto: ['kits-produto'],
+  Banco: ['bancos'],
+  FormaPagamento: ['formas-pagamento'],
+  PlanoDeContas: ['plano-contas'],
+  CentroCusto: ['centrosCusto'],
+  CentroResultado: ['centros-resultado'],
+  TipoDespesa: ['tipos-despesa'],
+  MoedaIndice: ['moedas-indices'],
+  CondicaoComercial: ['condicoes-comerciais'],
+  RegiaoAtendimento: ['regioes-atendimento'],
+  UnidadeMedida: ['unidades-medida'],
+  Veiculo: ['veiculos'],
+  Motorista: ['motoristas'],
+  TipoFrete: ['tipos-frete'],
+  LocalEstoque: ['locais-estoque'],
+  RotaPadrao: ['rotas-padrao'],
+  ModeloDocumento: ['modelos-documento'],
+  Empresa: ['empresas'],
+  GrupoEmpresarial: ['grupos'],
+  Departamento: ['departamentos'],
+  Cargo: ['cargos'],
+  Turno: ['turnos'],
+  User: ['usuarios'],
+  PerfilAcesso: ['perfis-acesso'],
+  EventoNotificacao: ['eventos-notificacao'],
+  ConfiguracaoIntegracaoMarketplace: ['configs-integracao-marketplace'],
+  Webhook: ['webhooks'],
+  ChatbotIntent: ['chatbotIntents'],
+  ChatbotCanal: ['chatbotCanais'],
+  ApiExterna: ['apis-externas'],
+  JobAgendado: ['jobs-agendados'],
+  IAConfig: ['configs-ia'],
+  ParametroPortalCliente: ['parametros-portal'],
+  ParametroOrigemPedido: ['parametros-origem-pedido'],
+  ParametroRecebimentoNFe: ['parametros-recebimento-nfe'],
+  ParametroRoteirizacao: ['parametros-roteirizacao'],
+  ParametroConciliacaoBancaria: ['parametros-conciliacao'],
+  ParametroCaixaDiario: ['parametros-caixa'],
+  TabelaFiscal: ['tabelas-fiscais']
+};
+
 export default function VisualizadorUniversalEntidade({ 
   nomeEntidade,
   tituloDisplay,
@@ -130,7 +187,7 @@ export default function VisualizadorUniversalEntidade({
   // ✅ REAL-TIME: Buscar dados com auto-refresh a cada 30s
   const queryKey = [nomeEntidade.toLowerCase()];
 
-  const { data: dados = [], isLoading, refetch } = useQuery({
+  const { data: dados = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: queryKey,
     queryFn: async () => {
       try {
@@ -389,10 +446,15 @@ export default function VisualizadorUniversalEntidade({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => queryClient.invalidateQueries({ queryKey: queryKey })}
-                disabled={isLoading}
+                onClick={async () => {
+                  queryClient.invalidateQueries({ queryKey });
+                  const aliases = ALIAS_QUERY_KEYS[nomeEntidade] || [];
+                  aliases.forEach((k) => queryClient.invalidateQueries({ queryKey: [k] }));
+                  refetch();
+                }}
+                disabled={isFetching}
               >
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
               <Button
