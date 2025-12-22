@@ -9,7 +9,7 @@ import { AnimatePresence } from 'framer-motion';
  */
 
 export default function WindowRenderer() {
-  const { windows } = useWindowManager();
+  const { windows, closeWindow } = useWindowManager();
 
   return (
     <AnimatePresence>
@@ -20,7 +20,11 @@ export default function WindowRenderer() {
         
         return (
           <WindowModal key={window.id} window={window}>
-            <Component {...window.props} />
+            <Component
+              {...window.props}
+              windowId={window.id}
+              closeSelf={() => closeWindow(window.id)}
+            />
           </WindowModal>
         );
       })}

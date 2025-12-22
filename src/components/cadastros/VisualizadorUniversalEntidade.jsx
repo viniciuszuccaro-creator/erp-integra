@@ -382,9 +382,12 @@ export default function VisualizadorUniversalEntidade({
         windowMode: true
       };
 
-      openWindow(
+      let winId;
+      const closeSelf = () => closeWindow(winId);
+      const finalProps = { ...props, closeWindow: closeSelf, closeSelf };
+      winId = openWindow(
         componenteEdicao,
-        props,
+        finalProps,
         {
           title: `✏️ Editar ${tituloDisplay}`,
           width: 1000,
@@ -402,9 +405,12 @@ export default function VisualizadorUniversalEntidade({
   // Abrir visualização - V21.6.2 CORREÇÃO: z-index alto
   const abrirVisualizacao = (item) => {
     if (componenteVisualizacao) {
-      openWindow(
+      let winId;
+      const closeSelf = () => closeWindow(winId);
+      const finalProps = { [nomeEntidade.toLowerCase()]: item, id: item.id, closeWindow: closeSelf, closeSelf };
+      winId = openWindow(
         componenteVisualizacao,
-        { [nomeEntidade.toLowerCase()]: item, id: item.id },
+        finalProps,
         {
           title: `👁️ Detalhes de ${tituloDisplay}`,
           width: 900,
