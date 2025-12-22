@@ -66,7 +66,7 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
       toast.error("Selecione um arquivo (.xlsx/.xls/.csv)");
       return;
     }
-    if (escopo === "empresa" && !empresaId) {
+    if (!empresaId) {
       toast.error("Selecione a empresa de destino");
       return;
     }
@@ -88,10 +88,9 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
         mapping: defaultMapping,
         dryRun,
       };
+      payload.empresa_id = empresaId;
       if (escopo === "grupo") {
         payload.group_id = grupoId;
-      } else {
-        payload.empresa_id = empresaId;
       }
       const { data } = await base44.functions.invoke("importProdutos", payload);
 
@@ -161,21 +160,38 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
                   </Select>
                 </div>
               ) : (
-                <div className="mt-3">
-                  <label className="text-sm font-semibold">Grupo de destino</label>
-                  <Select value={grupoId} onValueChange={setGrupoId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o grupo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {grupos.map((g) => (
-                        <SelectItem key={g.id} value={g.id}>
-                          {g.nome_do_grupo || g.razao_social_holding || g.id}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <>
+                  <div className="mt-3">
+                    <label className="text-sm font-semibold">Grupo de destino</label>
+                    <Select value={grupoId} onValueChange={setGrupoId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o grupo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {grupos.map((g) => (
+                          <SelectItem key={g.id} value={g.id}>
+                            {g.nome_do_grupo || g.razao_social_holding || g.id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="mt-3">
+                    <label className="text-sm font-semibold">Empresa de destino</label>
+                    <Select value={empresaId} onValueChange={setEmpresaId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a empresa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {empresas.map((e) => (
+                          <SelectItem key={e.id} value={e.id}>
+                            {e.nome_fantasia || e.razao_social || e.id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               )}
             </div>
 
@@ -211,7 +227,7 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={enviar} disabled={processando || !arquivo || (escopo === 'empresa' ? !empresaId : !grupoId)} className="gap-2">
+            <Button onClick={enviar} disabled={processando || !arquivo || !empresaId || (escopo === 'grupo' && !grupoId)} className="gap-2">
               {processando ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
