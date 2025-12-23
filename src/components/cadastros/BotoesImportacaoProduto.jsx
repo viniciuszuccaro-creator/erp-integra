@@ -58,23 +58,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
         </Button>
       </div>
 
-      {/* Modal de NF-e */}
-      <Dialog open={modalAberto === 'nfe'} onOpenChange={(open) => !open && setModalAberto(null)}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-6 h-6 text-purple-600" />
-              Importar Produtos via NF-e
-            </DialogTitle>
-          </DialogHeader>
-          <ImportacaoProdutoNFe 
-            onProdutosCriados={(produtos) => {
-              if (onProdutosCriados) onProdutosCriados(produtos);
-              setModalAberto(null);
-            }} 
-          />
-        </DialogContent>
-      </Dialog>
+
 
       {/* Modal de Lote */}
       <Dialog open={modalAberto === 'lote'} onOpenChange={(open) => !open && setModalAberto(null)}>
