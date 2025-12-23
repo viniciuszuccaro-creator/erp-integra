@@ -194,15 +194,31 @@ function normalizeRows(rows, { header_row_index = 1, start_row_index = 2 }) {
 }
 
 function getCell(row, keyOrLetter) {
-  // Tenta por chave literal (cabeçalho)
-  if (row[keyOrLetter] != null && row[keyOrLetter] !== '') return row[keyOrLetter];
+  if (!row) return undefined;
+  const rawKey = String(keyOrLetter || '').trim();
+  if (!rawKey) return undefined;
 
-  // Tenta por variantes (case-insensitive)
-  const foundKey = Object.keys(row).find((k) => k.toLowerCase() === String(keyOrLetter).toLowerCase());
-  if (foundKey && row[foundKey] != null && row[foundKey] !== '') return row[foundKey];
+  // 1) Tentativa direta
+  if (row[rawKey] != null && row[rawKey] !== '') return row[rawKey];
 
-  // Se veio uma letra de coluna (ex.: 'AD'), tente chaves como 'A','B','C',... 'AD'
-  const letter = String(keyOrLetter).toUpperCase();
+  // 2) Case-insensitive
+  const lower = rawKey.toLowerCase();
+  const foundInsensitive = Object.keys(row).find((k) => k.toLowerCase() === lower);
+  if (foundInsensitive && row[foundInsensitive] != null && row[foundInsensitive] !== '') return row[foundInsensitive];
+
+  // 3) Normalização avançada (remove acentos, pontuação e espaços)
+  const norm = (s) => String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // acentos
+    .replace(/[^a-z0-9]/g, '');        // não alfanuméricos
+
+  const normKey = norm(rawKey);
+  const foundNormalized = Object.keys(row).find((k) => norm(k) === normKey);
+  if (foundNormalized && row[foundNormalized] != null && row[foundNormalized] !== '') return row[foundNormalized];
+
+  // 4) Se veio uma letra de coluna (ex.: 'AD'), tentar por letras também
+  const letter = rawKey.toUpperCase();
   if (row[letter] != null && row[letter] !== '') return row[letter];
 
   return undefined;
