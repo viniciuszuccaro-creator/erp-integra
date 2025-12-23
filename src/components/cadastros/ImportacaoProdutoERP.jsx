@@ -32,7 +32,7 @@ const defaultMapping = {
   ncm: "G",
 };
 
-export default function ImportacaoProdutoERP({ onConcluido }) {
+export default function ImportacaoProdutoERP({ onConcluido, closeSelf }) {
   const [empresas, setEmpresas] = useState([]);
   const [grupos, setGrupos] = useState([]);
   const [escopo, setEscopo] = useState("empresa"); // 'empresa' | 'grupo'
@@ -152,6 +152,7 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
       } else {
         toast.success(`Importação concluída: ${data.created} criados, ${data.updated} atualizados`);
         onConcluido && onConcluido();
+        if (closeSelf) closeSelf();
       }
     } catch (error) {
       toast.error(error?.message || "Erro ao importar");

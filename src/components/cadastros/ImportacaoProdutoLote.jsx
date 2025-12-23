@@ -33,7 +33,7 @@ const toNumber = (v) => {
  * ✅ Deduplicação inteligente
  * ✅ Preview antes de salvar
  */
-export default function ImportacaoProdutoLote({ onProdutosCriados }) {
+export default function ImportacaoProdutoLote({ onProdutosCriados, closeSelf }) {
   const { empresaAtual } = useContextoVisual();
   const [arquivo, setArquivo] = useState(null);
   const [processando, setProcessando] = useState(false);
@@ -190,6 +190,7 @@ Areia Lavada m³;AREIA;25051000;M3;85,00;110,00;50;Agregados`;
 
       setPreview(null);
       setArquivo(null);
+      if (closeSelf) closeSelf();
     } catch (error) {
       toast.error("Erro ao importar: " + error.message);
     }
