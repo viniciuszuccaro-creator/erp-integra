@@ -60,7 +60,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
 
 
 
-      {/* Modal de Lote */}
+
       <Dialog open={modalAberto === 'lote'} onOpenChange={(open) => !open && setModalAberto(null)}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
