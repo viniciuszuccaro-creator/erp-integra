@@ -143,21 +143,54 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
 
       // 3. Normaliza campos esperados (15 colunas padrão solicitadas)
       const produtosBase = rows.map((r) => ({
-        codigo: pick(r, ['Cód. Material','codigo','A']),
-        descricao: pick(r, ['Descrição','descricao','B','produto','Produto','PRODUTO']),
-        unidade_medida: pick(r, ['Un.','unidade_medida','unidade','D']) || 'UN',
-        estoque_minimo: toNumber(pick(r, ['Estoque Minimo','estoque_minimo','F'])) || 0,
-        ncm: pick(r, ['Classif. Fiscal','ncm','G']),
-        peso_teorico_kg_m: toNumber(pick(r, ['Peso Teórico','I'])),
-        codigo_barras: pick(r, ['Código Barra','L']),
-        grupo_produto_id: pick(r, ['Codigo da Classe','M']),
-        grupo_produto_nome: pick(r, ['Descrição da Classe','N']),
-        peso_liquido_kg: toNumber(pick(r, ['Peso Liquido','P'])),
-        peso_bruto_kg: toNumber(pick(r, ['Peso Bruto','Q'])),
-        setor_atividade_id: pick(r, ['Codigo do Grupo','R']),
-        setor_atividade_nome: pick(r, ['Descrição do Grupo','S']),
-        custo_aquisicao: toNumber(pick(r, ['Custo Principal','AD'])) || 0,
-        tipo_item: pick(r, ['Descrição Tipo','AI']) || 'Revenda'
+        codigo: pick(r, [
+          'Cód. Material','Cod. Material','Cód Material','Cod Material',
+          'Código Material','Codigo Material','Código','Codigo',
+          'codigo','A'
+        ]),
+        descricao: pick(r, [
+          'Descrição','Descricao','descrição','descricao',
+          'Produto','produto','PRODUTO','B'
+        ]),
+        unidade_medida: pick(r, [
+          'Un.','UN','Un','un','Unidade','Unidade Medida','unidade_medida','unidade','D'
+        ]) || 'UN',
+        estoque_minimo: toNumber(pick(r, [
+          'Estoque Minimo','Estoque Mínimo','estoque_minimo','F'
+        ])) || 0,
+        ncm: pick(r, [
+          'Classif. Fiscal','Classif Fiscal','Classificação Fiscal','Classificacao Fiscal','NCM','ncm','G'
+        ]),
+        peso_teorico_kg_m: toNumber(pick(r, [
+          'Peso Teórico','Peso Teorico','Peso kg/m','I'
+        ])),
+        codigo_barras: pick(r, [
+          'Código Barra','Codigo Barra','Código Barras','Codigo Barras','Código de Barras','Codigo de Barras','L'
+        ]),
+        grupo_produto_id: pick(r, [
+          'Codigo da Classe','Código da Classe','Classe Código','Classe Codigo','M'
+        ]),
+        grupo_produto_nome: pick(r, [
+          'Descrição da Classe','Descricao da Classe','N'
+        ]),
+        peso_liquido_kg: toNumber(pick(r, [
+          'Peso Liquido','Peso Líquido','P'
+        ])),
+        peso_bruto_kg: toNumber(pick(r, [
+          'Peso Bruto','Q'
+        ])),
+        setor_atividade_id: pick(r, [
+          'Codigo do Grupo','Código do Grupo','Grupo Código','Grupo Codigo','R'
+        ]),
+        setor_atividade_nome: pick(r, [
+          'Descrição do Grupo','Descricao do Grupo','S'
+        ]),
+        custo_aquisicao: toNumber(pick(r, [
+          'Custo Principal','Custo','AD'
+        ])) || 0,
+        tipo_item: pick(r, [
+          'Descrição Tipo','Descricao Tipo','Tipo do item','Tipo Item','Tipo','AI'
+        ]) || 'Revenda'
       }));
 
       // Remove linha de cabeçalho (ex.: "Descrição", "Cód. Material", etc.)
@@ -187,7 +220,11 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
       });
 
       setPreview(produtosComStatus);
+      const novos = produtosComStatus.filter(p => !p.duplicado).length;
       toast.success(`✅ ${produtosComStatus.length} produto(s) processado(s)!`);
+      if (novos === 0 && closeSelf) {
+        closeSelf();
+      }
     } catch (error) {
       toast.error("Erro ao processar arquivo: " + error.message);
     } finally {
@@ -392,6 +429,13 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
                   className="flex-1"
                 >
                   Cancelar
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => closeSelf && closeSelf()}
+                  className="flex-1"
+                >
+                  Fechar
                 </Button>
                 <Button
                   onClick={importarTodos}
