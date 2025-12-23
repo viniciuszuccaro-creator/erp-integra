@@ -128,6 +128,8 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
         file_url,
         rows,
         mapping,
+        header_row_index: 1,
+        start_row_index: 1,
         dryRun,
         empresa_id: empresaId
       };
