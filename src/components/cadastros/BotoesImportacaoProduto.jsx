@@ -78,7 +78,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
         </DialogContent>
       </Dialog>
 
-      {/* Modal ERP Mapeado */}
+
       <Dialog open={modalAberto === 'erp'} onOpenChange={(open) => !open && setModalAberto(null)}>
         <DialogContent className="max-w-5xl">
           <DialogHeader>
