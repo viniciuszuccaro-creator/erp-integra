@@ -40,11 +40,10 @@ export default function ImportacaoProdutoLote({ onProdutosCriados, closeSelf }) 
   const [preview, setPreview] = useState(null);
 
   const baixarModelo = () => {
-    // CSV compatível com Excel PT-BR: usa ponto e vírgula como separador e vírgula como decimal
-    const csv = '\uFEFF' + `descricao;codigo;ncm;unidade_medida;custo_aquisicao;preco_venda;estoque_minimo;grupo
-Vergalhão 8mm CA-50;VERG8;72142000;KG;5,80;7,50;1000;Bitola
-Cimento CP-II 50kg;CIM50;25232900;SC;28,90;35,00;500;Material de Construção
-Areia Lavada m³;AREIA;25051000;M3;85,00;110,00;50;Agregados`;
+    // CSV compatível com Excel PT-BR (BOM + ; + vírgula decimal) com as 15 colunas exigidas
+    const csv = '\uFEFF' + `Cód. Material;Descrição;Un.;Estoque Minimo;Classif. Fiscal;Peso Teórico;Código Barra;Codigo da Classe;Descrição da Classe;Peso Liquido;Peso Bruto;Codigo do Grupo;Descrição do Grupo;Custo Principal;Descrição Tipo
+VERG8;Vergalhão 8mm CA-50;KG;1000;72142000;0,395;;BIT;Bitolas;0,39;0,40;REV;Revenda;5,80;Revenda
+CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Administrativo;28,90;Revenda`;
 
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -111,16 +110,23 @@ Areia Lavada m³;AREIA;25051000;M3;85,00;110,00;50;Agregados`;
         return;
       }
 
-      // 3. Normaliza campos esperados
+      // 3. Normaliza campos esperados (15 colunas padrão solicitadas)
       const produtosBase = rows.map((r) => ({
-        descricao: pick(r, ['descricao','Descrição','DESCRICAO','produto','Produto','PRODUTO','B']),
-        codigo: pick(r, ['codigo','Código','CODIGO','A']),
-        ncm: pick(r, ['ncm','NCM','G']),
-        unidade_medida: pick(r, ['unidade_medida','UN','unidade','Unidade','D']) || 'UN',
-        custo_aquisicao: toNumber(pick(r, ['custo_aquisicao','Custo','CUSTO','AD'])) || 0,
-        preco_venda: toNumber(pick(r, ['preco_venda','Preço','PRECO'])) || 0,
-        estoque_minimo: toNumber(pick(r, ['estoque_minimo','Estoque mínimo','ESTOQUE_MINIMO','F'])) || 0,
-        grupo: pick(r, ['grupo','Grupo','GRUPO']) || 'Outros'
+        codigo: pick(r, ['Cód. Material','codigo','A']),
+        descricao: pick(r, ['Descrição','descricao','B','produto','Produto','PRODUTO']),
+        unidade_medida: pick(r, ['Un.','unidade_medida','unidade','D']) || 'UN',
+        estoque_minimo: toNumber(pick(r, ['Estoque Minimo','estoque_minimo','F'])) || 0,
+        ncm: pick(r, ['Classif. Fiscal','ncm','G']),
+        peso_teorico_kg_m: toNumber(pick(r, ['Peso Teórico','I'])),
+        codigo_barras: pick(r, ['Código Barra','L']),
+        grupo_produto_id: pick(r, ['Codigo da Classe','M']),
+        grupo_produto_nome: pick(r, ['Descrição da Classe','N']),
+        peso_liquido_kg: toNumber(pick(r, ['Peso Liquido','P'])),
+        peso_bruto_kg: toNumber(pick(r, ['Peso Bruto','Q'])),
+        setor_atividade_id: pick(r, ['Codigo do Grupo','R']),
+        setor_atividade_nome: pick(r, ['Descrição do Grupo','S']),
+        custo_aquisicao: toNumber(pick(r, ['Custo Principal','AD'])) || 0,
+        tipo_item: pick(r, ['Descrição Tipo','AI']) || 'Revenda'
       })).filter(p => p.descricao);
 
       // 4. Verificar duplicidade (por empresa)
@@ -165,16 +171,23 @@ Areia Lavada m³;AREIA;25051000;M3;85,00;110,00;50;Agregados`;
       for (const prod of produtosNovos) {
         const novoProduto = await base44.entities.Produto.create({
           empresa_id: empresaAtual.id,
-          descricao: prod.descricao,
           codigo: prod.codigo,
-          ncm: prod.ncm || '',
+          descricao: prod.descricao,
           unidade_medida: prod.unidade_medida || 'UN',
           unidade_principal: prod.unidade_medida || 'UN',
           unidades_secundarias: [prod.unidade_medida || 'UN'],
-          custo_aquisicao: prod.custo_aquisicao || 0,
-          preco_venda: prod.preco_venda || 0,
           estoque_minimo: prod.estoque_minimo || 0,
-          grupo: prod.grupo || 'Outros',
+          ncm: prod.ncm || '',
+          codigo_barras: prod.codigo_barras || '',
+          grupo_produto_id: prod.grupo_produto_id || '',
+          grupo_produto_nome: prod.grupo_produto_nome || '',
+          setor_atividade_id: prod.setor_atividade_id || '',
+          setor_atividade_nome: prod.setor_atividade_nome || '',
+          tipo_item: prod.tipo_item || 'Revenda',
+          peso_teorico_kg_m: prod.peso_teorico_kg_m,
+          peso_liquido_kg: prod.peso_liquido_kg,
+          peso_bruto_kg: prod.peso_bruto_kg,
+          custo_aquisicao: prod.custo_aquisicao || 0,
           status: 'Ativo',
           observacoes: `Importado em lote em ${new Date().toLocaleDateString()}`
         });
