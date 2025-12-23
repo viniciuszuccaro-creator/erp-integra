@@ -158,11 +158,22 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
         setor_atividade_nome: pick(r, ['Descrição do Grupo','S']),
         custo_aquisicao: toNumber(pick(r, ['Custo Principal','AD'])) || 0,
         tipo_item: pick(r, ['Descrição Tipo','AI']) || 'Revenda'
-      })).filter(p => p.descricao);
+      }));
+
+      // Remove linha de cabeçalho (ex.: "Descrição", "Cód. Material", etc.)
+      const produtosClean = produtosBase.filter((p) => {
+        const d = (p.descricao || '').toLowerCase();
+        const c = (p.codigo || '').toLowerCase();
+        const u = (p.unidade_medida || '').toLowerCase();
+        if (['descrição','descricao','produto','nome'].includes(d)) return false;
+        if (['cód. material','cod. material','codigo','código','sku','referencia','referência'].includes(c)) return false;
+        if (['un.','unidade'].includes(u)) return false;
+        return !!p.descricao;
+      });
 
       // 4. Verificar duplicidade (por empresa)
       const produtosExistentes = empresaAtual?.id ? await base44.entities.Produto.filter({ empresa_id: empresaAtual.id }) : [];
-      const produtosComStatus = produtosBase.map(prod => {
+      const produtosComStatus = produtosClean.map(prod => {
         const duplicado = produtosExistentes.find(p => 
           p.codigo === prod.codigo || 
           (p.ncm === prod.ncm && p.descricao?.toLowerCase() === prod.descricao?.toLowerCase())

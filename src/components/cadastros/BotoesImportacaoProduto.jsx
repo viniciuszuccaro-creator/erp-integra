@@ -36,7 +36,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
           onClick={() => openWindow(
             ImportacaoProdutoLote,
             { windowMode: true, onProdutosCriados: (produtos) => { onProdutosCriados && onProdutosCriados(produtos); } },
-            { title: 'Importação em Lote', width: 1100, height: 800 }
+            { title: 'Importação em Lote', width: 1100, height: 800, ensureOnTop: true, forceTop: true, uniqueKey: 'importacao-lote', zIndex: 9999999999 }
           )}
           className="border-green-300 hover:bg-green-50"
         >
