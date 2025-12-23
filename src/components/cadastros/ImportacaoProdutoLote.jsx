@@ -92,11 +92,42 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
       });
 
       const output = dados.output || {};
-      const rows = Array.isArray(output)
+      let rows = Array.isArray(output)
         ? output
         : (Array.isArray(output.rows)
           ? output.rows
           : (Array.isArray(output.produtos) ? output.produtos : (Array.isArray(output.data) ? output.data : [])));
+
+      // Normalização: se veio uma coluna única com linhas separadas por ';', reconstituir colunas
+      const sample = rows.slice(0, Math.min(10, rows.length));
+      const looksSingleColumn = rows.length > 0 && rows.every((r) => {
+        const vals = Object.values(r || {});
+        return vals.length === 1 && typeof vals[0] === 'string';
+      });
+      const hasSemicolons = sample.some((r) => {
+        const v = Object.values(r || {})[0];
+        return typeof v === 'string' && v.includes(';');
+      });
+      if (looksSingleColumn && hasSemicolons) {
+        const letters = (n) => { const arr = []; for (let i=0;i<n;i++){ let num=i+1, label=''; while(num>0){ const rem=(num-1)%26; label=String.fromCharCode(65+rem)+label; num=Math.floor((num-1)/26);} arr.push(label);} return arr; };
+        const splitLine = (line) => { const out=[]; let current='', inQuotes=false; for (let i=0;i<line.length;i++){ const ch=line[i]; if(ch==='"'){ if(inQuotes && line[i+1]==='"'){ current+='"'; i++; } else { inQuotes=!inQuotes; } } else if(ch===';' && !inQuotes){ out.push(current); current=''; } else { current+=ch; } } out.push(current); return out; };
+        const strip = (s) => { if (s.length>=2 && s.startsWith('"') && s.endsWith('"')) return s.slice(1,-1); return s; };
+        const headerIdx = 0;
+        const rowsArr = rows.map((r) => { const v = Object.values(r || {})[0]; const line = typeof v === 'string' ? v : ''; return splitLine(line); });
+        const header = (rowsArr[headerIdx] || []).map((h) => strip(String(h || '').trim()));
+        const lettersList = letters(200);
+        rows = rowsArr.map((cells) => {
+          const obj = {};
+          for (let j=0;j<cells.length && j<lettersList.length;j++){
+            const val = strip(String(cells[j] ?? '').trim());
+            if (val==='') continue;
+            const letterKey = lettersList[j];
+            obj[letterKey] = val;
+            if (header[j]) obj[header[j]] = val;
+          }
+          return obj;
+        });
+      }
 
       if (dados.status === 'error') {
         toast.error(dados.details);
@@ -130,7 +161,7 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
       })).filter(p => p.descricao);
 
       // 4. Verificar duplicidade (por empresa)
-      const produtosExistentes = await base44.entities.Produto.filter({ empresa_id: empresaAtual.id });
+      const produtosExistentes = empresaAtual?.id ? await base44.entities.Produto.filter({ empresa_id: empresaAtual.id }) : [];
       const produtosComStatus = produtosBase.map(prod => {
         const duplicado = produtosExistentes.find(p => 
           p.codigo === prod.codigo || 
