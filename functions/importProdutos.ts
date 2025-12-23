@@ -219,7 +219,7 @@ function buildProdutoFromRow(row, mapping, { empresa_id, group_id }) {
     peso_teorico_kg_m: num(getCell(row, mapping.peso_teorico_kg_m)),
     peso_liquido_kg: num(getCell(row, mapping.peso_liquido_kg)),
     peso_bruto_kg: num(getCell(row, mapping.peso_bruto_kg)),
-    unidade_medida: sanitizeStr(getCell(row, mapping.unidade_medida)),
+    unidade_medida: sanitizeStr(getCell(row, mapping.unidade_medida)) || 'UN',
     custo_aquisicao: num(getCell(row, mapping.custo_aquisicao)),
     estoque_minimo: num(getCell(row, mapping.estoque_minimo)),
     ncm: sanitizeStr(getCell(row, mapping.ncm)),
