@@ -40,12 +40,13 @@ export default function ImportacaoProdutoLote({ onProdutosCriados }) {
   const [preview, setPreview] = useState(null);
 
   const baixarModelo = () => {
-    const csv = `descricao,codigo,ncm,unidade_medida,custo_aquisicao,preco_venda,estoque_minimo,grupo
-Vergalhão 8mm CA-50,VERG8,72142000,KG,5.80,7.50,1000,Bitola
-Cimento CP-II 50kg,CIM50,25232900,SC,28.90,35.00,500,Material de Construção
-Areia Lavada m³,AREIA,25051000,M3,85.00,110.00,50,Agregados`;
+    // CSV compatível com Excel PT-BR: usa ponto e vírgula como separador e vírgula como decimal
+    const csv = '\uFEFF' + `descricao;codigo;ncm;unidade_medida;custo_aquisicao;preco_venda;estoque_minimo;grupo
+Vergalhão 8mm CA-50;VERG8;72142000;KG;5,80;7,50;1000;Bitola
+Cimento CP-II 50kg;CIM50;25232900;SC;28,90;35,00;500;Material de Construção
+Areia Lavada m³;AREIA;25051000;M3;85,00;110,00;50;Agregados`;
 
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
