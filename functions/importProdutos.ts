@@ -183,14 +183,107 @@ function normalizeMapping(raw) {
 }
 
 function normalizeRows(rows, { header_row_index = 1, start_row_index = 2 }) {
-  // Se já parecer uma lista de objetos "linha" (com valores), retornamos como está.
-  // Caso contenha metadados de índice, ignoramos linhas antes de start_row_index.
-  // Aqui assumimos que o extrator já retornou objetos por linha (com chaves de cabeçalho ou letras de coluna)
-  // Se pedirem start_row_index=1, não cortar a primeira linha
+  // Fallback especial: alguns CSVs PT-BR abrem/extraem como "uma coluna só" com campos separados por ';'.
+  // Se detectarmos esse padrão, reconstituímos objetos com chaves por LETRAS (A, B, C, ...) e também pelos cabeçalhos.
   const start = Number(start_row_index) || 2;
-  return rows
+  if (!Array.isArray(rows) || rows.length === 0) return [];
+
+  const looksSingleColumn = rows.every((r) => {
+    const vals = Object.values(r || {});
+    return vals.length === 1 && typeof vals[0] === 'string';
+  });
+
+  const hasSemicolons = rows
+    .slice(0, Math.min(10, rows.length))
+    .some((r) => {
+      const v = Object.values(r || {})[0];
+      return typeof v === 'string' && v.includes(';');
+    });
+
+  let processed = rows;
+  if (looksSingleColumn && hasSemicolons) {
+    processed = toObjectsFromSemicolonRows(rows, { header_row_index });
+  }
+
+  return processed
     .map((r, i) => ({ __rownum: i + 1, ...r }))
     .filter((r) => r.__rownum >= start);
+}
+
+function toObjectsFromSemicolonRows(rows, { header_row_index = 1 }) {
+  const letters = generateLetters(200);
+  const headerIdx = Math.max(1, Number(header_row_index) || 1) - 1;
+
+  const rowsAsArrays = rows.map((r) => {
+    const v = Object.values(r || {})[0];
+    const line = typeof v === 'string' ? v : '';
+    return splitSemicolonLine(line);
+  });
+
+  const header = rowsAsArrays[headerIdx] || [];
+  const headerClean = header.map((h) => stripQuotes(String(h || '').trim()));
+
+  return rowsAsArrays.map((cells) => {
+    const obj = {};
+    for (let j = 0; j < cells.length && j < letters.length; j++) {
+      const value = stripQuotes(String(cells[j] ?? '').trim());
+      const letterKey = letters[j];
+      if (value !== '') obj[letterKey] = value;
+      const headerKeyRaw = headerClean[j];
+      if (headerKeyRaw) {
+        obj[headerKeyRaw] = value;
+      }
+    }
+    return obj;
+  });
+}
+
+function splitSemicolonLine(line) {
+  // Parser simples para ; com suporte básico a aspas duplas
+  const out = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ';' && !inQuotes) {
+      out.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  out.push(current);
+  return out;
+}
+
+function stripQuotes(s) {
+  if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) {
+    return s.slice(1, -1);
+  }
+  return s;
+}
+
+function generateLetters(n) {
+  const arr = [];
+  for (let i = 0; i < n; i++) {
+    let num = i + 1;
+    let label = '';
+    while (num > 0) {
+      const rem = (num - 1) % 26;
+      label = String.fromCharCode(65 + rem) + label;
+      num = Math.floor((num - 1) / 26);
+    }
+    arr.push(label);
+  }
+  return arr;
 }
 
 function getCell(row, keyOrLetter) {
