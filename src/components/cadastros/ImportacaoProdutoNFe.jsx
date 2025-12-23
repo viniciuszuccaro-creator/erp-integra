@@ -97,7 +97,7 @@ export default function ImportacaoProdutoNFe({ onProdutosCriados }) {
       });
 
       // 3. Verificar duplicidade
-      const produtosExistentes = await base44.entities.Produto.list();
+      const produtosExistentes = await base44.entities.Produto.filter({ empresa_id: empresaAtual.id });
       const produtosComStatus = dadosExtraidos.produtos.map(prod => {
         const duplicado = produtosExistentes.find(p => 
           p.ncm === prod.ncm && 

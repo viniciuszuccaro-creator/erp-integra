@@ -9,6 +9,23 @@ import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { toast } from "sonner";
 
+// Helpers para leitura flexível de colunas (por nome ou letra)
+const pick = (row, keys) => {
+  for (const k of keys) {
+    if (!k) continue;
+    const variations = [String(k), String(k).toUpperCase(), String(k).toLowerCase()];
+    for (const vKey of variations) {
+      if (row[vKey] != null && row[vKey] !== '') return String(row[vKey]).trim();
+    }
+  }
+  return undefined;
+};
+const toNumber = (v) => {
+  if (v == null || v === '') return undefined;
+  const n = Number(String(v).replace(/\./g, '').replace(/,/g, '.'));
+  return Number.isFinite(n) ? n : undefined;
+};
+
 /**
  * V21.1.2-R2 - Importação em Lote de Produtos
  * ✅ Excel, CSV, TXT
@@ -74,15 +91,40 @@ Areia Lavada m³,AREIA,25051000,M3,85.00,110.00,50,Agregados`;
         }
       });
 
+      const output = dados.output || {};
+      const rows = Array.isArray(output)
+        ? output
+        : (Array.isArray(output.rows)
+          ? output.rows
+          : (Array.isArray(output.produtos) ? output.produtos : (Array.isArray(output.data) ? output.data : [])));
+
       if (dados.status === 'error') {
         toast.error(dados.details);
         setProcessando(false);
         return;
       }
 
-      // 3. Verificar duplicidade
-      const produtosExistentes = await base44.entities.Produto.list();
-      const produtosComStatus = dados.output.produtos.map(prod => {
+      if (!rows.length) {
+        toast.error("Não encontramos produtos na planilha. Verifique os cabeçalhos ou baixe o modelo.");
+        setProcessando(false);
+        return;
+      }
+
+      // 3. Normaliza campos esperados
+      const produtosBase = rows.map((r) => ({
+        descricao: pick(r, ['descricao','Descrição','DESCRICAO','produto','Produto','PRODUTO','B']),
+        codigo: pick(r, ['codigo','Código','CODIGO','A']),
+        ncm: pick(r, ['ncm','NCM','G']),
+        unidade_medida: pick(r, ['unidade_medida','UN','unidade','Unidade','D']) || 'UN',
+        custo_aquisicao: toNumber(pick(r, ['custo_aquisicao','Custo','CUSTO','AD'])) || 0,
+        preco_venda: toNumber(pick(r, ['preco_venda','Preço','PRECO'])) || 0,
+        estoque_minimo: toNumber(pick(r, ['estoque_minimo','Estoque mínimo','ESTOQUE_MINIMO','F'])) || 0,
+        grupo: pick(r, ['grupo','Grupo','GRUPO']) || 'Outros'
+      })).filter(p => p.descricao);
+
+      // 4. Verificar duplicidade (por empresa)
+      const produtosExistentes = await base44.entities.Produto.filter({ empresa_id: empresaAtual.id });
+      const produtosComStatus = produtosBase.map(prod => {
         const duplicado = produtosExistentes.find(p => 
           p.codigo === prod.codigo || 
           (p.ncm === prod.ncm && p.descricao?.toLowerCase() === prod.descricao?.toLowerCase())
