@@ -179,9 +179,11 @@ function normalizeRows(rows, { header_row_index = 1, start_row_index = 2 }) {
   // Se já parecer uma lista de objetos "linha" (com valores), retornamos como está.
   // Caso contenha metadados de índice, ignoramos linhas antes de start_row_index.
   // Aqui assumimos que o extrator já retornou objetos por linha (com chaves de cabeçalho ou letras de coluna)
+  // Se pedirem start_row_index=1, não cortar a primeira linha
+  const start = Number(start_row_index) || 2;
   return rows
     .map((r, i) => ({ __rownum: i + 1, ...r }))
-    .filter((r) => r.__rownum >= start_row_index);
+    .filter((r) => r.__rownum >= start);
 }
 
 function getCell(row, keyOrLetter) {
