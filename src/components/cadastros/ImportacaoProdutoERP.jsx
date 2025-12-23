@@ -134,7 +134,7 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
         rows,
         mapping: cleanedMapping,
         header_row_index: 28,
-        start_row_index: 29,
+        start_row_index: 1,
         dryRun,
         empresa_id: empresaId
       };
