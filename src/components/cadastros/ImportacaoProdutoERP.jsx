@@ -15,6 +15,23 @@ import { toast } from "sonner";
  * Importa produtos usando o backend functions/importProdutos, com mapeamento ERP (colunas por letra).
  * Multiempresa: exige empresa_id. Dry-run opcional para validar antes de gravar.
  */
+const defaultMapping = {
+  codigo: "A",
+  descricao: "B",
+  tipo_item: "AI",
+  setor_atividade_id: "R",
+  setor_atividade_nome: "S",
+  grupo_produto_id: "M",
+  grupo_produto_nome: "N",
+  peso_teorico_kg_m: "I",
+  peso_liquido_kg: "P",
+  peso_bruto_kg: "Q",
+  unidade_medida: "D",
+  custo_aquisicao: "AD",
+  estoque_minimo: "F",
+  ncm: "G",
+};
+
 export default function ImportacaoProdutoERP({ onConcluido }) {
   const [empresas, setEmpresas] = useState([]);
   const [grupos, setGrupos] = useState([]);
@@ -28,23 +45,6 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
   const [mapping, setMapping] = useState(defaultMapping);
   const [amostrasHeaders, setAmostrasHeaders] = useState([]);
 
-  // Mapeamento padrão com base no fornecido pelo usuário
-  const defaultMapping = {
-    codigo: "A",
-    descricao: "B",
-    tipo_item: "AI",
-    setor_atividade_id: "R",
-    setor_atividade_nome: "S",
-    grupo_produto_id: "M",
-    grupo_produto_nome: "N",
-    peso_teorico_kg_m: "I",
-    peso_liquido_kg: "P",
-    peso_bruto_kg: "Q",
-    unidade_medida: "D",
-    custo_aquisicao: "AD",
-    estoque_minimo: "F",
-    ncm: "G",
-  };
 
   useEffect(() => {
     (async () => {
