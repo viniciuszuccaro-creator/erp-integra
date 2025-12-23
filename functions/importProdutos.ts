@@ -126,6 +126,13 @@ Deno.serve(async (req) => {
       try {
         const produto = buildProdutoFromRow(row, mapping, { empresa_id, group_id });
 
+        // Pula possíveis linhas de cabeçalho/label vindas da planilha antiga
+        if (isHeaderLike(produto)) {
+          report.skipped += 1;
+          report.details.push({ index: idx, status: 'skipped', reason: 'header_row' });
+          continue;
+        }
+
         if (!produto.codigo || !produto.descricao) {
           report.skipped += 1;
           report.details.push({ index: idx, status: 'skipped', reason: 'Sem codigo/descricao' });
@@ -238,4 +245,23 @@ function sanitizeStr(v) {
   if (v == null) return undefined;
   const s = String(v).trim();
   return s === '' ? undefined : s;
+}
+
+function norm(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function isHeaderLike(prod) {
+  const d = norm(prod?.descricao);
+  const c = norm(prod?.codigo);
+  const u = norm(prod?.unidade_medida);
+  const headerWords = ['descricao', 'descrição', 'produto', 'nome'];
+  const codeWords = ['codigo', 'código', 'sku', 'referencia'];
+  if (headerWords.includes(d)) return true;
+  if (codeWords.includes(c)) return true;
+  if (u === 'unidade') return true;
+  return false;
 }
