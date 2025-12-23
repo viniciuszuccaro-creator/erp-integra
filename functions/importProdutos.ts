@@ -77,9 +77,11 @@ Deno.serve(async (req) => {
 
     if (!rows && file_url) {
       const extractSchema = {
-        title: 'TabelaProdutos',
-        type: 'object',
-        additionalProperties: true,
+        type: 'array',
+        items: {
+          type: 'object',
+          additionalProperties: true,
+        },
       };
 
       const extractRes = await base44.integrations.Core.ExtractDataFromUploadedFile({
