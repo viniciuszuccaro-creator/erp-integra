@@ -25,6 +25,8 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
   const [processando, setProcessando] = useState(false);
   const [relatorio, setRelatorio] = useState(null);
   const [dryRun, setDryRun] = useState(true);
+  const [mapping, setMapping] = useState(defaultMapping);
+  const [amostrasHeaders, setAmostrasHeaders] = useState([]);
 
   // Mapeamento padrão com base no fornecido pelo usuário
   const defaultMapping = {
@@ -61,6 +63,27 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
     })();
   }, []);
 
+  const extrairCabecalhos = async (file) => {
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const res = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: { type: "object", additionalProperties: true }
+      });
+      const rows = Array.isArray(res.output)
+        ? res.output
+        : (Array.isArray(res.output?.rows)
+          ? res.output.rows
+          : (Array.isArray(res.output?.data) ? res.output.data : []));
+      if (rows && rows.length > 0) {
+        const keys = Object.keys(rows[0] || {});
+        setAmostrasHeaders(keys.filter((k) => !!k));
+      }
+    } catch (e) {
+      // silencioso
+    }
+  };
+
   const enviar = async () => {
     if (!arquivo) {
       toast.error("Selecione um arquivo (.xlsx/.xls/.csv)");
@@ -85,13 +108,12 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
       // 2) Invoca função backend
       const payload = {
         file_url,
-        mapping: defaultMapping,
+        mapping,
         dryRun,
+        empresa_id: empresaId
       };
       if (escopo === "grupo") {
         payload.group_id = grupoId;
-      } else {
-        payload.empresa_id = empresaId;
       }
       const { data } = await base44.functions.invoke("importProdutos", payload);
 
@@ -198,10 +220,54 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
 
             <div>
               <label className="text-sm font-semibold">Arquivo</label>
-              <Input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => setArquivo(e.target.files?.[0] || null)} />
+              <Input type="file" accept=".xlsx,.xls,.csv" onChange={async (e) => { const f = e.target.files?.[0] || null; setArquivo(f); if (f) { await extrairCabecalhos(f); } }} />
               {arquivo && (
                 <p className="text-xs text-slate-500 mt-1">{arquivo.name}</p>
               )}
+            </div>
+          </div>
+
+          <div className="border-t pt-4 mt-4 space-y-2">
+            <p className="text-sm font-semibold">Mapeamento de Colunas</p>
+            <p className="text-xs text-slate-500">Use letra da coluna (ex: AD) ou selecione um cabeçalho detectado da planilha.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                ["codigo","Código"],
+                ["descricao","Descrição"],
+                ["ncm","NCM"],
+                ["unidade_medida","Unidade"],
+                ["custo_aquisicao","Custo"],
+                ["estoque_minimo","Estoque mínimo"],
+                ["tipo_item","Tipo do item"],
+                ["setor_atividade_id","Setor ID"],
+                ["setor_atividade_nome","Setor Nome"],
+                ["grupo_produto_id","Grupo ID"],
+                ["grupo_produto_nome","Grupo Nome"],
+                ["peso_teorico_kg_m","Peso kg/m"],
+              ].map(([key,label]) => (
+                <div key={key}>
+                  <label className="text-xs font-medium">{label}</label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={mapping[key] || ""}
+                      onChange={(e) => setMapping(prev => ({ ...prev, [key]: e.target.value }))}
+                      placeholder="Ex: AD ou 'Código'"
+                    />
+                    {amostrasHeaders.length > 0 && (
+                      <Select onValueChange={(v) => setMapping(prev => ({ ...prev, [key]: v }))}>
+                        <SelectTrigger className="min-w-[120px]">
+                          <SelectValue placeholder="Cabeçalho" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {amostrasHeaders.map((h) => (
+                            <SelectItem key={h} value={h}>{h}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
