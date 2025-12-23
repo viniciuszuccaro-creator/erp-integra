@@ -25,8 +25,6 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
   const [processando, setProcessando] = useState(false);
   const [relatorio, setRelatorio] = useState(null);
   const [dryRun, setDryRun] = useState(true);
-  const [compartilharGrupo, setCompartilharGrupo] = useState(true);
-  const [empresasCompartilhar, setEmpresasCompartilhar] = useState([]);
 
   // Mapeamento padrão com base no fornecido pelo usuário
   const defaultMapping = {
@@ -63,23 +61,12 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
     })();
   }, []);
 
-  const empresasDoGrupo = empresas.filter((e) => e.group_id === grupoId);
-
-  useEffect(() => {
-    if (escopo === "grupo" && compartilharGrupo) {
-      const ids = empresas
-        .filter((e) => e.group_id === grupoId && e.id !== empresaId)
-        .map((e) => e.id);
-      setEmpresasCompartilhar(ids);
-    }
-  }, [escopo, compartilharGrupo, grupoId, empresaId, empresas]);
-
   const enviar = async () => {
     if (!arquivo) {
       toast.error("Selecione um arquivo (.xlsx/.xls/.csv)");
       return;
     }
-    if (!empresaId) {
+    if (escopo === "empresa" && !empresaId) {
       toast.error("Selecione a empresa de destino");
       return;
     }
@@ -101,23 +88,14 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
         mapping: defaultMapping,
         dryRun,
       };
-      payload.empresa_id = empresaId;
       if (escopo === "grupo") {
         payload.group_id = grupoId;
-        payload.compartilhado_grupo = compartilharGrupo;
-        payload.empresas_compartilhadas_ids = (empresasCompartilhar || []).filter((id) => id && id !== empresaId);
+      } else {
+        payload.empresa_id = empresaId;
       }
       const { data } = await base44.functions.invoke("importProdutos", payload);
 
-      if (!data || typeof data !== 'object') {
-        throw new Error('Resposta inesperada do servidor');
-      }
       setRelatorio(data);
-
-      // Atualiza listas na UI ao terminar
-      try { await Promise.all([
-        base44.entities.Produto.list(),
-      ]);} catch {}
 
       if (data?.errors > 0) {
         toast.error(`Importação finalizada com ${data.errors} erro(s)`);
@@ -128,9 +106,7 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
         onConcluido && onConcluido();
       }
     } catch (error) {
-      const msg = error?.response?.data?.error || error?.message || "Erro ao importar";
-      try { setRelatorio(error?.response?.data || { error: msg }); } catch {}
-      toast.error(msg);
+      toast.error(error?.message || "Erro ao importar");
     } finally {
       setProcessando(false);
     }
@@ -165,7 +141,7 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
 
               {escopo === "empresa" ? (
                 <div className="mt-3">
-                  <label className="text-sm font-semibold">Empresa proprietária</label>
+                  <label className="text-sm font-semibold">Empresa de destino</label>
                   <Select value={empresaId} onValueChange={setEmpresaId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a empresa" />
@@ -180,66 +156,21 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
                   </Select>
                 </div>
               ) : (
-                <>
-                  <div className="mt-3">
-                    <label className="text-sm font-semibold">Grupo de destino</label>
-                    <Select value={grupoId} onValueChange={setGrupoId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o grupo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {grupos.map((g) => (
-                          <SelectItem key={g.id} value={g.id}>
-                            {g.nome_do_grupo || g.razao_social_holding || g.id}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="mt-3">
-                    <label className="text-sm font-semibold">Empresa proprietária</label>
-                    <Select value={empresaId} onValueChange={setEmpresaId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a empresa" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {empresas.map((e) => (
-                          <SelectItem key={e.id} value={e.id}>
-                            {e.nome_fantasia || e.razao_social || e.id}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="mt-3">
-                    <label className="text-sm font-semibold">Compartilhamento</label>
-                    <div className="mt-2 flex items-center gap-2">
-                      <input type="checkbox" checked={compartilharGrupo} onChange={(e) => setCompartilharGrupo(e.target.checked)} />
-                      <span className="text-sm">Compartilhar com outras empresas do grupo</span>
-                    </div>
-                    {compartilharGrupo && (
-                      <div className="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {empresasDoGrupo.map((e) => (
-                          <label key={e.id} className="flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={empresasCompartilhar.includes(e.id)}
-                              onChange={(ev) => {
-                                const checked = ev.target.checked;
-                                setEmpresasCompartilhar((prev) => {
-                                  const without = prev.filter((id) => id !== e.id);
-                                  return checked ? [...prev, e.id] : without;
-                                });
-                              }}
-                            />
-                            {e.nome_fantasia || e.razao_social || e.id}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
+                <div className="mt-3">
+                  <label className="text-sm font-semibold">Grupo de destino</label>
+                  <Select value={grupoId} onValueChange={setGrupoId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o grupo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {grupos.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>
+                          {g.nome_do_grupo || g.razao_social_holding || g.id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </div>
 
@@ -275,7 +206,7 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={enviar} disabled={processando || !arquivo || !empresaId || (escopo === 'grupo' && !grupoId)} className="gap-2">
+            <Button onClick={enviar} disabled={processando || !arquivo || !empresaId} className="gap-2">
               {processando ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (

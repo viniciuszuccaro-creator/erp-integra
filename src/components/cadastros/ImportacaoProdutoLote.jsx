@@ -6,7 +6,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Upload, CheckCircle2, AlertTriangle, Download } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { toast } from "sonner";
 
 /**
@@ -17,7 +16,6 @@ import { toast } from "sonner";
  * ✅ Preview antes de salvar
  */
 export default function ImportacaoProdutoLote({ onProdutosCriados }) {
-  const { empresaAtual } = useContextoVisual();
   const [arquivo, setArquivo] = useState(null);
   const [processando, setProcessando] = useState(false);
   const [preview, setPreview] = useState(null);
@@ -105,10 +103,6 @@ Areia Lavada m³,AREIA,25051000,M3,85.00,110.00,50,Agregados`;
   };
 
   const importarTodos = async () => {
-    if (!empresaAtual?.id) {
-      toast.error("Selecione a empresa no topo para importar os produtos.");
-      return;
-    }
     const produtosNovos = preview.filter(p => !p.duplicado);
     
     if (produtosNovos.length === 0) {
@@ -121,7 +115,6 @@ Areia Lavada m³,AREIA,25051000,M3,85.00,110.00,50,Agregados`;
 
       for (const prod of produtosNovos) {
         const novoProduto = await base44.entities.Produto.create({
-          empresa_id: empresaAtual.id,
           descricao: prod.descricao,
           codigo: prod.codigo,
           ncm: prod.ncm || '',
