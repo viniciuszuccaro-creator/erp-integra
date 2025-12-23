@@ -124,10 +124,15 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
       }
 
       // 3) Invoca função backend passando as linhas e o mapeamento escolhido
+      // 3) Normaliza mapeamento (aceita '29AD' -> 'AD')
+      const normalizeCol = (v) => typeof v === 'string' ? v.trim().toUpperCase().replace(/^[0-9]+/, '').replace(/[^A-Z]/g, '') : v;
+      const cleanedMapping = Object.fromEntries(Object.entries(mapping).map(([k, v]) => [k, normalizeCol(v)]));
+
+      // 4) Invoca função backend passando as linhas e o mapeamento escolhido
       const payload = {
         file_url,
         rows,
-        mapping,
+        mapping: cleanedMapping,
         header_row_index: 28,
         start_row_index: 29,
         dryRun,
