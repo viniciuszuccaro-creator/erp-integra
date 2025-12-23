@@ -105,9 +105,28 @@ export default function ImportacaoProdutoERP({ onConcluido }) {
       // 1) Upload do arquivo
       const { file_url } = await base44.integrations.Core.UploadFile({ file: arquivo });
 
-      // 2) Invoca função backend
+      // 2) Extrai as linhas no frontend para máxima compatibilidade com planilhas antigas
+      const extractRes = await base44.integrations.Core.ExtractDataFromUploadedFile({
+        file_url,
+        json_schema: { title: 'TabelaProdutos', type: 'object', additionalProperties: true }
+      });
+      const out = extractRes?.output || {};
+      const rows = Array.isArray(out)
+        ? out
+        : (Array.isArray(out.rows)
+          ? out.rows
+          : (Array.isArray(out.data) ? out.data : Object.values(out).filter(v => typeof v === 'object')));
+
+      if (!Array.isArray(rows) || rows.length === 0) {
+        toast.error("Não encontramos linhas na planilha. Verifique o arquivo ou ajuste o mapeamento.");
+        setProcessando(false);
+        return;
+      }
+
+      // 3) Invoca função backend passando as linhas e o mapeamento escolhido
       const payload = {
         file_url,
+        rows,
         mapping,
         dryRun,
         empresa_id: empresaId
