@@ -221,6 +221,25 @@ function getCell(row, keyOrLetter) {
   const letter = rawKey.toUpperCase();
   if (row[letter] != null && row[letter] !== '') return row[letter];
 
+  // 5) Fallback: usar a POSIÇÃO da coluna a partir da letra (A=1, ..., Z=26, AA=27...)
+  const letterToIndex = (str) => {
+    if (!str) return 0;
+    let idx = 0;
+    for (let i = 0; i < str.length; i++) {
+      const c = str.charCodeAt(i);
+      if (c >= 65 && c <= 90) { // A-Z
+        idx = idx * 26 + (c - 64);
+      }
+    }
+    return idx;
+  };
+  const colIndex = letterToIndex(letter);
+  if (colIndex > 0) {
+    const values = Object.values(row);
+    const v = values[colIndex - 1];
+    if (v != null && v !== '') return v;
+  }
+
   return undefined;
 }
 
