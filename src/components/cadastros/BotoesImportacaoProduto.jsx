@@ -49,7 +49,7 @@ export default function BotoesImportacaoProduto({ onProdutosCriados }) {
           onClick={() => openWindow(
             ImportacaoProdutoERP,
             { windowMode: true, onConcluido: () => { onProdutosCriados && onProdutosCriados(); } },
-            { title: 'Importação ERP (Mapeado)', width: 1200, height: 800 }
+            { title: 'Importação ERP (Mapeado)', width: 1200, height: 800, ensureOnTop: true, forceTop: true, uniqueKey: 'importacao-erp-mapeado', zIndex: 9999999999 }
           )}
           className="border-indigo-300 hover:bg-indigo-50"
         >
