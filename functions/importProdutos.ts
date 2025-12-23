@@ -43,6 +43,8 @@ Deno.serve(async (req) => {
       empresa_id,
       group_id,
       dryRun = false,
+      empresas_compartilhadas_ids,
+      compartilhado_grupo = false,
     } = payload || {};
 
     if (!empresa_id) {
@@ -124,7 +126,7 @@ Deno.serve(async (req) => {
     // 3) Processar cada linha → montar produto → upsert por (codigo + empresa_id)
     for (const [idx, row] of normalized.entries()) {
       try {
-        const produto = buildProdutoFromRow(row, mapping, { empresa_id, group_id });
+        const produto = buildProdutoFromRow(row, mapping, { empresa_id, group_id, empresas_compartilhadas_ids, compartilhado_grupo });
 
         if (!produto.descricao || !produto.unidade_medida) {
           report.skipped += 1;
@@ -216,10 +218,12 @@ function num(v) {
   return Number.isFinite(n) ? n : undefined;
 }
 
-function buildProdutoFromRow(row, mapping, { empresa_id, group_id }) {
+function buildProdutoFromRow(row, mapping, { empresa_id, group_id, empresas_compartilhadas_ids, compartilhado_grupo }) {
   const produto = {
     empresa_id,
     group_id,
+    empresas_compartilhadas_ids: Array.isArray(empresas_compartilhadas_ids) ? empresas_compartilhadas_ids.filter(Boolean) : undefined,
+    compartilhado_grupo: Boolean(compartilhado_grupo),
     codigo: sanitizeStr(getCell(row, mapping.codigo)),
     descricao: sanitizeStr(getCell(row, mapping.descricao)),
     tipo_item: sanitizeStr(getCell(row, mapping.tipo_item)),
