@@ -46,6 +46,8 @@ export default function ImportacaoProdutoLote({ onProdutosCriados, closeSelf }) 
   const [arquivo, setArquivo] = useState(null);
   const [processando, setProcessando] = useState(false);
   const [preview, setPreview] = useState(null);
+  const [linhas, setLinhas] = useState([]);
+  const [fileUrl, setFileUrl] = useState(null);
 
   const baixarModelo = () => {
     // CSV compatível com Excel PT-BR (BOM + ; + vírgula decimal) com as 15 colunas exigidas
@@ -72,6 +74,7 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
     try {
       // 1. Upload do arquivo
       const { file_url } = await base44.integrations.Core.UploadFile({ file: arquivo });
+      setFileUrl(file_url);
 
       // 2. IA extrai e organiza os dados
       const dados = await base44.integrations.Core.ExtractDataFromUploadedFile({
@@ -149,6 +152,7 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
         return;
       }
 
+      setLinhas(rows);
       // 3. Normaliza campos esperados (15 colunas padrão solicitadas)
       const produtosBase = rows.map((r) => ({
         codigo: pick(r, [
@@ -228,11 +232,7 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
       });
 
       setPreview(produtosComStatus);
-      const novos = produtosComStatus.filter(p => !p.duplicado).length;
       toast.success(`✅ ${produtosComStatus.length} produto(s) processado(s)!`);
-      if (novos === 0 && closeSelf) {
-        closeSelf();
-      }
     } catch (error) {
       toast.error("Erro ao processar arquivo: " + error.message);
     } finally {
@@ -245,54 +245,57 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
       toast.error("Selecione/defina a empresa de destino antes de importar.");
       return;
     }
-    const produtosNovos = preview.filter(p => !p.duplicado);
-    
-    if (produtosNovos.length === 0) {
-      toast.error("Todos os produtos já existem!");
-      return;
-    }
 
+    setProcessando(true);
     try {
-      const produtosCriados = [];
+      // Mapeamento compatível com o modelo baixado pelo botão "Baixar Modelo de Planilha"
+      const mapping = {
+        codigo: 'Cód. Material',
+        descricao: 'Descrição',
+        ncm: 'Classif. Fiscal',
+        unidade_medida: 'Un.',
+        custo_aquisicao: 'Custo Principal',
+        estoque_minimo: 'Estoque Minimo',
+        tipo_item: 'Descrição Tipo',
+        setor_atividade_id: 'Codigo do Grupo',
+        setor_atividade_nome: 'Descrição do Grupo',
+        grupo_produto_id: 'Codigo da Classe',
+        grupo_produto_nome: 'Descrição da Classe',
+        peso_teorico_kg_m: 'Peso Teórico',
+        peso_liquido_kg: 'Peso Liquido',
+        peso_bruto_kg: 'Peso Bruto',
+      };
 
-      for (const prod of produtosNovos) {
-        const novoProduto = await base44.entities.Produto.create({
-          empresa_id: empresaAtual.id,
-          codigo: prod.codigo,
-          descricao: prod.descricao,
-          unidade_medida: prod.unidade_medida || 'UN',
-          unidade_principal: prod.unidade_medida || 'UN',
-          unidades_secundarias: [prod.unidade_medida || 'UN'],
-          estoque_minimo: prod.estoque_minimo || 0,
-          ncm: prod.ncm || '',
-          codigo_barras: prod.codigo_barras || '',
-          grupo_produto_id: prod.grupo_produto_id || (prod.grupo_produto_nome ? `classe-${slugify(prod.grupo_produto_nome)}` : ''),
-          grupo_produto_nome: prod.grupo_produto_nome || '',
-          setor_atividade_id: prod.setor_atividade_id || (prod.setor_atividade_nome ? `setor-${slugify(prod.setor_atividade_nome)}` : ''),
-          setor_atividade_nome: prod.setor_atividade_nome || '',
-          tipo_item: prod.tipo_item || 'Revenda',
-          peso_teorico_kg_m: prod.peso_teorico_kg_m,
-          peso_liquido_kg: prod.peso_liquido_kg,
-          peso_bruto_kg: prod.peso_bruto_kg,
-          custo_aquisicao: prod.custo_aquisicao || 0,
-          status: 'Ativo',
-          observacoes: `Importado em lote em ${new Date().toLocaleDateString()}`
-        });
+      const payload = {
+        empresa_id: empresaAtual.id,
+        header_row_index: 1,
+        start_row_index: 2,
+        dryRun: false,
+        mapping,
+      };
 
-        produtosCriados.push(novoProduto);
+      if (linhas && linhas.length > 0) {
+        payload.rows = linhas;
+      } else if (fileUrl) {
+        payload.file_url = fileUrl;
       }
 
-      toast.success(`✅ ${produtosCriados.length} produto(s) criado(s)!`);
-      
-      if (onProdutosCriados) {
-        onProdutosCriados(produtosCriados);
+      const { data } = await base44.functions.invoke('importProdutos', payload);
+
+      if (data?.errors > 0) {
+        toast.error(`Importação concluída com ${data.errors} erro(s). Criados: ${data.created}, Atualizados: ${data.updated}`);
+      } else {
+        toast.success(`✅ Importação concluída: ${data.created} criados, ${data.updated} atualizados, ${data.skipped} ignorados.`);
       }
 
+      onProdutosCriados && onProdutosCriados();
       setPreview(null);
       setArquivo(null);
       if (closeSelf) closeSelf();
     } catch (error) {
-      toast.error("Erro ao importar: " + error.message);
+      toast.error("Erro ao importar: " + (error?.message || error));
+    } finally {
+      setProcessando(false);
     }
   };
 
@@ -448,10 +451,10 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
                 <Button
                   onClick={importarTodos}
                   className="flex-1 bg-green-600 hover:bg-green-700"
-                  disabled={preview.every(p => p.duplicado)}
+                  disabled={processando}
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Importar {preview.filter(p => !p.duplicado).length} Produto(s)
+                  {processando ? 'Importando...' : `Importar ${preview.length} Produto(s)`}
                 </Button>
               </div>
             </CardContent>
