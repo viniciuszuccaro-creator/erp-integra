@@ -274,13 +274,19 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
         mapping,
       };
 
-      if (linhas && linhas.length > 0) {
-        payload.rows = linhas;
-      } else if (fileUrl) {
+      if (fileUrl) {
         payload.file_url = fileUrl;
+      } else if (linhas && linhas.length > 0) {
+        payload.rows = linhas;
       }
 
       const { data } = await base44.functions.invoke('importProdutos', payload);
+
+      if (data?.error) {
+        toast.error(`Erro na importação: ${data.error}`);
+        setProcessando(false);
+        return;
+      }
 
       if (data?.errors > 0) {
         toast.error(`Importação concluída com ${data.errors} erro(s). Criados: ${data.created}, Atualizados: ${data.updated}`);
@@ -291,7 +297,6 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
       onProdutosCriados && onProdutosCriados();
       setPreview(null);
       setArquivo(null);
-      if (closeSelf) closeSelf();
     } catch (error) {
       toast.error("Erro ao importar: " + (error?.message || error));
     } finally {
