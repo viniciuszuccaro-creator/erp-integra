@@ -21,10 +21,18 @@ const pick = (row, keys) => {
   return undefined;
 };
 const toNumber = (v) => {
-  if (v == null || v === '') return undefined;
-  const n = Number(String(v).replace(/\./g, '').replace(/,/g, '.'));
-  return Number.isFinite(n) ? n : undefined;
-};
+        if (v == null || v === '') return undefined;
+        const n = Number(String(v).replace(/\./g, '').replace(/,/g, '.'));
+        return Number.isFinite(n) ? n : undefined;
+      };
+
+      // Gera um ID estável a partir de um nome (acentos -> simples, minúsculas, hífens)
+      const slugify = (s) => String(s || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
 
 /**
  * V21.1.2-R2 - Importação em Lote de Produtos
@@ -258,9 +266,9 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
           estoque_minimo: prod.estoque_minimo || 0,
           ncm: prod.ncm || '',
           codigo_barras: prod.codigo_barras || '',
-          grupo_produto_id: prod.grupo_produto_id || '',
+          grupo_produto_id: prod.grupo_produto_id || (prod.grupo_produto_nome ? `classe-${slugify(prod.grupo_produto_nome)}` : ''),
           grupo_produto_nome: prod.grupo_produto_nome || '',
-          setor_atividade_id: prod.setor_atividade_id || '',
+          setor_atividade_id: prod.setor_atividade_id || (prod.setor_atividade_nome ? `setor-${slugify(prod.setor_atividade_nome)}` : ''),
           setor_atividade_nome: prod.setor_atividade_nome || '',
           tipo_item: prod.tipo_item || 'Revenda',
           peso_teorico_kg_m: prod.peso_teorico_kg_m,
