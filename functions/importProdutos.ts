@@ -121,6 +121,10 @@ Deno.serve(async (req) => {
       details: [],
     };
 
+    // Pré-carrega produtos existentes desta empresa para acelerar o upsert
+    const existingList = await base44.entities.Produto.filter({ empresa_id }, undefined, 10000);
+    const byCode = new Map(existingList.map((p) => [p.codigo, p]));
+
     // 3) Processar cada linha → montar produto → upsert por (codigo + empresa_id)
     for (const [idx, row] of normalized.entries()) {
       try {
@@ -139,24 +143,24 @@ Deno.serve(async (req) => {
           continue;
         }
 
-        // Upsert por codigo + empresa_id
-        const existing = await base44.entities.Produto.filter({ codigo: produto.codigo, empresa_id }, undefined, 1);
+        // Upsert por codigo + empresa_id usando cache em memória
+        const current = byCode.get(produto.codigo);
         if (dryRun) {
-          // Simulação
-          report.details.push({ index: idx, status: existing.length ? 'would_update' : 'would_create', codigo: produto.codigo });
-          if (existing.length) report.updated += 1; else report.created += 1;
+          report.details.push({ index: idx, status: current ? 'would_update' : 'would_create', codigo: produto.codigo });
+          if (current) report.updated += 1; else report.created += 1;
           continue;
         }
 
-        if (existing.length) {
-          const current = existing[0];
+        if (current) {
           await base44.entities.Produto.update(current.id, produto);
           report.updated += 1;
           report.details.push({ index: idx, status: 'updated', id: current.id, codigo: produto.codigo });
+          byCode.set(produto.codigo, { ...current, ...produto });
         } else {
           const created = await base44.entities.Produto.create(produto);
           report.created += 1;
           report.details.push({ index: idx, status: 'created', id: created.id, codigo: produto.codigo });
+          byCode.set(produto.codigo, created);
         }
       } catch (e) {
         report.errors += 1;

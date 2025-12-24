@@ -274,10 +274,10 @@ CIM50;Cimento CP-II 50kg;SC;500;25232900;;;;MAT;Materiais;50,00;50,50;ADM;Admini
         mapping,
       };
 
-      if (fileUrl) {
-        payload.file_url = fileUrl;
-      } else if (linhas && linhas.length > 0) {
+      if (linhas && linhas.length > 0) {
         payload.rows = linhas;
+      } else if (fileUrl) {
+        payload.file_url = fileUrl;
       }
 
       const { data } = await base44.functions.invoke('importProdutos', payload);
