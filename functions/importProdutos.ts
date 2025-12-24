@@ -271,6 +271,15 @@ function stripQuotes(s) {
   return s;
 }
 
+function slugify(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
 function generateLetters(n) {
   const arr = [];
   for (let i = 0; i < n; i++) {
@@ -365,9 +374,18 @@ function buildProdutoFromRow(row, mapping, { empresa_id, group_id }) {
   };
 
   // Remover chaves undefined para evitar sobrescrever com null
-  Object.keys(produto).forEach((k) => produto[k] === undefined && delete produto[k]);
-  return produto;
-}
+        Object.keys(produto).forEach((k) => produto[k] === undefined && delete produto[k]);
+
+        // Preenchimento automático quando IDs não vierem mas os nomes vierem no relatório
+        if (!produto.grupo_produto_id && produto.grupo_produto_nome) {
+          produto.grupo_produto_id = `classe-${slugify(produto.grupo_produto_nome)}`;
+        }
+        if (!produto.setor_atividade_id && produto.setor_atividade_nome) {
+          produto.setor_atividade_id = `setor-${slugify(produto.setor_atividade_nome)}`;
+        }
+
+        return produto;
+      }
 
 function sanitizeStr(v) {
   if (v == null) return undefined;
