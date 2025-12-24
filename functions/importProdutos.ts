@@ -355,6 +355,15 @@ function num(v) {
   return Number.isFinite(n) ? n : undefined;
 }
 
+function getAny(row, candidates) {
+  for (const key of candidates) {
+    if (!key) continue;
+    const val = getCell(row, key);
+    if (val != null && val !== '') return val;
+  }
+  return undefined;
+}
+
 function buildProdutoFromRow(row, mapping, { empresa_id, group_id }) {
   const produto = {
     empresa_id,
