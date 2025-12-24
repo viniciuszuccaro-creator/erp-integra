@@ -225,7 +225,7 @@ function toObjectsFromSemicolonRows(rows, { header_row_index = 1 }) {
   });
 
   const header = rowsAsArrays[headerIdx] || [];
-  const headerClean = header.map((h) => stripQuotes(String(h || '').trim()));
+  const headerClean = header.map((h) => stripQuotes(String(h || '').trim().replace(/^\uFEFF/, '')));
 
   return rowsAsArrays.map((cells) => {
     const obj = {};
@@ -368,20 +368,20 @@ function buildProdutoFromRow(row, mapping, { empresa_id, group_id }) {
   const produto = {
     empresa_id,
     group_id,
-    codigo: sanitizeStr(getCell(row, mapping.codigo)),
-    descricao: sanitizeStr(getCell(row, mapping.descricao)),
-    tipo_item: sanitizeStr(getCell(row, mapping.tipo_item)),
-    setor_atividade_id: sanitizeStr(getCell(row, mapping.setor_atividade_id)),
-    setor_atividade_nome: sanitizeStr(getCell(row, mapping.setor_atividade_nome)),
-    grupo_produto_id: sanitizeStr(getCell(row, mapping.grupo_produto_id)),
-    grupo_produto_nome: sanitizeStr(getCell(row, mapping.grupo_produto_nome)),
-    peso_teorico_kg_m: num(getCell(row, mapping.peso_teorico_kg_m)),
-    peso_liquido_kg: num(getCell(row, mapping.peso_liquido_kg)),
-    peso_bruto_kg: num(getCell(row, mapping.peso_bruto_kg)),
-    unidade_medida: sanitizeStr(getCell(row, mapping.unidade_medida)) || 'UN',
-    custo_aquisicao: num(getCell(row, mapping.custo_aquisicao)),
-    estoque_minimo: num(getCell(row, mapping.estoque_minimo)),
-    ncm: sanitizeStr(getCell(row, mapping.ncm)),
+    codigo: sanitizeStr(getAny(row, [mapping?.codigo, 'Cód. Material','Cod. Material','Cód Material','Codigo Material','Código Material','Código','Codigo','A'])),
+    descricao: sanitizeStr(getAny(row, [mapping?.descricao, 'Descrição','Descricao','Produto','B'])),
+    tipo_item: sanitizeStr(getAny(row, [mapping?.tipo_item, 'Descrição Tipo','Descricao Tipo','Tipo do item','Tipo Item','AI'])),
+    setor_atividade_id: sanitizeStr(getAny(row, [mapping?.setor_atividade_id, 'Codigo do Grupo','Código do Grupo','R'])),
+    setor_atividade_nome: sanitizeStr(getAny(row, [mapping?.setor_atividade_nome, 'Descrição do Grupo','Descricao do Grupo','S'])),
+    grupo_produto_id: sanitizeStr(getAny(row, [mapping?.grupo_produto_id, 'Codigo da Classe','Código da Classe','M'])),
+    grupo_produto_nome: sanitizeStr(getAny(row, [mapping?.grupo_produto_nome, 'Descrição da Classe','Descricao da Classe','N'])),
+    peso_teorico_kg_m: num(getAny(row, [mapping?.peso_teorico_kg_m, 'Peso Teórico','Peso Teorico','I'])),
+    peso_liquido_kg: num(getAny(row, [mapping?.peso_liquido_kg, 'Peso Liquido','Peso Líquido','P'])),
+    peso_bruto_kg: num(getAny(row, [mapping?.peso_bruto_kg, 'Peso Bruto','Q'])),
+    unidade_medida: sanitizeStr(getAny(row, [mapping?.unidade_medida, 'Un.','UN','Un','Unidade','Unidade Medida','D'])) || 'UN',
+    custo_aquisicao: num(getAny(row, [mapping?.custo_aquisicao, 'Custo Principal','Custo','AD'])),
+    estoque_minimo: num(getAny(row, [mapping?.estoque_minimo, 'Estoque Minimo','Estoque Mínimo','F'])),
+    ncm: sanitizeStr(getAny(row, [mapping?.ncm, 'Classif. Fiscal','Classif Fiscal','NCM','G'])),
     status: 'Ativo',
     modo_cadastro: 'Lote/Importação',
   };
