@@ -173,8 +173,8 @@ export default function WindowModal({ window, children }) {
         </div>
       </div>
 
-      {/* Conteúdo com barra de rolagem - w-full h-full */}
-      <div className="flex-1 overflow-auto bg-white w-full h-full">
+      {/* Conteúdo com barra de rolagem - padrão universal */}
+      <div className="flex-1 min-h-0 min-w-0 overflow-y-auto bg-white w-full">
         {children}
       </div>
 
