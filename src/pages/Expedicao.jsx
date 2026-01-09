@@ -47,6 +47,7 @@ import useContextoVisual from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import ComprovanteDigital from "../components/expedicao/ComprovanteDigital";
 import { useWindow } from "@/components/lib/useWindow";
+import { useUser } from "@/components/lib/UserContext";
 import RomaneioForm from "../components/expedicao/RomaneioForm";
 import RoteirizacaoMapa from "../components/expedicao/RoteirizacaoMapa";
 import DashboardLogistico from "../components/expedicao/DashboardLogistico";
@@ -81,6 +82,7 @@ export default function Expedicao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
   const permissoesLogistica = usePermissoesLogistica();
+  const { user } = useUser();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
@@ -282,7 +284,18 @@ export default function Expedicao() {
 
       return novaEntrega;
     },
-    onSuccess: () => {
+    onSuccess: async (novaEntrega) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        empresa_id: novaEntrega?.empresa_id || empresaAtual?.id,
+        empresa_nome: obterNomeEmpresa(novaEntrega?.empresa_id) || '',
+        acao: 'Criação',
+        modulo: 'Expedição',
+        entidade: 'Entrega',
+        registro_id: novaEntrega?.id,
+        descricao: `Entrega criada para pedido ${novaEntrega?.numero_pedido || ''}`,
+      });
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
       setIsDialogOpen(false);
@@ -293,7 +306,18 @@ export default function Expedicao() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Entrega.update(id, data),
-    onSuccess: () => {
+    onSuccess: async (updated) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        empresa_id: updated?.empresa_id || empresaAtual?.id,
+        empresa_nome: obterNomeEmpresa(updated?.empresa_id) || '',
+        acao: 'Edição',
+        modulo: 'Expedição',
+        entidade: 'Entrega',
+        registro_id: updated?.id,
+        descricao: `Entrega atualizada (${updated?.status || ''})`,
+      });
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       setIsDialogOpen(false);
       setEditingEntrega(null);
@@ -320,13 +344,26 @@ export default function Expedicao() {
           {
             status: "Entregue",
             data_hora: new Date().toISOString(),
-            usuario: "Sistema",
+            usuario: user?.full_name || user?.email || 'Usuário',
             observacao: `Entrega confirmada com assinatura digital. Recebido por: ${dadosAssinatura.nome_recebedor}`
           }
         ]
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      if (entregaSelecionada) {
+        await base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: entregaSelecionada?.empresa_id || empresaAtual?.id,
+          empresa_nome: obterNomeEmpresa(entregaSelecionada?.empresa_id) || '',
+          acao: 'Edição',
+          modulo: 'Expedição',
+          entidade: 'Entrega',
+          registro_id: entregaSelecionada?.id,
+          descricao: `Entrega confirmada com assinatura (${entregaSelecionada?.numero_pedido || ''})`,
+        });
+      }
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       setAssinaturaModal(null);
       toast({ title: "✅ Entrega confirmada com assinatura!" });
@@ -345,7 +382,7 @@ export default function Expedicao() {
     const historico = {
       status: novoStatus,
       data_hora: new Date().toISOString(),
-      usuario: 'Sistema', // Ideally, this would be the logged-in user
+      usuario: user?.full_name || user?.email || 'Usuário', // logged-in user
       observacao: `Status alterado para ${novoStatus}`
     };
 
@@ -371,7 +408,7 @@ export default function Expedicao() {
 
     // Registrar no histórico do cliente
     await base44.entities.HistoricoCliente.create({
-      group_id: entrega.group_id || empresaAtual?.group_id || "", // Assuming entrega has group_id or fallback to current company's group_id
+      group_id: entrega.group_id || empresaAtual?.group_id || "",
       empresa_id: entrega.empresa_id,
       cliente_id: entrega.cliente_id,
       cliente_nome: entrega.cliente_nome,
@@ -382,7 +419,7 @@ export default function Expedicao() {
       tipo_evento: "Alteracao",
       titulo_evento: `Status da entrega alterado para ${novoStatus}`,
       descricao_detalhada: `Pedido ${entrega.numero_pedido} - Status: ${novoStatus}`,
-      usuario_responsavel: "Sistema", // TODO: Replace with actual logged-in user
+      usuario_responsavel: user?.full_name || user?.email || 'Usuário',
       data_evento: new Date().toISOString(),
       status_relacionado: novoStatus
     });

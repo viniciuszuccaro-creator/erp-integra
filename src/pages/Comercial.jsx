@@ -33,6 +33,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
 import NotaFiscalFormCompleto from "../components/comercial/NotaFiscalFormCompleto";
 import { useWindow } from "@/components/lib/useWindow";
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * Módulo Comercial - V12.0 COMPLETO
@@ -46,6 +47,7 @@ export default function Comercial() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow, closeWindow } = useWindow();
   const { filtrarPorContexto, empresaAtual, grupoAtual } = useContextoVisual();
+  const { user } = useUser();
 
   const { data: clientes = [], isLoading: loadingClientes } = useQuery({
     queryKey: ['clientes'],
@@ -132,10 +134,23 @@ export default function Comercial() {
           pedidoCriado = true;
           
           try {
-            await base44.entities.Pedido.create({
+            const created = await base44.entities.Pedido.create({
               ...formData,
               empresa_id: formData.empresa_id || empresaAtual?.id,
               group_id: formData.group_id || grupoAtual?.id,
+              vendedor: formData.vendedor || user?.full_name,
+              vendedor_id: formData.vendedor_id || user?.id,
+            });
+            await base44.entities.AuditLog.create({
+              usuario: user?.full_name || user?.email || 'Usuário',
+              usuario_id: user?.id,
+              empresa_id: empresaAtual?.id,
+              empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || '',
+              acao: 'Criação',
+              modulo: 'Comercial',
+              entidade: 'Pedido',
+              registro_id: created.id,
+              descricao: `Pedido ${created.numero_pedido || ''} criado`,
             });
             toast.success("✅ Pedido criado com sucesso!");
             await pedidosQuery.refetch();
@@ -177,6 +192,17 @@ export default function Comercial() {
           
           try {
             await base44.entities.Pedido.update(formData.id, formData);
+            await base44.entities.AuditLog.create({
+              usuario: user?.full_name || user?.email || 'Usuário',
+              usuario_id: user?.id,
+              empresa_id: empresaAtual?.id,
+              empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || '',
+              acao: 'Edição',
+              modulo: 'Comercial',
+              entidade: 'Pedido',
+              registro_id: formData.id,
+              descricao: `Pedido ${formData.numero_pedido || ''} atualizado`,
+            });
             toast.success("✅ Pedido atualizado com sucesso!");
             await pedidosQuery.refetch();
             
@@ -449,10 +475,21 @@ export default function Comercial() {
                 windowMode: true,
                 onSubmit: async (formData) => {
                   try {
-                    await base44.entities.NotaFiscal.create({
+                    const nf = await base44.entities.NotaFiscal.create({
                       ...formData,
                       group_id: formData.group_id || grupoAtual?.id,
                       empresa_faturamento_id: formData.empresa_faturamento_id || empresaAtual?.id,
+                    });
+                    await base44.entities.AuditLog.create({
+                      usuario: user?.full_name || user?.email || 'Usuário',
+                      usuario_id: user?.id,
+                      empresa_id: empresaAtual?.id,
+                      empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || '',
+                      acao: 'Criação',
+                      modulo: 'Fiscal',
+                      entidade: 'NotaFiscal',
+                      registro_id: nf.id,
+                      descricao: `NF ${nf.numero || ''}/${nf.serie || ''} criada`,
                     });
                     toast.success("✅ NF-e salva com sucesso!");
                     queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
