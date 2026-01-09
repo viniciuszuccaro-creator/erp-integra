@@ -45,6 +45,7 @@ export default function Comercial() {
 
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow, closeWindow } = useWindow();
+  const { filtrarPorContexto, empresaAtual, grupoAtual } = useContextoVisual();
 
   const { data: clientes = [], isLoading: loadingClientes } = useQuery({
     queryKey: ['clientes'],
@@ -87,15 +88,19 @@ export default function Comercial() {
     queryFn: () => base44.entities.PedidoExterno.list('-created_date'),
   });
 
+  const clientesFiltrados = filtrarPorContexto(clientes, 'empresa_id');
+  const pedidosFiltrados = filtrarPorContexto(pedidos, 'empresa_id');
+  const notasFiscaisFiltradas = filtrarPorContexto(notasFiscais, 'empresa_id');
+
   const pedidosExternosPendentes = pedidosExternos.filter(
     p => p.status_importacao === 'A Validar'
   ).length;
 
-  const totalVendas = pedidos
+  const totalVendas = pedidosFiltrados
     .filter(p => p.status !== 'Cancelado')
     .reduce((sum, p) => sum + (p.valor_total || 0), 0);
 
-  const ticketMedio = pedidos.length > 0 ? totalVendas / pedidos.length : 0;
+  const ticketMedio = pedidosFiltrados.length > 0 ? totalVendas / pedidosFiltrados.length : 0;
 
   // NOVO: Atalhos de teclado (adjusted for component extraction)
   useKeyboardShortcuts({
@@ -127,7 +132,11 @@ export default function Comercial() {
           pedidoCriado = true;
           
           try {
-            await base44.entities.Pedido.create(formData);
+            await base44.entities.Pedido.create({
+              ...formData,
+              empresa_id: formData.empresa_id || empresaAtual?.id,
+              group_id: formData.group_id || grupoAtual?.id,
+            });
             toast.success("✅ Pedido criado com sucesso!");
             await pedidosQuery.refetch();
           } catch (error) {
@@ -247,7 +256,7 @@ export default function Comercial() {
             <Users className="w-5 h-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{clientes.length}</div>
+            <div className="text-3xl font-bold text-blue-600">{clientesFiltrados.length}</div>
             <p className="text-xs text-slate-500 mt-1">
               {clientes.filter(c => c.status === 'Ativo').length} ativos
             </p>
@@ -260,7 +269,7 @@ export default function Comercial() {
             <ShoppingCart className="w-5 h-5 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">{pedidos.length}</div>
+            <div className="text-3xl font-bold text-purple-600">{pedidosFiltrados.length}</div>
           </CardContent>
         </Card>
 
@@ -314,12 +323,12 @@ export default function Comercial() {
           >
             <Truck className="w-4 h-4 mr-2" />
             Logística de Entrega
-            {pedidos.filter(p => 
+            {pedidosFiltrados.filter(p => 
               (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') && 
               ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito'].includes(p.status)
             ).length > 0 && (
               <Badge className="ml-2 bg-blue-500 text-white">
-                {pedidos.filter(p => 
+                {pedidosFiltrados.filter(p => 
                   (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') && 
                   ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito'].includes(p.status)
                 ).length}
@@ -332,12 +341,12 @@ export default function Comercial() {
           >
             <Package className="w-4 h-4 mr-2" />
             Pedidos p/ Retirada
-            {pedidos.filter(p => 
+            {pedidosFiltrados.filter(p => 
               p.tipo_frete === 'Retirada' && 
               ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Pronto para Retirada'].includes(p.status)
             ).length > 0 && (
               <Badge className="ml-2 bg-green-500 text-white">
-                {pedidos.filter(p => 
+                {pedidosFiltrados.filter(p => 
                   p.tipo_frete === 'Retirada' && 
                   ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Pronto para Retirada'].includes(p.status)
                 ).length}
@@ -406,8 +415,8 @@ export default function Comercial() {
 
         <TabsContent value="pedidos">
           <PedidosTab 
-            pedidos={pedidos} 
-            clientes={clientes} 
+            pedidos={pedidosFiltrados} 
+            clientes={clientesFiltrados} 
             isLoading={loadingPedidos} 
             empresas={empresas}
             onCreatePedido={handleCreateNewPedido}
@@ -431,16 +440,20 @@ export default function Comercial() {
 
         <TabsContent value="notas">
           <NotasFiscaisTab 
-            notasFiscais={notasFiscais} 
-            pedidos={pedidos} 
-            clientes={clientes}
-            onCreateNFe={() => openWindow(
+             notasFiscais={notasFiscaisFiltradas} 
+             pedidos={pedidosFiltrados} 
+             clientes={clientesFiltrados}
+             onCreateNFe={() => openWindow(
               NotaFiscalFormCompleto,
               { 
                 windowMode: true,
                 onSubmit: async (formData) => {
                   try {
-                    await base44.entities.NotaFiscal.create(formData);
+                    await base44.entities.NotaFiscal.create({
+                      ...formData,
+                      group_id: formData.group_id || grupoAtual?.id,
+                      empresa_faturamento_id: formData.empresa_faturamento_id || empresaAtual?.id,
+                    });
                     toast.success("✅ NF-e salva com sucesso!");
                     queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
                   } catch (error) {
