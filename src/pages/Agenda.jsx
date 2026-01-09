@@ -174,7 +174,16 @@ export default function Agenda() {
 
       return evento;
     },
-    onSuccess: () => {
+    onSuccess: async (evento) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Criação',
+        modulo: 'Agenda',
+        entidade: 'Evento',
+        registro_id: evento?.id,
+        descricao: `Evento ${evento?.titulo || ''} criado`,
+      });
       queryClient.invalidateQueries({ queryKey: ['eventos'] });
       setEventoDialogOpen(false);
       resetForm();
@@ -196,7 +205,16 @@ export default function Agenda() {
         data_fim: dataFim
       });
     },
-    onSuccess: () => {
+    onSuccess: async (_res, { id, data }) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Edição',
+        modulo: 'Agenda',
+        entidade: 'Evento',
+        registro_id: id,
+        descricao: `Evento ${data?.titulo || ''} atualizado`,
+      });
       queryClient.invalidateQueries({ queryKey: ['eventos'] });
       setEventoDialogOpen(false);
       resetForm();
@@ -209,7 +227,16 @@ export default function Agenda() {
 
   const deleteEventoMutation = useMutation({
     mutationFn: (id) => base44.entities.Evento.delete(id),
-    onSuccess: () => {
+    onSuccess: async (_res, id) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Exclusão',
+        modulo: 'Agenda',
+        entidade: 'Evento',
+        registro_id: id,
+        descricao: `Evento excluído`,
+      });
       queryClient.invalidateQueries({ queryKey: ['eventos'] });
       setVisualizandoEvento(null);
       toast({
@@ -224,7 +251,16 @@ export default function Agenda() {
       ...evento,
       status: 'Concluído'
     }),
-    onSuccess: () => {
+    onSuccess: async (_res, evento) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Edição',
+        modulo: 'Agenda',
+        entidade: 'Evento',
+        registro_id: evento?.id,
+        descricao: `Evento concluído`,
+      });
       queryClient.invalidateQueries({ queryKey: ['eventos'] });
       toast({
         title: "✅ Evento Concluído!",
