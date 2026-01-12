@@ -44,6 +44,7 @@ import FunilVendasAvancado from "@/components/crm/FunilVendasAvancado";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
+import { useUser } from "@/components/lib/UserContext";
 import InteracaoForm from "../components/crm/InteracaoForm";
 import CampanhaForm from "../components/crm/CampanhaForm";
 
@@ -62,6 +63,7 @@ export default function CRMPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { openWindow } = useWindow();
+  const { user } = useUser();
 
   const [oppForm, setOppForm] = useState({
     titulo: "",
@@ -172,25 +174,37 @@ export default function CRMPage() {
   };
 
   const createOppMutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async (data) => {
       const score = calcularScore(data);
       const temperatura = calcularTemperatura(data);
-      return base44.entities.Oportunidade.create({
+      const created = await base44.entities.Oportunidade.create({
         ...data,
         score,
         temperatura,
         quantidade_interacoes: 0,
         dias_sem_contato: 0,
+        responsavel: data.responsavel || (user?.full_name || user?.email),
+        responsavel_id: data.responsavel_id || user?.id,
         data_ultima_interacao: new Date().toISOString().split('T')[0],
         historico_mudancas_etapa: [{
           etapa_anterior: null,
           etapa_nova: data.etapa,
           data: new Date().toISOString(),
-          usuario: "Sistema"
+          usuario: user?.full_name || user?.email || 'Usuário'
         }]
       });
+      return created;
     },
-    onSuccess: () => {
+    onSuccess: async (created) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Criação',
+        modulo: 'CRM',
+        entidade: 'Oportunidade',
+        registro_id: created?.id,
+        descricao: `Oportunidade ${created?.titulo || ''} criada`,
+      });
       queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
       setIsOppDialogOpen(false);
       resetOppForm();
@@ -211,7 +225,16 @@ export default function CRMPage() {
         temperatura
       });
     },
-    onSuccess: () => {
+    onSuccess: async (_res, { id, data }) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Edição',
+        modulo: 'CRM',
+        entidade: 'Oportunidade',
+        registro_id: id,
+        descricao: `Oportunidade ${data?.titulo || ''} atualizada`,
+      });
       queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
       setIsOppDialogOpen(false);
       setEditingOpp(null);
@@ -259,7 +282,16 @@ export default function CRMPage() {
         status: (novaEtapa === "Ganho" || novaEtapa === "Perdido") ? novaEtapa : "Aberto"
       });
     },
-    onSuccess: () => {
+    onSuccess: async (_res, { oppId, novaEtapa }) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Edição',
+        modulo: 'CRM',
+        entidade: 'Oportunidade',
+        registro_id: oppId,
+        descricao: `Oportunidade movida para etapa ${novaEtapa}`,
+      });
       queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
       toast({
         title: "✅ Etapa Atualizada!",
@@ -303,7 +335,16 @@ export default function CRMPage() {
 
       return { pedido: pedidoCriado, tipo };
     },
-    onSuccess: ({ pedido, tipo }) => {
+    onSuccess: async ({ pedido, tipo }) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Conversão',
+        modulo: 'CRM',
+        entidade: 'Oportunidade',
+        registro_id: pedido?.id,
+        descricao: `Oportunidade convertida em ${tipo === 'orcamento' ? 'Orçamento' : 'Pedido'}`,
+      });
       queryClient.invalidateQueries({ queryKey: ['oportunidades'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       setConverterOpp(null);
@@ -320,8 +361,24 @@ export default function CRMPage() {
   });
 
   const createInteractionMutation = useMutation({
-    mutationFn: (data) => base44.entities.Interacao.create(data),
-    onSuccess: () => {
+    mutationFn: async (data) => {
+      const created = await base44.entities.Interacao.create({
+        ...data,
+        responsavel: data.responsavel || (user?.full_name || user?.email),
+        responsavel_id: data.responsavel_id || user?.id,
+      });
+      return created;
+    },
+    onSuccess: async (created) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Criação',
+        modulo: 'CRM',
+        entidade: 'Interacao',
+        registro_id: created?.id,
+        descricao: `Interação ${created?.titulo || ''} registrada`,
+      });
       queryClient.invalidateQueries({ queryKey: ['interacoes'] });
       const relatedOpp = oportunidades.find(o => o.cliente_nome === interactionForm.cliente_nome);
       if (relatedOpp) {
@@ -343,14 +400,27 @@ export default function CRMPage() {
   });
 
   const createCampanhaMutation = useMutation({
-    mutationFn: (data) => {
+    mutationFn: async (data) => {
       const dataWithValues = {
         ...data,
         orcamento: parseFloat(data.orcamento) || 0
       };
-      return base44.entities.Campanha.create(dataWithValues);
+      const created = await base44.entities.Campanha.create({
+        ...dataWithValues,
+        responsavel: data.responsavel || (user?.full_name || user?.email),
+      });
+      return created;
     },
-    onSuccess: () => {
+    onSuccess: async (created) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Criação',
+        modulo: 'CRM',
+        entidade: 'Campanha',
+        registro_id: created?.id,
+        descricao: `Campanha ${created?.nome || ''} criada`,
+      });
       queryClient.invalidateQueries({ queryKey: ['campanhas'] });
       setIsCampanhaDialogOpen(false);
       resetCampanhaForm();
