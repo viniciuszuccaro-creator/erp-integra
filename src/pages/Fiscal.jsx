@@ -36,6 +36,7 @@ import ExportacaoSPED from "../components/fiscal/ExportacaoSPED";
 import ImportarXMLNFe from '../components/fiscal/ImportarXMLNFe'; // New Import
 import HistoricoImportacoesXML from '../components/fiscal/HistoricoImportacoesXML'; // New Import
 import { useToast } from "@/components/ui/use-toast";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function FiscalPage() {
   const [activeTab, setActiveTab] = useState("notas");
@@ -51,6 +52,7 @@ export default function FiscalPage() {
   const { empresaAtual, estaNoGrupo, empresasDoGrupo, filtrarPorContexto } = useContextoVisual();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useUser();
 
   const { data: notasFiscais = [], isLoading } = useQuery({
     queryKey: ['notasFiscais'],
@@ -130,7 +132,18 @@ export default function FiscalPage() {
         ]
       });
     },
-    onSuccess: () => {
+    onSuccess: async (_res) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        empresa_id: empresaAtual?.id,
+        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || '',
+        acao: 'Emissão',
+        modulo: 'Fiscal',
+        entidade: 'NotaFiscal',
+        registro_id: notaSelecionada?.id,
+        descricao: `NF-e ${notaSelecionada?.numero || ''}/${notaSelecionada?.serie || ''} autorizada (mock)`,
+      });
       queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
       toast({
         title: "✅ NF-e autorizada (simulação)",
@@ -192,7 +205,18 @@ export default function FiscalPage() {
         ]
       });
     },
-    onSuccess: () => {
+    onSuccess: async (_res) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        empresa_id: empresaAtual?.id,
+        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || '',
+        acao: 'Cancelamento',
+        modulo: 'Fiscal',
+        entidade: 'NotaFiscal',
+        registro_id: notaParaCancelar?.id,
+        descricao: `NF-e ${notaParaCancelar?.numero || ''}/${notaParaCancelar?.serie || ''} cancelada (mock)`,
+      });
       queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
       setDialogCancelamentoOpen(false);
       setNotaParaCancelar(null);

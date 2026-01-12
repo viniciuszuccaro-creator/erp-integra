@@ -324,9 +324,18 @@ export default function ContratosPage() {
 
       return { gerado: true, conta: contaReceber };
     },
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       // Invalidate specific queries only if an actual charge was generated
       if (result.gerado) {
+        await base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          acao: 'Criação',
+          modulo: 'Contratos',
+          entidade: 'ContaReceber',
+          registro_id: result.conta?.id,
+          descricao: `Cobrança gerada do contrato ${result.conta?.numero_documento || ''}`,
+        });
         queryClient.invalidateQueries({ queryKey: ['contratos'] });
         queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
         toast({
@@ -415,7 +424,16 @@ export default function ContratosPage() {
 
       return { contrato, novoValorMensal, percentualReajusteAplicado };
     },
-    onSuccess: ({ contrato, novoValorMensal, percentualReajusteAplicado }) => {
+    onSuccess: async ({ contrato, novoValorMensal, percentualReajusteAplicado }) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Renovação',
+        modulo: 'Contratos',
+        entidade: 'Contrato',
+        registro_id: contrato?.id,
+        descricao: `Contrato ${contrato?.numero_contrato || ''} renovado`,
+      });
       queryClient.invalidateQueries({ queryKey: ['contratos'] });
       
       toast({
@@ -452,7 +470,16 @@ export default function ContratosPage() {
         contas_geradas_ids: []
       });
     },
-    onSuccess: () => {
+    onSuccess: async (created) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Criação',
+        modulo: 'Contratos',
+        entidade: 'Contrato',
+        registro_id: created?.id,
+        descricao: `Contrato ${created?.numero_contrato || ''} criado`,
+      });
       queryClient.invalidateQueries({ queryKey: ['contratos'] });
       setIsDialogOpen(false);
       resetForm();
@@ -472,7 +499,16 @@ export default function ContratosPage() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Contrato.update(id, data),
-    onSuccess: () => {
+    onSuccess: async (_res, { id, data }) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Edição',
+        modulo: 'Contratos',
+        entidade: 'Contrato',
+        registro_id: id,
+        descricao: `Contrato ${data?.numero_contrato || ''} atualizado`,
+      });
       queryClient.invalidateQueries({ queryKey: ['contratos'] });
       setIsDialogOpen(false);
       setEditingContrato(null);
@@ -493,7 +529,16 @@ export default function ContratosPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Contrato.delete(id),
-    onSuccess: () => {
+    onSuccess: async (_res, id) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Exclusão',
+        modulo: 'Contratos',
+        entidade: 'Contrato',
+        registro_id: id,
+        descricao: `Contrato excluído`,
+      });
       queryClient.invalidateQueries({ queryKey: ['contratos'] });
       setViewingContrato(null);
       toast({

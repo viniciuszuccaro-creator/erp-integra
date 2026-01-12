@@ -120,7 +120,16 @@ export default function RH() {
 
   const updateFeriasMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Ferias.update(id, data),
-    onSuccess: () => {
+    onSuccess: async (_res, { id, data }) => {
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        acao: 'Edição',
+        modulo: 'RH',
+        entidade: 'Ferias',
+        registro_id: id,
+        descricao: `Férias atualizadas para status ${data?.status || ''}`,
+      });
       queryClient.invalidateQueries({ queryKey: ['ferias'] });
       toast({
         title: "Sucesso!",
@@ -383,7 +392,20 @@ export default function RH() {
                         windowMode: true,
                         onSubmit: async (data) => {
                           try {
-                            await base44.entities.Ferias.create(data);
+                            const created = await base44.entities.Ferias.create({
+                              ...data,
+                              responsavel: data.responsavel || (user?.full_name || user?.email),
+                              responsavel_id: data.responsavel_id || user?.id,
+                            });
+                            await base44.entities.AuditLog.create({
+                              usuario: user?.full_name || user?.email || 'Usuário',
+                              usuario_id: user?.id,
+                              acao: 'Criação',
+                              modulo: 'RH',
+                              entidade: 'Ferias',
+                              registro_id: created?.id,
+                              descricao: `Solicitação de férias criada`,
+                            });
                             queryClient.invalidateQueries({ queryKey: ['ferias'] });
                             toast({ title: "✅ Solicitação de férias enviada!" });
                           } catch (error) {
