@@ -43,7 +43,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import useContextoVisual from "@/components/lib/useContextoVisual";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import ComprovanteDigital from "../components/expedicao/ComprovanteDigital";
 import { useWindow } from "@/components/lib/useWindow";
@@ -248,6 +248,8 @@ export default function Expedicao() {
       const qrCode = `ENT-${Date.now()}`;
       const novaEntrega = await base44.entities.Entrega.create({
         ...data,
+        empresa_id: data.empresa_id || empresaAtual?.id || null,
+        group_id: data.group_id || undefined,
         qr_code: qrCode,
         data_separacao: data.status !== "Aguardando Separação" ? new Date().toISOString() : null
       });
@@ -580,7 +582,7 @@ export default function Expedicao() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 min-h-0">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
