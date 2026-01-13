@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import KanbanProducaoInteligente from "@/components/producao/KanbanProducaoInteligente";
@@ -55,6 +55,19 @@ import DashboardProducaoRealtime from "../components/producao/DashboardProducaoR
 
 export default function Producao() {
   const [activeTab, setActiveTab] = useState("kanban"); // ALTERADO: default agora é kanban
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab') || null;
+    if (!initial) { try { initial = localStorage.getItem('Producao_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Producao_tab', value); } catch {}
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [opSelecionada, setOpSelecionada] = useState(null);
@@ -137,7 +150,7 @@ export default function Producao() {
   const [itemSelecionado3D, setItemSelecionado3D] = useState(null);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-orange-50 p-6">
+    <div className="h-full w-full bg-gradient-to-br from-slate-50 to-orange-50 p-6 overflow-auto">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
@@ -216,7 +229,7 @@ export default function Producao() {
         </div>
 
         {/* NEW: Tabs layout and styling updated */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
             {/* NOVA: Tab Kanban como primeira */}
             <TabsTrigger

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -51,6 +51,19 @@ import DashboardRHRealtime from "../components/rh/DashboardRHRealtime";
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab') || null;
+    if (!initial) { try { initial = localStorage.getItem('RH_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('RH_tab', value); } catch {}
+  };
   const [search, setSearch] = useState("");
   const [selectedColaboradores, setSelectedColaboradores] = useState([]);
   const toggleColab = (id) => setSelectedColaboradores(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -171,7 +184,7 @@ export default function RH() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -243,7 +256,7 @@ export default function RH() {
 
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
               <TabsList className="grid w-full grid-cols-7 mb-6">
                 <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
                 <TabsTrigger value="ponto">Ponto</TabsTrigger>

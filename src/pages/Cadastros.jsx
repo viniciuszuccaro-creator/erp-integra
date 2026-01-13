@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -167,6 +167,30 @@ export default function Cadastros() {
   const [acordeonAberto, setAcordeonAberto] = useState([]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
   const [abaIntegracoes, setAbaIntegracoes] = useState("gerenciamento");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let t = params.get('tab');
+    let s = params.get('sub');
+    if (!t) { try { t = localStorage.getItem('Cadastros_tab'); } catch {} }
+    if (!s) { try { s = localStorage.getItem('Cadastros_subtab'); } catch {} }
+    if (t) setAbaGerenciamento(t);
+    if (s) setAbaIntegracoes(s);
+  }, []);
+  const handleAbaChange = (value) => {
+    setAbaGerenciamento(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Cadastros_tab', value); } catch {}
+  };
+  const handleSubChange = (value) => {
+    setAbaIntegracoes(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('sub', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Cadastros_subtab', value); } catch {}
+  };
   const { empresaAtual } = useContextoVisual();
 
   // Seleções em massa (Clientes, Fornecedores, Produtos)
@@ -535,12 +559,12 @@ export default function Cadastros() {
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       {/* GERENCIADOR DE JANELAS ABERTAS */}
       <GerenciadorJanelas />
 
       {/* TABS: CADASTROS vs GERENCIAMENTO */}
-      <Tabs value={abaGerenciamento} onValueChange={setAbaGerenciamento}>
+      <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
         <TabsList className="grid w-full grid-cols-3 bg-slate-100">
           <TabsTrigger value="cadastros">
             <Database className="w-4 h-4 mr-2" />
@@ -3695,7 +3719,7 @@ export default function Cadastros() {
               </AccordionTrigger>
               <AccordionContent className="p-6 bg-white">
                 {/* SUB-TABS INTEGRAÇÕES & IA - ETAPA 4 */}
-                <Tabs value={abaIntegracoes} onValueChange={setAbaIntegracoes}>
+                <Tabs value={abaIntegracoes} onValueChange={handleSubChange}>
                   <TabsList className="bg-slate-100 mb-6 flex-wrap h-auto">
                     <TabsTrigger value="gerenciamento">
                       <Database className="w-4 h-4 mr-2" />
