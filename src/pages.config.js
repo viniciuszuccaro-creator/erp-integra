@@ -26,6 +26,7 @@ import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
+import Acessos from './pages/Acessos';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +59,7 @@ export const PAGES = {
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
+    "Acessos": Acessos,
 }
 
 export const pagesConfig = {
