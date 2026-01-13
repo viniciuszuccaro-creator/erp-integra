@@ -98,7 +98,7 @@ export default function Acessos() {
       </div>
 
       {/* Painel redimensionável (sidebar de status à esquerda, conteúdo à direita) */}
-      <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-13rem)] min-h-[480px]">
+      <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-13rem)] min-h-[480px] max-h-[calc(100vh-14rem)]">
         <ResizablePanel defaultSize={28} minSize={20} maxSize={40} className="h-full">
           <div className="h-full flex flex-col gap-4">
             <Card className="h-full border-0 shadow-md">
