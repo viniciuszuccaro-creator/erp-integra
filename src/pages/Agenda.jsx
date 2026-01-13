@@ -43,6 +43,39 @@ export default function Agenda() {
   const [filtroUsuario, setFiltroUsuario] = useState("todos");
   const [syncGoogleDialogOpen, setSyncGoogleDialogOpen] = useState(false);
 
+  // Navegação: restaurar estado inicial da URL/localStorage
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let v = params.get('view');
+    let d = params.get('date');
+    let u = params.get('user');
+
+    if (!v) { try { v = localStorage.getItem('Agenda_view') || null; } catch {} }
+    if (!d) { try { d = localStorage.getItem('Agenda_date') || null; } catch {} }
+    if (!u) { try { u = localStorage.getItem('Agenda_user') || null; } catch {} }
+
+    if (v) setVisualizacao(v);
+    if (d) {
+      const parsed = new Date(d);
+      if (!isNaN(parsed)) setDataAtual(parsed);
+    }
+    if (u) setFiltroUsuario(u);
+  }, []);
+
+  // Sincronizar estado -> URL + localStorage
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', visualizacao);
+    url.searchParams.set('date', dataAtual.toISOString().split('T')[0]);
+    url.searchParams.set('user', filtroUsuario);
+    window.history.replaceState({}, '', url.toString());
+    try {
+      localStorage.setItem('Agenda_view', visualizacao);
+      localStorage.setItem('Agenda_date', dataAtual.toISOString());
+      localStorage.setItem('Agenda_user', filtroUsuario);
+    } catch {}
+  }, [visualizacao, dataAtual, filtroUsuario]);
+
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
