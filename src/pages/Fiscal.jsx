@@ -232,7 +232,7 @@ export default function FiscalPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Fiscal e Tributário</h1>
         <p className="text-slate-600">

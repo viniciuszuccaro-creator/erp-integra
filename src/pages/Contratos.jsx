@@ -35,6 +35,7 @@ import {
   History,
   Zap
 } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function ContratosPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,6 +50,7 @@ export default function ContratosPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
+  const { empresaAtual, filtrarPorContexto } = useContextoVisual();
 
   const [formData, setFormData] = useState({
     numero_contrato: "",
@@ -88,6 +90,11 @@ export default function ContratosPage() {
     queryKey: ['fornecedores'],
     queryFn: () => base44.entities.Fornecedor.list(),
   });
+
+  // Multiempresa: aplicar contexto
+  const contratosContexto = filtrarPorContexto(contratos, 'empresa_id');
+  const clientesFiltrados = filtrarPorContexto(clientes, 'empresa_id');
+  const fornecedoresFiltrados = filtrarPorContexto(fornecedores, 'empresa_dona_id');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -294,6 +301,8 @@ export default function ContratosPage() {
       const contaReceber = await base44.entities.ContaReceber.create({
         descricao: `Mensalidade ${contrato.objeto} - ${contrato.numero_contrato}`,
         cliente: contrato.parte_contratante,
+        empresa_id: contrato.empresa_id || empresaAtual?.id,
+        group_id: contrato.group_id || null,
         // Assuming parte_contratante_id exists or can be derived from clients/fornecedores
         // For now, it's missing in formData, should be added if needed for relation
         valor: contrato.valor_mensal,
@@ -463,6 +472,8 @@ export default function ContratosPage() {
 
       return base44.entities.Contrato.create({
         ...data,
+        empresa_id: data.empresa_id || empresaAtual?.id,
+        group_id: data.group_id || null,
         data_proximo_reajuste: dataProximoReajuste.toISOString().split('T')[0],
         proxima_cobranca: proximaCobranca.toISOString().split('T')[0],
         historico_renovacoes: [],
@@ -619,24 +630,24 @@ export default function ContratosPage() {
     return diff;
   };
 
-  const filteredContratos = contratos.filter(c =>
+  const filteredContratos = contratosContexto.filter(c =>
     c.numero_contrato?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.parte_contratante?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.objeto?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const contratosPorStatus = {
-    vigentes: contratos.filter(c => c.status === 'Vigente'),
-    aguardando: contratos.filter(c => c.status === 'Aguardando Assinatura'),
-    vencidos: contratos.filter(c => c.status === 'Vencido'),
-    proximosVencer: contratos.filter(c => {
+    vigentes: contratosContexto.filter(c => c.status === 'Vigente'),
+    aguardando: contratosContexto.filter(c => c.status === 'Aguardando Assinatura'),
+    vencidos: contratosContexto.filter(c => c.status === 'Vencido'),
+    proximosVencer: contratosContexto.filter(c => {
       if (c.status !== 'Vigente' || !c.data_fim) return false;
       const dias = calcularDiasParaVencimento(c.data_fim);
       return dias <= 60 && dias > 0;
     })
   };
 
-  const valorTotalContratos = contratos
+  const valorTotalContratos = contratosContexto
     .filter(c => c.status === 'Vigente')
     .reduce((sum, c) => sum + (c.valor_mensal || 0), 0);
 
@@ -659,7 +670,7 @@ export default function ContratosPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
@@ -686,6 +697,8 @@ export default function ContratosPage() {
                 proximaCobranca.setDate(data.dia_vencimento || 1);
                 await base44.entities.Contrato.create({
                   ...data,
+                  empresa_id: data.empresa_id || empresaAtual?.id,
+                  group_id: data.group_id || null,
                   data_proximo_reajuste: dataProximoReajuste.toISOString().split('T')[0],
                   proxima_cobranca: proximaCobranca.toISOString().split('T')[0],
                   historico_renovacoes: [],
@@ -759,8 +772,8 @@ export default function ContratosPage() {
                     required
                   />
                   <datalist id="partes-list">
-                    {clientes.map(c => <option key={c.id} value={c.nome} />)}
-                    {fornecedores.map(f => <option key={f.id} value={f.nome} />)}
+                    {clientesFiltrados.map(c => <option key={c.id} value={c.nome} />)}
+                    {fornecedoresFiltrados.map(f => <option key={f.id} value={f.nome} />)}
                   </datalist>
                 </div>
 
