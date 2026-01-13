@@ -193,12 +193,22 @@ function LayoutContent({ children, currentPageName }) {
       Evento: 'Agenda',
       Comissao: 'Comercial',
     };
+    const stampConfig = {
+      Cliente: { nameField: 'vendedor_responsavel', idField: 'vendedor_responsavel_id' },
+      Oportunidade: { nameField: 'responsavel', idField: 'responsavel_id' },
+      Interacao: { nameField: 'responsavel', idField: 'responsavel_id' },
+      Entrega: { nameField: 'usuario_responsavel', idField: 'usuario_responsavel_id' },
+      MovimentacaoEstoque: { nameField: 'responsavel', idField: 'responsavel_id' },
+      Pedido: { nameField: 'vendedor', idField: 'vendedor_id' },
+    };
+
     const entities = Object.keys(entityToModule);
     const unsubs = entities.map((name) => {
       const api = base44.entities?.[name];
       if (!api?.subscribe) return null;
       return api.subscribe(async (evt) => {
         try {
+          // 1) Auditoria universal
           await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
             usuario_id: user?.id,
@@ -211,9 +221,33 @@ function LayoutContent({ children, currentPageName }) {
             descricao: `${name} ${evt.type}`,
             dados_novos: evt?.data || null,
           });
-        } catch (e) {}
+
+          // 2) Carimbo de responsável + multiempresa no momento da criação, quando fizer sentido
+          if (evt.type === 'create') {
+            const cfg = stampConfig[name];
+            const data = evt?.data || {};
+            const patch = {};
+
+            if (cfg) {
+              const hasName = data?.[cfg.nameField];
+              const hasId = data?.[cfg.idField];
+              if (!hasName) patch[cfg.nameField] = user?.full_name || user?.email;
+              if (!hasId) patch[cfg.idField] = user?.id;
+            }
+            if ('empresa_id' in data && !data?.empresa_id && empresaAtual?.id) {
+              patch.empresa_id = empresaAtual.id;
+            }
+
+            if (Object.keys(patch).length > 0) {
+              try {
+                await base44.entities?.[name]?.update?.(evt.id, patch);
+              } catch (_) { /* silencioso: se não puder atualizar, seguimos */ }
+            }
+          }
+        } catch (e) { /* auditoria nunca deve quebrar a UI */ }
       });
     }).filter(Boolean);
+
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
   }, [user?.id, empresaAtual?.id]);
 
