@@ -43,6 +43,7 @@ import { base44 } from "@/api/base44Client";
 import NotificationCenter from "@/components/NotificationCenter";
 import EmpresaSwitcher from "@/components/EmpresaSwitcher";
 import { UserProvider, useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import AcoesRapidasGlobal from "@/components/AcoesRapidasGlobal";
 import PesquisaUniversal from "@/components/PesquisaUniversal";
 import MiniMapaNavegacao from "@/components/MiniMapaNavegacao";
@@ -78,10 +79,11 @@ const navigationItems = [
   ];
 
 function LayoutContent({ children, currentPageName }) {
-  const location = useLocation();
-  const { user } = useUser();
-  const [pesquisaOpen, setPesquisaOpen] = useState(false);
-  const [modoEscuro, setModoEscuro] = useState(false);
+        const location = useLocation();
+        const { user } = useUser();
+        const { empresaAtual } = useContextoVisual();
+        const [pesquisaOpen, setPesquisaOpen] = useState(false);
+        const [modoEscuro, setModoEscuro] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -170,6 +172,50 @@ function LayoutContent({ children, currentPageName }) {
       }
     </style>
   ` : '';
+
+  useEffect(() => {
+    if (!user) return;
+    const entityToModule = {
+      Cliente: 'CRM',
+      Oportunidade: 'CRM',
+      Interacao: 'CRM',
+      Pedido: 'Comercial',
+      NotaFiscal: 'Fiscal',
+      Entrega: 'Expedição',
+      Romaneio: 'Expedição',
+      Fornecedor: 'Compras',
+      SolicitacaoCompra: 'Compras',
+      OrdemCompra: 'Compras',
+      Produto: 'Estoque',
+      MovimentacaoEstoque: 'Estoque',
+      ContaPagar: 'Financeiro',
+      ContaReceber: 'Financeiro',
+      Evento: 'Agenda',
+      Comissao: 'Comercial',
+    };
+    const entities = Object.keys(entityToModule);
+    const unsubs = entities.map((name) => {
+      const api = base44.entities?.[name];
+      if (!api?.subscribe) return null;
+      return api.subscribe(async (evt) => {
+        try {
+          await base44.entities.AuditLog.create({
+            usuario: user?.full_name || user?.email || 'Usuário',
+            usuario_id: user?.id,
+            empresa_id: empresaAtual?.id || null,
+            empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+            acao: evt.type === 'create' ? 'Criação' : evt.type === 'update' ? 'Edição' : 'Exclusão',
+            modulo: entityToModule[name],
+            entidade: name,
+            registro_id: evt.id,
+            descricao: `${name} ${evt.type}`,
+            dados_novos: evt?.data || null,
+          });
+        } catch (e) {}
+      });
+    }).filter(Boolean);
+    return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
+  }, [user?.id, empresaAtual?.id]);
 
   const isMobilePage = currentPageName === "ProducaoMobile";
 

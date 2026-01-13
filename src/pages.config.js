@@ -1,3 +1,4 @@
+import Acessos from './pages/Acessos';
 import Agenda from './pages/Agenda';
 import CRM from './pages/CRM';
 import Cadastros from './pages/Cadastros';
@@ -26,11 +27,11 @@ import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
 import ValidadorEtapas24Final from './pages/ValidadorEtapas24Final';
-import Acessos from './pages/Acessos';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
+    "Acessos": Acessos,
     "Agenda": Agenda,
     "CRM": CRM,
     "Cadastros": Cadastros,
@@ -59,7 +60,6 @@ export const PAGES = {
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
     "ValidadorEtapas24Final": ValidadorEtapas24Final,
-    "Acessos": Acessos,
 }
 
 export const pagesConfig = {
