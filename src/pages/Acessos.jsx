@@ -66,8 +66,19 @@ export default function Acessos() {
     };
   }, [user?.id, user?.email, user?.full_name, empresaAtual?.id, empresaAtual?.nome_fantasia, empresaAtual?.razao_social]);
 
+  if (user?.role !== 'admin') {
+    return (
+      <div className="h-full w-full p-6 lg:p-8 overflow-auto">
+        <Card className="max-w-2xl mx-auto">
+          <CardHeader><CardTitle>Acesso restrito</CardTitle></CardHeader>
+          <CardContent>Você não possui permissão para acessar este módulo.</CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
