@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import DashboardFormasPagamento from "../components/financeiro/DashboardFormasPagamento";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -53,6 +53,19 @@ import AlertasFinanceirosEmpresa from "../components/financeiro/AlertasFinanceir
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) { try { initial = localStorage.getItem('Financeiro_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Financeiro_tab', value); } catch {}
+  };
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
   const [conciliacaoDialogOpen, setConciliacaoDialogOpen] = useState(false);
@@ -330,7 +343,7 @@ export default function Financeiro() {
       {/* NOVO: Régua de Cobrança IA */}
       <ReguaCobrancaIA empresaId={empresaAtual?.id} />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="dashboard-mestre" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
             <BarChart3 className="w-4 h-4 mr-2" />

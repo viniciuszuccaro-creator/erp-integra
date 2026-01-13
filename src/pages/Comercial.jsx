@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -41,6 +41,23 @@ import { useUser } from "@/components/lib/UserContext";
  */
 export default function Comercial() {
   const [activeTab, setActiveTab] = useState("clientes");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) {
+      try { initial = localStorage.getItem('Comercial_tab'); } catch {}
+    }
+    if (initial) setActiveTab(initial);
+  }, []);
+
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Comercial_tab', value); } catch {}
+  };
   const [painelClienteAberto, setPainelClienteAberto] = useState(false);
   const [clienteParaPainel, setClienteParaPainel] = useState(null);
 
@@ -327,7 +344,7 @@ export default function Comercial() {
       {/* NOVO V21.6: Monitoramento Realtime de Canais */}
       <MonitoramentoCanaisRealtime autoRefresh={true} />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap">
           <TabsTrigger 
             value="clientes" 

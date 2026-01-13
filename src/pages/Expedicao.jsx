@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -79,6 +79,19 @@ import { usePermissoesLogistica } from "../components/logistica/ControleAcessoLo
 
 export default function Expedicao() {
   const [activeTab, setActiveTab] = useState("entregas");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) { try { initial = localStorage.getItem('Expedicao_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Expedicao_tab', value); } catch {}
+  };
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
   const permissoesLogistica = usePermissoesLogistica();
@@ -698,7 +711,7 @@ export default function Expedicao() {
         </div>
 
         {/* NOVA: Tabs para organizar */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
             <TabsTrigger value="entregas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Truck className="w-4 h-4 mr-2" />

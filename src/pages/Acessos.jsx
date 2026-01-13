@@ -20,6 +20,20 @@ import { Shield, KeyRound, Users2, Activity, Brain } from "lucide-react";
 
 export default function Acessos() {
   const [activeTab, setActiveTab] = useState("perfis");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) { try { initial = localStorage.getItem('Acessos_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Acessos_tab', value); } catch {}
+  };
   const { user } = useUser();
   const { hasPermission } = usePermissions();
   const { empresaAtual, estaNoGrupo } = useContextoVisual();
@@ -127,7 +141,7 @@ export default function Acessos() {
             </CardHeader>
             <CardContent className="p-0 h-full overflow-hidden">
               <div className="h-full flex flex-col">
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+                <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full flex flex-col">
                   <div className="px-4 pt-3">
                     <TabsList className="flex flex-wrap bg-white border shadow-sm">
                       <TabsTrigger value="perfis" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">

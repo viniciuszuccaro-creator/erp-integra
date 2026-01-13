@@ -69,7 +69,20 @@ export default function Dashboard() {
   });
 
   // Removed visualizacao state as it's replaced by Tabs
-  const [activeTab, setActiveTab] = useState("tempo-real"); // New state for active tab
+  const [activeTab, setActiveTab] = useState("tempo-real");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) { try { initial = localStorage.getItem('Dashboard_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Dashboard_tab', value); } catch {}
+  }; // New state for active tab
 
   useEffect(() => {
     try {
@@ -637,7 +650,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="bg-white border shadow-sm">
           <TabsTrigger value="tempo-real" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Activity className="w-4 h-4 mr-2" />

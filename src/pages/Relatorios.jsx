@@ -29,7 +29,20 @@ import AgendamentoRelatorios from "../components/relatorios/AgendamentoRelatorio
 import GeradorRelatorios from '../components/sistema/GeradorRelatorios'; // Added import
 
 export default function Relatorios() {
-  const [activeTab, setActiveTab] = useState("vendas"); // Changed default active tab to "vendas"
+  const [activeTab, setActiveTab] = useState("vendas");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) { try { initial = localStorage.getItem('Relatorios_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Relatorios_tab', value); } catch {}
+  }; // Changed default active tab to "vendas"
   const [selectedReport, setSelectedReport] = useState(null);
   const [agendarEmailDialogOpen, setAgendarEmailDialogOpen] = useState(false);
   const [filtros, setFiltros] = useState({
@@ -297,7 +310,7 @@ export default function Relatorios() {
         <p className="text-slate-600">Relatórios estratégicos, análises gerenciais e exportação de dados</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           {/* Existing Triggers */}
           <TabsTrigger value="estrategicos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">

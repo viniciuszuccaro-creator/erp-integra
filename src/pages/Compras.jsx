@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,19 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function Compras() {
   const [activeTab, setActiveTab] = useState("fornecedores");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) { try { initial = localStorage.getItem('Compras_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Compras_tab', value); } catch {}
+  };
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto } = useContextoVisual();
 
@@ -97,7 +110,7 @@ export default function Compras() {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm">
           <TabsTrigger value="fornecedores" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
             <Building2 className="w-4 h-4 mr-2" />

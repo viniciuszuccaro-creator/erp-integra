@@ -20,6 +20,20 @@ export default function Seguranca() {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState('governanca');
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) { try { initial = localStorage.getItem('Seguranca_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Seguranca_tab', value); } catch {}
+  };
+
   // Restrição de acesso
   if (user?.role !== 'admin') {
     return (
@@ -45,7 +59,7 @@ export default function Seguranca() {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger
             value="governanca"

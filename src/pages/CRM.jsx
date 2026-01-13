@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -51,6 +51,19 @@ import CampanhaForm from "../components/crm/CampanhaForm";
 
 export default function CRMPage() {
   const [activeTab, setActiveTab] = useState("funil");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) { try { initial = localStorage.getItem('CRM_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('CRM_tab', value); } catch {}
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [isOppDialogOpen, setIsOppDialogOpen] = useState(false);
   const [isInteractionDialogOpen, setIsInteractionDialogOpen] = useState(false);
@@ -655,7 +668,7 @@ export default function CRMPage() {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="funil" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
