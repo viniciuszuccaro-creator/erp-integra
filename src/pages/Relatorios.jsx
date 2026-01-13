@@ -291,7 +291,7 @@ export default function Relatorios() {
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Relatórios e Análises</h1>
         <p className="text-slate-600">Relatórios estratégicos, análises gerenciais e exportação de dados</p>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Activity, Settings, Database } from 'lucide-react';
@@ -35,7 +34,7 @@ export default function Seguranca() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
           <Shield className="w-8 h-8 text-blue-600" />

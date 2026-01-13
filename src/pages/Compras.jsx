@@ -10,10 +10,12 @@ import SolicitacoesCompraTab from "../components/compras/SolicitacoesCompraTab";
 import CotacoesTab from "../components/compras/CotacoesTab";
 import ImportacaoNFeRecebimento from "../components/compras/ImportacaoNFeRecebimento";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function Compras() {
   const [activeTab, setActiveTab] = useState("fornecedores");
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
+  const { filtrarPorContexto } = useContextoVisual();
 
   const { data: fornecedores = [], isLoading: loadingFornecedores } = useQuery({
     queryKey: ['fornecedores'],
@@ -35,7 +37,11 @@ export default function Compras() {
     queryFn: () => base44.entities.Empresa.list(),
   });
 
-  const totalCompras = ordensCompra
+  const fornecedoresFiltrados = filtrarPorContexto(fornecedores, 'empresa_dona_id');
+  const ordensCompraFiltradas = filtrarPorContexto(ordensCompra, 'empresa_id');
+  const solicitacoesFiltradas = filtrarPorContexto(solicitacoes, 'empresa_id');
+
+  const totalCompras = ordensCompraFiltradas
     .filter(o => o.status !== 'Cancelada')
     .reduce((sum, o) => sum + (o.valor_total || 0), 0);
 
@@ -50,7 +56,7 @@ export default function Compras() {
   }
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Compras e Suprimentos</h1>
         <p className="text-slate-600">Gestão de fornecedores e ordens de compra</p>
@@ -63,8 +69,8 @@ export default function Compras() {
             <Users className="w-5 h-5 text-cyan-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-cyan-600">{fornecedores.length}</div>
-            <p className="text-xs text-slate-500 mt-1">{fornecedoresAtivos} ativos</p>
+            <div className="text-3xl font-bold text-cyan-600">{fornecedoresFiltrados.length}</div>
+            <p className="text-xs text-slate-500 mt-1">{fornecedoresFiltrados.filter(f => f.status === 'Ativo').length} ativos</p>
           </CardContent>
         </Card>
 
@@ -74,7 +80,7 @@ export default function Compras() {
             <ShoppingCart className="w-5 h-5 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{ordensCompra.length}</div>
+            <div className="text-3xl font-bold text-blue-600">{ordensCompraFiltradas.length}</div>
           </CardContent>
         </Card>
 
@@ -103,7 +109,7 @@ export default function Compras() {
           </TabsTrigger>
           <TabsTrigger value="solicitacoes" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
-            Solicitações ({solicitacoes.filter(s => s.status === 'Pendente').length})
+            Solicitações ({solicitacoesFiltradas.filter(s => s.status === 'Pendente').length})
           </TabsTrigger>
           <TabsTrigger value="cotacoes" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
@@ -116,7 +122,7 @@ export default function Compras() {
         </TabsList>
 
         <TabsContent value="fornecedores">
-          <FornecedoresTab fornecedores={fornecedores} isLoading={loadingFornecedores} />
+          <FornecedoresTab fornecedores={fornecedoresFiltrados} isLoading={loadingFornecedores} />
         </TabsContent>
 
         <TabsContent value="recebimento">
@@ -124,7 +130,7 @@ export default function Compras() {
         </TabsContent>
 
         <TabsContent value="solicitacoes">
-          <SolicitacoesCompraTab solicitacoes={solicitacoes} />
+          <SolicitacoesCompraTab solicitacoes={solicitacoesFiltradas} />
         </TabsContent>
 
         <TabsContent value="cotacoes">
@@ -132,7 +138,7 @@ export default function Compras() {
         </TabsContent>
 
         <TabsContent value="ordens">
-          <OrdensCompraTab ordensCompra={ordensCompra} fornecedores={fornecedores} empresas={empresas} isLoading={loadingOrdens} />
+          <OrdensCompraTab ordensCompra={ordensCompraFiltradas} fornecedores={fornecedoresFiltrados} empresas={empresas} isLoading={loadingOrdens} />
         </TabsContent>
       </Tabs>
     </div>

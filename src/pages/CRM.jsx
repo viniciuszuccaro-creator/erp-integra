@@ -45,6 +45,7 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import InteracaoForm from "../components/crm/InteracaoForm";
 import CampanhaForm from "../components/crm/CampanhaForm";
 
@@ -64,6 +65,7 @@ export default function CRMPage() {
   const navigate = useNavigate();
   const { openWindow } = useWindow();
   const { user } = useUser();
+  const { empresaAtual, filtrarPorContexto } = useContextoVisual();
 
   const [oppForm, setOppForm] = useState({
     titulo: "",
@@ -135,6 +137,11 @@ export default function CRMPage() {
     queryFn: () => base44.entities.Cliente.list(),
   });
 
+  // Multiempresa: aplicar contexto
+  const oportunidadesFiltradas = filtrarPorContexto(oportunidades, 'empresa_id');
+  const interacoesFiltradas = filtrarPorContexto(interacoes, 'empresa_id');
+  const campanhasFiltradas = filtrarPorContexto(campanhas, 'empresa_dona_id');
+
   const calcularScore = (opp) => {
     let score = 50;
     if (opp.valor_estimado > 50000) score += 20;
@@ -179,6 +186,8 @@ export default function CRMPage() {
       const temperatura = calcularTemperatura(data);
       const created = await base44.entities.Oportunidade.create({
         ...data,
+        empresa_id: data.empresa_id || empresaAtual?.id,
+        group_id: data.group_id || null,
         score,
         temperatura,
         quantidade_interacoes: 0,
@@ -364,6 +373,8 @@ export default function CRMPage() {
     mutationFn: async (data) => {
       const created = await base44.entities.Interacao.create({
         ...data,
+        empresa_id: data.empresa_id || empresaAtual?.id,
+        group_id: data.group_id || null,
         responsavel: data.responsavel || (user?.full_name || user?.email),
         responsavel_id: data.responsavel_id || user?.id,
       });
@@ -407,6 +418,8 @@ export default function CRMPage() {
       };
       const created = await base44.entities.Campanha.create({
         ...dataWithValues,
+        empresa_id: data.empresa_id || empresaAtual?.id,
+        group_id: data.group_id || null,
         responsavel: data.responsavel || (user?.full_name || user?.email),
       });
       return created;
@@ -532,26 +545,26 @@ export default function CRMPage() {
     converterOportunidadeMutation.mutate({ opp, tipo });
   };
 
-  const filteredOportunidades = oportunidades.filter(o =>
+  const filteredOportunidades = oportunidadesFiltradas.filter(o =>
     o.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     o.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredInteracoes = interacoes.filter(i =>
+  const filteredInteracoes = interacoesFiltradas.filter(i =>
     i.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     i.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredCampanhas = campanhas.filter(c =>
+  const filteredCampanhas = campanhasFiltradas.filter(c =>
     c.nome?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalOportunidades = oportunidades.length;
-  const oportunidadesAbertas = oportunidades.filter(o => o.status === 'Aberto' || o.status === 'Em Andamento').length;
-  const valorPipeline = oportunidades
+  const totalOportunidades = oportunidadesFiltradas.length;
+  const oportunidadesAbertas = oportunidadesFiltradas.filter(o => o.status === 'Aberto' || o.status === 'Em Andamento').length;
+  const valorPipeline = oportunidadesFiltradas
     .filter(o => o.status === 'Aberto' || o.status === 'Em Andamento')
     .reduce((sum, o) => sum + (o.valor_estimado || 0), 0);
-  const valorPonderado = oportunidades
+  const valorPonderado = oportunidadesFiltradas
     .filter(o => o.status === 'Aberto' || o.status === 'Em Andamento')
     .reduce((sum, o) => sum + ((o.valor_estimado || 0) * (o.probabilidade || 0) / 100), 0);
   const taxaConversao = totalOportunidades > 0
@@ -586,7 +599,7 @@ export default function CRMPage() {
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">CRM - Gestão de Relacionamento com Clientes</h1>
         <p className="text-slate-600">V21.1 - Gerencie oportunidades, interações, campanhas + IA de Churn</p>
