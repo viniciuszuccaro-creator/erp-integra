@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import { 
   Play, 
   Pause, 
@@ -44,6 +45,7 @@ export default function ApontamentoProducaoAvancado({ opId, opNumero, onClose })
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { getFiltroContexto } = useContextoVisual();
+  const { user: authUser } = useUser();
   
   const [apontamento, setApontamento] = useState({
     op_id: opId,
