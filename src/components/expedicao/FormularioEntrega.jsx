@@ -116,6 +116,22 @@ Retorne:
       toastHook({ title: "✅ Entrega atualizada!" });
       sonnerToast.success("✅ Entrega atualizada!");
 
+      try {
+        await base44.entities.AuditLog.create({
+          empresa_id: entregaAtualizada?.empresa_id,
+          usuario: authUser?.full_name || authUser?.email,
+          usuario_id: authUser?.id,
+          acao: 'Edição',
+          modulo: 'Expedição',
+          entidade: 'Entrega',
+          registro_id: entregaAtualizada?.id,
+          descricao: 'Entrega atualizada via formulário',
+          dados_novos: entregaAtualizada,
+          data_hora: new Date().toISOString(),
+          sucesso: true
+        });
+      } catch (_) {}
+
       onCancel();
     },
     onError: (error) => {
