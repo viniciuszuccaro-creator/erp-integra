@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/components/ui/use-toast";
 import { CheckCircle, XCircle, AlertTriangle, Package, Camera, QrCode, List } from "lucide-react";
+import { useUser } from "@/components/lib/UserContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode component
@@ -19,6 +20,7 @@ import ScannerQRCode from './ScannerQRCode'; // Import the new ScannerQRCode com
  * Separação e Conferência de Itens (Picking) para Entregas
  */
 export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onClose, windowMode = false }) {
+  const { user } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -90,7 +92,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
         tipo: "conferencia",
         data_inicio: new Date().toISOString(),
         data_conclusao: new Date().toISOString(),
-        responsavel_nome: "Conferente", // TODO: pegar do user
+        responsavel_nome: (user?.full_name || user?.email || "Conferente"),
         itens: itens,
         status: temDivergencia ? "com_divergencia" : "concluido",
         tem_divergencia: temDivergencia,
@@ -127,7 +129,7 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
           tipo_evento: "Finalizacao",
           titulo_evento: "Separação e conferência concluída",
           descricao_detalhada: `Separação conferida e liberada para expedição.`,
-          usuario_responsavel: "Sistema",
+          usuario_responsavel: (user?.full_name || user?.email || 'Sistema'),
           data_evento: new Date().toISOString(),
           status_relacionado: "Pronto para Expedir"
         });
@@ -135,7 +137,18 @@ export default function SeparacaoConferencia({ entregaId, pedido, empresaId, onC
 
       return separacao;
     },
-    onSuccess: () => {
+    onSuccess: async (separacao) => {
+      // Auditoria mínima
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: separacao?.empresa_id || empresaId || null,
+          acao: 'Criação', modulo: 'Expedição', entidade: 'SeparacaoConferencia', registro_id: separacao?.id,
+          descricao: `Separação concluída (${separacao?.numero_separacao || ''})`,
+          dados_novos: separacao
+        });
+      } catch (_) {}
       queryClient.invalidateQueries({ queryKey: ['entregas'] }); // Invalidate deliveries query
       queryClient.invalidateQueries({ queryKey: ['separacoes'] });
       toast({

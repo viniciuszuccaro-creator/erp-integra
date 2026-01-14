@@ -8,12 +8,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { RotateCcw, AlertTriangle, Package } from 'lucide-react';
+import { useUser } from "@/components/lib/UserContext";
 
 /**
  * Logística Reversa Automatizada
  * Processa devoluções e recusas com automação completa
  */
 export default function LogisticaReversa({ entrega, onConcluido }) {
+  const { user } = useUser();
   const [motivo, setMotivo] = useState('');
   const [detalhes, setDetalhes] = useState('');
   const [acao, setAcao] = useState('');
@@ -34,10 +36,12 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
       });
 
       // 2. Bloquear título financeiro (se existir)
+      let ped = null;
       if (entrega.pedido_id) {
         const pedido = await base44.entities.Pedido.filter({ id: entrega.pedido_id });
-        if (pedido[0]?.contas_receber_ids?.length > 0) {
-          for (const contaId of pedido[0].contas_receber_ids) {
+        ped = pedido[0] || null;
+        if (ped?.contas_receber_ids?.length > 0) {
+          for (const contaId of ped.contas_receber_ids) {
             await base44.entities.ContaReceber.update(contaId, {
               status: 'Cancelado',
               observacoes: `Cancelado automaticamente - Devolução total. Motivo: ${motivo}`
@@ -48,10 +52,11 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
 
       // 3. Criar entrada de devolução no estoque (se ação = devolver_estoque)
       if (acao === 'devolver_estoque' && entrega.pedido_id) {
-        const pedido = await base44.entities.Pedido.filter({ id: entrega.pedido_id });
-        if (pedido[0]) {
+        const pedido2 = ped ? [ped] : await base44.entities.Pedido.filter({ id: entrega.pedido_id });
+        const pedidoRef = ped || pedido2[0];
+        if (pedidoRef) {
           // Retornar itens de revenda ao estoque
-          for (const item of (pedido[0].itens_revenda || [])) {
+          for (const item of (pedidoRef.itens_revenda || [])) {
             await base44.entities.MovimentacaoEstoque.create({
               empresa_id: entrega.empresa_id,
               origem_movimento: 'devolucao',
@@ -64,15 +69,17 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
               data_movimentacao: new Date().toISOString(),
               documento: entrega.numero_pedido,
               motivo: `Devolução - ${motivo}`,
-              responsavel: 'Sistema Automático'
+              responsavel: (user?.full_name || user?.email || 'Sistema Automático')
             });
           }
         }
       }
 
       // 4. Notificar vendedor via IA
+      // Auditoria + Notificação
+      const destinatario = ped?.vendedor_id || null;
       await base44.entities.Notificacao.create({
-        destinatario_id: '', // TODO: pegar do pedido
+        destinatario_id: destinatario, 
         tipo: 'urgente',
         categoria: 'Comercial',
         titulo: `Devolução Total - Pedido ${entrega.numero_pedido}`,
@@ -80,6 +87,16 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
         link_acao: `/expedicao?ver=entrega&id=${entrega.id}`
       });
 
+      // AuditLog
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: entrega?.empresa_id || null,
+          acao: 'Edição', modulo: 'Expedição', entidade: 'Entrega', registro_id: entrega?.id,
+          descricao: `Logística Reversa processada (motivo: ${motivo}, ação: ${acao})`
+        });
+      } catch (_) {}
       return true;
     },
     onSuccess: () => {
