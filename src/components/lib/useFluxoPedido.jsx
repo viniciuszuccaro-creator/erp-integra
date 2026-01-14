@@ -288,6 +288,7 @@ async function gerarOPAutomatica(pedido, empresaId) {
   }
 
   const user = await getUsuarioAtual();
+  const user = await getUsuarioAtual();
   const op = await base44.entities.OrdemProducao.create({
      empresa_id: empresaId,
      group_id: pedido.group_id,
