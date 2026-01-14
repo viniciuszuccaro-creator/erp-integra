@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,26 +50,26 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
-import ConfiguracaoCanais from "@/components/chatbot/ConfiguracaoCanais";
-import GerenciadorTemplates from "@/components/chatbot/GerenciadorTemplates";
-import AnalyticsAtendimento from "@/components/chatbot/AnalyticsAtendimento";
-import HistoricoClienteChat from "@/components/chatbot/HistoricoClienteChat";
-import MonitorSLA from "@/components/chatbot/MonitorSLA";
-import ChatbotFilaEspera from "@/components/chatbot/ChatbotFilaEspera";
-import RespostasRapidas from "@/components/chatbot/RespostasRapidas";
-import TagsCategorizacao from "@/components/chatbot/TagsCategorizacao";
-import SugestoesIA from "@/components/chatbot/SugestoesIA";
-import ExportarConversas from "@/components/chatbot/ExportarConversas";
-import IAConversacional from "@/components/chatbot/IAConversacional";
-import CriarPedidoChat from "@/components/chatbot/CriarPedidoChat";
-import GerarBoletoChat from "@/components/chatbot/GerarBoletoChat";
-import ConsultarEntregaChat from "@/components/chatbot/ConsultarEntregaChat";
-import DashboardAtendente from "@/components/chatbot/DashboardAtendente";
-import TransferirConversa from "@/components/chatbot/TransferirConversa";
-import RelatoriosAtendimento from "@/components/chatbot/RelatoriosAtendimento";
-import ChatbotMulticanal from "@/components/chatbot/ChatbotMulticanal";
-import BaseConhecimento from "@/components/chatbot/BaseConhecimento";
+const ChatbotDashboard = React.lazy(() => import("@/components/chatbot/ChatbotDashboard"));
+const ConfiguracaoCanais = React.lazy(() => import("@/components/chatbot/ConfiguracaoCanais"));
+const GerenciadorTemplates = React.lazy(() => import("@/components/chatbot/GerenciadorTemplates"));
+const AnalyticsAtendimento = React.lazy(() => import("@/components/chatbot/AnalyticsAtendimento"));
+const HistoricoClienteChat = React.lazy(() => import("@/components/chatbot/HistoricoClienteChat"));
+const MonitorSLA = React.lazy(() => import("@/components/chatbot/MonitorSLA"));
+const ChatbotFilaEspera = React.lazy(() => import("@/components/chatbot/ChatbotFilaEspera"));
+const RespostasRapidas = React.lazy(() => import("@/components/chatbot/RespostasRapidas"));
+const TagsCategorizacao = React.lazy(() => import("@/components/chatbot/TagsCategorizacao"));
+const SugestoesIA = React.lazy(() => import("@/components/chatbot/SugestoesIA"));
+const ExportarConversas = React.lazy(() => import("@/components/chatbot/ExportarConversas"));
+const IAConversacional = React.lazy(() => import("@/components/chatbot/IAConversacional"));
+const CriarPedidoChat = React.lazy(() => import("@/components/chatbot/CriarPedidoChat"));
+const GerarBoletoChat = React.lazy(() => import("@/components/chatbot/GerarBoletoChat"));
+const ConsultarEntregaChat = React.lazy(() => import("@/components/chatbot/ConsultarEntregaChat"));
+const DashboardAtendente = React.lazy(() => import("@/components/chatbot/DashboardAtendente"));
+const TransferirConversa = React.lazy(() => import("@/components/chatbot/TransferirConversa"));
+const RelatoriosAtendimento = React.lazy(() => import("@/components/chatbot/RelatoriosAtendimento"));
+const ChatbotMulticanal = React.lazy(() => import("@/components/chatbot/ChatbotMulticanal"));
+const BaseConhecimento = React.lazy(() => import("@/components/chatbot/BaseConhecimento"));
 
 /**
  * V21.5 - HUB DE ATENDIMENTO OMNICANAL
@@ -433,31 +433,31 @@ export default function HubAtendimento() {
         {abaAtiva === "meupainel" && (
           <div className="grid lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1">
-              <DashboardAtendente />
+              <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><DashboardAtendente /></Suspense>
             </div>
             <div className="lg:col-span-3">
-              <ChatbotDashboard />
+              <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><ChatbotDashboard /></Suspense>
             </div>
           </div>
         )}
         {abaAtiva === "analytics" && (
           <div className="grid lg:grid-cols-4 gap-6">
             <div className="lg:col-span-3">
-              <ChatbotDashboard />
+              <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><ChatbotDashboard /></Suspense>
             </div>
             <div className="lg:col-span-1 space-y-4">
-              <ExportarConversas />
-              <AnalyticsAtendimento />
+              <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><ExportarConversas /></Suspense>
+              <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><AnalyticsAtendimento /></Suspense>
             </div>
           </div>
         )}
-        {abaAtiva === "templates" && <GerenciadorTemplates />}
-        {abaAtiva === "config" && <ConfiguracaoCanais />}
-        {abaAtiva === "sla" && <MonitorSLA />}
-        {abaAtiva === "fila" && <ChatbotFilaEspera />}
-        {abaAtiva === "relatorios" && <RelatoriosAtendimento />}
-        {abaAtiva === "multicanal" && <ChatbotMulticanal />}
-        {abaAtiva === "base" && <BaseConhecimento />}
+        {abaAtiva === "templates" && (<Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><GerenciadorTemplates /></Suspense>)}
+        {abaAtiva === "config" && (<Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><ConfiguracaoCanais /></Suspense>)}
+        {abaAtiva === "sla" && (<Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><MonitorSLA /></Suspense>)}
+        {abaAtiva === "fila" && (<Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><ChatbotFilaEspera /></Suspense>)}
+        {abaAtiva === "relatorios" && (<Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><RelatoriosAtendimento /></Suspense>)}
+        {abaAtiva === "multicanal" && (<Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><ChatbotMulticanal /></Suspense>)}
+        {abaAtiva === "base" && (<Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}><BaseConhecimento /></Suspense>)}
         
         {/* Aba de Atendimento */}
         {abaAtiva === "atendimento" && (
@@ -1007,25 +1007,25 @@ export default function HubAtendimento() {
 
                     {/* Tags */}
                     <div className="border-t pt-4">
-                      <TagsCategorizacao conversa={conversaSelecionada} />
+                      <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}><TagsCategorizacao conversa={conversaSelecionada} /></Suspense>
                     </div>
 
                     {/* Sugestões da IA */}
                     <div className="border-t pt-4">
-                      <SugestoesIA conversa={conversaSelecionada} mensagens={mensagens} />
+                      <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}><SugestoesIA conversa={conversaSelecionada} mensagens={mensagens} /></Suspense>
                     </div>
 
                     {/* Histórico Cliente */}
                     {conversaSelecionada.cliente_id && (
                       <div className="border-t pt-4">
-                        <HistoricoClienteChat clienteId={conversaSelecionada.cliente_id} />
+                        <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><HistoricoClienteChat clienteId={conversaSelecionada.cliente_id} /></Suspense>
                       </div>
                     )}
                   </div>
                 )}
 
                 {painelLateralConteudo === 'respostas' && (
-                  <RespostasRapidas
+                  <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><RespostasRapidas
                     onSelecionarResposta={(texto) => {
                       setMensagemAtendente(texto);
                       setPainelLateralConteudo('info');
@@ -1049,7 +1049,7 @@ export default function HubAtendimento() {
 
                 {painelLateralConteudo === 'acoes' && (
                   <div className="space-y-4">
-                    <CriarPedidoChat 
+                    <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><CriarPedidoChat 
                       conversa={conversaSelecionada}
                       clienteId={conversaSelecionada.cliente_id}
                       onPedidoCriado={(pedido) => {
@@ -1057,7 +1057,7 @@ export default function HubAtendimento() {
                         setPainelLateralConteudo('info');
                       }}
                     />
-                    <GerarBoletoChat 
+                    <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><GerarBoletoChat 
                       conversa={conversaSelecionada}
                       clienteId={conversaSelecionada.cliente_id}
                       onBoletoEnviado={(boleto) => {
@@ -1065,7 +1065,7 @@ export default function HubAtendimento() {
                         setPainelLateralConteudo('info');
                       }}
                     />
-                    <ConsultarEntregaChat 
+                    <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><ConsultarEntregaChat 
                       clienteId={conversaSelecionada.cliente_id}
                       conversa={conversaSelecionada}
                     />
@@ -1074,12 +1074,12 @@ export default function HubAtendimento() {
 
                 {painelLateralConteudo === 'ia' && (
                   <div className="space-y-4">
-                    <IAConversacional 
+                    <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><IAConversacional 
                       conversa={conversaSelecionada}
                       mensagens={mensagens}
                       clienteId={conversaSelecionada.cliente_id}
                     />
-                    <SugestoesIA conversa={conversaSelecionada} mensagens={mensagens} />
+                    <Suspense fallback={<div className="h-24 rounded-md bg-slate-100 animate-pulse" />}><SugestoesIA conversa={conversaSelecionada} mensagens={mensagens} /></Suspense>
                   </div>
                 )}
 
