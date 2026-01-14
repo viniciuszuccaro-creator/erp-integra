@@ -1,6 +1,6 @@
 /**
- * Hook de Autenticação com JWT
- * Gerencia tokens, refresh, sessões e segurança
+ * Autenticação Nativa Base44 (sem JWT)
+ * Usa base44.auth (login/logout/isAuthenticated) e mantém utilitários de sessão/auditoria.
  */
 
 import { useState, useEffect } from 'react';
