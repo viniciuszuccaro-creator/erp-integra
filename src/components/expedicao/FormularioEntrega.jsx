@@ -100,6 +100,22 @@ Retorne:
       toastHook({ title: "✅ Entrega criada!" });
       sonnerToast.success("✅ Entrega criada com sucesso!");
 
+      try {
+        await base44.entities.AuditLog.create({
+          empresa_id: entregaCriada?.empresa_id,
+          usuario: authUser?.full_name || authUser?.email,
+          usuario_id: authUser?.id,
+          acao: 'Criação',
+          modulo: 'Expedição',
+          entidade: 'Entrega',
+          registro_id: entregaCriada?.id,
+          descricao: 'Entrega criada via formulário',
+          dados_novos: entregaCriada,
+          data_hora: new Date().toISOString(),
+          sucesso: true
+        });
+      } catch (_) {}
+
       onCancel();
     },
     onError: (error) => {
