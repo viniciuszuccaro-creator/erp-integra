@@ -172,7 +172,8 @@ export default function Expedicao() {
     estaNoGrupo,
     empresaAtual,
     empresasDoGrupo,
-    filtrarPorContexto
+    filtrarPorContexto,
+    getFiltroContexto
   } = useContextoVisual();
 
   const [formData, setFormData] = useState({
@@ -225,27 +226,27 @@ export default function Expedicao() {
 
   const { data: entregas = [], isLoading: loadingEntregas } = useQuery({
     queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.list('-created_date'),
+    queryFn: () => base44.entities.Entrega.filter(getFiltroContexto('empresa_id'), '-created_date'),
   });
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryFn: () => base44.entities.Cliente.filter(getFiltroContexto('empresa_id')),
   });
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryFn: () => base44.entities.Pedido.filter(getFiltroContexto('empresa_id')),
   });
 
   const { data: romaneios = [] } = useQuery({
     queryKey: ['romaneios'],
-    queryFn: () => base44.entities.Romaneio.list('-created_date'),
+    queryFn: () => base44.entities.Romaneio.filter(getFiltroContexto('empresa_id'), '-created_date'),
   });
 
   const { data: rotas = [] } = useQuery({
     queryKey: ['rotas'],
-    queryFn: () => base44.entities.Rota.list('-created_date'),
+    queryFn: () => base44.entities.Rota.filter(getFiltroContexto('empresa_id'), '-created_date'),
   });
 
   // Filtrar por contexto

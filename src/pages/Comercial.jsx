@@ -63,18 +63,18 @@ export default function Comercial() {
 
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow, closeWindow } = useWindow();
-  const { filtrarPorContexto, empresaAtual, grupoAtual } = useContextoVisual();
+  const { filtrarPorContexto, getFiltroContexto, empresaAtual, grupoAtual } = useContextoVisual();
   const { user } = useUser();
 
   const { data: clientes = [], isLoading: loadingClientes } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list('-created_date'),
-  });
+        queryKey: ['clientes'],
+        queryFn: () => base44.entities.Cliente.filter(getFiltroContexto('empresa_id'), '-created_date'),
+      });
 
   const pedidosQuery = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
-  });
+        queryKey: ['pedidos'],
+        queryFn: () => base44.entities.Pedido.filter(getFiltroContexto('empresa_id'), '-created_date'),
+      });
 
   const { data: pedidos = [], isLoading: loadingPedidos } = pedidosQuery;
 
@@ -86,9 +86,9 @@ export default function Comercial() {
   const queryClient = useQueryClient();
   
   const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notasFiscais'],
-    queryFn: () => base44.entities.NotaFiscal.list('-created_date'),
-  });
+        queryKey: ['notasFiscais'],
+        queryFn: () => base44.entities.NotaFiscal.filter(getFiltroContexto('empresa_id'), '-created_date'),
+      });
 
   // Keeping this query as per outline, even if not displayed
   const { data: tabelasPreco = [] } = useQuery({
