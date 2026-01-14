@@ -1044,7 +1044,7 @@ export default function HubAtendimento() {
                       prazo: '5',
                       forma_pagamento: 'Boleto'
                     }}
-                  />
+                  /></Suspense>
                 )}
 
                 {painelLateralConteudo === 'acoes' && (
