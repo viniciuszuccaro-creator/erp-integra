@@ -14,8 +14,10 @@ import { Textarea } from "@/components/ui/textarea";
 import MovimentacaoForm from "./MovimentacaoForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast } from "sonner";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function MovimentacoesTab({ movimentacoes, produtos }) {
+  const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
@@ -96,12 +98,22 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
       
       return novaMovimentacao;
     },
-    onSuccess: async () => {
+    onSuccess: async (novaMov) => {
       await queryClient.invalidateQueries({ queryKey: ['movimentacoes'] });
       await queryClient.invalidateQueries({ queryKey: ['produtos'] });
       
       setIsDialogOpen(false);
       resetForm();
+      try {
+        if (novaMov?.id) {
+          await base44.entities.AuditLog.create({
+            acao: 'Criação', modulo: 'Estoque', entidade: 'MovimentacaoEstoque', registro_id: novaMov.id,
+            usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
+            descricao: 'Movimentação registrada', dados_novos: novaMov,
+            data_hora: new Date().toISOString(), sucesso: true
+          });
+        }
+      } catch (_) {}
     },
   });
 

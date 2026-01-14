@@ -20,8 +20,10 @@ import RecebimentoOCForm from "./RecebimentoOCForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [] }) {
+  const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOC, setEditingOC] = useState(null);
@@ -113,7 +115,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             data: new Date().toISOString(),
             status_anterior: oc.status,
             status_novo: 'Aprovada',
-            usuario: 'Sistema',
+            usuario: (authUser?.full_name || authUser?.email || 'Sistema'),
             observacao: 'Ordem de compra aprovada'
           }
         ]
@@ -138,7 +140,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             data: new Date().toISOString(),
             status_anterior: oc.status,
             status_novo: 'Enviada ao Fornecedor',
-            usuario: 'Sistema',
+            usuario: (authUser?.full_name || authUser?.email || 'Sistema'),
             observacao: 'Ordem enviada ao fornecedor'
           }
         ]
@@ -171,7 +173,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             data: new Date().toISOString(),
             status_anterior: oc.status,
             status_novo: 'Recebida',
-            usuario: 'Sistema',
+            usuario: (authUser?.full_name || authUser?.email || 'Sistema'),
             observacao: `Recebida. Lead time: ${leadTimeReal} dias`
           }
         ]

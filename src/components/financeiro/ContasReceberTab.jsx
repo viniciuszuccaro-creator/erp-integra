@@ -167,7 +167,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       criado_por: authUser?.full_name || authUser?.email,
       criado_por_id: authUser?.id
     }),
-    onSuccess: (created) => {
+    onSuccess: async (created) => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       setIsDialogOpen(false);
       resetForm();
@@ -175,6 +175,14 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
         title: "Sucesso!",
         description: "Conta a receber criada com sucesso.",
       });
+      if (created?.id) {
+        await base44.entities.AuditLog.create({
+          acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: created.id,
+          usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
+          empresa_id: created?.empresa_id, descricao: 'Conta a receber criada', dados_novos: created,
+          data_hora: new Date().toISOString(), sucesso: true
+        });
+      }
     },
     onError: (error) => {
       toast({
@@ -187,7 +195,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ContaReceber.update(id, data),
-    onSuccess: (updated) => {
+    onSuccess: async (updated) => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       setIsDialogOpen(false);
       resetForm();
@@ -195,6 +203,14 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
         title: "Sucesso!",
         description: "Conta a receber atualizada com sucesso.",
       });
+      if (updated?.id) {
+        await base44.entities.AuditLog.create({
+          acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: updated.id,
+          usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
+          empresa_id: updated?.empresa_id, descricao: 'Conta a receber atualizada', dados_novos: updated,
+          data_hora: new Date().toISOString(), sucesso: true
+        });
+      }
     },
     onError: (error) => {
       toast({

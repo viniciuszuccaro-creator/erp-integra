@@ -198,21 +198,37 @@ export default function ContasPagarTab({ contas }) {
       criado_por: authUser?.full_name || authUser?.email,
       criado_por_id: authUser?.id
     }),
-    onSuccess: (created) => {
+    onSuccess: async (created) => {
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
       setIsDialogOpen(false);
       resetForm();
       toast({ title: "✅ Conta criada com sucesso!" });
+      if (created?.id) {
+        await base44.entities.AuditLog.create({
+          acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaPagar', registro_id: created.id,
+          usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
+          empresa_id: created?.empresa_id, descricao: 'Conta a pagar criada', dados_novos: created,
+          data_hora: new Date().toISOString(), sucesso: true
+        });
+      }
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ContaPagar.update(id, data),
-    onSuccess: (updated) => {
+    onSuccess: async (updated) => {
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
       setIsDialogOpen(false);
       resetForm();
       toast({ title: "✅ Conta atualizada!" });
+      if (updated?.id) {
+        await base44.entities.AuditLog.create({
+          acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaPagar', registro_id: updated.id,
+          usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
+          empresa_id: updated?.empresa_id, descricao: 'Conta a pagar atualizada', dados_novos: updated,
+          data_hora: new Date().toISOString(), sucesso: true
+        });
+      }
     },
   });
 
