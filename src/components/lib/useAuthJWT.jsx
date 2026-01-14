@@ -86,7 +86,7 @@ export function useAuthJWT() {
     revogarTodasSessoes,
     listarSessoesAtivas,
     encerrarSessao,
-    tokenExpirado: true
+    tokenExpirado: false
   };
 }
 

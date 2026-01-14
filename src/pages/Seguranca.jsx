@@ -84,7 +84,7 @@ export default function Seguranca() {
           </TabsTrigger>
           <TabsTrigger value="jwt-sessoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Shield className="w-4 h-4 mr-2" />
-            JWT e Sessões
+            Sessões e Autenticação (Base44)
           </TabsTrigger>
           <TabsTrigger value="backup" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Database className="w-4 h-4 mr-2" />
