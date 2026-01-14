@@ -103,8 +103,10 @@ export default function GerenciadorSessoes() {
     );
   }
 
-  const sessaoAtual = sessoes.find(s => s.id === localStorage.getItem('sessao_id'));
-  const outrasSessoes = sessoes.filter(s => s.id !== localStorage.getItem('sessao_id'));
+  const sessaoAtual = sessoes.length > 0 
+    ? [...sessoes].sort((a,b) => new Date(b.data_hora_ultimo_acesso || b.data_hora_inicio) - new Date(a.data_hora_ultimo_acesso || a.data_hora_inicio))[0]
+    : null;
+  const outrasSessoes = sessaoAtual ? sessoes.filter(s => s.id !== sessaoAtual.id) : [];
 
   const getDispositivoIcon = (tipo) => {
     if (tipo === 'Mobile') return Smartphone;
