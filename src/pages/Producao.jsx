@@ -241,40 +241,40 @@ export default function Producao() {
             >
               <LayoutGrid className="w-4 h-4 mr-2" />
               Kanban Produção
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="ops" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <Package className="w-4 h-4 mr-2" />
               Ordens de Produção
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="apontamento" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <Clock className="w-4 h-4 mr-2" />
               Apontamentos
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="qualidade" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <CheckCircle className="w-4 h-4 mr-2" />
               Controle Qualidade
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="refugo" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <AlertTriangle className="w-4 h-4 mr-2" />
               Controle de Refugo
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             {/* NEW: Documentos Tab Trigger */}
             <TabsUI.TabsTrigger value="documentos" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <FileText className="w-4 h-4 mr-2" />
               Documentos
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
               <Activity className="w-4 h-4 mr-2" />
               Dashboard Realtime
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="relatorios" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
               Relatórios
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="config" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <Settings className="w-4 h-4 mr-2" />
               Configurações
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             {/* NOVA: Tab IoT e Equipamentos */}
             <TabsUI.TabsTrigger
               value="iot-equipamentos"
@@ -282,13 +282,13 @@ export default function Producao() {
             >
               <Activity className="w-4 h-4 mr-2" />
               IoT & Equipamentos
-            </TabsTrigger>
-          </TabsList>
+            </TabsUI.TabsTrigger>
+          </TabsUI.TabsList>
 
           {/* NOVA: Tab Kanban Inteligente */}
           <TabsUI.TabsContent value="kanban">
             <KanbanProducaoInteligente />
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           <TabsUI.TabsContent value="ops" className="space-y-4">
             {/* Removed: NOVO: Visualização Kanban ou Lista - now managed by dedicated Kanban tab */}
@@ -478,7 +478,7 @@ export default function Producao() {
                 </CardContent>
               </Card>
             </>
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           {/* NEW: Updated TabsContent for apontamento */}
           <TabsUI.TabsContent value="apontamento">
@@ -528,11 +528,11 @@ export default function Producao() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           <TabsUI.TabsContent value="qualidade">
             <RelatorioQualidade empresaId={empresaAtual?.id} />
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           {/* NOVO: Tab Dashboard Refugo IA */}
           <TabsUI.TabsContent value="refugo">
@@ -540,25 +540,25 @@ export default function Producao() {
             <div className="mt-6">
               <ControleRefugo ops={ordensProducao} />
             </div>
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           {/* NEW: Added TabsContent for documentos */}
           <TabsUI.TabsContent value="documentos">
             <DocumentosProducao />
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           <TabsUI.TabsContent value="dashboard-realtime">
             <DashboardProducaoRealtime empresaId={empresaAtual?.id} />
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           <TabsUI.TabsContent value="relatorios">
             <RelatoriosProducao ops={ordensProducao} />
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           {/* NEW: Updated TabsContent for config to use ConfiguracaoProducao */}
           <TabsUI.TabsContent value="config">
             <ConfiguracaoProducao />
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           {/* NOVA: Tab IoT e Equipamentos */}
           <TabsUI.TabsContent value="iot-equipamentos">
@@ -568,7 +568,7 @@ export default function Producao() {
                 <DigitalTwin3D itemProducao={itemSelecionado3D} />
               )}
             </div>
-          </TabsContent>
+          </TabsUI.TabsContent>
 
         </TabsUI.Tabs>
 

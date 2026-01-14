@@ -168,24 +168,24 @@ export default function ConfiguracaoCanais() {
             <TabsUI.TabsTrigger value="basico" className="text-xs">
               <Settings className="w-3 h-3 mr-1" />
               Básico
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="horarios" className="text-xs">
               <Clock className="w-3 h-3 mr-1" />
               Horários
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="ia" className="text-xs">
               <Brain className="w-3 h-3 mr-1" />
               IA
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="sla" className="text-xs">
               <Shield className="w-3 h-3 mr-1" />
               SLA
-            </TabsTrigger>
+            </TabsUI.TabsTrigger>
             <TabsUI.TabsTrigger value="automacao" className="text-xs">
               <Workflow className="w-3 h-3 mr-1" />
               Automação
-            </TabsTrigger>
-          </TabsList>
+            </TabsUI.TabsTrigger>
+          </TabsUI.TabsList>
 
           {/* Aba Básico */}
           <TabsUI.TabsContent value="basico">
@@ -212,7 +212,7 @@ export default function ConfiguracaoCanais() {
                 <NotificacoesCanal canalConfig={configAtual} />
               </div>
             </div>
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           {/* Aba Horários */}
           <TabsUI.TabsContent value="horarios">
@@ -221,7 +221,7 @@ export default function ConfiguracaoCanais() {
               onSave={(dados) => salvarConfigMutation.mutate(dados)}
               isSaving={salvarConfigMutation.isPending}
             />
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           {/* Aba IA */}
           <TabsUI.TabsContent value="ia">
@@ -230,7 +230,7 @@ export default function ConfiguracaoCanais() {
               onSave={(dados) => salvarConfigMutation.mutate(dados)}
               isSaving={salvarConfigMutation.isPending}
             />
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           {/* Aba SLA */}
           <TabsUI.TabsContent value="sla">
@@ -239,7 +239,7 @@ export default function ConfiguracaoCanais() {
               onSave={(dados) => salvarConfigMutation.mutate(dados)}
               isSaving={salvarConfigMutation.isPending}
             />
-          </TabsContent>
+          </TabsUI.TabsContent>
 
           {/* Aba Automação */}
           <TabsUI.TabsContent value="automacao">
@@ -247,7 +247,7 @@ export default function ConfiguracaoCanais() {
               <AutomacaoFluxos canalConfig={configAtual} />
               <WebhooksTester canalConfig={configAtual} />
             </div>
-          </TabsContent>
+          </TabsUI.TabsContent>
         </TabsUI.Tabs>
       </div>
     </div>
