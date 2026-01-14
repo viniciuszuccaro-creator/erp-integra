@@ -22,7 +22,8 @@ import {
   AlertCircle,
   Clock,
   XCircle,
-  Printer
+  Printer,
+  Download
 } from "lucide-react";
 import { ImprimirPedido } from "@/components/lib/impressao";
 import { useToast } from "@/components/ui/use-toast";
