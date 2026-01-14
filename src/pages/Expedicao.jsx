@@ -173,7 +173,8 @@ export default function Expedicao() {
     empresaAtual,
     empresasDoGrupo,
     filtrarPorContexto,
-    getFiltroContexto
+    getFiltroContexto,
+    grupoAtual
   } = useContextoVisual();
 
   const [formData, setFormData] = useState({
@@ -263,7 +264,7 @@ export default function Expedicao() {
       const novaEntrega = await base44.entities.Entrega.create({
         ...data,
         empresa_id: data.empresa_id || empresaAtual?.id || null,
-        group_id: data.group_id || undefined,
+        group_id: data.group_id || grupoAtual?.id || undefined,
         qr_code: qrCode,
         data_separacao: data.status !== "Aguardando Separação" ? new Date().toISOString() : null
       });
