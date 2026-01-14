@@ -444,97 +444,106 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
           <TabsContent value="identificacao" className="h-full overflow-y-auto p-6 m-0">
             <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <WizardEtapa1Cliente
-              formData={formData}
-              setFormData={setFormData}
-              clientes={clientes}
-              onNext={() => setActiveTab('revenda')}
-              bloquearOrigemEdicao={bloquearEdicao}
-            />
+                formData={formData}
+                setFormData={setFormData}
+                clientes={clientes}
+                onNext={() => setActiveTab('revenda')}
+                bloquearOrigemEdicao={bloquearEdicao}
+              />
+            </Suspense>
           </TabsContent>
 
           {/* ABA 2: ITENS DE REVENDA */}
           <TabsContent value="revenda" className="h-full overflow-y-auto p-6 m-0">
             <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <ItensRevendaTab
-              formData={formData}
-              setFormData={setFormData}
-              onNext={() => setActiveTab('armado')}
-            />
+                formData={formData}
+                setFormData={setFormData}
+                onNext={() => setActiveTab('armado')}
+              />
+            </Suspense>
           </TabsContent>
 
           {/* ABA 3: ARMADO PADRÃO */}
           <TabsContent value="armado" className="h-full overflow-y-auto p-6 m-0">
             <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <ArmadoPadraoTab
-              formData={formData}
-              setFormData={setFormData}
-              empresaId={formData?.empresa_id}
-              onNext={() => setActiveTab('corte')}
-            />
+                formData={formData}
+                setFormData={setFormData}
+                empresaId={formData?.empresa_id}
+                onNext={() => setActiveTab('corte')}
+              />
+            </Suspense>
           </TabsContent>
 
           {/* ABA 4: CORTE E DOBRA (IA) */}
           <TabsContent value="corte" className="h-full overflow-y-auto p-6 m-0">
             <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <CorteDobraIATab
-              formData={formData}
-              setFormData={setFormData}
-              empresaId={formData?.empresa_id}
-              onNext={() => setActiveTab('historico')}
-            />
+                formData={formData}
+                setFormData={setFormData}
+                empresaId={formData?.empresa_id}
+                onNext={() => setActiveTab('historico')}
+              />
+            </Suspense>
           </TabsContent>
 
           {/* V21.1.2-R1: ABA 5 - HISTÓRICO DO CLIENTE (EXPANDIDA) */}
           <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
             <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <HistoricoClienteTab
-              formData={formData}
-              setFormData={setFormData}
-              onAdicionarItemAoPedido={(produto) => {
-                toast.success(`Produto ${produto.descricao} adicionado!`);
-                // Optionally update formData here or let the HistoricoClienteTab do it
-                setActiveTab('revenda');
-              }}
-            />
+                formData={formData}
+                setFormData={setFormData}
+                onAdicionarItemAoPedido={(produto) => {
+                  toast.success(`Produto ${produto.descricao} adicionado!`);
+                  // Optionally update formData here or let the HistoricoClienteTab do it
+                  setActiveTab('revenda');
+                }}
+              />
+            </Suspense>
           </TabsContent>
 
           {/* ABA 6: LOGÍSTICA */}
           <TabsContent value="logistica" className="h-full overflow-y-auto p-6 m-0">
             <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <LogisticaEntregaTab
-              formData={formData}
-              setFormData={setFormData}
-              clientes={clientes}
-              onNext={() => setActiveTab('financeiro')}
-            />
+                formData={formData}
+                setFormData={setFormData}
+                clientes={clientes}
+                onNext={() => setActiveTab('financeiro')}
+              />
+            </Suspense>
           </TabsContent>
 
           {/* ABA 7: FINANCEIRO */}
           <TabsContent value="financeiro" className="h-full overflow-y-auto p-6 m-0">
             <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <FechamentoFinanceiroTab
-              formData={formData}
-              setFormData={setFormData}
-              onNext={() => setActiveTab('arquivos')}
-            />
+                formData={formData}
+                setFormData={setFormData}
+                onNext={() => setActiveTab('arquivos')}
+              />
+            </Suspense>
           </TabsContent>
 
           {/* ABA 8: ARQUIVOS */}
           <TabsContent value="arquivos" className="h-full overflow-y-auto p-6 m-0">
             <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <ArquivosProjetosTab
-              formData={formData}
-              setFormData={setFormData}
-            />
+                formData={formData}
+                setFormData={setFormData}
+              />
+            </Suspense>
           </TabsContent>
 
           {/* V21.1.2-R1: ABA 9 - AUDITORIA (ALTURA CORRIGIDA) */}
           <TabsContent value="auditoria" className="h-full overflow-y-auto p-6 m-0">
             <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <AuditoriaAprovacaoTab
-              formData={formData}
-              pedido={pedido}
-            />
+                formData={formData}
+                pedido={pedido}
+              />
+            </Suspense>
           </TabsContent>
         </div>
       </Tabs>
