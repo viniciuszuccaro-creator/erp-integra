@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import { Clock, CheckCircle, Play, Pause, AlertTriangle } from "lucide-react";
 
 /**
@@ -26,7 +27,11 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
     queryKey: ['colaboradores', getFiltroContexto('empresa_id')],
     queryFn: () => base44.entities.Colaborador.filter(getFiltroContexto('empresa_id')),
   });
-  const user = colaboradores[0]; // Represents the current operator/user
+  const { user: authUser } = useUser();
+  const operador = authUser || null;
+  const fallbackColab = colaboradores[0];
+  const operadorNome = (operador?.full_name || operador?.email || fallbackColab?.nome_completo || "Operador");
+  const operadorId = (operador?.id || fallbackColab?.id || null);
 
   const [formApontamento, setFormApontamento] = useState({
     setor: op?.status || "Em Corte",
@@ -47,8 +52,8 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
     mutationFn: async () => {
       const novoApontamento = {
         data_hora: new Date().toISOString(),
-        operador: user?.nome_completo || "Operador", // Using user from collaborators
-        operador_id: user?.id, // Using user from collaborators
+        operador: operadorNome,
+        operador_id: operadorId,
         setor: formApontamento.setor,
         item_elemento: formApontamento.item_elemento,
         quantidade_produzida: formApontamento.quantidade_produzida,
@@ -70,7 +75,7 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
             ...item,
             apontado: true,
             data_apontamento: new Date().toISOString(),
-            operador_apontamento: user?.nome_completo,
+            operador_apontamento: operadorNome,
             peso_real_total: (item.peso_real_total || 0) + formApontamento.peso_produzido_kg
           };
         }
@@ -91,8 +96,8 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
         quantidade_refugada: formApontamento.quantidade_refugada,
         peso_refugado_kg: formApontamento.peso_refugado_kg,
         motivo: formApontamento.motivo_refugo,
-        operador: user?.nome_completo,
-        operador_id: user?.id,
+        operador: operadorNome,
+        operador_id: operadorId,
         custo_perdido: formApontamento.peso_refugado_kg * 8.5, // Preço médio do aço
         reaproveitavel: false
       } : null;
@@ -129,7 +134,23 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
         }
       }
 
-      // Se concluiu 100% e modo for "reserva_baixa", baixar estoque
+      if (novoRefugo) {
+        await base44.entities.AuditLog.create({
+          empresa_id: op.empresa_id,
+          usuario: operadorNome,
+          usuario_id: operadorId,
+          acao: "Criação",
+          modulo: "Produção",
+          entidade: "Refugo",
+          registro_id: opId,
+          descricao: `Refugo registrado no item ${formApontamento.item_elemento} (${formApontamento.motivo_refugo || "Motivo não informado"})`,
+          dados_novos: novoRefugo,
+          data_hora: new Date().toISOString(),
+          sucesso: true
+        });
+      }
+
+       // Se concluiu 100% e modo for "reserva_baixa", baixar estoque
       if (percentual === 100 && !op.estoque_baixado) {
         const config = await base44.entities.ConfiguracaoProducao.filter({
           empresa_id: op.empresa_id
@@ -152,9 +173,23 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
               documento: op.numero_op,
               motivo: "Consumo em produção",
               data_movimentacao: new Date().toISOString(),
-              responsavel: user?.nome_completo
+              responsavel: operadorNome,
+              responsavel_id: operadorId
             });
 
+            await base44.entities.AuditLog.create({
+              empresa_id: op.empresa_id,
+              usuario: operadorNome,
+              usuario_id: operadorId,
+              acao: "Criação",
+              modulo: "Estoque",
+              entidade: "MovimentacaoEstoque",
+              registro_id: movBaixa.id,
+              descricao: `Baixa de material na OP ${op.numero_op}`,
+              dados_novos: movBaixa,
+              data_hora: new Date().toISOString(),
+              sucesso: true
+            });
             baixas.push(movBaixa.id);
 
             // Atualizar produto
@@ -172,7 +207,21 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
         }
       }
 
-      return await base44.entities.OrdemProducao.update(opId, dadosAtualizados);
+      const opAtualizada = await base44.entities.OrdemProducao.update(opId, dadosAtualizados);
+      await base44.entities.AuditLog.create({
+        empresa_id: op.empresa_id,
+        usuario: operadorNome,
+        usuario_id: operadorId,
+        acao: "Edição",
+        modulo: "Produção",
+        entidade: "OrdemProducao",
+        registro_id: opId,
+        descricao: `Apontamento registrado no item ${formApontamento.item_elemento} (${formApontamento.setor})`,
+        dados_novos: dadosAtualizados,
+        data_hora: new Date().toISOString(),
+        sucesso: true
+      });
+      return opAtualizada;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
