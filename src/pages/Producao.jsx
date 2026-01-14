@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import KanbanProducaoInteligente from "@/components/producao/KanbanProducaoInteligente";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import * as TabsUI from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,51 +232,51 @@ export default function Producao() {
         </div>
 
         {/* NEW: Tabs layout and styling updated */}
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
+        <TabsUI.Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsUI.TabsList className="bg-white border shadow-sm flex-wrap h-auto">
             {/* NOVA: Tab Kanban como primeira */}
-            <TabsTrigger
+            <TabsUI.TabsTrigger
               value="kanban"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
             >
               <LayoutGrid className="w-4 h-4 mr-2" />
               Kanban Produção
             </TabsTrigger>
-            <TabsTrigger value="ops" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsUI.TabsTrigger value="ops" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <Package className="w-4 h-4 mr-2" />
               Ordens de Produção
             </TabsTrigger>
-            <TabsTrigger value="apontamento" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsUI.TabsTrigger value="apontamento" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <Clock className="w-4 h-4 mr-2" />
               Apontamentos
             </TabsTrigger>
-            <TabsTrigger value="qualidade" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsUI.TabsTrigger value="qualidade" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <CheckCircle className="w-4 h-4 mr-2" />
               Controle Qualidade
             </TabsTrigger>
-            <TabsTrigger value="refugo" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsUI.TabsTrigger value="refugo" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <AlertTriangle className="w-4 h-4 mr-2" />
               Controle de Refugo
             </TabsTrigger>
             {/* NEW: Documentos Tab Trigger */}
-            <TabsTrigger value="documentos" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsUI.TabsTrigger value="documentos" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <FileText className="w-4 h-4 mr-2" />
               Documentos
             </TabsTrigger>
-            <TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+            <TabsUI.TabsTrigger value="dashboard-realtime" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
               <Activity className="w-4 h-4 mr-2" />
               Dashboard Realtime
             </TabsTrigger>
-            <TabsTrigger value="relatorios" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsUI.TabsTrigger value="relatorios" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
               Relatórios
             </TabsTrigger>
-            <TabsTrigger value="config" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <TabsUI.TabsTrigger value="config" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
               <Settings className="w-4 h-4 mr-2" />
               Configurações
             </TabsTrigger>
             {/* NOVA: Tab IoT e Equipamentos */}
-            <TabsTrigger
+            <TabsUI.TabsTrigger
               value="iot-equipamentos"
               className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
             >
@@ -286,11 +286,11 @@ export default function Producao() {
           </TabsList>
 
           {/* NOVA: Tab Kanban Inteligente */}
-          <TabsContent value="kanban">
+          <TabsUI.TabsContent value="kanban">
             <KanbanProducaoInteligente />
           </TabsContent>
 
-          <TabsContent value="ops" className="space-y-4">
+          <TabsUI.TabsContent value="ops" className="space-y-4">
             {/* Removed: NOVO: Visualização Kanban ou Lista - now managed by dedicated Kanban tab */}
             {/* The content for the "ops" tab is now exclusively the list view. */}
             <>
@@ -481,7 +481,7 @@ export default function Producao() {
           </TabsContent>
 
           {/* NEW: Updated TabsContent for apontamento */}
-          <TabsContent value="apontamento">
+          <TabsUI.TabsContent value="apontamento">
             <Card>
               <CardHeader className="bg-blue-50 border-b">
                 <CardTitle>Apontamento de Produção</CardTitle>
@@ -530,12 +530,12 @@ export default function Producao() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="qualidade">
+          <TabsUI.TabsContent value="qualidade">
             <RelatorioQualidade empresaId={empresaAtual?.id} />
           </TabsContent>
 
           {/* NOVO: Tab Dashboard Refugo IA */}
-          <TabsContent value="refugo">
+          <TabsUI.TabsContent value="refugo">
             <DashboardRefugoIA empresaId={empresaAtual?.id} />
             <div className="mt-6">
               <ControleRefugo ops={ordensProducao} />
@@ -543,25 +543,25 @@ export default function Producao() {
           </TabsContent>
 
           {/* NEW: Added TabsContent for documentos */}
-          <TabsContent value="documentos">
+          <TabsUI.TabsContent value="documentos">
             <DocumentosProducao />
           </TabsContent>
 
-          <TabsContent value="dashboard-realtime">
+          <TabsUI.TabsContent value="dashboard-realtime">
             <DashboardProducaoRealtime empresaId={empresaAtual?.id} />
           </TabsContent>
 
-          <TabsContent value="relatorios">
+          <TabsUI.TabsContent value="relatorios">
             <RelatoriosProducao ops={ordensProducao} />
           </TabsContent>
 
           {/* NEW: Updated TabsContent for config to use ConfiguracaoProducao */}
-          <TabsContent value="config">
+          <TabsUI.TabsContent value="config">
             <ConfiguracaoProducao />
           </TabsContent>
 
           {/* NOVA: Tab IoT e Equipamentos */}
-          <TabsContent value="iot-equipamentos">
+          <TabsUI.TabsContent value="iot-equipamentos">
             <div className="grid lg:grid-cols-2 gap-6">
               <IADiagnosticoEquipamentos />
               {itemSelecionado3D && (
@@ -570,7 +570,7 @@ export default function Producao() {
             </div>
           </TabsContent>
 
-        </Tabs>
+        </TabsUI.Tabs>
 
         <Card className="border-0 shadow-sm mt-6">
           <CardHeader className="bg-slate-50">
