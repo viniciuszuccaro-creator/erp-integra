@@ -88,22 +88,23 @@ export default function Producao() {
     estaNoGrupo,
     empresaAtual,
     empresasDoGrupo,
-    filtrarPorContexto
+    filtrarPorContexto,
+    getFiltroContexto
   } = useContextoVisual();
 
   const { data: ops = [], isLoading } = useQuery({
-    queryKey: ['ordens-producao'],
-    queryFn: () => base44.entities.OrdemProducao.list('-created_date'),
+    queryKey: ['ordens-producao', getFiltroContexto('empresa_id')],
+    queryFn: () => base44.entities.OrdemProducao.filter(getFiltroContexto('empresa_id'), '-created_date'),
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryKey: ['pedidos', getFiltroContexto('empresa_id')],
+    queryFn: () => base44.entities.Pedido.filter(getFiltroContexto('empresa_id')),
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', getFiltroContexto('empresa_id')],
+    queryFn: () => base44.entities.Produto.filter(getFiltroContexto('empresa_id')),
   });
 
   // Renamed opsFiltradasContexto to ordensProducao as per outline's usage

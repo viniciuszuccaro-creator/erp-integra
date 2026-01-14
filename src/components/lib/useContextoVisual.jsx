@@ -175,6 +175,26 @@ export function useContextoVisual() {
     }
   };
 
+  // Helpers: multiempresa stamping and server-side filter
+  const getFiltroContexto = (campo = 'empresa_id', incluirGrupo = true) => {
+    const filtro = {};
+    if (incluirGrupo && grupoAtual?.id) filtro.group_id = grupoAtual.id;
+    if (contexto === 'grupo') {
+      if (filtroEmpresa !== 'todas') filtro[campo] = filtroEmpresa;
+    } else if (empresaAtual?.id) {
+      filtro[campo] = empresaAtual.id;
+    }
+    return filtro;
+  };
+
+  const carimbarContexto = (dados, campo = 'empresa_id') => {
+    return {
+      ...dados,
+      ...(grupoAtual?.id && !dados?.group_id ? { group_id: grupoAtual.id } : {}),
+      ...((contexto !== 'grupo') && empresaAtual?.id && !dados?.[campo] ? { [campo]: empresaAtual.id } : {}),
+    };
+  };
+
   return {
     contexto,
     empresaAtual,
@@ -183,6 +203,8 @@ export function useContextoVisual() {
     grupoAtual,
     isLoading: loadingUser || loadingEmpresas,
     filtrarPorContexto,
+    getFiltroContexto,
+    carimbarContexto,
     adicionarColunasContexto,
     alternarContexto,
     selecionarEmpresa,
