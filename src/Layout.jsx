@@ -52,8 +52,6 @@ import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
 import ZIndexGuard from "@/components/lib/ZIndexFix";
-import { useWindow } from "@/components/lib/useWindow";
-import WindowApp from "@/components/lib/WindowApp";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -81,7 +79,6 @@ const navigationItems = [
   ];
 
 function LayoutContent({ children, currentPageName }) {
-        const { openWindow } = useWindow();
         const location = useLocation();
         const { user } = useUser();
         const { empresaAtual } = useContextoVisual();
@@ -328,15 +325,7 @@ function LayoutContent({ children, currentPageName }) {
                                   : 'hover:bg-slate-100 text-slate-700'
                               }`}
                             >
-                              <Link
-                                  to={item.url}
-                                  onClick={(e) => {
-                                    if (e.metaKey || e.ctrlKey || e.shiftKey) {
-                                      e.preventDefault();
-                                      openWindow(WindowApp, { url: item.url }, { title: item.title, width: 1200, height: 800 });
-                                    }
-                                  }}
-                                  className="flex items-center gap-3 px-4 py-3">
+                              <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
                                 <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
                                 <span className="font-medium">{item.title}</span>
                               </Link>
