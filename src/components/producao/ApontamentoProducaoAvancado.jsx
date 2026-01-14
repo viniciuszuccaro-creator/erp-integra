@@ -86,11 +86,56 @@ export default function ApontamentoProducaoAvancado({ opId, opNumero, onClose })
     queryFn: () => base44.entities.OrdemProducao.filter({ ...getFiltroContexto('empresa_id'), id: opId }).then(res => res[0])
   });
 
+  // Prefill operador com usuário logado (fallback para seleção)
+  React.useEffect(() => {
+    if (authUser && !apontamento.operador_id) {
+      setApontamento(prev => ({
+        ...prev,
+        operador_id: authUser.id,
+        operador_nome: authUser.full_name || authUser.email
+      }));
+    }
+  }, [authUser?.id]);
+
   // Mutation para criar apontamento
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.ApontamentoProducao.create(data),
-    onSuccess: () => {
+    onSuccess: async (created) => {
       toast({ title: "✅ Apontamento registrado", description: "Produção registrada com sucesso!" });
+      try {
+        await base44.entities.AuditLog.create({
+          empresa_id: op?.empresa_id,
+          usuario: (authUser?.full_name || authUser?.email || 'Operador'),
+          usuario_id: authUser?.id,
+          acao: 'Criação',
+          modulo: 'Produção',
+          entidade: 'ApontamentoProducao',
+          registro_id: created?.id || opId,
+          descricao: `Apontamento finalizado - OP ${opNumero}`,
+          dados_novos: created || null,
+          data_hora: new Date().toISOString(),
+          sucesso: true
+        });
+        if ((apontamento.quantidade_refugo || 0) > 0) {
+          await base44.entities.AuditLog.create({
+            empresa_id: op?.empresa_id,
+            usuario: (authUser?.full_name || authUser?.email || 'Operador'),
+            usuario_id: authUser?.id,
+            acao: 'Criação',
+            modulo: 'Produção',
+            entidade: 'Refugo',
+            registro_id: created?.id || opId,
+            descricao: `Refugo ${apontamento.quantidade_refugo}un (${apontamento.peso_refugo_kg || 0}kg) - ${apontamento.motivo_refugo || 'n/i'}`,
+            dados_novos: {
+              quantidade: apontamento.quantidade_refugo,
+              peso_kg: apontamento.peso_refugo_kg,
+              motivo: apontamento.motivo_refugo
+            },
+            data_hora: new Date().toISOString(),
+            sucesso: true
+          });
+        }
+      } catch (_) { /* auditoria silenciosa */ }
       queryClient.invalidateQueries(['apontamentos-producao']);
       queryClient.invalidateQueries(['ordem-producao']);
       onClose?.();
