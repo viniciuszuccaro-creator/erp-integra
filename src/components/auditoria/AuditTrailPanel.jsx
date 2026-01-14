@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { usePermissions } from "@/components/lib/usePermissions";
+import usePermissions from "@/components/lib/usePermissions";
 import { Clock } from "lucide-react";
 
 export default function AuditTrailPanel({ modulo = null, limit = 50 }) {
