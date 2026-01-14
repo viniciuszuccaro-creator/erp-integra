@@ -195,6 +195,17 @@ export function useContextoVisual() {
     };
   };
 
+  // Create helpers that always stamp context
+  const createInContext = (entityName, dados, campo = 'empresa_id') => {
+    return base44.entities[entityName].create(carimbarContexto(dados, campo));
+  };
+  const bulkCreateInContext = (entityName, lista, campo = 'empresa_id') => {
+    return base44.entities[entityName].bulkCreate(lista.map(item => carimbarContexto(item, campo)));
+  };
+  const filterInContext = (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
+    return base44.entities[entityName].filter({ ...criterios, ...getFiltroContexto(campo) }, order, limit);
+  };
+
   return {
     contexto,
     empresaAtual,
@@ -205,6 +216,9 @@ export function useContextoVisual() {
     filtrarPorContexto,
     getFiltroContexto,
     carimbarContexto,
+    createInContext,
+    bulkCreateInContext,
+    filterInContext,
     adicionarColunasContexto,
     alternarContexto,
     selecionarEmpresa,
