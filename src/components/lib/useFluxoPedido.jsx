@@ -249,7 +249,7 @@ async function baixarEstoqueItemAprovacao(item, pedido, empresaId) {
     estoque_atual: novoEstoque
   });
 
-  await auditar("Estoque","MovimentacaoEstoque","create", movimentacao.id, `Baixa automática - Pedido ${pedido.numero_pedido} aprovado`, empresaId, null, movimentacao);
+  await auditar("Estoque","MovimentacaoEstoque","create", movimentacao.id, `Baixa por faturamento - Pedido ${pedido.numero_pedido}`, empresaId, null, movimentacao);
   return movimentacao;
 }
 
@@ -471,8 +471,6 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
 
   // Criar movimentação de saída
   const user = await getUsuarioAtual();
-  const user = await getUsuarioAtual();
-  const user = await getUsuarioAtual();
   const movimentacao = await base44.entities.MovimentacaoEstoque.create({
     empresa_id: empresaId,
     group_id: pedido.group_id,
@@ -595,6 +593,7 @@ async function baixarMaterialProducao(material, op, empresaId) {
     responsavel_id: user?.id
   });
 
+  await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
