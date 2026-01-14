@@ -46,6 +46,22 @@ export default function ContratosPage() {
   const [contratoParaAssinar, setContratoParaAssinar] = useState(null);
   const [historicoDialogOpen, setHistoricoDialogOpen] = useState(false);
   const [contratoHistorico, setContratoHistorico] = useState(null);
+  const [activeTab, setActiveTab] = useState("todos");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    let initial = params.get('tab');
+    if (!initial) { try { initial = localStorage.getItem('Contratos_tab'); } catch {} }
+    if (initial) setActiveTab(initial);
+  }, []);
+
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.replaceState({}, '', url.toString());
+    try { localStorage.setItem('Contratos_tab', value); } catch {}
+  };
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -630,11 +646,22 @@ export default function ContratosPage() {
     return diff;
   };
 
-  const filteredContratos = contratosContexto.filter(c =>
-    c.numero_contrato?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.parte_contratante?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.objeto?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredContratos = contratosContexto.filter(c => {
+    const searchMatch = (
+      c.numero_contrato?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.parte_contratante?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.objeto?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (!searchMatch) return false;
+
+    if (activeTab === "todos") return true;
+    if (activeTab === "proximos") {
+      const diasVencer = c.data_fim ? calcularDiasParaVencimento(c.data_fim) : -1;
+      return diasVencer > 0 && diasVencer <= 60 && c.status === 'Vigente';
+    }
+    return c.status === activeTab;
+  });
 
   const contratosPorStatus = {
     vigentes: contratosContexto.filter(c => c.status === 'Vigente'),
@@ -1076,6 +1103,17 @@ export default function ContratosPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Abas de Navegação */}
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="grid w-full grid-cols-5 mb-4">
+          <TabsTrigger value="todos">Todos ({contratosContexto.length})</TabsTrigger>
+          <TabsTrigger value="Vigente">Vigentes ({contratosPorStatus.vigentes.length})</TabsTrigger>
+          <TabsTrigger value="Aguardando Assinatura">Aguardando Assinatura ({contratosPorStatus.aguardando.length})</TabsTrigger>
+          <TabsTrigger value="proximos">Próximos a Vencer ({contratosPorStatus.proximosVencer.length})</TabsTrigger>
+          <TabsTrigger value="Vencido">Vencidos ({contratosPorStatus.vencidos.length})</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Busca */}
       <Card>
