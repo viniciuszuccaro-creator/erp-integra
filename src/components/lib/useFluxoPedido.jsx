@@ -7,13 +7,29 @@ async function getUsuarioAtual() {
 
 async function auditar(modulo, entidade, acao, registro_id, descricao, empresaId, dados_anteriores = null, dados_novos = null) {
   const user = await getUsuarioAtual();
+  const mapModulo = (m) => {
+    const mapa = {
+      'Logística': 'Expedição',
+      'Logistica': 'Expedição',
+      'Expedição': 'Expedição',
+      'Produção': 'Produção',
+      'Producao': 'Produção',
+      'Estoque': 'Estoque',
+      'Financeiro': 'Financeiro',
+      'Comercial': 'Comercial'
+    };
+    return mapa[m] || m;
+  };
+  const moduloNorm = mapModulo(modulo);
   await base44.entities.AuditLog.create({
     empresa_id: empresaId,
     usuario: user?.full_name || user?.email || 'Sistema',
     usuario_id: user?.id || '',
     acao,
-    modulo,
+    action: acao,
+    modulo: moduloNorm,
     entidade,
+    entity_name: entidade,
     registro_id,
     descricao,
     dados_anteriores: dados_anteriores || undefined,
@@ -384,6 +400,7 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
     const entrega = await base44.entities.Entrega.create({
       empresa_id: empresaId,
       group_id: pedido.group_id,
+      group_id: pedido.group_id,
        group_id: pedido.group_id,
       pedido_id: pedido.id,
       numero_pedido: pedido.numero_pedido,
@@ -453,6 +470,7 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
   }
 
   // Criar movimentação de saída
+  const user = await getUsuarioAtual();
   const user = await getUsuarioAtual();
   const movimentacao = await base44.entities.MovimentacaoEstoque.create({
     empresa_id: empresaId,
@@ -576,6 +594,7 @@ async function baixarMaterialProducao(material, op, empresaId) {
     responsavel_id: user?.id
   });
 
+  await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await base44.entities.Produto.update(produto.id, {
     estoque_atual: Math.max(0, novoEstoque)
   });
@@ -807,7 +826,8 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
           status: 'Aguardando Separação',
           prioridade: pedido.prioridade || 'Normal'
         });
-        
+
+        await auditar("Expedição","Entrega","create", entrega.id, `Entrega criada do Pedido ${pedido.numero_pedido}`, empresaId, null, entrega);
         resultados.logistica.entrega = entrega;
         onLog(`✅ Entrega criada - Previsão: ${pedido.data_prevista_entrega || 'A definir'}`, 'success');
       }
