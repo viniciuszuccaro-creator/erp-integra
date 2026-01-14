@@ -52,6 +52,7 @@ import DashboardRefugoIA from "../components/producao/DashboardRefugoIA";
 import DigitalTwin3D from "../components/producao/DigitalTwin3D";
 import IADiagnosticoEquipamentos from "../components/producao/IADiagnosticoEquipamentos";
 import DashboardProducaoRealtime from "../components/producao/DashboardProducaoRealtime";
+import AuditTrailPanel from "@/components/auditoria/AuditTrailPanel";
 
 export default function Producao() {
   const [activeTab, setActiveTab] = useState("kanban"); // ALTERADO: default agora é kanban
@@ -111,10 +112,11 @@ export default function Producao() {
   const ordensProducao = filtrarPorContexto(ops, 'empresa_id');
 
   // NOVO: Concluir OP com integração completa usando useFluxoPedido (now concluirOPCompleto)
-  const handleConcluirOP = async (opId) => {
+  const handleConcluirOP = async (op) => {
     try {
-      await concluirOPCompleto.mutateAsync(opId); // Changed to use concluirOPCompleto
+      await concluirOPCompleto(op, empresaAtual?.id);
       toast({ title: "✅ OP enviada para expedição!" });
+      queryClient.invalidateQueries({ queryKey: ['ordens-producao'] });
     } catch (error) {
       console.error("Erro ao enviar OP para expedição:", error);
       toast({
@@ -459,8 +461,7 @@ export default function Producao() {
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      onClick={() => handleConcluirOP(op.id)} // NEW: Use handleConcluirOP
-                                      disabled={concluirOPCompleto.isPending} // NEW: Use concluirOPCompleto's pending state
+                                      onClick={() => handleConcluirOP(op)}
                                       title="Enviar para Expedição"
                                     >
                                       <Truck className="w-4 h-4 text-green-600" />
@@ -570,6 +571,17 @@ export default function Producao() {
           </TabsContent>
 
         </Tabs>
+
+        <Card className="border-0 shadow-sm mt-6">
+          <CardHeader className="bg-slate-50">
+            <CardTitle>Auditoria recente</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="resize-y overflow-auto min-h-[180px] max-h-[50vh]">
+              <AuditTrailPanel modulo="Produção" />
+            </div>
+          </CardContent>
+        </Card>
 
 
 

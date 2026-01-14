@@ -287,6 +287,7 @@ async function gerarOPAutomatica(pedido, empresaId) {
     }
   }
 
+  const user = await getUsuarioAtual();
   const op = await base44.entities.OrdemProducao.create({
      empresa_id: empresaId,
      group_id: pedido.group_id,
@@ -314,7 +315,7 @@ async function gerarOPAutomatica(pedido, empresaId) {
       status_anterior: null,
       status_novo: "Liberada",
       data_hora: new Date().toISOString(),
-      usuario: "Sistema Automático",
+      usuario: (user?.full_name || user?.email || "Sistema"),
       observacao: "OP gerada automaticamente na aprovação do pedido"
     }]
   });
@@ -423,7 +424,7 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
       historico_status: [{
         status: "Pronto para Expedir",
         data_hora: new Date().toISOString(),
-        usuario: "Sistema Automático",
+        usuario: (user?.full_name || user?.email || "Sistema"),
         observacao: "Entrega criada automaticamente no faturamento"
       }]
     });
