@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -46,12 +46,12 @@ import {
   Area,
   AreaChart
 } from "recharts";
-import PainelOperacoes3D from "../components/dashboard/PainelOperacoes3D";
-import GamificacaoOperacoes from "../components/dashboard/GamificacaoOperacoes";
-import DashboardTempoReal from '../components/dashboard/DashboardTempoReal';
-import DashboardOperacionalBI from "@/components/dashboard/DashboardOperacionalBI";
+const PainelOperacoes3D = React.lazy(() => import("../components/dashboard/PainelOperacoes3D"));
+const GamificacaoOperacoes = React.lazy(() => import("../components/dashboard/GamificacaoOperacoes"));
+const DashboardTempoReal = React.lazy(() => import('../components/dashboard/DashboardTempoReal'));
+const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/DashboardOperacionalBI"));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import WidgetCanaisOrigem from "@/components/dashboard/WidgetCanaisOrigem";
+const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem"));
 
 
 export default function Dashboard() {
@@ -666,11 +666,15 @@ export default function Dashboard() {
         </TabsList>
 
         <TabsContent value="tempo-real">
-          <DashboardTempoReal empresaId={empresaAtual?.id} />
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <DashboardTempoReal empresaId={empresaAtual?.id} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="bi-operacional">
-          <DashboardOperacionalBI />
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <DashboardOperacionalBI />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
@@ -700,7 +704,9 @@ export default function Dashboard() {
             
             {/* Widget Canais de Origem */}
             <div className="md:col-span-2 lg:col-span-2">
-              <WidgetCanaisOrigem empresaId={empresaAtual?.id} />
+              <Suspense fallback={<div className="h-28 rounded-md bg-slate-100 animate-pulse" />}>
+                <WidgetCanaisOrigem empresaId={empresaAtual?.id} />
+              </Suspense>
             </div>
           </div>
 
@@ -1095,7 +1101,9 @@ export default function Dashboard() {
               <Trophy className="w-6 h-6 text-yellow-600" />
               Rankings de Performance
             </h2>
-            <GamificacaoOperacoes />
+            <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+              <GamificacaoOperacoes />
+            </Suspense>
           </div>
 
           {/* Placeholder or replacement if PainelOperacoes3D was still intended for "resumo" tab */}
