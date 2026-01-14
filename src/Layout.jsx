@@ -82,6 +82,7 @@ const navigationItems = [
 
 function LayoutContent({ children, currentPageName }) {
         const { openWindow } = useWindow();
+        const openApp = (url, title) => openWindow(WindowApp, { url }, { title, width: 1200, height: 800 });
         const location = useLocation();
         const { user } = useUser();
         const { empresaAtual } = useContextoVisual();
@@ -331,10 +332,8 @@ function LayoutContent({ children, currentPageName }) {
                               <Link
                                   to={item.url}
                                   onClick={(e) => {
-                                    if (e.metaKey || e.ctrlKey || e.shiftKey) {
-                                      e.preventDefault();
-                                      openWindow(WindowApp, { url: item.url }, { title: item.title, width: 1200, height: 800 });
-                                    }
+                                    e.preventDefault();
+                                    openApp(item.url, item.title);
                                   }}
                                   className="flex items-center gap-3 px-4 py-3">
                                 <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
@@ -353,7 +352,7 @@ function LayoutContent({ children, currentPageName }) {
 
           <SidebarFooter className="border-t border-slate-200 p-4 bg-slate-50/50">
             <div className="flex items-center justify-between">
-              <Link to={createPageUrl("ConfiguracoesUsuario")} className="flex items-center gap-3 hover:bg-slate-100 p-2 rounded-lg transition-colors flex-1">
+              <Link to={createPageUrl("ConfiguracoesUsuario")} onClick={(e)=>{e.preventDefault(); openApp(createPageUrl("ConfiguracoesUsuario"), "Configurações do Usuário");}} className="flex items-center gap-3 hover:bg-slate-100 p-2 rounded-lg transition-colors flex-1">
                 <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-semibold text-sm">
                     {user?.full_name?.[0] || 'U'}
@@ -424,7 +423,7 @@ function LayoutContent({ children, currentPageName }) {
 
                 <NotificationCenter />
                 
-                <Link to={createPageUrl("ConfiguracoesUsuario")}>
+                <Link to={createPageUrl("ConfiguracoesUsuario")} onClick={(e)=>{e.preventDefault(); openApp(createPageUrl("ConfiguracoesUsuario"), "Configurações do Usuário");}}>
                   <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
                     <Settings className="w-5 h-5 text-slate-600" />
                   </button>
