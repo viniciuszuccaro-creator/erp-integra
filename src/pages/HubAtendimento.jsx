@@ -1056,7 +1056,7 @@ export default function HubAtendimento() {
                         setMensagemAtendente(`✅ Pedido ${pedido.numero_pedido} criado com sucesso! Valor: R$ ${pedido.valor_total?.toLocaleString('pt-BR')}`);
                         setPainelLateralConteudo('info');
                       }}
-                    />
+                    /></Suspense>
                     <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><GerarBoletoChat 
                       conversa={conversaSelecionada}
                       clienteId={conversaSelecionada.cliente_id}
