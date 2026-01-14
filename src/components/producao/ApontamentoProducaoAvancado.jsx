@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { 
   Play, 
   Pause, 
@@ -42,6 +43,7 @@ import {
 export default function ApontamentoProducaoAvancado({ opId, opNumero, onClose }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { getFiltroContexto } = useContextoVisual();
   
   const [apontamento, setApontamento] = useState({
     op_id: opId,
@@ -72,14 +74,14 @@ export default function ApontamentoProducaoAvancado({ opId, opNumero, onClose })
 
   // Fetch colaboradores para operador
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list()
+    queryKey: ['colaboradores', getFiltroContexto('empresa_id')],
+    queryFn: () => base44.entities.Colaborador.filter(getFiltroContexto('empresa_id'))
   });
 
   // Fetch OP details
   const { data: op } = useQuery({
-    queryKey: ['ordem-producao', opId],
-    queryFn: () => base44.entities.OrdemProducao.list().then(ops => ops.find(o => o.id === opId))
+    queryKey: ['ordem-producao', opId, getFiltroContexto('empresa_id')],
+    queryFn: () => base44.entities.OrdemProducao.filter({ ...getFiltroContexto('empresa_id'), id: opId }).then(res => res[0])
   });
 
   // Mutation para criar apontamento
@@ -157,7 +159,7 @@ export default function ApontamentoProducaoAvancado({ opId, opNumero, onClose })
       tempo_total_minutos,
       status: 'Finalizado'
     };
-    createMutation.mutate(apontamentoFinal);
+    createMutation.mutate({ ...apontamentoFinal, empresa_id: op?.empresa_id, group_id: op?.group_id });
   };
 
   const formatarTempo = (segundos) => {

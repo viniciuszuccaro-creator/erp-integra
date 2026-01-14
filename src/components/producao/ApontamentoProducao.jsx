@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -10,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Clock, CheckCircle, Play, Pause, AlertTriangle } from "lucide-react";
 
 /**
@@ -18,12 +18,13 @@ import { Clock, CheckCircle, Play, Pause, AlertTriangle } from "lucide-react";
 export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { getFiltroContexto } = useContextoVisual();
 
   // Assuming the first collaborator is the current user for this context.
   // In a real application, you might use a dedicated authentication hook like `useUser`.
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list(),
+    queryKey: ['colaboradores', getFiltroContexto('empresa_id')],
+    queryFn: () => base44.entities.Colaborador.filter(getFiltroContexto('empresa_id')),
   });
   const user = colaboradores[0]; // Represents the current operator/user
 
@@ -131,7 +132,7 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
       // Se concluiu 100% e modo for "reserva_baixa", baixar estoque
       if (percentual === 100 && !op.estoque_baixado) {
         const config = await base44.entities.ConfiguracaoProducao.filter({
-          empresa_id: op.group_id // Assuming group_id is equivalent to empresa_id here
+          empresa_id: op.empresa_id
         });
 
         if (config.length > 0 && config[0]?.modo_integracao_estoque === "reserva_baixa") {
@@ -140,7 +141,7 @@ export default function ApontamentoProducao({ opId, op, onApontamentoSalvo }) {
           for (const material of (op.materiais_necessarios || [])) {
             const movBaixa = await base44.entities.MovimentacaoEstoque.create({
               group_id: op.group_id,
-              empresa_id: op.group_id, // Assuming group_id is equivalent to empresa_id here
+              empresa_id: op.empresa_id,
               tipo_movimento: "saida",
               origem_movimento: "producao",
               origem_documento_id: op.id,

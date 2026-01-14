@@ -176,8 +176,10 @@ async function baixarEstoqueItemAprovacao(item, pedido, empresaId) {
 
   // Criar movimentação de saída imediata
   const movimentacao = await base44.entities.MovimentacaoEstoque.create({
-    empresa_id: empresaId,
-    tipo_movimento: "saida",
+     empresa_id: empresaId,
+     group_id: pedido.group_id,
+  group_id: pedido.group_id,
+  tipo_movimento: "saida",
     origem_movimento: "pedido",
     origem_documento_id: pedido.id,
     produto_id: item.produto_id,
@@ -243,7 +245,8 @@ async function gerarOPAutomatica(pedido, empresaId) {
   }
 
   const op = await base44.entities.OrdemProducao.create({
-    empresa_id: empresaId,
+     empresa_id: empresaId,
+     group_id: pedido.group_id,
     numero_op: numeroOP,
     pedido_id: pedido.id,
     numero_pedido: pedido.numero_pedido,
@@ -287,7 +290,8 @@ async function gerarOPAutomatica(pedido, empresaId) {
  */
 async function gerarContaReceber(pedido, parcela, empresaId) {
   return await base44.entities.ContaReceber.create({
-    empresa_id: empresaId,
+     empresa_id: empresaId,
+     group_id: pedido.group_id,
     origem_tipo: "pedido",
     descricao: `Pedido ${pedido.numero_pedido} - Parcela ${parcela.numero_parcela}`,
     cliente: pedido.cliente_nome,
@@ -348,7 +352,9 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
 
     // 2. CRIAR ENTREGA AUTOMATICAMENTE
     const entrega = await base44.entities.Entrega.create({
-      empresa_id: empresaId,
+       empresa_id: empresaId,
+       group_id: pedido.group_id,
+       group_id: pedido.group_id,
       pedido_id: pedido.id,
       numero_pedido: pedido.numero_pedido,
       nfe_id: nfe?.id,
