@@ -122,6 +122,7 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
       status: "Aprovado",
       data_aprovacao: new Date().toISOString()
     });
+    await auditar("Comercial","Pedido","update", pedido.id, `Pedido ${pedido.numero_pedido} aprovado`, empresaId, null, { status: "Aprovado" });
 
     // 7. REGISTRAR NO HISTÓRICO DO CLIENTE
     const userHC = await getUsuarioAtual();
@@ -436,6 +437,7 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
       ordem_expedicao_id: entrega.id,
       data_entrega_realizada: new Date().toISOString().split('T')[0]
     });
+    await auditar("Comercial","Pedido","update", pedido.id, `Pedido ${pedido.numero_pedido} faturado`, empresaId, null, { status: "Faturado" });
 
   } catch (error) {
     resultados.erros.push(`Erro no faturamento: ${error.message}`);
@@ -595,6 +597,7 @@ async function baixarMaterialProducao(material, op, empresaId) {
 
   await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
+  await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await base44.entities.Produto.update(produto.id, {
     estoque_atual: Math.max(0, novoEstoque)
   });
@@ -648,6 +651,7 @@ export async function cancelarPedidoCompleto(pedido, empresaId) {
     await base44.entities.Pedido.update(pedido.id, {
       status: "Cancelado"
     });
+    await auditar("Comercial","Pedido","update", pedido.id, `Pedido ${pedido.numero_pedido} cancelado`, empresaId, null, { status: "Cancelado" });
 
   } catch (error) {
     resultados.erros.push(`Erro ao cancelar: ${error.message}`);
