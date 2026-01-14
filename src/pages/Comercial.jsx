@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import MonitoramentoCanaisRealtime from "@/components/comercial/MonitoramentoCanaisRealtime";
+const MonitoramentoCanaisRealtime = React.lazy(() => import("@/components/comercial/MonitoramentoCanaisRealtime"));
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Users, ShoppingCart, FileText, TrendingUp, DollarSign, AlertCircle, Printer, Search, Plus, ShieldCheck, Truck, Package, Eye, Edit } from "lucide-react";
-import ClientesTab from "../components/comercial/ClientesTab";
-import PedidosTab from "../components/comercial/PedidosTab";
+const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
+const PedidosTab = React.lazy(() => import("../components/comercial/PedidosTab"));
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import ComissoesTab from "../components/comercial/ComissoesTab";
-import NotasFiscaisTab from "../components/comercial/NotasFiscaisTab";
-import TabelasPrecoTab from "../components/comercial/TabelasPrecoTab";
+const ComissoesTab = React.lazy(() => import("../components/comercial/ComissoesTab"));
+const NotasFiscaisTab = React.lazy(() => import("../components/comercial/NotasFiscaisTab"));
+const TabelasPrecoTab = React.lazy(() => import("../components/comercial/TabelasPrecoTab"));
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
 import CentralAprovacoesManager from "../components/comercial/CentralAprovacoesManager";
@@ -342,7 +342,9 @@ export default function Comercial() {
       </div>
 
       {/* NOVO V21.6: Monitoramento Realtime de Canais */}
-      <MonitoramentoCanaisRealtime autoRefresh={true} />
+      <Suspense fallback={<div className="h-28 rounded-md bg-slate-100 animate-pulse" />}>
+        <MonitoramentoCanaisRealtime autoRefresh={true} />
+      </Suspense>
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap">
@@ -446,25 +448,29 @@ export default function Comercial() {
         </TabsList>
 
         <TabsContent value="clientes">
-          <ClientesTab 
-            clientes={clientes} 
-            isLoading={loadingClientes} 
-            onViewCliente={(cliente) => {
-              setClienteParaPainel(cliente);
-              setPainelClienteAberto(true);
-            }}
-          />
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <ClientesTab 
+              clientes={clientes} 
+              isLoading={loadingClientes} 
+              onViewCliente={(cliente) => {
+                setClienteParaPainel(cliente);
+                setPainelClienteAberto(true);
+              }}
+            />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="pedidos">
-          <PedidosTab 
-            pedidos={pedidosFiltrados} 
-            clientes={clientesFiltrados} 
-            isLoading={loadingPedidos} 
-            empresas={empresas}
-            onCreatePedido={handleCreateNewPedido}
-            onEditPedido={handleEditPedido}
-          />
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <PedidosTab 
+              pedidos={pedidosFiltrados} 
+              clientes={clientesFiltrados} 
+              isLoading={loadingPedidos} 
+              empresas={empresas}
+              onCreatePedido={handleCreateNewPedido}
+              onEditPedido={handleEditPedido}
+            />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="entrega">
@@ -478,51 +484,55 @@ export default function Comercial() {
         {/* Removed TabelasPrecoTab TabsContent */}
 
         <TabsContent value="comissoes">
-          <ComissoesTab comissoes={comissoes} pedidos={pedidos} empresas={empresas} />
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <ComissoesTab comissoes={comissoes} pedidos={pedidos} empresas={empresas} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="notas">
-          <NotasFiscaisTab 
-             notasFiscais={notasFiscaisFiltradas} 
-             pedidos={pedidosFiltrados} 
-             clientes={clientesFiltrados}
-             onCreateNFe={() => openWindow(
-              NotaFiscalFormCompleto,
-              { 
-                windowMode: true,
-                onSubmit: async (formData) => {
-                  try {
-                    const nf = await base44.entities.NotaFiscal.create({
-                      ...formData,
-                      group_id: formData.group_id || grupoAtual?.id,
-                      empresa_faturamento_id: formData.empresa_faturamento_id || empresaAtual?.id,
-                    });
-                    await base44.entities.AuditLog.create({
-                      usuario: user?.full_name || user?.email || 'Usuário',
-                      usuario_id: user?.id,
-                      empresa_id: empresaAtual?.id,
-                      empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || '',
-                      acao: 'Criação',
-                      modulo: 'Fiscal',
-                      entidade: 'NotaFiscal',
-                      registro_id: nf.id,
-                      descricao: `NF ${nf.numero || ''}/${nf.serie || ''} criada`,
-                    });
-                    toast.success("✅ NF-e salva com sucesso!");
-                    queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
-                  } catch (error) {
-                    toast.error("Erro ao salvar NF-e: " + error.message);
-                  }
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <NotasFiscaisTab 
+               notasFiscais={notasFiscaisFiltradas} 
+               pedidos={pedidosFiltrados} 
+               clientes={clientesFiltrados}
+               onCreateNFe={() => openWindow(
+                NotaFiscalFormCompleto,
+                { 
+                  windowMode: true,
+                  onSubmit: async (formData) => {
+                    try {
+                      const nf = await base44.entities.NotaFiscal.create({
+                        ...formData,
+                        group_id: formData.group_id || grupoAtual?.id,
+                        empresa_faturamento_id: formData.empresa_faturamento_id || empresaAtual?.id,
+                      });
+                      await base44.entities.AuditLog.create({
+                        usuario: user?.full_name || user?.email || 'Usuário',
+                        usuario_id: user?.id,
+                        empresa_id: empresaAtual?.id,
+                        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || '',
+                        acao: 'Criação',
+                        modulo: 'Fiscal',
+                        entidade: 'NotaFiscal',
+                        registro_id: nf.id,
+                        descricao: `NF ${nf.numero || ''}/${nf.serie || ''} criada`,
+                      });
+                      toast.success("✅ NF-e salva com sucesso!");
+                      queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
+                    } catch (error) {
+                      toast.error("Erro ao salvar NF-e: " + error.message);
+                    }
+                  },
+                  onCancel: () => {}
                 },
-                onCancel: () => {}
-              },
-              {
-                title: '📄 Nova NF-e',
-                width: 1200,
-                height: 750
-              }
-            )}
-          />
+                {
+                  title: '📄 Nova NF-e',
+                  width: 1200,
+                  height: 750
+                }
+              )}
+            />
+          </Suspense>
         </TabsContent>
 
         {/* NOVO: Conteúdo Tab Vendas Externas */}
@@ -577,7 +587,9 @@ export default function Comercial() {
         </TabsContent>
 
         <TabsContent value="tabelas-preco">
-          <TabelasPrecoTab tabelasPreco={tabelasPreco} />
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <TabelasPrecoTab tabelasPreco={tabelasPreco} />
+          </Suspense>
         </TabsContent>
       </Tabs>
 

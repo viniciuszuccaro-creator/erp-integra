@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,25 +49,25 @@ import ComprovanteDigital from "../components/expedicao/ComprovanteDigital";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import RomaneioForm from "../components/expedicao/RomaneioForm";
-import RoteirizacaoMapa from "../components/expedicao/RoteirizacaoMapa";
-import DashboardLogistico from "../components/expedicao/DashboardLogistico";
-import RelatoriosLogistica from "../components/expedicao/RelatoriosLogistica";
+const RoteirizacaoMapa = React.lazy(() => import("../components/expedicao/RoteirizacaoMapa"));
+const DashboardLogistico = React.lazy(() => import("../components/expedicao/DashboardLogistico"));
+const RelatoriosLogistica = React.lazy(() => import("../components/expedicao/RelatoriosLogistica"));
 import AssinaturaDigitalEntrega from "../components/expedicao/AssinaturaDigitalEntrega";
 import SeparacaoConferencia from "../components/expedicao/SeparacaoConferencia";
 import SeparacaoConferenciaIA from "@/components/expedicao/SeparacaoConferenciaIA";
-import RoteirizacaoInteligente from "@/components/expedicao/RoteirizacaoInteligente";
+const RoteirizacaoInteligente = React.lazy(() => import("@/components/expedicao/RoteirizacaoInteligente"));
 import SeletorEnderecoEntrega from "../components/expedicao/SeletorEnderecoEntrega";
 import EnvioMensagemAutomatica from "../components/expedicao/EnvioMensagemAutomatica";
 import ConfigWhatsApp from "../components/expedicao/ConfigWhatsApp";
 import RastreamentoPublico from "../components/expedicao/RastreamentoPublico";
-import ConfiguracaoExpedicao from "../components/expedicao/ConfiguracaoExpedicao";
+const ConfiguracaoExpedicao = React.lazy(() => import("../components/expedicao/ConfiguracaoExpedicao"));
 import FormularioEntrega from "../components/expedicao/FormularioEntrega";
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTransportadora";
 import { useRealtimeEntregas } from '@/components/lib/useRealtimeData';
 import MapaTempoReal from '../components/expedicao/MapaTempoReal';
 import DetalhesEntregaView from "../components/expedicao/DetalhesEntregaView";
-import DashboardEntregasRealtime from "../components/expedicao/DashboardEntregasRealtime";
+const DashboardEntregasRealtime = React.lazy(() => import("../components/expedicao/DashboardEntregasRealtime"));
 import DashboardLogisticaInteligente from "../components/logistica/DashboardLogisticaInteligente";
 import NotificadorAutomaticoEntrega from "../components/logistica/NotificadorAutomaticoEntrega";
 import MapaRoteirizacaoIA from "../components/logistica/MapaRoteirizacaoIA";
@@ -1274,10 +1274,12 @@ export default function Expedicao() {
 
           {/* NOVA ABA: ROTAS */}
           <TabsContent value="rotas" className="space-y-6">
-            <RoteirizacaoMapa
-              entregas={entregasFiltradas.filter(e => e.status === "Pronto para Expedir")}
-              empresaId={empresaAtual?.id}
-            />
+            <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}>
+              <RoteirizacaoMapa
+                entregas={entregasFiltradas.filter(e => e.status === "Pronto para Expedir")}
+                empresaId={empresaAtual?.id}
+              />
+            </Suspense>
 
             <Card className="border-0 shadow-md">
               <CardHeader className="bg-slate-50 border-b">
@@ -1374,27 +1376,37 @@ export default function Expedicao() {
 
           {/* NOVA ABA: DASHBOARD */}
           <TabsContent value="dashboard">
-            <DashboardLogistico entregas={entregasFiltradas} />
+            <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}>
+              <DashboardLogistico entregas={entregasFiltradas} />
+            </Suspense>
           </TabsContent>
 
           {/* NOVA ABA: DASHBOARD REALTIME */}
           <TabsContent value="dashboard-realtime">
-            <DashboardEntregasRealtime empresaId={empresaAtual?.id} />
+            <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}>
+              <DashboardEntregasRealtime empresaId={empresaAtual?.id} />
+            </Suspense>
           </TabsContent>
 
           {/* Added: NEW TAB: RELATÓRIOS */}
           <TabsContent value="relatorios">
-            <RelatoriosLogistica empresaId={empresaAtual?.id} />
+            <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}>
+              <RelatoriosLogistica empresaId={empresaAtual?.id} />
+            </Suspense>
           </TabsContent>
 
           {/* NOVA ABA: ROTEIRIZAÇÃO IA */}
           <TabsContent value="roteirizacao-ia">
-            <RoteirizacaoInteligente />
+            <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}>
+              <RoteirizacaoInteligente />
+            </Suspense>
           </TabsContent>
 
           {/* Added: NEW TAB: CONFIG WHATSAPP */}
           <TabsContent value="config">
-            <ConfiguracaoExpedicao empresaId={empresaAtual?.id} />
+            <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}>
+              <ConfiguracaoExpedicao empresaId={empresaAtual?.id} />
+            </Suspense>
           </TabsContent>
         </Tabs>
 
