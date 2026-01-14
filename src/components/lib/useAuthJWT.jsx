@@ -11,7 +11,6 @@ import { base44 } from '@/api/base44Client';
  * Em produção real, isso seria feito no backend
  */
 function gerarTokenSimulado() {
-  console.warn('[useAuthJWT] gerarTokenSimulado desativado – use base44.auth');
   return null;
 }
 
@@ -26,7 +25,7 @@ function decodificarToken() {
  * Verifica se token está expirado
  */
 function tokenExpirado() {
-  return true;
+  return false;
 }
 
 /**
