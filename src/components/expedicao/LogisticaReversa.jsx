@@ -58,7 +58,6 @@ export default function LogisticaReversa({ entrega, onConcluido }) {
           // Retornar itens de revenda ao estoque
           for (const item of (pedidoRef.itens_revenda || [])) {
             await base44.entities.MovimentacaoEstoque.create({
-              group_id: entrega.group_id,
               empresa_id: entrega.empresa_id,
               origem_movimento: 'devolucao',
               origem_documento_id: entrega.id,
