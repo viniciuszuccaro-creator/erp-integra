@@ -574,7 +574,7 @@ async function baixarMaterialProducao(material, op, empresaId) {
   const novoEstoque = (produto.estoque_atual || 0) - material.quantidade_kg;
 
   const user = await getUsuarioAtual();
-  await base44.entities.MovimentacaoEstoque.create({
+  const movConsumo = await base44.entities.MovimentacaoEstoque.create({
     empresa_id: empresaId,
     group_id: op.group_id,
     tipo_movimento: "saida",
@@ -593,9 +593,6 @@ async function baixarMaterialProducao(material, op, empresaId) {
     responsavel_id: user?.id
   });
 
-  await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
-  await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
-  await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await base44.entities.Produto.update(produto.id, {
     estoque_atual: Math.max(0, novoEstoque)
