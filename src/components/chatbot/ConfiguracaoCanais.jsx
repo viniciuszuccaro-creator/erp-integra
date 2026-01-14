@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import * as TabsUI from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -163,32 +163,32 @@ export default function ConfiguracaoCanais() {
         </div>
 
         {/* Abas de Configuração */}
-        <TabsUI.Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full">
-          <TabsUI.TabsList className="grid grid-cols-5 w-full max-w-2xl">
-            <TabsUI.TabsTrigger value="basico" className="text-xs">
+        <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="w-full">
+          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+            <TabsTrigger value="basico" className="text-xs">
               <Settings className="w-3 h-3 mr-1" />
               Básico
-            </TabsUI.TabsTrigger>
-            <TabsUI.TabsTrigger value="horarios" className="text-xs">
+            </TabsTrigger>
+            <TabsTrigger value="horarios" className="text-xs">
               <Clock className="w-3 h-3 mr-1" />
               Horários
-            </TabsUI.TabsTrigger>
-            <TabsUI.TabsTrigger value="ia" className="text-xs">
+            </TabsTrigger>
+            <TabsTrigger value="ia" className="text-xs">
               <Brain className="w-3 h-3 mr-1" />
               IA
-            </TabsUI.TabsTrigger>
-            <TabsUI.TabsTrigger value="sla" className="text-xs">
+            </TabsTrigger>
+            <TabsTrigger value="sla" className="text-xs">
               <Shield className="w-3 h-3 mr-1" />
               SLA
-            </TabsUI.TabsTrigger>
-            <TabsUI.TabsTrigger value="automacao" className="text-xs">
+            </TabsTrigger>
+            <TabsTrigger value="automacao" className="text-xs">
               <Workflow className="w-3 h-3 mr-1" />
               Automação
-            </TabsUI.TabsTrigger>
-          </TabsUI.TabsList>
+            </TabsTrigger>
+          </TabsList>
 
           {/* Aba Básico */}
-          <TabsUI.TabsContent value="basico">
+          <TabsContent value="basico">
             <div className="grid lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-2">
                 <CardHeader className="border-b">
@@ -212,43 +212,43 @@ export default function ConfiguracaoCanais() {
                 <NotificacoesCanal canalConfig={configAtual} />
               </div>
             </div>
-          </TabsUI.TabsContent>
+          </TabsContent>
 
           {/* Aba Horários */}
-          <TabsUI.TabsContent value="horarios">
+          <TabsContent value="horarios">
             <ConfiguracaoHorarios
               config={configAtual}
               onSave={(dados) => salvarConfigMutation.mutate(dados)}
               isSaving={salvarConfigMutation.isPending}
             />
-          </TabsUI.TabsContent>
+          </TabsContent>
 
           {/* Aba IA */}
-          <TabsUI.TabsContent value="ia">
+          <TabsContent value="ia">
             <ConfiguracaoIA
               config={configAtual}
               onSave={(dados) => salvarConfigMutation.mutate(dados)}
               isSaving={salvarConfigMutation.isPending}
             />
-          </TabsUI.TabsContent>
+          </TabsContent>
 
           {/* Aba SLA */}
-          <TabsUI.TabsContent value="sla">
+          <TabsContent value="sla">
             <ConfiguracaoSLA
               config={configAtual}
               onSave={(dados) => salvarConfigMutation.mutate(dados)}
               isSaving={salvarConfigMutation.isPending}
             />
-          </TabsUI.TabsContent>
+          </TabsContent>
 
           {/* Aba Automação */}
-          <TabsUI.TabsContent value="automacao">
+          <TabsContent value="automacao">
             <div className="grid md:grid-cols-2 gap-6">
               <AutomacaoFluxos canalConfig={configAtual} />
               <WebhooksTester canalConfig={configAtual} />
             </div>
-          </TabsUI.TabsContent>
-        </TabsUI.Tabs>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
