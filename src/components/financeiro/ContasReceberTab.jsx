@@ -46,6 +46,7 @@ import ContaReceberForm from "./ContaReceberForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function ContasReceberTab({ contas, empresas = [] }) {
   const queryClient = useQueryClient();
@@ -53,6 +54,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
   const { formasPagamento, obterBancoPorTipo } = useFormasPagamento();
+  const { user: authUser } = useUser();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
@@ -150,12 +152,22 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
       queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
       toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
       setContasSelecionadas([]);
+      base44.entities.AuditLog.create({
+        acao: 'Exportação', modulo: 'Financeiro', entidade: 'ContaReceber',
+        descricao: `Envio de ${ordens.length} título(s) para caixa`,
+        usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
+        data_hora: new Date().toISOString(), sucesso: true
+      });
     }
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.ContaReceber.create(data),
-    onSuccess: () => {
+    mutationFn: (data) => base44.entities.ContaReceber.create({
+      ...data,
+      criado_por: authUser?.full_name || authUser?.email,
+      criado_por_id: authUser?.id
+    }),
+    onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       setIsDialogOpen(false);
       resetForm();
@@ -175,7 +187,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.ContaReceber.update(id, data),
-    onSuccess: () => {
+    onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       setIsDialogOpen(false);
       resetForm();
@@ -195,7 +207,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.ContaReceber.delete(id),
-    onSuccess: () => {
+    onSuccess: (res, id) => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       toast({
         title: "Sucesso!",
@@ -237,7 +249,8 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
           tipo_evento: "Recebimento",
           titulo_evento: `Recebimento de R$ ${dados.valor_recebido.toFixed(2)}`,
           descricao_detalhada: `Título ${conta.descricao} recebido via ${dados.forma_recebimento}`,
-          usuario_responsavel: "Sistema",
+          usuario_responsavel: authUser?.full_name || authUser?.email,
+          usuario_responsavel_id: authUser?.id,
           data_evento: new Date().toISOString(),
           valor_relacionado: dados.valor_recebido,
           resolvido: true
@@ -246,11 +259,16 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
 
       return titulo;
     },
-    onSuccess: () => {
+    onSuccess: (res, variables) => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       setDialogBaixaOpen(false);
       setContaAtual(null);
       toast({ title: "✅ Título baixado com sucesso!" });
+      base44.entities.AuditLog.create({
+        acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: variables?.id,
+        usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
+        descricao: 'Baixa de título (recebimento) registrada', data_hora: new Date().toISOString(), sucesso: true
+      });
     },
     onError: (error) => {
       toast({
@@ -360,6 +378,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       toast({ title: "✅ Boleto gerado (simulação)!" });
+      base44.entities.AuditLog.create({ acao: 'Exportação', modulo: 'Financeiro', entidade: 'ContaReceber', descricao: 'Boleto gerado (simulado)', usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id, data_hora: new Date().toISOString(), sucesso: true });
     },
     onError: (error) => {
       toast({
@@ -436,6 +455,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
       toast({ title: "✅ PIX gerado (simulação)!" });
+      base44.entities.AuditLog.create({ acao: 'Exportação', modulo: 'Financeiro', entidade: 'ContaReceber', descricao: 'PIX gerado (simulado)', usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id, data_hora: new Date().toISOString(), sucesso: true });
     },
     onError: (error) => {
       toast({
@@ -479,6 +499,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
     },
     onSuccess: () => {
       toast({ title: "✅ WhatsApp enviado (simulação)!" });
+      base44.entities.AuditLog.create({ acao: 'Exportação', modulo: 'Financeiro', entidade: 'ContaReceber', descricao: 'Cobrança enviada por WhatsApp (simulado)', usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id, data_hora: new Date().toISOString(), sucesso: true });
     },
     onError: (error) => {
       toast({
@@ -766,14 +787,26 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
               <Button onClick={() => openWindow(ContaReceberForm, {
                 windowMode: true,
                 onSubmit: async (data) => {
-                  try {
-                    await base44.entities.ContaReceber.create(data);
-                    queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
-                    toast({ title: "✅ Conta criada!" });
-                  } catch (error) {
-                    toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
-                  }
-                }
+                                    try {
+                                      const created = await base44.entities.ContaReceber.create({
+                                        ...data,
+                                        criado_por: authUser?.full_name || authUser?.email,
+                                        criado_por_id: authUser?.id
+                                      });
+                                      queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+                                      toast({ title: "✅ Conta criada!" });
+                                      if (created?.id) {
+                                        await base44.entities.AuditLog.create({
+                                          acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: created.id,
+                                          usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
+                                          empresa_id: created?.empresa_id, descricao: 'Conta a receber criada (janela)', dados_novos: created,
+                                          data_hora: new Date().toISOString(), sucesso: true
+                                        });
+                                      }
+                                    } catch (error) {
+                                      toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
+                                    }
+                                  }
               }, {
                 title: '💰 Nova Conta a Receber',
                 width: 900,
@@ -1044,9 +1077,17 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                                 windowMode: true,
                                 onSubmit: async (data) => {
                                   try {
-                                    await base44.entities.ContaReceber.update(conta.id, data);
-                                    queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
-                                    toast({ title: "✅ Conta atualizada!" });
+                                    const updated = await base44.entities.ContaReceber.update(conta.id, data);
+                                                                         queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
+                                                                         toast({ title: "✅ Conta atualizada!" });
+                                                                         if (updated?.id) {
+                                                                           await base44.entities.AuditLog.create({
+                                                                             acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: updated.id,
+                                                                             usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
+                                                                             empresa_id: updated?.empresa_id, descricao: 'Conta a receber editada (janela)', dados_novos: updated,
+                                                                             data_hora: new Date().toISOString(), sucesso: true
+                                                                           });
+                                                                         }
                                   } catch (error) {
                                     toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
                                   }
