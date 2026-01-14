@@ -85,9 +85,6 @@ function LayoutContent({ children, currentPageName }) {
         const openApp = (url, title) => {
           openWindow(WindowApp, { url }, { title: title || 'App', width: 1200, height: 800 });
         };
-        const openApp = (url, title) => {
-          openWindow(WindowApp, { url }, { title: title || 'App', width: 1200, height: 800 });
-        };
         const location = useLocation();
         const { user } = useUser();
         const { empresaAtual } = useContextoVisual();
