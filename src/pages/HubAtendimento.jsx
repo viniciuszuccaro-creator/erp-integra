@@ -1068,7 +1068,7 @@ export default function HubAtendimento() {
                     <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><ConsultarEntregaChat 
                       clienteId={conversaSelecionada.cliente_id}
                       conversa={conversaSelecionada}
-                    />
+                    /></Suspense>
                   </div>
                 )}
 
