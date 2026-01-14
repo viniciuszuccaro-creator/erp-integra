@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import RoadmapFuturo from "../components/sistema/RoadmapFuturo";
+const DocsCenter = React.lazy(() => import("@/components/docs/DocsCenter"));
 
 export default function Documentacao() {
   const [activeTab, setActiveTab] = useState("visao-geral");
@@ -521,6 +521,11 @@ export default function Documentacao() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="docs">
+          <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}> 
+            <DocsCenter />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>

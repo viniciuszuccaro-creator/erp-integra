@@ -16,8 +16,8 @@ const TabelasPrecoTab = React.lazy(() => import("../components/comercial/Tabelas
 import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
 import usePermissions from "@/components/lib/usePermissions";
 import CentralAprovacoesManager from "../components/comercial/CentralAprovacoesManager";
-import PedidosEntregaTab from "../components/comercial/PedidosEntregaTab";
-import PedidosRetiradaTab from "../components/comercial/PedidosRetiradaTab";
+const PedidosEntregaTab = React.lazy(() => import("../components/comercial/PedidosEntregaTab"));
+const PedidosRetiradaTab = React.lazy(() => import("../components/comercial/PedidosRetiradaTab"));
 import VisualizadorUniversalEntidade from '../components/cadastros/VisualizadorUniversalEntidade';
 import CadastroClienteCompleto from '../components/cadastros/CadastroClienteCompleto';
 
@@ -474,11 +474,15 @@ export default function Comercial() {
         </TabsContent>
 
         <TabsContent value="entrega">
-          <PedidosEntregaTab windowMode={false} />
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <PedidosEntregaTab windowMode={false} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="retirada">
-          <PedidosRetiradaTab windowMode={false} />
+          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+            <PedidosRetiradaTab windowMode={false} />
+          </Suspense>
         </TabsContent>
 
         {/* Removed TabelasPrecoTab TabsContent */}
