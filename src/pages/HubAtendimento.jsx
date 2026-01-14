@@ -1064,7 +1064,7 @@ export default function HubAtendimento() {
                         setMensagemAtendente(`📄 Boleto gerado!\n\nValor: R$ ${boleto.valor?.toLocaleString('pt-BR')}\nVencimento: ${new Date(boleto.data_vencimento).toLocaleDateString('pt-BR')}\n\nLinha digitável:\n${boleto.linha_digitavel || 'Disponível no link'}`);
                         setPainelLateralConteudo('info');
                       }}
-                    />
+                    /></Suspense>
                     <Suspense fallback={<div className="h-32 rounded-md bg-slate-100 animate-pulse" />}><ConsultarEntregaChat 
                       clienteId={conversaSelecionada.cliente_id}
                       conversa={conversaSelecionada}
