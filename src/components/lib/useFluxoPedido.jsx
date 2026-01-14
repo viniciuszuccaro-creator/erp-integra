@@ -608,8 +608,9 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
 
   // Criar movimentação de liberação
   await base44.entities.MovimentacaoEstoque.create({
-    empresa_id: empresaId,
-    tipo_movimento: "liberacao_reserva",
+     empresa_id: empresaId,
+     group_id: movimentacaoReserva.group_id,
+     tipo_movimento: "liberacao_reserva",
     origem_movimento: "pedido",
     origem_documento_id: movimentacaoReserva.origem_documento_id,
     produto_id: produto.id,
@@ -700,7 +701,8 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
         dataVencimento.setDate(dataVencimento.getDate() + (i * intervalo));
 
         const conta = await base44.entities.ContaReceber.create({
-          empresa_id: empresaId,
+           empresa_id: empresaId,
+           group_id: pedido.group_id,
           origem_tipo: 'pedido',
           descricao: `Venda - Pedido ${pedido.numero_pedido} - Parcela ${i}/${numeroParcelas}`,
           cliente: pedido.cliente_nome,
