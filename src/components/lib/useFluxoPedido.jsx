@@ -551,6 +551,7 @@ export async function concluirOPCompleto(op, empresaId) {
       await base44.entities.Pedido.update(op.pedido_id, {
         status: "Pronto para Faturar"
       });
+      await auditar("Comercial","Pedido","update", op.pedido_id, `Pedido ${op.numero_pedido || ''} pronto para faturar (via OP ${op.numero_op})`, empresaId, { status: op.status }, { status: "Pronto para Faturar" });
     }
 
   } catch (error) {
@@ -636,6 +637,7 @@ export async function cancelarPedidoCompleto(pedido, empresaId) {
       await base44.entities.ContaReceber.update(conta.id, {
         status: "Cancelado"
       });
+      await auditar("Financeiro","ContaReceber","update", conta.id, `Conta a receber cancelada (Pedido ${pedido.numero_pedido})`, empresaId, { status: conta.status }, { status: "Cancelado" });
       resultados.contasCanceladas.push(conta);
     }
 
@@ -849,6 +851,7 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
         observacoes_internas: (pedido.observacoes_internas || '') + 
           `\n[AUTOMAÇÃO ${new Date().toLocaleString('pt-BR')}] Fluxo automático concluído com sucesso.`
       });
+      await auditar("Comercial","Pedido","update", pedido.id, `Pedido ${pedido.numero_pedido} pronto para faturar (fechamento automático)`, empresaId, null, { status: 'Pronto para Faturar' });
 
       resultados.status.sucesso = true;
       onEtapaConcluida('status', true);
