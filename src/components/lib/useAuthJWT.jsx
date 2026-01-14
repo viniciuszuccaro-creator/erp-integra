@@ -10,48 +10,23 @@ import { base44 } from '@/api/base44Client';
  * Simula geração de JWT (frontend)
  * Em produção real, isso seria feito no backend
  */
-function gerarTokenSimulado(usuario, tipo = 'access') {
-  const now = new Date();
-  const payload = {
-    user_id: usuario.id,
-    email: usuario.email,
-    role: usuario.role,
-    empresa_id: usuario.empresa_atual_id || usuario.empresa_padrao_id,
-    grupo_id: usuario.grupo_atual_id,
-    tipo: tipo,
-    iat: now.getTime(),
-    exp: tipo === 'access' 
-      ? now.getTime() + (15 * 60 * 1000) // 15 minutos
-      : now.getTime() + (30 * 24 * 60 * 60 * 1000) // 30 dias
-  };
-
-  // Simula JWT (base64)
-  const token = btoa(JSON.stringify(payload)) + '.' + Math.random().toString(36);
-  return token;
+function gerarTokenSimulado() {
+  console.warn('[useAuthJWT] gerarTokenSimulado desativado – use base44.auth');
+  return null;
 }
 
 /**
  * Decodifica token JWT simulado
  */
-function decodificarToken(token) {
-  try {
-    const [payloadBase64] = token.split('.');
-    const payload = JSON.parse(atob(payloadBase64));
-    return payload;
-  } catch {
-    return null;
-  }
+function decodificarToken() {
+  return null;
 }
 
 /**
  * Verifica se token está expirado
  */
-function tokenExpirado(token) {
-  const payload = decodificarToken(token);
-  if (!payload) return true;
-  
-  const now = new Date().getTime();
-  return now >= payload.exp;
+function tokenExpirado() {
+  return true;
 }
 
 /**
