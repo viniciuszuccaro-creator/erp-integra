@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Activity, Settings, Database } from 'lucide-react';
 import PainelGovernanca from '../components/governanca/PainelGovernanca';
