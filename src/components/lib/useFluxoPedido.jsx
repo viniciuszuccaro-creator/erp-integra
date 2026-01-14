@@ -1,5 +1,28 @@
 import { base44 } from "@/api/base44Client";
 
+// Auditoria helpers
+async function getUsuarioAtual() {
+  try { return await base44.auth.me(); } catch { return null; }
+}
+
+async function auditar(modulo, entidade, acao, registro_id, descricao, empresaId, dados_anteriores = null, dados_novos = null) {
+  const user = await getUsuarioAtual();
+  await base44.entities.AuditLog.create({
+    empresa_id: empresaId,
+    usuario: user?.full_name || user?.email || 'Sistema',
+    usuario_id: user?.id || '',
+    acao,
+    modulo,
+    entidade,
+    registro_id,
+    descricao,
+    dados_anteriores: dados_anteriores || undefined,
+    dados_novos: dados_novos || undefined,
+    data_hora: new Date().toISOString(),
+    sucesso: true
+  });
+}
+
 /**
  * 🔄 HOOK DE FLUXOS AUTOMÁTICOS DO PEDIDO V21.6 COMPLETO
  * 
@@ -85,7 +108,8 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
     });
 
     // 7. REGISTRAR NO HISTÓRICO DO CLIENTE
-    await base44.entities.HistoricoCliente.create({
+    const userHC = await getUsuarioAtual();
+  await base44.entities.HistoricoCliente.create({
       empresa_id: empresaId,
       cliente_id: pedido.cliente_id,
       cliente_nome: pedido.cliente_nome,
@@ -96,7 +120,7 @@ export async function aprovarPedidoCompleto(pedido, empresaId) {
       tipo_evento: "Aprovacao",
       titulo_evento: "Pedido Aprovado e Processado",
       descricao_detalhada: `Pedido aprovado. ${resultados.reservasEstoque.length} baixas de estoque, ${resultados.opsGeradas.length} OPs geradas`,
-      usuario_responsavel: "Sistema",
+      usuario_responsavel: (userHC?.full_name || userHC?.email || "Sistema"),
       data_evento: new Date().toISOString(),
       valor_relacionado: pedido.valor_total
     });
@@ -276,6 +300,7 @@ async function gerarOPAutomatica(pedido, empresaId) {
     }]
   });
 
+  await auditar("Produ e7 e3o","OrdemProducao","create", op.id, `OP ${numeroOP} gerada do Pedido ${pedido.numero_pedido}`, empresaId, null, op);
   // Atualizar pedido com OP gerada
   await base44.entities.Pedido.update(pedido.id, {
     ordem_producao_ids: [...(pedido.ordem_producao_ids || []), op.id],
@@ -289,7 +314,7 @@ async function gerarOPAutomatica(pedido, empresaId) {
  * 5️⃣ GERAR CONTA A RECEBER
  */
 async function gerarContaReceber(pedido, parcela, empresaId) {
-  return await base44.entities.ContaReceber.create({
+  const conta = await base44.entities.ContaReceber.create({
      empresa_id: empresaId,
      group_id: pedido.group_id,
     origem_tipo: "pedido",
@@ -305,6 +330,8 @@ async function gerarContaReceber(pedido, parcela, empresaId) {
     numero_parcela: parcela.numero_parcela.toString(),
     observacoes: `Gerado automaticamente do pedido ${pedido.numero_pedido}`
   });
+  await auditar("Financeiro","ContaReceber","create", conta.id, `CR gerada do Pedido ${pedido.numero_pedido} - Parcela ${parcela.numero_parcela}`, empresaId, null, conta);
+  return conta;
 }
 
 /**
@@ -351,6 +378,7 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
     }
 
     // 2. CRIAR ENTREGA AUTOMATICAMENTE
+    const user = await getUsuarioAtual();
     const entrega = await base44.entities.Entrega.create({
        empresa_id: empresaId,
        group_id: pedido.group_id,
@@ -371,6 +399,8 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
       valor_mercadoria: pedido.valor_total,
       status: "Pronto para Expedir",
       prioridade: pedido.prioridade || "Normal",
+      usuario_responsavel: (user?.full_name || user?.email || 'Sistema'),
+      usuario_responsavel_id: user?.id,
       qr_code: `ENT-${Date.now()}`,
       historico_status: [{
         status: "Pronto para Expedir",
@@ -380,7 +410,8 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
       }]
     });
 
-    resultados.entrega = entrega;
+    await auditar("Log edstica","Entrega","create", entrega.id, `Entrega criada do Pedido ${pedido.numero_pedido}`, empresaId, null, entrega);
+  resultados.entrega = entrega;
 
     // 3. ATUALIZAR PEDIDO
     await base44.entities.Pedido.update(pedido.id, {
@@ -420,8 +451,10 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
   }
 
   // Criar movimentação de saída
+  const user = await getUsuarioAtual();
   const movimentacao = await base44.entities.MovimentacaoEstoque.create({
     empresa_id: empresaId,
+    group_id: pedido.group_id,
     tipo_movimento: "liberacao_reserva",
     origem_movimento: "pedido",
     origem_documento_id: pedido.id,
@@ -482,13 +515,15 @@ export async function concluirOPCompleto(op, empresaId) {
           status_anterior: op.status,
           status_novo: "Finalizada",
           data_hora: new Date().toISOString(),
-          usuario: "Sistema",
+          usuario: (user?.full_name || user?.email || "Sistema"),
           observacao: "OP concluída - material liberado para expedição"
         }
       ]
     });
 
-    // 3. ATUALIZAR PEDIDO (se vinculado)
+    await auditar("Produ e7 e3o","OrdemProducao","update", op.id, `OP ${op.numero_op} finalizada`, empresaId, { status: op.status }, { status: "Finalizada" });
+
+  // 3. ATUALIZAR PEDIDO (se vinculado)
     if (op.pedido_id) {
       await base44.entities.Pedido.update(op.pedido_id, {
         status: "Pronto para Faturar"
@@ -628,6 +663,7 @@ async function liberarReservaEstoque(movimentacaoReserva, empresaId) {
     responsavel: "Sistema"
   });
 
+  await auditar("Estoque","MovimentacaoEstoque","create", mov.id, "Libera e7 e3o de reserva - pedido cancelado", empresaId, null, mov);
   // Atualizar produto
   await base44.entities.Produto.update(produto.id, {
     estoque_reservado: Math.max(0, (produto.estoque_reservado || 0) - movimentacaoReserva.quantidade)
