@@ -400,8 +400,6 @@ export async function faturarPedidoCompleto(pedido, nfe, empresaId) {
     const entrega = await base44.entities.Entrega.create({
       empresa_id: empresaId,
       group_id: pedido.group_id,
-      group_id: pedido.group_id,
-       group_id: pedido.group_id,
       pedido_id: pedido.id,
       numero_pedido: pedido.numero_pedido,
       nfe_id: nfe?.id,
@@ -470,6 +468,7 @@ async function baixarEstoqueItem(item, pedido, empresaId) {
   }
 
   // Criar movimentação de saída
+  const user = await getUsuarioAtual();
   const user = await getUsuarioAtual();
   const user = await getUsuarioAtual();
   const movimentacao = await base44.entities.MovimentacaoEstoque.create({
@@ -594,6 +593,7 @@ async function baixarMaterialProducao(material, op, empresaId) {
     responsavel_id: user?.id
   });
 
+  await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await auditar("Estoque","MovimentacaoEstoque","create", movConsumo.id, `Consumo na produção - OP ${op.numero_op}`, empresaId, null, movConsumo);
   await base44.entities.Produto.update(produto.id, {
     estoque_atual: Math.max(0, novoEstoque)
