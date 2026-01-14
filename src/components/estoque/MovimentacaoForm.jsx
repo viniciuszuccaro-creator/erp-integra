@@ -8,11 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, ArrowDown, ArrowUp } from "lucide-react";
+import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2: Movimentação Form - Adaptado para Window Mode
  */
 export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = false }) {
+  const { user: authUser } = useUser();
+  const { getFiltroContexto } = useContextoVisual();
+  const defaultEmpresaId = (getFiltroContexto('empresa_id') || {}).empresa_id || '';
   const [formData, setFormData] = useState(movimentacao || {
     tipo_movimentacao: '',
     produto_id: '',
@@ -22,8 +27,20 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
     data_movimentacao: new Date().toISOString().split('T')[0],
     documento_referencia: '',
     observacoes: '',
-    responsavel: ''
+    responsavel: '',
+    responsavel_id: '',
+    empresa_id: '',
+    group_id: ''
   });
+
+  React.useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      empresa_id: prev.empresa_id || defaultEmpresaId,
+      responsavel: prev.responsavel || (authUser?.full_name || authUser?.email || ''),
+      responsavel_id: prev.responsavel_id || authUser?.id || ''
+    }));
+  }, [authUser?.id, defaultEmpresaId]);
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
@@ -44,7 +61,13 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    const payload = {
+      ...formData,
+      empresa_id: formData.empresa_id || defaultEmpresaId,
+      responsavel: formData.responsavel || (authUser?.full_name || authUser?.email),
+      responsavel_id: formData.responsavel_id || authUser?.id
+    };
+    onSubmit(payload);
   };
 
   const content = (

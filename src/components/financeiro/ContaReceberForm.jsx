@@ -13,9 +13,11 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
+import { useUser } from "@/components/lib/UserContext";
 
 export default function ContaReceberForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
+  const { user: authUser } = useUser();
   const [formData, setFormData] = useState(() => conta || {
     descricao: '',
     cliente: '',
@@ -74,7 +76,11 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
       return;
     }
 
-    onSubmit(formData);
+    onSubmit({
+      ...formData,
+      criado_por: authUser?.full_name || authUser?.email,
+      criado_por_id: authUser?.id
+    });
   };
 
   const content = (

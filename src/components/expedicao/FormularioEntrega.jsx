@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
+import { useUser } from "@/components/lib/UserContext";
 import { base44 } from "@/api/base44Client";
 import { toast as sonnerToast } from "sonner";
 
@@ -33,6 +34,7 @@ export default function FormularioEntrega({
 
   const queryClient = useQueryClient();
   const { toast: toastHook } = useToast();
+  const { user: authUser } = useUser();
 
   const calcularPrevisaoEntrega = async () => {
     if (!formData.endereco_entrega_completo?.cidade) {
@@ -83,7 +85,14 @@ Retorne:
   };
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Entrega.create(data),
+    mutationFn: (data) => {
+      const payload = {
+        ...data,
+        usuario_responsavel: data.usuario_responsavel || (authUser?.full_name || authUser?.email),
+        usuario_responsavel_id: data.usuario_responsavel_id || authUser?.id,
+      };
+      return base44.entities.Entrega.create(payload);
+    },
     onSuccess: async (entregaCriada) => {
       queryClient.invalidateQueries({ queryKey: ['entregas'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
