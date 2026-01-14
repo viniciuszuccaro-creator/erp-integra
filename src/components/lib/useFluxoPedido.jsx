@@ -786,6 +786,7 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
           visivel_no_portal: true
         });
 
+        await auditar("Financeiro","ContaReceber","create", conta.id, `CR gerada do Pedido ${pedido.numero_pedido} - Parcela ${i}/${numeroParcelas}` , empresaId, null, conta);
         resultados.financeiro.contas.push(conta);
         onLog(`✅ Parcela ${i}/${numeroParcelas}: R$ ${valorParcela.toFixed(2)} - Venc: ${dataVencimento.toLocaleDateString('pt-BR')}`, 'success');
       }
@@ -811,6 +812,7 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
       } else {
         const entrega = await base44.entities.Entrega.create({
           empresa_id: empresaId,
+          group_id: pedido.group_id,
           pedido_id: pedido.id,
           numero_pedido: pedido.numero_pedido,
           cliente_id: pedido.cliente_id,
@@ -827,7 +829,9 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
           peso_total_kg: pedido.peso_total_kg || 0,
           volumes: 1,
           status: 'Aguardando Separação',
-          prioridade: pedido.prioridade || 'Normal'
+          prioridade: pedido.prioridade || 'Normal',
+          usuario_responsavel: (user?.full_name || user?.email || 'Sistema'),
+          usuario_responsavel_id: user?.id
         });
 
         await auditar("Expedição","Entrega","create", entrega.id, `Entrega criada do Pedido ${pedido.numero_pedido}`, empresaId, null, entrega);
