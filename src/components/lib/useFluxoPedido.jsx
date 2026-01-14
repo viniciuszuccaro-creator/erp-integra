@@ -810,6 +810,7 @@ export async function executarFechamentoCompleto(pedido, empresaId, callbacks = 
         });
         onLog(`✅ Pedido marcado para RETIRADA`, 'success');
       } else {
+        const user = await getUsuarioAtual();
         const entrega = await base44.entities.Entrega.create({
           empresa_id: empresaId,
           group_id: pedido.group_id,
