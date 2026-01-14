@@ -101,6 +101,7 @@ export default function Documentacao() {
           <TabsTrigger value="entidades">Entidades</TabsTrigger>
           <TabsTrigger value="ia">Inteligência Artificial</TabsTrigger>
           <TabsTrigger value="integracao">Integrações</TabsTrigger>
+            <TabsTrigger value="docs">📚 Documentos (MD)</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral">
