@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,15 +25,15 @@ import { base44 } from '@/api/base44Client';
 import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
 
 // Componentes das Etapas
-import WizardEtapa1Cliente from './wizard/WizardEtapa1Cliente';
-import ItensRevendaTab from './ItensRevendaTab';
-import ArmadoPadraoTab from './ArmadoPadraoTab';
-import CorteDobraIATab from './CorteDobraIATab';
-import HistoricoClienteTab from './HistoricoClienteTab'; // NOVO V21.1
-import LogisticaEntregaTab from './LogisticaEntregaTab';
-import FechamentoFinanceiroTab from './FechamentoFinanceiroTab';
-import ArquivosProjetosTab from './ArquivosProjetosTab';
-import AuditoriaAprovacaoTab from './AuditoriaAprovacaoTab';
+const WizardEtapa1Cliente = React.lazy(() => import('./wizard/WizardEtapa1Cliente'));
+const ItensRevendaTab = React.lazy(() => import('./ItensRevendaTab'));
+const ArmadoPadraoTab = React.lazy(() => import('./ArmadoPadraoTab'));
+const CorteDobraIATab = React.lazy(() => import('./CorteDobraIATab'));
+const HistoricoClienteTab = React.lazy(() => import('./HistoricoClienteTab')); // NOVO V21.1
+const LogisticaEntregaTab = React.lazy(() => import('./LogisticaEntregaTab'));
+const FechamentoFinanceiroTab = React.lazy(() => import('./FechamentoFinanceiroTab'));
+const ArquivosProjetosTab = React.lazy(() => import('./ArquivosProjetosTab'));
+const AuditoriaAprovacaoTab = React.lazy(() => import('./AuditoriaAprovacaoTab'));
 import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
 
 /**
@@ -442,7 +442,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
         <div className="flex-1 overflow-hidden">
           {/* ABA 1: IDENTIFICAÇÃO */}
           <TabsContent value="identificacao" className="h-full overflow-y-auto p-6 m-0">
-            <WizardEtapa1Cliente
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <WizardEtapa1Cliente
               formData={formData}
               setFormData={setFormData}
               clientes={clientes}
@@ -453,7 +454,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
           {/* ABA 2: ITENS DE REVENDA */}
           <TabsContent value="revenda" className="h-full overflow-y-auto p-6 m-0">
-            <ItensRevendaTab
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <ItensRevendaTab
               formData={formData}
               setFormData={setFormData}
               onNext={() => setActiveTab('armado')}
@@ -462,7 +464,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
           {/* ABA 3: ARMADO PADRÃO */}
           <TabsContent value="armado" className="h-full overflow-y-auto p-6 m-0">
-            <ArmadoPadraoTab
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <ArmadoPadraoTab
               formData={formData}
               setFormData={setFormData}
               empresaId={formData?.empresa_id}
@@ -472,7 +475,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
           {/* ABA 4: CORTE E DOBRA (IA) */}
           <TabsContent value="corte" className="h-full overflow-y-auto p-6 m-0">
-            <CorteDobraIATab
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <CorteDobraIATab
               formData={formData}
               setFormData={setFormData}
               empresaId={formData?.empresa_id}
@@ -482,7 +486,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
           {/* V21.1.2-R1: ABA 5 - HISTÓRICO DO CLIENTE (EXPANDIDA) */}
           <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
-            <HistoricoClienteTab
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <HistoricoClienteTab
               formData={formData}
               setFormData={setFormData}
               onAdicionarItemAoPedido={(produto) => {
@@ -495,7 +500,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
           {/* ABA 6: LOGÍSTICA */}
           <TabsContent value="logistica" className="h-full overflow-y-auto p-6 m-0">
-            <LogisticaEntregaTab
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <LogisticaEntregaTab
               formData={formData}
               setFormData={setFormData}
               clientes={clientes}
@@ -505,7 +511,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
           {/* ABA 7: FINANCEIRO */}
           <TabsContent value="financeiro" className="h-full overflow-y-auto p-6 m-0">
-            <FechamentoFinanceiroTab
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <FechamentoFinanceiroTab
               formData={formData}
               setFormData={setFormData}
               onNext={() => setActiveTab('arquivos')}
@@ -514,7 +521,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
           {/* ABA 8: ARQUIVOS */}
           <TabsContent value="arquivos" className="h-full overflow-y-auto p-6 m-0">
-            <ArquivosProjetosTab
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <ArquivosProjetosTab
               formData={formData}
               setFormData={setFormData}
             />
@@ -522,7 +530,8 @@ export default function PedidoFormCompleto({ pedido, clientes = [], onSubmit, on
 
           {/* V21.1.2-R1: ABA 9 - AUDITORIA (ALTURA CORRIGIDA) */}
           <TabsContent value="auditoria" className="h-full overflow-y-auto p-6 m-0">
-            <AuditoriaAprovacaoTab
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <AuditoriaAprovacaoTab
               formData={formData}
               pedido={pedido}
             />
