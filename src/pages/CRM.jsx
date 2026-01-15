@@ -45,7 +45,6 @@ import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 const InteracaoForm = React.lazy(() => import("../components/crm/InteracaoForm"));

@@ -20,7 +20,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function ConfiguracoesSistema() {
   const [activeTab, setActiveTab] = useState("diagnostico");

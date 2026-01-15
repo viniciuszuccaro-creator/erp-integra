@@ -18,7 +18,6 @@ const IAGovernancaCompliance = React.lazy(() => import("@/components/ia/IAGovern
 
 import { Shield, KeyRound, Users2, Activity, Brain } from "lucide-react";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function Acessos() {
   const [activeTab, setActiveTab] = useState("perfis");

@@ -35,7 +35,6 @@ import IAReposicao from "../components/estoque/IAReposicao";
 import { useWindow } from "@/components/lib/useWindow";
 import TransferenciaEntreEmpresasForm from "../components/estoque/TransferenciaEntreEmpresasForm";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 
 export default function Estoque() {
