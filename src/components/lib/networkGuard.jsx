@@ -52,14 +52,21 @@
         const headers = new Headers((init && init.headers) || (typeof input !== 'string' && input && input.headers) || {});
         const contexto = getContextoAtual();
         const groupId = getGroupAtualId();
-        if (empresaId) headers.set('x-company-id', empresaId);
+        if (empresaId) {
+          headers.set('x-company-id', empresaId);
+          headers.set('X-Company-ID', empresaId);
+        }
         if (contexto === 'grupo' && groupId) {
           headers.set('x-tenant-id', groupId);
+          headers.set('X-Tenant-ID', groupId);
           headers.set('x-group-id', groupId);
+          headers.set('X-Group-ID', groupId);
         } else if (empresaId) {
           headers.set('x-tenant-id', empresaId);
+          headers.set('X-Tenant-ID', empresaId);
         }
         headers.set('x-scope', contexto);
+        headers.set('X-Scope', contexto);
 
         // Reconstrói init preservando método/body/etc
         const nextInit = {
