@@ -40,6 +40,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { base44 } from "@/api/base44Client";
+import { useQueryClient } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
 import NotificationCenter from "@/components/NotificationCenter";
 import EmpresaSwitcher from "@/components/EmpresaSwitcher";
@@ -88,6 +89,39 @@ function LayoutContent({ children, currentPageName }) {
         const { hasPermission } = usePermissions();
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
+        const queryClient = useQueryClient();
+
+        const prefetchForItem = (title) => {
+          try {
+            switch (title) {
+              case 'Dashboard':
+                queryClient.prefetchQuery({ queryKey: ['dash', 'kpis'], queryFn: () => base44.entities.AuditLog.filter({}, '-data_hora', 5) });
+                break;
+              case 'CRM - Relacionamento':
+                queryClient.prefetchQuery({ queryKey: ['crm', 'clientes'], queryFn: () => base44.entities.Cliente.filter({}, '-updated_date', 10) });
+                queryClient.prefetchQuery({ queryKey: ['crm', 'oportunidades'], queryFn: () => base44.entities.Oportunidade.filter({}, '-updated_date', 10) });
+                break;
+              case 'Comercial e Vendas':
+                queryClient.prefetchQuery({ queryKey: ['comercial', 'pedidos'], queryFn: () => base44.entities.Pedido.filter({}, '-updated_date', 10) });
+                break;
+              case 'Estoque e Almoxarifado':
+                queryClient.prefetchQuery({ queryKey: ['estoque', 'produtos'], queryFn: () => base44.entities.Produto.filter({}, '-updated_date', 10) });
+                break;
+              case 'Compras e Suprimentos':
+                queryClient.prefetchQuery({ queryKey: ['compras', 'ocs'], queryFn: () => base44.entities.OrdemCompra.filter({}, '-updated_date', 10) });
+                break;
+              case 'Financeiro e Contábil':
+                queryClient.prefetchQuery({ queryKey: ['fin', 'pagar'], queryFn: () => base44.entities.ContaPagar.filter({}, '-updated_date', 10) });
+                queryClient.prefetchQuery({ queryKey: ['fin', 'receber'], queryFn: () => base44.entities.ContaReceber.filter({}, '-updated_date', 10) });
+                break;
+              case 'Expedição e Logística':
+                queryClient.prefetchQuery({ queryKey: ['log', 'entregas'], queryFn: () => base44.entities.Entrega.filter({}, '-updated_date', 10) });
+                break;
+              default:
+                break;
+            }
+          } catch (_) {}
+        };
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -372,7 +406,7 @@ function LayoutContent({ children, currentPageName }) {
                                   : 'hover:bg-slate-100 text-slate-700'
                               }`}
                             >
-                              <Link to={item.url} className="flex items-center gap-3 px-4 py-3">
+                              <Link to={item.url} onMouseEnter={() => prefetchForItem(item.title)} className="flex items-center gap-3 px-4 py-3">
                                 <item.icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
                                 <span className="font-medium">{item.title}</span>
                               </Link>

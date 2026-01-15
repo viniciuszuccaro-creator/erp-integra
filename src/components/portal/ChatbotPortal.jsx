@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { X, Minimize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ChatbotWidget from '@/components/chatbot/ChatbotWidget';
+import { useWindowManager } from '@/components/lib/WindowManager';
 
 /**
  * V21.5 - Chatbot Portal (REFATORADO)
@@ -19,6 +20,7 @@ import ChatbotWidget from '@/components/chatbot/ChatbotWidget';
  */
 export default function ChatbotPortal({ onClose, isMinimized, onToggleMinimize }) {
   const [clienteId, setClienteId] = useState(null);
+  const { openWindow, bringToFront } = useWindowManager();
 
   // Buscar cliente autenticado
   useEffect(() => {
@@ -39,6 +41,26 @@ export default function ChatbotPortal({ onClose, isMinimized, onToggleMinimize }
     
     fetchCliente();
   }, []);
+
+  // Notificações em tempo real via WindowContext (Omnichannel)
+  useEffect(() => {
+    if (!clienteId) return;
+    const unsubscribe = base44.entities.MensagemOmnicanal.subscribe((evt) => {
+      try {
+        if (evt.type === 'create' && evt?.data?.cliente_id === clienteId && evt?.data?.canal === 'Portal') {
+          const winId = openWindow(ChatbotWidget, { clienteId, canal: 'Portal', exibirBotaoFlutuante: false }, {
+            title: 'Nova mensagem do atendimento',
+            width: 420,
+            height: 560,
+            uniqueKey: `chat-portal-${clienteId}`,
+            bringToFront: true
+          });
+          bringToFront(winId);
+        }
+      } catch {}
+    });
+    return () => { if (typeof unsubscribe === 'function') unsubscribe(); };
+  }, [clienteId, openWindow, bringToFront]);
 
   if (isMinimized) {
     return null;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -87,6 +87,7 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
   
   // V21.1.2: NOVO TOGGLE
   const [modoManual, setModoManual] = useState(false);
+  const debounceTimeoutRef = useRef(null);
 
   // V22.0: Recalcular fatores quando mudam campos-chave
   useEffect(() => {
@@ -104,6 +105,25 @@ export default function ProdutoForm({ produto, onSubmit, isSubmitting }) {
         setFormData(prev => ({ ...prev, volume_m3: 0 }));
     }
   }, [formData.altura_cm, formData.largura_cm, formData.comprimento_cm, formData.volume_m3]);
+
+  // V22.1: Self-Healing automático (debounced)
+  useEffect(() => {
+    if (modoManual) {
+      setIaSugestao(null);
+      return;
+    }
+    if ((formData.descricao || '').length >= 5) {
+      if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+      debounceTimeoutRef.current = setTimeout(() => {
+        analisarDescricaoIA(formData.descricao);
+      }, 700);
+    } else {
+      setIaSugestao(null);
+    }
+    return () => {
+      if (debounceTimeoutRef.current) clearTimeout(debounceTimeoutRef.current);
+    };
+  }, [formData.descricao, modoManual]);
 
   // V22.0: MOTOR DE CONVERSÃO AUTOMÁTICA
   const recalcularFatoresConversao = () => {
@@ -355,6 +375,18 @@ Caso contrário, sugira:
                   <div>
                     <p className="font-semibold text-sm text-purple-900 mb-1">🤖 IA Classificou:</p>
                     <p className="text-xs text-purple-800">{iaSugestao.explicacao}</p>
+                    <div className="text-xs text-purple-700 mt-2 space-y-1">
+                      {iaSugestao.eh_bitola && <p>• <strong>É bitola:</strong> Sim</p>}
+                      {iaSugestao.peso_teorico_kg_m > 0 && <p>• <strong>Peso Teórico (kg/m):</strong> {iaSugestao.peso_teorico_kg_m}</p>}
+                      {iaSugestao.bitola_diametro_mm > 0 && <p>• <strong>Diâmetro (mm):</strong> {iaSugestao.bitola_diametro_mm}</p>}
+                      {iaSugestao.tipo_aco && <p>• <strong>Tipo de Aço:</strong> {iaSugestao.tipo_aco}</p>}
+                      {iaSugestao.ncm && <p>• <strong>NCM:</strong> {iaSugestao.ncm}</p>}
+                      {iaSugestao.grupo_produto && <p>• <strong>Grupo:</strong> {iaSugestao.grupo_produto}</p>}
+                      {iaSugestao.unidade_principal && <p>• <strong>Unidade Principal:</strong> {iaSugestao.unidade_principal}</p>}
+                      {iaSugestao.unidades_secundarias && iaSugestao.unidades_secundarias.length > 0 && (
+                        <p>• <strong>Unidades Habilitadas:</strong> {iaSugestao.unidades_secundarias.join(', ')}</p>
+                      )}
+                    </div>
                   </div>
                   <Button size="sm" onClick={aplicarSugestaoIA} className="bg-purple-600">
                     Aplicar Tudo
@@ -362,7 +394,7 @@ Caso contrário, sugira:
                 </div>
               </AlertDescription>
             </Alert>
-          )}
+          )
 
           {modoManual && iaSugestao && (
             <Alert className="border-orange-200 bg-orange-50">
@@ -372,6 +404,15 @@ Caso contrário, sugira:
               </AlertDescription>
             </Alert>
           )}
+
+          {processandoIA && !modoManual && (formData.descricao || '').length >= 5 && !iaSugestao && (
+            <Alert className="border-blue-200 bg-blue-50">
+              <AlertDescription className="flex items-center text-sm text-blue-900">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <span>Analisando descrição com IA...</span>
+              </AlertDescription>
+            </Alert>
+          )
 
           <div className="grid grid-cols-2 gap-4">
             <div>
