@@ -34,7 +34,6 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { AnimatePresence } from "framer-motion";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 
 /**
