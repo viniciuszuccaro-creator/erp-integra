@@ -3,6 +3,8 @@ import usePermissions from "@/components/lib/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
+import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 // ProtectedAction v2 - suporta modos: "disable" (padrão) e "hide" + auditoria opcional
 export function ProtectedAction({
@@ -16,6 +18,8 @@ export function ProtectedAction({
   auditMetadata = null,
 }) {
   const { hasPermission, isLoading } = usePermissions();
+  const { user } = useUser();
+  const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
 
   if (isLoading) return null;
 
