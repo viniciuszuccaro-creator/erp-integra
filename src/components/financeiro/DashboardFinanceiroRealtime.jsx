@@ -100,7 +100,7 @@ function DashboardFinanceiroRealtime({ empresaId, windowMode = false }) {
     });
   }, [contasReceber, contasPagar, movimentosCartao, conciliacoes, caixaMovimentos]);
 
-  const containerClass = windowMode ? "w-full h-full flex flex-col" : "space-y-6";
+  const containerClass = windowMode ? "w-full h-full flex flex-col" : "w-full h-full space-y-6";
 
   const dadosFluxoCaixa7Dias = [];
   for (let i = 6; i >= 0; i--) {
