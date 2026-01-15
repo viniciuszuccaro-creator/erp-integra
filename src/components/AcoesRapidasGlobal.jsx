@@ -16,6 +16,8 @@ import { base44 } from '@/api/base44Client';
 import { useWindow } from '@/components/lib/useWindow';
 import { Badge } from '@/components/ui/badge';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import usePermissions from '@/components/lib/usePermissions';
+import ModuleMap from '@/components/lib/ModuleMap';
 import CadastroClienteCompleto from '@/components/cadastros/CadastroClienteCompleto';
 import CadastroFornecedorCompleto from '@/components/cadastros/CadastroFornecedorCompleto';
 import ProdutoFormV22_Completo from '@/components/cadastros/ProdutoFormV22_Completo';
@@ -36,180 +38,121 @@ import { toast } from 'sonner';
 export default function AcoesRapidasGlobal() {
   const navigate = useNavigate();
   const { openWindow } = useWindow();
-  const { empresaAtual, estaNoGrupo } = useContextoVisual();
+  const { empresaAtual, estaNoGrupo, createInContext } = useContextoVisual();
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
     queryFn: () => base44.entities.Cliente.list(),
   });
 
-  const acoes = [
-    {
-      label: 'Novo Pedido',
-      icon: ShoppingCart,
-      action: () => openWindow(
-        PedidoFormCompleto,
-        { 
-          clientes,
-          windowMode: true,
-          onSubmit: async (formData) => {
-            try {
-              await base44.entities.Pedido.create(formData);
-              toast.success("✅ Pedido criado com sucesso!");
-            } catch (error) {
-              toast.error("Erro ao salvar pedido");
-            }
-          },
-          onCancel: () => {}
+  const { hasPermission, isLoading: loadingPerms, user } = usePermissions();
+
+  const actionHandlers = {
+    novoPedido: () => openWindow(
+      PedidoFormCompleto,
+      {
+        clientes,
+        windowMode: true,
+        onSubmit: async (formData) => {
+          try {
+            await createInContext('Pedido', formData);
+            toast.success('✅ Pedido criado com sucesso!');
+          } catch (error) {
+            toast.error('Erro ao salvar pedido');
+          }
         },
-        {
-          title: '🛒 Novo Pedido',
-          width: 1400,
-          height: 800
+        onCancel: () => {}
+      },
+      { title: '🛒 Novo Pedido', width: 1400, height: 800 }
+    ),
+    novoCliente: () => openWindow(CadastroClienteCompleto, { windowMode: true }, { title: '🧑 Novo Cliente', width: 1100, height: 650 }),
+    novoProduto: () => openWindow(ProdutoFormV22_Completo, { windowMode: true }, { title: '📦 Novo Produto', width: 1200, height: 700 }),
+    novoFornecedor: () => openWindow(CadastroFornecedorCompleto, { windowMode: true }, { title: '🏢 Novo Fornecedor', width: 1100, height: 650 }),
+    novaTabelaPreco: () => openWindow(TabelaPrecoFormCompleto, { windowMode: true }, { title: '💰 Nova Tabela', width: 1200, height: 700 }),
+    novaContaReceber: () => openWindow(ContaReceberForm, {
+      windowMode: true,
+      onSubmit: async (data) => {
+        try {
+          await createInContext('ContaReceber', data);
+          toast.success('✅ Conta criada!');
+        } catch (error) {
+          toast.error('Erro ao criar conta');
         }
-      ),
-      cor: 'text-blue-600'
-    },
-    {
-      label: 'Novo Cliente',
-      icon: Users,
-      action: () => openWindow(CadastroClienteCompleto, { windowMode: true }, {
-        title: '🧑 Novo Cliente',
-        width: 1100,
-        height: 650
-      }),
-      cor: 'text-green-600'
-    },
-    {
-      label: 'Novo Produto',
-      icon: Package,
-      action: () => openWindow(ProdutoFormV22_Completo, { windowMode: true }, {
-        title: '📦 Novo Produto',
-        width: 1200,
-        height: 700
-      }),
-      cor: 'text-purple-600'
-    },
-    {
-      label: 'Novo Fornecedor',
-      icon: Truck,
-      action: () => openWindow(CadastroFornecedorCompleto, { windowMode: true }, {
-        title: '🏢 Novo Fornecedor',
-        width: 1100,
-        height: 650
-      }),
-      cor: 'text-cyan-600'
-    },
-    {
-      label: 'Nova Tabela de Preço',
-      icon: DollarSign,
-      action: () => openWindow(TabelaPrecoFormCompleto, { windowMode: true }, {
-        title: '💰 Nova Tabela',
-        width: 1200,
-        height: 700
-      }),
-      cor: 'text-emerald-600'
-    },
-    {
-      label: 'Novo Título a Receber',
-      icon: DollarSign,
-      action: () => openWindow(ContaReceberForm, {
-        windowMode: true,
-        onSubmit: async (data) => {
-          try {
-            await base44.entities.ContaReceber.create(data);
-            toast.success("✅ Conta criada!");
-          } catch (error) {
-            toast.error("Erro ao criar conta");
-          }
+      }
+    }, { title: '💰 Nova Conta a Receber', width: 900, height: 600 }),
+    novaContaPagar: () => openWindow(ContaPagarForm, {
+      windowMode: true,
+      onSubmit: async (data) => {
+        try {
+          await createInContext('ContaPagar', data);
+          toast.success('✅ Conta criada!');
+        } catch (error) {
+          toast.error('Erro ao criar conta');
         }
-      }, {
-        title: '💰 Nova Conta a Receber',
-        width: 900,
-        height: 600
-      }),
-      cor: 'text-green-600'
-    },
-    {
-      label: 'Novo Título a Pagar',
-      icon: DollarSign,
-      action: () => openWindow(ContaPagarForm, {
-        windowMode: true,
-        onSubmit: async (data) => {
-          try {
-            await base44.entities.ContaPagar.create(data);
-            toast.success("✅ Conta criada!");
-          } catch (error) {
-            toast.error("Erro ao criar conta");
-          }
+      }
+    }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600 }),
+    novaOportunidade: () => openWindow(OportunidadeForm, {
+      windowMode: true,
+      onSubmit: async (data) => {
+        try {
+          await createInContext('Oportunidade', { ...data, quantidade_interacoes: 0, dias_sem_contato: 0 });
+          toast.success('✅ Oportunidade criada!');
+        } catch (error) {
+          toast.error('Erro ao criar oportunidade');
         }
-      }, {
-        title: '💸 Nova Conta a Pagar',
-        width: 900,
-        height: 600
-      }),
-      cor: 'text-red-600'
-    },
-    {
-      label: 'Nova Oportunidade CRM',
-      icon: Users,
-      action: () => openWindow(OportunidadeForm, {
-        windowMode: true,
-        onSubmit: async (data) => {
-          try {
-            await base44.entities.Oportunidade.create({
-              ...data,
-              quantidade_interacoes: 0,
-              dias_sem_contato: 0
-            });
-            toast.success("✅ Oportunidade criada!");
-          } catch (error) {
-            toast.error("Erro ao criar oportunidade");
-          }
+      }
+    }, { title: '🎯 Nova Oportunidade', width: 1000, height: 650 }),
+    novoEvento: () => openWindow(EventoForm, {
+      windowMode: true,
+      onSubmit: async (data) => {
+        try {
+          const dataInicio = `${data.data_inicio}T${data.hora_inicio || '00:00'}:00`;
+          const dataFim = `${data.data_fim}T${data.hora_fim || '23:59'}:00`;
+          const me = await base44.auth.me();
+          await createInContext('Evento', {
+            ...data,
+            data_inicio: dataInicio,
+            data_fim: dataFim,
+            responsavel: me?.full_name || 'Usuário',
+            responsavel_id: me?.id
+          });
+          toast.success('✅ Evento criado!');
+        } catch (error) {
+          toast.error('Erro ao criar evento');
         }
-      }, {
-        title: '🎯 Nova Oportunidade',
-        width: 1000,
-        height: 650
-      }),
-      cor: 'text-purple-600'
-    },
-    {
-      label: 'Novo Evento/Compromisso',
-      icon: DollarSign,
-      action: () => openWindow(EventoForm, {
-        windowMode: true,
-        onSubmit: async (data) => {
-          try {
-            const dataInicio = `${data.data_inicio}T${data.hora_inicio || '00:00'}:00`;
-            const dataFim = `${data.data_fim}T${data.hora_fim || '23:59'}:00`;
-            const user = await base44.auth.me();
-            await base44.entities.Evento.create({
-              ...data,
-              data_inicio: dataInicio,
-              data_fim: dataFim,
-              responsavel: user?.full_name || 'Usuário',
-              responsavel_id: user?.id
-            });
-            toast.success("✅ Evento criado!");
-          } catch (error) {
-            toast.error("Erro ao criar evento");
-          }
-        }
-      }, {
-        title: '📅 Novo Evento',
-        width: 1000,
-        height: 650
-      }),
-      cor: 'text-blue-600'
-    },
-    {
-      label: 'Nova NF-e',
-      icon: FileText,
-      action: () => navigate(createPageUrl('Fiscal') + '?action=nova-nfe'),
-      cor: 'text-indigo-600'
-    }
-  ];
+      }
+    }, { title: '📅 Novo Evento', width: 1000, height: 650 }),
+    novaNFe: () => navigate(createPageUrl('Fiscal') + '?action=nova-nfe'),
+  };
+
+  const colorMap = {
+    novoPedido: 'text-blue-600',
+    novoCliente: 'text-green-600',
+    novoProduto: 'text-purple-600',
+    novoFornecedor: 'text-cyan-600',
+    novaTabelaPreco: 'text-emerald-600',
+    novaContaReceber: 'text-green-600',
+    novaContaPagar: 'text-red-600',
+    novaOportunidade: 'text-purple-600',
+    novoEvento: 'text-blue-600',
+    novaNFe: 'text-indigo-600',
+  };
+
+  const acoes = ModuleMap.quickActions
+    .filter((qa) => {
+      if (loadingPerms) return true;
+      try {
+        return hasPermission(qa.module || qa.modulo || '', null, qa.perm || 'criar') || (user?.role === 'admin');
+      } catch {
+        return true;
+      }
+    })
+    .map((qa) => ({
+      label: qa.label,
+      icon: qa.icon,
+      action: actionHandlers[qa.key],
+      cor: colorMap[qa.key] || 'text-slate-600',
+    }));
 
   return (
     <DropdownMenu>
