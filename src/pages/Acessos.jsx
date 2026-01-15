@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,7 @@ export default function Acessos() {
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());

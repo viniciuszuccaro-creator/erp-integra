@@ -52,6 +52,7 @@ import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
 import ZIndexGuard from "@/components/lib/ZIndexFix";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import "@/components/lib/networkGuard";
 
 const navigationItems = [
@@ -400,7 +401,7 @@ function LayoutContent({ children, currentPageName }) {
 
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => setPesquisaOpen(true)}
+                  onClick={() => startTransition(() => setPesquisaOpen(true))}
                   className="p-2 hover:bg-slate-100 rounded-lg transition-colors hidden md:flex items-center gap-2"
                   title="Pesquisa Universal (Ctrl+K)"
                 >
@@ -424,9 +425,11 @@ function LayoutContent({ children, currentPageName }) {
           </header>
 
           <div className="flex-1 overflow-auto">
-            <Suspense fallback={<div className="p-6 text-slate-500">Carregando…</div>}>
-              {children}
-            </Suspense>
+            <ErrorBoundary>
+              <Suspense fallback={<div className="p-6 text-slate-500">Carregando…</div>}>
+                {children}
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </main>
 
