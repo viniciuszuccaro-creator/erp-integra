@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense, startTransition } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
@@ -92,7 +92,7 @@ function LayoutContent({ children, currentPageName }) {
       
       if (ctrl && e.key === 'k') {
         e.preventDefault();
-        setPesquisaOpen(true);
+        startTransition(() => setPesquisaOpen(true));
       }
 
       if (ctrl && e.shiftKey && e.key === 'D') {
@@ -107,7 +107,7 @@ function LayoutContent({ children, currentPageName }) {
 
       if (ctrl && e.key === 'm') {
         e.preventDefault();
-        setModoEscuro(prev => !prev);
+        startTransition(() => setModoEscuro(prev => !prev));
       }
 
       // V21.0 FASE 1: Atalhos para abrir janelas multitarefa
@@ -369,7 +369,7 @@ function LayoutContent({ children, currentPageName }) {
             
             <div className="mt-2 pt-2 border-t border-slate-200">
               <button
-                onClick={() => setModoEscuro(!modoEscuro)}
+                onClick={() => startTransition(() => setModoEscuro(!modoEscuro))}
                 className="w-full flex items-center gap-2 p-2 rounded hover:bg-slate-100 text-sm text-slate-600 transition-colors"
                 title="Ctrl+M"
               >
@@ -424,13 +424,15 @@ function LayoutContent({ children, currentPageName }) {
           </header>
 
           <div className="flex-1 overflow-auto">
-            {children}
+            <Suspense fallback={<div className="p-6 text-slate-500">Carregando…</div>}>
+              {children}
+            </Suspense>
           </div>
         </main>
 
         <PesquisaUniversal 
           open={pesquisaOpen} 
-          onOpenChange={setPesquisaOpen} 
+          onOpenChange={(v) => startTransition(() => setPesquisaOpen(v))} 
         />
 
         {/* Sistema de Janelas Multitarefa V21.0 */}
