@@ -24,7 +24,7 @@ const DashboardInadimplencia = React.lazy(() => import("@/components/relatorios/
 const RelatorioVendasPorRegiao = React.lazy(() => import("@/components/relatorios/RelatorioVendasPorRegiao"));
 const DashboardRepresentantes = React.lazy(() => import("@/components/relatorios/DashboardRepresentantes"));
 import useContextoVisual from "@/components/lib/useContextoVisual";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
+
 
 const AgendamentoRelatorios = React.lazy(() => import("../components/relatorios/AgendamentoRelatorios"));
 const GeradorRelatorios = React.lazy(() => import('../components/sistema/GeradorRelatorios')); // Added import

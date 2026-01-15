@@ -11,7 +11,7 @@ const CotacoesTab = React.lazy(() => import("../components/compras/CotacoesTab")
 const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/ImportacaoNFeRecebimento"));
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
+
 
 export default function Compras() {
   const [activeTab, setActiveTab] = useState("fornecedores");
