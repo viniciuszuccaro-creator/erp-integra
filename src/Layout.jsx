@@ -52,6 +52,7 @@ import WindowRenderer from "@/components/lib/WindowRenderer";
 import MinimizedWindowsBar from "@/components/lib/MinimizedWindowsBar";
 import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
 import ZIndexGuard from "@/components/lib/ZIndexFix";
+import "@/components/lib/networkGuard";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },

@@ -49,6 +49,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'empresa_id é obrigatório' }, { status: 400 });
     }
 
+    // Fase 1 - Blindagem Multiempresa: valida escopo pelo header
+    const companyIdHeader = req.headers.get('x-company-id');
+    if (companyIdHeader && companyIdHeader !== empresa_id) {
+      return Response.json({ error: 'Empresa do header não corresponde ao payload' }, { status: 403 });
+    }
+
     // Mapeamento padrão baseado no que foi informado pelo usuário (colunas por letra)
     // Ex.: 29A, 29B etc. – usamos apenas a letra.
     const defaultMapping = {
