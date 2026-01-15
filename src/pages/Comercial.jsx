@@ -259,7 +259,7 @@ export default function Comercial() {
   }
 
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Comercial e Vendas</h1>
@@ -597,14 +597,16 @@ export default function Comercial() {
         </TabsContent>
       </Tabs>
 
-      <PainelDinamicoCliente
-        cliente={clienteParaPainel}
-        isOpen={painelClienteAberto}
-        onClose={() => {
-          setPainelClienteAberto(false);
-          setClienteParaPainel(null);
-        }}
-      />
+      <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}>
+        <PainelDinamicoCliente
+          cliente={clienteParaPainel}
+          isOpen={painelClienteAberto}
+          onClose={() => {
+            setPainelClienteAberto(false);
+            setClienteParaPainel(null);
+          }}
+        />
+      </Suspense>
     </div>
   );
 }

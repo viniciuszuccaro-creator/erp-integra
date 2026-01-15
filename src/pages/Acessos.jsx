@@ -92,7 +92,7 @@ export default function Acessos() {
   }
 
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>

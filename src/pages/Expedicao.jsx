@@ -45,7 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
-import ComprovanteDigital from "../components/expedicao/ComprovanteDigital";
+const ComprovanteDigital = React.lazy(() => import("../components/expedicao/ComprovanteDigital"));
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import RomaneioForm from "../components/expedicao/RomaneioForm";
@@ -65,7 +65,7 @@ import FormularioEntrega from "../components/expedicao/FormularioEntrega";
 import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTransportadora";
 import { useRealtimeEntregas } from '@/components/lib/useRealtimeData';
-import MapaTempoReal from '../components/expedicao/MapaTempoReal';
+const MapaTempoReal = React.lazy(() => import('../components/expedicao/MapaTempoReal'));
 import DetalhesEntregaView from "../components/expedicao/DetalhesEntregaView";
 const DashboardEntregasRealtime = React.lazy(() => import("../components/expedicao/DashboardEntregasRealtime"));
 import DashboardLogisticaInteligente from "../components/logistica/DashboardLogisticaInteligente";
@@ -597,7 +597,7 @@ export default function Expedicao() {
   }
 
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -1114,7 +1114,9 @@ export default function Expedicao() {
             
             {/* Mapa Tempo Real (se houver entrega selecionada com romaneio) */}
             {entregaSelecionada?.romaneio_id && (
-              <MapaTempoReal romaneioId={entregaSelecionada.romaneio_id} />
+              <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}>
+                <MapaTempoReal romaneioId={entregaSelecionada.romaneio_id} />
+              </Suspense>
             )}
           </TabsContent>
 
@@ -1462,11 +1464,13 @@ export default function Expedicao() {
 
         {/* Modal de Comprovante - mantido por ser visualização de imagem */}
         {comprovanteModal && (
-          <ComprovanteDigital
-            entrega={comprovanteModal}
-            isOpen={!!comprovanteModal}
-            onClose={() => setComprovanteModal(null)}
-          />
+          <Suspense fallback={<div className="h-[400px] w-full bg-white/60 animate-pulse rounded" />}> 
+            <ComprovanteDigital
+              entrega={comprovanteModal}
+              isOpen={!!comprovanteModal}
+              onClose={() => setComprovanteModal(null)}
+            />
+          </Suspense>
         )}
       </div>
     </div>
