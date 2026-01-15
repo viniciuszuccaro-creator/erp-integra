@@ -52,6 +52,7 @@ const DashboardTempoReal = React.lazy(() => import('../components/dashboard/Dash
 const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/DashboardOperacionalBI"));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem"));
 
 

@@ -7,6 +7,7 @@ import ConfigCenter from '../components/sistema/ConfigCenter';
 import ConfiguracaoBackup from '../components/sistema/ConfiguracaoBackup';
 import HistoricoBackups from '../components/sistema/HistoricoBackups';
 import { useUser } from '../components/lib/UserContext';
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ErrorBoundary from '@/components/lib/ErrorBoundary';
 import DashboardPerformance from '../components/sistema/DashboardPerformance';
 import ConfiguracaoMonitoramento from '../components/sistema/ConfiguracaoMonitoramento';

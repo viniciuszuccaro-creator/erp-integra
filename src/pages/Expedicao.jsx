@@ -49,6 +49,7 @@ const ComprovanteDigital = React.lazy(() => import("../components/expedicao/Comp
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import RomaneioForm from "../components/expedicao/RomaneioForm";
 const RoteirizacaoMapa = React.lazy(() => import("../components/expedicao/RoteirizacaoMapa"));
 const DashboardLogistico = React.lazy(() => import("../components/expedicao/DashboardLogistico"));

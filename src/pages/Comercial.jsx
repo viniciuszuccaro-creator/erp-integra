@@ -35,6 +35,7 @@ import NotaFiscalFormCompleto from "../components/comercial/NotaFiscalFormComple
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 /**
  * Módulo Comercial - V12.0 COMPLETO

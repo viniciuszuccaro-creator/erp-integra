@@ -137,7 +137,7 @@ import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
 import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
 import DashboardCliente from "@/components/portal/DashboardCliente";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
+
 
 /**
  * ⭐⭐⭐ CADASTROS GERAIS V21.3 - FASE 3: 100% COMPLETA ⭐⭐⭐

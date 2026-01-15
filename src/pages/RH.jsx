@@ -49,6 +49,7 @@ const MonitoramentoRHInteligente = React.lazy(() => import("@/components/rh/Moni
 const PontoEletronicoBiometrico = React.lazy(() => import("@/components/rh/PontoEletronicoBiometrico"));
 const DashboardRHRealtime = React.lazy(() => import("../components/rh/DashboardRHRealtime"));
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 
 export default function RH() {

@@ -12,6 +12,7 @@ const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 
 export default function Compras() {
