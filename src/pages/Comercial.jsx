@@ -13,7 +13,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 const ComissoesTab = React.lazy(() => import("../components/comercial/ComissoesTab"));
 const NotasFiscaisTab = React.lazy(() => import("../components/comercial/NotasFiscaisTab"));
 const TabelasPrecoTab = React.lazy(() => import("../components/comercial/TabelasPrecoTab"));
-import PainelDinamicoCliente from "../components/cadastros/PainelDinamicoCliente";
+const PainelDinamicoCliente = React.lazy(() => import("../components/cadastros/PainelDinamicoCliente"));
 import usePermissions from "@/components/lib/usePermissions";
 import CentralAprovacoesManager from "../components/comercial/CentralAprovacoesManager";
 const PedidosEntregaTab = React.lazy(() => import("../components/comercial/PedidosEntregaTab"));
