@@ -4829,12 +4829,12 @@ export default function Cadastros() {
 
         {/* ABA: CONTROLE DE ACESSO - V21.7 MELHORADO */}
         <TabsContent value="acesso" className="mt-6">
-          <CentralPerfisAcesso />
+          <Suspense fallback={<div>Carregando...</div>}><CentralPerfisAcesso /></Suspense>
         </TabsContent>
 
         {/* ABA: AUDIT LOG */}
         <TabsContent value="auditoria" className="mt-6">
-          <GlobalAuditLog limite={50} mostrarFiltros={true} />
+          <Suspense fallback={<div>Carregando...</div>}><GlobalAuditLog limite={50} mostrarFiltros={true} /></Suspense>
         </TabsContent>
       </Tabs>
       </ErrorBoundary>

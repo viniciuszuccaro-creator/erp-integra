@@ -387,7 +387,7 @@ export default function Relatorios() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <selectedReport.component empresaId={empresaAtual?.id} />
+                  <Suspense fallback={<div>Carregando...</div>}><selectedReport.component empresaId={empresaAtual?.id} /></Suspense>
                 </CardContent>
               </Card>
             )}
@@ -540,7 +540,7 @@ export default function Relatorios() {
         </TabsContent>
 
         <TabsContent value="agendamento">
-          <AgendamentoRelatorios empresaId={empresaAtual?.id} />
+          <Suspense fallback={<div>Carregando...</div>}><AgendamentoRelatorios empresaId={empresaAtual?.id} /></Suspense>
         </TabsContent>
 
         {/* New TabsContent for 'vendas', 'financeiro', 'estoque', 'producao', 'dre' could go here if needed.
@@ -578,7 +578,7 @@ export default function Relatorios() {
 
         {/* NEW: Tab Exportação */}
         <TabsContent value="exportacao">
-          <GeradorRelatorios empresaId={empresaAtual?.id} />
+          <Suspense fallback={<div>Carregando...</div>}><GeradorRelatorios empresaId={empresaAtual?.id} /></Suspense>
         </TabsContent>
         </Tabs>
       </ErrorBoundary>

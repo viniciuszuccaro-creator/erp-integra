@@ -51,6 +51,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 const ChatbotDashboard = React.lazy(() => import("@/components/chatbot/ChatbotDashboard"));
 const ConfiguracaoCanais = React.lazy(() => import("@/components/chatbot/ConfiguracaoCanais"));
 const GerenciadorTemplates = React.lazy(() => import("@/components/chatbot/GerenciadorTemplates"));
