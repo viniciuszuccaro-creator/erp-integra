@@ -97,41 +97,46 @@ export default function Seguranca() {
         <TabsContent value="governanca">
           <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
             <PainelGovernanca
-            empresaId={user?.empresa_padrao_id}
-            grupoId={user?.grupo_padrao_id}
-          />
+              empresaId={user?.empresa_padrao_id}
+              grupoId={user?.grupo_padrao_id}
+            />
+          </Suspense>
         </TabsContent>
 
         {/* NOVA ABA: Performance / APM */}
         <TabsContent value="performance" className="space-y-6">
           <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
             <ConfiguracaoMonitoramento empresaId={user?.empresa_padrao_id} grupoId={user?.grupo_padrao_id} />
-          <DashboardPerformance empresaId={user?.empresa_padrao_id} grupoId={user?.grupo_padrao_id} />
+            <DashboardPerformance empresaId={user?.empresa_padrao_id} grupoId={user?.grupo_padrao_id} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="configuracoes">
           <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
             <ConfigCenter empresaId={user?.empresa_padrao_id} />
+          </Suspense>
         </TabsContent>
 
         {/* NOVA ABA: JWT e Sessões */}
         <TabsContent value="jwt-sessoes" className="space-y-6">
           <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
             <ConfiguracaoSeguranca empresaId={user?.empresa_padrao_id} grupoId={user?.grupo_padrao_id} />
-          <GerenciadorSessoes />
+            <GerenciadorSessoes />
+          </Suspense>
         </TabsContent>
 
         {/* NOVA ABA: Backup Automático */}
         <TabsContent value="backup" className="space-y-6">
           <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
             <ConfiguracaoBackup
-            empresaId={user?.empresa_padrao_id}
-            grupoId={user?.grupo_padrao_id}
-          />
+              empresaId={user?.empresa_padrao_id}
+              grupoId={user?.grupo_padrao_id}
+            />
             <HistoricoBackups
-            empresaId={user?.empresa_padrao_id}
-            grupoId={user?.grupo_padrao_id}
-          />
+              empresaId={user?.empresa_padrao_id}
+              grupoId={user?.grupo_padrao_id}
+            />
+          </Suspense>
         </TabsContent>
         </Tabs>
       </ErrorBoundary>

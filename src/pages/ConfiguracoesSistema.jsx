@@ -76,7 +76,7 @@ export default function ConfiguracoesSistema() {
 
         <TabsContent value="diagnostico">
           <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
-          <div className="space-y-4">
+            <div className="space-y-4">
             <Card className="border-yellow-200 bg-yellow-50">
               <CardHeader>
                 <CardTitle className="text-yellow-900">🔧 Diagnóstico do Sistema</CardTitle>
@@ -86,7 +86,8 @@ export default function ConfiguracoesSistema() {
               </CardHeader>
             </Card>
             <DiagnosticoBackend />
-          </div>
+            </div>
+          </Suspense>
         </TabsContent>
 
 
