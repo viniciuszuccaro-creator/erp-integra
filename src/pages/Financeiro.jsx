@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 const DashboardFormasPagamento = React.lazy(() => import("../components/financeiro/DashboardFormasPagamento"));
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +37,7 @@ const RateioMultiempresa = React.lazy(() => import("../components/financeiro/Rat
 const ReguaCobrancaIA = React.lazy(() => import("../components/financeiro/ReguaCobrancaIA"));
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 const ContaReceberForm = React.lazy(() => import("../components/financeiro/ContaReceberForm"));
 const ContaPagarForm = React.lazy(() => import("../components/financeiro/ContaPagarForm"));
 const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
@@ -60,7 +61,7 @@ export default function Financeiro() {
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -343,7 +344,8 @@ export default function Financeiro() {
       {/* NOVO: Régua de Cobrança IA */}
       <ReguaCobrancaIA empresaId={empresaAtual?.id} />
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="dashboard-mestre" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
             <BarChart3 className="w-4 h-4 mr-2" />
@@ -655,6 +657,7 @@ export default function Financeiro() {
           <AlertasFinanceirosEmpresa empresaId={empresaAtual?.id} groupId={empresasDoGrupo[0]?.group_id} windowMode={false} />
         </TabsContent>
       </Tabs>
+      </ErrorBoundary>
     </div>
   );
 }

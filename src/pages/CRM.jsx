@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -44,6 +44,7 @@ const FunilVendasAvancado = React.lazy(() => import("@/components/crm/FunilVenda
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 const InteracaoForm = React.lazy(() => import("../components/crm/InteracaoForm"));
@@ -58,7 +59,7 @@ export default function CRMPage() {
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -668,7 +669,8 @@ export default function CRMPage() {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="funil" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <TrendingUp className="w-4 h-4 mr-2" />
@@ -1500,6 +1502,7 @@ export default function CRMPage() {
           <IAChurnDetection clientes={clientes} />
         </TabsContent>
       </Tabs>
+      </ErrorBoundary>
 
       <Dialog open={!!viewingOpp} onOpenChange={() => setViewingOpp(null)}>
         <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">

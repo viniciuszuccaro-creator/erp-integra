@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,6 +34,7 @@ import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
 import NotaFiscalFormCompleto from "../components/comercial/NotaFiscalFormCompleto";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 /**
  * Módulo Comercial - V12.0 COMPLETO
@@ -52,7 +53,7 @@ export default function Comercial() {
   }, []);
 
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -346,7 +347,8 @@ export default function Comercial() {
         <MonitoramentoCanaisRealtime autoRefresh={true} />
       </Suspense>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap">
           <TabsTrigger 
             value="clientes" 
@@ -596,6 +598,7 @@ export default function Comercial() {
           </Suspense>
         </TabsContent>
       </Tabs>
+      </ErrorBoundary>
 
       <Suspense fallback={<div className="h-64 rounded-md bg-slate-100 animate-pulse" />}>
         <PainelDinamicoCliente

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,6 +48,7 @@ import usePermissions from "@/components/lib/usePermissions";
 const ComprovanteDigital = React.lazy(() => import("../components/expedicao/ComprovanteDigital"));
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import RomaneioForm from "../components/expedicao/RomaneioForm";
 const RoteirizacaoMapa = React.lazy(() => import("../components/expedicao/RoteirizacaoMapa"));
 const DashboardLogistico = React.lazy(() => import("../components/expedicao/DashboardLogistico"));
@@ -86,7 +87,7 @@ export default function Expedicao() {
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -713,7 +714,8 @@ export default function Expedicao() {
         </div>
 
         {/* NOVA: Tabs para organizar */}
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+        <ErrorBoundary>
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
             <TabsTrigger value="entregas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <Truck className="w-4 h-4 mr-2" />
@@ -1411,6 +1413,7 @@ export default function Expedicao() {
             </Suspense>
           </TabsContent>
         </Tabs>
+        </ErrorBoundary>
 
         {/* Dialogs Modernos V21.5 */}
         <Dialog open={notificadorOpen} onOpenChange={setNotificadorOpen}>

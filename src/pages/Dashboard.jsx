@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -51,6 +51,7 @@ const GamificacaoOperacoes = React.lazy(() => import("../components/dashboard/Ga
 const DashboardTempoReal = React.lazy(() => import('../components/dashboard/DashboardTempoReal'));
 const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/DashboardOperacionalBI"));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem"));
 
 
@@ -77,7 +78,7 @@ export default function Dashboard() {
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -650,7 +651,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="bg-white border shadow-sm">
           <TabsTrigger value="tempo-real" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Activity className="w-4 h-4 mr-2" />
@@ -1113,6 +1115,7 @@ export default function Dashboard() {
           {/* Example: <PainelOperacoes3D empresaId={null} grupoId={null} /> */}
         </TabsContent>
       </Tabs>
+      </ErrorBoundary>
       </div>
     </div>
   );
