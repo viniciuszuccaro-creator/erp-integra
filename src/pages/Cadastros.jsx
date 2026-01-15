@@ -566,7 +566,6 @@ export default function Cadastros() {
 
       {/* TABS: CADASTROS vs GERENCIAMENTO */}
       <ErrorBoundary>
-        <ErrorBoundary>
         <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
         <TabsList className="grid w-full grid-cols-3 bg-slate-100">
           <TabsTrigger value="cadastros">
