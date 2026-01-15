@@ -4,6 +4,8 @@
  * Fontes: ReceitaWS → BrasilAPI (fallback automático)
  */
 
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+
 export default async function ConsultarCNPJ({ cnpj }) {
   console.log('🚀 [Backend] ConsultarCNPJ iniciado:', cnpj);
   
@@ -136,7 +138,31 @@ export default async function ConsultarCNPJ({ cnpj }) {
   // ===== TODAS AS FONTES FALHARAM =====
   console.error('❌ [Backend] Todas as APIs falharam para CNPJ:', cnpjLimpo);
   return {
-    sucesso: false,
-    erro: '❌ CNPJ não encontrado nas fontes públicas. Verifique se digitou corretamente.'
+  sucesso: false,
+  erro: '❌ CNPJ não encontrado nas fontes públicas. Verifique se digitou corretamente.'
   };
-}
+  }
+
+  // HTTP Wrapper - Fase 1: Segurança com autenticação e escopo multiempresa
+  Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const companyIdHeader = req.headers.get('x-company-id');
+    if (!companyIdHeader) {
+      return Response.json({ error: 'x-company-id é obrigatório no header' }, { status: 400 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const { cnpj } = body || {};
+
+    const result = await ConsultarCNPJ({ cnpj });
+    return Response.json(result);
+  } catch (error) {
+    return Response.json({ error: error?.message || String(error) }, { status: 500 });
+  }
+  });
