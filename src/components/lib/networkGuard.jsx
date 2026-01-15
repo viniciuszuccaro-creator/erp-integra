@@ -19,6 +19,23 @@
     }
   }
 
+  function getContextoAtual() {
+    try {
+      return localStorage.getItem('contexto_atual') || 'empresa';
+    } catch {
+      return 'empresa';
+    }
+  }
+
+  function getGroupAtualId() {
+    try {
+      const groupId = localStorage.getItem('group_atual_id');
+      return groupId || null;
+    } catch {
+      return null;
+    }
+  }
+
   window.fetch = async function(input, init) {
     try {
       const empresaId = getEmpresaAtualId();
@@ -30,7 +47,7 @@
       // Só injeta em chamadas do mesmo domínio (inclui SDK/entities/functions)
       const isSameOrigin = fullUrl.origin === window.location.origin;
 
-      if (isSameOrigin && empresaId) {
+      if (isSameOrigin) {
         // Normaliza headers preservando existentes
         const headers = new Headers((init && init.headers) || (typeof input !== 'string' && input && input.headers) || {});
         const contexto = getContextoAtual();
