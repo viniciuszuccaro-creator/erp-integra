@@ -743,3 +743,4 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
   return content;
 }
+export default React.memo(PedidoFormCompleto);

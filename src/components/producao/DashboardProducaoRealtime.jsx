@@ -285,3 +285,4 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
     </div>
   );
 }
+export default React.memo(DashboardProducaoRealtime);
