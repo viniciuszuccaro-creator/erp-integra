@@ -1030,9 +1030,10 @@ export default function CRMPage() {
                               height: 650
                             })}
                             title="Editar"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            </ProtectedAction>
                           <ProtectedAction module="CRM" section="Oportunidades" action="editar">
                                                       <Button
                                                         variant="ghost"
@@ -1045,6 +1046,7 @@ export default function CRMPage() {
                           </Button>
                           </ProtectedAction>
                           {(opp.etapa === "Negociação" || opp.etapa === "Fechamento") && (
+                            <ProtectedAction module="Comercial" section="Pedidos" action="criar">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1054,6 +1056,7 @@ export default function CRMPage() {
                             >
                               <ShoppingCart className="w-4 h-4" />
                             </Button>
+                            </ProtectedAction>
                           )}
                         </div>
                       </TableCell>
@@ -1633,7 +1636,7 @@ export default function CRMPage() {
                     Converter em Venda
                   </Button>
                   </ProtectedAction>
-                )
+                )}}
               </div>
             </div>
           )}
