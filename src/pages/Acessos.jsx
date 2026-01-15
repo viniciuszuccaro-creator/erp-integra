@@ -17,6 +17,7 @@ const GlobalAuditLog = React.lazy(() => import("@/components/sistema/GlobalAudit
 const IAGovernancaCompliance = React.lazy(() => import("@/components/ia/IAGovernancaCompliance"));
 
 import { Shield, KeyRound, Users2, Activity, Brain } from "lucide-react";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function Acessos() {
   const [activeTab, setActiveTab] = useState("perfis");
@@ -112,7 +113,8 @@ export default function Acessos() {
       </div>
 
       {/* Painel redimensionável (sidebar de status à esquerda, conteúdo à direita) */}
-      <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-13rem)] min-h-[480px] max-h-[calc(100vh-14rem)]">
+      <ErrorBoundary>
+        <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-13rem)] min-h-[480px] max-h-[calc(100vh-14rem)]">
         <ResizablePanel defaultSize={28} minSize={20} maxSize={40} className="h-full">
           <div className="h-full flex flex-col gap-4">
             <Card className="h-full border-0 shadow-md">
@@ -211,6 +213,7 @@ export default function Acessos() {
           </Card>
         </ResizablePanel>
       </ResizablePanelGroup>
+        </ErrorBoundary>
     </div>
   );
 }

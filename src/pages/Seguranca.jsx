@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, startTransition } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Activity, Settings, Database } from 'lucide-react';
 import PainelGovernanca from '../components/governanca/PainelGovernanca';
@@ -7,6 +7,7 @@ import ConfigCenter from '../components/sistema/ConfigCenter';
 import ConfiguracaoBackup from '../components/sistema/ConfiguracaoBackup';
 import HistoricoBackups from '../components/sistema/HistoricoBackups';
 import { useUser } from '../components/lib/UserContext';
+import ErrorBoundary from '@/components/lib/ErrorBoundary';
 import DashboardPerformance from '../components/sistema/DashboardPerformance';
 import ConfiguracaoMonitoramento from '../components/sistema/ConfiguracaoMonitoramento';
 import GerenciadorSessoes from '../components/sistema/GerenciadorSessoes';
@@ -24,10 +25,10 @@ export default function Seguranca() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) { try { initial = localStorage.getItem('Seguranca_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
+    if (initial) startTransition(() => setActiveTab(initial));
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -59,7 +60,8 @@ export default function Seguranca() {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger
             value="governanca"
@@ -93,7 +95,8 @@ export default function Seguranca() {
         </TabsList>
 
         <TabsContent value="governanca">
-          <PainelGovernanca
+          <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
+            <PainelGovernanca
             empresaId={user?.empresa_padrao_id}
             grupoId={user?.grupo_padrao_id}
           />
@@ -101,32 +104,37 @@ export default function Seguranca() {
 
         {/* NOVA ABA: Performance / APM */}
         <TabsContent value="performance" className="space-y-6">
-          <ConfiguracaoMonitoramento empresaId={user?.empresa_padrao_id} grupoId={user?.grupo_padrao_id} />
+          <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
+            <ConfiguracaoMonitoramento empresaId={user?.empresa_padrao_id} grupoId={user?.grupo_padrao_id} />
           <DashboardPerformance empresaId={user?.empresa_padrao_id} grupoId={user?.grupo_padrao_id} />
         </TabsContent>
 
         <TabsContent value="configuracoes">
-          <ConfigCenter empresaId={user?.empresa_padrao_id} />
+          <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
+            <ConfigCenter empresaId={user?.empresa_padrao_id} />
         </TabsContent>
 
         {/* NOVA ABA: JWT e Sessões */}
         <TabsContent value="jwt-sessoes" className="space-y-6">
-          <ConfiguracaoSeguranca empresaId={user?.empresa_padrao_id} grupoId={user?.grupo_padrao_id} />
+          <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
+            <ConfiguracaoSeguranca empresaId={user?.empresa_padrao_id} grupoId={user?.grupo_padrao_id} />
           <GerenciadorSessoes />
         </TabsContent>
 
         {/* NOVA ABA: Backup Automático */}
         <TabsContent value="backup" className="space-y-6">
-          <ConfiguracaoBackup
+          <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
+            <ConfiguracaoBackup
             empresaId={user?.empresa_padrao_id}
             grupoId={user?.grupo_padrao_id}
           />
-          <HistoricoBackups
+            <HistoricoBackups
             empresaId={user?.empresa_padrao_id}
             grupoId={user?.grupo_padrao_id}
           />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </ErrorBoundary>
     </div>
   );
 }

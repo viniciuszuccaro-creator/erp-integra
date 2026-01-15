@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense, startTransition } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
 import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_FINAL";
@@ -19,6 +19,7 @@ import { createPageUrl } from "@/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function ConfiguracoesSistema() {
   const [activeTab, setActiveTab] = useState("diagnostico");
@@ -48,7 +49,8 @@ export default function ConfiguracoesSistema() {
         </CardContent>
       </Card>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={(v) => startTransition(() => setActiveTab(v))}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger
             value="diagnostico"
@@ -73,6 +75,7 @@ export default function ConfiguracoesSistema() {
         </TabsList>
 
         <TabsContent value="diagnostico">
+          <Suspense fallback={<div className="p-4 text-slate-500">Carregando…</div>}>
           <div className="space-y-4">
             <Card className="border-yellow-200 bg-yellow-50">
               <CardHeader>
@@ -100,6 +103,7 @@ export default function ConfiguracoesSistema() {
           <ControleEstoqueCompleto empresaId={empresaAtual?.id} />
         </TabsContent>
       </Tabs>
+      </ErrorBoundary>
     </div>
   );
 }
