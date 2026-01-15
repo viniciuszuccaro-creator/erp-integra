@@ -51,7 +51,10 @@ Deno.serve(async (req) => {
 
     // Fase 1 - Blindagem Multiempresa: valida escopo pelo header
     const companyIdHeader = req.headers.get('x-company-id');
-    if (companyIdHeader && companyIdHeader !== empresa_id) {
+    if (!companyIdHeader) {
+      return Response.json({ error: 'x-company-id é obrigatório no header' }, { status: 400 });
+    }
+    if (companyIdHeader !== empresa_id) {
       return Response.json({ error: 'Empresa do header não corresponde ao payload' }, { status: 403 });
     }
 
