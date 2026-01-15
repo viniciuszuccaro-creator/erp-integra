@@ -44,6 +44,7 @@ const FunilVendasAvancado = React.lazy(() => import("@/components/crm/FunilVenda
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
+import ProtectedAction from "@/components/ProtectedAction";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -729,7 +730,8 @@ export default function CRMPage() {
           <div className="space-y-4 mt-6">
             <div className="flex justify-between items-center">
               <h2 className="text-xl font-bold">Funil de Vendas - Drag & Drop</h2>
-              <Button 
+              <ProtectedAction module="CRM" section="Oportunidades" action="criar">
+                <Button 
                 className="bg-blue-600 hover:bg-blue-700"
                 onClick={() => openWindow(OportunidadeForm, {
                   windowMode: true,
@@ -1004,10 +1006,11 @@ export default function CRMPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openWindow(OportunidadeForm, {
+                          <ProtectedAction module="CRM" section="Oportunidades" action="editar">
+                                                      <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => openWindow(OportunidadeForm, {
                               oportunidade: opp,
                               windowMode: true,
                               onSubmit: async (data) => {
@@ -1030,15 +1033,17 @@ export default function CRMPage() {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setFollowUpOpp(opp)}
-                            title="Agendar Follow-up"
-                            className="text-purple-600"
-                          >
+                          <ProtectedAction module="CRM" section="Oportunidades" action="editar">
+                                                      <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setFollowUpOpp(opp)}
+                                                        title="Agendar Follow-up"
+                                                        className="text-purple-600"
+                                                      >
                             <Calendar className="w-4 h-4" />
                           </Button>
+                          </ProtectedAction>
                           {(opp.etapa === "Negociação" || opp.etapa === "Fechamento") && (
                             <Button
                               variant="ghost"
@@ -1071,7 +1076,8 @@ export default function CRMPage() {
             <CardHeader className="border-b bg-slate-50">
               <div className="flex justify-between items-center">
                 <CardTitle>Histórico de Interações</CardTitle>
-                <Button 
+                <ProtectedAction module="CRM" section="Interações" action="criar">
+                  <Button 
                   className="bg-blue-600 hover:bg-blue-700"
                   onClick={() => openWindow(InteracaoForm, {
                     windowMode: true,
@@ -1301,7 +1307,8 @@ export default function CRMPage() {
             <CardHeader className="border-b bg-slate-50">
               <div className="flex justify-between items-center">
                 <CardTitle>Campanhas de Marketing</CardTitle>
-                <Button 
+                <ProtectedAction module="CRM" section="Campanhas" action="criar">
+                  <Button 
                   className="bg-blue-600 hover:bg-blue-700"
                   onClick={() => openWindow(CampanhaForm, {
                     windowMode: true,
@@ -1610,11 +1617,14 @@ export default function CRMPage() {
                 </div>
               )}
               <div className="flex gap-2 pt-4">
+                <ProtectedAction module="CRM" section="Oportunidades" action="editar">
                 <Button onClick={() => setFollowUpOpp(viewingOpp)} className="bg-purple-600 hover:bg-purple-700">
                   <Calendar className="w-4 h-4 mr-2" />
                   Agendar Follow-up
                 </Button>
+                </ProtectedAction>
                 {(viewingOpp.etapa === "Negociação" || viewingOpp.etapa === "Fechamento") && (
+                  <ProtectedAction module="Comercial" section="Pedidos" action="criar">
                   <Button onClick={() => {
                     setViewingOpp(null);
                     setConverterOpp(viewingOpp);
@@ -1622,7 +1632,8 @@ export default function CRMPage() {
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     Converter em Venda
                   </Button>
-                )}
+                  </ProtectedAction>
+                )
               </div>
             </div>
           )}
