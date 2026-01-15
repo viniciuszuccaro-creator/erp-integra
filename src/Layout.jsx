@@ -278,6 +278,17 @@ function LayoutContent({ children, currentPageName }) {
     return hasPermission(mod, null, 'ver');
   });
 
+  const pageToModule = {
+    CRM: 'CRM',
+    Comercial: 'Comercial',
+    Estoque: 'Estoque',
+    Compras: 'Compras',
+    Financeiro: 'Financeiro',
+    Fiscal: 'Fiscal',
+    RH: 'RH',
+    Expedicao: 'Expedição',
+  };
+
 
 
   const groupedItems = {
@@ -439,7 +450,22 @@ function LayoutContent({ children, currentPageName }) {
           <div className="flex-1 overflow-auto">
             <ErrorBoundary>
               <Suspense fallback={<div className="p-6 text-slate-500">Carregando…</div>}>
-                {children}
+                {(() => {
+                  const mod = pageToModule[currentPageName];
+                  if (mod && !hasPermission(mod, null, 'ver')) {
+                    return (
+                      <div className="p-6 w-full h-full">
+                        <div className="max-w-2xl mx-auto w-full">
+                          <div className="rounded-xl border bg-white p-6 shadow-sm">
+                            <h2 className="text-lg font-semibold text-slate-800">Acesso restrito</h2>
+                            <p className="text-slate-600 mt-1">Você não possui permissão para acessar este módulo.</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return children;
+                })()}
               </Suspense>
             </ErrorBoundary>
           </div>
