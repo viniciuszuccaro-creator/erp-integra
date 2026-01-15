@@ -29,31 +29,33 @@ import {
   Tooltip,
   Legend
 } from "recharts";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-export default function DashboardFinanceiroUnificado({ empresaId, windowMode = false }) {
+function DashboardFinanceiroUnificado({ empresaId, windowMode = false }) {
+  const { filterInContext } = useContextoVisual();
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list(),
+    queryFn: () => filterInContext('ContaReceber', {}),
   });
 
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['contasPagar'],
-    queryFn: () => base44.entities.ContaPagar.list(),
+    queryFn: () => filterInContext('ContaPagar', {}),
   });
 
   const { data: ordensLiquidacao = [] } = useQuery({
     queryKey: ['caixa-ordens'],
-    queryFn: () => base44.entities.CaixaOrdemLiquidacao.list(),
+    queryFn: () => filterInContext('CaixaOrdemLiquidacao', {}),
   });
 
   const { data: pagamentosOmni = [] } = useQuery({
     queryKey: ['pagamentos-omni'],
-    queryFn: () => base44.entities.PagamentoOmnichannel.list(),
+    queryFn: () => filterInContext('PagamentoOmnichannel', {}),
   });
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryFn: () => filterInContext('Pedido', {}),
   });
 
   // Filtrar por empresa se necessário
@@ -102,7 +104,7 @@ export default function DashboardFinanceiroUnificado({ empresaId, windowMode = f
   const COLORS = ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#10b981'];
 
   return (
-    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6"}>
+    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6"}>
       <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       {/* KPIs Principais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -287,4 +289,5 @@ export default function DashboardFinanceiroUnificado({ empresaId, windowMode = f
       </div>
     </div>
   );
-}
+  }
+  export default React.memo(DashboardFinanceiroUnificado);

@@ -24,7 +24,7 @@ import {
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-export default function DashboardOperacionalBI({ windowMode = false }) {
+function DashboardOperacionalBI({ windowMode = false }) {
   const [periodoFiltro, setPeriodoFiltro] = useState("mes");
   const { empresaAtual, estaNoGrupo, filtrarPorContexto } = useContextoVisual();
 
@@ -116,7 +116,7 @@ export default function DashboardOperacionalBI({ windowMode = false }) {
     { mes: "Jun", valor: 67000 },
   ];
 
-  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen";
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50";
 
   return (
     <div className={containerClass}>
@@ -457,4 +457,5 @@ export default function DashboardOperacionalBI({ windowMode = false }) {
       </div>
     </div>
   );
-}
+  }
+  export default React.memo(DashboardOperacionalBI);

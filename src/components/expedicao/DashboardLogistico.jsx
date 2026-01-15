@@ -22,7 +22,7 @@ import {
  * Dashboard analítico de logística (LEGADO - preservado)
  * NOVO: DashboardLogisticaInteligente.jsx com IA avançada
  */
-export default function DashboardLogistico({ entregas, windowMode = false }) {
+function DashboardLogistico({ entregas, windowMode = false }) {
   // KPIs
   const totalEntregas = entregas.length;
   const entregasEntregues = entregas.filter(e => e.status === "Entregue").length;
@@ -79,7 +79,7 @@ export default function DashboardLogistico({ entregas, windowMode = false }) {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6";
 
   return (
     <div className={containerClass}>
@@ -224,5 +224,6 @@ export default function DashboardLogistico({ entregas, windowMode = false }) {
       )}
       </div>
     </div>
-  );
-}
+    );
+    }
+    export default React.memo(DashboardLogistico);

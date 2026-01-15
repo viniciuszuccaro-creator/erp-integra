@@ -16,25 +16,27 @@ import {
   Zap
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * 📊 DASHBOARD DE LOGÍSTICA INTELIGENTE V21.5
  * Analytics avançado com IA preditiva
  */
-export default function DashboardLogisticaInteligente({ windowMode = false }) {
+function DashboardLogisticaInteligente({ windowMode = false }) {
+  const { filterInContext } = useContextoVisual();
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date', 500),
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 500),
   });
 
   const { data: entregas = [] } = useQuery({
     queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.list('-created_date', 500),
+    queryFn: () => filterInContext('Entrega', {}, '-created_date', 500),
   });
 
   const { data: regioes = [] } = useQuery({
     queryKey: ['regioes'],
-    queryFn: () => base44.entities.RegiaoAtendimento.list(),
+    queryFn: () => filterInContext('RegiaoAtendimento', {}),
   });
 
   // 🤖 IA: Análise de Performance
@@ -102,7 +104,7 @@ export default function DashboardLogisticaInteligente({ windowMode = false }) {
 
   const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
 
-  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6";
 
   return (
     <div className={containerClass}>
@@ -353,4 +355,5 @@ export default function DashboardLogisticaInteligente({ windowMode = false }) {
       </div>
     </div>
   );
-}
+  }
+  export default React.memo(DashboardLogisticaInteligente);
