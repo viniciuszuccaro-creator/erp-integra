@@ -45,7 +45,7 @@ import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
  * 
  * REGRA-MÃE: NUNCA APAGAR - APENAS ACRESCENTAR
  */
-export default React.memo(function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowMode = false, contexto = 'erp', criacaoManual = true }) {
+function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowMode = false, contexto = 'erp', criacaoManual = true }) {
   const [activeTab, setActiveTab] = useState('identificacao');
   const [salvando, setSalvando] = useState(false); // V21.5: Anti-duplicação
   
