@@ -155,7 +155,7 @@ export default function Estoque() {
   }
 
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Estoque e Almoxarifado</h1>

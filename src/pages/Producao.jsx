@@ -153,7 +153,7 @@ export default function Producao() {
   const [itemSelecionado3D, setItemSelecionado3D] = useState(null);
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-slate-50 to-orange-50 p-6 overflow-auto">
+    <div className="h-full min-h-screen w-full bg-gradient-to-br from-slate-50 to-orange-50 p-6 overflow-auto">
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>

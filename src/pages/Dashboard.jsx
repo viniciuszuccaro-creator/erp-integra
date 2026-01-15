@@ -607,7 +607,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex-1 overflow-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>

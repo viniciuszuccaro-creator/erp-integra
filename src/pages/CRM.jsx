@@ -33,21 +33,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import FunilVisual from "../components/crm/FunilVisual";
-import AgendarFollowUp from "../components/crm/AgendarFollowUp";
-import ConverterOportunidade from "../components/crm/ConverterOportunidade";
-import IALeadsPriorizacao from "../components/crm/IALeadsPriorizacao";
-import IAChurnDetection from "../components/crm/IAChurnDetection";
-import OportunidadeForm from "../components/crm/OportunidadeForm";
-import FunilComercialInteligente from "@/components/crm/FunilComercialInteligente";
-import FunilVendasAvancado from "@/components/crm/FunilVendasAvancado";
+const FunilVisual = React.lazy(() => import("../components/crm/FunilVisual"));
+const AgendarFollowUp = React.lazy(() => import("../components/crm/AgendarFollowUp"));
+const ConverterOportunidade = React.lazy(() => import("../components/crm/ConverterOportunidade"));
+const IALeadsPriorizacao = React.lazy(() => import("../components/crm/IALeadsPriorizacao"));
+const IAChurnDetection = React.lazy(() => import("../components/crm/IAChurnDetection"));
+const OportunidadeForm = React.lazy(() => import("../components/crm/OportunidadeForm"));
+const FunilComercialInteligente = React.lazy(() => import("@/components/crm/FunilComercialInteligente"));
+const FunilVendasAvancado = React.lazy(() => import("@/components/crm/FunilVendasAvancado"));
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import InteracaoForm from "../components/crm/InteracaoForm";
-import CampanhaForm from "../components/crm/CampanhaForm";
+const InteracaoForm = React.lazy(() => import("../components/crm/InteracaoForm"));
+const CampanhaForm = React.lazy(() => import("../components/crm/CampanhaForm"));
 
 export default function CRMPage() {
   const [activeTab, setActiveTab] = useState("funil");
@@ -612,7 +612,7 @@ export default function CRMPage() {
   };
 
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">CRM - Gestão de Relacionamento com Clientes</h1>
         <p className="text-slate-600">V21.1 - Gerencie oportunidades, interações, campanhas + IA de Churn</p>

@@ -4,11 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Users, ShoppingCart, Building2, FileText, TrendingUp, Upload } from "lucide-react";
-import FornecedoresTab from "../components/compras/FornecedoresTab";
-import OrdensCompraTab from "../components/compras/OrdensCompraTab";
-import SolicitacoesCompraTab from "../components/compras/SolicitacoesCompraTab";
-import CotacoesTab from "../components/compras/CotacoesTab";
-import ImportacaoNFeRecebimento from "../components/compras/ImportacaoNFeRecebimento";
+const FornecedoresTab = React.lazy(() => import("../components/compras/FornecedoresTab"));
+const OrdensCompraTab = React.lazy(() => import("../components/compras/OrdensCompraTab"));
+const SolicitacoesCompraTab = React.lazy(() => import("../components/compras/SolicitacoesCompraTab"));
+const CotacoesTab = React.lazy(() => import("../components/compras/CotacoesTab"));
+const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/ImportacaoNFeRecebimento"));
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
@@ -69,7 +69,7 @@ export default function Compras() {
   }
 
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Compras e Suprimentos</h1>
         <p className="text-slate-600">Gestão de fornecedores e ordens de compra</p>

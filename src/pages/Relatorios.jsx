@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import RelatorioPedidosPorOrigem from "@/components/relatorios/RelatorioPedidosPorOrigem";
-import DashboardCanaisOrigem from "@/components/cadastros/DashboardCanaisOrigem";
+const RelatorioPedidosPorOrigem = React.lazy(() => import("@/components/relatorios/RelatorioPedidosPorOrigem"));
+const DashboardCanaisOrigem = React.lazy(() => import("@/components/cadastros/DashboardCanaisOrigem"));
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, ComposedChart } from 'recharts';
 import { FileText, Download, Calendar, Filter, Eye, BarChart3, PieChart as PieChartIcon, TrendingUp, DollarSign, Users, Package, AlertCircle, Send, Mail, Activity, TrendingDown, MapPin } from "lucide-react";
@@ -16,17 +16,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import DREComparativo from "@/components/relatorios/DREComparativo";
-import FluxoCaixaProjetado from "@/components/relatorios/FluxoCaixaProjetado";
-import RentabilidadeCliente from "@/components/relatorios/RentabilidadeCliente";
-import RentabilidadeProduto from "@/components/relatorios/RentabilidadeProduto";
-import DashboardInadimplencia from "@/components/relatorios/DashboardInadimplencia";
-import RelatorioVendasPorRegiao from "@/components/relatorios/RelatorioVendasPorRegiao";
-import DashboardRepresentantes from "@/components/relatorios/DashboardRepresentantes";
+const DREComparativo = React.lazy(() => import("@/components/relatorios/DREComparativo"));
+const FluxoCaixaProjetado = React.lazy(() => import("@/components/relatorios/FluxoCaixaProjetado"));
+const RentabilidadeCliente = React.lazy(() => import("@/components/relatorios/RentabilidadeCliente"));
+const RentabilidadeProduto = React.lazy(() => import("@/components/relatorios/RentabilidadeProduto"));
+const DashboardInadimplencia = React.lazy(() => import("@/components/relatorios/DashboardInadimplencia"));
+const RelatorioVendasPorRegiao = React.lazy(() => import("@/components/relatorios/RelatorioVendasPorRegiao"));
+const DashboardRepresentantes = React.lazy(() => import("@/components/relatorios/DashboardRepresentantes"));
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
-import AgendamentoRelatorios from "../components/relatorios/AgendamentoRelatorios";
-import GeradorRelatorios from '../components/sistema/GeradorRelatorios'; // Added import
+const AgendamentoRelatorios = React.lazy(() => import("../components/relatorios/AgendamentoRelatorios"));
+const GeradorRelatorios = React.lazy(() => import('../components/sistema/GeradorRelatorios')); // Added import
 
 export default function Relatorios() {
   const [activeTab, setActiveTab] = useState("vendas");
@@ -304,7 +304,7 @@ export default function Relatorios() {
   };
 
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Relatórios e Análises</h1>
         <p className="text-slate-600">Relatórios estratégicos, análises gerenciais e exportação de dados</p>

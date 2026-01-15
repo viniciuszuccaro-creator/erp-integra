@@ -28,13 +28,13 @@ import {
   Upload // Added Upload icon
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import ConfigFiscalAutomatica from "../components/fiscal/ConfigFiscalAutomatica";
-import PlanoDeContasTree from "../components/fiscal/PlanoDeContasTree";
-import RelatorioDRE from "../components/fiscal/RelatorioDRE";
-import MotorFiscalInteligente from "@/components/fiscal/MotorFiscalInteligente";
-import ExportacaoSPED from "../components/fiscal/ExportacaoSPED";
-import ImportarXMLNFe from '../components/fiscal/ImportarXMLNFe'; // New Import
-import HistoricoImportacoesXML from '../components/fiscal/HistoricoImportacoesXML'; // New Import
+const ConfigFiscalAutomatica = React.lazy(() => import("../components/fiscal/ConfigFiscalAutomatica"));
+const PlanoDeContasTree = React.lazy(() => import("../components/fiscal/PlanoDeContasTree"));
+const RelatorioDRE = React.lazy(() => import("../components/fiscal/RelatorioDRE"));
+const MotorFiscalInteligente = React.lazy(() => import("@/components/fiscal/MotorFiscalInteligente"));
+const ExportacaoSPED = React.lazy(() => import("../components/fiscal/ExportacaoSPED"));
+const ImportarXMLNFe = React.lazy(() => import('../components/fiscal/ImportarXMLNFe')); // New Import
+const HistoricoImportacoesXML = React.lazy(() => import('../components/fiscal/HistoricoImportacoesXML')); // New Import
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
 
@@ -245,7 +245,7 @@ export default function FiscalPage() {
   };
 
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Fiscal e Tributário</h1>
         <p className="text-slate-600">

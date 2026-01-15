@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import DashboardFormasPagamento from "../components/financeiro/DashboardFormasPagamento";
+const DashboardFormasPagamento = React.lazy(() => import("../components/financeiro/DashboardFormasPagamento"));
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,29 +27,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import ContasReceberTab from "../components/financeiro/ContasReceberTab";
-import ContasPagarTab from "../components/financeiro/ContasPagarTab";
+const ContasReceberTab = React.lazy(() => import("../components/financeiro/ContasReceberTab"));
+const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import PainelConciliacao from "../components/financeiro/PainelConciliacao";
-import ConfiguracaoCobranca from "../components/financeiro/ConfiguracaoCobranca";
-import RelatorioFinanceiro from "../components/financeiro/RelatorioFinanceiro";
-import RateioMultiempresa from "../components/financeiro/RateioMultiempresa";
-import ReguaCobrancaIA from "../components/financeiro/ReguaCobrancaIA";
+const PainelConciliacao = React.lazy(() => import("../components/financeiro/PainelConciliacao"));
+const ConfiguracaoCobranca = React.lazy(() => import("../components/financeiro/ConfiguracaoCobranca"));
+const RelatorioFinanceiro = React.lazy(() => import("../components/financeiro/RelatorioFinanceiro"));
+const RateioMultiempresa = React.lazy(() => import("../components/financeiro/RateioMultiempresa"));
+const ReguaCobrancaIA = React.lazy(() => import("../components/financeiro/ReguaCobrancaIA"));
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
-import ContaReceberForm from "../components/financeiro/ContaReceberForm";
-import ContaPagarForm from "../components/financeiro/ContaPagarForm";
-import ConciliacaoBancaria from "../components/financeiro/ConciliacaoBancaria";
-import AprovacaoDescontosManager from "../components/comercial/AprovacaoDescontosManager";
-import DashboardFinanceiroUnificado from "../components/financeiro/DashboardFinanceiroUnificado";
-import DashboardFinanceiroRealtime from "../components/financeiro/DashboardFinanceiroRealtime";
-import DashboardFinanceiroMestre from "../components/sistema/DashboardFinanceiroMestre";
-import CaixaPDVCompleto from "../components/financeiro/CaixaPDVCompleto";
-import GestaoRemessaRetorno from "../components/financeiro/GestaoRemessaRetorno";
-import VendasMulticanal from "../components/financeiro/VendasMulticanal";
-import CaixaDiarioTab from "../components/financeiro/CaixaDiarioTab";
-import VisaoConsolidadaGrupo from "../components/financeiro/VisaoConsolidadaGrupo";
-import AlertasFinanceirosEmpresa from "../components/financeiro/AlertasFinanceirosEmpresa";
+const ContaReceberForm = React.lazy(() => import("../components/financeiro/ContaReceberForm"));
+const ContaPagarForm = React.lazy(() => import("../components/financeiro/ContaPagarForm"));
+const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
+const AprovacaoDescontosManager = React.lazy(() => import("../components/comercial/AprovacaoDescontosManager"));
+const DashboardFinanceiroUnificado = React.lazy(() => import("../components/financeiro/DashboardFinanceiroUnificado"));
+const DashboardFinanceiroRealtime = React.lazy(() => import("../components/financeiro/DashboardFinanceiroRealtime"));
+const DashboardFinanceiroMestre = React.lazy(() => import("../components/sistema/DashboardFinanceiroMestre"));
+const CaixaPDVCompleto = React.lazy(() => import("../components/financeiro/CaixaPDVCompleto"));
+const GestaoRemessaRetorno = React.lazy(() => import("../components/financeiro/GestaoRemessaRetorno"));
+const VendasMulticanal = React.lazy(() => import("../components/financeiro/VendasMulticanal"));
+const CaixaDiarioTab = React.lazy(() => import("../components/financeiro/CaixaDiarioTab"));
+const VisaoConsolidadaGrupo = React.lazy(() => import("../components/financeiro/VisaoConsolidadaGrupo"));
+const AlertasFinanceirosEmpresa = React.lazy(() => import("../components/financeiro/AlertasFinanceirosEmpresa"));
 
 export default function Financeiro() {
   const [activeTab, setActiveTab] = useState("contas-receber");
@@ -186,7 +186,7 @@ export default function Financeiro() {
   }
 
   return (
-    <div className="h-full w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Financeiro Multi-Empresa</h1>
