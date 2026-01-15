@@ -764,6 +764,7 @@ export default function CRMPage() {
               </Button>
               </ProtectedAction>
               
+              </ProtectedAction>
               {/* BACKUP: Dialog removido */}
               <Dialog open={false}>
                 <DialogTrigger asChild>
@@ -1007,6 +1008,7 @@ export default function CRMPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
+                          </ProtectedAction>
                           <ProtectedAction module="CRM" section="Oportunidades" action="editar">
                                                       <Button
                                                         variant="ghost"
