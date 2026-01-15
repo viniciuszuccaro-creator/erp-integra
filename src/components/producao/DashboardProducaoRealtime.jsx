@@ -20,7 +20,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
  * Consolidação e melhoria do módulo de produção
  */
 
-export default function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
+export default React.memo(function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
   const [metricas, setMetricas] = useState({
     eficienciaGeral: 0,
     opsAtrasadas: 0,
