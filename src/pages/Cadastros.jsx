@@ -566,6 +566,7 @@ export default function Cadastros() {
 
       {/* TABS: CADASTROS vs GERENCIAMENTO */}
       <ErrorBoundary>
+        <ErrorBoundary>
         <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
         <TabsList className="grid w-full grid-cols-3 bg-slate-100">
           <TabsTrigger value="cadastros">
@@ -4837,6 +4838,7 @@ export default function Cadastros() {
           <GlobalAuditLog limite={50} mostrarFiltros={true} />
         </TabsContent>
       </Tabs>
+      </ErrorBoundary>
 
       {/* ==================== FASE 1 DEFINITIVO-100% ==================== */}
       {/* TODOS OS FORMULÁRIOS AGORA ABREM EM JANELAS REDIMENSIONÁVEIS */}

@@ -918,7 +918,8 @@ export default function Agenda() {
       </div>
 
       {/* Calendário */}
-      <Card className="border-0 shadow-md">
+      <ErrorBoundary>
+        <Card className="border-0 shadow-md">
         <CardHeader className="border-b bg-slate-50">
           <div className="flex flex-col sm:flex-row justify-between gap-4">
             <div className="flex items-center gap-3">
