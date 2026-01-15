@@ -762,10 +762,9 @@ export default function CRMPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Oportunidade
               </Button>
-              </ProtectedAction>
-              
-              </ProtectedAction>
-              {/* BACKUP: Dialog removido */}
+                             </ProtectedAction>
+
+                             {/* BACKUP: Dialog removido */}
               <Dialog open={false}>
                 <DialogTrigger asChild>
                   <Button className="hidden">Removido</Button>
@@ -1008,8 +1007,7 @@ export default function CRMPage() {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
-                          </ProtectedAction>
-                          <ProtectedAction module="CRM" section="Oportunidades" action="editar">
+                                                     <ProtectedAction module="CRM" section="Oportunidades" action="editar">
                                                       <Button
                                                         variant="ghost"
                                                         size="icon"
@@ -1037,8 +1035,7 @@ export default function CRMPage() {
                               <Edit className="w-4 h-4" />
                             </Button>
                            </ProtectedAction>
-                            </ProtectedAction>
-                          <ProtectedAction module="CRM" section="Oportunidades" action="editar">
+                           <ProtectedAction module="CRM" section="Oportunidades" action="editar">
                                                       <Button
                                                         variant="ghost"
                                                         size="icon"
@@ -1642,7 +1639,7 @@ export default function CRMPage() {
                     Converter em Venda
                   </Button>
                   </ProtectedAction>
-                )}}
+                )}
               </div>
             </div>
           )}
