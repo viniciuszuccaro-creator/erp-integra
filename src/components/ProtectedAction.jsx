@@ -42,6 +42,14 @@ export function ProtectedAction({
             ...(auditMetadata || {}),
             contexto: contexto || 'empresa',
             group_id: grupoAtual?.id || null,
+            page: typeof window !== 'undefined' ? window?.location?.pathname : undefined,
+            url: typeof window !== 'undefined' ? window?.location?.href : undefined,
+            user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+            headers_snapshot: {
+              'x-company-id': empresaAtual?.id || null,
+              'x-tenant-id': (contexto === 'grupo' ? grupoAtual?.id : empresaAtual?.id) || null,
+              'x-scope': contexto || 'empresa',
+            },
           },
         });
       } catch {}
