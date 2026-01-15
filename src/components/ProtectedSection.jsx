@@ -16,7 +16,7 @@ export default function ProtectedSection({
   if (allowed) return <>{children}</>;
 
   if (mode === "disable") {
-    return <div className="opacity-50 pointer-events-none select-none">{children}</div>;
+    return <div className="w-full h-full opacity-50 pointer-events-none select-none" aria-disabled="true">{children}</div>;
   }
   return null;
 }

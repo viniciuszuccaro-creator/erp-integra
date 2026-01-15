@@ -55,7 +55,7 @@ export function ProtectedAction({
 
     // Modo disable: mantém layout estável, desativa interação
     return (
-      <div className="opacity-50 pointer-events-none select-none">
+      <div className="w-full h-full opacity-50 pointer-events-none select-none" aria-disabled="true">
         {children ? (
           children
         ) : (
