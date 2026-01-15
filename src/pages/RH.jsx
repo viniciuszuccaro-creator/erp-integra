@@ -42,12 +42,12 @@ import usePermissions from "@/components/lib/usePermissions";
 import IconeAcessoColaborador from "@/components/cadastros/IconeAcessoColaborador";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import GameficacaoProducao from "@/components/rh/GameficacaoProducao";
+const GameficacaoProducao = React.lazy(() => import("@/components/rh/GameficacaoProducao"));
 import FeriasForm from "@/components/rh/FeriasForm";
 import { useWindow } from "@/components/lib/useWindow";
-import MonitoramentoRHInteligente from "@/components/rh/MonitoramentoRHInteligente";
-import PontoEletronicoBiometrico from "@/components/rh/PontoEletronicoBiometrico";
-import DashboardRHRealtime from "../components/rh/DashboardRHRealtime";
+const MonitoramentoRHInteligente = React.lazy(() => import("@/components/rh/MonitoramentoRHInteligente"));
+const PontoEletronicoBiometrico = React.lazy(() => import("@/components/rh/PontoEletronicoBiometrico"));
+const DashboardRHRealtime = React.lazy(() => import("../components/rh/DashboardRHRealtime"));
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function RH() {
