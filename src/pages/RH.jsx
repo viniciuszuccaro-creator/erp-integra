@@ -48,6 +48,7 @@ import { useWindow } from "@/components/lib/useWindow";
 const MonitoramentoRHInteligente = React.lazy(() => import("@/components/rh/MonitoramentoRHInteligente"));
 const PontoEletronicoBiometrico = React.lazy(() => import("@/components/rh/PontoEletronicoBiometrico"));
 const DashboardRHRealtime = React.lazy(() => import("../components/rh/DashboardRHRealtime"));
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 
 export default function RH() {

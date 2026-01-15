@@ -33,6 +33,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import EventoForm from "@/components/agenda/EventoForm";
 import { useWindow } from "@/components/lib/useWindow";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 
 export default function Agenda() {

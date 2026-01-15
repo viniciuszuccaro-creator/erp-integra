@@ -37,6 +37,7 @@ const ImportarXMLNFe = React.lazy(() => import('../components/fiscal/ImportarXML
 const HistoricoImportacoesXML = React.lazy(() => import('../components/fiscal/HistoricoImportacoesXML')); // New Import
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 
 export default function FiscalPage() {
