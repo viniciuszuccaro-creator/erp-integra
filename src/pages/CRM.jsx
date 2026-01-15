@@ -762,6 +762,7 @@ export default function CRMPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Oportunidade
               </Button>
+              </ProtectedAction>
                              {/* BACKUP: Dialog removido */}
               <Dialog open={false}>
                 <DialogTrigger asChild>
@@ -1031,8 +1032,9 @@ export default function CRMPage() {
                             title="Editar"
                             >
                               <Edit className="w-4 h-4" />
-                            </Button>
-                            <ProtectedAction module="CRM" section="Oportunidades" action="editar">
+                              </Button>
+                              </ProtectedAction>
+                              <ProtectedAction module="CRM" section="Oportunidades" action="editar">
                                                       <Button
                                                         variant="ghost"
                                                         size="icon"
