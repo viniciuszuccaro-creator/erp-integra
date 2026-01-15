@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,13 +8,13 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
 
-// Sistema (já existentes no projeto)
-import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
-import MatrizPermissoesVisual from "@/components/sistema/MatrizPermissoesVisual";
-import ValidadorAcessoCompleto from "@/components/sistema/ValidadorAcessoCompleto";
-import StatusControleAcesso from "@/components/sistema/StatusControleAcesso";
-import GlobalAuditLog from "@/components/sistema/GlobalAuditLog";
-import IAGovernancaCompliance from "@/components/ia/IAGovernancaCompliance";
+// Sistema (lazy)
+const CentralPerfisAcesso = React.lazy(() => import("@/components/sistema/CentralPerfisAcesso"));
+const MatrizPermissoesVisual = React.lazy(() => import("@/components/sistema/MatrizPermissoesVisual"));
+const ValidadorAcessoCompleto = React.lazy(() => import("@/components/sistema/ValidadorAcessoCompleto"));
+const StatusControleAcesso = React.lazy(() => import("@/components/sistema/StatusControleAcesso"));
+const GlobalAuditLog = React.lazy(() => import("@/components/sistema/GlobalAuditLog"));
+const IAGovernancaCompliance = React.lazy(() => import("@/components/ia/IAGovernancaCompliance"));
 
 import { Shield, KeyRound, Users2, Activity, Brain } from "lucide-react";
 
@@ -123,7 +123,9 @@ export default function Acessos() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0 h-full overflow-auto">
-                <StatusControleAcesso empresaId={empresaAtual?.id || null} />
+                <Suspense fallback={<div className="p-4 text-slate-500">Carregando status...</div>}>
+                  <StatusControleAcesso empresaId={empresaAtual?.id || null} />
+                </Suspense>
               </CardContent>
             </Card>
           </div>
@@ -165,31 +167,41 @@ export default function Acessos() {
                   <div className="flex-1 min-h-0">
                     <TabsContent value="perfis" className="h-full">
                       <div className="h-full overflow-auto p-4">
-                        <CentralPerfisAcesso empresaId={empresaAtual?.id || null} />
+                        <Suspense fallback={<div className="p-4 text-slate-500">Carregando perfis...</div>}>
+                          <CentralPerfisAcesso empresaId={empresaAtual?.id || null} />
+                        </Suspense>
                       </div>
                     </TabsContent>
 
                     <TabsContent value="matriz" className="h-full">
                       <div className="h-full overflow-auto p-4">
-                        <MatrizPermissoesVisual empresaId={empresaAtual?.id || null} />
+                        <Suspense fallback={<div className="p-4 text-slate-500">Carregando matriz...</div>}>
+                          <MatrizPermissoesVisual empresaId={empresaAtual?.id || null} />
+                        </Suspense>
                       </div>
                     </TabsContent>
 
                     <TabsContent value="validador" className="h-full">
                       <div className="h-full overflow-auto p-4">
-                        <ValidadorAcessoCompleto empresaId={empresaAtual?.id || null} />
+                        <Suspense fallback={<div className="p-4 text-slate-500">Carregando validador...</div>}>
+                          <ValidadorAcessoCompleto empresaId={empresaAtual?.id || null} />
+                        </Suspense>
                       </div>
                     </TabsContent>
 
                     <TabsContent value="auditoria" className="h-full">
                       <div className="h-full overflow-auto p-4">
-                        <GlobalAuditLog />
+                        <Suspense fallback={<div className="p-4 text-slate-500">Carregando auditoria...</div>}>
+                          <GlobalAuditLog />
+                        </Suspense>
                       </div>
                     </TabsContent>
 
                     <TabsContent value="ia" className="h-full">
                       <div className="h-full overflow-auto p-4">
-                        <IAGovernancaCompliance empresaId={empresaAtual?.id || null} />
+                        <Suspense fallback={<div className="p-4 text-slate-500">Carregando IA...</div>}>
+                          <IAGovernancaCompliance empresaId={empresaAtual?.id || null} />
+                        </Suspense>
                       </div>
                     </TabsContent>
                   </div>

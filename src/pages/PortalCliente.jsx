@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,25 +8,25 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Home, ShoppingCart, FileText, Upload, DollarSign, LogOut, Package, Calendar, Download, LayoutDashboard, CheckCircle2, AlertTriangle, User, LogIn, ShoppingBag, Truck, MapPin, Navigation, MessageCircle, MessageSquare, Send, Target, TrendingUp, Settings, HelpCircle } from "lucide-react";
-import DashboardClienteInterativo from "@/components/portal/DashboardClienteInterativo";
-import ChatVendedor from "@/components/portal/ChatVendedor";
-import ChamadosCliente from "@/components/portal/ChamadosCliente";
-import UploadProjetos from "@/components/portal/UploadProjetos";
-import AprovacaoComAssinatura from "@/components/portal/AprovacaoComAssinatura";
-import PedidosCliente from "@/components/portal/PedidosCliente";
-import DocumentosCliente from "@/components/portal/DocumentosCliente";
-import SolicitarOrcamento from "@/components/portal/SolicitarOrcamento";
-import MinhasOportunidades from "@/components/portal/MinhasOportunidades";
-import ChatbotPortal from "@/components/portal/ChatbotPortal";
-import ChatbotWidgetAvancado from "@/components/chatbot/ChatbotWidgetAvancado";
-import RastreamentoRealtime from "@/components/portal/RastreamentoRealtime";
-import NotificacoesPortal from "@/components/portal/NotificacoesPortal";
-import AnalyticsPortalCliente from "@/components/portal/AnalyticsPortalCliente";
-import StatusWidgetPortal from "@/components/portal/StatusWidgetPortal";
-import ConfiguracoesPortal from "@/components/portal/ConfiguracoesPortal";
-import HistoricoComprasCliente from "@/components/portal/HistoricoComprasCliente";
-import ExportarDadosPortal from "@/components/portal/ExportarDadosPortal";
-import FAQAjuda from "@/components/portal/FAQAjuda";
+const DashboardClienteInterativo = React.lazy(() => import("@/components/portal/DashboardClienteInterativo"));
+const ChatVendedor = React.lazy(() => import("@/components/portal/ChatVendedor"));
+const ChamadosCliente = React.lazy(() => import("@/components/portal/ChamadosCliente"));
+const UploadProjetos = React.lazy(() => import("@/components/portal/UploadProjetos"));
+const AprovacaoComAssinatura = React.lazy(() => import("@/components/portal/AprovacaoComAssinatura"));
+const PedidosCliente = React.lazy(() => import("@/components/portal/PedidosCliente"));
+const DocumentosCliente = React.lazy(() => import("@/components/portal/DocumentosCliente"));
+const SolicitarOrcamento = React.lazy(() => import("@/components/portal/SolicitarOrcamento"));
+const MinhasOportunidades = React.lazy(() => import("@/components/portal/MinhasOportunidades"));
+const ChatbotPortal = React.lazy(() => import("@/components/portal/ChatbotPortal"));
+const ChatbotWidgetAvancado = React.lazy(() => import("@/components/chatbot/ChatbotWidgetAvancado"));
+const RastreamentoRealtime = React.lazy(() => import("@/components/portal/RastreamentoRealtime"));
+const NotificacoesPortal = React.lazy(() => import("@/components/portal/NotificacoesPortal"));
+const AnalyticsPortalCliente = React.lazy(() => import("@/components/portal/AnalyticsPortalCliente"));
+const StatusWidgetPortal = React.lazy(() => import("@/components/portal/StatusWidgetPortal"));
+const ConfiguracoesPortal = React.lazy(() => import("@/components/portal/ConfiguracoesPortal"));
+const HistoricoComprasCliente = React.lazy(() => import("@/components/portal/HistoricoComprasCliente"));
+const ExportarDadosPortal = React.lazy(() => import("@/components/portal/ExportarDadosPortal"));
+const FAQAjuda = React.lazy(() => import("@/components/portal/FAQAjuda"));
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
@@ -353,7 +353,9 @@ export default function PortalCliente() {
               <p className="text-sm text-slate-600">{cliente?.nome_fantasia || cliente?.razao_social || user?.full_name}</p>
             </div>
             <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
-              <NotificacoesPortal />
+              <Suspense fallback={<div className="w-6 h-6 rounded-full bg-slate-200 animate-pulse" />}> 
+                <NotificacoesPortal />
+              </Suspense>
               <Button
                 onClick={() => setChatOpen(!chatOpen)}
                 className="flex-1 sm:flex-none bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
@@ -381,7 +383,9 @@ export default function PortalCliente() {
         {/* Status Widget do Portal */}
         {user?.role === 'admin' && (
           <div className="mb-6">
-            <StatusWidgetPortal />
+            <Suspense fallback={<div className="h-24 rounded-md bg-white shadow animate-pulse" />}> 
+              <StatusWidgetPortal />
+            </Suspense>
           </div>
         )}
 
@@ -456,32 +460,44 @@ export default function PortalCliente() {
 
           {/* Dashboard Interativo */}
           <TabsContent value="dashboard">
-            <DashboardClienteInterativo />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <DashboardClienteInterativo />
+            </Suspense>
           </TabsContent>
 
           {/* Nova Aba: Meus Pedidos (Componente Novo) */}
           <TabsContent value="meus-pedidos">
-            <PedidosCliente />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <PedidosCliente />
+            </Suspense>
           </TabsContent>
 
           {/* Nova Aba: Documentos (Componente Novo) */}
           <TabsContent value="documentos-novos">
-            <DocumentosCliente />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <DocumentosCliente />
+            </Suspense>
           </TabsContent>
 
           {/* Nova Aba: Solicitar Orçamento */}
           <TabsContent value="solicitar-orcamento">
-            <SolicitarOrcamento />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <SolicitarOrcamento />
+            </Suspense>
           </TabsContent>
 
           {/* Nova Aba: Minhas Oportunidades */}
           <TabsContent value="minhas-oportunidades">
-            <MinhasOportunidades />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <MinhasOportunidades />
+            </Suspense>
           </TabsContent>
 
           {/* Rastreamento em Tempo Real - Componente Dedicado */}
           <TabsContent value="rastreamento">
-            <RastreamentoRealtime />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <RastreamentoRealtime />
+            </Suspense>
           </TabsContent>
 
           {/* Tab antiga de entregas - REMOVIDA (agora usa rastreamento) */}
@@ -605,7 +621,9 @@ export default function PortalCliente() {
 
           {/* Aprovação com Assinatura */}
           <TabsContent value="orcamentos">
-            <AprovacaoComAssinatura clienteId={cliente?.id} />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <AprovacaoComAssinatura clienteId={cliente?.id} />
+            </Suspense>
           </TabsContent>
 
           {/* Histórico de Pedidos - REMOVIDO (substituído por meus-pedidos) */}
@@ -671,7 +689,9 @@ export default function PortalCliente() {
           </TabsContent>
 
           <TabsContent value="projetos">
-            <UploadProjetos clienteId={cliente?.id} clienteNome={cliente?.nome || cliente?.razao_social} />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <UploadProjetos clienteId={cliente?.id} clienteNome={cliente?.nome || cliente?.razao_social} />
+            </Suspense>
           </TabsContent>
 
           {/* Chat Duplo: IA + Vendedor */}
@@ -684,45 +704,61 @@ export default function PortalCliente() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 h-[600px] w-full">
-                  <ChatbotWidgetAvancado
-                    clienteId={cliente?.id}
-                    canal="Portal"
-                    exibirBotaoFlutuante={false}
-                    habilitarAvaliacao={true}
-                  />
+                  <Suspense fallback={<div className="h-full w-full bg-white/60 animate-pulse" />}> 
+                    <ChatbotWidgetAvancado
+                      clienteId={cliente?.id}
+                      canal="Portal"
+                      exibirBotaoFlutuante={false}
+                      habilitarAvaliacao={true}
+                    />
+                  </Suspense>
                 </CardContent>
               </Card>
 
-              <ChatVendedor clienteId={cliente?.id} />
+              <Suspense fallback={<div className="h-[600px] w-full bg-white/60 animate-pulse rounded" />}> 
+                <ChatVendedor clienteId={cliente?.id} />
+              </Suspense>
             </div>
           </TabsContent>
 
           {/* Chamados e Suporte */}
           <TabsContent value="chamados">
-            <ChamadosCliente clienteId={cliente?.id} clienteNome={cliente?.nome || cliente?.razao_social} />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <ChamadosCliente clienteId={cliente?.id} clienteNome={cliente?.nome || cliente?.razao_social} />
+            </Suspense>
           </TabsContent>
 
           {/* Analytics e Relatórios */}
           <TabsContent value="analytics">
-            <AnalyticsPortalCliente clienteId={cliente?.id} />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <AnalyticsPortalCliente clienteId={cliente?.id} />
+            </Suspense>
           </TabsContent>
 
           {/* Histórico de Compras */}
           <TabsContent value="historico">
-            <HistoricoComprasCliente clienteId={cliente?.id} />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <HistoricoComprasCliente clienteId={cliente?.id} />
+            </Suspense>
           </TabsContent>
 
           {/* Configurações */}
           <TabsContent value="configuracoes">
             <div className="space-y-6 w-full">
-              <ConfiguracoesPortal />
-              <ExportarDadosPortal clienteId={cliente?.id} />
+              <Suspense fallback={<div className="h-40 rounded-md bg-white shadow animate-pulse" />}> 
+                <ConfiguracoesPortal />
+              </Suspense>
+              <Suspense fallback={<div className="h-32 rounded-md bg-white shadow animate-pulse" />}> 
+                <ExportarDadosPortal clienteId={cliente?.id} />
+              </Suspense>
             </div>
           </TabsContent>
 
           {/* FAQ e Ajuda */}
           <TabsContent value="ajuda">
-            <FAQAjuda />
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <FAQAjuda />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>
@@ -730,11 +766,13 @@ export default function PortalCliente() {
       {/* Chatbot IA Flutuante */}
       <AnimatePresence>
         {chatOpen && (
-          <ChatbotPortal
-            onClose={() => setChatOpen(false)}
-            isMinimized={chatMinimized}
-            onToggleMinimize={() => setChatMinimized(!chatMinimized)}
-          />
+          <Suspense fallback={<div className="fixed bottom-4 right-4 w-12 h-12 bg-white/80 rounded-full shadow animate-pulse" />}> 
+            <ChatbotPortal
+              onClose={() => setChatOpen(false)}
+              isMinimized={chatMinimized}
+              onToggleMinimize={() => setChatMinimized(!chatMinimized)}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
 

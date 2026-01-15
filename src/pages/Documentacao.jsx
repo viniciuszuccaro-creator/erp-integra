@@ -16,7 +16,7 @@ import {
   Smartphone,
   TrendingUp
 } from "lucide-react";
-import RoadmapFuturo from "../components/sistema/RoadmapFuturo";
+const RoadmapFuturo = React.lazy(() => import("@/components/sistema/RoadmapFuturo"));
 const DocsCenter = React.lazy(() => import("@/components/docs/DocsCenter"));
 
 export default function Documentacao() {
@@ -76,7 +76,7 @@ export default function Documentacao() {
   };
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="w-full h-full min-h-screen p-6 lg:p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
           📚 Documentação ERP Zuccaro v3.0
@@ -354,7 +354,9 @@ export default function Documentacao() {
               ))}
             </div>
 
-            <RoadmapFuturo />
+            <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}> 
+              <RoadmapFuturo />
+            </Suspense>
           </div>
         </TabsContent>
 
