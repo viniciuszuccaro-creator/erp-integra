@@ -3,7 +3,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 
-export function ProtectedAction({ 
+export function ProtectedAction({ children, module, section = null, action = "editar", fallback = null }) { 
   children, 
   module, 
   action = "editar",
