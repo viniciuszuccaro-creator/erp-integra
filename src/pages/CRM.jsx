@@ -80,7 +80,7 @@ export default function CRMPage() {
   const navigate = useNavigate();
   const { openWindow } = useWindow();
   const { user } = useUser();
-  const { empresaAtual, filtrarPorContexto } = useContextoVisual();
+  const { empresaAtual, filtrarPorContexto, filterInContext } = useContextoVisual();
 
   const [oppForm, setOppForm] = useState({
     titulo: "",
@@ -134,17 +134,17 @@ export default function CRMPage() {
 
   const { data: oportunidades = [] } = useQuery({
     queryKey: ['oportunidades'],
-    queryFn: () => base44.entities.Oportunidade.list('-created_date'),
+    queryFn: () => filterInContext('Oportunidade', {}, '-created_date'),
   });
 
   const { data: interacoes = [] } = useQuery({
     queryKey: ['interacoes'],
-    queryFn: () => base44.entities.Interacao.list('-created_date'),
+    queryFn: () => filterInContext('Interacao', {}, '-created_date'),
   });
 
   const { data: campanhas = [] } = useQuery({
     queryKey: ['campanhas'],
-    queryFn: () => base44.entities.Campanha.list('-created_date'),
+    queryFn: () => filterInContext('Campanha', {}, '-created_date', undefined, 'empresa_dona_id'),
   });
 
   const { data: clientes = [] } = useQuery({
