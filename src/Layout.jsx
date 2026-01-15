@@ -40,6 +40,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { base44 } from "@/api/base44Client";
+import usePermissions from "@/components/lib/usePermissions";
 import NotificationCenter from "@/components/NotificationCenter";
 import EmpresaSwitcher from "@/components/EmpresaSwitcher";
 import { UserProvider, useUser } from "@/components/lib/UserContext";
@@ -84,6 +85,7 @@ function LayoutContent({ children, currentPageName }) {
         const location = useLocation();
         const { user } = useUser();
         const { empresaAtual } = useContextoVisual();
+        const { hasPermission } = usePermissions();
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
 
@@ -259,11 +261,21 @@ function LayoutContent({ children, currentPageName }) {
     return <div className="min-h-screen">{children}</div>;
   }
 
+  const titleToModule = {
+    "CRM - Relacionamento": "CRM",
+    "Comercial e Vendas": "Comercial",
+    "Estoque e Almoxarifado": "Estoque",
+    "Compras e Suprimentos": "Compras",
+    "Financeiro e Contábil": "Financeiro",
+    "Fiscal e Tributário": "Fiscal",
+    "Recursos Humanos": "RH",
+  };
+
   const itemsFiltrados = navigationItems.filter(item => {
-    if (item.adminOnly && user?.role !== 'admin') {
-      return false;
-    }
-    return true;
+    if (item.adminOnly && user?.role !== 'admin') return false;
+    const mod = titleToModule[item.title];
+    if (!mod) return true; // itens públicos ou informativos continuam visíveis
+    return hasPermission(mod, null, 'ver');
   });
 
 
