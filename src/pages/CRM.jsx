@@ -1032,8 +1032,7 @@ export default function CRMPage() {
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
-                           </ProtectedAction>
-                           <ProtectedAction module="CRM" section="Oportunidades" action="editar">
+                            <ProtectedAction module="CRM" section="Oportunidades" action="editar">
                                                       <Button
                                                         variant="ghost"
                                                         size="icon"
