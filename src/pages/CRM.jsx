@@ -762,8 +762,6 @@ export default function CRMPage() {
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Oportunidade
               </Button>
-                             </ProtectedAction>
-
                              {/* BACKUP: Dialog removido */}
               <Dialog open={false}>
                 <DialogTrigger asChild>
