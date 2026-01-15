@@ -12,7 +12,7 @@ export function ProtectedAction({
   action = "editar",
   fallback = null,
   mode = "disable", // "disable" | "hide"
-  auditDenied = false,
+  auditDenied = true,
   auditMetadata = null,
 }) {
   const { hasPermission, isLoading } = usePermissions();
