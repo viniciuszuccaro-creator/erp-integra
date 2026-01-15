@@ -15,6 +15,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * ETAPAS 8 E 9: DASHBOARD FINANCEIRO TEMPO REAL V21.4
@@ -22,6 +23,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
  */
 
 function DashboardFinanceiroRealtime({ empresaId, windowMode = false }) {
+  const { filterInContext } = useContextoVisual();
   const [metricas, setMetricas] = useState({
     saldoCaixa: 0,
     receitasHoje: 0,
@@ -35,27 +37,27 @@ function DashboardFinanceiroRealtime({ empresaId, windowMode = false }) {
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contas-receber'],
-    queryFn: () => base44.entities.ContaReceber.list()
+    queryFn: () => filterInContext('ContaReceber', {})
   });
 
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['contas-pagar'],
-    queryFn: () => base44.entities.ContaPagar.list()
+    queryFn: () => filterInContext('ContaPagar', {})
   });
 
   const { data: movimentosCartao = [] } = useQuery({
     queryKey: ['movimentos-cartao'],
-    queryFn: () => base44.entities.MovimentoCartao.list()
+    queryFn: () => filterInContext('MovimentoCartao', {})
   });
 
   const { data: conciliacoes = [] } = useQuery({
     queryKey: ['conciliacoes-bancarias'],
-    queryFn: () => base44.entities.ConciliacaoBancaria.list()
+    queryFn: () => filterInContext('ConciliacaoBancaria', {})
   });
 
   const { data: caixaMovimentos = [] } = useQuery({
     queryKey: ['caixa-movimentos'],
-    queryFn: () => base44.entities.CaixaMovimento.list()
+    queryFn: () => filterInContext('CaixaMovimento', {})
   });
 
   useEffect(() => {

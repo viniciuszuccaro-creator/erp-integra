@@ -14,6 +14,7 @@ import {
   Activity
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * ETAPA 7: DASHBOARD RH TEMPO REAL V21.4
@@ -21,6 +22,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
  */
 
 function DashboardRHRealtime({ empresaId, windowMode = false }) {
+  const { filterInContext } = useContextoVisual();
   const [metricas, setMetricas] = useState({
     colaboradoresAtivos: 0,
     presentesHoje: 0,
@@ -33,17 +35,17 @@ function DashboardRHRealtime({ empresaId, windowMode = false }) {
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list()
+    queryFn: () => filterInContext('Colaborador', {})
   });
 
   const { data: pontos = [] } = useQuery({
     queryKey: ['pontos'],
-    queryFn: () => base44.entities.Ponto.list()
+    queryFn: () => filterInContext('Ponto', {})
   });
 
   const { data: monitoramento = [] } = useQuery({
     queryKey: ['monitoramento-rh'],
-    queryFn: () => base44.entities.MonitoramentoRH.list()
+    queryFn: () => filterInContext('MonitoramentoRH', {})
   });
 
   useEffect(() => {

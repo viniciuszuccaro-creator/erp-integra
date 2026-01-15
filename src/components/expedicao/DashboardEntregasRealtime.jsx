@@ -14,6 +14,7 @@ import {
   Activity
 } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * ETAPA 6: DASHBOARD ENTREGAS TEMPO REAL V21.4
@@ -21,6 +22,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, R
  */
 
 function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
+  const { filterInContext } = useContextoVisual();
   const [metricas, setMetricas] = useState({
     entregasHoje: 0,
     entregasPrazo: 0,
@@ -32,12 +34,12 @@ function DashboardEntregasRealtime({ empresaId, windowMode = false }) {
 
   const { data: entregas = [] } = useQuery({
     queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.list()
+    queryFn: () => filterInContext('Entrega', {})
   });
 
   const { data: rotas = [] } = useQuery({
     queryKey: ['rotas-inteligentes'],
-    queryFn: () => base44.entities.RoteirizacaoInteligente.list()
+    queryFn: () => filterInContext('RoteirizacaoInteligente', {})
   });
 
   useEffect(() => {

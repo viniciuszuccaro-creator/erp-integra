@@ -14,6 +14,7 @@ import {
   Target
 } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * ETAPA 5: DASHBOARD PRODUÇÃO TEMPO REAL V21.4
@@ -21,6 +22,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
  */
 
 function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
+  const { filterInContext } = useContextoVisual();
   const [metricas, setMetricas] = useState({
     eficienciaGeral: 0,
     opsAtrasadas: 0,
@@ -32,12 +34,12 @@ function DashboardProducaoRealtime({ empresaId, windowMode = false }) {
 
   const { data: ops = [] } = useQuery({
     queryKey: ['ordens-producao'],
-    queryFn: () => base44.entities.OrdemProducao.list()
+    queryFn: () => filterInContext('OrdemProducao', {})
   });
 
   const { data: apontamentos = [] } = useQuery({
     queryKey: ['apontamentos-producao'],
-    queryFn: () => base44.entities.ApontamentoProducao.list()
+    queryFn: () => filterInContext('ApontamentoProducao', {})
   });
 
   // Calcular métricas em tempo real
