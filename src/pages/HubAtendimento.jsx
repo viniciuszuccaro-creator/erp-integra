@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -314,6 +314,7 @@ export default function HubAtendimento() {
   return (
     <div className="w-full h-full min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 lg:p-6 overflow-auto">
       <div className={`${layoutExpandido ? 'max-w-full' : 'max-w-7xl'} mx-auto space-y-4`}>
+        <ErrorBoundary>
         {/* Header Responsivo */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
@@ -330,7 +331,7 @@ export default function HubAtendimento() {
           <div className="flex flex-wrap gap-2">
             <Button
               variant={abaAtiva === "atendimento" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("atendimento")}
+              onClick={() => startTransition(() => setAbaAtiva("atendimento"))}
               size="sm"
               className={abaAtiva === "atendimento" ? "bg-blue-600" : ""}
             >
@@ -339,7 +340,7 @@ export default function HubAtendimento() {
             </Button>
             <Button
               variant={abaAtiva === "meupainel" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("meupainel")}
+              onClick={() => startTransition(() => setAbaAtiva("meupainel"))}
               size="sm"
               className={abaAtiva === "meupainel" ? "bg-purple-600" : ""}
             >
@@ -348,7 +349,7 @@ export default function HubAtendimento() {
             </Button>
             <Button
               variant={abaAtiva === "analytics" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("analytics")}
+              onClick={() => startTransition(() => setAbaAtiva("analytics"))}
               size="sm"
               className={abaAtiva === "analytics" ? "bg-blue-600" : ""}
             >
@@ -357,7 +358,7 @@ export default function HubAtendimento() {
             </Button>
             <Button
               variant={abaAtiva === "templates" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("templates")}
+              onClick={() => startTransition(() => setAbaAtiva("templates"))}
               size="sm"
               className={abaAtiva === "templates" ? "bg-blue-600" : ""}
             >
@@ -366,7 +367,7 @@ export default function HubAtendimento() {
             </Button>
             <Button
               variant={abaAtiva === "config" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("config")}
+              onClick={() => startTransition(() => setAbaAtiva("config"))}
               size="sm"
               className={abaAtiva === "config" ? "bg-blue-600" : ""}
             >
@@ -375,7 +376,7 @@ export default function HubAtendimento() {
             </Button>
             <Button
               variant={abaAtiva === "sla" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("sla")}
+              onClick={() => startTransition(() => setAbaAtiva("sla"))}
               size="sm"
               className={abaAtiva === "sla" ? "bg-blue-600" : ""}
             >
@@ -384,7 +385,7 @@ export default function HubAtendimento() {
             </Button>
             <Button
               variant={abaAtiva === "fila" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("fila")}
+              onClick={() => startTransition(() => setAbaAtiva("fila"))}
               size="sm"
               className={abaAtiva === "fila" ? "bg-blue-600" : ""}
             >
@@ -393,7 +394,7 @@ export default function HubAtendimento() {
             </Button>
             <Button
               variant={abaAtiva === "relatorios" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("relatorios")}
+              onClick={() => startTransition(() => setAbaAtiva("relatorios"))}
               size="sm"
               className={abaAtiva === "relatorios" ? "bg-blue-600" : ""}
             >
@@ -402,7 +403,7 @@ export default function HubAtendimento() {
             </Button>
             <Button
               variant={abaAtiva === "multicanal" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("multicanal")}
+              onClick={() => startTransition(() => setAbaAtiva("multicanal"))}
               size="sm"
               className={abaAtiva === "multicanal" ? "bg-blue-600" : ""}
             >
@@ -411,7 +412,7 @@ export default function HubAtendimento() {
             </Button>
             <Button
               variant={abaAtiva === "base" ? "default" : "outline"}
-              onClick={() => setAbaAtiva("base")}
+              onClick={() => startTransition(() => setAbaAtiva("base"))}
               size="sm"
               className={abaAtiva === "base" ? "bg-blue-600" : ""}
             >
@@ -1128,6 +1129,7 @@ export default function HubAtendimento() {
         </AnimatePresence>
           </>
         )}
+        </ErrorBoundary>
       </div>
     </div>
   );

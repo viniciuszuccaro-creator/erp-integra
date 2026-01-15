@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +33,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { AnimatePresence } from "framer-motion";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 /**
  * 🌐 PORTAL DO CLIENTE V21.5 - 100% COMPLETO E FINALIZADO
@@ -84,7 +85,7 @@ export default function PortalCliente() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab) setActiveTab(tab);
+    if (tab) startTransition(() => setActiveTab(tab));
   }, []);
 
   const { data: fetchedCliente, isLoading: isClienteLoading } = useQuery({
@@ -380,6 +381,7 @@ export default function PortalCliente() {
 
       {/* Conteúdo Principal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8 w-full">
+        <ErrorBoundary>
         {/* Status Widget do Portal */}
         {user?.role === 'admin' && (
           <div className="mb-6">
@@ -389,7 +391,7 @@ export default function PortalCliente() {
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full">
+        <Tabs value={activeTab} onValueChange={(v) => startTransition(() => setActiveTab(v))} className="space-y-6 w-full">
           <div className="overflow-x-auto">
             <TabsList className="inline-flex w-auto min-w-full bg-white shadow-sm p-1">
               <TabsTrigger value="dashboard" className="flex items-center gap-2 whitespace-nowrap">
@@ -761,6 +763,7 @@ export default function PortalCliente() {
             </Suspense>
           </TabsContent>
         </Tabs>
+        </ErrorBoundary>
       </div>
 
       {/* Chatbot IA Flutuante */}

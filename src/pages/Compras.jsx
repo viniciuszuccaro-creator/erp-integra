@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +11,7 @@ const CotacoesTab = React.lazy(() => import("../components/compras/CotacoesTab")
 const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/ImportacaoNFeRecebimento"));
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function Compras() {
   const [activeTab, setActiveTab] = useState("fornecedores");
@@ -18,10 +19,10 @@ export default function Compras() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) { try { initial = localStorage.getItem('Compras_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
+    if (initial) startTransition(() => setActiveTab(initial));
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -110,7 +111,8 @@ export default function Compras() {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm">
           <TabsTrigger value="fornecedores" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
             <Building2 className="w-4 h-4 mr-2" />
@@ -135,25 +137,36 @@ export default function Compras() {
         </TabsList>
 
         <TabsContent value="fornecedores">
-          <FornecedoresTab fornecedores={fornecedoresFiltrados} isLoading={loadingFornecedores} />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <FornecedoresTab fornecedores={fornecedoresFiltrados} isLoading={loadingFornecedores} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="recebimento">
-          <ImportacaoNFeRecebimento />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <ImportacaoNFeRecebimento />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="solicitacoes">
-          <SolicitacoesCompraTab solicitacoes={solicitacoesFiltradas} />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <SolicitacoesCompraTab solicitacoes={solicitacoesFiltradas} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="cotacoes">
-          <CotacoesTab />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <CotacoesTab />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="ordens">
-          <OrdensCompraTab ordensCompra={ordensCompraFiltradas} fornecedores={fornecedoresFiltrados} empresas={empresas} isLoading={loadingOrdens} />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <OrdensCompraTab ordensCompra={ordensCompraFiltradas} fornecedores={fornecedoresFiltrados} empresas={empresas} isLoading={loadingOrdens} />
+          </Suspense>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </ErrorBoundary>
     </div>
   );
 }

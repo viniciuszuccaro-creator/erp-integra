@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, Suspense } from "react";
+import React, { useState, useMemo, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,6 +33,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import EventoForm from "@/components/agenda/EventoForm";
 import { useWindow } from "@/components/lib/useWindow";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function Agenda() {
   const [visualizacao, setVisualizacao] = useState("mes");
@@ -54,12 +55,12 @@ export default function Agenda() {
     if (!d) { try { d = localStorage.getItem('Agenda_date') || null; } catch {} }
     if (!u) { try { u = localStorage.getItem('Agenda_user') || null; } catch {} }
 
-    if (v) setVisualizacao(v);
+    if (v) startTransition(() => setVisualizacao(v));
     if (d) {
       const parsed = new Date(d);
-      if (!isNaN(parsed)) setDataAtual(parsed);
+      if (!isNaN(parsed)) startTransition(() => setDataAtual(parsed));
     }
-    if (u) setFiltroUsuario(u);
+    if (u) startTransition(() => setFiltroUsuario(u));
   }, []);
 
   // Sincronizar estado -> URL + localStorage
@@ -438,7 +439,7 @@ export default function Agenda() {
     } else {
       novaData.setDate(novaData.getDate() - 1);
     }
-    setDataAtual(novaData);
+    startTransition(() => setDataAtual(novaData));
   };
 
   const navegarProximo = () => {
@@ -450,11 +451,11 @@ export default function Agenda() {
     } else {
       novaData.setDate(novaData.getDate() + 1);
     }
-    setDataAtual(novaData);
+    startTransition(() => setDataAtual(novaData));
   };
 
   const irParaHoje = () => {
-    setDataAtual(new Date());
+    startTransition(() => setDataAtual(new Date()));
   };
 
   // Filtrar eventos
@@ -952,21 +953,21 @@ export default function Agenda() {
                 <Button
                   variant={visualizacao === 'mes' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setVisualizacao('mes')}
+                  onClick={() => startTransition(() => setVisualizacao('mes'))}
                 >
                   Mês
                 </Button>
                 <Button
                   variant={visualizacao === 'semana' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setVisualizacao('semana')}
+                  onClick={() => startTransition(() => setVisualizacao('semana'))}
                 >
                   Semana
                 </Button>
                 <Button
                   variant={visualizacao === 'dia' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => setVisualizacao('dia')}
+                  onClick={() => startTransition(() => setVisualizacao('dia'))}
                 >
                   Dia
                 </Button>
@@ -1312,6 +1313,7 @@ export default function Agenda() {
           {visualizacao === 'dia' && renderVisaoDiaria()}
         </CardContent>
       </Card>
+      </ErrorBoundary>
 
       {/* Dialog de Visualização do Evento */}
       <Dialog open={!!visualizandoEvento} onOpenChange={() => setVisualizandoEvento(null)}>

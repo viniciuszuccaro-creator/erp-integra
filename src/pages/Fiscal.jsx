@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,6 +37,7 @@ const ImportarXMLNFe = React.lazy(() => import('../components/fiscal/ImportarXML
 const HistoricoImportacoesXML = React.lazy(() => import('../components/fiscal/HistoricoImportacoesXML')); // New Import
 import { useToast } from "@/components/ui/use-toast";
 import { useUser } from "@/components/lib/UserContext";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function FiscalPage() {
   const [activeTab, setActiveTab] = useState("notas");
@@ -44,10 +45,10 @@ export default function FiscalPage() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) { try { initial = localStorage.getItem('Fiscal_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
+    if (initial) startTransition(() => setActiveTab(initial));
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -289,7 +290,8 @@ export default function FiscalPage() {
         </Card>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="notas" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
@@ -321,7 +323,9 @@ export default function FiscalPage() {
         </TabsList>
 
         <TabsContent value="motor-ia">
-          <MotorFiscalInteligente />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <MotorFiscalInteligente />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="notas" className="space-y-4">
@@ -447,37 +451,50 @@ export default function FiscalPage() {
         </TabsContent>
 
         <TabsContent value="config">
-          <ConfigFiscalAutomatica empresaId={empresaAtual?.id} />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <ConfigFiscalAutomatica empresaId={empresaAtual?.id} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="contabil">
-          <Card className="border-0 shadow-md">
-            <CardHeader className="bg-slate-50 border-b">
-              <CardTitle>Plano de Contas Contábil</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <PlanoDeContasTree empresaId={empresaAtual?.id} />
-            </CardContent>
-          </Card>
+          <Suspense fallback={<div>Carregando...</div>}>
+            <Card className="border-0 shadow-md">
+              <CardHeader className="bg-slate-50 border-b">
+                <CardTitle>Plano de Contas Contábil</CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <PlanoDeContasTree empresaId={empresaAtual?.id} />
+              </CardContent>
+            </Card>
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="dre">
-          <RelatorioDRE 
-            empresaId={empresaAtual?.id}
-            tipoRelatorio={estaNoGrupo ? "Consolidado" : "Individual"}
-          />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <RelatorioDRE 
+              empresaId={empresaAtual?.id}
+              tipoRelatorio={estaNoGrupo ? "Consolidado" : "Individual"}
+            />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="sped">
-          <ExportacaoSPED empresaId={empresaAtual?.id} />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <ExportacaoSPED empresaId={empresaAtual?.id} />
+          </Suspense>
         </TabsContent>
 
         {/* NOVA ABA: Importar XML */}
         <TabsContent value="importar-xml" className="space-y-6">
-          <ImportarXMLNFe empresaId={empresaAtual?.id} />
-          <HistoricoImportacoesXML empresaId={empresaAtual?.id} />
+          <Suspense fallback={<div>Carregando...</div>}>
+            <ImportarXMLNFe empresaId={empresaAtual?.id} />
+          </Suspense>
+          <Suspense fallback={<div>Carregando...</div>}>
+            <HistoricoImportacoesXML empresaId={empresaAtual?.id} />
+          </Suspense>
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </ErrorBoundary>
 
       {/* Dialog Detalhes NF-e */}
       <Dialog open={dialogDetalhesOpen} onOpenChange={setDialogDetalhesOpen}>

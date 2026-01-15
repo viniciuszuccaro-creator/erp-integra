@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, Suspense } from "react";
+import React, { useState, useMemo, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +24,7 @@ const DashboardInadimplencia = React.lazy(() => import("@/components/relatorios/
 const RelatorioVendasPorRegiao = React.lazy(() => import("@/components/relatorios/RelatorioVendasPorRegiao"));
 const DashboardRepresentantes = React.lazy(() => import("@/components/relatorios/DashboardRepresentantes"));
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 const AgendamentoRelatorios = React.lazy(() => import("../components/relatorios/AgendamentoRelatorios"));
 const GeradorRelatorios = React.lazy(() => import('../components/sistema/GeradorRelatorios')); // Added import
@@ -34,10 +35,10 @@ export default function Relatorios() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) { try { initial = localStorage.getItem('Relatorios_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
+    if (initial) startTransition(() => setActiveTab(initial));
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -310,7 +311,8 @@ export default function Relatorios() {
         <p className="text-slate-600">Relatórios estratégicos, análises gerenciais e exportação de dados</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           {/* Existing Triggers */}
           <TabsTrigger value="estrategicos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
@@ -578,7 +580,8 @@ export default function Relatorios() {
         <TabsContent value="exportacao">
           <GeradorRelatorios empresaId={empresaAtual?.id} />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </ErrorBoundary>
 
       {/* Dialog de Agendamento */}
       <Dialog open={agendarEmailDialogOpen} onOpenChange={setAgendarEmailDialogOpen}>

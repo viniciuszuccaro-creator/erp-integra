@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, startTransition, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -48,6 +48,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import MonitoramentoRHInteligente from "@/components/rh/MonitoramentoRHInteligente";
 import PontoEletronicoBiometrico from "@/components/rh/PontoEletronicoBiometrico";
 import DashboardRHRealtime from "../components/rh/DashboardRHRealtime";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function RH() {
   const [activeTab, setActiveTab] = useState("colaboradores");
@@ -55,10 +56,10 @@ export default function RH() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab') || null;
     if (!initial) { try { initial = localStorage.getItem('RH_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
+    if (initial) startTransition(() => setActiveTab(initial));
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -256,6 +257,7 @@ export default function RH() {
 
         <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
+            <ErrorBoundary>
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
               <TabsList className="grid w-full grid-cols-7 mb-6">
                 <TabsTrigger value="colaboradores">Colaboradores</TabsTrigger>
@@ -376,24 +378,28 @@ export default function RH() {
               </TabsContent>
 
               <TabsContent value="ponto-biometrico">
-                <Card>
-                  <CardHeader className="bg-indigo-50 border-b">
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-indigo-600" />
-                      Ponto Eletrônico Biométrico
-                    </CardTitle>
-                    <CardDescription>
-                      Sistema avançado com reconhecimento facial, biometria digital, GPS e validação por IA
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <PontoEletronicoBiometrico />
-                  </CardContent>
-                </Card>
+                <Suspense fallback={<div>Carregando...</div>}>
+                  <Card>
+                    <CardHeader className="bg-indigo-50 border-b">
+                      <CardTitle className="flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-indigo-600" />
+                        Ponto Eletrônico Biométrico
+                      </CardTitle>
+                      <CardDescription>
+                        Sistema avançado com reconhecimento facial, biometria digital, GPS e validação por IA
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <PontoEletronicoBiometrico />
+                    </CardContent>
+                  </Card>
+                </Suspense>
               </TabsContent>
 
               <TabsContent value="dashboard-realtime">
-                <DashboardRHRealtime empresaId={user?.empresa_padrao_id} />
+                <Suspense fallback={<div>Carregando...</div>}>
+                  <DashboardRHRealtime empresaId={user?.empresa_padrao_id} />
+                </Suspense>
               </TabsContent>
 
               <TabsContent value="ferias" className="space-y-4">
@@ -511,14 +517,19 @@ export default function RH() {
 
               {/* NOVA: Tab Gamificação */}
               <TabsContent value="gamificacao">
-                <GameficacaoProducao empresaId={user?.empresa_padrao_id} />
+                <Suspense fallback={<div>Carregando...</div>}>
+                  <GameficacaoProducao empresaId={user?.empresa_padrao_id} />
+                </Suspense>
               </TabsContent>
 
               {/* NOVA: Tab Monitoramento IA */}
               <TabsContent value="monitoramento-ia">
-                <MonitoramentoRHInteligente />
+                <Suspense fallback={<div>Carregando...</div>}>
+                  <MonitoramentoRHInteligente />
+                </Suspense>
               </TabsContent>
             </Tabs>
+            </ErrorBoundary>
           </CardContent>
         </Card>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, startTransition } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,6 +34,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import IAReposicao from "../components/estoque/IAReposicao";
 import { useWindow } from "@/components/lib/useWindow";
 import TransferenciaEntreEmpresasForm from "../components/estoque/TransferenciaEntreEmpresasForm";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function Estoque() {
   const [activeTab, setActiveTab] = useState("produtos");
@@ -41,10 +42,10 @@ export default function Estoque() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) { try { initial = localStorage.getItem('Estoque_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
+    if (initial) startTransition(() => setActiveTab(initial));
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    startTransition(() => setActiveTab(value));
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
@@ -308,7 +309,8 @@ export default function Estoque() {
         </Card>
       )}
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+      <ErrorBoundary>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger value="produtos" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
             <Box className="w-4 h-4 mr-2" />
@@ -382,7 +384,8 @@ export default function Estoque() {
         <TabsContent value="ia-reposicao">
           <IAReposicao empresaId={empresaAtual?.id} />
         </TabsContent>
-      </Tabs>
+        </Tabs>
+      </ErrorBoundary>
     </div>
   );
 }
