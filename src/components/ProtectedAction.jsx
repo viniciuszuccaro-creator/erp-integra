@@ -15,7 +15,7 @@ export function ProtectedAction({
     return null;
   }
 
-  if (!hasPermission(module, action)) {
+  if (!hasPermission(module, section, action)) {
     if (fallback) return fallback;
     
     return (

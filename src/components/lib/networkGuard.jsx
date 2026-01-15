@@ -33,7 +33,16 @@
       if (isSameOrigin && empresaId) {
         // Normaliza headers preservando existentes
         const headers = new Headers((init && init.headers) || (typeof input !== 'string' && input && input.headers) || {});
-        headers.set('x-company-id', empresaId);
+        const contexto = getContextoAtual();
+        const groupId = getGroupAtualId();
+        if (empresaId) headers.set('x-company-id', empresaId);
+        if (contexto === 'grupo' && groupId) {
+          headers.set('x-tenant-id', groupId);
+          headers.set('x-group-id', groupId);
+        } else if (empresaId) {
+          headers.set('x-tenant-id', empresaId);
+        }
+        headers.set('x-scope', contexto);
 
         // Reconstrói init preservando método/body/etc
         const nextInit = {

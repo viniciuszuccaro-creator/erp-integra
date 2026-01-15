@@ -45,12 +45,23 @@ export function useContextoVisual() {
   const estaNoGrupo = contexto === 'grupo';
 
   useEffect(() => {
-    try {
-      localStorage.setItem('contexto_atual', contexto);
-    } catch (e) {
-      console.warn('Erro ao salvar contexto:', e);
-    }
-  }, [contexto]);
+            try {
+              localStorage.setItem('contexto_atual', contexto);
+            } catch (e) {
+              console.warn('Erro ao salvar contexto:', e);
+            }
+          }, [contexto]);
+
+          // Persistir o grupo atual para headers multi-tenant
+          useEffect(() => {
+            try {
+              if (grupoAtual?.id) {
+                localStorage.setItem('group_atual_id', grupoAtual.id);
+              }
+            } catch (e) {
+              console.warn('Erro ao salvar grupo:', e);
+            }
+          }, [grupoAtual?.id]);
 
   const adaptarMenuPorContexto = (menuItems) => {
     if (!user) return menuItems;
