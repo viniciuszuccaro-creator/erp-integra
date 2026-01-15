@@ -30,12 +30,19 @@ export function ProtectedAction({
     if (auditDenied) {
       try {
         base44.entities.AuditLog.create({
-          usuario: "Sistema/UI",
+          usuario: user?.full_name || user?.email || "Usuário",
+          usuario_id: user?.id,
+          empresa_id: empresaAtual?.id || null,
+          empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
           acao: "Bloqueio",
           modulo: module,
           entidade: section || "-",
           descricao: `Ação negada: ${module}/${section || "-"}/${action}`,
-          dados_novos: auditMetadata || null,
+          dados_novos: {
+            ...(auditMetadata || {}),
+            contexto: contexto || 'empresa',
+            group_id: grupoAtual?.id || null,
+          },
         });
       } catch {}
     }
