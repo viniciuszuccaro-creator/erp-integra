@@ -289,6 +289,28 @@ function LayoutContent({ children, currentPageName }) {
     Expedicao: 'Expedição',
   };
 
+  const currentModule = pageToModule[currentPageName];
+  useEffect(() => {
+    if (!currentModule) return;
+    const key = `audit_block_${currentModule}`;
+    try {
+      const allowed = hasPermission(currentModule, null, 'ver');
+      if (!allowed && !sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1');
+        base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: empresaAtual?.id || null,
+          empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+          acao: 'Bloqueio',
+          modulo: currentModule,
+          entidade: 'Página',
+          descricao: `Acesso negado ao módulo ${currentModule} (${currentPageName})`,
+        });
+      }
+    } catch {}
+  }, [currentModule, currentPageName, user?.id, empresaAtual?.id]);
+
 
 
   const groupedItems = {
