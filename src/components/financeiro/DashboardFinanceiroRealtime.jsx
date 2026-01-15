@@ -21,7 +21,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
  * Consolidação Caixa Diário + Conciliação Bancária
  */
 
-export default function DashboardFinanceiroRealtime({ empresaId, windowMode = false }) {
+function DashboardFinanceiroRealtime({ empresaId, windowMode = false }) {
   const [metricas, setMetricas] = useState({
     saldoCaixa: 0,
     receitasHoje: 0,
@@ -254,3 +254,4 @@ export default function DashboardFinanceiroRealtime({ empresaId, windowMode = fa
     </div></div>
   );
 }
+export default React.memo(DashboardFinanceiroRealtime);

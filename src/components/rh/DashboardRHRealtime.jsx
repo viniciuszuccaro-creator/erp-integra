@@ -20,7 +20,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
  * Consolidação e melhoria do módulo de RH
  */
 
-export default function DashboardRHRealtime({ empresaId, windowMode = false }) {
+function DashboardRHRealtime({ empresaId, windowMode = false }) {
   const [metricas, setMetricas] = useState({
     colaboradoresAtivos: 0,
     presentesHoje: 0,
@@ -277,3 +277,4 @@ export default function DashboardRHRealtime({ empresaId, windowMode = false }) {
     </div>
   );
 }
+export default React.memo(DashboardRHRealtime);

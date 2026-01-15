@@ -24,7 +24,7 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  * Dashboard em Tempo Real
  * V21.7: Auto-atualiza a cada 10s + Multiempresa + IA
  */
-export default function DashboardTempoReal({ empresaId, windowMode = false }) {
+function DashboardTempoReal({ empresaId, windowMode = false }) {
   const [pulseActive, setPulseActive] = useState(false);
   const { empresaAtual, estaNoGrupo, filtrarPorContexto } = useContextoVisual();
   
@@ -61,7 +61,7 @@ export default function DashboardTempoReal({ empresaId, windowMode = false }) {
 
   const containerClass = windowMode 
     ? "w-full h-full flex flex-col overflow-hidden" 
-    : "space-y-6";
+    : "w-full h-full space-y-6";
 
   return (
     <div className={containerClass}>
@@ -516,3 +516,4 @@ export default function DashboardTempoReal({ empresaId, windowMode = false }) {
     </div>
   );
 }
+export default React.memo(DashboardTempoReal);
