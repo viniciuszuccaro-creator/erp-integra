@@ -163,6 +163,43 @@ function LayoutContent({ children, currentPageName }) {
     }
   }, [modoEscuro]);
 
+  // Registro global de erros de UI (não altera layout visual)
+  useEffect(() => {
+    const onError = (e) => {
+      try {
+        const msg = e?.message || e?.error?.message || 'Erro de UI';
+        const stack = e?.error?.stack || null;
+        base44.entities?.AuditLog?.create?.({
+          acao: 'Visualização',
+          modulo: 'Sistema',
+          entidade: 'UI',
+          descricao: `Erro não tratado: ${msg}`,
+          dados_novos: { stack, source: e?.filename, lineno: e?.lineno, colno: e?.colno },
+          data_hora: new Date().toISOString(),
+        });
+      } catch {}
+    };
+    const onUnhandled = (e) => {
+      try {
+        const msg = e?.reason?.message || String(e?.reason);
+        base44.entities?.AuditLog?.create?.({
+          acao: 'Visualização',
+          modulo: 'Sistema',
+          entidade: 'UI',
+          descricao: `Promise rejeitada: ${msg}`,
+          dados_novos: { reason: e?.reason },
+          data_hora: new Date().toISOString(),
+        });
+      } catch {}
+    };
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onUnhandled);
+    return () => {
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onUnhandled);
+    };
+  }, []);
+
   const darkModeStyles = modoEscuro ? `
     <style>
       :root.dark {
