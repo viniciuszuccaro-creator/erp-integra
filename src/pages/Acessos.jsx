@@ -35,9 +35,12 @@ export default function Acessos() {
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Acessos_tab', value); } catch {}
   };
-  const { user } = useUser();
+  const userCtx = useUser();
+  const user = userCtx?.user;
 
-  const { empresaAtual, estaNoGrupo } = useContextoVisual();
+  const visualCtx = useContextoVisual();
+  const empresaAtual = visualCtx?.empresaAtual;
+  const estaNoGrupo = visualCtx?.estaNoGrupo;
 
   // Auditoria automática de alterações em Perfis/Permissões (não altera funcionalidades; apenas registra)
   useEffect(() => {
