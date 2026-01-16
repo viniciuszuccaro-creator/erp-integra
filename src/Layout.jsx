@@ -291,9 +291,7 @@ function LayoutContent({ children, currentPageName }) {
 
   const isMobilePage = currentPageName === "ProducaoMobile";
 
-  if (isMobilePage) {
-    return <div className="min-h-screen">{children}</div>;
-  }
+
 
   const titleToModule = {
     "CRM - Relacionamento": "CRM",
@@ -355,6 +353,15 @@ function LayoutContent({ children, currentPageName }) {
     sistema: itemsFiltrados.filter(item => item.group === "sistema"),
     publico: itemsFiltrados.filter(item => item.group === "publico"),
   };
+
+  if (isMobilePage) {
+    return (
+      <>
+        {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
+        <div className="min-h-screen">{children}</div>
+      </>
+    );
+  }
 
   return (
     <SidebarProvider>
