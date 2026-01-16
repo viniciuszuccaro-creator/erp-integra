@@ -3,9 +3,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
-  Package, Calculator, Globe, TrendingUp, 
-  FileText, Upload, Loader2 
+  Package, Calculator, Globe, TrendingUp
 } from "lucide-react";
+import ProdutoFormHeader from "./produto/ProdutoFormHeader";
 import ProdutoForm from "./ProdutoForm";
 import AbaConversoesProduto from "./AbaConversoesProduto";
 import AbaEcommerceProduto from "./AbaEcommerceProduto";
@@ -66,37 +66,13 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Header com Botões de Importação */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">
-            {produto ? `Editar: ${produto.descricao}` : 'Novo Produto'}
-          </h2>
-          <p className="text-sm text-slate-600">V21.1.2-R2 - Cadastro Avançado com IA</p>
-        </div>
-        
-        {!produto && (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setModoImportacao('nfe')}
-              className="border-purple-300"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Via NF-e
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setModoImportacao('lote')}
-              className="border-green-300"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Em Lote
-            </Button>
-          </div>
-        )}
-      </div>
+      <ProdutoFormHeader
+        produto={produto}
+        onImportarNFe={() => setModoImportacao('nfe')}
+        onImportarLote={() => setModoImportacao('lote')}
+      />
 
       {/* Abas do Formulário */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
