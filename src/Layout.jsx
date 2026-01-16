@@ -43,6 +43,8 @@ import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import usePermissions from "@/components/lib/usePermissions";
 import NotificationCenter from "@/components/NotificationCenter";
+import InviteUserButton from "@/components/users/InviteUserButton";
+import useGlobalErrorReporter from "@/components/lib/useGlobalErrorReporter";
 import EmpresaSwitcher from "@/components/EmpresaSwitcher";
 import { UserProvider, useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -61,6 +63,7 @@ const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
   { title: "Dashboard Corporativo", url: createPageUrl("DashboardCorporativo"), icon: BarChart3, group: "principal" },
   { title: "Relatórios e Análises", url: createPageUrl("Relatorios"), icon: BarChart3, group: "principal" },
+  { title: "Fluxos Integrados", url: createPageUrl("Fluxos"), icon: Zap, group: "principal" },
   { title: "Agenda e Calendário", url: createPageUrl("Agenda"), icon: Calendar, group: "principal" },
   { title: "CRM - Relacionamento", url: createPageUrl("CRM"), icon: Users, group: "principal" },
   { title: "Cadastros Gerais", url: createPageUrl("Cadastros"), icon: Users, group: "cadastros" },
@@ -90,6 +93,7 @@ function LayoutContent({ children, currentPageName }) {
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
         const queryClient = useQueryClient();
+        useGlobalErrorReporter();
 
         const prefetchForItem = (title) => {
                         try {
@@ -275,6 +279,9 @@ function LayoutContent({ children, currentPageName }) {
             if ('empresa_id' in data && !data?.empresa_id && empresaAtual?.id) {
               patch.empresa_id = empresaAtual.id;
             }
+            if ('group_id' in data && !data?.group_id && empresaAtual?.group_id) {
+              patch.group_id = empresaAtual.group_id;
+            }
 
             if (Object.keys(patch).length > 0) {
               try {
@@ -301,6 +308,7 @@ function LayoutContent({ children, currentPageName }) {
     "Financeiro e Contábil": "Financeiro",
     "Fiscal e Tributário": "Fiscal",
     "Recursos Humanos": "RH",
+    "Fluxos Integrados": "Comercial",
   };
 
   const itemsFiltrados = navigationItems.filter(item => {
@@ -318,6 +326,7 @@ function LayoutContent({ children, currentPageName }) {
     Financeiro: 'Financeiro',
     Fiscal: 'Fiscal',
     RH: 'RH',
+    Fluxos: 'Comercial',
     Expedicao: 'Expedição',
   };
 
