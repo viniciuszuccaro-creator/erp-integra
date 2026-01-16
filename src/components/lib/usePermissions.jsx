@@ -27,8 +27,9 @@ export default function usePermissions() {
 
     // Se não especificar seção, verifica se tem a ação em QUALQUER seção
     if (!section) {
+      const alt = action === 'ver' ? 'visualizar' : (action === 'visualizar' ? 'ver' : null);
       return Object.values(moduloPermissoes).some(secao => 
-        Array.isArray(secao) && secao.includes(action)
+        Array.isArray(secao) && (secao.includes(action) || (alt ? secao.includes(alt) : false))
       );
     }
 
@@ -36,7 +37,8 @@ export default function usePermissions() {
     const secaoPermissoes = moduloPermissoes[section];
     if (!Array.isArray(secaoPermissoes)) return false;
 
-    return secaoPermissoes.includes(action);
+    const alt = action === 'ver' ? 'visualizar' : (action === 'visualizar' ? 'ver' : null);
+    return secaoPermissoes.includes(action) || (alt ? secaoPermissoes.includes(alt) : false);
   };
 
   const hasGranularPermission = (module, section, action) => {

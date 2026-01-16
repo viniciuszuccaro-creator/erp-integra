@@ -22,6 +22,9 @@ import {
   Shield
 } from "lucide-react";
 import { toast } from "sonner";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * V21.6 - Chatbot ERP-Cêntrico - 100% COMPLETO
@@ -37,6 +40,8 @@ export default function ChatbotAtendimento() {
   const [clienteAutenticado, setClienteAutenticado] = useState(null);
   const [vendedorAtendendo, setVendedorAtendendo] = useState(null);
   const queryClient = useQueryClient();
+  const { empresaAtual } = useContextoVisual();
+  const { hasPermission, isAdmin } = usePermissions();
 
   // V21.1: Buscar intents configurados
   const { data: intentsConfig = [] } = useQuery({
@@ -48,8 +53,9 @@ export default function ChatbotAtendimento() {
     queryKey: ['chatbot-interacoes', sessaoAtual],
     queryFn: () => {
       if (!sessaoAtual) return [];
+      const filtro = empresaAtual?.id ? { sessao_id: sessaoAtual, empresa_id: empresaAtual.id } : { sessao_id: sessaoAtual };
       return base44.entities.ChatbotInteracao.filter(
-        { sessao_id: sessaoAtual },
+        filtro,
         '-data_hora',
         50
       );
@@ -73,6 +79,8 @@ export default function ChatbotAtendimento() {
       if (intent.requer_autenticacao && !clienteAutenticado) {
         return await base44.entities.ChatbotInteracao.create({
           sessao_id: sessaoAtual,
+          empresa_id: empresaAtual?.id,
+          group_id: empresaAtual?.group_id || null,
           canal: 'Portal',
           mensagem_usuario: msg,
           intent_detectado: intent.nome,
@@ -109,6 +117,7 @@ export default function ChatbotAtendimento() {
         data_hora: new Date().toISOString()
       });
     },
+    onError: () => { toast.error('Falha ao enviar mensagem'); },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chatbot-interacoes'] });
       setMensagem('');
@@ -303,6 +312,18 @@ export default function ChatbotAtendimento() {
 
   const ultimasInteracoes = interacoes.slice().reverse(); // Reverse for chronological display
 
+  if (!hasPermission('CRM', null, 'ver')) {
+    return (
+      <div className="p-6 w-full h-full">
+        <div className="max-w-2xl mx-auto w-full">
+          <div className="rounded-xl border bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-800">Acesso restrito</h2>
+            <p className="text-slate-600 mt-1">Você não possui permissão para acessar este módulo.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="w-full h-full min-h-screen p-4 lg:p-6 bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -414,7 +435,7 @@ export default function ChatbotAtendimento() {
               <Input
                 value={mensagem}
                 onChange={(e) => setMensagem(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleEnviar()}
+                onKeyDown={(e) => e.key === 'Enter' && handleEnviar()}
                 placeholder="Digite sua mensagem..."
                 disabled={enviarMensagemMutation.isPending}
               />
