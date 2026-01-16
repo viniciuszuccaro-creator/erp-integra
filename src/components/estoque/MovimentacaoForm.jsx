@@ -19,7 +19,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
   const { getFiltroContexto } = useContextoVisual();
   const defaultEmpresaId = (getFiltroContexto('empresa_id') || {}).empresa_id || '';
   const [formData, setFormData] = useState(movimentacao || {
-    tipo_movimentacao: '',
+    tipo_movimento: '',
     produto_id: '',
     produto_nome: '',
     quantidade: 0,
@@ -83,8 +83,8 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
             <div>
               <Label>Tipo de Movimentação *</Label>
               <Select
-                value={formData.tipo_movimentacao}
-                onValueChange={(v) => setFormData({ ...formData, tipo_movimentacao: v })}
+                value={formData.tipo_movimento}
+                onValueChange={(v) => setFormData({ ...formData, tipo_movimento: v })}
                 required
               >
                 <SelectTrigger>
