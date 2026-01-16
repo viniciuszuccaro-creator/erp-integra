@@ -36,97 +36,16 @@ async function verificarConfiguracao(empresaId) {
  * Enviar Email via SendGrid
  */
 async function enviarEmailSendGrid(dados, config) {
-  const apiKey = config.api_key;
-
-  const payload = {
-    personalizations: [{
-      to: [{ email: dados.destinatario, name: dados.destinatario_nome }],
-      subject: dados.assunto
-    }],
-    from: {
-      email: config.email_remetente || 'noreply@zuccaro.com.br',
-      name: config.nome_remetente || dados.empresa_nome || 'ERP Zuccaro'
-    },
-    content: [{
-      type: dados.tipo_conteudo === 'html' ? 'text/html' : 'text/plain',
-      value: dados.mensagem
-    }]
-  };
-
-  // Anexos
-  if (dados.anexos && dados.anexos.length > 0) {
-    payload.attachments = dados.anexos.map(anexo => ({
-      content: anexo.conteudo_base64,
-      filename: anexo.nome_arquivo,
-      type: anexo.tipo_mime,
-      disposition: 'attachment'
-    }));
-  }
-
-  const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    const erro = await response.json();
-    throw new Error(erro.errors?.[0]?.message || 'Erro ao enviar email');
-  }
-
-  return {
-    sucesso: true,
-    messageId: response.headers.get('X-Message-Id'),
-    status: 'enviado'
-  };
+  const { data } = await base44.functions.invoke('sendEmailProvider', dados);
+  return data;
 }
 
 /**
  * Enviar Email via AWS SES
  */
 async function enviarEmailAWSSES(dados, config) {
-  const awsRegion = config.aws_region || 'us-east-1';
-  const accessKeyId = config.aws_access_key_id;
-  const secretAccessKey = config.aws_secret_access_key;
-
-  // Nota: Em produção, usar SDK AWS adequado
-  // Aqui é uma simplificação
-  const payload = {
-    Source: config.email_remetente || 'noreply@zuccaro.com.br',
-    Destination: {
-      ToAddresses: [dados.destinatario]
-    },
-    Message: {
-      Subject: {
-        Data: dados.assunto,
-        Charset: 'UTF-8'
-      },
-      Body: dados.tipo_conteudo === 'html' ? {
-        Html: {
-          Data: dados.mensagem,
-          Charset: 'UTF-8'
-        }
-      } : {
-        Text: {
-          Data: dados.mensagem,
-          Charset: 'UTF-8'
-        }
-      }
-    }
-  };
-
-  // Simulação - em produção usar AWS SDK
-  console.log('AWS SES Email:', payload);
-  
-  return {
-    sucesso: true,
-    messageId: `aws-${Date.now()}`,
-    status: 'enviado',
-    modo: 'simulado_aws'
-  };
+  const { data } = await base44.functions.invoke('sendEmailProvider', dados);
+  return data;
 }
 
 /**

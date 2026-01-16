@@ -66,7 +66,7 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
   }
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6 w-full h-full overflow-auto">
       {/* Header com Botões de Importação */}
       <ProdutoFormHeader
         produto={produto}

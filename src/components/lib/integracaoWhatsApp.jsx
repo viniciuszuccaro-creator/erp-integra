@@ -36,74 +36,16 @@ async function verificarConfiguracao(empresaId) {
  * Enviar Mensagem via Evolution API
  */
 async function enviarMensagemEvolution(numero, mensagem, config) {
-  const apiKey = config.api_key;
-  const apiUrl = config.api_url || 'https://evolution-api.com';
-  const instanceName = config.instance_name;
-
-  const payload = {
-    number: numero.replace(/\D/g, ''),
-    text: mensagem
-  };
-
-  const response = await fetch(`${apiUrl}/message/sendText/${instanceName}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': apiKey
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    const erro = await response.json();
-    throw new Error(erro.message || 'Erro ao enviar mensagem');
-  }
-
-  const resultado = await response.json();
-  
-  return {
-    sucesso: true,
-    messageId: resultado.key?.id,
-    status: 'sent',
-    timestamp: new Date().toISOString()
-  };
+  const { data } = await base44.functions.invoke('whatsappSend', { action: 'sendText', numero, mensagem });
+  return data;
 }
 
 /**
  * Enviar Arquivo via WhatsApp
  */
 async function enviarArquivoEvolution(numero, arquivoUrl, legenda, config) {
-  const apiKey = config.api_key;
-  const apiUrl = config.api_url || 'https://evolution-api.com';
-  const instanceName = config.instance_name;
-
-  const payload = {
-    number: numero.replace(/\D/g, ''),
-    mediaUrl: arquivoUrl,
-    caption: legenda || ''
-  };
-
-  const response = await fetch(`${apiUrl}/message/sendMedia/${instanceName}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': apiKey
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    const erro = await response.json();
-    throw new Error(erro.message || 'Erro ao enviar arquivo');
-  }
-
-  const resultado = await response.json();
-  
-  return {
-    sucesso: true,
-    messageId: resultado.key?.id,
-    status: 'sent'
-  };
+  const { data } = await base44.functions.invoke('whatsappSend', { action: 'sendMedia', numero, arquivoUrl, legenda });
+  return data;
 }
 
 /**
