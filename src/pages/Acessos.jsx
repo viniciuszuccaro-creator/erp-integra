@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import usePermissions from "@/components/lib/usePermissions";
+
 import { useUser } from "@/components/lib/UserContext";
 import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
 
@@ -36,14 +36,14 @@ export default function Acessos() {
     try { localStorage.setItem('Acessos_tab', value); } catch {}
   };
   const { user } = useUser();
-  const { hasPermission } = usePermissions();
+
   const { empresaAtual, estaNoGrupo } = useContextoVisual();
 
   // Auditoria automática de alterações em Perfis/Permissões (não altera funcionalidades; apenas registra)
   useEffect(() => {
     const unsub1 = base44.entities?.PerfilAcesso?.subscribe?.(async (evt) => {
       try {
-        await base44.entities.AuditLog.create({
+        await base44.entities?.AuditLog?.create({
           usuario: user?.full_name || user?.email || "Usuário",
           usuario_id: user?.id,
           empresa_id: empresaAtual?.id || null,
@@ -60,7 +60,7 @@ export default function Acessos() {
 
     const unsub2 = base44.entities?.PermissaoEmpresaModulo?.subscribe?.(async (evt) => {
       try {
-        await base44.entities.AuditLog.create({
+        await base44.entities?.AuditLog?.create({
           usuario: user?.full_name || user?.email || "Usuário",
           usuario_id: user?.id,
           empresa_id: empresaAtual?.id || null,
