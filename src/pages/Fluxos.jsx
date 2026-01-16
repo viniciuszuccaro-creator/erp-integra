@@ -2,41 +2,55 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RefreshCcw } from "lucide-react";
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import GuardedButton from "@/components/security/GuardedButton";
+import { RefreshCcw } from "lucide-react";
 
 export default function Fluxos() {
   const [recalcLoading, setRecalcLoading] = useState(false);
-  const handleRecalc = async () => {
-    setRecalcLoading(true);
-    try { await base44.functions.invoke('recalculateAggregates', {}); } finally { setRecalcLoading(false); }
-  };
+
   const { data: pedidos = [] } = useQuery({
     queryKey: ["fluxos", "pedidos"],
     queryFn: async () => {
       const list = await base44.entities.Pedido.list("-updated_date", 20);
-      const enrich = await Promise.all(list.map(async (p) => {
-        const [entregas, notas] = await Promise.all([
-          base44.entities.Entrega.filter({ pedido_id: p.id }, "-updated_date", 5),
-          base44.entities.NotaFiscal.filter({ pedido_id: p.id }, "-updated_date", 5)
-        ]);
-        return { ...p, _entregas: entregas || [], _notas: notas || [] };
-      }));
+      const enrich = await Promise.all(
+        list.map(async (p) => {
+          const [entregas, notas] = await Promise.all([
+            base44.entities.Entrega.filter({ pedido_id: p.id }, "-updated_date", 5),
+            base44.entities.NotaFiscal.filter({ pedido_id: p.id }, "-updated_date", 5),
+          ]);
+          return { ...p, _entregas: entregas || [], _notas: notas || [] };
+        })
+      );
       return enrich;
     },
     initialData: [],
   });
+
+  const handleRecalc = async () => {
+    setRecalcLoading(true);
+    try {
+      await base44.functions.invoke("recalculateAggregates", {});
+    } finally {
+      setRecalcLoading(false);
+    }
+  };
 
   return (
     <div className="w-full h-full p-6">
       <Card className="w-full h-full">
         <CardHeader className="flex items-center justify-between">
           <CardTitle>Fluxos Integrados (Pedido → Entrega → Nota Fiscal)</CardTitle>
-          <Button variant="outline" onClick={handleRecalc} className="gap-2">
+          <GuardedButton
+            module="Comercial"
+            action="exportar"
+            variant="outline"
+            onClick={handleRecalc}
+            className="gap-2"
+          >
             <RefreshCcw className="w-4 h-4" /> {recalcLoading ? "Recalculando..." : "Recalcular Agregados"}
-          </Button>
+          </GuardedButton>
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
