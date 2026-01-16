@@ -1205,7 +1205,16 @@ Caso contrário, sugira:
             handleDadosNCM={handleDadosNCM}
             planoContas={planoContas}
           />
-            <CardHeader className="bg-purple-100 border-b border-purple-200 pb-3">
+        </TabsContent>
+
+        {/* ABA 6: ESTOQUE AVANÇADO */}
+        <TabsContent value="estoque-avancado" className="space-y-6">
+          <EstoqueAvancadoSection 
+            formData={formData}
+            setFormData={setFormData}
+            locaisEstoque={locaisEstoque}
+          />
+        </TabsContent>
               <CardTitle className="text-base flex items-center gap-2">
                 <FileText className="w-5 h-5 text-purple-600" />
                 Configuração Fiscal
