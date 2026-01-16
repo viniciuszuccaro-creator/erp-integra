@@ -20,6 +20,8 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import HistoricoProduto from "./HistoricoProduto";
+import FiscalContabilSection from "./produto/FiscalContabilSection";
+import EstoqueAvancadoSection from "./produto/EstoqueAvancadoSection";
 
 /**
  * V21.4 ETAPA 2/3 COMPLETA - CADASTRO COMPLETO DE PRODUTOS
@@ -1196,7 +1198,13 @@ Caso contrário, sugira:
 
         {/* ABA 5: FISCAL E CONTÁBIL */}
         <TabsContent value="fiscal-contabil" className="space-y-6">
-          <Card className="border-purple-200 bg-purple-50">
+          <FiscalContabilSection 
+            formData={formData}
+            setFormData={setFormData}
+            sugestoesIA={sugestoesIA}
+            handleDadosNCM={handleDadosNCM}
+            planoContas={planoContas}
+          />
             <CardHeader className="bg-purple-100 border-b border-purple-200 pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <FileText className="w-5 h-5 text-purple-600" />
@@ -1388,7 +1396,11 @@ Caso contrário, sugira:
 
         {/* ABA 6: ESTOQUE AVANÇADO */}
         <TabsContent value="estoque-avancado" className="space-y-6">
-          <Card className="border-orange-200 bg-orange-50">
+          <EstoqueAvancadoSection 
+            formData={formData}
+            setFormData={setFormData}
+            locaisEstoque={locaisEstoque}
+          />
             <CardHeader className="bg-orange-100 border-b border-orange-200 pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Warehouse className="w-5 h-5 text-orange-600" />
