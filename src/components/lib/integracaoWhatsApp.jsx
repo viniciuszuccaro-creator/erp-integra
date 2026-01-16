@@ -158,59 +158,18 @@ async function verificarConexao(empresaId) {
  */
 export async function enviarWhatsApp(dados) {
   const { numero, mensagem, empresaId, tipo = 'texto', arquivoUrl = null, legenda = null } = dados;
-  
-  // 1. Verificar configuração
-  const verificacao = await verificarConfiguracao(empresaId);
-  
-  // 2. Modo simulado se não configurado
-  if (!verificacao.configurado) {
-    console.warn('⚠️ WhatsApp não configurado. Modo simulado.');
-    
-    return {
-      sucesso: true,
-      modo: 'simulado',
-      messageId: `SIM_${Date.now()}`,
-      status: 'sent',
-      mensagem: 'Mensagem simulada. Configure WhatsApp para envio real.'
-    };
+
+  const action = tipo === 'arquivo' && arquivoUrl ? 'sendMedia' : 'sendText';
+  const { data } = await base44.functions.invoke('whatsappSend', {
+    action,
+    numero,
+    mensagem,
+    empresaId,
+    arquivoUrl,
+    legenda,
+  });
+  return data;
   }
-
-  // 3. Verificar conexão
-  const statusConexao = await verificarConexao(empresaId);
-  
-  if (!statusConexao.conectado) {
-    throw new Error('WhatsApp desconectado. Escaneie o QR Code novamente.');
-  }
-
-  // 4. Enviar conforme tipo
-  try {
-    let resultado;
-    
-    if (tipo === 'arquivo' && arquivoUrl) {
-      resultado = await enviarArquivoEvolution(numero, arquivoUrl, legenda, verificacao.whatsapp);
-    } else {
-      resultado = await enviarMensagemEvolution(numero, mensagem, verificacao.whatsapp);
-    }
-
-    // 5. Registrar envio
-    await base44.entities.Notificacao.create({
-      titulo: '📱 WhatsApp Enviado',
-      mensagem: `Mensagem enviada para ${numero}`,
-      tipo: 'info',
-      categoria: 'Sistema',
-      prioridade: 'Baixa'
-    });
-
-    return {
-      ...resultado,
-      modo: 'real'
-    };
-    
-  } catch (error) {
-    console.error('Erro ao enviar WhatsApp:', error);
-    throw error;
-  }
-}
 
 /**
  * Enviar Boleto por WhatsApp
