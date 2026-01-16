@@ -1,11 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { RefreshCcw } from "lucide-react";
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
 export default function Fluxos() {
+  const [recalcLoading, setRecalcLoading] = useState(false);
+  const handleRecalc = async () => {
+    setRecalcLoading(true);
+    try { await base44.functions.invoke('recalculateAggregates', {}); } finally { setRecalcLoading(false); }
+  };
   const { data: pedidos = [] } = useQuery({
     queryKey: ["fluxos", "pedidos"],
     queryFn: async () => {
@@ -25,8 +32,11 @@ export default function Fluxos() {
   return (
     <div className="w-full h-full p-6">
       <Card className="w-full h-full">
-        <CardHeader>
+        <CardHeader className="flex items-center justify-between">
           <CardTitle>Fluxos Integrados (Pedido → Entrega → Nota Fiscal)</CardTitle>
+          <Button variant="outline" onClick={handleRecalc} className="gap-2">
+            <RefreshCcw className="w-4 h-4" /> {recalcLoading ? "Recalculando..." : "Recalcular Agregados"}
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="overflow-auto">
