@@ -1215,7 +1215,8 @@ Caso contrário, sugira:
             locaisEstoque={locaisEstoque}
           />
         </TabsContent>
-              {/* ABA 7: HISTÓRICO */}
+
+        {/* ABA 7: HISTÓRICO */}
         <TabsContent value="historico" className="space-y-6">
           {produto ? (
             <HistoricoProduto produtoId={produto.id} produto={produto} />
