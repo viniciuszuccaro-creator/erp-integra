@@ -18,22 +18,23 @@ export default function usePermissions() {
   const hasPermission = (module, section, action = "visualizar") => {
     if (!user) return false;
     if (user.role === "admin") return true;
+    if (!module) return false;
 
-    if (!perfilAcesso?.permissoes) return false;
+    if (!perfilAcesso?.permissoes || typeof perfilAcesso.permissoes !== 'object') return false;
 
     // ESTRUTURA GRANULAR: módulo → seção → [ações]
-    const moduloPermissoes = perfilAcesso.permissoes[module];
-    if (!moduloPermissoes) return false;
+    const moduloPermissoes = perfilAcesso.permissoes?.[module];
+    if (!moduloPermissoes || typeof moduloPermissoes !== 'object') return false;
 
     // Se não especificar seção, verifica se tem a ação em QUALQUER seção
     if (!section) {
-      return Object.values(moduloPermissoes).some(secao => 
+      return Object.values(moduloPermissoes || {}).some((secao) =>
         Array.isArray(secao) && secao.includes(action)
       );
     }
 
     // Verifica permissão na seção específica
-    const secaoPermissoes = moduloPermissoes[section];
+    const secaoPermissoes = moduloPermissoes?.[section];
     if (!Array.isArray(secaoPermissoes)) return false;
 
     return secaoPermissoes.includes(action);
