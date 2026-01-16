@@ -741,6 +741,8 @@ export default function CRMPage() {
                       const temperatura = calcularTemperatura(data);
                       await base44.entities.Oportunidade.create({
                         ...data,
+                        empresa_id: empresaAtual?.id,
+                        group_id: null,
                         score,
                         temperatura,
                         quantidade_interacoes: 0,
@@ -1086,7 +1088,7 @@ export default function CRMPage() {
                     windowMode: true,
                     onSubmit: async (data) => {
                       try {
-                        await base44.entities.Interacao.create(data);
+                        await base44.entities.Interacao.create({ ...data, empresa_id: empresaAtual?.id, group_id: null });
                         const relatedOpp = oportunidades.find(o => o.cliente_nome === data.cliente_nome);
                         if (relatedOpp) {
                           await base44.entities.Oportunidade.update(relatedOpp.id, {
@@ -1322,7 +1324,7 @@ export default function CRMPage() {
                           ...data,
                           orcamento: parseFloat(data.orcamento) || 0
                         };
-                        await base44.entities.Campanha.create(dataWithValues);
+                        await base44.entities.Campanha.create({ ...dataWithValues, empresa_id: empresaAtual?.id, group_id: null });
                         queryClient.invalidateQueries({ queryKey: ['campanhas'] });
                         toast({ title: "✅ Campanha criada!" });
                       } catch (error) {

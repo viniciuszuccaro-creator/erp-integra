@@ -105,7 +105,7 @@ export default function HubAtendimento() {
   const fileInputRef = useRef(null);
   
   const queryClient = useQueryClient();
-  const { hasPermission, user } = usePermissions();
+  const { hasPermission, user, isAdmin } = usePermissions();
   const { empresaAtual } = useContextoVisual();
 
   // Auto-scroll para última mensagem
@@ -121,7 +121,7 @@ export default function HubAtendimento() {
   }, []);
 
   // Verificar permissão
-  const podeAtenderTransbordo = hasPermission('chatbot', 'pode_atender_transbordo');
+  const podeAtenderTransbordo = isAdmin() || hasPermission('chatbot', null, 'ver') || hasPermission('CRM', null, 'ver');
 
   // Buscar conversas
   const { data: conversas = [], isLoading } = useQuery({
@@ -212,6 +212,8 @@ export default function HubAtendimento() {
       // Criar mensagem
       const novaMensagem = await base44.entities.MensagemOmnicanal.create({
         conversa_id: conversaSelecionada.id,
+        empresa_id: conversaSelecionada.empresa_id || empresaAtual?.id,
+        group_id: empresaAtual?.group_id || null,
         sessao_id: conversaSelecionada.sessao_id,
         canal: conversaSelecionada.canal,
         tipo_remetente: 'Atendente',
