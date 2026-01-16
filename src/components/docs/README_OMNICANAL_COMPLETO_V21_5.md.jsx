@@ -193,7 +193,7 @@ Finaliza conversa
 
 ---
 
-## 📈 ENTIDADES DO SISTEMA
+## 🧩 ENTIDADES DO SISTEMA
 
 ### ConversaOmnicanal
 - Conversa principal multicanal
@@ -248,7 +248,7 @@ Finaliza conversa
 
 ---
 
-## 📊 MÉTRICAS RASTREADAS
+## 📈 MÉTRICAS RASTREADAS
 
 ### Por Conversa:
 - Tempo até primeira resposta
@@ -322,7 +322,7 @@ Finaliza conversa
 
 ---
 
-## 🔒 SEGURANÇA
+## 🔐 SEGURANÇA
 
 - Autenticação obrigatória
 - Permissões granulares por perfil

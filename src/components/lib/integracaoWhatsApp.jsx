@@ -110,47 +110,8 @@ async function enviarArquivoEvolution(numero, arquivoUrl, legenda, config) {
  * Verificar Status da Conexão
  */
 async function verificarConexao(empresaId) {
-  const verificacao = await verificarConfiguracao(empresaId);
-  
-  if (!verificacao.configurado) {
-    return {
-      conectado: false,
-      modo: 'simulado',
-      mensagem: verificacao.erro
-    };
-  }
-
-  const { whatsapp } = verificacao;
-  const apiKey = whatsapp.api_key;
-  const apiUrl = whatsapp.api_url || 'https://evolution-api.com';
-  const instanceName = whatsapp.instance_name;
-
-  try {
-    const response = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
-      headers: { 'apikey': apiKey }
-    });
-
-    if (!response.ok) {
-      return {
-        conectado: false,
-        erro: 'Erro ao verificar conexão'
-      };
-    }
-
-    const resultado = await response.json();
-    
-    return {
-      conectado: resultado.state === 'open',
-      estado: resultado.state,
-      qrcode: resultado.qrcode
-    };
-    
-  } catch (error) {
-    return {
-      conectado: false,
-      erro: error.message
-    };
-  }
+  const { data } = await base44.functions.invoke('whatsappSend', { action: 'status', empresaId });
+  return data;
 }
 
 /**

@@ -22,6 +22,8 @@ import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import HistoricoProduto from "./HistoricoProduto";
 import FiscalContabilSection from "./produto/FiscalContabilSection";
 import EstoqueAvancadoSection from "./produto/EstoqueAvancadoSection";
+import PrecosSection from "./produto/PrecosSection";
+import PesoDimensoesSection from "./produto/PesoDimensoesSection";
 
 /**
  * V21.4 ETAPA 2/3 COMPLETA - CADASTRO COMPLETO DE PRODUTOS
@@ -900,54 +902,7 @@ Caso contrário, sugira:
           )}
 
           {/* PRECIFICAÇÃO */}
-          <Card className="border-green-200 bg-green-50">
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-bold text-green-900">💰 Precificação</h3>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label>Custo Aquisição</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.custo_aquisicao}
-                    onChange={(e) => setFormData(prev => ({...prev, custo_aquisicao: parseFloat(e.target.value) || 0}))}
-                  />
-                </div>
-
-                <div>
-                  <Label>Preço Venda</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.preco_venda}
-                    onChange={(e) => setFormData(prev => ({...prev, preco_venda: parseFloat(e.target.value) || 0}))}
-                  />
-                </div>
-
-                <div>
-                  <Label>Margem (%)</Label>
-                  <Input
-                    type="number"
-                    value={formData.custo_aquisicao > 0 ? (((formData.preco_venda - formData.custo_aquisicao) / formData.custo_aquisicao) * 100).toFixed(2) : 0}
-                    disabled
-                    className="bg-white"
-                  />
-                </div>
-
-                <div>
-                  <Label>Margem Mínima (%)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.margem_minima_percentual}
-                    onChange={(e) => setFormData(prev => ({...prev, margem_minima_percentual: parseFloat(e.target.value) || 0}))}
-                  />
-                  <p className="text-xs text-slate-500 mt-1">Usada na aprovação de descontos</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <PrecosSection formData={formData} setFormData={setFormData} />
 
           {/* STATUS */}
           <Card>
@@ -1034,90 +989,7 @@ Caso contrário, sugira:
 
         {/* ABA 3: DIMENSÕES E PESO */}
         <TabsContent value="dimensoes" className="space-y-6">
-          <Card className="border-orange-200 bg-orange-50">
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-bold text-orange-900">📦 Peso e Dimensões (Logística)</h3>
-
-              <Alert className="border-orange-300 bg-orange-100">
-                <AlertDescription className="text-xs text-orange-900">
-                  <strong>Usado em:</strong> Cálculo de frete, cubagem, marketplace, Portal
-                </AlertDescription>
-              </Alert>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Peso Líquido (kg)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={formData.peso_liquido_kg}
-                    onChange={(e) => setFormData(prev => ({...prev, peso_liquido_kg: parseFloat(e.target.value) || 0}))}
-                  />
-                </div>
-
-                <div>
-                  <Label>Peso Bruto (kg)</Label>
-                  <Input
-                    type="number"
-                    step="0.001"
-                    value={formData.peso_bruto_kg}
-                    onChange={(e) => setFormData(prev => ({...prev, peso_bruto_kg: parseFloat(e.target.value) || 0}))}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <Label>Altura (cm)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.altura_cm}
-                    onChange={(e) => setFormData(prev => ({...prev, altura_cm: parseFloat(e.target.value) || 0}))}
-                  />
-                </div>
-
-                <div>
-                  <Label>Largura (cm)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.largura_cm}
-                    onChange={(e) => setFormData(prev => ({...prev, largura_cm: parseFloat(e.target.value) || 0}))}
-                  />
-                </div>
-
-                <div>
-                  <Label>Comprimento (cm)</Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.comprimento_cm}
-                    onChange={(e) => setFormData(prev => ({...prev, comprimento_cm: parseFloat(e.target.value) || 0}))}
-                  />
-                </div>
-
-                <div>
-                  <Label>Volume (m³)</Label>
-                  <Input
-                    type="number"
-                    value={formData.volume_m3?.toFixed(6) || 0}
-                    disabled
-                    className="bg-white"
-                  />
-                </div>
-              </div>
-
-              {formData.volume_m3 > 0 && (
-                <Alert className="border-green-300 bg-green-50">
-                  <AlertDescription className="text-xs text-green-900">
-                    ✅ Cubagem: {formData.volume_m3.toFixed(6)} m³
-                    {formData.peso_bruto_kg > 0 && ` • Peso taxado: ${Math.max(formData.peso_bruto_kg, formData.volume_m3 * 300).toFixed(2)} kg`}
-                  </AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
+          <PesoDimensoesSection formData={formData} setFormData={setFormData} />
         </TabsContent>
 
         {/* ABA 4: E-COMMERCE */}
