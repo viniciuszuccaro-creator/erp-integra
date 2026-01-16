@@ -1410,7 +1410,9 @@ Caso contrário, sugira:
             setFormData={setFormData}
             locaisEstoque={locaisEstoque}
           />
-            <CardHeader className="bg-orange-100 border-b border-orange-200 pb-3">
+        </TabsContent>
+
+        {/* ABA 7: HISTÓRICO */}
               <CardTitle className="text-base flex items-center gap-2">
                 <Warehouse className="w-5 h-5 text-orange-600" />
                 Controle de Estoque Avançado
