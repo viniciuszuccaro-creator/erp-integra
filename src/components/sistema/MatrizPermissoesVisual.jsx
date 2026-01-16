@@ -47,19 +47,19 @@ const MODULOS_ICONES = {
   configuracoes: LayoutDashboard
 };
 
-export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema = {} }) {
+export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }) {
   const [busca, setBusca] = useState("");
   const [perfilDetalhesOpen, setPerfilDetalhesOpen] = useState(false);
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
 
   const perfisAtivos = perfis.filter(p => p.ativo !== false);
-  const modulosFiltrados = Object.entries(estruturaSistema || {}).filter(([id, mod]) =>
-    !busca || (mod?.nome || '').toLowerCase().includes(busca.toLowerCase())
+  const modulosFiltrados = Object.entries(estruturaSistema).filter(([id, mod]) =>
+    !busca || mod.nome.toLowerCase().includes(busca.toLowerCase())
   );
 
   const calcularNivelAcesso = (perfil, moduloId, modulo) => {
     const perms = perfil.permissoes?.[moduloId] || {};
-    const totalSecoes = Object.keys(modulo?.secoes || {}).length;
+    const totalSecoes = Object.keys(modulo.secoes).length;
     const secoesComAcesso = Object.values(perms).filter(arr => arr?.length > 0).length;
     
     if (secoesComAcesso === 0) return { nivel: "nenhum", label: "Sem Acesso", cor: "slate" };
@@ -130,7 +130,7 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema =
                           <span className="font-medium">{modulo.nome}</span>
                         </div>
                         <p className="text-xs text-slate-500 mt-1">
-                          {Object.keys(modulo?.secoes || {}).length} seções
+                          {Object.keys(modulo.secoes).length} seções
                         </p>
                       </td>
                       {perfisAtivos.map(perfil => {

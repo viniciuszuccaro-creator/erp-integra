@@ -17,7 +17,6 @@ import Estoque from './pages/Estoque';
 import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
 import Fiscal from './pages/Fiscal';
-import Fluxos from './pages/Fluxos';
 import GerenciamentoAcessosCompleto from './pages/GerenciamentoAcessosCompleto';
 import Home from './pages/Home';
 import HubAtendimento from './pages/HubAtendimento';
@@ -51,7 +50,6 @@ export const PAGES = {
     "Expedicao": Expedicao,
     "Financeiro": Financeiro,
     "Fiscal": Fiscal,
-    "Fluxos": Fluxos,
     "GerenciamentoAcessosCompleto": GerenciamentoAcessosCompleto,
     "Home": Home,
     "HubAtendimento": HubAtendimento,
@@ -65,7 +63,7 @@ export const PAGES = {
 }
 
 export const pagesConfig = {
-    mainPage: "Fluxos",
+    mainPage: "Dashboard",
     Pages: PAGES,
     Layout: __Layout,
 };
