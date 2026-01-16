@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import usePermissions from "@/components/lib/usePermissions";
 
-export default function GuardedButton({ module, section = null, action = "ver", children, ...props }) {
+export default function GuardedButton({ module, section = null, action = "visualizar", children, ...props }) {
   const { hasPermission } = usePermissions();
   const allowed = hasPermission(module, section, action);
   return (
