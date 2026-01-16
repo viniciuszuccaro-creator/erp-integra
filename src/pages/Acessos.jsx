@@ -128,9 +128,13 @@ export default function Acessos() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0 h-full overflow-auto">
-                <Suspense fallback={<div className="p-4 text-slate-500">Carregando status...</div>}>
-                  <StatusControleAcesso empresaId={empresaAtual?.id || null} />
-                </Suspense>
+                {empresaAtual?.id ? (
+                  <Suspense fallback={<div className="p-4 text-slate-500">Carregando status...</div>}>
+                    <StatusControleAcesso empresaId={empresaAtual.id} />
+                  </Suspense>
+                ) : (
+                  <div className="p-4 text-slate-500">Selecione uma empresa para ver o status.</div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -172,25 +176,37 @@ export default function Acessos() {
                   <div className="flex-1 min-h-0">
                     <TabsContent value="perfis" className="h-full">
                       <div className="h-full overflow-auto p-4">
-                        <Suspense fallback={<div className="p-4 text-slate-500">Carregando perfis...</div>}>
-                          <CentralPerfisAcesso empresaId={empresaAtual?.id || null} />
-                        </Suspense>
+                        {empresaAtual?.id ? (
+                          <Suspense fallback={<div className="p-4 text-slate-500">Carregando perfis...</div>}>
+                            <CentralPerfisAcesso empresaId={empresaAtual.id} />
+                          </Suspense>
+                        ) : (
+                          <div className="p-4 text-slate-500">Selecione uma empresa para gerenciar perfis.</div>
+                        )}
                       </div>
                     </TabsContent>
 
                     <TabsContent value="matriz" className="h-full">
                       <div className="h-full overflow-auto p-4">
-                        <Suspense fallback={<div className="p-4 text-slate-500">Carregando matriz...</div>}>
-                          <MatrizPermissoesVisual empresaId={empresaAtual?.id || null} />
-                        </Suspense>
+                        {empresaAtual?.id ? (
+                          <Suspense fallback={<div className="p-4 text-slate-500">Carregando matriz...</div>}>
+                            <MatrizPermissoesVisual empresaId={empresaAtual.id} />
+                          </Suspense>
+                        ) : (
+                          <div className="p-4 text-slate-500">Selecione uma empresa para ver a matriz.</div>
+                        )}
                       </div>
                     </TabsContent>
 
                     <TabsContent value="validador" className="h-full">
                       <div className="h-full overflow-auto p-4">
-                        <Suspense fallback={<div className="p-4 text-slate-500">Carregando validador...</div>}>
-                          <ValidadorAcessoCompleto empresaId={empresaAtual?.id || null} />
-                        </Suspense>
+                        {empresaAtual?.id ? (
+                          <Suspense fallback={<div className="p-4 text-slate-500">Carregando validador...</div>}>
+                            <ValidadorAcessoCompleto empresaId={empresaAtual.id} />
+                          </Suspense>
+                        ) : (
+                          <div className="p-4 text-slate-500">Selecione uma empresa para validar acessos.</div>
+                        )}
                       </div>
                     </TabsContent>
 
@@ -204,9 +220,13 @@ export default function Acessos() {
 
                     <TabsContent value="ia" className="h-full">
                       <div className="h-full overflow-auto p-4">
-                        <Suspense fallback={<div className="p-4 text-slate-500">Carregando IA...</div>}>
-                          <IAGovernancaCompliance empresaId={empresaAtual?.id || null} />
-                        </Suspense>
+                        {empresaAtual?.id ? (
+                          <Suspense fallback={<div className="p-4 text-slate-500">Carregando IA...</div>}>
+                            <IAGovernancaCompliance empresaId={empresaAtual.id} />
+                          </Suspense>
+                        ) : (
+                          <div className="p-4 text-slate-500">Selecione uma empresa para usar a IA de Governança.</div>
+                        )}
                       </div>
                     </TabsContent>
                   </div>
