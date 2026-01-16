@@ -223,258 +223,37 @@ async function emitirNFeNFeIO(nfe, config) {
  * Consultar Status NF-e
  */
 async function consultarStatusNFe(nfeId, empresaId, chaveAcesso) {
-  const verificacao = await verificarConfiguracao(empresaId);
-  
-  if (!verificacao.configurado) {
-    return {
-      sucesso: false,
-      modo: 'simulado',
-      status: 'Autorizada',
-      mensagem: 'Modo simulado - Configure a integração para usar API real'
-    };
-  }
-
-  const { config, integracao } = verificacao;
-  const provedor = integracao.provedor;
-
-  if (provedor === 'eNotas') {
-    const response = await fetch(
-      `https://api.enotas.com.br/v2/empresas/${integracao.empresa_id_provedor}/nfes/${nfeId}`,
-      {
-        headers: {
-          'Authorization': `Basic ${btoa(integracao.api_key + ':')}`
-        }
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Erro ao consultar status');
-    }
-
-    const resultado = await response.json();
-    return {
-      sucesso: true,
-      status: resultado.status,
-      protocolo: resultado.protocolo,
-      dataAutorizacao: resultado.dataAutorizacao,
-      xml: resultado.linkDownloadXml,
-      pdf: resultado.linkDownloadPdf
-    };
-  }
-
-  if (provedor === 'NFe.io') {
-    const response = await fetch(
-      `https://api.nfe.io/v1/companies/${integracao.empresa_id_provedor}/productinvoices/${nfeId}`,
-      {
-        headers: {
-          'Authorization': integracao.api_key,
-          'Accept': 'application/json'
-        }
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Erro ao consultar status');
-    }
-
-    const resultado = await response.json();
-    return {
-      sucesso: true,
-      status: resultado.status,
-      protocolo: resultado.authorization_protocol,
-      dataAutorizacao: resultado.issued_on,
-      xml: resultado.xml_url,
-      pdf: resultado.danfe_url
-    };
-  }
-
-  throw new Error('Provedor não suportado');
+  const { data } = await base44.functions.invoke('nfeActions', { action: 'status', nfeId, empresaId, chaveAcesso });
+  return data;
 }
 
 /**
  * Cancelar NF-e
  */
 async function cancelarNFe(nfeId, empresaId, justificativa) {
-  const verificacao = await verificarConfiguracao(empresaId);
-  
-  if (!verificacao.configurado) {
-    return {
-      sucesso: false,
-      modo: 'simulado',
-      mensagem: 'Modo simulado - NF-e cancelada localmente'
-    };
-  }
-
-  const { integracao } = verificacao;
-  const provedor = integracao.provedor;
-
-  if (provedor === 'eNotas') {
-    const response = await fetch(
-      `https://api.enotas.com.br/v2/empresas/${integracao.empresa_id_provedor}/nfes/${nfeId}/cancelamento`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${btoa(integracao.api_key + ':')}`
-        },
-        body: JSON.stringify({ motivo: justificativa })
-      }
-    );
-
-    if (!response.ok) {
-      const erro = await response.json();
-      throw new Error(erro.mensagem || 'Erro ao cancelar NF-e');
-    }
-
-    const resultado = await response.json();
-    return {
-      sucesso: true,
-      protocolo: resultado.protocolo,
-      xml: resultado.linkDownloadXml
-    };
-  }
-
-  throw new Error('Provedor não suportado');
+  const { data } = await base44.functions.invoke('nfeActions', { action: 'cancelar', nfeId, empresaId, justificativa });
+  return data;
 }
 
 /**
  * Emitir Carta de Correção
  */
 async function emitirCartaCorrecao(nfeId, empresaId, correcao) {
-  const verificacao = await verificarConfiguracao(empresaId);
-  
-  if (!verificacao.configurado) {
-    return {
-      sucesso: false,
-      modo: 'simulado',
-      mensagem: 'Modo simulado'
-    };
-  }
-
-  const { integracao } = verificacao;
-  const provedor = integracao.provedor;
-
-  if (provedor === 'eNotas') {
-    const response = await fetch(
-      `https://api.enotas.com.br/v2/empresas/${integracao.empresa_id_provedor}/nfes/${nfeId}/cartaCorrecao`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Basic ${btoa(integracao.api_key + ':')}`
-        },
-        body: JSON.stringify({ correcao })
-      }
-    );
-
-    if (!response.ok) {
-      const erro = await response.json();
-      throw new Error(erro.mensagem || 'Erro ao emitir carta de correção');
-    }
-
-    const resultado = await response.json();
-    return {
-      sucesso: true,
-      protocolo: resultado.protocolo,
-      xml: resultado.linkDownloadXml
-    };
-  }
-
-  throw new Error('Provedor não suportado');
+  const { data } = await base44.functions.invoke('nfeActions', { action: 'carta', nfeId, empresaId, correcao });
+  return data;
 }
 
 /**
  * Função principal de emissão
  */
 export async function emitirNFe(nfe, empresaId) {
-  // 1. Verificar configuração
-  const verificacao = await verificarConfiguracao(empresaId);
-  
-  // 2. Se não configurado, retornar modo simulado
-  if (!verificacao.configurado) {
-    console.warn('⚠️ Integração NF-e não configurada. Usando modo simulado.');
-    
-    return {
-      sucesso: true,
-      modo: 'simulado',
-      numero: String(Math.floor(Math.random() * 999999) + 1).padStart(6, '0'),
-      serie: '1',
-      chave: gerarChaveAcessoSimulada(),
-      protocolo: `SIM${Date.now()}`,
-      dataAutorizacao: new Date().toISOString(),
-      status: 'Autorizada',
-      xml: null,
-      pdf: null,
-      mensagem: 'NF-e gerada em modo simulado. Configure a integração para emissão real.'
-    };
-  }
-
-  // 3. Log da tentativa
-  await base44.entities.LogFiscal.create({
-    empresa_id: empresaId,
-    nfe_id: nfe.id,
-    numero_nfe: nfe.numero,
-    data_hora: new Date().toISOString(),
-    acao: 'enviar_sefaz',
-    provedor: verificacao.integracao.provedor,
-    ambiente: verificacao.config.ambiente,
-    payload_enviado: { nfe },
-    status: 'pendente'
-  });
-
-  // 4. Emitir conforme provedor
-  try {
-    let resultado;
-    
-    if (verificacao.integracao.provedor === 'eNotas') {
-      resultado = await emitirNFeENotas(nfe, verificacao.config);
-    } else if (verificacao.integracao.provedor === 'NFe.io') {
-      resultado = await emitirNFeNFeIO(nfe, verificacao.config);
-    } else {
-      throw new Error('Provedor não implementado: ' + verificacao.integracao.provedor);
-    }
-
-    // 5. Log de sucesso
-    await base44.entities.LogFiscal.create({
-      empresa_id: empresaId,
-      nfe_id: nfe.id,
-      numero_nfe: resultado.numero,
-      chave_acesso: resultado.chave,
-      data_hora: new Date().toISOString(),
-      acao: 'enviar_sefaz',
-      provedor: verificacao.integracao.provedor,
-      ambiente: verificacao.config.ambiente,
-      retorno_recebido: resultado,
-      status: 'sucesso',
-      mensagem: 'NF-e autorizada com sucesso'
-    });
-
-    return {
-      ...resultado,
-      modo: 'real'
-    };
-    
-  } catch (error) {
-    // 6. Log de erro
-    await base44.entities.LogFiscal.create({
-      empresa_id: empresaId,
-      nfe_id: nfe.id,
-      numero_nfe: nfe.numero,
-      data_hora: new Date().toISOString(),
-      acao: 'enviar_sefaz',
-      provedor: verificacao.integracao.provedor,
-      ambiente: verificacao.config.ambiente,
-      status: 'erro',
-      mensagem: error.message
-    });
-
-    throw error;
-  }
+  const { data } = await base44.functions.invoke('nfeActions', { action: 'emitir', nfe, empresaId });
+  return data;
 }
 
 /**
- * Gerar chave de acesso simulada (44 dígitos)
- */
+  * Gerar chave de acesso simulada (44 dígitos)
+  */
 function gerarChaveAcessoSimulada() {
   const uf = '35'; // SP
   const aamm = new Date().toISOString().substr(2, 5).replace('-', '');
