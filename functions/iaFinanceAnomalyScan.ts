@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
     // Registrar resumo
     if (issues.length > 0) {
       await base44.asServiceRole.entities.AuditLog.create({
+        usuario: 'Sistema',
         acao: 'Visualização', modulo: 'Financeiro', entidade: 'Monitoramento',
         descricao: `Anomalias detectadas: ${issues.length}`,
         dados_novos: { issues: issues.slice(0, 50) },

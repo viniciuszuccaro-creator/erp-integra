@@ -35,6 +35,7 @@ Deno.serve(async (req) => {
 
     // Gravar uma entrada de auditoria consolidada (mantém histórico sem criar nova entidade)
     await base44.asServiceRole.entities.AuditLog.create({
+      usuario: 'Sistema',
       acao: 'Criação',
       modulo: 'Sistema',
       entidade: 'ConsolidaçãoGrupo',

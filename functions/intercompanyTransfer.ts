@@ -39,6 +39,8 @@ Deno.serve(async (req) => {
     // Auditoria dupla
     try {
       await base44.asServiceRole.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id,
         acao: 'Criação', modulo: 'Financeiro', entidade: 'TransacaoInterempresas',
         descricao: `Geradas contas cruzadas (Pagar:${pagar.id} / Receber:${receber.id})`,
         dados_novos: { from_empresa_id: fromId, to_empresa_id: toId, valor, descricao },

@@ -79,6 +79,7 @@ Deno.serve(async (req) => {
     // Registrar auditoria (não quebra se falhar)
     try {
       await base44.asServiceRole.entities.AuditLog.create({
+        usuario: 'Sistema',
         acao: 'Edição',
         modulo: 'Controle de Acesso',
         entidade: 'PerfilAcesso',

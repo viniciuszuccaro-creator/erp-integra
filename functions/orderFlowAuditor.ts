@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
         // Registrar no AuditLog
         try {
           await base44.asServiceRole.entities.AuditLog.create({
+            usuario: 'Sistema',
             acao: 'Visualização',
             modulo: 'Comercial',
             entidade: 'Pedido',

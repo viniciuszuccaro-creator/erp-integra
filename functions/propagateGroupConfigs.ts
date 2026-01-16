@@ -60,6 +60,8 @@ Deno.serve(async (req) => {
     // Auditoria
     try {
       await base44.asServiceRole.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Sistema',
+        usuario_id: user?.id,
         acao: 'Criação',
         modulo: 'Sistema',
         entidade: 'PropagacaoGrupo',

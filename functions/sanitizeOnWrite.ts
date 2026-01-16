@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
       // Auditoria
       try {
         await base44.asServiceRole.entities.AuditLog.create({
+          usuario: 'Sistema',
           acao: 'Edição',
           modulo: 'Sistema',
           entidade: event.entity_name,

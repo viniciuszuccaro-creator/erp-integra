@@ -22,6 +22,7 @@ Deno.serve(async (req) => {
         flagged.push(o.id);
         try {
           await base44.asServiceRole.entities.AuditLog.create({
+            usuario: 'Sistema',
             acao: 'Visualização', modulo: 'CRM', entidade: 'Oportunidade', registro_id: o.id,
             descricao: `Sinal de churn: dias_sem_contato=${dias}, prob=${prob}, atrasoPrev=${atrasoPrev}`,
             dados_novos: { recomendacao: 'Agendar follow-up nas próximas 24h' },
