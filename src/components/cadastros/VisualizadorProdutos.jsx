@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import VisualizadorUniversalEntidade from './VisualizadorUniversalEntidade';
 import BotoesImportacaoProduto from './BotoesImportacaoProduto';
 import ProdutoFormV22_Completo from './ProdutoFormV22_Completo';
-import { Package, Edit } from 'lucide-react';
+import ImportadorProdutosPlanilha from '@/components/estoque/ImportadorProdutosPlanilha';
+import { useWindow } from '@/components/lib/useWindow';
+import { Package, Edit, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +14,7 @@ import { base44 } from '@/api/base44Client';
 
 export default function VisualizadorProdutos(props) {
   const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
   const [selectedProdutos, setSelectedProdutos] = useState(new Set());
   const [isSetorModalOpen, setIsSetorModalOpen] = useState(false);
   const [targetSetorId, setTargetSetorId] = useState(null);
@@ -77,6 +80,21 @@ export default function VisualizadorProdutos(props) {
     <div className="flex flex-col h-full w-full bg-slate-50">
       <div className="p-4 border-b bg-white flex items-center gap-4">
         <BotoesImportacaoProduto onProdutosCriados={() => queryClient.invalidateQueries({ queryKey: ['produtos'] })} />
+        <Button
+          variant="outline"
+          className="border-green-300 text-green-700 hover:bg-green-50"
+          onClick={() => openWindow(ImportadorProdutosPlanilha, {
+            windowMode: true,
+            onConcluido: () => queryClient.invalidateQueries({ queryKey: ['produtos'] })
+          }, {
+            title: '📥 Importar Planilha',
+            width: 1100,
+            height: 700
+          })}
+        >
+          <Upload className="w-4 h-4 mr-2" />
+          Importar Planilha
+        </Button>
         <Button
           variant="outline"
           onClick={() => setIsSetorModalOpen(true)}
