@@ -78,25 +78,44 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setFileUrl(file_url);
 
-    const res = await base44.integrations.Core.ExtractDataFromUploadedFile({
+    // 1) Tenta extrair como array de arrays (XLS/CSV): primeira linha = cabeçalho
+    let res = await base44.integrations.Core.ExtractDataFromUploadedFile({
       file_url,
-      json_schema: { title: "TabelaProdutos", type: "object", additionalProperties: true },
+      json_schema: { type: "array", items: { type: "array" } },
+    });
+
+    if (Array.isArray(res?.output) && res.output.length > 1 && Array.isArray(res.output[0])) {
+      const headerRow = res.output[0].map((h) => String(h || "").trim());
+      const dataRows = res.output.slice(1);
+      const objetos = dataRows.map((linha) => {
+        const obj = {};
+        headerRow.forEach((header, i) => {
+          if (header) obj[header] = linha[i];
+        });
+        return obj;
+      });
+      return objetos.filter((o) => Object.keys(o).length > 0);
+    }
+
+    // 2) Fallback: extrai como objeto genérico e procura arrays de objetos em 'rows'/'data' ou propriedades
+    res = await base44.integrations.Core.ExtractDataFromUploadedFile({
+      file_url,
+      json_schema: { type: "object", additionalProperties: true },
     });
 
     const out = res?.output || {};
-    const pickArray = (obj) => {
-      if (Array.isArray(obj)) return obj;
+    const pickArrayOfObjects = (obj) => {
+      if (Array.isArray(obj) && obj.every((it) => typeof it === "object" && !Array.isArray(it))) return obj;
       if (Array.isArray(obj?.rows)) return obj.rows;
       if (Array.isArray(obj?.data)) return obj.data;
-      for (const v of Object.values(obj)) {
-        if (Array.isArray(v)) return v;
+      for (const val of Object.values(obj)) {
+        if (Array.isArray(val) && val.every((it) => typeof it === "object" && !Array.isArray(it))) return val;
       }
       return [];
     };
 
-    const rows = pickArray(out);
-    if (!Array.isArray(rows) || rows.length === 0) return [];
-    return rows;
+    const rows = pickArrayOfObjects(out);
+    return Array.isArray(rows) ? rows : [];
   };
 
   const montarProduto = (row) => {
