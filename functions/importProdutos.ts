@@ -62,23 +62,25 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Empresa do header não corresponde ao payload' }, { status: 403 });
     }
 
-    // Mapeamento padrão baseado no que foi informado pelo usuário (colunas por letra)
-    // Ex.: 29A, 29B etc. – usamos apenas a letra.
+    // Mapeamento padrão baseado no layout enviado (linha 1 com cabeçalhos)
+    // Colunas exatas: A=Cód. Material, B=Descrição, C=Un., D=Estoque Mínimo, E=Classif. Fiscal,
+    // F=Peso Teórico, G=Código da Classe, H=Descrição da Classe, I=Peso Líquido, J=Peso Bruto,
+    // K=Código do Grupo, L=Descrição do Grupo, M=Custo Principal, N=Descrição Tipo
     const defaultMapping = {
       codigo: 'A',
       descricao: 'B',
-      tipo_item: 'AI',
-      setor_atividade_id: 'R',
-      setor_atividade_nome: 'S',
-      grupo_produto_id: 'M',
-      grupo_produto_nome: 'N',
-      peso_teorico_kg_m: 'I',
-      peso_liquido_kg: 'P',
-      peso_bruto_kg: 'Q',
-      unidade_medida: 'D',
-      custo_aquisicao: 'AD',
-      estoque_minimo: 'F',
-      ncm: 'G',
+      unidade_medida: 'C',
+      estoque_minimo: 'D',
+      ncm: 'E',
+      peso_teorico_kg_m: 'F',
+      grupo_produto_id: 'G',
+      grupo_produto_nome: 'H',
+      peso_liquido_kg: 'I',
+      peso_bruto_kg: 'J',
+      setor_atividade_id: 'K',
+      setor_atividade_nome: 'L',
+      custo_aquisicao: 'M',
+      tipo_item: 'N',
     };
 
     const mapping = normalizeMapping(inputMapping || defaultMapping);
