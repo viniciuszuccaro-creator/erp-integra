@@ -36,6 +36,18 @@ const get = (row, keys) => {
   return undefined;
 };
 
+// Normalização e detecção da linha de cabeçalho
+const norm = (s) => String(s || "").normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const isHeaderRow = (row) => {
+  const code = norm(get(row, ["Cód. Material", "Cod. Material", "A"]));
+  const desc = norm(get(row, ["Descrição", "B"]));
+  const un = norm(get(row, ["Un.", "C"]));
+  if (["cod. material", "codigo material", "cod material"].includes(code)) return true;
+  if (["descricao", "descrição", "produto", "nome"].includes(desc)) return true;
+  if (["un.", "un", "unidade"].includes(un)) return true;
+  return false;
+};
+
 // Mapeamento fixo conforme especificação do usuário (linha 1 = cabeçalhos, dados a partir da linha 2)
 const HEADERS = {
   codigo: ["Cód. Material", "Cod. Material", "A"],
@@ -60,6 +72,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const [processando, setProcessando] = useState(false);
   const [preview, setPreview] = useState([]);
   const [fileUrl, setFileUrl] = useState(null);
+  const [totalLinhas, setTotalLinhas] = useState(0);
 
   const extrairLinhas = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -128,13 +141,16 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
         return;
       }
 
-      // Montar preview usando todas as linhas após a primeira (considerando linha 1 como cabeçalho)
-      const pre = rows
+      const dataRows = rows.filter((r) => !isHeaderRow(r));
+      setTotalLinhas(dataRows.length);
+
+      // Montar preview (limitada) apenas com dados
+      const pre = dataRows
         .map((r) => montarProduto(r))
         .filter((p) => p?.descricao)
-        .slice(0, 50); // limitar pré-visualização
+        .slice(0, 50);
       setPreview(pre);
-      toast.success(`Arquivo lido: ${rows.length} linha(s)`);
+      toast.success(`Arquivo lido: ${dataRows.length} item(ns) de produto`);
     } finally {
       setProcessando(false);
     }
@@ -153,7 +169,8 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
     try {
       // Reextrai linhas para processar tudo (não só o preview)
       const rows = await extrairLinhas(arquivo);
-      const produtos = rows.map((r) => montarProduto(r)).filter((p) => p?.descricao);
+      const dataRows = rows.filter((r) => !isHeaderRow(r));
+      const produtos = dataRows.map((r) => montarProduto(r)).filter((p) => p?.descricao);
       if (produtos.length === 0) {
         toast.error("Nada para importar.");
         return;
@@ -193,7 +210,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
         <div>
           <Input
             type="file"
-            accept=".xls,.xlsx,.csv"
+            accept=".xls,.xlsx,.csv,text/csv"
             onChange={handleArquivo}
             disabled={processando}
           />
@@ -205,7 +222,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
         {preview.length > 0 && (
           <Card className="border-slate-200">
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-sm">Pré-visualização ({preview.length} de {Math.max(preview.length, preview.length)} linhas)</CardTitle>
+              <CardTitle className="text-sm">Pré-visualização (mostrando {preview.length} de {totalLinhas} itens)</CardTitle>
             </CardHeader>
             <CardContent className="p-3">
               <div className="max-h-64 overflow-auto border rounded">
