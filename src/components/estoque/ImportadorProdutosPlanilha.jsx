@@ -191,17 +191,17 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
       const dataRows = rows.filter((r) => !isHeaderRow(r));
       const produtos = dataRows.map((r) => montarProduto(r)).filter((p) => p?.descricao);
       if (produtos.length === 0) {
-        toast.error("Nada para importar.");
+        toast.error("Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.");
         return;
       }
 
-      // Importação em lotes
+      // Importação sequencial robusta (evita falhas de bulk em alguns provedores)
       const chunkSize = 200;
       let createdTotal = 0;
       for (let i = 0; i < produtos.length; i += chunkSize) {
         const chunk = produtos.slice(i, i + chunkSize);
-        const res = await base44.entities.Produto.bulkCreate(chunk);
-        createdTotal += Array.isArray(res) ? res.length : chunk.length;
+        const results = await Promise.allSettled(chunk.map((p) => base44.entities.Produto.create(p)));
+        createdTotal += results.filter(r => r.status === 'fulfilled').length;
       }
 
       toast.success(`Importação concluída: ${createdTotal} produto(s) criado(s).`);
