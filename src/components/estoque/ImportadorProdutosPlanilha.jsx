@@ -241,7 +241,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
         {preview.length > 0 && (
           <Card className="border-slate-200">
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-sm">Pré-visualização (mostrando {preview.length} de {totalLinhas} itens)</CardTitle>
+              <CardTitle className="text-sm">Pré-visualização (mostrando {preview.length} de {totalLinhas} itens) • Grupos: {Array.from(new Set(preview.map(p => p.grupo_produto_nome || p.grupo_produto_id).filter(Boolean))).length} • Setores: {Array.from(new Set(preview.map(p => p.setor_atividade_nome || p.setor_atividade_id).filter(Boolean))).length}</CardTitle>
             </CardHeader>
             <CardContent className="p-3">
               <div className="max-h-64 overflow-auto border rounded">
