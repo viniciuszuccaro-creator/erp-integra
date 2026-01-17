@@ -405,39 +405,39 @@ function buildProdutoFromRow(row, mapping, { empresa_id, group_id }) {
   const produto = {
     empresa_id,
     group_id,
-    codigo: sanitizeStr(getAny(row, [mapping?.codigo, 'Cód. Material linha1 colunaA','Cód. Material','Cod. Material','Cód Material','Codigo Material','Código Material','Código','Codigo','A'])),
-    descricao: sanitizeStr(getAny(row, [mapping?.descricao, 'Descrição l1 cB','Descrição','Descricao','Produto','B'])),
-    tipo_item: sanitizeStr(getAny(row, [mapping?.tipo_item, 'Descrição Tipo l1 cO','Descrição Tipo','Descricao Tipo','Tipo do item','Tipo Item','AI'])),
-    setor_atividade_id: sanitizeStr(getAny(row, [mapping?.setor_atividade_id, 'Codigo do Grupo l1 cL','Codigo do Grupo','Código do Grupo','R'])),
-    setor_atividade_nome: sanitizeStr(getAny(row, [mapping?.setor_atividade_nome, 'Descrição do Grupo l1 cM','Descrição do Grupo','Descricao do Grupo','S'])),
-    grupo_produto_id: sanitizeStr(getAny(row, [mapping?.grupo_produto_id, 'Codigo da Classe l1 cH','Codigo da Classe','Código da Classe','M'])),
-    grupo_produto_nome: sanitizeStr(getAny(row, [mapping?.grupo_produto_nome, 'Descrição da Classe l1 cI','Descrição da Classe','Descricao da Classe','N'])),
-    peso_teorico_kg_m: num(getAny(row, [mapping?.peso_teorico_kg_m, 'Peso Teórico l1 cF','Peso Teórico','Peso Teorico','I'])),
-    peso_liquido_kg: num(getAny(row, [mapping?.peso_liquido_kg, 'Peso Liquido l1 cJ','Peso Liquido','Peso Líquido','P'])),
-    peso_bruto_kg: num(getAny(row, [mapping?.peso_bruto_kg, 'Peso Bruto l1 cK','Peso Bruto','Q'])),
-    unidade_medida: sanitizeStr(getAny(row, [mapping?.unidade_medida, 'Un. l1 cC','Un.','UN','Un','Unidade','Unidade Medida','D'])) || 'UN',
-    custo_aquisicao: num(getAny(row, [mapping?.custo_aquisicao, 'Custo Principal l1 cN','Custo Principal','Custo','AD'])),
-    estoque_minimo: num(getAny(row, [mapping?.estoque_minimo, 'Estoque Minimo l1 cD','Estoque Minimo','Estoque Mínimo','F'])),
-    ncm: sanitizeStr(getAny(row, [mapping?.ncm, 'Classif. Fiscal l1 cE','Classif. Fiscal','Classif Fiscal','NCM','G'])),
-    codigo_barras: sanitizeStr(getAny(row, [mapping?.codigo_barras, 'Código Barra l1 cG','Código Barra','Codigo Barra'])),
+    // Mapeamento alinhado ao layout A..N informado
+    codigo: sanitizeStr(getAny(row, [mapping?.codigo, 'Cód. Material','Cod. Material','Cód Material','Codigo Material','Código Material','Código','Codigo','A'])),
+    descricao: sanitizeStr(getAny(row, [mapping?.descricao, 'Descrição','Descricao','Produto','B'])),
+    tipo_item: sanitizeStr(getAny(row, [mapping?.tipo_item, 'Descrição Tipo','Descricao Tipo','Tipo do item','Tipo Item','N'])),
+    setor_atividade_id: sanitizeStr(getAny(row, [mapping?.setor_atividade_id, 'Código do Grupo','Codigo do Grupo','K'])),
+    setor_atividade_nome: sanitizeStr(getAny(row, [mapping?.setor_atividade_nome, 'Descrição do Grupo','Descricao do Grupo','L'])),
+    grupo_produto_id: sanitizeStr(getAny(row, [mapping?.grupo_produto_id, 'Código da Classe','Codigo da Classe','G'])),
+    grupo_produto_nome: sanitizeStr(getAny(row, [mapping?.grupo_produto_nome, 'Descrição da Classe','Descricao da Classe','H'])),
+    peso_teorico_kg_m: num(getAny(row, [mapping?.peso_teorico_kg_m, 'Peso Teórico','Peso Teorico','F'])),
+    peso_liquido_kg: num(getAny(row, [mapping?.peso_liquido_kg, 'Peso Líquido','Peso Liquido','I'])),
+    peso_bruto_kg: num(getAny(row, [mapping?.peso_bruto_kg, 'Peso Bruto','J'])),
+    unidade_medida: sanitizeStr(getAny(row, [mapping?.unidade_medida, 'Un.','UN','Un','Unidade','C'])) || 'UN',
+    custo_aquisicao: num(getAny(row, [mapping?.custo_aquisicao, 'Custo Principal','Custo','M'])),
+    estoque_minimo: num(getAny(row, [mapping?.estoque_minimo, 'Estoque Mínimo','Estoque Minimo','D'])),
+    ncm: sanitizeStr(getAny(row, [mapping?.ncm, 'Classif. Fiscal','Classif Fiscal','NCM','E'])),
 
     status: 'Ativo',
     modo_cadastro: 'Lote/Importação',
   };
 
   // Remover chaves undefined para evitar sobrescrever com null
-        Object.keys(produto).forEach((k) => produto[k] === undefined && delete produto[k]);
+  Object.keys(produto).forEach((k) => produto[k] === undefined && delete produto[k]);
 
-        // Preenchimento automático quando IDs não vierem mas os nomes vierem no relatório
-        if (!produto.grupo_produto_id && produto.grupo_produto_nome) {
-          produto.grupo_produto_id = `classe-${slugify(produto.grupo_produto_nome)}`;
-        }
-        if (!produto.setor_atividade_id && produto.setor_atividade_nome) {
-          produto.setor_atividade_id = `setor-${slugify(produto.setor_atividade_nome)}`;
-        }
+  // Preenchimento automático quando IDs não vierem mas os nomes vierem no relatório
+  if (!produto.grupo_produto_id && produto.grupo_produto_nome) {
+    produto.grupo_produto_id = `classe-${slugify(produto.grupo_produto_nome)}`;
+  }
+  if (!produto.setor_atividade_id && produto.setor_atividade_nome) {
+    produto.setor_atividade_id = `setor-${slugify(produto.setor_atividade_nome)}`;
+  }
 
-        return produto;
-      }
+  return produto;
+}
 
 function sanitizeStr(v) {
   if (v == null) return undefined;
