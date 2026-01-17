@@ -7,8 +7,7 @@ import ImportacaoProdutoNFe from "./ImportacaoProdutoNFe";
 /**
  * V21.1.2-R2 - Botões de Importação de Produtos
  * ✅ Via NF-e
- * ✅ Em Lote
- * ✅ Modal independente
+ * (Importação em lote e ERP mapeado desativadas temporariamente a pedido do cliente)
  */
 export default function BotoesImportacaoProduto({ onProdutosCriados }) {
   const { openWindow } = useWindow();
