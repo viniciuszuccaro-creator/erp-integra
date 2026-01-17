@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download } from "lucide-react";
+import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import SearchInput from "@/components/ui/SearchInput";
 import SolicitarCompraRapidoModal from "../compras/SolicitarCompraRapidoModal";
@@ -20,6 +20,7 @@ import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Compl
 import { useWindow } from "@/components/lib/useWindow";
 import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMassa";
 import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosProducao";
+import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
 
 export default function ProdutosTab({ produtos, isLoading }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -285,6 +286,24 @@ export default function ProdutosTab({ produtos, isLoading }) {
           >
             <ArrowUpRight className="w-4 h-4 mr-2" />
             Converter em Massa
+          </Button>
+
+          <Button 
+            variant="outline"
+            className="border-green-300 text-green-700 hover:bg-green-50"
+            onClick={() => openWindow(ImportadorProdutosPlanilha, {
+              windowMode: true,
+              onConcluido: () => {
+                queryClient.invalidateQueries({ queryKey: ['produtos'] });
+              }
+            }, {
+              title: '📥 Importar Planilha',
+              width: 1100,
+              height: 700
+            })}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Importar Planilha
           </Button>
 
           <Button 
