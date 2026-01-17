@@ -83,40 +83,52 @@ Deno.serve(async (req) => {
       tipo_item: 'N',
     };
 
-    const mapping = normalizeMapping(inputMapping || defaultMapping);
+    // mapping será definido após extrair as linhas (permite auto-mapeamento por cabeçalho)
 
     // 1) Extrair linhas se file_url foi fornecida
     let rows = Array.isArray(inputRows) ? inputRows : null;
 
     if (!rows && file_url) {
-      const extractSchema = {
-        title: 'TabelaProdutos',
-        type: 'object',
-        additionalProperties: true,
-      };
+              const extractSchema = {
+                title: 'TabelaProdutos',
+                type: 'object',
+                additionalProperties: true,
+              };
 
-      const extractRes = await base44.integrations.Core.ExtractDataFromUploadedFile({
-        file_url,
-        json_schema: extractSchema,
-      });
+              const extractRes = await base44.integrations.Core.ExtractDataFromUploadedFile({
+                file_url,
+                json_schema: extractSchema,
+              });
 
-      const { status, output } = extractRes || {};
-      if (status !== 'success' || !output) {
-        return Response.json({ error: 'Falha ao extrair dados do arquivo', details: extractRes }, { status: 400 });
-      }
+              const { status, output } = extractRes || {};
+              if (status !== 'success' || !output) {
+                return Response.json({ error: 'Falha ao extrair dados do arquivo', details: extractRes }, { status: 400 });
+              }
 
-      // Tente acomodar formatos diferentes
-      if (Array.isArray(output)) {
-        rows = output;
-      } else if (Array.isArray(output.rows)) {
-        rows = output.rows;
-      } else if (Array.isArray(output.data)) {
-        rows = output.data;
-      } else {
-        // Como fallback, tente converter objeto em lista de linhas, se contiver índices
-        rows = Object.values(output).filter((v) => typeof v === 'object');
-      }
-    }
+              const pickFirstArray = (obj) => {
+                if (Array.isArray(obj)) return obj;
+                for (const v of Object.values(obj || {})) {
+                  if (Array.isArray(v)) return v;
+                  if (v && typeof v === 'object') {
+                    const inner = pickFirstArray(v);
+                    if (Array.isArray(inner)) return inner;
+                  }
+                }
+                return null;
+              };
+
+              if (sheet_name && output && typeof output === 'object' && Array.isArray(output[sheet_name])) {
+                rows = output[sheet_name];
+              } else if (Array.isArray(output)) {
+                rows = output;
+              } else if (Array.isArray(output.rows)) {
+                rows = output.rows;
+              } else if (Array.isArray(output.data)) {
+                rows = output.data;
+              } else {
+                rows = pickFirstArray(output) || Object.values(output).filter((v) => typeof v === 'object');
+              }
+            }
 
     if (!rows || !Array.isArray(rows) || rows.length === 0) {
       return Response.json({ error: 'Nenhuma linha encontrada para importar. Informe file_url ou rows.' }, { status: 400 });
@@ -126,6 +138,10 @@ Deno.serve(async (req) => {
     //    Também recorta pelo intervalo (header_row_index, start_row_index)
     const normalized = normalizeRows(rows, { header_row_index, start_row_index });
 
+    // Tenta detectar cabeçalhos e montar auto-mapeamento
+    const headers = guessHeaders(rows);
+    const mapping = normalizeMapping(inputMapping || deriveAutoMapping(headers) || defaultMapping);
+
     const report = {
       dryRun,
       total_input_rows: normalized.length,
@@ -134,6 +150,10 @@ Deno.serve(async (req) => {
       skipped: 0,
       errors: 0,
       details: [],
+      headers_detected: headers,
+      mapping_used: mapping,
+      sample_preview: [],
+      reasons: {},
     };
 
     // Pré-carrega produtos existentes desta empresa para acelerar o upsert
@@ -144,17 +164,22 @@ Deno.serve(async (req) => {
     for (const [idx, row] of normalized.entries()) {
       try {
         const produto = buildProdutoFromRow(row, mapping, { empresa_id, group_id });
+        if (report.sample_preview.length < 5) {
+          report.sample_preview.push({ rownum: row.__rownum || (idx + 1), extracted: produto });
+        }
 
         // Pula possíveis linhas de cabeçalho/label vindas da planilha antiga
         if (isHeaderLike(produto)) {
           report.skipped += 1;
           report.details.push({ index: idx, status: 'skipped', reason: 'header_row' });
+          report.reasons['header_row'] = (report.reasons['header_row'] || 0) + 1;
           continue;
         }
 
         if (!produto.codigo || !produto.descricao) {
           report.skipped += 1;
           report.details.push({ index: idx, status: 'skipped', reason: 'Sem codigo/descricao' });
+          report.reasons['Sem codigo/descricao'] = (report.reasons['Sem codigo/descricao'] || 0) + 1;
           continue;
         }
 
@@ -424,11 +449,61 @@ function sanitizeStr(v) {
 }
 
 function norm(s) {
-  return String(s || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
+        return String(s || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+      }
+
+      // Helpers de cabeçalho e auto-mapeamento
+      function headerNormalize(s) {
+        return String(s || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, ' ')
+          .trim();
+      }
+
+      function guessHeaders(rows) {
+        if (!Array.isArray(rows) || rows.length === 0) return [];
+        const first = rows.find(r => r && Object.keys(r).length > 0);
+        if (!first) return [];
+        // Se for array, não temos nomes – retornamos vazio
+        if (Array.isArray(first)) return [];
+        return Object.keys(first);
+      }
+
+      function deriveAutoMapping(headers) {
+        if (!headers || headers.length === 0) return null;
+        const idx = {};
+        headers.forEach((h) => { idx[headerNormalize(h)] = h; });
+
+        const pick = (...cands) => {
+          for (const c of cands) {
+            const key = Object.keys(idx).find(k => k.includes(c));
+            if (key) return idx[key];
+          }
+          return null;
+        };
+
+        return {
+          codigo: pick('cod material', 'codigo material', 'cod produto', 'codigo', 'sku', 'referencia'),
+          descricao: pick('descricao', 'descrição', 'produto', 'nome'),
+          unidade_medida: pick('un.', 'unidade', 'unid', 'un'),
+          estoque_minimo: pick('estoque minimo', 'estoque min'),
+          ncm: pick('ncm', 'classif fiscal', 'classificacao fiscal'),
+          peso_teorico_kg_m: pick('peso teorico', 'peso teorico kg m', 'peso kg m'),
+          grupo_produto_id: pick('codigo da classe', 'cod classe', 'classe codigo'),
+          grupo_produto_nome: pick('descricao da classe', 'classe descricao'),
+          peso_liquido_kg: pick('peso liquido', 'peso liq'),
+          peso_bruto_kg: pick('peso bruto'),
+          setor_atividade_id: pick('codigo do grupo', 'cod grupo', 'grupo codigo'),
+          setor_atividade_nome: pick('descricao do grupo', 'grupo descricao'),
+          custo_aquisicao: pick('custo principal', 'custo'),
+          tipo_item: pick('descricao tipo', 'tipo', 'tipo item'),
+        };
+      }
 
 function isHeaderLike(prod) {
   const d = norm(prod?.descricao);
