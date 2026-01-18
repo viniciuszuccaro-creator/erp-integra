@@ -1123,7 +1123,7 @@ const [suggesting, setSuggesting] = useState(false);
           <Button type="button" variant="outline" onClick={() => closeSelf && closeSelf()} disabled={processando}>
             Cancelar
           </Button>
-          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId) || checando || validationErrors.length > 0 || (duplicidades.length > 0 && Object.keys(escolhasDuplicidades).length < duplicidades.length)} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId) || checando || (duplicidades.length > 0 && Object.keys(escolhasDuplicidades).length < duplicidades.length)} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
             {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {processando ? "Importando..." : "Importar Agora"}
           </Button>
