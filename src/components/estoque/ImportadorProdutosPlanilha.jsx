@@ -746,7 +746,7 @@ const [checando, setChecando] = useState(false);
         if (!hasDesc) dicas.push(`- Cabeçalho de Descrição ausente (ex.: ${expectedDesc}).`);
         if (!hasUn) dicas.push(`- Cabeçalho de Unidade ausente (ex.: ${expectedUn}).`);
         if (!empresaId && !grupoId) dicas.push('- Selecione a empresa de destino ou um grupo.');
-        const msg = `Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.\nObrigatórios: Descrição, Unidade (Un.) e Empresa ou Grupo de destino.\n${dicas.join('\n')}\nDetectamos estes cabeçalhos: ${headersPrimeiros.join(', ')}`;
+        const msg = `Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.\nObrigatórios: Descrição, Unidade (Un.) e Empresa ou Grupo de destino.\n${dicas.join('\n')}\nDetectamos estes cabeçalhos: ${headersPrimeiros.join(', ')}\nMapeamento atual: ${JSON.stringify(columnMap)}`;
         setErro(msg);
         toast.error('Nada para importar. Veja os detalhes acima.');
         return;
