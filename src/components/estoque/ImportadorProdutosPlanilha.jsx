@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Upload, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Helpers
 const num = (v) => {
@@ -74,6 +76,33 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const [fileUrl, setFileUrl] = useState(null);
   const [totalLinhas, setTotalLinhas] = useState(0);
   const [erro, setErro] = useState('');
+  const [grupoId, setGrupoId] = useState('');
+  const [empresaId, setEmpresaId] = useState(empresaAtual?.id || '');
+  const [grupos, setGrupos] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
+
+  React.useEffect(() => {
+    (async () => {
+      const gs = await base44.entities.GrupoEmpresarial?.list?.();
+      setGrupos(gs || []);
+    })();
+  }, []);
+
+  React.useEffect(() => {
+    (async () => {
+      if (grupoId) {
+        const es = await base44.entities.Empresa?.filter?.({ group_id: grupoId });
+        setEmpresas(es || []);
+      } else {
+        const es = await base44.entities.Empresa?.list?.();
+        setEmpresas(es || []);
+      }
+    })();
+  }, [grupoId]);
+
+  React.useEffect(() => {
+    if (empresaAtual?.id && !empresaId) setEmpresaId(empresaAtual.id);
+  }, [empresaAtual?.id]);
 
   const extrairLinhas = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -121,7 +150,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
 
   const montarProduto = (row) => {
     const produto = {
-      empresa_id: empresaAtual?.id,
+      empresa_id: empresaId,
       codigo: sanitize(get(row, HEADERS.codigo)),
       descricao: sanitize(get(row, HEADERS.descricao)),
       unidade_medida: sanitize(get(row, HEADERS.unidade_medida)) || "UN",
@@ -151,7 +180,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
     setArquivo(f);
     setProcessando(true);
     try {
-      if (!empresaAtual?.id) {
+      if (!empresaId) {
         setErro('Defina a empresa de destino antes de importar.');
         toast.error("Defina a empresa de destino antes de importar.");
         return;
@@ -185,7 +214,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
       toast.error("Selecione um arquivo válido.");
       return;
     }
-    if (!empresaAtual?.id) {
+    if (!empresaId) {
       setErro('Defina a empresa de destino.');
       toast.error("Defina a empresa de destino.");
       return;
@@ -233,6 +262,39 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
             Envie uma planilha com 14 colunas (A–N) e cabeçalho na linha 1. Dados a partir da linha 2. Formatos: XLS, XLSX, CSV, CSV UTF‑8.
           </AlertDescription>
         </Alert>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label>Grupo</Label>
+            <Select value={grupoId} onValueChange={(v) => { setGrupoId(v); setEmpresaId(''); }}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o grupo (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {grupos.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.nome_fantasia || g.razao_social || g.nome || g.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label>Empresa de destino</Label>
+            <Select value={empresaId} onValueChange={setEmpresaId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                {empresas.map((e) => (
+                  <SelectItem key={e.id} value={e.id}>
+                    {e.nome_fantasia || e.razao_social || e.nome || e.id}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
 
         <div>
           <Input
@@ -292,7 +354,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
           <Button type="button" variant="outline" onClick={() => closeSelf && closeSelf()} disabled={processando}>
             Cancelar
           </Button>
-          <Button type="button" onClick={importar} disabled={processando || !arquivo} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+          <Button type="button" onClick={importar} disabled={processando || !arquivo || !empresaId} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
             {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {processando ? "Importando..." : "Importar Agora"}
           </Button>
