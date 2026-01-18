@@ -637,6 +637,7 @@ const [checando, setChecando] = useState(false);
         return;
       }
 
+      setParsedRows(rows);
       const dataRows = rows.filter((r) => !isHeaderRow(r));
       setTotalLinhas(dataRows.length);
 
