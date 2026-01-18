@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -86,14 +86,26 @@ const mapUnidade = (v) => {
   }
 };
 const mapTipoItem = (v) => {
-  const s = norm(v || '');
-  if (s.includes('rev')) return 'Revenda';
-  if (s.includes('mater') || s.includes('prima')) return 'Matéria-Prima Produção';
-  if (s.includes('acab')) return 'Produto Acabado';
-  if (s.includes('consum')) return 'Consumo Interno';
-  if (s.includes('serv')) return 'Serviço';
-  return 'Revenda';
-};
+        const s = norm(v || '');
+        if (s.includes('rev')) return 'Revenda';
+        if (s.includes('mater') || s.includes('prima')) return 'Matéria-Prima Produção';
+        if (s.includes('acab')) return 'Produto Acabado';
+        if (s.includes('consum')) return 'Consumo Interno';
+        if (s.includes('serv')) return 'Serviço';
+        return 'Revenda';
+      };
+
+      // Validações adicionais
+      const UNIDADES_ACEITAS = ['UN','PC','KG','LT','MT','CX','M2','M3'];
+      const sanitizeNCM = (v) => {
+        const s = String(v || '').replace(/\./g, '').trim();
+        return s || undefined;
+      };
+      const isNCMValido = (v) => {
+        const s = String(v || '').replace(/\./g, '').trim();
+        return s === '' || /^\d{8}$/.test(s);
+      };
+      const makeKey = (empresaId, codigo) => `${empresaId || ''}__${String(codigo || '').toUpperCase()}`;
 
 export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const { empresaAtual } = useContextoVisual();
@@ -106,6 +118,11 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const [grupoId, setGrupoId] = useState('');
   const [empresaId, setEmpresaId] = useState(empresaAtual?.id || '');
 const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false);
+const [baseProdutos, setBaseProdutos] = useState([]);
+const [validationErrors, setValidationErrors] = useState([]); // {empresa_id, codigo, motivo}
+const [duplicidades, setDuplicidades] = useState([]); // {empresa_id, codigo, existente, novo}
+const [escolhasDuplicidades, setEscolhasDuplicidades] = useState({}); // key -> 'atualizar' | 'pular'
+const [checando, setChecando] = useState(false);
   const { data: grupos = [] } = useQuery({
     queryKey: ['grupos-empresariais'],
     queryFn: () => base44.entities.GrupoEmpresarial.list(),
@@ -133,6 +150,91 @@ const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false
       setEmpresaId(empresas[0].id);
     }
   }, [empresaAtual?.id, empresas?.length, empresaId]);
+
+  // Calcula a lista de produtos alvo (considerando importação por grupo)
+  const getProdutosAlvo = () => {
+    if (!baseProdutos?.length) return [];
+    if ((importarParaTodasEmpresas && grupoId && empresas?.length) || (!empresaId && grupoId && empresas?.length)) {
+      return empresas.flatMap(emp => baseProdutos.map(p => ({ ...p, empresa_id: emp.id, group_id: grupoId, compartilhado_grupo: true })));
+    }
+    return baseProdutos;
+  };
+
+  const downloadErrosCSV = () => {
+    if (!validationErrors.length) return;
+    const headers = ['empresa_id','codigo','motivo'];
+    const rows = validationErrors.map(e => [e.empresa_id || '', e.codigo || '', e.motivo || '']);
+    const csv = [headers.join(','), ...rows.map(r => r.map(x => `"${String(x).replace(/"/g,'"')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'erros_importacao_produtos.csv';
+    document.body.appendChild(a);
+    a.click();
+    URL.revokeObjectURL(url);
+    a.remove();
+  };
+
+  // Validação e checagem de duplicidade no banco
+  React.useEffect(() => {
+    const validar = async () => {
+      if (!baseProdutos?.length) { setValidationErrors([]); setDuplicidades([]); setEscolhasDuplicidades({}); return; }
+      const produtosAlvo = getProdutosAlvo();
+      setChecando(true);
+      setValidationErrors([]);
+      setDuplicidades([]);
+      setEscolhasDuplicidades({});
+
+      const erros = [];
+      const internos = new Set();
+      const vistos = new Set();
+      for (const p of produtosAlvo) {
+        const k = makeKey(p.empresa_id, p.codigo);
+        if (!p?.codigo) erros.push({ empresa_id: p.empresa_id, codigo: '-', motivo: 'Código ausente' });
+        if (!p?.descricao || String(p.descricao).trim() === '') erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Descrição obrigatória ausente' });
+        if (!UNIDADES_ACEITAS.includes(p.unidade_medida)) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Unidade de medida inválida' });
+        if (!isNCMValido(p.ncm)) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'NCM inválido' });
+        if (vistos.has(k)) internos.add(k); else vistos.add(k);
+      }
+      // Duplicidades internas na planilha
+      if (internos.size) {
+        internos.forEach(k => {
+          const [empId, code] = k.split('__');
+          erros.push({ empresa_id: empId, codigo: code, motivo: 'Código duplicado na empresa (na planilha)' });
+        });
+      }
+
+      // Checagem no banco por empresa+codigo
+      const keys = Array.from(new Set(produtosAlvo
+        .filter(p => p.codigo)
+        .map(p => makeKey(p.empresa_id, p.codigo))));
+
+      const duplics = [];
+      const chunk = 200;
+      for (let i = 0; i < keys.length; i += chunk) {
+        const slice = keys.slice(i, i + chunk);
+        const calls = slice.map(async (k) => {
+          const [empId, code] = k.split('__');
+          // se já é duplicidade interna, não precisa checar no banco
+          if (internos.has(k)) return null;
+          const encontrados = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+          if (Array.isArray(encontrados) && encontrados.length > 0) {
+            // pegue o primeiro produto correspondente da planilha para compor o "novo"
+            const novo = produtosAlvo.find(p => makeKey(p.empresa_id, p.codigo) === k);
+            duplics.push({ empresa_id: empId, codigo: code, existente: encontrados[0], novo });
+          }
+          return null;
+        });
+        await Promise.allSettled(calls);
+      }
+      setValidationErrors(erros);
+      setDuplicidades(duplics);
+      setChecando(false);
+    };
+    validar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseProdutos, empresaId, grupoId, importarParaTodasEmpresas, empresas?.length]);
 
   const extrairLinhas = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -232,11 +334,12 @@ const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false
       setTotalLinhas(dataRows.length);
 
       // Montar preview (limitada) apenas com dados
-      const pre = dataRows
+      const baseAll = dataRows
         .map((r) => montarProduto(r))
-        .filter((p) => p?.descricao)
-        .slice(0, 50);
+        .filter((p) => p?.descricao);
+      const pre = baseAll.slice(0, 50);
       setPreview(pre);
+      setBaseProdutos(baseAll);
       setErro('');
       toast.success(`Arquivo lido: ${dataRows.length} item(ns) de produto`);
     } finally {
@@ -269,6 +372,37 @@ const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false
       } else {
         produtos = baseProdutos;
       }
+
+      // Remover itens com erros de validação
+      const errorKeys = new Set(validationErrors.map(e => makeKey(e.empresa_id, e.codigo)));
+      produtos = produtos.filter(p => !errorKeys.has(makeKey(p.empresa_id, p.codigo)));
+
+      // Executar atualizações para duplicidades marcadas como "atualizar"
+      const dupChoice = (d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'atualizar';
+      const paraAtualizar = duplicidades.filter(dupChoice);
+      let updatedTotal = 0;
+      if (paraAtualizar.length > 0) {
+        const chunkU = 200;
+        for (let i = 0; i < paraAtualizar.length; i += chunkU) {
+          const parte = paraAtualizar.slice(i, i + chunkU);
+          const res = await Promise.allSettled(parte.map(d => {
+            const patch = {
+              descricao: d.novo?.descricao,
+              unidade_medida: d.novo?.unidade_medida,
+              ncm: sanitizeNCM(d.novo?.ncm),
+            };
+            // remove undefineds
+            Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
+            return base44.entities.Produto.update(d.existente.id, patch);
+          }));
+          updatedTotal += res.filter(r => r.status === 'fulfilled').length;
+        }
+      }
+
+      // Remover todas as duplicidades (atualizadas ou puladas) da criação
+      const dupKeys = new Set(duplicidades.map(d => makeKey(d.empresa_id, d.codigo)));
+      produtos = produtos.filter(p => !dupKeys.has(makeKey(p.empresa_id, p.codigo)));
+
       if (produtos.length === 0) {
         const hasDesc = dataRows.some(r => !!sanitize(get(r, HEADERS.descricao)));
         const hasUn = dataRows.some(r => !!sanitize(get(r, HEADERS.unidade_medida)));
@@ -410,11 +544,115 @@ const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false
           </Card>
         )}
 
+        {/* Duplicidades */}
+        {duplicidades.length > 0 && (
+          <Card className="border-amber-200 mt-4">
+            <CardHeader className="bg-amber-50 border-b">
+              <CardTitle className="text-sm">Produtos duplicados por código na empresa ({duplicidades.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 space-y-3">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  const all = {}; duplicidades.forEach(d => { all[makeKey(d.empresa_id, d.codigo)] = 'atualizar'; });
+                  setEscolhasDuplicidades(all);
+                }}>Marcar todos como Atualizar</Button>
+                <Button variant="outline" size="sm" onClick={() => {
+                  const all = {}; duplicidades.forEach(d => { all[makeKey(d.empresa_id, d.codigo)] = 'pular'; });
+                  setEscolhasDuplicidades(all);
+                }}>Marcar todos como Pular</Button>
+              </div>
+              <div className="max-h-56 overflow-auto border rounded">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-white">
+                      <TableHead>Empresa</TableHead>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Descrição (existente → novo)</TableHead>
+                      <TableHead>Ação</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {duplicidades.map((d, idx) => {
+                      const key = makeKey(d.empresa_id, d.codigo);
+                      const escolha = escolhasDuplicidades[key] || '';
+                      return (
+                        <TableRow key={idx}>
+                          <TableCell>{d.empresa_id}</TableCell>
+                          <TableCell>{d.codigo}</TableCell>
+                          <TableCell>
+                            <div className="text-xs">
+                              <div><span className="text-slate-500">Existente:</span> {d.existente?.descricao || '-'}</div>
+                              <div><span className="text-slate-500">Novo:</span> {d.novo?.descricao || '-'}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Select value={escolha} onValueChange={(v) => setEscolhasDuplicidades(prev => ({ ...prev, [key]: v }))}>
+                              <SelectTrigger className="w-40">
+                                <SelectValue placeholder="Escolha" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="atualizar">Atualizar produto existente</SelectItem>
+                                <SelectItem value="pular">Pular produto</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Relatório de erros */}
+        {(checando || validationErrors.length > 0) && (
+          <Card className="border-red-200 mt-4">
+            <CardHeader className="bg-red-50 border-b">
+              <CardTitle className="text-sm flex items-center justify-between w-full">
+                <span>
+                  {checando ? 'Validando produtos…' : `Erros de validação (${validationErrors.length})`}
+                </span>
+                {!checando && validationErrors.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={downloadErrosCSV} className="gap-2">
+                    <Download className="w-4 h-4" /> Baixar CSV
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            {!checando && validationErrors.length > 0 && (
+              <CardContent className="p-3">
+                <div className="max-h-56 overflow-auto border rounded">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-white">
+                        <TableHead>Empresa</TableHead>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Motivo</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {validationErrors.map((e, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{e.empresa_id}</TableCell>
+                          <TableCell>{e.codigo}</TableCell>
+                          <TableCell>{e.motivo}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
+
         <div className="flex justify-end gap-2">
           <Button type="button" variant="outline" onClick={() => closeSelf && closeSelf()} disabled={processando}>
             Cancelar
           </Button>
-          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId)} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId) || checando || validationErrors.length > 0 || (duplicidades.length > 0 && Object.keys(escolhasDuplicidades).length < duplicidades.length)} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
             {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {processando ? "Importando..." : "Importar Agora"}
           </Button>
