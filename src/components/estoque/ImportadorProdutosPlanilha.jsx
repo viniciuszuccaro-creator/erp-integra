@@ -631,6 +631,13 @@ const [checando, setChecando] = useState(false);
       const dataRows = rows.filter((r) => !isHeaderRow(r));
       setTotalLinhas(dataRows.length);
 
+      // Captura e salva os cabeçalhos disponíveis para auto-mapeamento
+      const headersDetectados = Array.from(
+        new Set(Object.keys(dataRows[0] || {}))
+      ).filter(Boolean);
+      setAvailableHeaders(headersDetectados);
+      setColumnMap(autoMapFromHeaders(headersDetectados));
+
       // Montar preview (limitada) apenas com dados
       const baseAll = dataRows
           .map((r) => montarProduto(r))
