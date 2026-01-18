@@ -842,6 +842,7 @@ const [suggesting, setSuggesting] = useState(false);
       }));
 
       // Não filtramos por erros pré-calculados para garantir a importação completa; falhas serão reportadas individualmente pelo backend.
+      // Garantir que group_id e empresa_id sejam mantidos, e IDs resolvidos por nome/código já aplicados em montarProduto.
 
       // Executar atualizações para duplicidades marcadas como "atualizar"
       const dupChoice = (d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'atualizar';
