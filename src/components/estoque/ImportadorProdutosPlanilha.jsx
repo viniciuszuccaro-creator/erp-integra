@@ -253,7 +253,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
       // Reextrai linhas para processar tudo (não só o preview)
       const rows = await extrairLinhas(arquivo);
       const dataRows = rows.filter((r) => !isHeaderRow(r));
-      const produtos = dataRows.map((r) => montarProduto(r)).filter((p) => p?.descricao);
+      const produtos = dataRows.map((r) => montarProduto(r)).filter((p) => p?.descricao && p?.empresa_id);
       if (produtos.length === 0) {
         setErro('Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.');
         toast.error("Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.");
