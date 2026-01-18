@@ -275,7 +275,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
         )}
 
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => closeSelf && closeSelf()} disabled={processando}>
+          <Button type="button" variant="outline" onClick={() => closeSelf && closeSelf()} disabled={processando}>
             Cancelar
           </Button>
           <Button onClick={importar} disabled={processando || !arquivo} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
