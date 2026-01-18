@@ -180,7 +180,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
     const produto = {
       empresa_id: empresaId,
       codigo: sanitize(get(row, HEADERS.codigo)),
-      descricao: sanitize(get(row, HEADERS.descricao)),
+      descricao: sanitize(get(row, HEADERS.descricao))?.slice(0, 250),
       unidade_medida: mapUnidade(get(row, HEADERS.unidade_medida)),
       estoque_minimo: num(get(row, HEADERS.estoque_minimo)) || 0,
       ncm: sanitize(get(row, HEADERS.ncm)),
