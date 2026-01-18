@@ -386,6 +386,7 @@ const [checando, setChecando] = useState(false);
         text = decodeWith('utf-16le') || decodeWith('utf-16be') || decodeWith('iso-8859-1') || decodeWith('windows-1252') || text;
       }
 
+      // 1) Parser local
       const rowsAA = parseCSVRows(text || '');
       if (Array.isArray(rowsAA) && rowsAA.length > 0) {
         const headerRowRaw = rowsAA[0].map((h) => String(h ?? '').replace(/^\uFEFF/, '').trim());
@@ -412,8 +413,35 @@ const [checando, setChecando] = useState(false);
           }
           return obj;
         });
-        return objetos.filter((o) => Object.keys(o).length > 0);
+        if (objetos.length > 0) return objetos.filter((o) => Object.keys(o).length > 0);
       }
+
+      // 2) Fallback: extrator do Core tentando array de arrays
+      try {
+        const r = await base44.integrations.Core.ExtractDataFromUploadedFile({
+          file_url: file_url,
+          json_schema: { type: 'array', items: { type: 'array' } }
+        });
+        const arr = Array.isArray(r?.output) ? r.output : [];
+        if (arr.length > 0 && Array.isArray(arr[0])) {
+          const headerRow = arr[0].map((h) => String(h ?? '').trim());
+          const dataRows = arr.slice(1);
+          const maxLen = Math.max(headerRow.length, ...dataRows.map(r => r.length, 0));
+          const objetos = dataRows.map((linha) => {
+            const obj = {};
+            for (let i = 0; i < maxLen; i++) {
+              const val = linha[i];
+              const header = headerRow[i] || `COL_${i+1}`;
+              if (header) obj[header] = val;
+              const letter = String.fromCharCode(65 + i);
+              obj[letter] = val;
+            }
+            return obj;
+          });
+          if (objetos.length > 0) return objetos.filter((o) => Object.keys(o).length > 0);
+        }
+      } catch (_) {}
+
       return [];
     }
 
