@@ -58,7 +58,7 @@ const get = (row, keys) => {
 const norm = (s) => String(s || "").normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 // Após converter a planilha em objetos, não há linha de cabeçalho nas linhas retornadas.
 // Para evitar falsos positivos (ex.: valores "UN"/"KG" sendo confundidos com cabeçalho), sempre retornamos false.
-const isHeaderRow = () => false;
+const isHeaderRow = () => false; // nunca descarta linhas de dados
 
 // Mapeamento fixo conforme especificação do usuário (linha 1 = cabeçalhos, dados a partir da linha 2)
 const HEADERS = {
