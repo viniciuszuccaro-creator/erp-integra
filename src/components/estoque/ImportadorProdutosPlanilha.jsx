@@ -30,19 +30,26 @@ const sanitize = (v) => {
 const removeDiacritics = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const get = (row, keys) => {
   const normKey = (s) => removeDiacritics(String(s || '').toLowerCase().trim().replace(/^\uFEFF/, ''));
+  const tryReturn = (key) => (key != null && row[key] != null && row[key] !== '') ? row[key] : undefined;
+  const rowKeys = Object.keys(row || {});
+  const rowKeysNorm = rowKeys.map((rk) => ({ raw: rk, norm: normKey(rk) }));
+
   for (const k of keys) {
     if (!k) continue;
-    // tenta direto
-    if (row[k] != null && row[k] !== "") return row[k];
-    const upper = String(k).toUpperCase();
-    if (row[upper] != null && row[upper] !== "") return row[upper];
+    // 1) direto e variações simples
+    const direct = tryReturn(k); if (direct !== undefined) return direct;
+    const upper = tryReturn(String(k).toUpperCase()); if (upper !== undefined) return upper;
+
+    // 2) comparações normalizadas
     const target = normKey(k);
-    // case-insensitive
-    const foundInsensitive = Object.keys(row).find((rk) => rk && String(rk).toLowerCase() === String(k).toLowerCase());
-    if (foundInsensitive && row[foundInsensitive] != null && row[foundInsensitive] !== "") return row[foundInsensitive];
-    // normalização (remove acentos + BOM)
-    const foundNormalized = Object.keys(row).find((rk) => normKey(rk) === target);
-    if (foundNormalized && row[foundNormalized] != null && row[foundNormalized] !== "") return row[foundNormalized];
+    const eq = rowKeysNorm.find((rk) => rk.norm === target);
+    if (eq) { const v = tryReturn(eq.raw); if (v !== undefined) return v; }
+
+    // 3) fuzzy: inclui o alvo dentro do cabeçalho normalizado (ex.: "descr" casa com "descricao do produto")
+    if (target.length >= 4) {
+      const incl = rowKeysNorm.find((rk) => rk.norm.includes(target));
+      if (incl) { const v = tryReturn(incl.raw); if (v !== undefined) return v; }
+    }
   }
   return undefined;
 };
