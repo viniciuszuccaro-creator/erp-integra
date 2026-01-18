@@ -26,6 +26,7 @@ const sanitize = (v) => {
   const s = String(v).trim();
   return s === "" ? undefined : s;
 };
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const removeDiacritics = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const get = (row, keys) => {
