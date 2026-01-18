@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Upload, Loader2, CheckCircle2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Label } from "@/components/ui/label";
@@ -78,31 +79,26 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const [erro, setErro] = useState('');
   const [grupoId, setGrupoId] = useState('');
   const [empresaId, setEmpresaId] = useState(empresaAtual?.id || '');
-  const [grupos, setGrupos] = useState([]);
-  const [empresas, setEmpresas] = useState([]);
+  const { data: grupos = [] } = useQuery({
+    queryKey: ['grupos-empresariais'],
+    queryFn: () => base44.entities.GrupoEmpresarial.list(),
+    staleTime: 300000,
+  });
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas-por-grupo', grupoId],
+    queryFn: () => grupoId ? base44.entities.Empresa.filter({ group_id: grupoId }) : base44.entities.Empresa.list(),
+    staleTime: 120000,
+  });
+
+
 
   React.useEffect(() => {
-    (async () => {
-      const gs = await base44.entities.GrupoEmpresarial?.list?.();
-      setGrupos(gs || []);
-    })();
-  }, []);
-
-  React.useEffect(() => {
-    (async () => {
-      if (grupoId) {
-        const es = await base44.entities.Empresa?.filter?.({ group_id: grupoId });
-        setEmpresas(es || []);
-      } else {
-        const es = await base44.entities.Empresa?.list?.();
-        setEmpresas(es || []);
-      }
-    })();
-  }, [grupoId]);
-
-  React.useEffect(() => {
-    if (empresaAtual?.id && !empresaId) setEmpresaId(empresaAtual.id);
-  }, [empresaAtual?.id]);
+    if (!empresaId && empresaAtual?.id) {
+      setEmpresaId(empresaAtual.id);
+    } else if (!empresaId && empresas?.length > 0) {
+      setEmpresaId(empresas[0].id);
+    }
+  }, [empresaAtual?.id, empresas?.length, empresaId]);
 
   const extrairLinhas = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
