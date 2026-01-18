@@ -364,6 +364,11 @@ const [checando, setChecando] = useState(false);
 
     // detectar delimitador ("," ";" ou tab) na primeira linha útil
     const detectDelim = (line) => {
+      // aceita ; , \t explicitamente se primeira linha tem sep=.. ou cabeçalho com A;B;C
+      if (/^[A-Z](;|,|\t)[A-Z](;|,|\t)[A-Z]/i.test(line)) {
+        const m = line.match(/^[^A-Za-z0-9]*([;,\t])/);
+        if (m) return m[1] === '\\t' ? '\t' : m[1];
+      }
       if (sepDirective) return sepDirective;
       const cand = [',', ';', '\t'];
       const counts = { ',': 0, ';': 0, '\t': 0 };
