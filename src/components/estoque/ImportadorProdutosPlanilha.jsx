@@ -181,7 +181,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
       empresa_id: empresaId,
       codigo: sanitize(get(row, HEADERS.codigo)),
       descricao: sanitize(get(row, HEADERS.descricao)),
-      unidade_medida: sanitize(get(row, HEADERS.unidade_medida)) || "UN",
+      unidade_medida: mapUnidade(get(row, HEADERS.unidade_medida)),
       estoque_minimo: num(get(row, HEADERS.estoque_minimo)) || 0,
       ncm: sanitize(get(row, HEADERS.ncm)),
       peso_teorico_kg_m: num(get(row, HEADERS.peso_teorico_kg_m)),
@@ -192,7 +192,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
       setor_atividade_id: sanitize(get(row, HEADERS.setor_atividade_id)),
       setor_atividade_nome: sanitize(get(row, HEADERS.setor_atividade_nome)),
       custo_aquisicao: num(get(row, HEADERS.custo_aquisicao)),
-      tipo_item: sanitize(get(row, HEADERS.tipo_item)) || "Revenda",
+      tipo_item: mapTipoItem(get(row, HEADERS.tipo_item)),
       status: "Ativo",
       modo_cadastro: "Lote/Importação",
     };
