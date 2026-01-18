@@ -643,7 +643,7 @@ const [checando, setChecando] = useState(false);
 
       // Captura e salva os cabeçalhos disponíveis para auto-mapeamento
       const headersDetectados = Array.from(
-        new Set(Object.keys(dataRows[0] || {}))
+        new Set(dataRows.flatMap((r) => Object.keys(r || {})))
       ).filter(Boolean);
       setAvailableHeaders(headersDetectados);
       setColumnMap(autoMapFromHeaders(headersDetectados));
