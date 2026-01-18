@@ -49,15 +49,9 @@ const get = (row, keys) => {
 
 // Normalização e detecção da linha de cabeçalho
 const norm = (s) => String(s || "").normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-const isHeaderRow = (row) => {
-  const code = norm(get(row, ["Cód. Material", "Cod. Material", "A"]));
-  const desc = norm(get(row, ["Descrição", "B"]));
-  const un = norm(get(row, ["Un.", "C"]));
-  if (["cod. material", "codigo material", "cod material"].includes(code)) return true;
-  if (["descricao", "descrição", "produto", "nome"].includes(desc)) return true;
-  if (["un.", "un", "unidade"].includes(un)) return true;
-  return false;
-};
+// Após converter a planilha em objetos, não há linha de cabeçalho nas linhas retornadas.
+// Para evitar falsos positivos (ex.: valores "UN"/"KG" sendo confundidos com cabeçalho), sempre retornamos false.
+const isHeaderRow = () => false;
 
 // Mapeamento fixo conforme especificação do usuário (linha 1 = cabeçalhos, dados a partir da linha 2)
 const HEADERS = {
