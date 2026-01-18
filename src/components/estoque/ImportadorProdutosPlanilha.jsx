@@ -462,7 +462,7 @@ const [checando, setChecando] = useState(false);
         const dataRows = rowsAA.slice(1);
         const maxLen = Math.max(headerRowRaw.length, ...dataRows.map(r => r.length, 0));
         let headerRow = headerRowRaw;
-        const nonEmptyHeaders = headerRowRaw.filter(h => h).length;
+        const nonEmptyHeaders = headerRowRaw.filter(h => h && h.toString().trim().length > 0).length;
         if (nonEmptyHeaders === 0) {
           headerRow = Array.from({ length: maxLen }, (_, i) => `COL_${i + 1}`);
         } else if (headerRowRaw.length < maxLen) {
