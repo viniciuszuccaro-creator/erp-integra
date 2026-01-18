@@ -361,7 +361,10 @@ const [checando, setChecando] = useState(false);
         const objetos = dataRows.map((linha) => {
           const obj = {};
           headerRow.forEach((header, i) => {
-            if (header) obj[header] = linha[i];
+            const val = linha[i];
+            if (header) obj[header] = val;
+            const letter = String.fromCharCode(65 + i); // A, B, C...
+            obj[letter] = val;
           });
           return obj;
         });
@@ -405,7 +408,10 @@ const [checando, setChecando] = useState(false);
       const objetos = dataRows.map((linha) => {
         const obj = {};
         headerRow.forEach((header, i) => {
-          if (header) obj[header] = linha[i];
+          const val = linha[i];
+          if (header) obj[header] = val;
+          const letter = String.fromCharCode(65 + i);
+          obj[letter] = val;
         });
         return obj;
       });
@@ -554,7 +560,11 @@ const [checando, setChecando] = useState(false);
         const hasUn = dataRows.some(r => !!sanitize(get(r, HEADERS.unidade_medida)));
         const expectedDesc = HEADERS.descricao.filter(h => h.length > 1).join(', ');
         const expectedUn = HEADERS.unidade_medida.filter(h => h.length > 1).join(', ');
-        const headersPrimeiros = Array.isArray(rows) && rows[0] ? Object.keys(rows[0]) : [];
+        const headersPrimeiros = (() => {
+          const set = new Set();
+          (Array.isArray(rows) ? rows.slice(0,5) : []).forEach(r => Object.keys(r || {}).forEach(k => set.add(k)));
+          return Array.from(set);
+        })();
         const dicas = [];
         if (!hasDesc) dicas.push(`- Cabeçalho de Descrição ausente (ex.: ${expectedDesc}).`);
         if (!hasUn) dicas.push(`- Cabeçalho de Unidade ausente (ex.: ${expectedUn}).`);
