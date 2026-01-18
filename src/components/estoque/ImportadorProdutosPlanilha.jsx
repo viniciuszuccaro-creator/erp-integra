@@ -367,7 +367,7 @@ const [checando, setChecando] = useState(false);
       // aceita ; , \t explicitamente se primeira linha tem sep=.. ou cabeçalho com A;B;C
       if (/^[A-Z](;|,|\t)[A-Z](;|,|\t)[A-Z]/i.test(line)) {
         const m = line.match(/^[^A-Za-z0-9]*([;,\t])/);
-        if (m) return m[1] === '\\t' ? '\t' : m[1];
+        if (m) return m[1] === '\t' ? '\t' : m[1];
       }
       if (sepDirective) return sepDirective;
       const cand = [',', ';', '\t'];
@@ -547,62 +547,7 @@ const [checando, setChecando] = useState(false);
       return rows;
     }
 
-    // 1) Tenta extrair como array de arrays (CSV): primeira linha = cabeçalho
-    const attemptExtract = async (schema) => {
-      const encs = [
-        (encoding === 'UTF-16LE' || encoding === 'UTF-16BE') ? 'UTF-16' : encoding,
-        'UTF-16',
-        'ISO-8859-1'
-      ];
-      for (const enc of encs) {
-        try {
-          const r = await base44.integrations.Core.ExtractDataFromUploadedFile({
-            file_url,
-            json_schema: schema,
-            encoding: enc,
-            ignore_errors: true,
-          });
-          if (r && (r.output || r.data)) return r;
-        } catch (_) { /* tenta próximo encoding */ }
-      }
-      return null;
-    };
 
-    let res = await attemptExtract({ type: "array", items: { type: "array" } });
-
-    if (Array.isArray(res?.output) && res.output.length > 1 && Array.isArray(res.output[0])) {
-      const headerRow = res.output[0].map((h) => String(h || "").trim());
-      const dataRows = res.output.slice(1);
-      const objetos = dataRows.map((linha) => {
-        const obj = {};
-        headerRow.forEach((header, i) => {
-          const val = linha[i];
-          if (header) obj[header] = val;
-          const letter = String.fromCharCode(65 + i);
-          obj[letter] = val;
-        });
-        return obj;
-      });
-      return objetos.filter((o) => Object.keys(o).length > 0);
-    }
-
-    // 2) Fallback: extrai como objeto genérico e procura arrays de objetos em 'rows'/'data' ou propriedades
-    res = res || await attemptExtract({ type: "object", additionalProperties: true });
-
-    const out = res?.output || {};
-    const pickArrayOfObjects = (obj) => {
-      if (Array.isArray(obj) && obj.every((it) => typeof it === "object" && !Array.isArray(it))) return obj;
-      if (Array.isArray(obj?.rows)) return obj.rows;
-      if (Array.isArray(obj?.data)) return obj.data;
-      for (const val of Object.values(obj)) {
-        if (Array.isArray(val) && val.every((it) => typeof it === "object" && !Array.isArray(it))) return val;
-      }
-      return [];
-    };
-
-    const rows = pickArrayOfObjects(out);
-    return Array.isArray(rows) ? rows : [];
-  };
 
   // Usa columnMap para resolver sinônimos antes de buscar
   const getWithMap = (row, fieldKey) => {
