@@ -732,7 +732,7 @@ const [suggesting, setSuggesting] = useState(false);
     const grupoIdResolved =
       (rawGrupoId && (gruposByCodigo[rawGrupoId] || gruposByNome[norm(rawGrupoId)])) ||
       (rawGrupoNome && gruposByNome[norm(rawGrupoNome)]) ||
-      rawGrupoId || undefined;
+      undefined;
     const grupoNomeResolved =
       rawGrupoNome ||
       (gruposProduto.find((g) => g.id === grupoIdResolved)?.nome_grupo ||
