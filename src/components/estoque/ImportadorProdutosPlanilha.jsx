@@ -711,6 +711,31 @@ const [suggesting, setSuggesting] = useState(false);
   };
 
   const montarProduto = (row) => {
+    // Resolver Grupo de Produto e Setor de Atividade a partir de ID/código ou nome
+    const rawGrupoId = sanitize(getWithMap(row, 'grupo_produto_id'));
+    const rawGrupoNome = sanitize(getWithMap(row, 'grupo_produto_nome'));
+    const grupoIdResolved =
+      (rawGrupoId && (gruposByCodigo[rawGrupoId] || gruposByNome[norm(rawGrupoId)])) ||
+      (rawGrupoNome && gruposByNome[norm(rawGrupoNome)]) ||
+      rawGrupoId || undefined;
+    const grupoNomeResolved =
+      rawGrupoNome ||
+      (gruposProduto.find((g) => g.id === grupoIdResolved)?.nome_grupo ||
+       gruposProduto.find((g) => String(g.codigo || '') === String(rawGrupoId || ''))?.nome_grupo) ||
+      undefined;
+
+    const rawSetorId = sanitize(getWithMap(row, 'setor_atividade_id'));
+    const rawSetorNome = sanitize(getWithMap(row, 'setor_atividade_nome'));
+    const setorIdResolved =
+      (rawSetorNome && setoresByNome[norm(rawSetorNome)]) ||
+      (rawSetorId && setoresByNome[norm(rawSetorId)]) ||
+      rawSetorId || undefined;
+    const setorNomeResolved =
+      rawSetorNome ||
+      (setoresAtividade.find((s) => s.id === setorIdResolved)?.nome ||
+       setoresAtividade.find((s) => String(s.codigo || '') === String(rawSetorId || ''))?.nome) ||
+      undefined;
+
     const produto = {
       empresa_id: empresaId,
       codigo: sanitize(getWithMap(row, 'codigo')),
@@ -719,12 +744,12 @@ const [suggesting, setSuggesting] = useState(false);
       estoque_minimo: num(getWithMap(row, 'estoque_minimo')) || 0,
       ncm: sanitizeNCM(getWithMap(row, 'ncm')),
       peso_teorico_kg_m: num(getWithMap(row, 'peso_teorico_kg_m')),
-      grupo_produto_id: sanitize(getWithMap(row, 'grupo_produto_id')),
-      grupo_produto_nome: sanitize(getWithMap(row, 'grupo_produto_nome')),
+      grupo_produto_id: grupoIdResolved,
+      grupo_produto_nome: grupoNomeResolved,
       peso_liquido_kg: num(getWithMap(row, 'peso_liquido_kg')),
       peso_bruto_kg: num(getWithMap(row, 'peso_bruto_kg')),
-      setor_atividade_id: sanitize(getWithMap(row, 'setor_atividade_id')),
-      setor_atividade_nome: sanitize(getWithMap(row, 'setor_atividade_nome')),
+      setor_atividade_id: setorIdResolved,
+      setor_atividade_nome: setorNomeResolved,
       custo_aquisicao: num(getWithMap(row, 'custo_aquisicao')),
       tipo_item: mapTipoItem(getWithMap(row, 'tipo_item')),
       status: "Ativo",
@@ -735,6 +760,7 @@ const [suggesting, setSuggesting] = useState(false);
     Object.keys(produto).forEach((k) => produto[k] === undefined && delete produto[k]);
     return produto;
   };
+
 
   const handleArquivo = async (e) => {
     const f = e.target.files?.[0];
