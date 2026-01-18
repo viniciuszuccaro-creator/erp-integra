@@ -69,6 +69,31 @@ const HEADERS = {
   tipo_item: ["Descrição Tipo", "N"],
 };
 
+// Normalizadores para evitar 422 (enum inválido)
+const mapUnidade = (v) => {
+  const s = norm(v || '').replace(/\./g, '');
+  switch (s) {
+    case 'un': case 'und': case 'unid': return 'UN';
+    case 'pc': case 'pç': case 'peca': case 'pec': case 'peça': return 'PC';
+    case 'kg': case 'kilo': return 'KG';
+    case 'lt': case 'l': return 'LT';
+    case 'mt': case 'm': return 'MT';
+    case 'cx': case 'caixa': return 'CX';
+    case 'm2': case 'm²': return 'M2';
+    case 'm3': case 'm³': return 'M3';
+    default: return 'UN';
+  }
+};
+const mapTipoItem = (v) => {
+  const s = norm(v || '');
+  if (s.includes('rev')) return 'Revenda';
+  if (s.includes('mater') || s.includes('prima')) return 'Matéria-Prima Produção';
+  if (s.includes('acab')) return 'Produto Acabado';
+  if (s.includes('consum')) return 'Consumo Interno';
+  if (s.includes('serv')) return 'Serviço';
+  return 'Revenda';
+};
+
 export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const { empresaAtual } = useContextoVisual();
   const [arquivo, setArquivo] = useState(null);
