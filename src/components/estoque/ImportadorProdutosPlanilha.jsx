@@ -805,12 +805,11 @@ const [suggesting, setSuggesting] = useState(false);
       setAvailableHeaders(headersDetectados);
       setColumnMap(autoMapFromHeaders(headersDetectados));
 
-      // Montar preview (limitada) apenas com dados
+      // Montar preview com TODOS os itens
       const baseAll = dataRows
           .map((r) => montarProduto(r))
           .filter((p) => p?.descricao && p?.unidade_medida);
-        const pre = baseAll.slice(0, 50);
-        setPreview(pre);
+        setPreview(baseAll);
         setBaseProdutos(baseAll);
       setErro('');
       toast.success(`Arquivo lido: ${dataRows.length} item(ns) de produto`);
