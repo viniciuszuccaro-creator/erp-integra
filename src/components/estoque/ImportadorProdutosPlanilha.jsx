@@ -176,7 +176,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   };
 
   const importar = async () => {
-    if (!fileUrl) {
+    if (!arquivo) {
       toast.error("Selecione um arquivo válido.");
       return;
     }
