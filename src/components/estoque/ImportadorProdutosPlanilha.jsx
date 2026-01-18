@@ -672,6 +672,11 @@ const [checando, setChecando] = useState(false);
       toast.error('Selecione a empresa ou um grupo.');
       return;
     }
+    // Valida se os campos essenciais estão mapeados
+    const mapa = columnMap || {};
+    if (!mapa.descricao || !mapa.unidade_medida) {
+      toast.warning('Revise o mapeamento: "Descrição" e "Unidade" devem estar definidos.');
+    }
     toast("Iniciando importação...");
     setProcessando(true);
     try {
