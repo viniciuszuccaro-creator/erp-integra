@@ -530,6 +530,13 @@ const [checando, setChecando] = useState(false);
       }
 
     if (['xls','xlsx'].includes(ext)) {
+      // se vier um CSV salvo como XLS/XLSX mal formatado, tente fallback para array de arrays
+      try {
+        const { data } = await base44.functions.invoke('parseSpreadsheet', { file_url });
+        const rows = Array.isArray(data?.rows) ? data.rows : [];
+        return rows;
+      } catch (_) {}
+    }
       const { data } = await base44.functions.invoke('parseSpreadsheet', { file_url });
       const rows = Array.isArray(data?.rows) ? data.rows : [];
       return rows;
