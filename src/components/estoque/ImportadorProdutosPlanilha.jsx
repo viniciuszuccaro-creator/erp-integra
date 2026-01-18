@@ -457,8 +457,28 @@ const [checando, setChecando] = useState(false);
         }
       } catch (_) {}
 
+      // 3) Fallback final: extrair como objeto genérico e procurar arrays de objetos
+      try {
+        const r2 = await base44.integrations.Core.ExtractDataFromUploadedFile({
+          file_url: file_url,
+          json_schema: { type: 'object', additionalProperties: true }
+        });
+        const out = r2?.output || {};
+        const pickArrayOfObjects = (obj) => {
+          if (Array.isArray(obj) && obj.every((it) => typeof it === 'object' && !Array.isArray(it))) return obj;
+          if (Array.isArray(obj?.rows)) return obj.rows;
+          if (Array.isArray(obj?.data)) return obj.data;
+          for (const val of Object.values(obj)) {
+            if (Array.isArray(val) && val.every((it) => typeof it === 'object' && !Array.isArray(it))) return val;
+          }
+          return [];
+        };
+        const rows = pickArrayOfObjects(out);
+        if (Array.isArray(rows) && rows.length) return rows;
+      } catch (_) {}
+
       return [];
-    }
+      }
 
     if (['xls','xlsx'].includes(ext)) {
       const { data } = await base44.functions.invoke('parseSpreadsheet', { file_url });
