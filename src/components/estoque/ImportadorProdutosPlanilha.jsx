@@ -294,7 +294,7 @@ const [checando, setChecando] = useState(false);
       descricao: sanitize(get(row, HEADERS.descricao))?.slice(0, 250),
       unidade_medida: mapUnidade(get(row, HEADERS.unidade_medida)),
       estoque_minimo: num(get(row, HEADERS.estoque_minimo)) || 0,
-      ncm: sanitize(get(row, HEADERS.ncm)),
+      ncm: sanitizeNCM(get(row, HEADERS.ncm)),
       peso_teorico_kg_m: num(get(row, HEADERS.peso_teorico_kg_m)),
       grupo_produto_id: sanitize(get(row, HEADERS.grupo_produto_id)),
       grupo_produto_nome: sanitize(get(row, HEADERS.grupo_produto_nome)),
@@ -386,12 +386,15 @@ const [checando, setChecando] = useState(false);
         for (let i = 0; i < paraAtualizar.length; i += chunkU) {
           const parte = paraAtualizar.slice(i, i + chunkU);
           const res = await Promise.allSettled(parte.map(d => {
-            const patch = {
-              descricao: d.novo?.descricao,
-              unidade_medida: d.novo?.unidade_medida,
-              ncm: sanitizeNCM(d.novo?.ncm),
-            };
-            // remove undefineds
+            const patch = { ...d.novo };
+            delete patch.id;
+            delete patch.empresa_id;
+            delete patch.group_id;
+            delete patch.created_date;
+            delete patch.updated_date;
+            delete patch.created_by;
+            delete patch.codigo; // não alteramos o código-chave na atualização
+            if (patch.ncm != null) patch.ncm = sanitizeNCM(patch.ncm);
             Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
             return base44.entities.Produto.update(d.existente.id, patch);
           }));
