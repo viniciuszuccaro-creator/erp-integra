@@ -240,8 +240,8 @@ const [checando, setChecando] = useState(false);
     try {
       const buf = await file.slice(0, 4).arrayBuffer();
       const b = new Uint8Array(buf);
-      if (b[0] === 0xFF && b[1] === 0xFE) return 'UTF-16LE';
-      if (b[0] === 0xFE && b[1] === 0xFF) return 'UTF-16BE';
+      if (b[0] === 0xFF && b[1] === 0xFE) return 'UTF-16';
+      if (b[0] === 0xFE && b[1] === 0xFF) return 'UTF-16';
       if (b[0] === 0xEF && b[1] === 0xBB && b[2] === 0xBF) return 'UTF-8';
     } catch (_) {}
     return 'UTF-8';
