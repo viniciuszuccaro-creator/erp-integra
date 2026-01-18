@@ -59,20 +59,30 @@ const isHeaderRow = (row) => {
 
 // Mapeamento fixo conforme especificação do usuário (linha 1 = cabeçalhos, dados a partir da linha 2)
 const HEADERS = {
-  codigo: ["Cód. Material", "Cod. Material", "A"],
-  descricao: ["Descrição", "B"],
-  unidade_medida: ["Un.", "UN", "Un", "Unidade", "Unid.", "Unid", "C"],
-  estoque_minimo: ["Estoque Minimo", "D"],
-  ncm: ["Classif. Fiscal", "E"],
-  peso_teorico_kg_m: ["Peso Teórico", "F"],
-  grupo_produto_id: ["Codigo da Classe", "G"],
-  grupo_produto_nome: ["Descrição da Classe", "H"],
-  peso_liquido_kg: ["Peso Liquido", "I"],
+  codigo: [
+    "Cód. Material", "Cod. Material", "Código", "Codigo", "Código Material", "Codigo Material",
+    "SKU", "Código Interno", "Codigo Interno", "A"
+  ],
+  descricao: [
+    "Descrição", "Descricao", "Descrição Produto", "Descricao Produto", "Descrição do Produto", "Descricao do Produto",
+    "Descrição do Material", "Descricao do Material", "Descrição Material", "Descricao Material",
+    "Produto", "Nome", "Nome do Produto", "Item", "B"
+  ],
+  unidade_medida: [
+    "Un.", "UN", "Un", "Unidade", "Unid.", "Unid", "Unidade de Medida", "Unidade Medida",
+    "UNIDADE", "UM", "UNI", "UND", "C"
+  ],
+  estoque_minimo: ["Estoque Minimo", "Estoque Mínimo", "Estoque Mínimo (Qtd)", "D"],
+  ncm: ["Classif. Fiscal", "NCM", "Classificação Fiscal", "Classificacao Fiscal", "E"],
+  peso_teorico_kg_m: ["Peso Teórico", "Peso Teorico", "Peso Teorico KG/M", "F"],
+  grupo_produto_id: ["Codigo da Classe", "Código da Classe", "Código do Grupo de Produto", "ID Grupo Produto", "G"],
+  grupo_produto_nome: ["Descrição da Classe", "Descricao da Classe", "Grupo do Produto", "Grupo Produto", "H"],
+  peso_liquido_kg: ["Peso Liquido", "Peso Líquido", "I"],
   peso_bruto_kg: ["Peso Bruto", "J"],
-  setor_atividade_id: ["Codigo do Grupo", "K"],
-  setor_atividade_nome: ["Descrição do Grupo", "L"],
-  custo_aquisicao: ["Custo Principal", "M"],
-  tipo_item: ["Descrição Tipo", "N"],
+  setor_atividade_id: ["Codigo do Grupo", "Código do Grupo", "ID Setor Atividade", "K"],
+  setor_atividade_nome: ["Descrição do Grupo", "Descricao do Grupo", "Setor de Atividade", "L"],
+  custo_aquisicao: ["Custo Principal", "Custo", "Preço de Custo", "Preco de Custo", "M"],
+  tipo_item: ["Descrição Tipo", "Descricao Tipo", "Tipo do Item", "Tipo", "N"],
 };
 
 // Normalizadores para evitar 422 (enum inválido)
@@ -553,7 +563,7 @@ const [checando, setChecando] = useState(false);
         if (!hasDesc) dicas.push(`- Cabeçalho de Descrição ausente (ex.: ${expectedDesc}).`);
         if (!hasUn) dicas.push(`- Cabeçalho de Unidade ausente (ex.: ${expectedUn}).`);
         if (!empresaId && !grupoId) dicas.push('- Selecione a empresa de destino ou um grupo.');
-        const msg = `Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.\nObrigatórios: Descrição, Unidade (Un.) e Empresa de destino.\n${dicas.join('\n')}\nDetectamos estes cabeçalhos: ${headersPrimeiros.join(', ')}`;
+        const msg = `Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.\nObrigatórios: Descrição, Unidade (Un.) e Empresa ou Grupo de destino.\n${dicas.join('\n')}\nDetectamos estes cabeçalhos: ${headersPrimeiros.join(', ')}`;
         setErro(msg);
         toast.error('Nada para importar. Veja os detalhes acima.');
         return;
