@@ -409,6 +409,7 @@ const [suggesting, setSuggesting] = useState(false);
         if (!p?.codigo) erros.push({ empresa_id: p.empresa_id, codigo: '-', motivo: 'Código ausente' });
         if (!p?.descricao || String(p.descricao).trim() === '') erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Descrição obrigatória ausente' });
         if (!UNIDADES_ACEITAS.includes(p.unidade_medida)) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Unidade de medida inválida' });
+        if (p?.grupo_produto_nome && !p?.grupo_produto_id) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: `Grupo de produto não encontrado: ${p.grupo_produto_nome}` });
         /* NCM inválido não bloqueia importação; será sugerido por IA */
         if (vistos.has(k)) internos.add(k); else vistos.add(k);
       }
