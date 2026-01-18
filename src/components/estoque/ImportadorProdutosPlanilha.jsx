@@ -247,12 +247,65 @@ const [checando, setChecando] = useState(false);
     return 'UTF-8';
   };
 
+  // CSV parser simples que trata aspas, vírgulas e quebras de linha
+  const parseCSVRows = (text) => {
+    const rows = [];
+    let row = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i + 1];
+      if (inQuotes) {
+        if (ch === '"' && next === '"') { cur += '"'; i++; continue; }
+        if (ch === '"') { inQuotes = false; continue; }
+        cur += ch;
+      } else {
+        if (ch === '"') { inQuotes = true; continue; }
+        if (ch === ',') { row.push(cur); cur = ''; continue; }
+        if (ch === '\n' || ch === '\r') {
+          if (ch === '\r' && next === '\n') i++; // CRLF
+          row.push(cur); rows.push(row); row = []; cur = '';
+          continue;
+        }
+        cur += ch;
+      }
+    }
+    // última célula
+    row.push(cur);
+    rows.push(row);
+    // remove linhas vazias
+    return rows.filter(r => r.some(c => String(c || '').trim() !== ''));
+  };
+
   const extrairLinhas = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setFileUrl(file_url);
 
     const ext = (file?.name || '').split('.').pop()?.toLowerCase();
     const encoding = await detectEncoding(file);
+
+    // Se for CSV em UTF-16, fazemos o parse localmente para evitar erro de encoding no servidor
+    if (ext === 'csv' && (encoding === 'UTF-16LE' || encoding === 'UTF-16BE')) {
+      const buf = await file.arrayBuffer();
+      const decoder = new TextDecoder(encoding === 'UTF-16LE' ? 'utf-16le' : 'utf-16be');
+      const text = decoder.decode(buf);
+      const rowsAA = parseCSVRows(text);
+      if (Array.isArray(rowsAA) && rowsAA.length > 1) {
+        const headerRow = rowsAA[0].map((h) => String(h || '').trim());
+        const dataRows = rowsAA.slice(1);
+        const objetos = dataRows.map((linha) => {
+          const obj = {};
+          headerRow.forEach((header, i) => {
+            if (header) obj[header] = linha[i];
+          });
+          return obj;
+        });
+        return objetos.filter((o) => Object.keys(o).length > 0);
+      }
+      return [];
+    }
+
     if (['xls','xlsx'].includes(ext)) {
       const { data } = await base44.functions.invoke('parseSpreadsheet', { file_url });
       const rows = Array.isArray(data?.rows) ? data.rows : [];
