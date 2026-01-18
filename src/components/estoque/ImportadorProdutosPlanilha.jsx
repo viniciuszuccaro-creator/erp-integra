@@ -585,6 +585,14 @@ const [checando, setChecando] = useState(false);
     return Array.isArray(rows) ? rows : [];
   };
 
+  // Usa columnMap para resolver sinônimos antes de buscar
+  const getWithMap = (row, fieldKey) => {
+    const mappedHeader = columnMap?.[fieldKey];
+    const syns = HEADERS[fieldKey] || [];
+    const candidates = mappedHeader ? [mappedHeader, ...syns] : syns;
+    return get(row, candidates);
+  };
+
   const montarProduto = (row) => {
     const produto = {
       empresa_id: empresaId,
