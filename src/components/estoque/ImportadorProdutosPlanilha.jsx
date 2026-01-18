@@ -236,11 +236,23 @@ const [checando, setChecando] = useState(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseProdutos, empresaId, grupoId, importarParaTodasEmpresas, empresas?.length]);
 
+  const detectEncoding = async (file) => {
+    try {
+      const buf = await file.slice(0, 4).arrayBuffer();
+      const b = new Uint8Array(buf);
+      if (b[0] === 0xFF && b[1] === 0xFE) return 'UTF-16LE';
+      if (b[0] === 0xFE && b[1] === 0xFF) return 'UTF-16BE';
+      if (b[0] === 0xEF && b[1] === 0xBB && b[2] === 0xBF) return 'UTF-8';
+    } catch (_) {}
+    return 'UTF-8';
+  };
+
   const extrairLinhas = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setFileUrl(file_url);
 
     const ext = (file?.name || '').split('.').pop()?.toLowerCase();
+    const encoding = await detectEncoding(file);
     if (['xls','xlsx'].includes(ext)) {
       const { data } = await base44.functions.invoke('parseSpreadsheet', { file_url });
       const rows = Array.isArray(data?.rows) ? data.rows : [];
@@ -251,6 +263,8 @@ const [checando, setChecando] = useState(false);
     let res = await base44.integrations.Core.ExtractDataFromUploadedFile({
       file_url,
       json_schema: { type: "array", items: { type: "array" } },
+      encoding,
+      ignore_errors: true,
     });
 
     if (Array.isArray(res?.output) && res.output.length > 1 && Array.isArray(res.output[0])) {
@@ -270,6 +284,8 @@ const [checando, setChecando] = useState(false);
     res = await base44.integrations.Core.ExtractDataFromUploadedFile({
       file_url,
       json_schema: { type: "object", additionalProperties: true },
+      encoding,
+      ignore_errors: true,
     });
 
     const out = res?.output || {};
