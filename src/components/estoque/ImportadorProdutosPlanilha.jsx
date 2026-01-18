@@ -27,6 +27,7 @@ const sanitize = (v) => {
   return s === "" ? undefined : s;
 };
 
+const removeDiacritics = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const get = (row, keys) => {
   for (const k of keys) {
     if (!k) continue;
@@ -36,6 +37,10 @@ const get = (row, keys) => {
     const lower = String(k).toLowerCase();
     const foundInsensitive = Object.keys(row).find((rk) => rk.toLowerCase() === lower);
     if (foundInsensitive && row[foundInsensitive] != null && row[foundInsensitive] !== "") return row[foundInsensitive];
+    // diacrítico-insensível
+    const lowerNoAcc = removeDiacritics(lower);
+    const foundNoAcc = Object.keys(row).find((rk) => removeDiacritics(rk.toLowerCase()) === lowerNoAcc);
+    if (foundNoAcc && row[foundNoAcc] != null && row[foundNoAcc] !== "") return row[foundNoAcc];
   }
   return undefined;
 };
@@ -56,7 +61,7 @@ const isHeaderRow = (row) => {
 const HEADERS = {
   codigo: ["Cód. Material", "Cod. Material", "A"],
   descricao: ["Descrição", "B"],
-  unidade_medida: ["Un.", "C"],
+  unidade_medida: ["Un.", "UN", "Un", "Unidade", "Unid.", "Unid", "C"],
   estoque_minimo: ["Estoque Minimo", "D"],
   ncm: ["Classif. Fiscal", "E"],
   peso_teorico_kg_m: ["Peso Teórico", "F"],
@@ -249,6 +254,37 @@ const [checando, setChecando] = useState(false);
 
   // CSV parser simples que trata aspas, vírgulas e quebras de linha
   const parseCSVRows = (text) => {
+    // detectar delimitador ("," ";" ou tab) na primeira linha, ignorando conteúdo entre aspas
+    const detectDelim = (line) => {
+      const cand = [',', ';', '\t'];
+      const counts = { ',': 0, ';': 0, '\t': 0 };
+      let inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        const next = line[i + 1];
+        if (inQ) {
+          if (ch === '"' && next === '"') { i++; continue; }
+          if (ch === '"') { inQ = false; continue; }
+        } else {
+          if (ch === '"') { inQ = true; continue; }
+          if (cand.includes(ch)) counts[ch]++;
+          if (ch === '\n' || ch === '\r') break;
+        }
+      }
+      const best = cand.reduce((a, b) => (counts[a] >= counts[b] ? a : b));
+      return counts[best] > 0 ? best : ',';
+    };
+
+    const firstLineEnd = (() => {
+      const n = text.indexOf('\n');
+      const r = text.indexOf('\r');
+      if (n === -1 && r === -1) return text.length;
+      if (n === -1) return r;
+      if (r === -1) return n;
+      return Math.min(n, r);
+    })();
+    const delim = detectDelim(text.slice(0, firstLineEnd));
+
     const rows = [];
     let row = [];
     let cur = '';
@@ -262,7 +298,7 @@ const [checando, setChecando] = useState(false);
         cur += ch;
       } else {
         if (ch === '"') { inQuotes = true; continue; }
-        if (ch === ',') { row.push(cur); cur = ''; continue; }
+        if (ch === delim) { row.push(cur); cur = ''; continue; }
         if (ch === '\n' || ch === '\r') {
           if (ch === '\r' && next === '\n') i++; // CRLF
           row.push(cur); rows.push(row); row = []; cur = '';
@@ -271,10 +307,8 @@ const [checando, setChecando] = useState(false);
         cur += ch;
       }
     }
-    // última célula
     row.push(cur);
     rows.push(row);
-    // remove linhas vazias
     return rows.filter(r => r.some(c => String(c || '').trim() !== ''));
   };
 
@@ -511,7 +545,7 @@ const [checando, setChecando] = useState(false);
         const dicas = [];
         if (!hasDesc) dicas.push(`- Cabeçalho de Descrição ausente (ex.: ${expectedDesc}).`);
         if (!hasUn) dicas.push(`- Cabeçalho de Unidade ausente (ex.: ${expectedUn}).`);
-        if (!empresaId && !(importarParaTodasEmpresas && grupoId)) dicas.push('- Selecione a empresa de destino.');
+        if (!empresaId && !grupoId) dicas.push('- Selecione a empresa de destino ou um grupo.');
         const msg = `Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.\nObrigatórios: Descrição, Unidade (Un.) e Empresa de destino.\n${dicas.join('\n')}\nDetectamos estes cabeçalhos: ${headersPrimeiros.join(', ')}`;
         setErro(msg);
         toast.error('Nada para importar. Veja os detalhes acima.');
