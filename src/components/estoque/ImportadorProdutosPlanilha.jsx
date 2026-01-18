@@ -730,10 +730,22 @@ const [suggesting, setSuggesting] = useState(false);
     // Resolver Grupo de Produto e Setor de Atividade a partir de ID/código ou nome
     const rawGrupoId = sanitize(getWithMap(row, 'grupo_produto_id'));
     const rawGrupoNome = sanitize(getWithMap(row, 'grupo_produto_nome'));
-    const grupoIdResolved =
+    let grupoIdResolved =
       (rawGrupoId && (gruposByCodigo[rawGrupoId] || gruposByNome[norm(rawGrupoId)])) ||
       (rawGrupoNome && gruposByNome[norm(rawGrupoNome)]) ||
       undefined;
+    // Fallback fuzzy: tenta casar por parte do nome/código quando não houver correspondência exata
+    if (!grupoIdResolved) {
+      const tgt = norm(rawGrupoNome || rawGrupoId || '');
+      if (tgt) {
+        const hit = (gruposProduto || []).find(g => {
+          const gn = norm(g.nome_grupo || g.nome || '');
+          const gc = String(g.codigo || '').trim();
+          return (gn && (gn.includes(tgt) || tgt.includes(gn))) || (rawGrupoId && gc === String(rawGrupoId).trim());
+        });
+        if (hit) grupoIdResolved = hit.id;
+      }
+    }
     // Corrigir associações erradas: só usar ID mapeado de fato; nunca forçar ID vindo da planilha se não existir
     const grupoNomeResolved =
       rawGrupoNome ||
