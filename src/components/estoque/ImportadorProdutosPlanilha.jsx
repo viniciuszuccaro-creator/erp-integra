@@ -285,12 +285,29 @@ const [checando, setChecando] = useState(false);
     const ext = (file?.name || '').split('.').pop()?.toLowerCase();
     const encoding = await detectEncoding(file);
 
-    // Se for CSV em UTF-16, fazemos o parse localmente para evitar erro de encoding no servidor
-    if (ext === 'csv' && (encoding === 'UTF-16LE' || encoding === 'UTF-16BE')) {
+    // CSV: parse local para evitar problemas de encoding no servidor
+    if (ext === 'csv') {
       const buf = await file.arrayBuffer();
-      const decoder = new TextDecoder(encoding === 'UTF-16LE' ? 'utf-16le' : 'utf-16be');
-      const text = decoder.decode(buf);
-      const rowsAA = parseCSVRows(text);
+
+      // primeira tentativa: usar encoding detectado
+      const decodeWith = (enc) => {
+        try { return new TextDecoder(enc).decode(buf); } catch { return null; }
+      };
+
+      let text = null;
+      if (encoding === 'UTF-16LE' || encoding === 'UTF-16BE') {
+        text = decodeWith(encoding === 'UTF-16LE' ? 'utf-16le' : 'utf-16be');
+      } else {
+        text = decodeWith('utf-8');
+      }
+      // heurística: se tiver muitos \u0000 ou �, tenta alternativas
+      const hasNulls = text && /\u0000/.test(text);
+      const manyReplacement = text && ((text.match(/\uFFFD/g)?.length) || 0) > 5;
+      if (!text || hasNulls || manyReplacement) {
+        text = decodeWith('utf-16le') || decodeWith('utf-16be') || decodeWith('iso-8859-1') || decodeWith('windows-1252') || text;
+      }
+
+      const rowsAA = parseCSVRows(text || '');
       if (Array.isArray(rowsAA) && rowsAA.length > 1) {
         const headerRow = rowsAA[0].map((h) => String(h || '').trim());
         const dataRows = rowsAA.slice(1);
