@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Upload, Loader2, CheckCircle2, Download } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, Download, AlertCircle, Wand2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -190,6 +190,9 @@ const [validationErrors, setValidationErrors] = useState([]); // {empresa_id, co
 const [duplicidades, setDuplicidades] = useState([]); // {empresa_id, codigo, existente, novo}
 const [escolhasDuplicidades, setEscolhasDuplicidades] = useState({}); // key -> 'atualizar' | 'pular'
 const [checando, setChecando] = useState(false);
+const [invalidNCMKeys, setInvalidNCMKeys] = useState(new Set());
+const [ncmSuggestions, setNcmSuggestions] = useState({});
+const [suggesting, setSuggesting] = useState(false);
   const { data: grupos = [] } = useQuery({
     queryKey: ['grupos-empresariais'],
     queryFn: () => base44.entities.GrupoEmpresarial.list(),
@@ -265,6 +268,86 @@ const [checando, setChecando] = useState(false);
     a.remove();
   };
 
+  // Sugestão de NCM via IA
+  const sugerirNCMsIA = async () => {
+    try {
+      setSuggesting(true);
+      const produtosAlvo = getProdutosAlvo();
+      const alvos = produtosAlvo.filter(p => invalidNCMKeys.has(makeKey(p.empresa_id, p.codigo)));
+      if (alvos.length === 0) {
+        toast('Nenhum item pendente de NCM');
+        setSuggesting(false);
+        return;
+      }
+      const itens = alvos.map(p => ({
+        chave: makeKey(p.empresa_id, p.codigo),
+        codigo: p.codigo,
+        descricao: p.descricao,
+        grupo: p.grupo_produto_nome || p.grupo_produto_id || '',
+        setor: p.setor_atividade_nome || p.setor_atividade_id || '',
+        ncm_atual: p.ncm || ''
+      }));
+      const prompt = [
+        'Você é um especialista fiscal brasileiro. Para cada item, sugira o NCM de 8 dígitos mais apropriado.',
+        'Considere apenas regras gerais (sem estado específico).',
+        'Responda estritamente no JSON do schema.',
+        'Itens:', JSON.stringify(itens, null, 2)
+      ].join('\n');
+      const res = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            sugestoes: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  chave: { type: 'string' },
+                  ncm_sugerido: { type: 'string' },
+                  confianca: { type: 'number' },
+                  justificativa: { type: 'string' }
+                },
+                required: ['chave', 'ncm_sugerido']
+              }
+            }
+          },
+          required: ['sugestoes']
+        }
+      });
+      const sugestoes = Array.isArray(res?.sugestoes) ? res.sugestoes : [];
+      const map = {};
+      sugestoes.forEach(s => {
+        const ncm = String(s.ncm_sugerido || '').replace(/\D/g, '').slice(0, 8);
+        if (ncm && ncm.length === 8) map[s.chave] = ncm;
+      });
+      setNcmSuggestions(map);
+      toast.success(`Sugestões geradas para ${Object.keys(map).length} itens`);
+    } catch (e) {
+      toast.error(e?.message || 'Falha ao sugerir NCMs');
+    } finally {
+      setSuggesting(false);
+    }
+  };
+  const applySuggestion = (key) => {
+    const ncm = ncmSuggestions[key];
+    if (!ncm) return;
+    setBaseProdutos(prev => prev.map(p => (makeKey(p.empresa_id, p.codigo) === key ? { ...p, ncm } : p)));
+    setPreview(prev => prev.map(p => (makeKey(p.empresa_id, p.codigo) === key ? { ...p, ncm } : p)));
+  };
+  const applyAllSuggestions = () => {
+    const keys = Object.keys(ncmSuggestions || {});
+    if (keys.length === 0) return;
+    setBaseProdutos(prev => prev.map(p => {
+      const k = makeKey(p.empresa_id, p.codigo);
+      return ncmSuggestions[k] ? { ...p, ncm: ncmSuggestions[k] } : p;
+    }));
+    setPreview(prev => prev.map(p => {
+      const k = makeKey(p.empresa_id, p.codigo);
+      return ncmSuggestions[k] ? { ...p, ncm: ncmSuggestions[k] } : p;
+    }));
+  };
+
   // Validação e checagem de duplicidade no banco
   React.useEffect(() => {
     const validar = async () => {
@@ -283,7 +366,7 @@ const [checando, setChecando] = useState(false);
         if (!p?.codigo) erros.push({ empresa_id: p.empresa_id, codigo: '-', motivo: 'Código ausente' });
         if (!p?.descricao || String(p.descricao).trim() === '') erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Descrição obrigatória ausente' });
         if (!UNIDADES_ACEITAS.includes(p.unidade_medida)) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Unidade de medida inválida' });
-        if (!isNCMValido(p.ncm)) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'NCM inválido' });
+        /* NCM inválido não bloqueia importação; será sugerido por IA */
         if (vistos.has(k)) internos.add(k); else vistos.add(k);
       }
       // Duplicidades internas na planilha
@@ -293,6 +376,15 @@ const [checando, setChecando] = useState(false);
           erros.push({ empresa_id: empId, codigo: code, motivo: 'Código duplicado na empresa (na planilha)' });
         });
       }
+
+      // Marcar NCMs ausentes ou inválidos para sugestão por IA (não bloqueia)
+      const invalids = new Set();
+      for (const p of produtosAlvo) {
+        const k = makeKey(p.empresa_id, p.codigo);
+        const invalido = !p?.ncm || !isNCMValido(p.ncm);
+        if (invalido) invalids.add(k);
+      }
+      setInvalidNCMKeys(invalids);
 
       // Checagem no banco por empresa+codigo
       const keys = Array.from(new Set(produtosAlvo
@@ -813,9 +905,20 @@ const [checando, setChecando] = useState(false);
         {preview.length > 0 && (
           <Card className="border-slate-200">
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-sm">Pré-visualização (mostrando {preview.length} de {totalLinhas} itens){importarParaTodasEmpresas || (!empresaId && grupoId) ? ' • Modo: Grupo (todas as empresas)' : ''} • Grupos: {Array.from(new Set(preview.map(p => p.grupo_produto_nome || p.grupo_produto_id).filter(Boolean))).length} • Setores: {Array.from(new Set(preview.map(p => p.setor_atividade_nome || p.setor_atividade_id).filter(Boolean))).length}</CardTitle>
+            <CardTitle className="text-sm">Pré-visualização (mostrando {preview.length} de {totalLinhas} itens){importarParaTodasEmpresas || (!empresaId && grupoId) ? ' • Modo: Grupo (todas as empresas)' : ''} • Grupos: {Array.from(new Set(preview.map(p => p.grupo_produto_nome || p.grupo_produto_id).filter(Boolean))).length} • Setores: {Array.from(new Set(preview.map(p => p.setor_atividade_nome || p.setor_atividade_id).filter(Boolean))).length} • NCMs pendentes: {invalidNCMKeys.size}</CardTitle>
             </CardHeader>
             <CardContent className="p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs text-slate-600">NCMs pendentes: {invalidNCMKeys.size}</div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={sugerirNCMsIA} disabled={suggesting || invalidNCMKeys.size === 0} className="gap-1">
+                    {suggesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />} Sugerir NCMs (IA)
+                  </Button>
+                  {Object.keys(ncmSuggestions || {}).length > 0 && (
+                    <Button variant="secondary" size="sm" onClick={applyAllSuggestions}>Aplicar todos</Button>
+                  )}
+                </div>
+              </div>
               <div className="max-h-64 overflow-auto border rounded">
                 <Table>
                   <TableHeader>
@@ -825,6 +928,7 @@ const [checando, setChecando] = useState(false);
                       <TableHead>UN</TableHead>
                       <TableHead>Estoque Mín.</TableHead>
                       <TableHead>NCM</TableHead>
+                      <TableHead>Sugestão IA</TableHead>
                       <TableHead>Custo</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -835,7 +939,28 @@ const [checando, setChecando] = useState(false);
                         <TableCell className="font-medium">{p.descricao}</TableCell>
                         <TableCell>{p.unidade_medida}</TableCell>
                         <TableCell>{p.estoque_minimo ?? 0}</TableCell>
-                        <TableCell>{p.ncm || "-"}</TableCell>
+                        <TableCell className={invalidNCMKeys.has(makeKey(p.empresa_id, p.codigo)) ? "bg-amber-50 text-amber-800" : ""}>
+                          <div className="flex items-center gap-1">
+                            <span>{p.ncm || "-"}</span>
+                            {invalidNCMKeys.has(makeKey(p.empresa_id, p.codigo)) && (
+                              <AlertCircle className="w-4 h-4 text-amber-600" />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {invalidNCMKeys.has(makeKey(p.empresa_id, p.codigo)) ? (
+                            ncmSuggestions[makeKey(p.empresa_id, p.codigo)] ? (
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline">{ncmSuggestions[makeKey(p.empresa_id, p.codigo)]}</Badge>
+                                <Button size="sm" variant="outline" onClick={() => applySuggestion(makeKey(p.empresa_id, p.codigo))}>Aplicar</Button>
+                              </div>
+                            ) : (
+                              <span className="text-amber-600 text-xs">Aguardando sugestão</span>
+                            )
+                          ) : (
+                            <span className="text-green-600 text-xs">OK</span>
+                          )}
+                        </TableCell>
                         <TableCell>R$ {(p.custo_aquisicao || 0).toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
