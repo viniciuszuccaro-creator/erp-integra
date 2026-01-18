@@ -984,10 +984,11 @@ const [suggesting, setSuggesting] = useState(false);
         createdTotal += results.filter(r => r.status === 'fulfilled').length;
       }
 
+      const processados = createdTotal + updatedTotal;
       if (failedTotal > 0) {
-        toast.warning(`Importação concluída: ${createdTotal} criados, ${failedTotal} falharam. Verifique validações e grupos.`);
+        toast.warning(`Importação concluída: ${processados} processados (${createdTotal} novos, ${updatedTotal} atualizados, ${failedTotal} falharam).`);
       } else {
-        toast.success(`Importação concluída: ${createdTotal} produto(s) criado(s).`);
+        toast.success(`Importação concluída: ${processados} processados (${createdTotal} novos, ${updatedTotal} atualizados).`);
       }
       onConcluido && onConcluido();
       closeSelf && closeSelf();
