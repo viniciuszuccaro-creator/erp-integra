@@ -733,6 +733,7 @@ const [suggesting, setSuggesting] = useState(false);
       (rawGrupoId && (gruposByCodigo[rawGrupoId] || gruposByNome[norm(rawGrupoId)])) ||
       (rawGrupoNome && gruposByNome[norm(rawGrupoNome)]) ||
       undefined;
+    // Corrigir associações erradas: só usar ID mapeado de fato; nunca forçar ID vindo da planilha se não existir
     const grupoNomeResolved =
       rawGrupoNome ||
       (gruposProduto.find((g) => g.id === grupoIdResolved)?.nome_grupo ||
