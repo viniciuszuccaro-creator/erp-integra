@@ -313,12 +313,27 @@ const [checando, setChecando] = useState(false);
     }
 
     // 1) Tenta extrair como array de arrays (CSV): primeira linha = cabeçalho
-    let res = await base44.integrations.Core.ExtractDataFromUploadedFile({
-      file_url,
-      json_schema: { type: "array", items: { type: "array" } },
-      encoding: encoding === 'UTF-16LE' || encoding === 'UTF-16BE' ? 'UTF-16' : encoding,
-      ignore_errors: true,
-    });
+    const attemptExtract = async (schema) => {
+      const encs = [
+        (encoding === 'UTF-16LE' || encoding === 'UTF-16BE') ? 'UTF-16' : encoding,
+        'UTF-16',
+        'ISO-8859-1'
+      ];
+      for (const enc of encs) {
+        try {
+          const r = await base44.integrations.Core.ExtractDataFromUploadedFile({
+            file_url,
+            json_schema: schema,
+            encoding: enc,
+            ignore_errors: true,
+          });
+          if (r && (r.output || r.data)) return r;
+        } catch (_) { /* tenta próximo encoding */ }
+      }
+      return null;
+    };
+
+    let res = await attemptExtract({ type: "array", items: { type: "array" } });
 
     if (Array.isArray(res?.output) && res.output.length > 1 && Array.isArray(res.output[0])) {
       const headerRow = res.output[0].map((h) => String(h || "").trim());
