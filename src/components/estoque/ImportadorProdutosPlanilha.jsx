@@ -172,8 +172,13 @@ const [checando, setChecando] = useState(false);
   // Opções de grupos: usa GrupoEmpresarial quando disponível; caso contrário, deriva dos group_id das empresas
   const groupsOptions = React.useMemo(() => {
     if (Array.isArray(grupos) && grupos.length > 0) return grupos;
-    const ids = Array.from(new Set((empresas || []).map(e => e?.group_id).filter(Boolean)));
-    return ids.map(id => ({ id, nome: id }));
+    const ids = new Set();
+    (empresas || []).forEach(e => {
+      if (e?.group_id) ids.add(e.group_id);
+      if (e?.grupo_id) ids.add(e.grupo_id);
+      if (e?.groupId) ids.add(e.groupId);
+    });
+    return Array.from(ids).map(id => ({ id, nome: id }));
   }, [grupos, empresas]);
 
 
