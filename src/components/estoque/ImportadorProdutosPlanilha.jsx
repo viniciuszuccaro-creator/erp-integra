@@ -29,18 +29,20 @@ const sanitize = (v) => {
 
 const removeDiacritics = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const get = (row, keys) => {
+  const normKey = (s) => removeDiacritics(String(s || '').toLowerCase().trim().replace(/^\uFEFF/, ''));
   for (const k of keys) {
     if (!k) continue;
+    // tenta direto
     if (row[k] != null && row[k] !== "") return row[k];
     const upper = String(k).toUpperCase();
     if (row[upper] != null && row[upper] !== "") return row[upper];
-    const lower = String(k).toLowerCase();
-    const foundInsensitive = Object.keys(row).find((rk) => rk.toLowerCase() === lower);
+    const target = normKey(k);
+    // case-insensitive
+    const foundInsensitive = Object.keys(row).find((rk) => rk && String(rk).toLowerCase() === String(k).toLowerCase());
     if (foundInsensitive && row[foundInsensitive] != null && row[foundInsensitive] !== "") return row[foundInsensitive];
-    // diacrítico-insensível
-    const lowerNoAcc = removeDiacritics(lower);
-    const foundNoAcc = Object.keys(row).find((rk) => removeDiacritics(rk.toLowerCase()) === lowerNoAcc);
-    if (foundNoAcc && row[foundNoAcc] != null && row[foundNoAcc] !== "") return row[foundNoAcc];
+    // normalização (remove acentos + BOM)
+    const foundNormalized = Object.keys(row).find((rk) => normKey(rk) === target);
+    if (foundNormalized && row[foundNormalized] != null && row[foundNormalized] !== "") return row[foundNormalized];
   }
   return undefined;
 };
@@ -360,7 +362,7 @@ const [checando, setChecando] = useState(false);
 
       const rowsAA = parseCSVRows(text || '');
       if (Array.isArray(rowsAA) && rowsAA.length > 1) {
-        const headerRow = rowsAA[0].map((h) => String(h || '').trim());
+        const headerRow = rowsAA[0].map((h) => String(h || '').replace(/^\uFEFF/, '').trim());
         const dataRows = rowsAA.slice(1);
         const objetos = dataRows.map((linha) => {
           const obj = {};
