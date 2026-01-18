@@ -609,7 +609,15 @@ const [checando, setChecando] = useState(false);
     const mappedHeader = columnMap?.[fieldKey];
     const syns = HEADERS[fieldKey] || [];
     const candidates = mappedHeader ? [mappedHeader, ...syns] : syns;
-    return get(row, candidates);
+    const val = get(row, candidates);
+    if (val !== undefined) return val;
+    // Fallback por posição padrão do template
+    const pos = { codigo: 'A', descricao: 'B', unidade_medida: 'C' };
+    const letter = pos[fieldKey];
+    if (letter && row && Object.prototype.hasOwnProperty.call(row, letter)) {
+      return row[letter];
+    }
+    return undefined;
   };
 
   const montarProduto = (row) => {
