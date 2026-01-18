@@ -149,14 +149,24 @@ const [checando, setChecando] = useState(false);
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas-por-grupo', grupoId],
     queryFn: async () => {
+      // Garantir que o grupo selecionado existe e recarregar quando trocar
       if (!grupoId) return base44.entities.Empresa.list();
-      const [byGroup, byGrupo] = await Promise.all([
+      // Alguns clientes usam campos diferentes (group_id vs grupo_id)
+      const [byGroup, byGrupo, byGroupExact] = await Promise.all([
         base44.entities.Empresa.filter({ group_id: grupoId }),
         base44.entities.Empresa.filter({ grupo_id: grupoId }),
+        base44.entities.Empresa.filter({ groupId: grupoId }),
       ]);
-      return (byGroup && byGroup.length) ? byGroup : (byGrupo || []);
+      const merged = [...(byGroup || []), ...(byGrupo || []), ...(byGroupExact || [])];
+      // dedup por id
+      const map = new Map();
+      merged.forEach(e => { if (e?.id) map.set(e.id, e); });
+      const arr = Array.from(map.values());
+      return arr.length ? arr : [];
     },
-    staleTime: 120000,
+    staleTime: 60000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   // Opções de grupos: usa GrupoEmpresarial quando disponível; caso contrário, deriva dos group_id das empresas
