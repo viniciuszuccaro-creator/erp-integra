@@ -134,17 +134,24 @@ const [checando, setChecando] = useState(false);
     staleTime: 300000,
   });
   const { data: empresas = [] } = useQuery({
-            queryKey: ['empresas-por-grupo', grupoId],
-            queryFn: async () => {
-              if (!grupoId) return base44.entities.Empresa.list();
-              const [byGroup, byGrupo] = await Promise.all([
-                base44.entities.Empresa.filter({ group_id: grupoId }),
-                base44.entities.Empresa.filter({ grupo_id: grupoId }),
-              ]);
-              return (byGroup && byGroup.length) ? byGroup : (byGrupo || []);
-            },
-            staleTime: 120000,
-          });
+    queryKey: ['empresas-por-grupo', grupoId],
+    queryFn: async () => {
+      if (!grupoId) return base44.entities.Empresa.list();
+      const [byGroup, byGrupo] = await Promise.all([
+        base44.entities.Empresa.filter({ group_id: grupoId }),
+        base44.entities.Empresa.filter({ grupo_id: grupoId }),
+      ]);
+      return (byGroup && byGroup.length) ? byGroup : (byGrupo || []);
+    },
+    staleTime: 120000,
+  });
+
+  // Opções de grupos: usa GrupoEmpresarial quando disponível; caso contrário, deriva dos group_id das empresas
+  const groupsOptions = React.useMemo(() => {
+    if (Array.isArray(grupos) && grupos.length > 0) return grupos;
+    const ids = Array.from(new Set((empresas || []).map(e => e?.group_id).filter(Boolean)));
+    return ids.map(id => ({ id, nome: id }));
+  }, [grupos, empresas]);
 
 
 
@@ -591,9 +598,9 @@ const [checando, setChecando] = useState(false);
                 <SelectValue placeholder="Selecione o grupo (opcional)" />
               </SelectTrigger>
               <SelectContent>
-                {grupos.map((g) => (
+                {(groupsOptions || []).map((g) => (
                                         <SelectItem key={g.id} value={g.id}>
-                                          {g.nome_fantasia || g.razao_social || g.nome_do_grupo || g.nome || g.id}
+                                          {g.nome_fantasia || g.razao_social || g.nome_do_grupo || g.nome || g.descricao || g.sigla || g.id}
                                         </SelectItem>
                                       ))}
               </SelectContent>
@@ -601,7 +608,7 @@ const [checando, setChecando] = useState(false);
           </div>
           <div className="space-y-1">
             <Label>Empresa de destino</Label>
-            <Select value={empresaId} onValueChange={setEmpresaId}>
+            <Select value={empresaId} onValueChange={setEmpresaId} disabled={!!grupoId}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a empresa" />
               </SelectTrigger>
