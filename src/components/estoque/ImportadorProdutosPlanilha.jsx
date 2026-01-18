@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Helpers
@@ -104,16 +105,24 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const [erro, setErro] = useState('');
   const [grupoId, setGrupoId] = useState('');
   const [empresaId, setEmpresaId] = useState(empresaAtual?.id || '');
+const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false);
   const { data: grupos = [] } = useQuery({
     queryKey: ['grupos-empresariais'],
     queryFn: () => base44.entities.GrupoEmpresarial.list(),
     staleTime: 300000,
   });
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas-por-grupo', grupoId],
-    queryFn: () => grupoId ? base44.entities.Empresa.filter({ group_id: grupoId }) : base44.entities.Empresa.list(),
-    staleTime: 120000,
-  });
+            queryKey: ['empresas-por-grupo', grupoId],
+            queryFn: async () => {
+              if (!grupoId) return base44.entities.Empresa.list();
+              const [byGroup, byGrupo] = await Promise.all([
+                base44.entities.Empresa.filter({ group_id: grupoId }),
+                base44.entities.Empresa.filter({ grupo_id: grupoId }),
+              ]);
+              return (byGroup && byGroup.length) ? byGroup : (byGrupo || []);
+            },
+            staleTime: 120000,
+          });
 
 
 
@@ -242,9 +251,9 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
       toast.error("Selecione um arquivo válido.");
       return;
     }
-    if (!empresaId) {
-      setErro('Defina a empresa de destino.');
-      toast.error("Defina a empresa de destino.");
+    if (!empresaId && !(importarParaTodasEmpresas && grupoId)) {
+      setErro('Selecione a empresa de destino ou marque "Importar para todas as empresas" e selecione um grupo.');
+      toast.error('Selecione a empresa ou marque importar para todas com grupo.');
       return;
     }
     toast("Iniciando importação...");
@@ -253,10 +262,26 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
       // Reextrai linhas para processar tudo (não só o preview)
       const rows = await extrairLinhas(arquivo);
       const dataRows = rows.filter((r) => !isHeaderRow(r));
-      const produtos = dataRows.map((r) => montarProduto(r)).filter((p) => p?.descricao && p?.empresa_id);
+      const baseProdutos = dataRows.map((r) => montarProduto(r)).filter((p) => p?.descricao);
+      let produtos;
+      if (importarParaTodasEmpresas && grupoId && empresas?.length) {
+        produtos = empresas.flatMap(emp => baseProdutos.map(p => ({ ...p, empresa_id: emp.id, group_id: grupoId, compartilhado_grupo: true })));
+      } else {
+        produtos = baseProdutos;
+      }
       if (produtos.length === 0) {
-        setErro('Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.');
-        toast.error("Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.");
+        const hasDesc = dataRows.some(r => !!sanitize(get(r, HEADERS.descricao)));
+        const hasUn = dataRows.some(r => !!sanitize(get(r, HEADERS.unidade_medida)));
+        const expectedDesc = HEADERS.descricao.filter(h => h.length > 1).join(', ');
+        const expectedUn = HEADERS.unidade_medida.filter(h => h.length > 1).join(', ');
+        const headersPrimeiros = Array.isArray(rows) && rows[0] ? Object.keys(rows[0]) : [];
+        const dicas = [];
+        if (!hasDesc) dicas.push(`- Cabeçalho de Descrição ausente (ex.: ${expectedDesc}).`);
+        if (!hasUn) dicas.push(`- Cabeçalho de Unidade ausente (ex.: ${expectedUn}).`);
+        if (!empresaId && !(importarParaTodasEmpresas && grupoId)) dicas.push('- Selecione a empresa de destino.');
+        const msg = `Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.\nObrigatórios: Descrição, Unidade (Un.) e Empresa de destino.\n${dicas.join('\n')}\nDetectamos estes cabeçalhos: ${headersPrimeiros.join(', ')}`;
+        setErro(msg);
+        toast.error('Nada para importar. Veja os detalhes acima.');
         return;
       }
 
@@ -293,17 +318,17 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
-            <Label>Grupo</Label>
+            <Label>Grupo (opcional)</Label>
             <Select value={grupoId} onValueChange={(v) => { setGrupoId(v); setEmpresaId(''); }}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o grupo (opcional)" />
               </SelectTrigger>
               <SelectContent>
                 {grupos.map((g) => (
-                  <SelectItem key={g.id} value={g.id}>
-                    {g.nome_fantasia || g.razao_social || g.nome || g.id}
-                  </SelectItem>
-                ))}
+                                        <SelectItem key={g.id} value={g.id}>
+                                          {g.nome_fantasia || g.razao_social || g.nome_do_grupo || g.nome || g.id}
+                                        </SelectItem>
+                                      ))}
               </SelectContent>
             </Select>
           </div>
@@ -373,6 +398,13 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
                     ))}
                   </TableBody>
                 </Table>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Checkbox id="importar-grupo" checked={importarParaTodasEmpresas} onCheckedChange={(v) => setImportarParaTodasEmpresas(!!v)} />
+                <Label htmlFor="importar-grupo" className="text-sm">
+                  Importar para todas as empresas do grupo selecionado
+                </Label>
               </div>
             </CardContent>
           </Card>
