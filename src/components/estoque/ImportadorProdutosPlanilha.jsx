@@ -171,6 +171,8 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const [processando, setProcessando] = useState(false);
   const [preview, setPreview] = useState([]);
   const [fileUrl, setFileUrl] = useState(null);
+  const [columnMap, setColumnMap] = useState({}); // {campoERP: headerPlanilha}
+  const [availableHeaders, setAvailableHeaders] = useState([]);
   const [totalLinhas, setTotalLinhas] = useState(0);
   const [erro, setErro] = useState('');
   const [grupoId, setGrupoId] = useState('');
