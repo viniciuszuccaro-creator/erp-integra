@@ -184,6 +184,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
       toast.error("Defina a empresa de destino.");
       return;
     }
+    toast("Iniciando importação...");
     setProcessando(true);
     try {
       // Reextrai linhas para processar tudo (não só o preview)
