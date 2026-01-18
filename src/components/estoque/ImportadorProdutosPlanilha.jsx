@@ -73,6 +73,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   const [preview, setPreview] = useState([]);
   const [fileUrl, setFileUrl] = useState(null);
   const [totalLinhas, setTotalLinhas] = useState(0);
+  const [erro, setErro] = useState('');
 
   const extrairLinhas = async (file) => {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
@@ -151,6 +152,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
     setProcessando(true);
     try {
       if (!empresaAtual?.id) {
+        setErro('Defina a empresa de destino antes de importar.');
         toast.error("Defina a empresa de destino antes de importar.");
         return;
       }
@@ -169,6 +171,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
         .filter((p) => p?.descricao)
         .slice(0, 50);
       setPreview(pre);
+      setErro('');
       toast.success(`Arquivo lido: ${dataRows.length} item(ns) de produto`);
     } finally {
       setProcessando(false);
@@ -176,11 +179,14 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
   };
 
   const importar = async () => {
+    setErro('');
     if (!arquivo) {
+      setErro('Selecione um arquivo válido.');
       toast.error("Selecione um arquivo válido.");
       return;
     }
     if (!empresaAtual?.id) {
+      setErro('Defina a empresa de destino.');
       toast.error("Defina a empresa de destino.");
       return;
     }
@@ -192,6 +198,7 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
       const dataRows = rows.filter((r) => !isHeaderRow(r));
       const produtos = dataRows.map((r) => montarProduto(r)).filter((p) => p?.descricao);
       if (produtos.length === 0) {
+        setErro('Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.');
         toast.error("Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.");
         return;
       }
@@ -238,6 +245,12 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
             <p className="text-xs text-slate-500 mt-1">{arquivo.name}</p>
           )}
         </div>
+
+        {erro && (
+          <Alert variant="destructive">
+            <AlertDescription className="text-sm">{erro}</AlertDescription>
+          </Alert>
+        )}
 
         {preview.length > 0 && (
           <Card className="border-slate-200">
