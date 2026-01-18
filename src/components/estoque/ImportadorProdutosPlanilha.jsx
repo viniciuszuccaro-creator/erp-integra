@@ -867,7 +867,7 @@ const [suggesting, setSuggesting] = useState(false);
         const chunkU = 200;
         for (let i = 0; i < paraAtualizar.length; i += chunkU) {
           const parte = paraAtualizar.slice(i, i + chunkU);
-          const res = await Promise.allSettled(parte.map(d => {
+          const res = await Promise.allSettled(parte.map(async (d) => {
             const patch = { ...d.novo };
             delete patch.id;
             delete patch.empresa_id;
@@ -878,7 +878,24 @@ const [suggesting, setSuggesting] = useState(false);
             delete patch.codigo; // não alteramos o código-chave na atualização
             if (patch.ncm != null) patch.ncm = sanitizeNCM(patch.ncm);
             Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
-            return base44.entities.Produto.update(d.existente.id, patch);
+            try {
+              return await base44.entities.Produto.update(d.existente.id, patch);
+            } catch (err) {
+              const msg = String(err?.message || '').toLowerCase();
+              if (msg.includes('not found')) {
+                // registro não existe mais: criar novamente com os dados novos
+                return await base44.entities.Produto.create({
+                  ...patch,
+                  empresa_id: d.empresa_id,
+                  codigo: d.codigo,
+                });
+              }
+              if (msg.includes('rate limit')) {
+                await sleep(600);
+                return await base44.entities.Produto.update(d.existente.id, patch);
+              }
+              throw err;
+            }
           }));
           updatedTotal += res.filter(r => r.status === 'fulfilled').length;
         }
