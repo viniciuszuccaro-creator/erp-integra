@@ -221,6 +221,48 @@ const [suggesting, setSuggesting] = useState(false);
     refetchOnReconnect: true,
   });
 
+  // Mapas para Grupo de Produto e Setor de Atividade (carregar do ERP)
+  const { data: gruposProduto = [] } = useQuery({
+    queryKey: ['grupos-produto'],
+    queryFn: () => base44.entities.GrupoProduto.list(),
+    staleTime: 300000,
+  });
+  const { data: setoresAtividade = [] } = useQuery({
+    queryKey: ['setores-atividade'],
+    queryFn: () => base44.entities.SetorAtividade.list(),
+    staleTime: 300000,
+  });
+  const gruposByCodigo = React.useMemo(() => {
+    const m = {};
+    (gruposProduto || []).forEach(g => {
+      if (g?.codigo != null) m[String(g.codigo).trim()] = g.id;
+    });
+    return m;
+  }, [gruposProduto]);
+  const gruposByNome = React.useMemo(() => {
+    const m = {};
+    (gruposProduto || []).forEach(g => {
+      const n = g?.nome_grupo || g?.nome;
+      if (n) m[norm(n)] = g.id;
+    });
+    return m;
+  }, [gruposProduto]);
+  const setoresByCodigo = React.useMemo(() => {
+    const m = {};
+    (setoresAtividade || []).forEach(s => {
+      if (s?.codigo != null) m[String(s.codigo).trim()] = s.id;
+    });
+    return m;
+  }, [setoresAtividade]);
+  const setoresByNome = React.useMemo(() => {
+    const m = {};
+    (setoresAtividade || []).forEach(s => {
+      const n = s?.nome || s?.descricao || s?.nome_setor;
+      if (n) m[norm(n)] = s.id;
+    });
+    return m;
+  }, [setoresAtividade]);
+
   // Opções de grupos: usa GrupoEmpresarial quando disponível; caso contrário, deriva dos group_id das empresas
   const groupsOptions = React.useMemo(() => {
     if (Array.isArray(grupos) && grupos.length > 0) return grupos;
