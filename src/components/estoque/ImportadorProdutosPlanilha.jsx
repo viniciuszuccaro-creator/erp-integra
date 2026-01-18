@@ -265,10 +265,35 @@ const [checando, setChecando] = useState(false);
     return 'UTF-8';
   };
 
-  // CSV parser simples que trata aspas, vírgulas e quebras de linha
-  const parseCSVRows = (text) => {
-    // detectar delimitador ("," ";" ou tab) na primeira linha, ignorando conteúdo entre aspas
+  // CSV parser com suporte a BOM e linha "sep=;"/"sep=,"
+  const parseCSVRows = (raw) => {
+    let text = String(raw || '');
+    // remove BOM
+    text = text.replace(/^\uFEFF/, '');
+
+    // checa diretiva de separador do Excel (primeira linha: sep=; ou sep=,)
+    let sepDirective = null;
+    const firstBreak = (() => {
+      const n = text.indexOf('\n');
+      const r = text.indexOf('\r');
+      if (n === -1 && r === -1) return -1;
+      if (n === -1) return r;
+      if (r === -1) return n;
+      return Math.min(n, r);
+    })();
+    if (firstBreak > -1) {
+      const firstLine = text.slice(0, firstBreak).trim();
+      const m = /^sep=(.|\t)$/i.exec(firstLine);
+      if (m) {
+        sepDirective = m[1] === 't' ? '\t' : m[1];
+        // remove a linha de diretiva do conteúdo antes de parsear
+        text = text.slice(firstBreak + 1);
+      }
+    }
+
+    // detectar delimitador ("," ";" ou tab) na primeira linha útil
     const detectDelim = (line) => {
+      if (sepDirective) return sepDirective;
       const cand = [',', ';', '\t'];
       const counts = { ',': 0, ';': 0, '\t': 0 };
       let inQ = false;
@@ -285,7 +310,7 @@ const [checando, setChecando] = useState(false);
         }
       }
       const best = cand.reduce((a, b) => (counts[a] >= counts[b] ? a : b));
-      return counts[best] > 0 ? best : ',';
+      return counts[best] > 0 ? best : ';'; // default mais comum em pt-BR
     };
 
     const firstLineEnd = (() => {
