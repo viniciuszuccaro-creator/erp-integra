@@ -766,10 +766,14 @@ const [suggesting, setSuggesting] = useState(false);
       } else {
         produtos = baseProdutos;
       }
+      // Garantir empresa_id e group_id válidos
+      produtos = produtos.map(p => ({
+        ...p,
+        empresa_id: p.empresa_id || empresaId || empresaAtual?.id || (empresas[0]?.id || ''),
+        ...(grupoId ? { group_id: grupoId } : {})
+      }));
 
-      // Remover itens com erros de validação
-      const errorKeys = new Set(validationErrors.map(e => makeKey(e.empresa_id, e.codigo)));
-      produtos = produtos.filter(p => !errorKeys.has(makeKey(p.empresa_id, p.codigo)));
+      // Não filtramos por erros pré-calculados para garantir a importação completa; falhas serão reportadas individualmente pelo backend.
 
       // Executar atualizações para duplicidades marcadas como "atualizar"
       const dupChoice = (d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'atualizar';
