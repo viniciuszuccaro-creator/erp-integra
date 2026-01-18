@@ -1027,7 +1027,7 @@ const [suggesting, setSuggesting] = useState(false);
         {preview.length > 0 && (
           <Card className="border-slate-200">
             <CardHeader className="bg-slate-50 border-b">
-            <CardTitle className="text-sm">Pré-visualização (mostrando {preview.length} de {totalLinhas} itens){importarParaTodasEmpresas || (!empresaId && grupoId) ? ' • Modo: Grupo (todas as empresas)' : ''} • Grupos: {Array.from(new Set(preview.map(p => p.grupo_produto_nome || p.grupo_produto_id).filter(Boolean))).length} • Setores: {Array.from(new Set(preview.map(p => p.setor_atividade_nome || p.setor_atividade_id).filter(Boolean))).length} • NCMs pendentes: {invalidNCMKeys.size}</CardTitle>
+            <CardTitle className="text-sm">Pré-visualização ({preview.length} de {totalLinhas} itens){importarParaTodasEmpresas || (!empresaId && grupoId) ? ' • Modo: Grupo (todas as empresas)' : ''} • Grupos: {Array.from(new Set(preview.map(p => p.grupo_produto_nome || p.grupo_produto_id).filter(Boolean))).length} • Setores: {Array.from(new Set(preview.map(p => p.setor_atividade_nome || p.setor_atividade_id).filter(Boolean))).length} • NCMs pendentes: {invalidNCMKeys.size}</CardTitle>
             </CardHeader>
             <CardContent className="p-3">
               <div className="flex items-center justify-between mb-2">
