@@ -88,6 +88,46 @@ const HEADERS = {
   tipo_item: ["Descrição Tipo", "Descricao Tipo", "Tipo do Item", "Tipo", "N"],
 };
 
+// Labels amigáveis por campo
+const FIELD_LABELS = {
+  codigo: 'Código',
+  descricao: 'Descrição',
+  unidade_medida: 'Unidade',
+  estoque_minimo: 'Estoque Mínimo',
+  ncm: 'NCM',
+  peso_teorico_kg_m: 'Peso Teórico KG/M',
+  grupo_produto_id: 'ID Grupo Produto',
+  grupo_produto_nome: 'Grupo Produto Nome',
+  peso_liquido_kg: 'Peso Líquido KG',
+  peso_bruto_kg: 'Peso Bruto KG',
+  setor_atividade_id: 'ID Setor Atividade',
+  setor_atividade_nome: 'Setor Atividade Nome',
+  custo_aquisicao: 'Custo Aquisição',
+  tipo_item: 'Tipo Item',
+};
+
+// Auto-mapeamento: sugere cabeçalhos para cada campo a partir da lista disponível
+const autoMapFromHeaders = (headers = []) => {
+  const n = (s) => norm(s).replace(/^\uFEFF/, '');
+  const headersNorm = headers.map((h) => ({ raw: h, norm: n(String(h || '')) }));
+  const result = {};
+  Object.keys(HEADERS).forEach((field) => {
+    const syns = HEADERS[field] || [];
+    let found = '';
+    for (const syn of syns) {
+      const target = n(String(syn));
+      const eq = headersNorm.find((h) => h.norm === target);
+      if (eq) { found = eq.raw; break; }
+      if (target.length >= 3) {
+        const incl = headersNorm.find((h) => h.norm.includes(target));
+        if (incl) { found = incl.raw; break; }
+      }
+    }
+    result[field] = found;
+  });
+  return result;
+};
+
 // Normalizadores para evitar 422 (enum inválido)
 const mapUnidade = (v) => {
   const s = norm(v || '').replace(/\./g, '');
