@@ -738,12 +738,14 @@ const [suggesting, setSuggesting] = useState(false);
     if (!grupoIdResolved) {
       const tgt = norm(rawGrupoNome || rawGrupoId || '');
       if (tgt) {
-        const hit = (gruposProduto || []).find(g => {
+        const candidates = (gruposProduto || []).filter(g => {
           const gn = norm(g.nome_grupo || g.nome || '');
           const gc = String(g.codigo || '').trim();
           return (gn && (gn.includes(tgt) || tgt.includes(gn))) || (rawGrupoId && gc === String(rawGrupoId).trim());
         });
-        if (hit) grupoIdResolved = hit.id;
+        if (candidates.length === 1) {
+          grupoIdResolved = candidates[0].id;
+        }
       }
     }
     // Corrigir associações erradas: só usar ID mapeado de fato; nunca forçar ID vindo da planilha se não existir
@@ -884,7 +886,11 @@ const [suggesting, setSuggesting] = useState(false);
       // Garantir que group_id e empresa_id sejam mantidos, e IDs resolvidos por nome/código já aplicados em montarProduto.
 
       // Executar atualizações para duplicidades marcadas como "atualizar"
-      const dupChoice = (d) => escolhasDuplicidades[makeKey(d.empresa_id, d.codigo)] === 'atualizar';
+      const dupChoice = (d) => {
+        const k = makeKey(d.empresa_id, d.codigo);
+        const choice = escolhasDuplicidades[k];
+        return choice ? choice === 'atualizar' : true; // padrão: atualizar
+      };
       const paraAtualizar = duplicidades.filter(dupChoice);
       let updatedTotal = 0;
       if (paraAtualizar.length > 0) {
@@ -952,6 +958,7 @@ const [suggesting, setSuggesting] = useState(false);
       // Importação com controle de taxa: pequenos lotes + backoff simples para evitar rate limit
       const chunkSize = 50; // reduzir o lote
       let createdTotal = 0;
+      let failedTotal = 0;
       let delay = 0;
       for (let i = 0; i < produtos.length; i += chunkSize) {
         const chunk = produtos.slice(i, i + chunkSize);
@@ -973,10 +980,15 @@ const [suggesting, setSuggesting] = useState(false);
         if (failures.length > 0 && failures.some(f => String(f.reason?.message || '').toLowerCase().includes('rate limit'))) {
           delay = Math.min((delay || 400) * 1.5, 5000);
         }
+        failedTotal += failures.length;
         createdTotal += results.filter(r => r.status === 'fulfilled').length;
       }
 
-      toast.success(`Importação concluída: ${createdTotal} produto(s) criado(s).`);
+      if (failedTotal > 0) {
+        toast.warning(`Importação concluída: ${createdTotal} criados, ${failedTotal} falharam. Verifique validações e grupos.`);
+      } else {
+        toast.success(`Importação concluída: ${createdTotal} produto(s) criado(s).`);
+      }
       onConcluido && onConcluido();
       closeSelf && closeSelf();
     } catch (e) {
@@ -1266,7 +1278,7 @@ const [suggesting, setSuggesting] = useState(false);
           <Button type="button" variant="outline" onClick={() => closeSelf && closeSelf()} disabled={processando}>
             Cancelar
           </Button>
-          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId) || checando || (duplicidades.length > 0 && Object.keys(escolhasDuplicidades).length < duplicidades.length)} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
+          <Button type="button" onClick={importar} disabled={processando || !arquivo || (!empresaId && !grupoId) || checando} className="gap-2 bg-indigo-600 hover:bg-indigo-700">
             {processando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {processando ? "Importando..." : "Importar Agora"}
           </Button>
