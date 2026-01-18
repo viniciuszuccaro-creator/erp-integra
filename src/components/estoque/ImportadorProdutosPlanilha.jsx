@@ -435,22 +435,36 @@ const [suggesting, setSuggesting] = useState(false);
         .map(p => makeKey(p.empresa_id, p.codigo))));
 
       const duplics = [];
-      const chunk = 200;
+      const chunk = 50; // reduzir concorrência para evitar rate limit
+      let delayDup = 0;
       for (let i = 0; i < keys.length; i += chunk) {
         const slice = keys.slice(i, i + chunk);
-        const calls = slice.map(async (k) => {
+        if (delayDup) await sleep(delayDup);
+        const results = await Promise.allSettled(slice.map(async (k) => {
           const [empId, code] = k.split('__');
-          // se já é duplicidade interna, não precisa checar no banco
           if (internos.has(k)) return null;
-          const encontrados = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
-          if (Array.isArray(encontrados) && encontrados.length > 0) {
-            // pegue o primeiro produto correspondente da planilha para compor o "novo"
-            const novo = produtosAlvo.find(p => makeKey(p.empresa_id, p.codigo) === k);
-            duplics.push({ empresa_id: empId, codigo: code, existente: encontrados[0], novo });
+          try {
+            const encontrados = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+            if (Array.isArray(encontrados) && encontrados.length > 0) {
+              const novo = produtosAlvo.find(p => makeKey(p.empresa_id, p.codigo) === k);
+              duplics.push({ empresa_id: empId, codigo: code, existente: encontrados[0], novo });
+            }
+          } catch (err) {
+            const msg = String(err?.message || '').toLowerCase();
+            if (msg.includes('rate limit')) {
+              await sleep(500);
+              const encontrados = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+              if (Array.isArray(encontrados) && encontrados.length > 0) {
+                const novo = produtosAlvo.find(p => makeKey(p.empresa_id, p.codigo) === k);
+                duplics.push({ empresa_id: empId, codigo: code, existente: encontrados[0], novo });
+              }
+            }
           }
           return null;
-        });
-        await Promise.allSettled(calls);
+        }));
+        if (results.some(r => r.status === 'rejected' && String(r.reason?.message || '').toLowerCase().includes('rate limit'))) {
+          delayDup = Math.min((delayDup || 400) * 1.5, 5000);
+        }
       }
       setValidationErrors(erros);
       setDuplicidades(duplics);
