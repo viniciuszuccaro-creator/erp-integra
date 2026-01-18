@@ -132,7 +132,7 @@ const autoMapFromHeaders = (headers = []) => {
 const mapUnidade = (v) => {
   const s = norm(v || '').replace(/\./g, '');
   switch (s) {
-    case 'un': case 'und': case 'unid': return 'UN';
+    case 'un': case 'und': case 'unid': case 'um': case 'uni': return 'UN';
     case 'pc': case 'pç': case 'peca': case 'pec': case 'peça': return 'PC';
     case 'kg': case 'kilo': return 'KG';
     case 'lt': case 'l': return 'LT';
