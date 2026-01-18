@@ -125,8 +125,14 @@ const autoMapFromHeaders = (headers = []) => {
     }
     result[field] = found;
   });
+  // Fallback por posição (template A..N)
+  const has = (k) => headers.includes(k);
+  if (!result.codigo && has('A')) result.codigo = 'A';
+  if (!result.descricao && has('B')) result.descricao = 'B';
+  if (!result.unidade_medida && has('C')) result.unidade_medida = 'C';
   return result;
 };
+
 
 // Normalizadores para evitar 422 (enum inválido)
 const mapUnidade = (v) => {
