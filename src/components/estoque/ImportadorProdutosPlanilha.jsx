@@ -349,12 +349,7 @@ const [checando, setChecando] = useState(false);
     }
 
     // 2) Fallback: extrai como objeto genérico e procura arrays de objetos em 'rows'/'data' ou propriedades
-    res = await base44.integrations.Core.ExtractDataFromUploadedFile({
-      file_url,
-      json_schema: { type: "object", additionalProperties: true },
-      encoding: encoding === 'UTF-16LE' || encoding === 'UTF-16BE' ? 'UTF-16' : encoding,
-      ignore_errors: true,
-    });
+    res = res || await attemptExtract({ type: "object", additionalProperties: true });
 
     const out = res?.output || {};
     const pickArrayOfObjects = (obj) => {
