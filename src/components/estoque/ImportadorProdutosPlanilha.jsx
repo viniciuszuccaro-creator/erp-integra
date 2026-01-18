@@ -743,10 +743,21 @@ const [suggesting, setSuggesting] = useState(false);
 
     const rawSetorId = sanitize(getWithMap(row, 'setor_atividade_id'));
     const rawSetorNome = sanitize(getWithMap(row, 'setor_atividade_nome'));
-    const setorIdResolved =
+    let setorIdResolved =
       (rawSetorNome && setoresByNome[norm(rawSetorNome)]) ||
       (rawSetorId && setoresByNome[norm(rawSetorId)]) ||
-      rawSetorId || undefined;
+      undefined;
+    if (!setorIdResolved) {
+      const tgtS = norm(rawSetorNome || rawSetorId || '');
+      if (tgtS) {
+        const hitS = (setoresAtividade || []).find(s => {
+          const sn = norm(s.nome || s.descricao || s.nome_setor || '');
+          const sc = String(s.codigo || '').trim();
+          return sn.includes(tgtS) || tgtS.includes(sn) || (rawSetorId && sc === String(rawSetorId).trim());
+        });
+        if (hitS) setorIdResolved = hitS.id;
+      }
+    }
     const setorNomeResolved =
       rawSetorNome ||
       (setoresAtividade.find((s) => s.id === setorIdResolved)?.nome ||
