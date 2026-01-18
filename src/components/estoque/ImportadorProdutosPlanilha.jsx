@@ -380,17 +380,29 @@ const [checando, setChecando] = useState(false);
       }
 
       const rowsAA = parseCSVRows(text || '');
-      if (Array.isArray(rowsAA) && rowsAA.length > 1) {
-        const headerRow = rowsAA[0].map((h) => String(h || '').replace(/^\uFEFF/, '').trim());
+      if (Array.isArray(rowsAA) && rowsAA.length > 0) {
+        const headerRowRaw = rowsAA[0].map((h) => String(h ?? '').replace(/^\uFEFF/, '').trim());
         const dataRows = rowsAA.slice(1);
+        const maxLen = Math.max(headerRowRaw.length, ...dataRows.map(r => r.length, 0));
+        let headerRow = headerRowRaw;
+        const nonEmptyHeaders = headerRowRaw.filter(h => h).length;
+        if (nonEmptyHeaders === 0) {
+          headerRow = Array.from({ length: maxLen }, (_, i) => `COL_${i + 1}`);
+        } else if (headerRowRaw.length < maxLen) {
+          headerRow = [
+            ...headerRowRaw,
+            ...Array.from({ length: maxLen - headerRowRaw.length }, (_, i) => `COL_${headerRowRaw.length + i + 1}`)
+          ];
+        }
         const objetos = dataRows.map((linha) => {
           const obj = {};
-          headerRow.forEach((header, i) => {
+          for (let i = 0; i < maxLen; i++) {
             const val = linha[i];
+            const header = headerRow[i];
             if (header) obj[header] = val;
             const letter = String.fromCharCode(65 + i); // A, B, C...
             obj[letter] = val;
-          });
+          }
           return obj;
         });
         return objetos.filter((o) => Object.keys(o).length > 0);
