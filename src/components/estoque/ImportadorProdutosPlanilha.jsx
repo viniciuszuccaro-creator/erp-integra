@@ -668,10 +668,10 @@ const [checando, setChecando] = useState(false);
         const expectedDesc = HEADERS.descricao.filter(h => h.length > 1).join(', ');
         const expectedUn = HEADERS.unidade_medida.filter(h => h.length > 1).join(', ');
         const headersPrimeiros = (() => {
-          const set = new Set();
-          (Array.isArray(rows) ? rows.slice(0,5) : []).forEach(r => Object.keys(r || {}).forEach(k => set.add(k)));
-          return Array.from(set);
-        })();
+            const set = new Set();
+            (Array.isArray(rows) ? rows.slice(0,5) : []).forEach(r => Object.keys(r || {}).forEach(k => set.add(String(k))));
+            return Array.from(set);
+          })();
         const dicas = [];
         if (!hasDesc) dicas.push(`- Cabeçalho de Descrição ausente (ex.: ${expectedDesc}).`);
         if (!hasUn) dicas.push(`- Cabeçalho de Unidade ausente (ex.: ${expectedUn}).`);
