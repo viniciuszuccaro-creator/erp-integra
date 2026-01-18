@@ -364,12 +364,21 @@ const [checando, setChecando] = useState(false);
 
     // detectar delimitador ("," ";" ou tab) na primeira linha útil
     const detectDelim = (line) => {
-      // aceita ; , \t explicitamente se primeira linha tem sep=.. ou cabeçalho com A;B;C
-      if (/^[A-Z](;|,|\t)[A-Z](;|,|\t)[A-Z]/i.test(line)) {
-        const m = line.match(/^[^A-Za-z0-9]*([;,\t])/);
-        if (m) return m[1] === '\t' ? '\t' : m[1];
-      }
+      // prioridade: diretiva explícita
       if (sepDirective) return sepDirective;
+
+      // atalho seguro: tabulação explícita na linha
+      if (line.includes('\t')) return '\t';
+
+      // fallback heurístico simples
+      const simpleCounts = {
+        ',': (line.match(/,/g) || []).length,
+        ';': (line.match(/;/g) || []).length,
+      };
+      if (simpleCounts[';'] > simpleCounts[',']) return ';'
+      if (simpleCounts[','] > simpleCounts[';']) return ',';
+
+      // varredura ignorando aspas
       const cand = [',', ';', '\t'];
       const counts = { ',': 0, ';': 0, '\t': 0 };
       let inQ = false;
@@ -381,12 +390,14 @@ const [checando, setChecando] = useState(false);
           if (ch === '"') { inQ = false; continue; }
         } else {
           if (ch === '"') { inQ = true; continue; }
-          if (cand.includes(ch)) counts[ch]++;
+          if (ch === '\t') counts['\t']++;
+          else if (ch === ',') counts[',']++;
+          else if (ch === ';') counts[';']++;
           if (ch === '\n' || ch === '\r') break;
         }
       }
       const best = cand.reduce((a, b) => (counts[a] >= counts[b] ? a : b));
-      return counts[best] > 0 ? best : ';'; // default mais comum em pt-BR
+      return counts[best] > 0 ? best : ';';
     };
 
     const firstLineEnd = (() => {
