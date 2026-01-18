@@ -731,7 +731,7 @@ const [suggesting, setSuggesting] = useState(false);
     const rawGrupoId = sanitize(getWithMap(row, 'grupo_produto_id'));
     const rawGrupoNome = sanitize(getWithMap(row, 'grupo_produto_nome'));
     let grupoIdResolved =
-      (rawGrupoId && (gruposByCodigo[rawGrupoId] || gruposByNome[norm(rawGrupoId)])) ||
+      (rawGrupoId && gruposByCodigo[rawGrupoId]) ||
       (rawGrupoNome && gruposByNome[norm(rawGrupoNome)]) ||
       undefined;
     // Fallback fuzzy: tenta casar por parte do nome/código quando não houver correspondência exata
