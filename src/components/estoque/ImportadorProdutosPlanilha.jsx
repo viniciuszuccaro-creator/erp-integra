@@ -727,13 +727,13 @@ const [checando, setChecando] = useState(false);
       produtos = produtos.filter(p => !dupKeys.has(makeKey(p.empresa_id, p.codigo)));
 
       if (produtos.length === 0) {
-        const hasDesc = dataRows.some(r => !!sanitize(get(r, HEADERS.descricao)));
-        const hasUn = dataRows.some(r => !!sanitize(get(r, HEADERS.unidade_medida)));
+        const hasDesc = parsedRows.some(r => !!(getWithMap(r, 'descricao') || sanitize(get(r, HEADERS.descricao))));
+        const hasUn = parsedRows.some(r => !!(getWithMap(r, 'unidade_medida') || sanitize(get(r, HEADERS.unidade_medida))));
         const expectedDesc = HEADERS.descricao.filter(h => h.length > 1).join(', ');
         const expectedUn = HEADERS.unidade_medida.filter(h => h.length > 1).join(', ');
         const headersPrimeiros = (() => {
             const set = new Set();
-            (Array.isArray(rows) ? rows.slice(0,5) : []).forEach(r => Object.keys(r || {}).forEach(k => set.add(String(k))));
+            (Array.isArray(parsedRows) ? parsedRows.slice(0,5) : []).forEach(r => Object.keys(r || {}).forEach(k => set.add(String(k))));
             return Array.from(set);
           })();
         const dicas = [];
