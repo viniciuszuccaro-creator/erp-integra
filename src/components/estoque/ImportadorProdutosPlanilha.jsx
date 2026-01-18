@@ -104,7 +104,14 @@ export default function ImportadorProdutosPlanilha({ onConcluido, closeSelf }) {
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     setFileUrl(file_url);
 
-    // 1) Tenta extrair como array de arrays (XLS/CSV): primeira linha = cabeçalho
+    const ext = (file?.name || '').split('.').pop()?.toLowerCase();
+    if (['xls','xlsx'].includes(ext)) {
+      const { data } = await base44.functions.invoke('parseSpreadsheet', { file_url });
+      const rows = Array.isArray(data?.rows) ? data.rows : [];
+      return rows;
+    }
+
+    // 1) Tenta extrair como array de arrays (CSV): primeira linha = cabeçalho
     let res = await base44.integrations.Core.ExtractDataFromUploadedFile({
       file_url,
       json_schema: { type: "array", items: { type: "array" } },

@@ -170,6 +170,8 @@ function LayoutContent({ children, currentPageName }) {
         const msg = e?.message || e?.error?.message || 'Erro de UI';
         const stack = e?.error?.stack || null;
         base44.entities?.AuditLog?.create?.({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
           acao: 'Visualização',
           modulo: 'Sistema',
           entidade: 'UI',
@@ -183,6 +185,8 @@ function LayoutContent({ children, currentPageName }) {
       try {
         const msg = e?.reason?.message || String(e?.reason);
         base44.entities?.AuditLog?.create?.({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
           acao: 'Visualização',
           modulo: 'Sistema',
           entidade: 'UI',
