@@ -894,12 +894,30 @@ const [suggesting, setSuggesting] = useState(false);
         return;
       }
 
-      // Importação sequencial robusta (evita falhas de bulk em alguns provedores)
-      const chunkSize = 200;
+      // Importação com controle de taxa: pequenos lotes + backoff simples para evitar rate limit
+      const chunkSize = 50; // reduzir o lote
       let createdTotal = 0;
+      let delay = 0;
       for (let i = 0; i < produtos.length; i += chunkSize) {
         const chunk = produtos.slice(i, i + chunkSize);
-        const results = await Promise.allSettled(chunk.map((p) => base44.entities.Produto.create(p)));
+        if (delay) await sleep(delay);
+        const results = await Promise.allSettled(chunk.map(async (p) => {
+          try {
+            return await base44.entities.Produto.create(p);
+          } catch (err) {
+            if (String(err?.message || '').toLowerCase().includes('rate limit')) {
+              // backoff pontual e retry uma vez
+              await sleep(800);
+              return await base44.entities.Produto.create(p);
+            }
+            throw err;
+          }
+        }));
+        const failures = results.filter(r => r.status === 'rejected');
+        // se muitos 429 no lote, aumentar pequeno delay para próximo
+        if (failures.length > 0 && failures.some(f => String(f.reason?.message || '').toLowerCase().includes('rate limit'))) {
+          delay = Math.min((delay || 400) * 1.5, 5000);
+        }
         createdTotal += results.filter(r => r.status === 'fulfilled').length;
       }
 
