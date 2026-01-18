@@ -284,7 +284,7 @@ const [checando, setChecando] = useState(false);
     res = await base44.integrations.Core.ExtractDataFromUploadedFile({
       file_url,
       json_schema: { type: "object", additionalProperties: true },
-      encoding,
+      encoding: encoding === 'UTF-16LE' || encoding === 'UTF-16BE' ? 'UTF-16' : encoding,
       ignore_errors: true,
     });
 
