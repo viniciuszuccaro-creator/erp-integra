@@ -217,9 +217,9 @@ const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false
     setArquivo(f);
     setProcessando(true);
     try {
-      if (!empresaId) {
-        setErro('Defina a empresa de destino antes de importar.');
-        toast.error("Defina a empresa de destino antes de importar.");
+      if (!empresaId && !grupoId) {
+        setErro('Selecione a empresa OU um grupo antes de importar.');
+        toast.error('Selecione a empresa ou um grupo.');
         return;
       }
       const rows = await extrairLinhas(f);
@@ -251,9 +251,9 @@ const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false
       toast.error("Selecione um arquivo válido.");
       return;
     }
-    if (!empresaId && !(importarParaTodasEmpresas && grupoId)) {
-      setErro('Selecione a empresa de destino ou marque "Importar para todas as empresas" e selecione um grupo.');
-      toast.error('Selecione a empresa ou marque importar para todas com grupo.');
+    if (!empresaId && !grupoId) {
+      setErro('Selecione a empresa de destino ou um grupo.');
+      toast.error('Selecione a empresa ou um grupo.');
       return;
     }
     toast("Iniciando importação...");
@@ -264,7 +264,7 @@ const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false
       const dataRows = rows.filter((r) => !isHeaderRow(r));
       const baseProdutos = dataRows.map((r) => montarProduto(r)).filter((p) => p?.descricao);
       let produtos;
-      if (importarParaTodasEmpresas && grupoId && empresas?.length) {
+      if ((importarParaTodasEmpresas && grupoId && empresas?.length) || (!empresaId && grupoId && empresas?.length)) {
         produtos = empresas.flatMap(emp => baseProdutos.map(p => ({ ...p, empresa_id: emp.id, group_id: grupoId, compartilhado_grupo: true })));
       } else {
         produtos = baseProdutos;
@@ -370,7 +370,7 @@ const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false
         {preview.length > 0 && (
           <Card className="border-slate-200">
             <CardHeader className="bg-slate-50 border-b">
-              <CardTitle className="text-sm">Pré-visualização (mostrando {preview.length} de {totalLinhas} itens) • Grupos: {Array.from(new Set(preview.map(p => p.grupo_produto_nome || p.grupo_produto_id).filter(Boolean))).length} • Setores: {Array.from(new Set(preview.map(p => p.setor_atividade_nome || p.setor_atividade_id).filter(Boolean))).length}</CardTitle>
+              <CardTitle className="text-sm">Pré-visualização (mostrando {preview.length} de {totalLinhas} itens){importarParaTodasEmpresas || (!empresaId && grupoId) ? ' • Modo: Grupo (todas as empresas)' : ''} • Grupos: {Array.from(new Set(preview.map(p => p.grupo_produto_nome || p.grupo_produto_id).filter(Boolean))).length} • Setores: {Array.from(new Set(preview.map(p => p.setor_atividade_nome || p.setor_atividade_id).filter(Boolean))).length}</CardTitle>
             </CardHeader>
             <CardContent className="p-3">
               <div className="max-h-64 overflow-auto border rounded">
