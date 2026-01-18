@@ -591,11 +591,11 @@ const [checando, setChecando] = useState(false);
 
       // Montar preview (limitada) apenas com dados
       const baseAll = dataRows
-        .map((r) => montarProduto(r))
-        .filter((p) => p?.descricao);
-      const pre = baseAll.slice(0, 50);
-      setPreview(pre);
-      setBaseProdutos(baseAll);
+          .map((r) => montarProduto(r))
+          .filter((p) => p?.descricao && p?.unidade_medida);
+        const pre = baseAll.slice(0, 50);
+        setPreview(pre);
+        setBaseProdutos(baseAll);
       setErro('');
       toast.success(`Arquivo lido: ${dataRows.length} item(ns) de produto`);
     } finally {
