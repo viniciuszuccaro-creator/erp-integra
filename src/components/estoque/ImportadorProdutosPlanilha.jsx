@@ -730,9 +730,11 @@ const [suggesting, setSuggesting] = useState(false);
     // Resolver Grupo de Produto e Setor de Atividade a partir de ID/código ou nome
     const rawGrupoId = sanitize(getWithMap(row, 'grupo_produto_id'));
     const rawGrupoNome = sanitize(getWithMap(row, 'grupo_produto_nome'));
+    const gruposCodigoMap = { ...gruposByCodigo, ...runtimeGruposByCodigo };
+    const gruposNomeMap = { ...gruposByNome, ...runtimeGruposByNome };
     let grupoIdResolved =
-      (rawGrupoId && gruposByCodigo[rawGrupoId]) ||
-      (rawGrupoNome && gruposByNome[norm(rawGrupoNome)]) ||
+      (rawGrupoId && gruposCodigoMap[rawGrupoId]) ||
+      (rawGrupoNome && gruposNomeMap[norm(rawGrupoNome)]) ||
       undefined;
     // Fallback fuzzy: tenta casar por parte do nome/código quando não houver correspondência exata
     if (!grupoIdResolved) {
@@ -757,9 +759,10 @@ const [suggesting, setSuggesting] = useState(false);
 
     const rawSetorId = sanitize(getWithMap(row, 'setor_atividade_id'));
     const rawSetorNome = sanitize(getWithMap(row, 'setor_atividade_nome'));
+    const setoresNomeMap = { ...setoresByNome, ...runtimeSetoresByNome };
     let setorIdResolved =
-      (rawSetorNome && setoresByNome[norm(rawSetorNome)]) ||
-      (rawSetorId && setoresByNome[norm(rawSetorId)]) ||
+      (rawSetorNome && setoresNomeMap[norm(rawSetorNome)]) ||
+      (rawSetorId && setoresNomeMap[norm(rawSetorId)]) ||
       undefined;
     if (!setorIdResolved) {
       const tgtS = norm(rawSetorNome || rawSetorId || '');
@@ -774,9 +777,7 @@ const [suggesting, setSuggesting] = useState(false);
     }
     const setorNomeResolved =
       rawSetorNome ||
-      (setoresAtividade.find((s) => s.id === setorIdResolved)?.nome ||
-       setoresAtividade.find((s) => String(s.codigo || '') === String(rawSetorId || ''))?.nome) ||
-      undefined;
+      (setoresAtividade.find((s) => s.id === setorIdResolved)?.nome || undefined);
 
     const produto = {
       empresa_id: empresaId,
@@ -868,6 +869,76 @@ const [suggesting, setSuggesting] = useState(false);
       // Reextrai linhas para processar tudo (não só o preview)
       const rows = await extrairLinhas(arquivo);
       const dataRows = rows.filter((r) => !isHeaderRow(r));
+
+      // 1) Criar automaticamente grupos e setores ausentes
+      const localGruposByCodigo = { ...gruposByCodigo };
+      const localGruposByNome = { ...gruposByNome };
+      const localSetoresByNome = { ...setoresByNome };
+
+      const gruposPendentes = new Map();
+      const setoresPendentes = new Map();
+
+      for (const r of dataRows) {
+        const rawGrupoId = sanitize(getWithMap(r, 'grupo_produto_id'));
+        const rawGrupoNome = sanitize(getWithMap(r, 'grupo_produto_nome'));
+        const rawSetorId = sanitize(getWithMap(r, 'setor_atividade_id'));
+        const rawSetorNome = sanitize(getWithMap(r, 'setor_atividade_nome'));
+
+        const grpOk = (rawGrupoId && localGruposByCodigo[rawGrupoId]) || (rawGrupoNome && localGruposByNome[norm(rawGrupoNome)]);
+        if (!grpOk && (rawGrupoNome || rawGrupoId)) {
+          const chave = norm(rawGrupoNome || rawGrupoId);
+          if (!gruposPendentes.has(chave)) gruposPendentes.set(chave, { nome: rawGrupoNome || rawGrupoId, codigo: rawGrupoId || undefined });
+        }
+
+        const setOk = (rawSetorNome && localSetoresByNome[norm(rawSetorNome)]);
+        if (!setOk && (rawSetorNome || rawSetorId)) {
+          const chaveS = norm(rawSetorNome || rawSetorId);
+          if (!setoresPendentes.has(chaveS)) setoresPendentes.set(chaveS, { nome: rawSetorNome || rawSetorId });
+        }
+      }
+
+      if (gruposPendentes.size) {
+        const payloads = Array.from(gruposPendentes.values()).map(g => ({
+          nome_grupo: g.nome,
+          codigo: g.codigo || undefined,
+          natureza: 'Revenda',
+          ativo: true,
+          ...(grupoId ? { group_id: grupoId } : {})
+        }));
+        const res = await Promise.allSettled(payloads.map(p => base44.entities.GrupoProduto.create(p)));
+        res.forEach((r, idx) => {
+          if (r.status === 'fulfilled') {
+            const p = payloads[idx];
+            const key = norm(p.nome_grupo);
+            localGruposByNome[key] = r.value.id;
+            if (p.codigo) localGruposByCodigo[String(p.codigo).trim()] = r.value.id;
+          }
+        });
+      }
+
+      if (setoresPendentes.size) {
+        const payloadsS = Array.from(setoresPendentes.values()).map(s => ({
+          nome: s.nome,
+          tipo_operacao: 'Revenda',
+          ativo: true,
+          ...(grupoId ? { group_id: grupoId } : {})
+        }));
+        const resS = await Promise.allSettled(payloadsS.map(p => base44.entities.SetorAtividade.create(p)));
+        resS.forEach((r, idx) => {
+          if (r.status === 'fulfilled') {
+            const p = payloadsS[idx];
+            const key = norm(p.nome);
+            localSetoresByNome[key] = r.value.id;
+          }
+        });
+      }
+
+      // disponibilizar mapas criados para o montador
+      runtimeGruposByCodigo = localGruposByCodigo;
+      runtimeGruposByNome = localGruposByNome;
+      runtimeSetoresByNome = localSetoresByNome;
+
+      // 2) Agora montar os produtos com os mapas atualizados
       const baseProdutos = dataRows.map((r) => montarProduto(r)).filter((p) => p?.descricao);
       let produtos;
       if ((importarParaTodasEmpresas && grupoId && empresas?.length) || (!empresaId && grupoId && empresas?.length)) {
@@ -889,7 +960,7 @@ const [suggesting, setSuggesting] = useState(false);
       const dupChoice = (d) => {
         const k = makeKey(d.empresa_id, d.codigo);
         const choice = escolhasDuplicidades[k];
-        return choice ? choice === 'atualizar' : true; // padrão: atualizar
+        return choice ? choice === 'atualizar' : false; // padrão: pular (não atualizar)
       };
       const paraAtualizar = duplicidades.filter(dupChoice);
       let updatedTotal = 0;
