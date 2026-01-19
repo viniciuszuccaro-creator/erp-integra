@@ -1,7 +1,17 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
+import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit"
 
-const Textarea = React.forwardRef(({ className, ...props }, ref) => {
+const Textarea = React.forwardRef(({ className, onChange, onBlur, ...props }, ref) => {
+  React.useEffect(() => {
+    if (!onChange) {
+      logUIIssue({ component: 'Textarea', issue: 'Sem onChange associado', severity: 'warn', meta: { name: props?.name } });
+    }
+  }, []);
+
+  const auditedOnChange = typeof onChange === 'function' ? uiAuditWrap('Textarea.onChange', onChange, { kind: 'textarea' }) : undefined;
+  const auditedOnBlur = typeof onBlur === 'function' ? uiAuditWrap('Textarea.onBlur', onBlur, { kind: 'textarea' }) : undefined;
+
   return (
     <textarea
       className={cn(
@@ -9,6 +19,8 @@ const Textarea = React.forwardRef(({ className, ...props }, ref) => {
         className
       )}
       ref={ref}
+      onChange={auditedOnChange}
+      onBlur={auditedOnBlur}
       {...props}
     />
   )
