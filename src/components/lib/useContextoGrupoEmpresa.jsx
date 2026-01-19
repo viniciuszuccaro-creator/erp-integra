@@ -33,7 +33,8 @@ export function useContextoGrupoEmpresa() {
       try { localStorage.setItem('contexto_atual', ctx); } catch {}
 
       if (ctx === 'grupo') {
-        const grupoId = currentUser.grupo_atual_id || currentUser.grupo_padrao_id;
+        // Tenta user > localStorage
+        const grupoId = currentUser.grupo_atual_id || currentUser.grupo_padrao_id || localStorage.getItem('group_atual_id');
         if (grupoId) {
           const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
           if (grupos[0]) setGrupoAtual(grupos[0]);
