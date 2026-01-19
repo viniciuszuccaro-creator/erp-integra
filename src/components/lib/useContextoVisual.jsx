@@ -45,7 +45,7 @@ export function useContextoVisual() {
     }
   }, [empresaContexto]);
 
-  const empresaAtual = empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || null;
+  const empresaAtual = (contexto === 'grupo') ? null : (empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || null);
   const empresasDoGrupo = empresas.filter(empresa => empresa.group_id === grupoAtual?.id);
   const estaNoGrupo = contexto === 'grupo';
 
