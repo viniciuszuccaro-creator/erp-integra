@@ -377,6 +377,13 @@ export default function ProdutosTab({ produtos, isLoading }) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
+                  <TableHead>
+                    <Checkbox
+                      checked={selectedProdutos.length > 0 && selectedProdutos.length === filteredProdutos.length}
+                      onCheckedChange={(v) => toggleAllProdutos(!!v, filteredProdutos)}
+                      aria-label="Selecionar todos"
+                    />
+                  </TableHead>
                   <TableHead>Código</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Tipo</TableHead>
