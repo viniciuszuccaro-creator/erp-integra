@@ -944,7 +944,7 @@ Caso contrário, sugira:
 
               <div>
                 <Label>Unidade Principal (Relatórios) *</Label>
-                <Select value={formData.unidade_principal} onValueChange={(v) => setFormData(prev => ({...prev, unidade_principal: v}))}>
+                <Select value={formData.unidade_principal} onValueChange={(v) => setFormData(prev => ({...prev, unidade_principal: v, unidade_medida: v }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
