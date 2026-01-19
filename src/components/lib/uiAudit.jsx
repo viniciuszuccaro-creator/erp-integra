@@ -28,9 +28,11 @@ export function logUIAction({ component, action, status, meta }) {
   try {
     const descricao = `[${component}] ${action} • ${status}`;
     getUserSafe().then((u) => {
+      const ctx = getContextSafe();
       base44.entities?.AuditLog?.create?.({
         usuario: u?.full_name || u?.email || 'Usuário',
         usuario_id: u?.id,
+        empresa_id: ctx?.empresa_id || null,
         acao: "Interação",
         modulo: "Sistema",
         entidade: "UI",
@@ -51,9 +53,11 @@ export function logUIIssue({ component, issue, severity = "warn", meta }) {
   try {
     const descricao = `[${component}] ISSUE: ${issue}`;
     getUserSafe().then((u) => {
+      const ctx = getContextSafe();
       base44.entities?.AuditLog?.create?.({
         usuario: u?.full_name || u?.email || 'Usuário',
         usuario_id: u?.id,
+        empresa_id: ctx?.empresa_id || null,
         acao: "Auditoria",
         modulo: "Sistema",
         entidade: "UI",

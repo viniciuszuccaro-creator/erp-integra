@@ -7,7 +7,7 @@ import { logUIIssue } from "@/components/lib/uiAudit";
 
 export default function BootstrapGuard({ children }) {
   const { user, isLoading: loadingUser } = useUser();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, isLoading: loadingCtx } = useContextoVisual();
 
   const { data: iaConfigs, isLoading: loadingIA } = useQuery({
     queryKey: ["ia-config"],
@@ -28,7 +28,7 @@ export default function BootstrapGuard({ children }) {
     }
   }, [loadingIA, iaConfigs?.length]);
 
-  const booting = loadingUser || loadingIA;
+  const booting = loadingUser || loadingIA || loadingCtx;
 
   if (booting) {
     return (
