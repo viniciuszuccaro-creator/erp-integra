@@ -40,6 +40,7 @@ export default function EstoqueAvancadoSection({ formData, setFormData, locaisEs
         )}
 
         <h4 className="font-bold text-slate-800 mt-6 mb-3 pt-4 border-t">Parâmetros de Estoque</h4>
+        <p className="text-xs text-slate-500 -mt-2">Unidade: {(formData.unidade_principal || formData.unidade_medida || 'KG')}</p>
         <div className="grid grid-cols-3 gap-4">
           <div>
             <Label>Estoque Mínimo</Label>
