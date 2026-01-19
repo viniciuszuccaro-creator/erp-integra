@@ -30,7 +30,7 @@ import { uiAuditWrap } from "@/components/lib/uiAudit";
 
 const _RG = RadioGroup;
 const AuditedRadioGroup = React.forwardRef(({ onValueChange, ...props }, ref) => {
-  const audited = typeof onValueChange === 'function' ? uiAuditWrap('RadioGroup.onValueChange', onValueChange, { kind: 'radio' }) : undefined;
+  const audited = typeof onValueChange === 'function' ? uiAuditWrap('RadioGroup.onValueChange', onValueChange, { kind: 'radio', toastSuccess: true }) : undefined;
   return (<_RG ref={ref} onValueChange={audited} {...props} />);
 });
 AuditedRadioGroup.displayName = 'AuditedRadioGroup';
