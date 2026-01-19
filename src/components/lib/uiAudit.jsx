@@ -1,22 +1,37 @@
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
+let _cachedUser = null;
+async function getUserSafe() {
+  try {
+    if (_cachedUser) return _cachedUser;
+    _cachedUser = await base44.auth.me();
+    return _cachedUser;
+  } catch (_) {
+    return null;
+  }
+}
+
 // Minimal, resilient audit logger (non-blocking) + visual feedback
 export function logUIAction({ component, action, status, meta }) {
   try {
     const descricao = `[${component}] ${action} • ${status}`;
-    base44.entities?.AuditLog?.create?.({
-      acao: "Interação",
-      modulo: "Sistema",
-      entidade: "UI",
-      descricao,
-      dados_novos: {
-        status,
-        action,
-        component,
-        meta: sanitizeMeta(meta),
-        url: typeof window !== 'undefined' ? window.location.pathname : undefined,
-      },
+    getUserSafe().then((u) => {
+      base44.entities?.AuditLog?.create?.({
+        usuario: u?.full_name || u?.email || 'Usuário',
+        usuario_id: u?.id,
+        acao: "Interação",
+        modulo: "Sistema",
+        entidade: "UI",
+        descricao,
+        dados_novos: {
+          status,
+          action,
+          component,
+          meta: sanitizeMeta(meta),
+          url: typeof window !== 'undefined' ? window.location.pathname : undefined,
+        },
+      });
     });
   } catch (_) {}
 }
@@ -24,18 +39,22 @@ export function logUIAction({ component, action, status, meta }) {
 export function logUIIssue({ component, issue, severity = "warn", meta }) {
   try {
     const descricao = `[${component}] ISSUE: ${issue}`;
-    base44.entities?.AuditLog?.create?.({
-      acao: "Auditoria",
-      modulo: "Sistema",
-      entidade: "UI",
-      descricao,
-      dados_novos: {
-        severity,
-        issue,
-        component,
-        meta: sanitizeMeta(meta),
-        url: typeof window !== 'undefined' ? window.location.pathname : undefined,
-      },
+    getUserSafe().then((u) => {
+      base44.entities?.AuditLog?.create?.({
+        usuario: u?.full_name || u?.email || 'Usuário',
+        usuario_id: u?.id,
+        acao: "Auditoria",
+        modulo: "Sistema",
+        entidade: "UI",
+        descricao,
+        dados_novos: {
+          severity,
+          issue,
+          component,
+          meta: sanitizeMeta(meta),
+          url: typeof window !== 'undefined' ? window.location.pathname : undefined,
+        },
+      });
     });
   } catch (_) {}
 }
