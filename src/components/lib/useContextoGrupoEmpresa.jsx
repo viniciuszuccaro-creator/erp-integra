@@ -85,8 +85,10 @@ export function useContextoGrupoEmpresa() {
       setContexto('grupo');
       setGrupoAtual(grupo);
       setEmpresaAtual(null);
+      try { localStorage.setItem('contexto_atual', 'grupo'); } catch {}
+      try { if (grupo?.id) localStorage.setItem('group_atual_id', grupo.id); } catch {}
       queryClient.invalidateQueries();
-      setTimeout(() => window.location.reload(), 500);
+      // Evitar reload completo; atualizar queries e deixar GuardRails liberar
     },
     onError: (error) => {
       // V21.7: Mostrar erro amigável
