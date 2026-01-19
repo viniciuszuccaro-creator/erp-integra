@@ -40,9 +40,21 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
     (<Comp
       className={cn(buttonVariants({ variant, size, className }))}
       ref={ref}
-      {...props} />)
+      {...withUIAudit(props)} />)
   );
 })
 Button.displayName = "Button"
+
+import { uiAuditWrap } from "@/components/lib/uiAudit";
+
+// HOC to wrap onClick with audit (non-invasive)
+function withUIAudit(props) {
+  const p = { ...props };
+  if (typeof p.onClick === 'function' && !p.__wrapped_audit) {
+    p.onClick = uiAuditWrap(p['data-action'] || 'Button.onClick', p.onClick, { kind: 'button' });
+    p.__wrapped_audit = true;
+  }
+  return p;
+}
 
 export { Button, buttonVariants }
