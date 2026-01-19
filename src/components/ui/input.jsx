@@ -1,8 +1,18 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit";
 
-const Input = React.forwardRef(({ className, type, ...props }, ref) => {
+const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props }, ref) => {
+  React.useEffect(() => {
+    if (!onChange) {
+      logUIIssue({ component: 'Input', issue: 'Sem onChange associado', severity: 'warn', meta: { name: props?.name } });
+    }
+  }, []);
+
+  const auditedOnChange = typeof onChange === 'function' ? uiAuditWrap('Input.onChange', onChange, { name: props?.name }) : undefined;
+  const auditedOnBlur = typeof onBlur === 'function' ? uiAuditWrap('Input.onBlur', onBlur, { name: props?.name }) : undefined;
+
   return (
     (<input
       type={type}
@@ -11,6 +21,8 @@ const Input = React.forwardRef(({ className, type, ...props }, ref) => {
         className
       )}
       ref={ref}
+      onChange={auditedOnChange}
+      onBlur={auditedOnBlur}
       {...props} />)
   );
 })
