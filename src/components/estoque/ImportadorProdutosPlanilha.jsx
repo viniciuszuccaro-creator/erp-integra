@@ -886,6 +886,10 @@ const [suggesting, setSuggesting] = useState(false);
           .map((r) => montarProduto(r))
           .map((p) => ({
             ...p,
+            // Disponível deve iniciar em 0; estoque_atual também 0 até entradas posteriores
+            estoque_disponivel: 0,
+            estoque_atual: p.estoque_atual ?? 0,
+            estoque_reservado: 0,
             unidade_medida: UNIDADES_ACEITAS.includes(p.unidade_medida) ? p.unidade_medida : 'UN'
           }))
           .filter((p) => p?.descricao);
