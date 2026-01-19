@@ -588,6 +588,8 @@ function LayoutContent({ children, currentPageName }) {
         );
         }
 
+import GuardRails from "@/components/lib/GuardRails";
+
 export default function Layout({ children, currentPageName }) {
   return (
     <UserProvider>
