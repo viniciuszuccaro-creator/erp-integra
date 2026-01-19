@@ -56,6 +56,7 @@ import AtalhosTecladoInfo from "@/components/sistema/AtalhosTecladoInfo";
 import ZIndexGuard from "@/components/lib/ZIndexFix";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import "@/components/lib/networkGuard";
+import BootstrapGuard from "@/components/lib/BootstrapGuard";
 
 const navigationItems = [
   { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -554,9 +555,11 @@ function LayoutContent({ children, currentPageName }) {
           <div className="flex-1 overflow-auto">
             <ErrorBoundary>
               <Suspense fallback={<div className="p-6 text-slate-500">Carregando…</div>}>
-                <GuardRails currentPageName={currentPageName}>
-                  {children}
-                </GuardRails>
+                <BootstrapGuard>
+                  <GuardRails currentPageName={currentPageName}>
+                    {children}
+                  </GuardRails>
+                </BootstrapGuard>
               </Suspense>
             </ErrorBoundary>
           </div>

@@ -1,5 +1,6 @@
 import Acessos from './pages/Acessos';
 import Agenda from './pages/Agenda';
+import AuditoriaUI from './pages/AuditoriaUI';
 import CRM from './pages/CRM';
 import Cadastros from './pages/Cadastros';
 import ChatbotAtendimento from './pages/ChatbotAtendimento';
@@ -26,13 +27,13 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
-import AuditoriaUI from './pages/AuditoriaUI';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Acessos": Acessos,
     "Agenda": Agenda,
+    "AuditoriaUI": AuditoriaUI,
     "CRM": CRM,
     "Cadastros": Cadastros,
     "ChatbotAtendimento": ChatbotAtendimento,
@@ -59,7 +60,6 @@ export const PAGES = {
     "RH": RH,
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
-    "AuditoriaUI": AuditoriaUI,
 }
 
 export const pagesConfig = {
