@@ -410,6 +410,7 @@ export default function ProdutosTab({ produtos, isLoading }) {
                         <Checkbox
                           checked={selectedProdutos.includes(produto.id)}
                           onCheckedChange={() => toggleProduto(produto.id)}
+                          aria-label={`Selecionar ${produto.descricao}`}
                         />
                       </TableCell>
                       <TableCell className="font-medium">{produto.codigo}</TableCell>
@@ -435,19 +436,19 @@ export default function ProdutosTab({ produtos, isLoading }) {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{produto.grupo || 'Sem Grupo'}</Badge>
+                        <Badge variant="outline">{produto.grupo || produto.grupo_produto_nome || 'Sem Grupo'}</Badge>
                       </TableCell>
                       <TableCell>
                         <span className={estoqueBaixo ? 'text-red-600 font-bold' : 'font-semibold'}>
-                          {produto.estoque_atual || 0} {produto.unidade_medida}
+                          {(produto.estoque_atual ?? 0)} {produto.unidade_medida}
                         </span>
                       </TableCell>
                       <TableCell className="text-slate-600">
-                        {produto.estoque_minimo || 0} {produto.unidade_medida}
+                        {(produto.estoque_minimo ?? 0)} {produto.unidade_medida}
                       </TableCell>
                       <TableCell>
                         <span className={estoqueZerado ? 'text-red-600 font-bold' : ''}>
-                          {disponivelCalc} {produto.unidade_medida}
+                          {Number.isFinite(disponivelCalc) ? disponivelCalc : 0} {produto.unidade_medida}
                         </span>
                       </TableCell>
                       <TableCell className="text-sm">

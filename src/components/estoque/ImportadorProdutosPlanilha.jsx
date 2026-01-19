@@ -791,6 +791,10 @@ const [suggesting, setSuggesting] = useState(false);
       descricao: sanitize(getWithMap(row, 'descricao'))?.slice(0, 250),
       unidade_medida: mapUnidade(getWithMap(row, 'unidade_medida')),
       estoque_minimo: num(getWithMap(row, 'estoque_minimo')) || 0,
+      // estoques sempre iniciam zerados ao importar planilha
+      estoque_atual: 0,
+      estoque_reservado: 0,
+      estoque_disponivel: 0,
       ncm: sanitizeNCM(getWithMap(row, 'ncm')),
       peso_teorico_kg_m: num(getWithMap(row, 'peso_teorico_kg_m')),
       grupo_produto_id: grupoIdResolved,
@@ -886,10 +890,10 @@ const [suggesting, setSuggesting] = useState(false);
           .map((r) => montarProduto(r))
           .map((p) => ({
             ...p,
-            // Disponível deve iniciar em 0; estoque_atual também 0 até entradas posteriores
-            estoque_disponivel: 0,
-            estoque_atual: p.estoque_atual ?? 0,
+            // Garantir mapeamento correto: estoques iniciam zerados; estoque_minimo vem da planilha
+            estoque_atual: 0,
             estoque_reservado: 0,
+            estoque_disponivel: 0,
             unidade_medida: UNIDADES_ACEITAS.includes(p.unidade_medida) ? p.unidade_medida : 'UN'
           }))
           .filter((p) => p?.descricao);
@@ -1021,9 +1025,9 @@ const [suggesting, setSuggesting] = useState(false);
       produtos = produtos.map(p => ({
         ...p,
         unidade_medida: UNIDADES_ACEITAS.includes(p.unidade_medida) ? p.unidade_medida : 'UN',
-        estoque_disponivel: 0,
-        estoque_atual: p.estoque_atual ?? 0,
+        estoque_atual: 0,
         estoque_reservado: 0,
+        estoque_disponivel: 0,
       }));
 
       // Deduplicar internamente por empresa+codigo (mantém a primeira ocorrência)
