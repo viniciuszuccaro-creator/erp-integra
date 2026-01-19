@@ -77,9 +77,14 @@ export function uiAuditWrap(actionName, handler, baseMeta = {}) {
       const res = handler ? handler(...args) : undefined;
       if (res && typeof res.then === 'function') await res;
       logUIAction({ component: inferComponent(actionName), action: actionName, status: "success", meta: baseMeta });
+      if (baseMeta && baseMeta.toastSuccess) {
+        try { toast.success(`${actionName} concluído`); } catch (_) {}
+      }
       return res;
     } catch (error) {
-      logUIAction({ component: inferComponent(actionName), action: actionName, status: "error", meta: { ...baseMeta, error: String(error?.message || error) } });
+      const msg = String(error?.message || error) || 'Erro';
+      try { toast.error(`Falha: ${actionName}`, { description: msg }); } catch (_) {}
+      logUIAction({ component: inferComponent(actionName), action: actionName, status: "error", meta: { ...baseMeta, error: msg } });
       throw error;
     }
   };
