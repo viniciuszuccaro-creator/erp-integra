@@ -1010,6 +1010,7 @@ const [suggesting, setSuggesting] = useState(false);
       // Não filtramos por erros pré-calculados para garantir a importação completa; falhas serão reportadas individualmente pelo backend.
       // Garantir que group_id e empresa_id sejam mantidos, e IDs resolvidos por nome/código já aplicados em montarProduto.
 
+      let updatedTotal = 0;
       if (!skipDupFlow) {
         // Executar atualizações para duplicidades marcadas como "atualizar"
         const dupChoice = (d) => {
@@ -1018,7 +1019,7 @@ const [suggesting, setSuggesting] = useState(false);
           return choice ? choice === 'atualizar' : false; // padrão: pular (não atualizar)
         };
         const paraAtualizar = duplicidades.filter(dupChoice);
-        let updatedTotal = 0;
+        /* updatedTotal acumulado */
         if (paraAtualizar.length > 0) {
           const chunkU = 20;
           for (let i = 0; i < paraAtualizar.length; i += chunkU) {
@@ -1098,6 +1099,30 @@ const [suggesting, setSuggesting] = useState(false);
         }
       }
 
+      // Se criamos grupos/setores agora, preparar mapa de existentes para atualizar em vez de criar
+      const existingByKey = {};
+      if (skipDupFlow) {
+        const keys = Array.from(new Set(produtos.map(p => makeKey(p.empresa_id, p.codigo))));
+        for (let i = 0; i < keys.length; i += 10) {
+          const slice = keys.slice(i, i + 10);
+          await Promise.allSettled(slice.map(async (k) => {
+            const [empId, code] = k.split('__');
+            try {
+              const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+              if (Array.isArray(found) && found[0]) existingByKey[k] = found[0];
+            } catch (err) {
+              if (String(err?.message || '').toLowerCase().includes('rate limit')) {
+                await sleep(600);
+                const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+                if (Array.isArray(found) && found[0]) existingByKey[k] = found[0];
+              }
+            }
+            return null;
+          }));
+          await sleep(250);
+        }
+      }
+
       // Importação com controle de taxa: pequenos lotes + backoff simples para evitar rate limit
       const chunkSize = 10; // reduzir ainda mais o lote para estabilidade
       let createdTotal = 0;
@@ -1107,25 +1132,64 @@ const [suggesting, setSuggesting] = useState(false);
         const chunk = produtos.slice(i, i + chunkSize);
         if (delay) await sleep(delay);
         const results = await Promise.allSettled(chunk.map(async (p) => {
-          try {
-            return await base44.entities.Produto.create(p);
-          } catch (err) {
-            const msg = String(err?.message || '').toLowerCase();
-            if (msg.includes('rate limit')) {
-              // backoff com jitter e até 2 tentativas
-              await sleep(800 + Math.floor(Math.random() * 200));
-              try {
-                return await base44.entities.Produto.create(p);
-              } catch (err2) {
-                const msg2 = String(err2?.message || '').toLowerCase();
-                if (msg2.includes('rate limit')) {
-                  await sleep(1500 + Math.floor(Math.random() * 300));
-                  return await base44.entities.Produto.create(p);
+          const key = makeKey(p.empresa_id, p.codigo);
+          const existente = skipDupFlow ? existingByKey[key] : null;
+          if (existente) {
+            // Atualizar existente com dados novos
+            const patch = { ...p };
+            delete patch.id;
+            delete patch.empresa_id;
+            delete patch.group_id;
+            delete patch.created_date;
+            delete patch.updated_date;
+            delete patch.created_by;
+            delete patch.codigo;
+            if (patch.ncm != null) patch.ncm = sanitizeNCM(patch.ncm);
+            Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
+            try {
+              return await base44.entities.Produto.update(existente.id, patch);
+            } catch (err) {
+              const msg = String(err?.message || '').toLowerCase();
+              if (msg.includes('rate limit')) {
+                await sleep(800 + Math.floor(Math.random() * 200));
+                try {
+                  return await base44.entities.Produto.update(existente.id, patch);
+                } catch (err2) {
+                  const msg2 = String(err2?.message || '').toLowerCase();
+                  if (msg2.includes('rate limit')) {
+                    await sleep(1500 + Math.floor(Math.random() * 300));
+                    return await base44.entities.Produto.update(existente.id, patch);
+                  }
+                  throw err2;
                 }
-                throw err2;
               }
+              // se por algum motivo não encontrar mais, cria
+              if (msg.includes('not found')) {
+                return await base44.entities.Produto.create({ ...p });
+              }
+              throw err;
             }
-            throw err;
+          } else {
+            try {
+              return await base44.entities.Produto.create(p);
+            } catch (err) {
+              const msg = String(err?.message || '').toLowerCase();
+              if (msg.includes('rate limit')) {
+                // backoff com jitter e até 2 tentativas
+                await sleep(800 + Math.floor(Math.random() * 200));
+                try {
+                  return await base44.entities.Produto.create(p);
+                } catch (err2) {
+                  const msg2 = String(err2?.message || '').toLowerCase();
+                  if (msg2.includes('rate limit')) {
+                    await sleep(1500 + Math.floor(Math.random() * 300));
+                    return await base44.entities.Produto.create(p);
+                  }
+                  throw err2;
+                }
+              }
+              throw err;
+            }
           }
         }));
         const failures = results.filter(r => r.status === 'rejected');
@@ -1139,7 +1203,7 @@ const [suggesting, setSuggesting] = useState(false);
         await sleep(300 + Math.floor(Math.random() * 150));
       }
 
-      const processados = createdTotal + updatedTotal;
+      const processados = createdTotal + (updatedTotal || 0);
       if (failedTotal > 0) {
         toast.warning(`Importação concluída: ${processados} processados (${createdTotal} novos, ${updatedTotal} atualizados, ${failedTotal} falharam).`);
       } else {
