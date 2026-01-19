@@ -26,7 +26,7 @@ const _orig = Checkbox; // keep ref
 const WrappedCheckbox = React.forwardRef((props, ref) => {
   const p = { ...props };
   if (typeof p.onCheckedChange === 'function' && !p.__wrapped_audit) {
-    p.onCheckedChange = uiAuditWrap(p['data-action'] || 'Checkbox.onCheckedChange', p.onCheckedChange, { kind: 'checkbox' });
+    p.onCheckedChange = uiAuditWrap(p['data-action'] || 'Checkbox.onCheckedChange', p.onCheckedChange, { kind: 'checkbox', toastSuccess: true });
     p.__wrapped_audit = true;
   }
   return (<_orig {...p} ref={ref} />);
