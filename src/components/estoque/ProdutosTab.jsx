@@ -144,10 +144,10 @@ export default function ProdutosTab({ produtos, isLoading }) {
     return matchSearch && matchGrupo && matchStatus;
   });
 
-  const produtosBaixoEstoque = produtos.filter(p => 
-    p.status === 'Ativo' && 
-    (p.estoque_disponivel || p.estoque_atual || 0) <= (p.estoque_minimo || 0)
-  );
+  const produtosBaixoEstoque = produtos.filter(p => {
+    const disponivel = (p.estoque_disponivel ?? ((p.estoque_atual || 0) - (p.estoque_reservado || 0)));
+    return p.status === 'Ativo' && (Math.max(0, disponivel) <= (p.estoque_minimo || 0));
+  });
 
   // V21.6: Estatísticas de produtos em produção
   const produtosProducao = produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção');
@@ -392,8 +392,9 @@ export default function ProdutosTab({ produtos, isLoading }) {
               </TableHeader>
               <TableBody>
                 {filteredProdutos.map((produto) => {
-                  const estoqueBaixo = (produto.estoque_disponivel || produto.estoque_atual || 0) <= (produto.estoque_minimo || 0);
-                  const estoqueZerado = (produto.estoque_disponivel || produto.estoque_atual || 0) === 0;
+                  const disponivelCalc = Math.max(0, (produto.estoque_disponivel ?? ((produto.estoque_atual || 0) - (produto.estoque_reservado || 0))));
+                  const estoqueBaixo = disponivelCalc <= (produto.estoque_minimo || 0);
+                  const estoqueZerado = disponivelCalc === 0;
                   const ehProducao = produto.tipo_item === 'Matéria-Prima Produção';
                   
                   return (
@@ -439,7 +440,7 @@ export default function ProdutosTab({ produtos, isLoading }) {
                       </TableCell>
                       <TableCell>
                         <span className={estoqueZerado ? 'text-red-600 font-bold' : ''}>
-                          {produto.estoque_disponivel || produto.estoque_atual || 0} {produto.unidade_medida}
+                          {disponivelCalc} {produto.unidade_medida}
                         </span>
                       </TableCell>
                       <TableCell className="text-sm">
