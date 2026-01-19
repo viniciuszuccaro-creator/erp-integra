@@ -22,6 +22,11 @@ export function useContextoVisual() {
     estaEmEmpresa
   } = useContextoGrupoEmpresa();
 
+  // Sincroniza o contexto local com o contexto real (grupo/empresa)
+  useEffect(() => {
+    setContexto(estaNoGrupoContexto ? 'grupo' : 'empresa');
+  }, [estaNoGrupoContexto]);
+
   const { data: empresas = [], isLoading: loadingEmpresas } = useQuery({
     queryKey: ['empresas'],
     queryFn: () => base44.entities.Empresa.list(),
