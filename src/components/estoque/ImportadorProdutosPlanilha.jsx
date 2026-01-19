@@ -264,6 +264,11 @@ const [suggesting, setSuggesting] = useState(false);
     return m;
   }, [setoresAtividade]);
 
+  // Runtime maps to include entities created during import
+  let runtimeGruposByCodigo = {};
+  let runtimeGruposByNome = {};
+  let runtimeSetoresByNome = {};
+
   // Opções de grupos: usa GrupoEmpresarial quando disponível; caso contrário, deriva dos group_id das empresas
   const groupsOptions = React.useMemo(() => {
     if (Array.isArray(grupos) && grupos.length > 0) return grupos;
