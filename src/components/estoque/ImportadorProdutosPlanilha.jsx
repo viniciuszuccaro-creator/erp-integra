@@ -953,6 +953,15 @@ const [suggesting, setSuggesting] = useState(false);
         ...(grupoId ? { group_id: grupoId } : {})
       }));
 
+      // Deduplicar internamente por empresa+codigo (mantém a primeira ocorrência)
+      const seenKeys = new Set();
+      produtos = produtos.filter(p => {
+        const k = makeKey(p.empresa_id, p.codigo);
+        if (seenKeys.has(k)) return false;
+        seenKeys.add(k);
+        return true;
+      });
+
       // Não filtramos por erros pré-calculados para garantir a importação completa; falhas serão reportadas individualmente pelo backend.
       // Garantir que group_id e empresa_id sejam mantidos, e IDs resolvidos por nome/código já aplicados em montarProduto.
 
@@ -1027,7 +1036,7 @@ const [suggesting, setSuggesting] = useState(false);
       }
 
       // Importação com controle de taxa: pequenos lotes + backoff simples para evitar rate limit
-      const chunkSize = 50; // reduzir o lote
+      const chunkSize = 20; // reduzir o lote para estabilidade
       let createdTotal = 0;
       let failedTotal = 0;
       let delay = 0;
@@ -1053,6 +1062,8 @@ const [suggesting, setSuggesting] = useState(false);
         }
         failedTotal += failures.length;
         createdTotal += results.filter(r => r.status === 'fulfilled').length;
+        // Pequena pausa entre lotes para evitar limites de taxa
+        await sleep(200);
       }
 
       const processados = createdTotal + updatedTotal;
