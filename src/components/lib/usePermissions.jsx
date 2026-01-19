@@ -15,30 +15,72 @@ export default function usePermissions() {
     enabled: !!user?.perfil_acesso_id
   });
 
+  // Verificação de permissão com suporte a múltiplos níveis: módulo.submódulo.aba.campo
   const hasPermission = (module, section, action = "visualizar") => {
     if (!user) return false;
     if (user.role === "admin") return true;
+    const perms = perfilAcesso?.permissoes;
+    if (!perms) return false;
 
-    if (!perfilAcesso?.permissoes) return false;
+    // normaliza alias
+    const desired = action === 'ver' ? 'visualizar' : action;
 
-    // ESTRUTURA GRANULAR: módulo → seção → [ações]
-    const moduloPermissoes = perfilAcesso.permissoes[module];
-    if (!moduloPermissoes) return false;
+    const modNode = perms[module];
+    if (!modNode) return false;
 
-    // Se não especificar seção, verifica se tem a ação em QUALQUER seção
+    // Se não houver seção especificada, verifica ação em qualquer subnível direto
     if (!section) {
-      const alt = action === 'ver' ? 'visualizar' : (action === 'visualizar' ? 'ver' : null);
-      return Object.values(moduloPermissoes).some(secao => 
-        Array.isArray(secao) && (secao.includes(action) || (alt ? secao.includes(alt) : false))
-      );
+      return Object.values(modNode).some((node) => {
+        if (Array.isArray(node)) return node.includes(desired) || (desired === 'visualizar' && node.includes('ver'));
+        // Caso node seja objeto, verifica se algum filho é array com a ação
+        if (node && typeof node === 'object') {
+          return Object.values(node).some((v) => Array.isArray(v) && (v.includes(desired) || (desired === 'visualizar' && v.includes('ver'))));
+        }
+        return false;
+      });
     }
 
-    // Verifica permissão na seção específica
-    const secaoPermissoes = moduloPermissoes[section];
-    if (!Array.isArray(secaoPermissoes)) return false;
+    // Suporta paths hierárquicos: "Pedidos.Financeiro.margens" ou ["Pedidos","Financeiro","margens"]
+    const path = Array.isArray(section) ? section : String(section).split('.').filter(Boolean);
+    let cursor = modNode;
+    for (let i = 0; i < path.length; i++) {
+      const key = path[i];
+      if (cursor == null) return false;
+      cursor = cursor[key];
+    }
 
-    const alt = action === 'ver' ? 'visualizar' : (action === 'visualizar' ? 'ver' : null);
-    return secaoPermissoes.includes(action) || (alt ? secaoPermissoes.includes(alt) : false);
+    if (!cursor) return false;
+
+    if (Array.isArray(cursor)) {
+      return cursor.includes(desired) || (desired === 'visualizar' && cursor.includes('ver'));
+    }
+
+    // Se o nó final ainda for um objeto, aceite se QUALQUER folha trouxer a ação
+    if (typeof cursor === 'object') {
+      const stack = [cursor];
+      while (stack.length) {
+        const node = stack.pop();
+        if (Array.isArray(node)) {
+          if (node.includes(desired) || (desired === 'visualizar' && node.includes('ver'))) return true;
+        } else if (node && typeof node === 'object') {
+          Object.values(node).forEach((v) => stack.push(v));
+        }
+      }
+      return false;
+    }
+
+    return false;
+  };
+
+  // Helpers específicos para granularidade
+  const hasTabPermission = (module, submodule, tab, action = 'visualizar') => {
+    const section = [submodule, tab].filter(Boolean);
+    return hasPermission(module, section, action);
+  };
+
+  const hasFieldPermission = (module, submodule, tab, field, action = 'visualizar') => {
+    const section = [submodule, tab, field].filter(Boolean);
+    return hasPermission(module, section, action);
   };
 
   const hasGranularPermission = (module, section, action) => {

@@ -213,13 +213,28 @@ export function useContextoVisual() {
 
   // Create helpers that always stamp context
   const createInContext = (entityName, dados, campo = 'empresa_id') => {
-    return base44.entities[entityName].create(carimbarContexto(dados, campo));
+    const stamped = carimbarContexto(dados, campo);
+    if (!stamped.group_id && !stamped[campo]) {
+      throw new Error('Contexto multiempresa obrigatório: defina grupo ou empresa');
+    }
+    return base44.entities[entityName].create(stamped);
   };
   const bulkCreateInContext = (entityName, lista, campo = 'empresa_id') => {
-    return base44.entities[entityName].bulkCreate(lista.map(item => carimbarContexto(item, campo)));
+    const stampedList = lista.map(item => {
+      const s = carimbarContexto(item, campo);
+      if (!s.group_id && !s[campo]) {
+        throw new Error('Contexto multiempresa obrigatório em item da lista');
+      }
+      return s;
+    });
+    return base44.entities[entityName].bulkCreate(stampedList);
   };
   const filterInContext = (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
-    return base44.entities[entityName].filter({ ...criterios, ...getFiltroContexto(campo) }, order, limit);
+    const filtro = { ...criterios, ...getFiltroContexto(campo) };
+    if (!filtro.group_id && !filtro[campo]) {
+      throw new Error('Filtro sem contexto multiempresa');
+    }
+    return base44.entities[entityName].filter(filtro, order, limit);
   };
 
   return {

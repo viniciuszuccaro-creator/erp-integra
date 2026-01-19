@@ -23,6 +23,7 @@ import {
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
+import ProtectedSection from '@/components/security/ProtectedSection';
 
 // Componentes das Etapas
 const WizardEtapa1Cliente = React.lazy(() => import('./wizard/WizardEtapa1Cliente'));
@@ -248,16 +249,37 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
         const margemMinima = 10;
 
         if (margemAposDesconto < margemMinima && formData.status !== 'Aprovado') {
-          const dadosComAprovacao = {
+          // Cria solicitação de aprovação de desconto (backend)
+          try {
+            const { data: solicitacao } = await base44.functions.invoke('solicitacoesAprovacao', {
+              action: 'create',
+              group_id: formData.group_id || null,
+              empresa_id: formData.empresa_id || null,
+              tipo_solicitacao: 'desconto_pedido',
+              entidade_alvo: 'Pedido',
+              entidade_alvo_id: formData.id || `temp_${Date.now()}`,
+              dados_propostos: {
+                desconto_geral_pedido_percentual: formData.desconto_geral_pedido_percentual,
+                desconto_geral_pedido_valor: formData.desconto_geral_pedido_valor || 0,
+                margem_aplicada_vendedor: margemAposDesconto,
+                margem_minima_produto: margemMinima
+              },
+              justificativa: formData.justificativa_desconto || 'Ajuste comercial abaixo da margem mínima'
+            });
+            toast.info('⚠️ Solicitação de aprovação enviada', { description: `#${solicitacao?.id || ''}` });
+          } catch (e) {
+            toast.error('Não foi possível abrir a solicitação de aprovação');
+          }
+
+          // Mantém o pedido aguardando aprovação e salva rascunho
+          await onSubmit({
             ...formData,
             status_aprovacao: 'pendente',
             margem_minima_produto: margemMinima,
             margem_aplicada_vendedor: margemAposDesconto,
             desconto_solicitado_percentual: formData.desconto_geral_pedido_percentual,
             status: 'Aguardando Aprovação'
-          };
-          await onSubmit(dadosComAprovacao);
-          toast.info('⚠️ Pedido enviado para aprovação de desconto');
+          });
           return;
         }
       }
@@ -515,15 +537,17 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
             </Suspense>
           </TabsContent>
 
-          {/* ABA 7: FINANCEIRO */}
+          {/* ABA 7: FINANCEIRO (protegida) */}
           <TabsContent value="financeiro" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-              <FechamentoFinanceiroTab
-                formData={formData}
-                setFormData={setFormData}
-                onNext={() => setActiveTab('arquivos')}
-              />
-            </Suspense>
+            <ProtectedSection module="Comercial" section={"Pedido.Financeiro"} action="visualizar" fallback={<div className="text-sm text-slate-500">Acesso restrito ao financeiro.</div>}>
+              <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+                <FechamentoFinanceiroTab
+                  formData={formData}
+                  setFormData={setFormData}
+                  onNext={() => setActiveTab('arquivos')}
+                />
+              </Suspense>
+            </ProtectedSection>
           </TabsContent>
 
           {/* ABA 8: ARQUIVOS */}
