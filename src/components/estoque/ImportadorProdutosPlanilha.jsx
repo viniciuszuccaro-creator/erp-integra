@@ -912,7 +912,7 @@ const [suggesting, setSuggesting] = useState(false);
           ...(grupoId ? { group_id: grupoId } : {})
         }));
         for (let i = 0; i < payloads.length; i += 10) {
-          const slice = payloads.slice(i, i + 20);
+          const slice = payloads.slice(i, i + 10);
           const res = await Promise.allSettled(slice.map(p => base44.entities.GrupoProduto.create(p)));
           res.forEach((r, idx) => {
             if (r.status === 'fulfilled') {
@@ -922,7 +922,7 @@ const [suggesting, setSuggesting] = useState(false);
               if (p.codigo) localGruposByCodigo[String(p.codigo).trim()] = r.value.id;
             }
           });
-          await sleep(200);
+          await sleep(300);
         }
       }
 
@@ -934,7 +934,7 @@ const [suggesting, setSuggesting] = useState(false);
           ...(grupoId ? { group_id: grupoId } : {})
         }));
         for (let i = 0; i < payloadsS.length; i += 10) {
-          const slice = payloadsS.slice(i, i + 20);
+          const slice = payloadsS.slice(i, i + 10);
           const resS = await Promise.allSettled(slice.map(p => base44.entities.SetorAtividade.create(p)));
           resS.forEach((r, idx) => {
             if (r.status === 'fulfilled') {
@@ -943,7 +943,7 @@ const [suggesting, setSuggesting] = useState(false);
               localSetoresByNome[key] = r.value.id;
             }
           });
-          await sleep(200);
+          await sleep(300);
         }
       }
 
@@ -981,7 +981,7 @@ const [suggesting, setSuggesting] = useState(false);
       const existingSet = new Set();
       let delayExist = 0;
       for (let i = 0; i < keysToCheck.length; i += 10) {
-        const slice = keysToCheck.slice(i, i + 20);
+        const slice = keysToCheck.slice(i, i + 10);
         if (delayExist) await sleep(delayExist);
         const checks = await Promise.allSettled(slice.map(async (k) => {
           const [empId, code] = k.split('__');
@@ -1034,7 +1034,8 @@ const [suggesting, setSuggesting] = useState(false);
               return await base44.entities.Produto.update(d.existente.id, patch);
             } catch (err) {
               const msg = String(err?.message || '').toLowerCase();
-              if (msg.includes('not found')) {
+              const status = err?.response?.status || err?.status;
+              if (status === 404 || msg.includes('not found') || msg.includes('does not exist') || msg.includes('no such')) {
                 // registro não existe mais: criar novamente com os dados novos
                 return await base44.entities.Produto.create({
                   ...patch,
@@ -1043,8 +1044,17 @@ const [suggesting, setSuggesting] = useState(false);
                 });
               }
               if (msg.includes('rate limit')) {
-                await sleep(600);
-                return await base44.entities.Produto.update(d.existente.id, patch);
+                await sleep(600 + Math.floor(Math.random() * 200));
+                try {
+                  return await base44.entities.Produto.update(d.existente.id, patch);
+                } catch (err2) {
+                  const msg2 = String(err2?.message || '').toLowerCase();
+                  if (msg2.includes('rate limit')) {
+                    await sleep(1200 + Math.floor(Math.random() * 300));
+                    return await base44.entities.Produto.update(d.existente.id, patch);
+                  }
+                  throw err2;
+                }
               }
               throw err;
             }
@@ -1090,10 +1100,20 @@ const [suggesting, setSuggesting] = useState(false);
           try {
             return await base44.entities.Produto.create(p);
           } catch (err) {
-            if (String(err?.message || '').toLowerCase().includes('rate limit')) {
-              // backoff pontual e retry uma vez
-              await sleep(800);
-              return await base44.entities.Produto.create(p);
+            const msg = String(err?.message || '').toLowerCase();
+            if (msg.includes('rate limit')) {
+              // backoff com jitter e até 2 tentativas
+              await sleep(800 + Math.floor(Math.random() * 200));
+              try {
+                return await base44.entities.Produto.create(p);
+              } catch (err2) {
+                const msg2 = String(err2?.message || '').toLowerCase();
+                if (msg2.includes('rate limit')) {
+                  await sleep(1500 + Math.floor(Math.random() * 300));
+                  return await base44.entities.Produto.create(p);
+                }
+                throw err2;
+              }
             }
             throw err;
           }
@@ -1106,7 +1126,7 @@ const [suggesting, setSuggesting] = useState(false);
         failedTotal += failures.length;
         createdTotal += results.filter(r => r.status === 'fulfilled').length;
         // Pequena pausa entre lotes para evitar limites de taxa
-        await sleep(200);
+        await sleep(300);
       }
 
       const processados = createdTotal + updatedTotal;
