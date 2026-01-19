@@ -40,7 +40,7 @@ export function useContextoGrupoEmpresa() {
           if (grupos[0]) setGrupoAtual(grupos[0]);
         }
       } else {
-        const empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id;
+        const empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id || localStorage.getItem('empresa_atual_id');
         if (empresaId) {
           const empresas = await base44.entities.Empresa.filter({ id: empresaId });
           if (empresas[0]) setEmpresaAtual(empresas[0]);
