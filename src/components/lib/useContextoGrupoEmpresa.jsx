@@ -131,8 +131,10 @@ export function useContextoGrupoEmpresa() {
       setContexto('empresa');
       setEmpresaAtual(empresa);
       setGrupoAtual(null);
+      try { localStorage.setItem('contexto_atual', 'empresa'); } catch {}
+      try { if (empresa?.id) localStorage.setItem('empresa_atual_id', empresa.id); } catch {}
       queryClient.invalidateQueries();
-      setTimeout(() => window.location.reload(), 500);
+      // Sem reload completo
     },
     onError: (error) => {
       // V21.7: Mostrar erro amigável
