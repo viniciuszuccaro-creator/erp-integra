@@ -441,7 +441,7 @@ const [suggesting, setSuggesting] = useState(false);
         .map(p => makeKey(p.empresa_id, p.codigo))));
 
       const duplics = [];
-      const chunk = 50; // reduzir concorrência para evitar rate limit
+      const chunk = 20; // reduzir concorrência para evitar rate limit
       let delayDup = 0;
       for (let i = 0; i < keys.length; i += chunk) {
         const slice = keys.slice(i, i + chunk);
@@ -471,6 +471,7 @@ const [suggesting, setSuggesting] = useState(false);
         if (results.some(r => r.status === 'rejected' && String(r.reason?.message || '').toLowerCase().includes('rate limit'))) {
           delayDup = Math.min((delayDup || 400) * 1.5, 5000);
         }
+        await sleep(150);
       }
       setValidationErrors(erros);
       setDuplicidades(duplics);
@@ -910,15 +911,19 @@ const [suggesting, setSuggesting] = useState(false);
           ativo: true,
           ...(grupoId ? { group_id: grupoId } : {})
         }));
-        const res = await Promise.allSettled(payloads.map(p => base44.entities.GrupoProduto.create(p)));
-        res.forEach((r, idx) => {
-          if (r.status === 'fulfilled') {
-            const p = payloads[idx];
-            const key = norm(p.nome_grupo);
-            localGruposByNome[key] = r.value.id;
-            if (p.codigo) localGruposByCodigo[String(p.codigo).trim()] = r.value.id;
-          }
-        });
+        for (let i = 0; i < payloads.length; i += 20) {
+          const slice = payloads.slice(i, i + 20);
+          const res = await Promise.allSettled(slice.map(p => base44.entities.GrupoProduto.create(p)));
+          res.forEach((r, idx) => {
+            if (r.status === 'fulfilled') {
+              const p = slice[idx];
+              const key = norm(p.nome_grupo);
+              localGruposByNome[key] = r.value.id;
+              if (p.codigo) localGruposByCodigo[String(p.codigo).trim()] = r.value.id;
+            }
+          });
+          await sleep(200);
+        }
       }
 
       if (setoresPendentes.size) {
@@ -928,14 +933,18 @@ const [suggesting, setSuggesting] = useState(false);
           ativo: true,
           ...(grupoId ? { group_id: grupoId } : {})
         }));
-        const resS = await Promise.allSettled(payloadsS.map(p => base44.entities.SetorAtividade.create(p)));
-        resS.forEach((r, idx) => {
-          if (r.status === 'fulfilled') {
-            const p = payloadsS[idx];
-            const key = norm(p.nome);
-            localSetoresByNome[key] = r.value.id;
-          }
-        });
+        for (let i = 0; i < payloadsS.length; i += 20) {
+          const slice = payloadsS.slice(i, i + 20);
+          const resS = await Promise.allSettled(slice.map(p => base44.entities.SetorAtividade.create(p)));
+          resS.forEach((r, idx) => {
+            if (r.status === 'fulfilled') {
+              const p = slice[idx];
+              const key = norm(p.nome);
+              localSetoresByNome[key] = r.value.id;
+            }
+          });
+          await sleep(200);
+        }
       }
 
       // disponibilizar mapas criados para o montador
@@ -970,17 +979,28 @@ const [suggesting, setSuggesting] = useState(false);
       // Segurança extra: remover já existentes no banco (empresa+codigo)
       const keysToCheck = Array.from(new Set(produtos.map(p => makeKey(p.empresa_id, p.codigo))));
       const existingSet = new Set();
-      for (let i = 0; i < keysToCheck.length; i += 100) {
-        const slice = keysToCheck.slice(i, i + 100);
+      let delayExist = 0;
+      for (let i = 0; i < keysToCheck.length; i += 20) {
+        const slice = keysToCheck.slice(i, i + 20);
+        if (delayExist) await sleep(delayExist);
         const checks = await Promise.allSettled(slice.map(async (k) => {
           const [empId, code] = k.split('__');
-          const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
-          if (Array.isArray(found) && found.length > 0) existingSet.add(k);
+          try {
+            const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+            if (Array.isArray(found) && found.length > 0) existingSet.add(k);
+          } catch (err) {
+            if (String(err?.message || '').toLowerCase().includes('rate limit')) {
+              await sleep(600);
+              const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+              if (Array.isArray(found) && found.length > 0) existingSet.add(k);
+            }
+          }
           return null;
         }));
         if (checks.some(r => r.status === 'rejected')) {
-          // em caso de erro, segue para não bloquear importação
+          delayExist = Math.min((delayExist || 300) * 1.5, 4000);
         }
+        await sleep(150);
       }
       produtos = produtos.filter(p => !existingSet.has(makeKey(p.empresa_id, p.codigo)));
 
@@ -996,7 +1016,7 @@ const [suggesting, setSuggesting] = useState(false);
       const paraAtualizar = duplicidades.filter(dupChoice);
       let updatedTotal = 0;
       if (paraAtualizar.length > 0) {
-        const chunkU = 200;
+        const chunkU = 50;
         for (let i = 0; i < paraAtualizar.length; i += chunkU) {
           const parte = paraAtualizar.slice(i, i + chunkU);
           const res = await Promise.allSettled(parte.map(async (d) => {
@@ -1030,6 +1050,7 @@ const [suggesting, setSuggesting] = useState(false);
             }
           }));
           updatedTotal += res.filter(r => r.status === 'fulfilled').length;
+          await sleep(200);
         }
       }
 
