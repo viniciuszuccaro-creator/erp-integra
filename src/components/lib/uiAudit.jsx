@@ -12,6 +12,15 @@ async function getUserSafe() {
   }
 }
 
+function getContextSafe() {
+  try {
+    const empresa_id = typeof localStorage !== 'undefined' ? localStorage.getItem('empresa_atual_id') : null;
+    return { empresa_id };
+  } catch (_) {
+    return {};
+  }
+}
+
 // Minimal, resilient audit logger (non-blocking) + visual feedback
 export function logUIAction({ component, action, status, meta }) {
   // Visual feedback minimal por status
