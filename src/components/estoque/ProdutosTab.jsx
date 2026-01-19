@@ -280,7 +280,8 @@ export default function ProdutosTab({ produtos, isLoading }) {
           >
             <Factory className="w-4 h-4 mr-2" />
             Dashboard Produção
-          </Button>
+            </Button>
+            )}
 
           {/* V21.6: NOVO - Conversão em Massa */}
           {canEdit('Estoque', 'Produtos') && (
@@ -301,7 +302,8 @@ export default function ProdutosTab({ produtos, isLoading }) {
           >
             <ArrowUpRight className="w-4 h-4 mr-2" />
             Converter em Massa
-          </Button>
+            </Button>
+            )}
 
           {canCreate('Estoque', 'Produtos') && (
             <Button 
@@ -320,7 +322,8 @@ export default function ProdutosTab({ produtos, isLoading }) {
           >
             <Upload className="w-4 h-4 mr-2" />
             Importar Planilha
-          </Button>
+            </Button>
+            )}
 
           {canCreate('Estoque', 'Produtos') && (
             <Button 
