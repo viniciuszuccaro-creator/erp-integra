@@ -1,6 +1,7 @@
 import { base44 } from "@/api/base44Client";
+import { toast } from "sonner";
 
-// Minimal, resilient audit logger (non-blocking)
+// Minimal, resilient audit logger (non-blocking) + visual feedback
 export function logUIAction({ component, action, status, meta }) {
   try {
     const descricao = `[${component}] ${action} • ${status}`;
