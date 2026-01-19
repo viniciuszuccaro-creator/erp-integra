@@ -1020,7 +1020,10 @@ const [suggesting, setSuggesting] = useState(false);
       // B: garantir unidade válida sem travar a importação (fallback para UN)
       produtos = produtos.map(p => ({
         ...p,
-        unidade_medida: UNIDADES_ACEITAS.includes(p.unidade_medida) ? p.unidade_medida : 'UN'
+        unidade_medida: UNIDADES_ACEITAS.includes(p.unidade_medida) ? p.unidade_medida : 'UN',
+        estoque_disponivel: 0,
+        estoque_atual: p.estoque_atual ?? 0,
+        estoque_reservado: 0,
       }));
 
       // Deduplicar internamente por empresa+codigo (mantém a primeira ocorrência)
