@@ -24,8 +24,13 @@ export function useContextoGrupoEmpresa() {
       const currentUser = await base44.auth.me();
       setUser(currentUser);
 
-      const ctx = currentUser.contexto_atual || 'empresa';
+      // Detecta contexto: prioridade user.contexto_atual, senão localStorage
+      const ctxPersistido = (() => {
+        try { return localStorage.getItem('contexto_atual'); } catch { return null; }
+      })();
+      const ctx = currentUser.contexto_atual || ctxPersistido || 'empresa';
       setContexto(ctx);
+      try { localStorage.setItem('contexto_atual', ctx); } catch {}
 
       if (ctx === 'grupo') {
         const grupoId = currentUser.grupo_atual_id || currentUser.grupo_padrao_id;
