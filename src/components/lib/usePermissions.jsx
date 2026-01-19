@@ -114,6 +114,8 @@ export default function usePermissions() {
   return {
     hasPermission,
     hasGranularPermission,
+    hasTabPermission,
+    hasFieldPermission,
     isAdmin,
     canApprove,
     canDelete,
