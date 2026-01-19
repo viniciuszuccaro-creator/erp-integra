@@ -78,10 +78,15 @@ export default function GuardRails({ children, currentPageName }) {
   if (mod && !hasPermission(mod, null, 'ver')) {
     try {
       base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        empresa_id: empresaAtual?.id || null,
+        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
         acao: 'Bloqueio',
         modulo: mod,
-        entidade: 'UI',
+        entidade: 'Página',
         descricao: `GuardRails bloqueou acesso a ${currentPageName}`,
+        data_hora: new Date().toISOString(),
       });
     } catch {}
     return (

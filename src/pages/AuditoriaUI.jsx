@@ -27,7 +27,19 @@ export default function AuditoriaUI() {
               alert('Nenhum problema encontrado nos componentes visíveis.');
             } else {
               console.warn('UI Audit Issues', issues);
-              alert(`Foram encontrados ${issues.length} potenciais problemas. Confira o console para detalhes.`);
+              issues.forEach((iss) => {
+                try {
+                  base44.entities.AuditLog.create({
+                    acao: 'Auditoria',
+                    modulo: 'Sistema',
+                    entidade: 'UI',
+                    descricao: `[UI Scanner] ${iss.type} em ${iss.selector || '(sem seletor)'}`,
+                    dados_novos: iss,
+                    data_hora: new Date().toISOString(),
+                  });
+                } catch {}
+              });
+              alert(`Foram encontrados ${issues.length} potenciais problemas. Eles foram registrados no log de auditoria.`);
             }
           }}>Varredura Rápida (Página)</Button>
         </CardHeader>
