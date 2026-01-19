@@ -967,6 +967,12 @@ const [suggesting, setSuggesting] = useState(false);
         ...(grupoId ? { group_id: grupoId } : {})
       }));
 
+      // B: garantir unidade válida sem travar a importação (fallback para UN)
+      produtos = produtos.map(p => ({
+        ...p,
+        unidade_medida: UNIDADES_ACEITAS.includes(p.unidade_medida) ? p.unidade_medida : 'UN'
+      }));
+
       // Deduplicar internamente por empresa+codigo (mantém a primeira ocorrência)
       const seenKeys = new Set();
       produtos = produtos.filter(p => {
