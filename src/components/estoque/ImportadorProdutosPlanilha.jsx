@@ -147,7 +147,7 @@ const mapUnidade = (v) => {
     case 'cx': case 'caixa': return 'CX';
     case 'm2': case 'm²': return 'M2';
     case 'm3': case 'm³': return 'M3';
-    default: return 'UN';
+    default: return undefined;
   }
 };
 const mapTipoItem = (v) => {
@@ -413,7 +413,7 @@ const [suggesting, setSuggesting] = useState(false);
         const k = makeKey(p.empresa_id, p.codigo);
         if (!p?.codigo) erros.push({ empresa_id: p.empresa_id, codigo: '-', motivo: 'Código ausente' });
         if (!p?.descricao || String(p.descricao).trim() === '') erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Descrição obrigatória ausente' });
-        if (!UNIDADES_ACEITAS.includes(p.unidade_medida)) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Unidade de medida inválida' });
+        if (!UNIDADES_ACEITAS.includes(p.unidade_medida)) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: 'Unidade de medida ausente ou inválida' });
         if (p?.grupo_produto_nome && !p?.grupo_produto_id) erros.push({ empresa_id: p.empresa_id, codigo: p.codigo, motivo: `Grupo de produto não encontrado: ${p.grupo_produto_nome}` });
         /* NCM inválido não bloqueia importação; será sugerido por IA */
         if (vistos.has(k)) internos.add(k); else vistos.add(k);
@@ -842,7 +842,7 @@ const [suggesting, setSuggesting] = useState(false);
       // Montar preview com TODOS os itens
       const baseAll = dataRows
           .map((r) => montarProduto(r))
-          .filter((p) => p?.descricao && p?.unidade_medida);
+          .filter((p) => p?.descricao);
         setPreview(baseAll);
         setBaseProdutos(baseAll);
       setErro('');
