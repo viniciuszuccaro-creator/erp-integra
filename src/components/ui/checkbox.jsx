@@ -19,4 +19,18 @@ const Checkbox = React.forwardRef(({ className, ...props }, ref) => (
 ))
 Checkbox.displayName = CheckboxPrimitive.Root.displayName
 
-export { Checkbox }
+import { uiAuditWrap } from "@/components/lib/uiAudit";
+
+// decorate onCheckedChange if present
+const _orig = Checkbox; // keep ref
+const WrappedCheckbox = React.forwardRef((props, ref) => {
+  const p = { ...props };
+  if (typeof p.onCheckedChange === 'function' && !p.__wrapped_audit) {
+    p.onCheckedChange = uiAuditWrap(p['data-action'] || 'Checkbox.onCheckedChange', p.onCheckedChange, { kind: 'checkbox' });
+    p.__wrapped_audit = true;
+  }
+  return (<_orig {...p} ref={ref} />);
+});
+WrappedCheckbox.displayName = "WrappedCheckbox";
+
+export { WrappedCheckbox as Checkbox }
