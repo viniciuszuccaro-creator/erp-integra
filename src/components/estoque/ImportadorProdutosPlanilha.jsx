@@ -967,6 +967,23 @@ const [suggesting, setSuggesting] = useState(false);
         return true;
       });
 
+      // Segurança extra: remover já existentes no banco (empresa+codigo)
+      const keysToCheck = Array.from(new Set(produtos.map(p => makeKey(p.empresa_id, p.codigo))));
+      const existingSet = new Set();
+      for (let i = 0; i < keysToCheck.length; i += 100) {
+        const slice = keysToCheck.slice(i, i + 100);
+        const checks = await Promise.allSettled(slice.map(async (k) => {
+          const [empId, code] = k.split('__');
+          const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+          if (Array.isArray(found) && found.length > 0) existingSet.add(k);
+          return null;
+        }));
+        if (checks.some(r => r.status === 'rejected')) {
+          // em caso de erro, segue para não bloquear importação
+        }
+      }
+      produtos = produtos.filter(p => !existingSet.has(makeKey(p.empresa_id, p.codigo)));
+
       // Não filtramos por erros pré-calculados para garantir a importação completa; falhas serão reportadas individualmente pelo backend.
       // Garantir que group_id e empresa_id sejam mantidos, e IDs resolvidos por nome/código já aplicados em montarProduto.
 
