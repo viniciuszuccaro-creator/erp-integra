@@ -6,6 +6,7 @@ import {
   Package, Calculator, Globe, TrendingUp
 } from "lucide-react";
 import ProdutoFormHeader from "./produto/ProdutoFormHeader";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import ProdutoForm from "./ProdutoForm";
 import AbaConversoesProduto from "./AbaConversoesProduto";
 import AbaEcommerceProduto from "./AbaEcommerceProduto";
@@ -104,6 +105,19 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
             isSubmitting={isSubmitting} 
           />
         </TabsContent>
+
+        <TabsContent value="conversoes">
+          <Card>
+            <div className="p-6">
+              <AbaConversoesProduto 
+                formData={produto || {}} 
+                setFormData={() => {}} 
+              />
+            </div>
+          </Card>
+        </TabsContent>
+
+        {/* Precificação sensível protegida já dentro do ProdutoForm; opcional proteger a aba inteira no futuro */}
 
         <TabsContent value="conversoes">
           <Card>

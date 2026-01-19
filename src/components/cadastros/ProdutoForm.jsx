@@ -11,6 +11,7 @@ import { Loader2, Sparkles, Package, Upload, Calculator, CheckCircle2, AlertTria
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
+import ProtectedField from "@/components/security/ProtectedField";
 
 /**
  * V21.6 - EVOLUÇÃO DO CADASTRO DE PRODUTOS
@@ -693,16 +694,18 @@ Caso contrário, sugira:
           </h3>
 
           <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Custo Aquisição</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.custo_aquisicao}
-                onChange={(e) => setFormData(prev => ({...prev, custo_aquisicao: parseFloat(e.target.value) || 0}))}
-                placeholder="0.00"
-              />
-            </div>
+            <ProtectedField module="Estoque" submodule="Produto" tab="Precificacao" field="custo_aquisicao" action="visualizar" asText>
+              <div>
+                <Label>Custo Aquisição</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.custo_aquisicao}
+                  onChange={(e) => setFormData(prev => ({...prev, custo_aquisicao: parseFloat(e.target.value) || 0}))}
+                  placeholder="0.00"
+                />
+              </div>
+            </ProtectedField>
 
             <div>
               <Label>Preço Venda</Label>
@@ -715,15 +718,17 @@ Caso contrário, sugira:
               />
             </div>
 
-            <div>
-              <Label>Margem (%)</Label>
-              <Input
-                type="number"
-                value={formData.custo_aquisicao > 0 ? (((formData.preco_venda - formData.custo_aquisicao) / formData.custo_aquisicao) * 100).toFixed(2) : 0}
-                disabled
-                className="bg-slate-100"
-              />
-            </div>
+            <ProtectedField module="Estoque" submodule="Produto" tab="Precificacao" field="margem_percentual" action="visualizar" asText>
+              <div>
+                <Label>Margem (%)</Label>
+                <Input
+                  type="number"
+                  value={formData.custo_aquisicao > 0 ? (((formData.preco_venda - formData.custo_aquisicao) / formData.custo_aquisicao) * 100).toFixed(2) : 0}
+                  disabled
+                  className="bg-slate-100"
+                />
+              </div>
+            </ProtectedField>
           </div>
         </CardContent>
       </Card>

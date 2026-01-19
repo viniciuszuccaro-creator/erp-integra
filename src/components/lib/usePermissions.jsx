@@ -83,6 +83,10 @@ export default function usePermissions() {
     return hasPermission(module, section, action);
   };
 
+  // Convenções sugeridas de chaves para Produtos/Precificação
+  // Estoque -> Produto -> Precificacao -> (custo_aquisicao, margem_percentual)
+  // Comercial -> Pedido -> Financeiro -> (emitir_nfe, aprovar_desconto)
+
   const hasGranularPermission = (module, section, action) => {
     return hasPermission(module, section, action);
   };

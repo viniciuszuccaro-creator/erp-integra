@@ -15,5 +15,5 @@ export default function ProtectedField({
   if (isLoading) return null;
   const allowed = hasFieldPermission ? hasFieldPermission(modulo, submodule, tab, field, action) : false;
   if (allowed) return <>{children}</>;
-  return asText ? <span>{mask}</span> : null;
+  return asText ? <span className="inline-block px-2 py-1 text-slate-400">{mask}</span> : null;
 }

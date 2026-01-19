@@ -34,7 +34,7 @@ export default function FechamentoFinanceiroTab({ formData, setFormData, onNext 
   const percentualFaturado = valorTotal > 0 ? (valorFaturado / valorTotal) * 100 : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="region" aria-label="Fechamento Financeiro do Pedido">
       {/* V21.1: Barra de Progresso do Faturamento */}
       {etapas.length > 0 && (
         <Card className="border-2 border-purple-300 bg-purple-50">
