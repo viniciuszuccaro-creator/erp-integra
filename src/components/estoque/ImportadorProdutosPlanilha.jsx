@@ -976,116 +976,126 @@ const [suggesting, setSuggesting] = useState(false);
         return true;
       });
 
+      const skipDupFlow = (gruposPendentes.size > 0) || (setoresPendentes.size > 0);
       // Segurança extra: remover já existentes no banco (empresa+codigo)
-      const keysToCheck = Array.from(new Set(produtos.map(p => makeKey(p.empresa_id, p.codigo))));
-      const existingSet = new Set();
-      let delayExist = 0;
-      for (let i = 0; i < keysToCheck.length; i += 10) {
-        const slice = keysToCheck.slice(i, i + 10);
-        if (delayExist) await sleep(delayExist);
-        const checks = await Promise.allSettled(slice.map(async (k) => {
-          const [empId, code] = k.split('__');
-          try {
-            const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
-            if (Array.isArray(found) && found.length > 0) existingSet.add(k);
-          } catch (err) {
-            if (String(err?.message || '').toLowerCase().includes('rate limit')) {
-              await sleep(600);
+      if (!skipDupFlow) {
+        const keysToCheck = Array.from(new Set(produtos.map(p => makeKey(p.empresa_id, p.codigo))));
+        const existingSet = new Set();
+        let delayExist = 0;
+        for (let i = 0; i < keysToCheck.length; i += 10) {
+          const slice = keysToCheck.slice(i, i + 10);
+          if (delayExist) await sleep(delayExist);
+          const checks = await Promise.allSettled(slice.map(async (k) => {
+            const [empId, code] = k.split('__');
+            try {
               const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
               if (Array.isArray(found) && found.length > 0) existingSet.add(k);
+            } catch (err) {
+              if (String(err?.message || '').toLowerCase().includes('rate limit')) {
+                await sleep(600);
+                const found = await base44.entities.Produto.filter({ empresa_id: empId, codigo: code }, undefined, 1);
+                if (Array.isArray(found) && found.length > 0) existingSet.add(k);
+              }
             }
+            return null;
+          }));
+          if (checks.some(r => r.status === 'rejected')) {
+            delayExist = Math.min((delayExist || 300) * 1.5, 4000);
           }
-          return null;
-        }));
-        if (checks.some(r => r.status === 'rejected')) {
-          delayExist = Math.min((delayExist || 300) * 1.5, 4000);
+          await sleep(250);
         }
-        await sleep(250);
+        produtos = produtos.filter(p => !existingSet.has(makeKey(p.empresa_id, p.codigo)));
       }
-      produtos = produtos.filter(p => !existingSet.has(makeKey(p.empresa_id, p.codigo)));
 
       // Não filtramos por erros pré-calculados para garantir a importação completa; falhas serão reportadas individualmente pelo backend.
       // Garantir que group_id e empresa_id sejam mantidos, e IDs resolvidos por nome/código já aplicados em montarProduto.
 
-      // Executar atualizações para duplicidades marcadas como "atualizar"
-      const dupChoice = (d) => {
-        const k = makeKey(d.empresa_id, d.codigo);
-        const choice = escolhasDuplicidades[k];
-        return choice ? choice === 'atualizar' : false; // padrão: pular (não atualizar)
-      };
-      const paraAtualizar = duplicidades.filter(dupChoice);
-      let updatedTotal = 0;
-      if (paraAtualizar.length > 0) {
-        const chunkU = 20;
-        for (let i = 0; i < paraAtualizar.length; i += chunkU) {
-          const parte = paraAtualizar.slice(i, i + chunkU);
-          const res = await Promise.allSettled(parte.map(async (d) => {
-            const patch = { ...d.novo };
-            delete patch.id;
-            delete patch.empresa_id;
-            delete patch.group_id;
-            delete patch.created_date;
-            delete patch.updated_date;
-            delete patch.created_by;
-            delete patch.codigo; // não alteramos o código-chave na atualização
-            if (patch.ncm != null) patch.ncm = sanitizeNCM(patch.ncm);
-            Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
-            try {
-              return await base44.entities.Produto.update(d.existente.id, patch);
-            } catch (err) {
-              const msg = String(err?.message || '').toLowerCase();
-              const status = err?.response?.status || err?.status;
-              if (status === 404 || msg.includes('not found') || msg.includes('does not exist') || msg.includes('no such')) {
-                // registro não existe mais: criar novamente com os dados novos
-                return await base44.entities.Produto.create({
-                  ...patch,
-                  empresa_id: d.empresa_id,
-                  codigo: d.codigo,
-                });
-              }
-              if (msg.includes('rate limit')) {
-                await sleep(600 + Math.floor(Math.random() * 200));
-                try {
-                  return await base44.entities.Produto.update(d.existente.id, patch);
-                } catch (err2) {
-                  const msg2 = String(err2?.message || '').toLowerCase();
-                  if (msg2.includes('rate limit')) {
-                    await sleep(1200 + Math.floor(Math.random() * 300));
-                    return await base44.entities.Produto.update(d.existente.id, patch);
-                  }
-                  throw err2;
+      if (!skipDupFlow) {
+        // Executar atualizações para duplicidades marcadas como "atualizar"
+        const dupChoice = (d) => {
+          const k = makeKey(d.empresa_id, d.codigo);
+          const choice = escolhasDuplicidades[k];
+          return choice ? choice === 'atualizar' : false; // padrão: pular (não atualizar)
+        };
+        const paraAtualizar = duplicidades.filter(dupChoice);
+        let updatedTotal = 0;
+        if (paraAtualizar.length > 0) {
+          const chunkU = 20;
+          for (let i = 0; i < paraAtualizar.length; i += chunkU) {
+            const parte = paraAtualizar.slice(i, i + chunkU);
+            const res = await Promise.allSettled(parte.map(async (d) => {
+              const patch = { ...d.novo };
+              delete patch.id;
+              delete patch.empresa_id;
+              delete patch.group_id;
+              delete patch.created_date;
+              delete patch.updated_date;
+              delete patch.created_by;
+              delete patch.codigo; // não alteramos o código-chave na atualização
+              if (patch.ncm != null) patch.ncm = sanitizeNCM(patch.ncm);
+              Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
+              try {
+                return await base44.entities.Produto.update(d.existente.id, patch);
+              } catch (err) {
+                const msg = String(err?.message || '').toLowerCase();
+                const status = err?.response?.status || err?.status;
+                if (status === 404 || msg.includes('not found') || msg.includes('does not exist') || msg.includes('no such')) {
+                  // registro não existe mais: criar novamente com os dados novos
+                  return await base44.entities.Produto.create({
+                    ...patch,
+                    empresa_id: d.empresa_id,
+                    codigo: d.codigo,
+                  });
                 }
+                if (msg.includes('rate limit')) {
+                  await sleep(600 + Math.floor(Math.random() * 200));
+                  try {
+                    return await base44.entities.Produto.update(d.existente.id, patch);
+                  } catch (err2) {
+                    const msg2 = String(err2?.message || '').toLowerCase();
+                    if (msg2.includes('rate limit')) {
+                      await sleep(1200 + Math.floor(Math.random() * 300));
+                      return await base44.entities.Produto.update(d.existente.id, patch);
+                    }
+                    throw err2;
+                  }
+                }
+                throw err;
               }
-              throw err;
-            }
-          }));
-          updatedTotal += res.filter(r => r.status === 'fulfilled').length;
-          await sleep(300);
+            }));
+            updatedTotal += res.filter(r => r.status === 'fulfilled').length;
+            await sleep(300);
+          }
         }
+
+        // Remover todas as duplicidades (atualizadas ou puladas) da criação
+        const dupKeys = new Set(duplicidades.map(d => makeKey(d.empresa_id, d.codigo)));
+        produtos = produtos.filter(p => !dupKeys.has(makeKey(p.empresa_id, p.codigo)));
       }
 
-      // Remover todas as duplicidades (atualizadas ou puladas) da criação
-      const dupKeys = new Set(duplicidades.map(d => makeKey(d.empresa_id, d.codigo)));
-      produtos = produtos.filter(p => !dupKeys.has(makeKey(p.empresa_id, p.codigo)));
-
       if (produtos.length === 0) {
-        const hasDesc = parsedRows.some(r => !!(getWithMap(r, 'descricao') || sanitize(get(r, HEADERS.descricao))));
-        const hasUn = parsedRows.some(r => !!(getWithMap(r, 'unidade_medida') || sanitize(get(r, HEADERS.unidade_medida))));
-        const expectedDesc = HEADERS.descricao.filter(h => h.length > 1).join(', ');
-        const expectedUn = HEADERS.unidade_medida.filter(h => h.length > 1).join(', ');
-        const headersPrimeiros = (() => {
-            const set = new Set();
-            (Array.isArray(parsedRows) ? parsedRows.slice(0,5) : []).forEach(r => Object.keys(r || {}).forEach(k => set.add(String(k))));
-            return Array.from(set);
-          })();
-        const dicas = [];
-        if (!hasDesc) dicas.push(`- Cabeçalho de Descrição ausente (ex.: ${expectedDesc}).`);
-        if (!hasUn) dicas.push(`- Cabeçalho de Unidade ausente (ex.: ${expectedUn}).`);
-        if (!empresaId && !grupoId) dicas.push('- Selecione a empresa de destino ou um grupo.');
-        const msg = `Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.\nObrigatórios: Descrição, Unidade (Un.) e Empresa ou Grupo de destino.\n${dicas.join('\n')}\nDetectamos estes cabeçalhos: ${headersPrimeiros.join(', ')}\nMapeamento atual: ${JSON.stringify(columnMap)}`;
-        setErro(msg);
-        toast.error('Nada para importar. Veja os detalhes acima.');
-        return;
+        // Se criamos grupos/setores agora, não interromper prematuramente: tentar criar mesmo assim
+        if (skipDupFlow) {
+          // prosseguir para etapa de criação (pode ter sido filtrado tudo por verificações anteriores)
+        } else {
+          const hasDesc = parsedRows.some(r => !!(getWithMap(r, 'descricao') || sanitize(get(r, HEADERS.descricao))));
+          const hasUn = parsedRows.some(r => !!(getWithMap(r, 'unidade_medida') || sanitize(get(r, HEADERS.unidade_medida))));
+          const expectedDesc = HEADERS.descricao.filter(h => h.length > 1).join(', ');
+          const expectedUn = HEADERS.unidade_medida.filter(h => h.length > 1).join(', ');
+          const headersPrimeiros = (() => {
+              const set = new Set();
+              (Array.isArray(parsedRows) ? parsedRows.slice(0,5) : []).forEach(r => Object.keys(r || {}).forEach(k => set.add(String(k))));
+              return Array.from(set);
+            })();
+          const dicas = [];
+          if (!hasDesc) dicas.push(`- Cabeçalho de Descrição ausente (ex.: ${expectedDesc}).`);
+          if (!hasUn) dicas.push(`- Cabeçalho de Unidade ausente (ex.: ${expectedUn}).`);
+          if (!empresaId && !grupoId) dicas.push('- Selecione a empresa de destino ou um grupo.');
+          const msg = `Nada para importar. Verifique o cabeçalho da planilha e os campos obrigatórios.\nObrigatórios: Descrição, Unidade (Un.) e Empresa ou Grupo de destino.\n${dicas.join('\n')}\nDetectamos estes cabeçalhos: ${headersPrimeiros.join(', ')}\nMapeamento atual: ${JSON.stringify(columnMap)}`;
+          setErro(msg);
+          toast.error('Nada para importar. Veja os detalhes acima.');
+          return;
+        }
       }
 
       // Importação com controle de taxa: pequenos lotes + backoff simples para evitar rate limit
@@ -1126,7 +1136,7 @@ const [suggesting, setSuggesting] = useState(false);
         failedTotal += failures.length;
         createdTotal += results.filter(r => r.status === 'fulfilled').length;
         // Pequena pausa entre lotes para evitar limites de taxa
-        await sleep(300);
+        await sleep(300 + Math.floor(Math.random() * 150));
       }
 
       const processados = createdTotal + updatedTotal;
