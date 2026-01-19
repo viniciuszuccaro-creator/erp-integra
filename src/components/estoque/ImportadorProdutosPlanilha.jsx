@@ -832,6 +832,48 @@ const [suggesting, setSuggesting] = useState(false);
       const dataRows = rows.filter((r) => !isHeaderRow(r));
       setTotalLinhas(dataRows.length);
 
+      // Criar automaticamente unidades de medida ausentes (opção B)
+      try {
+        const unidadesDetectadas = new Set();
+        for (const r of dataRows) {
+          const rawUnit = sanitize(getWithMap(r, 'unidade_medida'));
+          if (!rawUnit) continue;
+          const mapped = mapUnidade(rawUnit);
+          if (!mapped || !UNIDADES_ACEITAS.includes(mapped)) {
+            const sigla = String(rawUnit).trim().toUpperCase().replace(/\s+/g, '');
+            if (sigla) unidadesDetectadas.add(sigla);
+          }
+        }
+        if (unidadesDetectadas.size) {
+          let existentes = [];
+          try {
+            existentes = await base44.entities.UnidadeMedida.list();
+          } catch (_) {}
+          const existentesSet = new Set((existentes || []).map(u => String(u.sigla || '').toUpperCase().trim()));
+          const novosUM = Array.from(unidadesDetectadas).filter(s => !existentesSet.has(s));
+          if (novosUM.length) {
+            const payloadsUM = novosUM.map(sigla => ({
+              sigla,
+              nome_completo: sigla,
+              tipo_grandeza: 'Outro',
+              permite_conversao: true,
+              fator_conversao_para_base: 1,
+              usa_em_estoque: true,
+              usa_em_compras: true,
+              usa_em_vendas: true,
+              usa_em_producao: false,
+              ativo: true,
+              ...(grupoId ? { group_id: grupoId } : {})
+            }));
+            for (let i = 0; i < payloadsUM.length; i += 20) {
+              const slice = payloadsUM.slice(i, i + 20);
+              await Promise.allSettled(slice.map(p => base44.entities.UnidadeMedida.create(p)));
+              await sleep(200);
+            }
+          }
+        }
+      } catch (_) { /* não bloquear import preview por UM */ }
+
       // Captura e salva os cabeçalhos disponíveis para auto-mapeamento
       const headersDetectados = Array.from(
         new Set(dataRows.flatMap((r) => Object.keys(r || {})))
