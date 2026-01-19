@@ -19,8 +19,17 @@ export default function AuditoriaUI() {
   return (
     <div className="p-6">
       <Card className="bg-white">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Auditoria Funcional de UI</CardTitle>
+          <Button variant="outline" onClick={() => {
+            const issues = scanInteractiveIssues(document);
+            if (issues.length === 0) {
+              alert('Nenhum problema encontrado nos componentes visíveis.');
+            } else {
+              console.warn('UI Audit Issues', issues);
+              alert(`Foram encontrados ${issues.length} potenciais problemas. Confira o console para detalhes.`);
+            }
+          }}>Varredura Rápida (Página)</Button>
         </CardHeader>
         <CardContent>
           {isLoading ? (
