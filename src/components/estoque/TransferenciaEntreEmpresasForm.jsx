@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeftRight, Save, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import usePermissions from "@/components/lib/usePermissions";
+import ProtectedField from "@/components/security/ProtectedField";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -21,6 +23,7 @@ export default function TransferenciaEntreEmpresasForm({
   windowMode = false
 }) {
   const queryClient = useQueryClient();
+  const { canCreate } = usePermissions();
 
   const [formData, setFormData] = useState({
     empresa_origem_id: "",
@@ -60,6 +63,7 @@ export default function TransferenciaEntreEmpresasForm({
       // Criar movimentações de estoque
       await base44.entities.MovimentacaoEstoque.create({
         empresa_id: data.empresa_origem_id,
+        group_id: empresaOrigem.group_id,
         produto_id: data.produto_id,
         tipo_movimento: "transferencia",
         origem_movimento: "transferencia",
@@ -71,6 +75,7 @@ export default function TransferenciaEntreEmpresasForm({
 
       await base44.entities.MovimentacaoEstoque.create({
         empresa_id: data.empresa_destino_id,
+        group_id: empresaDestino.group_id,
         produto_id: data.produto_id,
         tipo_movimento: "transferencia",
         origem_movimento: "transferencia",
@@ -222,7 +227,9 @@ export default function TransferenciaEntreEmpresasForm({
                 <div>
                   <p className="text-blue-700">Custo Médio</p>
                   <p className="font-bold text-blue-900">
-                    R$ {(produtoSelecionado.custo_medio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    <ProtectedField module="Estoque" submodule="Transferencias" field="custo" action="ver" asText>
+                      R$ {(produtoSelecionado.custo_medio || produtoSelecionado.custo_aquisicao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </ProtectedField>
                   </p>
                 </div>
               </div>
@@ -312,7 +319,7 @@ export default function TransferenciaEntreEmpresasForm({
         <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
           <Button
             type="submit"
-            disabled={createTransferenciaMutation.isPending}
+            disabled={createTransferenciaMutation.isPending || !canCreate('Estoque','Transferencias')}
             className="bg-purple-600 hover:bg-purple-700"
           >
             {createTransferenciaMutation.isPending ? (

@@ -12,11 +12,23 @@ import {
 } from "recharts";
 import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Package } from "lucide-react";
 import ProtectedField from "@/components/security/ProtectedField";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function RelatoriosEstoque({ produtos, movimentacoes }) {
-  const produtosComValor = produtos.map(p => {
+  const { empresaAtual, contexto } = useContextoVisual();
+  const produtosFiltrados = Array.isArray(produtos) ? produtos.filter(p => {
+    const empresaOk = empresaAtual?.id ? p.empresa_id === empresaAtual.id : true;
+    const grupoOk = contexto?.group_id ? (p.group_id === contexto.group_id || p.compartilhado_grupo) : true;
+    return empresaOk && grupoOk;
+  }) : [];
+  const movimentacoesFiltradas = Array.isArray(movimentacoes) ? movimentacoes.filter(m => {
+    const empresaOk = empresaAtual?.id ? m.empresa_id === empresaAtual.id : true;
+    const grupoOk = contexto?.group_id ? (m.group_id === contexto.group_id) : true;
+    return empresaOk && grupoOk;
+  }) : [];
+  const produtosComValor = produtosFiltrados.map(p => {
     const valorEstoque = (p.estoque_atual || 0) * (p.custo_aquisicao || 0);
-    const valorMovimentado = movimentacoes
+    const valorMovimentado = movimentacoesFiltradas
       .filter(m => m.produto_id === p.id)
       .reduce((sum, m) => sum + (m.valor_total || 0), 0);
     
@@ -47,8 +59,8 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   });
 
   const hoje = new Date();
-  const itensParados = produtos.filter(p => {
-    const ultimaMov = movimentacoes
+  const itensParados = produtosFiltrados.filter(p => {
+    const ultimaMov = movimentacoesFiltradas
       .filter(m => m.produto_id === p.id)
       .sort((a, b) => new Date(b.data_movimentacao) - new Date(a.data_movimentacao))[0];
     
@@ -58,7 +70,7 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
     return diasParado > 90;
   });
 
-  const produtosComGiro = produtos.map(p => {
+  const produtosComGiro = produtosFiltrados.map(p => {
     const totalSaidas = movimentacoes
       .filter(m => m.produto_id === p.id && m.tipo_movimento === "saida")
       .reduce((sum, m) => sum + (m.quantidade || 0), 0);

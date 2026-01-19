@@ -20,7 +20,7 @@ import { toast } from "sonner";
 export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, contexto } = useContextoVisual();
   const { canCreate } = usePermissions();
   const [formData, setFormData] = useState({
     numero_requisicao: `REQ-ALM-${Date.now()}`,
@@ -42,15 +42,16 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
       for (const item of data.itens) {
         await base44.entities.MovimentacaoEstoque.create({
           empresa_id: empresaAtual?.id,
+          group_id: contexto?.group_id,
           produto_id: item.produto_id,
           produto_descricao: item.produto_descricao,
-          tipo_movimentacao: "Saída",
+          tipo_movimento: "saida",
           quantidade: item.quantidade,
           data_movimentacao: data.data_requisicao,
           documento: data.numero_requisicao,
           motivo: `Requisição Almoxarifado - ${data.finalidade}`,
-          setor_origem: "Almoxarifado",
-          setor_destino: data.setor,
+          localizacao_origem: "Almoxarifado",
+          localizacao_destino: data.setor,
           responsavel: data.solicitante,
           observacoes: data.observacoes
         });
