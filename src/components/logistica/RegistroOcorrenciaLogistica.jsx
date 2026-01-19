@@ -214,7 +214,7 @@ export default function RegistroOcorrenciaLogistica({ pedido, entrega, onClose, 
           </Button>
           <Button
             onClick={() => registrarOcorrenciaMutation.mutate()}
-            disabled={!descricao.trim() || !nomeRecebedor.trim() || registrarOcorrenciaMutation.isPending}
+            disabled={!descricao.trim() || registrarOcorrenciaMutation.isPending}
             className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700"
           >
             <CheckCircle2 className="w-4 h-4 mr-2" />
