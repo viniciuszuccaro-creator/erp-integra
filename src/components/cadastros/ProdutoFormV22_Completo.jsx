@@ -55,7 +55,14 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
     if (produto) {
       return {
         ...produto,
-        unidades_secundarias: produto.unidades_secundarias || ['KG'],
+        // Garante que a Unidade Principal apareça selecionada no formulário
+        unidade_principal: produto.unidade_principal || produto.unidade_medida || (produto.eh_bitola ? 'KG' : 'UN'),
+        // Garante que a unidade principal esteja presente nas unidades habilitadas
+        unidades_secundarias: (() => {
+          const base = produto.unidades_secundarias || ['KG'];
+          const up = produto.unidade_principal || produto.unidade_medida || (produto.eh_bitola ? 'KG' : undefined);
+          return up && !base.includes(up) ? [...base, up] : base;
+        })(),
         fatores_conversao: produto.fatores_conversao || {
           kg_por_peca: 0,
           kg_por_metro: 0,
