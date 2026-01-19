@@ -126,8 +126,27 @@ const SelectSeparator = React.forwardRef(({ className, ...props }, ref) => (
 ))
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName
 
+import { uiAuditWrap } from "@/components/lib/uiAudit";
+
+// Patch SelectTrigger to audit onValueChange when passed via Root
+const _Select = Select;
+const _Root = _Select;
+
+function withAuditRoot(props) {
+  const p = { ...props };
+  if (typeof p.onValueChange === 'function' && !p.__wrapped_audit) {
+    p.onValueChange = uiAuditWrap(p['data-action'] || 'Select.onValueChange', p.onValueChange, { kind: 'select' });
+    p.__wrapped_audit = true;
+  }
+  return p;
+}
+
+const AuditedSelect = (props) => (
+  <_Root {...withAuditRoot(props)} />
+);
+
 export {
-  Select,
+  AuditedSelect as Select,
   SelectGroup,
   SelectValue,
   SelectTrigger,
