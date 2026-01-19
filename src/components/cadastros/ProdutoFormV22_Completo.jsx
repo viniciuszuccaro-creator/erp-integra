@@ -474,7 +474,8 @@ Caso contrário, sugira:
 
     const dadosSubmit = {
       ...formData,
-      unidade_medida: formData.unidade_principal || 'KG',
+      // Sincroniza unidade do formulário com o schema (campo unidade_medida é requerido)
+      unidade_medida: formData.unidade_principal || formData.unidade_medida || 'KG',
       empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1',
       tributacao: {
         icms_cst: formData.tributacao.icms_cst || '',
