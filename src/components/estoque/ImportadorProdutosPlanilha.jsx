@@ -441,7 +441,7 @@ const [suggesting, setSuggesting] = useState(false);
         .map(p => makeKey(p.empresa_id, p.codigo))));
 
       const duplics = [];
-      const chunk = 20; // reduzir concorrência para evitar rate limit
+      const chunk = 10; // reduzir concorrência para evitar rate limit (mais conservador)
       let delayDup = 0;
       for (let i = 0; i < keys.length; i += chunk) {
         const slice = keys.slice(i, i + chunk);
@@ -471,7 +471,7 @@ const [suggesting, setSuggesting] = useState(false);
         if (results.some(r => r.status === 'rejected' && String(r.reason?.message || '').toLowerCase().includes('rate limit'))) {
           delayDup = Math.min((delayDup || 400) * 1.5, 5000);
         }
-        await sleep(150);
+        await sleep(250);
       }
       setValidationErrors(erros);
       setDuplicidades(duplics);
@@ -911,7 +911,7 @@ const [suggesting, setSuggesting] = useState(false);
           ativo: true,
           ...(grupoId ? { group_id: grupoId } : {})
         }));
-        for (let i = 0; i < payloads.length; i += 20) {
+        for (let i = 0; i < payloads.length; i += 10) {
           const slice = payloads.slice(i, i + 20);
           const res = await Promise.allSettled(slice.map(p => base44.entities.GrupoProduto.create(p)));
           res.forEach((r, idx) => {
@@ -933,7 +933,7 @@ const [suggesting, setSuggesting] = useState(false);
           ativo: true,
           ...(grupoId ? { group_id: grupoId } : {})
         }));
-        for (let i = 0; i < payloadsS.length; i += 20) {
+        for (let i = 0; i < payloadsS.length; i += 10) {
           const slice = payloadsS.slice(i, i + 20);
           const resS = await Promise.allSettled(slice.map(p => base44.entities.SetorAtividade.create(p)));
           resS.forEach((r, idx) => {
@@ -980,7 +980,7 @@ const [suggesting, setSuggesting] = useState(false);
       const keysToCheck = Array.from(new Set(produtos.map(p => makeKey(p.empresa_id, p.codigo))));
       const existingSet = new Set();
       let delayExist = 0;
-      for (let i = 0; i < keysToCheck.length; i += 20) {
+      for (let i = 0; i < keysToCheck.length; i += 10) {
         const slice = keysToCheck.slice(i, i + 20);
         if (delayExist) await sleep(delayExist);
         const checks = await Promise.allSettled(slice.map(async (k) => {
@@ -1000,7 +1000,7 @@ const [suggesting, setSuggesting] = useState(false);
         if (checks.some(r => r.status === 'rejected')) {
           delayExist = Math.min((delayExist || 300) * 1.5, 4000);
         }
-        await sleep(150);
+        await sleep(250);
       }
       produtos = produtos.filter(p => !existingSet.has(makeKey(p.empresa_id, p.codigo)));
 
@@ -1016,7 +1016,7 @@ const [suggesting, setSuggesting] = useState(false);
       const paraAtualizar = duplicidades.filter(dupChoice);
       let updatedTotal = 0;
       if (paraAtualizar.length > 0) {
-        const chunkU = 50;
+        const chunkU = 20;
         for (let i = 0; i < paraAtualizar.length; i += chunkU) {
           const parte = paraAtualizar.slice(i, i + chunkU);
           const res = await Promise.allSettled(parte.map(async (d) => {
@@ -1050,7 +1050,7 @@ const [suggesting, setSuggesting] = useState(false);
             }
           }));
           updatedTotal += res.filter(r => r.status === 'fulfilled').length;
-          await sleep(200);
+          await sleep(300);
         }
       }
 
@@ -1079,7 +1079,7 @@ const [suggesting, setSuggesting] = useState(false);
       }
 
       // Importação com controle de taxa: pequenos lotes + backoff simples para evitar rate limit
-      const chunkSize = 20; // reduzir o lote para estabilidade
+      const chunkSize = 10; // reduzir ainda mais o lote para estabilidade
       let createdTotal = 0;
       let failedTotal = 0;
       let delay = 0;
