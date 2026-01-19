@@ -55,34 +55,37 @@ export default function GuardRails({ children, currentPageName }) {
     );
   }
 
-  if (!empresaAtual?.id) {
-    return (
-      <div className="p-6">
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Selecione uma empresa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-slate-600">Defina a empresa ativa para continuar. Use o seletor no topo.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (contexto === 'grupo' && !grupoAtual?.id) {
-    return (
-      <div className="p-6">
-        <Card className="bg-white">
-          <CardHeader>
-            <CardTitle>Selecione um grupo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-slate-600">Defina o grupo ativo para continuar. Use os controles de contexto.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+  // Validação de contexto (grupo x empresa)
+  if (contexto === 'grupo') {
+    if (!grupoAtual?.id) {
+      return (
+        <div className="p-6">
+          <Card className="bg-white">
+            <CardHeader>
+              <CardTitle>Selecione um grupo</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-600">Defina o grupo ativo para continuar. Use os controles de contexto.</p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+  } else {
+    if (!empresaAtual?.id) {
+      return (
+        <div className="p-6">
+          <Card className="bg-white">
+            <CardHeader>
+              <CardTitle>Selecione uma empresa</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-600">Defina a empresa ativa para continuar. Use o seletor no topo.</p>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
   }
 
   // Permissão por módulo (Layout já valida, aqui reforçamos)
