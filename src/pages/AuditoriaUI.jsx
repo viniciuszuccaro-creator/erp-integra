@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { scanInteractiveIssues } from "@/components/lib/uiAuditScanner";
 
 export default function AuditoriaUI() {
   const { data = [], isLoading } = useQuery({
