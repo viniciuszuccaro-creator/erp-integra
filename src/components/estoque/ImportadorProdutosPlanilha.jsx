@@ -884,6 +884,10 @@ const [suggesting, setSuggesting] = useState(false);
       // Montar preview com TODOS os itens
       const baseAll = dataRows
           .map((r) => montarProduto(r))
+          .map((p) => ({
+            ...p,
+            unidade_medida: UNIDADES_ACEITAS.includes(p.unidade_medida) ? p.unidade_medida : 'UN'
+          }))
           .filter((p) => p?.descricao);
         setPreview(baseAll);
         setBaseProdutos(baseAll);
