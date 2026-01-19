@@ -39,6 +39,18 @@ Deno.serve(async (req) => {
 
     const sanitized = sanitizeValue(data);
 
+    // Enriquecimento de contexto: se faltar group_id mas houver empresa_id, obtém do cadastro da empresa
+    let enriched = sanitized;
+    try {
+      if (!enriched?.group_id && data?.empresa_id) {
+        const empresas = await base44.asServiceRole.entities.Empresa.filter({ id: data.empresa_id });
+        const emp = Array.isArray(empresas) ? empresas[0] : null;
+        if (emp?.group_id) {
+          enriched = { ...enriched, group_id: emp.group_id };
+        }
+      }
+    } catch {}
+
     // Construir patch somente com campos alterados (ignorar built-ins)
     const BUILT_INS = new Set(['id', 'created_date', 'updated_date', 'created_by']);
 
@@ -53,7 +65,7 @@ Deno.serve(async (req) => {
       return patch;
     };
 
-    const patch = diffPatch(data, sanitized);
+    const patch = diffPatch(data, enriched);
 
     if (Object.keys(patch).length > 0) {
       await base44.asServiceRole.entities[event.entity_name].update(event.entity_id, patch);
