@@ -38,6 +38,14 @@ export function useContextoGrupoEmpresa() {
         if (grupoId) {
           const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
           if (grupos[0]) setGrupoAtual(grupos[0]);
+        } else if (currentUser.role === 'admin') {
+          // Admin fallback: selecionar automaticamente um grupo ativo
+          const todos = await base44.entities.GrupoEmpresarial.list();
+          const ativo = todos.find(g => g.status === 'Ativo') || todos[0];
+          if (ativo) {
+            setGrupoAtual(ativo);
+            try { localStorage.setItem('group_atual_id', ativo.id); } catch {}
+          }
         }
       } else {
         const empresaId = currentUser.empresa_atual_id || currentUser.empresa_padrao_id || localStorage.getItem('empresa_atual_id');
