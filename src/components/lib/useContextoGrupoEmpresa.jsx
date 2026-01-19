@@ -4,7 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useContextoGrupoEmpresa() {
   const [user, setUser] = useState(null);
-  const [contexto, setContexto] = useState('empresa');
+  const [contexto, setContexto] = useState(() => {
+    try {
+      return localStorage.getItem('contexto_atual') || 'empresa';
+    } catch {
+      return 'empresa';
+    }
+  });
   const [grupoAtual, setGrupoAtual] = useState(null);
   const [empresaAtual, setEmpresaAtual] = useState(null);
   const queryClient = useQueryClient();
