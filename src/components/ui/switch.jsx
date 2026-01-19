@@ -35,4 +35,13 @@ const Switch = React.forwardRef(({ className, checked, onCheckedChange, disabled
 
 Switch.displayName = "Switch"
 
-export { Switch }
+import { uiAuditWrap } from "@/components/lib/uiAudit";
+
+const _Switch = Switch;
+const AuditedSwitch = React.forwardRef(({ onCheckedChange, ...props }, ref) => {
+  const audited = typeof onCheckedChange === 'function' ? uiAuditWrap('Switch.onCheckedChange', onCheckedChange, { kind: 'switch' }) : undefined;
+  return (<_Switch ref={ref} onCheckedChange={audited} {...props} />);
+});
+AuditedSwitch.displayName = 'AuditedSwitch';
+
+export { AuditedSwitch as Switch }
