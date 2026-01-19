@@ -14,6 +14,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import SearchInput from "@/components/ui/SearchInput";
+import ProtectedField from "@/components/security/ProtectedField";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import SolicitarCompraRapidoModal from "../compras/SolicitarCompraRapidoModal";
 import { toast as sonnerToast } from "sonner";
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
@@ -29,6 +32,8 @@ export default function ProdutosTab({ produtos, isLoading }) {
   const [editingProduto, setEditingProduto] = useState(null);
   const [solicitacaoModal, setSolicitacaoModal] = useState(null);
   const { openWindow } = useWindow();
+  const { empresaAtual, contexto } = useContextoVisual();
+  const { canCreate, canEdit, hasPermission } = usePermissions();
 
   // Seleção em massa + exportação
   const [selectedProdutos, setSelectedProdutos] = useState([]);
@@ -64,7 +69,11 @@ export default function ProdutosTab({ produtos, isLoading }) {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Produto.create(data),
+    mutationFn: (data) => base44.entities.Produto.create({
+      ...data,
+      empresa_id: empresaAtual?.id || data.empresa_id,
+      group_id: contexto?.group_id || data.group_id
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
       setIsDialogOpen(false);
@@ -74,7 +83,11 @@ export default function ProdutosTab({ produtos, isLoading }) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Produto.update(id, data),
+    mutationFn: ({ id, data }) => base44.entities.Produto.update(id, {
+      ...data,
+      empresa_id: data.empresa_id || empresaAtual?.id,
+      group_id: data.group_id || contexto?.group_id
+    }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
       setIsDialogOpen(false);
@@ -240,10 +253,11 @@ export default function ProdutosTab({ produtos, isLoading }) {
         <h2 className="text-2xl font-bold">Produtos</h2>
         <div className="flex gap-2">
           {/* V21.6: NOVO - Dashboard de Produção */}
-          <Button 
-            variant="outline"
-            className="border-orange-300 text-orange-700 hover:bg-orange-50" 
-            onClick={() => openWindow(DashboardProdutosProducao, {
+          {hasPermission('Estoque', 'Produtos', 'visualizar') && (
+            <Button 
+              variant="outline"
+              className="border-orange-300 text-orange-700 hover:bg-orange-50" 
+              onClick={() => openWindow(DashboardProdutosProducao, {
               windowMode: true,
               onAbrirConversao: () => {
                 openWindow(ConversaoProducaoMassa, {
@@ -269,10 +283,11 @@ export default function ProdutosTab({ produtos, isLoading }) {
           </Button>
 
           {/* V21.6: NOVO - Conversão em Massa */}
-          <Button 
-            variant="outline"
-            className="border-purple-300 text-purple-700 hover:bg-purple-50" 
-            onClick={() => openWindow(ConversaoProducaoMassa, {
+          {canEdit('Estoque', 'Produtos') && (
+            <Button 
+              variant="outline"
+              className="border-purple-300 text-purple-700 hover:bg-purple-50" 
+              onClick={() => openWindow(ConversaoProducaoMassa, {
               produtos,
               windowMode: true,
               onConcluido: () => {
@@ -288,10 +303,11 @@ export default function ProdutosTab({ produtos, isLoading }) {
             Converter em Massa
           </Button>
 
-          <Button 
-            variant="outline"
-            className="border-green-300 text-green-700 hover:bg-green-50"
-            onClick={() => openWindow(ImportadorProdutosPlanilha, {
+          {canCreate('Estoque', 'Produtos') && (
+            <Button 
+              variant="outline"
+              className="border-green-300 text-green-700 hover:bg-green-50"
+              onClick={() => openWindow(ImportadorProdutosPlanilha, {
               windowMode: true,
               onConcluido: () => {
                 queryClient.invalidateQueries({ queryKey: ['produtos'] });
@@ -306,9 +322,10 @@ export default function ProdutosTab({ produtos, isLoading }) {
             Importar Planilha
           </Button>
 
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700" 
-            onClick={() => openWindow(ProdutoFormV22_Completo, {
+          {canCreate('Estoque', 'Produtos') && (
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700" 
+              onClick={() => openWindow(ProdutoFormV22_Completo, {
               windowMode: true,
               onSubmit: async (data) => {
                 try {
@@ -324,10 +341,11 @@ export default function ProdutosTab({ produtos, isLoading }) {
               width: 1200,
               height: 700
             })}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Produto
-          </Button>
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Produto
+            </Button>
+          )}
         </div>
       </div>
 
@@ -452,7 +470,9 @@ export default function ProdutosTab({ produtos, isLoading }) {
                         </span>
                       </TableCell>
                       <TableCell className="text-sm">
-                        R$ {(produto.custo_medio || produto.custo_aquisicao || 0).toFixed(2)}
+                        <ProtectedField module="Estoque" submodule="Produtos" field="custo" action="ver" asText>
+                          R$ {(produto.custo_medio || produto.custo_aquisicao || 0).toFixed(2)}
+                        </ProtectedField>
                       </TableCell>
                       <TableCell className="font-semibold text-green-600">
                         R$ {(produto.preco_venda || 0).toFixed(2)}

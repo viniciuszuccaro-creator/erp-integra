@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import MovimentacaoForm from "./MovimentacaoForm";
 import { useWindow } from "@/components/lib/useWindow";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 import { useUser } from "@/components/lib/UserContext";
 
@@ -21,6 +23,8 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
+  const { empresaAtual } = useContextoVisual();
+  const { canCreate } = usePermissions();
   const [novaMovimentacao, setNovaMovimentacao] = useState({
     tipo_movimentacao: "",
     produto_id: "",
@@ -65,6 +69,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
     mutationFn: async (data) => {
       const movimentacaoData = {
         tipo_movimentacao: data.tipo_movimentacao,
+        empresa_id: data.empresa_id || empresaAtual?.id,
         produto_id: data.produto_id,
         produto_descricao: data.produto_nome,
         quantidade: parseFloat(data.quantidade),
@@ -161,9 +166,10 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
             className="pl-10"
           />
         </div>
-        <Button 
-          className="bg-indigo-600 hover:bg-indigo-700"
-          onClick={() => openWindow(MovimentacaoForm, {
+        {canCreate('Estoque', 'Movimentacoes') && (
+          <Button 
+            className="bg-indigo-600 hover:bg-indigo-700"
+            onClick={() => openWindow(MovimentacaoForm, {
             windowMode: true,
             onSubmit: async (data) => {
               try {
@@ -183,9 +189,10 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
             height: 600
           })}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Movimentação
-        </Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Movimentação
+          </Button>
+        )}
         
         {/* BACKUP: Dialog removido */}
         <Dialog open={false}>

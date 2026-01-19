@@ -11,6 +11,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 import { TrendingUp, TrendingDown, AlertCircle, CheckCircle, Package } from "lucide-react";
+import ProtectedField from "@/components/security/ProtectedField";
 
 export default function RelatoriosEstoque({ produtos, movimentacoes }) {
   const produtosComValor = produtos.map(p => {
@@ -199,7 +200,9 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
                       <TableCell className="font-medium">{produto.descricao}</TableCell>
                       <TableCell className="text-right">{produto.estoque_atual}</TableCell>
                       <TableCell className="text-right font-semibold">
-                        R$ {produto.valor_estoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <ProtectedField module="Estoque" submodule="Relatorios" field="valor_estoque" action="ver" asText>
+                          R$ {produto.valor_estoque.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </ProtectedField>
                       </TableCell>
                       <TableCell className="text-right">{produto.percentual_valor}%</TableCell>
                     </TableRow>
@@ -287,7 +290,9 @@ export default function RelatoriosEstoque({ produtos, movimentacoes }) {
                       </TableCell>
                       <TableCell className="text-right">{produto.estoque_atual}</TableCell>
                       <TableCell className="text-right font-semibold text-red-700">
-                        R$ {((produto.estoque_atual || 0) * (produto.custo_aquisicao || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        <ProtectedField module="Estoque" submodule="Relatorios" field="valor_imobilizado" action="ver" asText>
+                          R$ {((produto.estoque_atual || 0) * (produto.custo_aquisicao || 0)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </ProtectedField>
                       </TableCell>
                       <TableCell>
                         <Badge className="bg-orange-600 text-white">Revisar</Badge>

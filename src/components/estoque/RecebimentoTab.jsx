@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import RecebimentoForm from "./RecebimentoForm";
 import { useWindow } from "@/components/lib/useWindow";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
 export default function RecebimentoTab({ recebimentos, ordensCompra, produtos }) {
@@ -20,6 +22,8 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingRecebimento, setViewingRecebimento] = useState(null);
   const { openWindow } = useWindow();
+  const { empresaAtual } = useContextoVisual();
+  const { canCreate } = usePermissions();
   const [formData, setFormData] = useState({
     numero_recebimento: `REC-${Date.now()}`,
     ordem_compra_id: "",
@@ -39,6 +43,7 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
       // Criar recebimento
       await base44.entities.MovimentacaoEstoque.create({
         tipo_movimentacao: "Entrada",
+        empresa_id: empresaAtual?.id,
         data_movimentacao: data.data_recebimento,
         documento: data.numero_nf || data.numero_recebimento,
         responsavel: data.responsavel_recebimento,
@@ -57,6 +62,7 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
 
             // Criar movimentação individual
             await base44.entities.MovimentacaoEstoque.create({
+              empresa_id: empresaAtual?.id,
               produto_id: item.produto_id,
               produto_descricao: item.produto_descricao,
               tipo_movimentacao: "Entrada",
@@ -175,9 +181,10 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
           />
         </div>
 
-        <Button
-          className="bg-green-600 hover:bg-green-700"
-          onClick={() => openWindow(RecebimentoForm, {
+        {canCreate('Estoque', 'Recebimento') && (
+          <Button
+            className="bg-green-600 hover:bg-green-700"
+            onClick={() => openWindow(RecebimentoForm, {
             windowMode: true,
             onSubmit: async (data) => {
               try {
@@ -197,9 +204,10 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
             height: 700
           })}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Registrar Recebimento
-        </Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Registrar Recebimento
+          </Button>
+        )}
 
         <Dialog open={false}>
           <DialogTrigger asChild>

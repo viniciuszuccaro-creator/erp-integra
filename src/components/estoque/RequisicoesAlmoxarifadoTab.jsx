@@ -13,11 +13,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import RequisicaoAlmoxarifadoForm from "./RequisicaoAlmoxarifadoForm";
 import { useWindow } from "@/components/lib/useWindow";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
 export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
+  const { empresaAtual } = useContextoVisual();
+  const { canCreate } = usePermissions();
   const [formData, setFormData] = useState({
     numero_requisicao: `REQ-ALM-${Date.now()}`,
     data_requisicao: new Date().toISOString().split('T')[0],
@@ -37,6 +41,7 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
       // Criar requisição como MovimentacaoEstoque
       for (const item of data.itens) {
         await base44.entities.MovimentacaoEstoque.create({
+          empresa_id: empresaAtual?.id,
           produto_id: item.produto_id,
           produto_descricao: item.produto_descricao,
           tipo_movimentacao: "Saída",
@@ -141,9 +146,10 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <Button
-          className="bg-orange-600 hover:bg-orange-700"
-          onClick={() => openWindow(RequisicaoAlmoxarifadoForm, {
+        {canCreate('Estoque', 'Requisicoes') && (
+          <Button
+            className="bg-orange-600 hover:bg-orange-700"
+            onClick={() => openWindow(RequisicaoAlmoxarifadoForm, {
             windowMode: true,
             onSubmit: async (data) => {
               try {
@@ -163,9 +169,10 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
             height: 650
           })}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Requisição
-        </Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Requisição
+          </Button>
+        )}
 
         <Dialog open={false}>
           <DialogTrigger asChild>

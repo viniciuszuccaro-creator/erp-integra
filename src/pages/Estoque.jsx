@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import ProtectedField from "@/components/security/ProtectedField";
 import { 
   Box, 
   PackageOpen, 
@@ -218,7 +219,9 @@ export default function Estoque() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-900">
-              R$ {totalReservado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <ProtectedField module="Estoque" submodule="KPIs" field="valores" action="ver" asText>
+                R$ {totalReservado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </ProtectedField>
             </div>
             <p className="text-xs text-blue-700 mt-1">em pedidos/produção</p>
           </CardContent>
@@ -231,7 +234,9 @@ export default function Estoque() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-900">
-              R$ {estoqueDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <ProtectedField module="Estoque" submodule="KPIs" field="valores" action="ver" asText>
+                R$ {estoqueDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </ProtectedField>
             </div>
             <p className="text-xs text-green-700 mt-1">para venda/produção</p>
           </CardContent>
