@@ -14,6 +14,17 @@ async function getUserSafe() {
 
 // Minimal, resilient audit logger (non-blocking) + visual feedback
 export function logUIAction({ component, action, status, meta }) {
+  // Visual feedback minimal por status
+  try {
+    if (status === 'start') {
+      // noop (evitar ruído)
+    } else if (status === 'success' && meta?.toastSuccess) {
+      try { toast.success(`${action} concluído`); } catch {}
+    } else if (status === 'error') {
+      try { toast.error(`Falha em ${action}`, { description: meta?.error || '' }); } catch {}
+    }
+  } catch {}
+
   try {
     const descricao = `[${component}] ${action} • ${status}`;
     getUserSafe().then((u) => {
