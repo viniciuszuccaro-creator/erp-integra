@@ -122,6 +122,9 @@ const FormMessage = React.forwardRef(({ className, children, ...props }, ref) =>
 })
 FormMessage.displayName = "FormMessage"
 
+import { uiAuditWrap } from "@/components/lib/uiAudit";
+
+// Audit Controller-level submissions via onSubmit wrappers is done in pages/forms; here focus on field-level blur/change via consumers.
 export {
   useFormField,
   Form,
