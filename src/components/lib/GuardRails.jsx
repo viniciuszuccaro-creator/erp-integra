@@ -1,0 +1,102 @@
+import React from "react";
+import { base44 } from "@/api/base44Client";
+import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export default function GuardRails({ children, currentPageName }) {
+  const { user } = useUser();
+  const { hasPermission } = usePermissions();
+  const { empresaAtual } = useContextoVisual();
+  const [auth, setAuth] = React.useState(false);
+  const [booted, setBooted] = React.useState(false);
+
+  React.useEffect(() => {
+    let mounted = true;
+    base44.auth.isAuthenticated().then((ok) => {
+      if (!mounted) return;
+      setAuth(!!ok);
+      setBooted(true);
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  // Loading state until auth/context determined
+  if (!booted) {
+    return (
+      <div className="p-6">
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle>Preparando ambiente…</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-2 w-64 bg-slate-100 rounded overflow-hidden">
+              <div className="h-2 bg-blue-600 animate-pulse" style={{ width: "60%" }} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!auth || !user) {
+    return (
+      <div className="p-6">
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle>Acesso necessário</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-slate-600">Você precisa estar autenticado para acessar este conteúdo.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!empresaAtual?.id) {
+    return (
+      <div className="p-6">
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle>Selecione uma empresa</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-slate-600">Defina a empresa ativa para continuar. Use o seletor no topo.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Permissão por módulo (Layout já valida, aqui reforçamos)
+  const pageToModule = {
+    CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição'
+  };
+  const mod = pageToModule[currentPageName];
+  if (mod && !hasPermission(mod, null, 'ver')) {
+    try {
+      base44.entities.AuditLog.create({
+        acao: 'Bloqueio',
+        modulo: mod,
+        entidade: 'UI',
+        descricao: `GuardRails bloqueou acesso a ${currentPageName}`,
+      });
+    } catch {}
+    return (
+      <div className="p-6">
+        <Card className="bg-white">
+          <CardHeader>
+            <CardTitle>Acesso restrito</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-slate-600">Você não possui permissão para acessar este módulo.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
