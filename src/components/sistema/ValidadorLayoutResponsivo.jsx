@@ -52,13 +52,6 @@ export default function ValidadorLayoutResponsivo() {
         const parentStyle = window.getComputedStyle(el.parentElement);
         const parentClasses = el.parentElement?.className || '';
 
-        // LÓGICA CORRIGIDA: Container é responsivo se:
-        // 1. Tem w-full explícito
-        // 2. Tem width 100% via CSS
-        // 3. Está em flex/grid que define largura automaticamente
-        // 4. Tem flex-1 ou flex-grow
-        // 5. Pai é grid com auto-cols/rows
-
         const hasWFullClass = classes.includes('w-full');
         const hasCSSWidth100 = style.width === '100%';
         const isFlexChild = parentClasses.includes('flex') && (classes.includes('flex-1') || classes.includes('flex-grow'));
@@ -73,7 +66,6 @@ export default function ValidadorLayoutResponsivo() {
                             hasFlexGrow ||
                             isMainContent;
 
-        // Overflow é problema CRÍTICO apenas se tiver conteúdo escondido SEM alternativa
         const hasScrollArea = el.querySelector('[data-radix-scroll-area-viewport]');
         const hasOverflowAuto = style.overflow === 'auto' || style.overflowY === 'auto';
         const parentHasScroll = el.parentElement?.querySelector('[data-radix-scroll-area-viewport]');
@@ -85,7 +77,9 @@ export default function ValidadorLayoutResponsivo() {
                                   !hasOverflowAuto &&
                                   !parentHasScroll;
 
-        // Adicionar problema APENAS se realmente é responsabilidade deste elemento
+        // CONTAR PROBLEMA POR ELEMENTO, NÃO POR PROPRIEDADE
+        let eletemProblema = false;
+
         if (!isResponsive && el.offsetWidth > 400) {
           problemas.push({
             tipo: 'Container grande sem w-full',
@@ -94,8 +88,7 @@ export default function ValidadorLayoutResponsivo() {
             severidade: 'Média',
             sugestao: 'Adicionar w-full ou flex-1'
           });
-        } else {
-          containersValidos++;
+          eletemProblema = true;
         }
 
         if (hasOverflowProblem) {
@@ -106,7 +99,11 @@ export default function ValidadorLayoutResponsivo() {
             severidade: 'Alta',
             sugestao: 'Usar overflow-auto ou <ScrollArea>'
           });
-        } else {
+          eletemProblema = true;
+        }
+
+        // Marcar como válido SÓ UMA VEZ por elemento
+        if (!eletemProblema) {
           containersValidos++;
         }
       });
