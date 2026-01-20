@@ -7,7 +7,7 @@ import {
   Activity, 
   Cpu, 
   HardDrive, 
-  Zap,
+  Bolt,
   TrendingUp,
   AlertTriangle,
   CheckCircle
@@ -113,7 +113,7 @@ export default function MonitorPerformance() {
                   {ultimaMetrica.latencia_media_ms?.toFixed(0) || 0} ms
                 </p>
               </div>
-              <Zap className="w-10 h-10 text-orange-600 opacity-50" />
+              <Bolt className="w-10 h-10 text-orange-600 opacity-50" />
             </div>
           </CardContent>
         </Card>

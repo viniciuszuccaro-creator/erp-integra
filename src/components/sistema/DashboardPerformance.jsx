@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Activity, 
-  Zap, 
+  Bolt, 
   AlertTriangle,
   CheckCircle2,
   Clock,

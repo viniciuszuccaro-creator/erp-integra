@@ -8,7 +8,7 @@ import {
   Database, 
   CheckCircle2, 
   Network,
-  Zap,
+  Bolt,
   TrendingUp,
   Link2
 } from "lucide-react";
@@ -93,7 +93,7 @@ export default function FonteUnicaVerdade() {
         <Card className="border-purple-200">
           <CardHeader className="bg-purple-50 border-b pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Zap className="w-4 h-4 text-purple-600" />
+              <Bolt className="w-4 h-4 text-purple-600" />
               Zero Duplicação
             </CardTitle>
           </CardHeader>
