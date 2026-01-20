@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Activity, CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
+import { Activity, CheckCircle, XCircle, Clock, TrendingUp } from 'lucide-react';
 
 /**
  * V22.0 ETAPA 1 - Monitor de Estados de Ação
@@ -57,7 +57,7 @@ export default function ActionStateMonitor() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="p-3 border rounded-lg bg-white">
             <div className="flex items-center gap-2 mb-1">
-              <Zap className="w-4 h-4 text-blue-600" />
+              <TrendingUp className="w-4 h-4 text-blue-600" />
               <span className="text-xs text-slate-500">Total</span>
             </div>
             <p className="text-2xl font-bold text-slate-900">{stats.total}</p>
