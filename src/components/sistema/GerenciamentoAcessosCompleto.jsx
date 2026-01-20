@@ -53,7 +53,7 @@ import {
   MessageCircle,
   Briefcase,
   Globe,
-  Zap,
+  Bolt,
   AlertTriangle,
   Copy,
   RefreshCw,
@@ -1132,7 +1132,7 @@ Forneça recomendações práticas de segurança.`,
             <Card className="lg:col-span-1">
               <CardHeader className="bg-slate-50 border-b">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-yellow-500" />
+                  <Bolt className="w-5 h-5 text-yellow-500" />
                   Ações Rápidas
                 </CardTitle>
               </CardHeader>

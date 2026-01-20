@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   Settings,
   TrendingUp,
-  Zap,
+  Bolt,
   Shield,
   Download
 } from "lucide-react";
@@ -145,7 +145,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
                   {parametros.filter(p => p.tipo_criacao === 'Automático' || p.tipo_criacao === 'Misto').length}
                 </p>
               </div>
-              <Zap className="w-8 h-8 text-purple-600 opacity-20" />
+              <Bolt className="w-8 h-8 text-purple-600 opacity-20" />
             </div>
           </CardContent>
         </Card>
@@ -212,9 +212,9 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
                           : 'bg-slate-100'
                       }`}>
                         {param.tipo_criacao === 'Automático' || param.tipo_criacao === 'Misto' ? (
-                          <Zap className={`w-6 h-6 ${param.ativo ? `text-${param.cor_badge}-600` : 'text-slate-400'}`} />
+                          <Bolt className="w-6 h-6 text-slate-600" />
                         ) : (
-                          <Settings className={`w-6 h-6 ${param.ativo ? `text-${param.cor_badge}-600` : 'text-slate-400'}`} />
+                          <Settings className="w-6 h-6 text-slate-600" />
                         )}
                       </div>
 
@@ -294,7 +294,7 @@ export default function GerenciadorCanaisOrigem({ windowMode = false }) {
       <Card className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            <Zap className="w-5 h-5 text-purple-600" />
+            <Bolt className="w-5 h-5 text-purple-600" />
             🤖 Insights Inteligentes de Configuração
           </CardTitle>
         </CardHeader>

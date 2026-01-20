@@ -19,7 +19,7 @@ import {
   Line
 } from "recharts";
 import { 
-  Zap, 
+  Bolt, 
   TrendingUp, 
   ShoppingCart, 
   CheckCircle, 
@@ -158,7 +158,7 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
                   <p className="text-xs text-slate-600">Canais Ativos</p>
                   <p className="text-2xl font-bold text-blue-600">{canaisAtivos.length}</p>
                 </div>
-                <Zap className="w-8 h-8 text-blue-600 opacity-20" />
+                <Bolt className="w-8 h-8 text-blue-600 opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -423,7 +423,7 @@ export default function DashboardCanaisOrigem({ empresaId, windowMode = false })
         <Card className="mt-6 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-purple-600" />
+              <Bolt className="w-5 h-5 text-purple-600" />
               💡 Insights Inteligentes
             </CardTitle>
           </CardHeader>
