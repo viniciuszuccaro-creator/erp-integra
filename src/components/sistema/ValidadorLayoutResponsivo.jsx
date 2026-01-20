@@ -41,7 +41,7 @@ export default function ValidadorLayoutResponsivo() {
       let containersValidos = 0;
 
       allDivs.forEach((el, idx) => {
-        // Verificar se é um container principal (tem filhos e não é muito pequeno)
+        // Pular elementos muito pequenos ou sem filhos
         if (el.children.length === 0) return;
         if (el.offsetWidth < 100 || el.offsetHeight < 100) return;
 
@@ -49,52 +49,66 @@ export default function ValidadorLayoutResponsivo() {
 
         const classes = el.className || '';
         const style = window.getComputedStyle(el);
+        const parentStyle = window.getComputedStyle(el.parentElement);
+        const parentClasses = el.parentElement?.className || '';
 
-        // Verificar w-full - mais flexível
-        const hasWFull = classes.includes('w-full') || 
-                        style.width === '100%' ||
-                        el.parentElement?.offsetWidth === el.offsetWidth ||
-                        classes.includes('flex') && classes.includes('flex-col');
+        // LÓGICA CORRIGIDA: Container é responsivo se:
+        // 1. Tem w-full explícito
+        // 2. Tem width 100% via CSS
+        // 3. Está em flex/grid que define largura automaticamente
+        // 4. Tem flex-1 ou flex-grow
+        // 5. Pai é grid com auto-cols/rows
 
-        // Verificar h-full
-        const hasHFull = classes.includes('h-full') || 
-                        classes.includes('min-h-screen') ||
-                        classes.includes('flex-1') ||
-                        style.height.includes('%');
+        const hasWFullClass = classes.includes('w-full');
+        const hasCSSWidth100 = style.width === '100%';
+        const isFlexChild = parentClasses.includes('flex') && (classes.includes('flex-1') || classes.includes('flex-grow'));
+        const isGridChild = parentStyle.display === 'grid';
+        const hasFlexGrow = classes.includes('flex-1') || classes.includes('flex-grow');
+        const isMainContent = el.tagName === 'MAIN' || el.className?.includes('flex-1');
 
-        // Overflow é OK se tiver ScrollArea
+        const isResponsive = hasWFullClass || 
+                            hasCSSWidth100 || 
+                            isFlexChild || 
+                            isGridChild || 
+                            hasFlexGrow ||
+                            isMainContent;
+
+        // Overflow é problema CRÍTICO apenas se tiver conteúdo escondido SEM alternativa
         const hasScrollArea = el.querySelector('[data-radix-scroll-area-viewport]');
-        const hasOverflowIssue = style.overflow === 'hidden' && 
-                                el.scrollHeight > el.clientHeight &&
-                                !hasScrollArea;
+        const hasOverflowAuto = style.overflow === 'auto' || style.overflowY === 'auto';
+        const parentHasScroll = el.parentElement?.querySelector('[data-radix-scroll-area-viewport]');
+        const hasClipping = el.scrollHeight > el.clientHeight;
 
-        let temProblema = false;
+        const hasOverflowProblem = hasClipping && 
+                                  style.overflow === 'hidden' && 
+                                  !hasScrollArea && 
+                                  !hasOverflowAuto &&
+                                  !parentHasScroll;
 
-        // Menos rigoroso - container grande sem w-full é OK se pai é flex
-        if (!hasWFull && el.offsetWidth > 300 && !el.parentElement?.className?.includes('flex')) {
+        // Adicionar problema APENAS se realmente é responsabilidade deste elemento
+        if (!isResponsive && el.offsetWidth > 400) {
           problemas.push({
-            tipo: 'Container sem w-full',
+            tipo: 'Container grande sem w-full',
             elemento: el.tagName.toLowerCase(),
-            descricao: `Container largo (${el.offsetWidth}px) sem w-full`,
-            severidade: 'Baixa',
-            sugestao: 'Considerar adicionar w-full'
+            descricao: `Container ${el.offsetWidth}px sem mecanismo de responsividade`,
+            severidade: 'Média',
+            sugestao: 'Adicionar w-full ou flex-1'
           });
-          // Não marca como problema crítico
+        } else {
+          containersValidos++;
         }
 
-        if (hasOverflowIssue) {
+        if (hasOverflowProblem) {
           problemas.push({
-            tipo: 'Overflow escondido',
+            tipo: 'Overflow:hidden com clipping',
             elemento: el.tagName.toLowerCase(),
-            descricao: 'Conteúdo escondido por overflow:hidden',
+            descricao: 'Conteúdo cortado sem rolagem ou ScrollArea',
             severidade: 'Alta',
-            sugestao: 'Usar overflow-auto ou ScrollArea'
+            sugestao: 'Usar overflow-auto ou <ScrollArea>'
           });
-          temProblema = true;
+        } else {
+          containersValidos++;
         }
-
-        // Se passou, é válido
-        containersValidos++;
       });
 
       // Verificar abas
