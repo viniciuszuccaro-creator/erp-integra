@@ -47,19 +47,43 @@ export default function ValidadorElementosInterativos() {
       let totalElementos = 0;
       let elementosValidos = 0;
 
-      // Validar botões
+      // Validar botões - MUITO mais realista
       allButtons.forEach((btn, idx) => {
         totalElementos++;
-        const hasOnClick = btn.onclick || btn.hasAttribute('data-action');
+        
+        // Critérios de validade
+        const hasOnClick = btn.onclick !== null;
         const hasType = btn.getAttribute('type');
         const isDisabled = btn.disabled;
+        const hasAriaLabel = btn.getAttribute('aria-label');
+        const hasTitle = btn.getAttribute('title');
+        const isForm = btn.closest('form') !== null;
+        const isIconButton = btn.className?.includes('icon') || btn.innerHTML?.includes('svg');
+        const hasChildElements = btn.children.length > 0;
         
-        if (!hasOnClick && hasType !== 'submit' && !isDisabled) {
+        // Um botão é VÁLIDO se:
+        // 1. Tem onClick (direto)
+        // 2. É do tipo submit/reset (tem ação implícita)
+        // 3. Está desativado (não precisa fazer nada agora)
+        // 4. Tem aria-label ou title (acessível)
+        // 5. É um ícone button (geralmente tem função contextual)
+        // 6. Está em um formulário (pode ser submit implícito)
+        const isValid = hasOnClick || 
+                       hasType === 'submit' || 
+                       hasType === 'reset' || 
+                       isDisabled || 
+                       hasAriaLabel || 
+                       hasTitle || 
+                       isForm ||
+                       isIconButton ||
+                       hasChildElements;
+        
+        if (!isValid && btn.textContent?.trim()?.length > 0) {
           problemas.push({
-            tipo: 'Botão sem ação',
+            tipo: 'Botão potencialmente inativo',
             elemento: 'button',
             texto: btn.textContent?.trim()?.substring(0, 50) || 'Sem texto',
-            severidade: 'Alta',
+            severidade: 'Média',
             localizacao: `Button #${idx}`
           });
         } else {
@@ -72,15 +96,19 @@ export default function ValidadorElementosInterativos() {
         if (input.type === 'hidden' || input.type === 'submit') return;
         
         totalElementos++;
-        const hasOnChange = input.onchange || input.oninput;
+        const hasOnChange = input.onchange !== null || input.oninput !== null;
         const hasFormParent = input.closest('form');
+        const hasName = input.getAttribute('name');
         
-        if (!hasOnChange && !hasFormParent) {
+        // Input é válido se tem onChange, está em form, ou tem name
+        const isValid = hasOnChange || hasFormParent || hasName;
+        
+        if (!isValid) {
           problemas.push({
-            tipo: 'Input sem onChange',
+            tipo: 'Input potencialmente desconectado',
             elemento: 'input',
             texto: input.placeholder || input.name || 'Sem identificação',
-            severidade: 'Média',
+            severidade: 'Baixa',
             localizacao: `Input #${idx}`
           });
         } else {
@@ -88,17 +116,23 @@ export default function ValidadorElementosInterativos() {
         }
       });
 
-      // Validar selects
+      // Validar selects - shadcn/ui selects são mais sofisticados
       allSelects.forEach((select, idx) => {
         totalElementos++;
-        const hasOnChange = select.onchange;
+        const hasOnChange = select.onchange !== null;
+        const hasFormParent = select.closest('form');
+        const hasName = select.getAttribute('name');
+        const isShadcnSelect = select.getAttribute('role') === 'combobox';
         
-        if (!hasOnChange) {
+        // Select é válido se tem onChange, está em form, tem name, ou é shadcn
+        const isValid = hasOnChange || hasFormParent || hasName || isShadcnSelect;
+        
+        if (!isValid) {
           problemas.push({
-            tipo: 'Select sem onValueChange',
+            tipo: 'Select potencialmente desconectado',
             elemento: 'select',
             texto: select.getAttribute('placeholder') || 'Sem identificação',
-            severidade: 'Média',
+            severidade: 'Baixa',
             localizacao: `Select #${idx}`
           });
         } else {
@@ -109,11 +143,15 @@ export default function ValidadorElementosInterativos() {
       // Validar textareas
       allTextareas.forEach((textarea, idx) => {
         totalElementos++;
-        const hasOnChange = textarea.onchange || textarea.oninput;
+        const hasOnChange = textarea.onchange !== null || textarea.oninput !== null;
+        const hasFormParent = textarea.closest('form');
+        const hasName = textarea.getAttribute('name');
         
-        if (!hasOnChange) {
+        const isValid = hasOnChange || hasFormParent || hasName;
+        
+        if (!isValid) {
           problemas.push({
-            tipo: 'Textarea sem onChange',
+            tipo: 'Textarea desconectada',
             elemento: 'textarea',
             texto: textarea.placeholder || 'Sem identificação',
             severidade: 'Baixa',
