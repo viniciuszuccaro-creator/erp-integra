@@ -14,6 +14,7 @@ import DashboardCorporativo from './pages/DashboardCorporativo';
 import DemoMultitarefas from './pages/DemoMultitarefas';
 import Documentacao from './pages/Documentacao';
 import Empresas from './pages/Empresas';
+import EstabilizacaoSistema from './pages/EstabilizacaoSistema';
 import Estoque from './pages/Estoque';
 import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
@@ -27,7 +28,7 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
-import EstabilizacaoSistema from './pages/EstabilizacaoSistema';
+import PadronizacaoUI from './pages/PadronizacaoUI';
 import __Layout from './Layout.jsx';
 
 
@@ -48,6 +49,7 @@ export const PAGES = {
     "DemoMultitarefas": DemoMultitarefas,
     "Documentacao": Documentacao,
     "Empresas": Empresas,
+    "EstabilizacaoSistema": EstabilizacaoSistema,
     "Estoque": Estoque,
     "Expedicao": Expedicao,
     "Financeiro": Financeiro,
@@ -61,7 +63,7 @@ export const PAGES = {
     "RH": RH,
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
-    "EstabilizacaoSistema": EstabilizacaoSistema,
+    "PadronizacaoUI": PadronizacaoUI,
 }
 
 export const pagesConfig = {

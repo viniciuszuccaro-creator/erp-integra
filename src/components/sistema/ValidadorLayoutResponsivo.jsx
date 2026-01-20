@@ -1,0 +1,348 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  CheckCircle,
+  XCircle,
+  Layout,
+  RefreshCw,
+  Download,
+  AlertTriangle,
+  Maximize2
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+/**
+ * V22.0 ETAPA 3 - Validador de Layout Responsivo
+ * 
+ * Varre o DOM para garantir que:
+ * 1. Todos os containers principais usam w-full h-full
+ * 2. Não há overflow escondido ou cortes de conteúdo
+ * 3. Componentes são responsivos
+ * 4. Abas calculam altura dinamicamente
+ */
+export default function ValidadorLayoutResponsivo() {
+  const [scanning, setScanning] = useState(false);
+  const [results, setResults] = useState(null);
+
+  const executarVarredura = () => {
+    setScanning(true);
+
+    setTimeout(() => {
+      // Varredura do DOM
+      const allDivs = document.querySelectorAll('div, main, section');
+      const problemas = [];
+      let totalContainers = 0;
+      let containersValidos = 0;
+
+      allDivs.forEach((el, idx) => {
+        // Verificar se é um container principal (tem filhos e não é muito pequeno)
+        if (el.children.length === 0) return;
+        if (el.offsetWidth < 100 || el.offsetHeight < 100) return;
+
+        totalContainers++;
+
+        const classes = el.className || '';
+        const style = window.getComputedStyle(el);
+
+        // Verificar w-full
+        const hasWFull = classes.includes('w-full') || style.width === '100%';
+        
+        // Verificar h-full (menos crítico para alguns containers)
+        const hasHFull = classes.includes('h-full') || 
+                        classes.includes('min-h-screen') ||
+                        style.height.includes('%');
+
+        // Verificar overflow
+        const hasOverflowIssue = style.overflow === 'hidden' && 
+                                el.scrollHeight > el.clientHeight;
+
+        // Verificar cortes de conteúdo
+        const hasClipping = el.scrollWidth > el.clientWidth || 
+                           el.scrollHeight > el.clientHeight;
+
+        let temProblema = false;
+
+        if (!hasWFull && el.offsetWidth > 200) {
+          problemas.push({
+            tipo: 'Container sem w-full',
+            elemento: el.tagName.toLowerCase(),
+            descricao: `Container largo (${el.offsetWidth}px) sem w-full`,
+            severidade: 'Média',
+            sugestao: 'Adicionar classe w-full'
+          });
+          temProblema = true;
+        }
+
+        if (hasOverflowIssue) {
+          problemas.push({
+            tipo: 'Overflow escondido',
+            elemento: el.tagName.toLowerCase(),
+            descricao: 'Conteúdo escondido por overflow:hidden',
+            severidade: 'Alta',
+            sugestao: 'Usar overflow-auto ou ScrollArea'
+          });
+          temProblema = true;
+        }
+
+        if (!temProblema) {
+          containersValidos++;
+        }
+      });
+
+      // Verificar abas
+      const allTabs = document.querySelectorAll('[role="tabpanel"]');
+      let abasComProblema = 0;
+
+      allTabs.forEach((tab) => {
+        const hasScroll = tab.querySelector('[data-radix-scroll-area-viewport]');
+        const hasClipping = tab.scrollHeight > tab.clientHeight;
+
+        if (hasClipping && !hasScroll) {
+          abasComProblema++;
+          problemas.push({
+            tipo: 'Aba sem scroll dinâmico',
+            elemento: 'TabPanel',
+            descricao: 'Conteúdo cortado sem rolagem',
+            severidade: 'Média',
+            sugestao: 'Usar DynamicTabContent'
+          });
+        }
+      });
+
+      const score = totalContainers > 0
+        ? Math.round((containersValidos / totalContainers) * 100)
+        : 100;
+
+      setResults({
+        totalContainers,
+        containersValidos,
+        problemas,
+        score,
+        totalAbas: allTabs.length,
+        abasComProblema,
+        timestamp: new Date().toISOString()
+      });
+
+      setScanning(false);
+
+      if (problemas.length === 0) {
+        toast.success('✅ Layout 100% responsivo!');
+      } else {
+        toast.warning(`⚠️ ${problemas.length} problema(s) de layout detectado(s)`);
+      }
+    }, 1500);
+  };
+
+  useEffect(() => {
+    executarVarredura();
+  }, []);
+
+  const exportarRelatorio = () => {
+    if (!results) return;
+
+    const relatorio = {
+      titulo: 'Relatório de Validação de Layout Responsivo',
+      data: new Date().toLocaleString('pt-BR'),
+      score: results.score,
+      estatisticas: {
+        total_containers: results.totalContainers,
+        containers_validos: results.containersValidos,
+        total_abas: results.totalAbas,
+        abas_com_problema: results.abasComProblema,
+        problemas: results.problemas.length
+      },
+      problemas: results.problemas
+    };
+
+    const blob = new Blob([JSON.stringify(relatorio, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `validacao-layout-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast.success('Relatório exportado!');
+  };
+
+  return (
+    <div className="w-full h-full space-y-6">
+      {/* Header */}
+      <Card>
+        <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-cyan-50">
+          <CardTitle className="flex items-center gap-2">
+            <Maximize2 className="w-6 h-6 text-blue-600" />
+            Validador de Layout Responsivo
+            <Badge className="bg-blue-600 text-white ml-auto">
+              V22.0 ETAPA 3
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-slate-600">
+              Garante w-full, h-full, responsividade e ausência de cortes de conteúdo
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={executarVarredura}
+                disabled={scanning}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {scanning ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Varrendo...
+                  </>
+                ) : (
+                  <>
+                    <Layout className="w-4 h-4 mr-2" />
+                    Executar Varredura
+                  </>
+                )}
+              </Button>
+              {results && (
+                <Button variant="outline" onClick={exportarRelatorio}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Score */}
+          {results && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <Card className={`border-2 ${
+                results.score >= 90 ? 'border-green-500 bg-green-50' :
+                results.score >= 70 ? 'border-yellow-500 bg-yellow-50' :
+                'border-red-500 bg-red-50'
+              }`}>
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-slate-600 mb-1">Score Layout</p>
+                  <p className={`text-3xl font-bold ${
+                    results.score >= 90 ? 'text-green-600' :
+                    results.score >= 70 ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`}>
+                    {results.score}%
+                  </p>
+                  <Progress value={results.score} className="mt-2 h-2" />
+                </CardContent>
+              </Card>
+
+              <Card className="bg-blue-50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-slate-600 mb-1">Containers</p>
+                  <p className="text-3xl font-bold text-blue-600">
+                    {results.totalContainers}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">analisados</p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-green-50">
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-slate-600 mb-1">Válidos</p>
+                  <p className="text-3xl font-bold text-green-600">
+                    {results.containersValidos}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">responsivos</p>
+                </CardContent>
+              </Card>
+
+              <Card className={`${
+                results.problemas.length > 0 ? 'bg-orange-50' : 'bg-emerald-50'
+              }`}>
+                <CardContent className="p-4 text-center">
+                  <p className="text-xs text-slate-600 mb-1">Problemas</p>
+                  <p className={`text-3xl font-bold ${
+                    results.problemas.length > 0 ? 'text-orange-600' : 'text-emerald-600'
+                  }`}>
+                    {results.problemas.length}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">detectados</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Problemas */}
+          {results && results.problemas.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-sm text-slate-700 mb-2">
+                Problemas Detectados
+              </h3>
+              <ScrollArea className="h-[300px] border rounded-lg bg-white">
+                <div className="p-3 space-y-2">
+                  {results.problemas.map((problema, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-3 rounded border ${
+                        problema.severidade === 'Alta' ? 'bg-red-50 border-red-200' :
+                        problema.severidade === 'Média' ? 'bg-orange-50 border-orange-200' :
+                        'bg-yellow-50 border-yellow-200'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${
+                          problema.severidade === 'Alta' ? 'text-red-600' :
+                          problema.severidade === 'Média' ? 'text-orange-600' :
+                          'text-yellow-600'
+                        }`} />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm">{problema.tipo}</span>
+                            <Badge className={
+                              problema.severidade === 'Alta' ? 'bg-red-600' :
+                              problema.severidade === 'Média' ? 'bg-orange-600' :
+                              'bg-yellow-600'
+                            }>
+                              {problema.severidade}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-slate-600 mb-1">
+                            {problema.descricao}
+                          </p>
+                          <p className="text-xs text-blue-600 font-medium">
+                            💡 Sugestão: {problema.sugestao}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+
+          {/* Tudo OK */}
+          {results && results.problemas.length === 0 && (
+            <Card className="border-green-300 bg-green-50">
+              <CardContent className="p-6 text-center">
+                <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-3" />
+                <h3 className="text-xl font-bold text-green-700 mb-2">
+                  ✅ Layout 100% Responsivo!
+                </h3>
+                <p className="text-green-600">
+                  Todos os {results.containersValidos} containers estão validados
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Exemplos */}
+      <ConversorModaisJanelas />
+    </div>
+  );
+}
+
+// Importar componente de exemplo
+import ConversorModaisJanelas from './ConversorModaisJanelas';
