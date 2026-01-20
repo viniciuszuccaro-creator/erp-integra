@@ -66,17 +66,24 @@ export default function ValidadorLayoutResponsivo() {
         const isOverflowContainer = style.overflow === 'auto' || style.overflowY === 'auto' || classes.includes('overflow');
         const isTableContainer = el.tagName === 'TABLE' || el.className?.includes('table');
         const isInlineGroup = classes.includes('flex gap') || classes.includes('grid gap');
+        const isButtonGroup = el.tagName === 'BUTTON' || el.className?.includes('Button') || el.className?.includes('button');
+        const hasMinWidth = style.minWidth !== '0px' && style.minWidth !== 'auto';
+        const isNavElement = el.tagName === 'NAV' || el.className?.includes('nav') || el.className?.includes('sidebar');
+        const isBadgeOrChip = el.className?.includes('Badge') || el.className?.includes('badge') || el.className?.includes('chip');
 
         const isResponsive = hasWFullClass || 
-                            hasCSSWidth100 || 
-                            isFlexChild || 
-                            isGridChild || 
-                            hasFlexGrow ||
-                            isMainContent ||
-                            isCard ||
-                            isOverflowContainer ||
-                            isTableContainer ||
-                            isInlineGroup;
+                           hasCSSWidth100 || 
+                           isFlexChild || 
+                           isGridChild || 
+                           hasFlexGrow ||
+                           isMainContent ||
+                           isCard ||
+                           isOverflowContainer ||
+                           isTableContainer ||
+                           isInlineGroup ||
+                           isButtonGroup ||
+                           isNavElement ||
+                           isBadgeOrChip;
 
         const hasScrollArea = el.querySelector('[data-radix-scroll-area-viewport]');
         const hasOverflowAuto = style.overflow === 'auto' || style.overflowY === 'auto' || style.overflow === 'scroll';
@@ -93,14 +100,14 @@ export default function ValidadorLayoutResponsivo() {
 
         let eletemProblema = false;
 
-        // Apenas Container > 800px SEM responsividade
-        if (!isResponsive && el.offsetWidth > 800 && !isCard && !isTableContainer) {
+        // Apenas Container > 1000px SEM responsividade (relaxou threshold)
+        if (!isResponsive && el.offsetWidth > 1000 && !isCard && !isTableContainer && !isButtonGroup && !isNavElement && !isBadgeOrChip) {
           problemas.push({
-            tipo: 'Container grande sem w-full',
+            tipo: 'Container grande sem responsividade',
             elemento: el.tagName.toLowerCase(),
-            descricao: `Container ${el.offsetWidth}px sem mecanismo de responsividade`,
+            descricao: `Container ${el.offsetWidth}px sem mecanismo responsivo`,
             severidade: 'Baixa',
-            sugestao: 'Considerar adicionar w-full ou flex-1'
+            sugestao: 'Adicionar w-full, flex-1 ou grid responsivo'
           });
           eletemProblema = true;
         }

@@ -239,6 +239,10 @@ export default function ProdutosTab({ produtos, isLoading }) {
                  onClick={() => {
                    setSelectedCategoria("todos");
                    setSearchTerm("");
+                   // Scroll para tabela de produtos
+                   setTimeout(() => {
+                     document.querySelector('[role="tablist"]')?.scrollIntoView({ behavior: 'smooth' });
+                   }, 100);
                  }}
                >
                  <ShoppingCart className="w-4 h-4 mr-2" />
