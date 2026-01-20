@@ -13,7 +13,8 @@ import {
   Scan,
   RefreshCw,
   Eye,
-  Download
+  Download,
+  Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 
