@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Layout, Maximize2, Layers, Activity, TrendingUp, Zap, Trophy } from 'lucide-react';
+import { CheckCircle, Layout, Maximize2, Layers, Activity, TrendingUp, Zap } from 'lucide-react';
 
 /**
  * V22.0 ETAPA 3 - Resumo Executivo Completo
