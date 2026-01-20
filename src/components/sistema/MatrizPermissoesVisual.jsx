@@ -136,9 +136,16 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
                       {perfisAtivos.map(perfil => {
                         const { nivel, label, cor } = calcularNivelAcesso(perfil, moduloId, modulo);
                         
+                        const badgeClass = 
+                          cor === 'green' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
+                          cor === 'blue' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
+                          cor === 'yellow' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' :
+                          cor === 'orange' ? 'bg-orange-100 text-orange-700 hover:bg-orange-200' :
+                          'bg-slate-100 text-slate-700 hover:bg-slate-200';
+                        
                         return (
                           <td key={perfil.id} className="border p-3 text-center">
-                            <Badge className={`bg-${cor}-100 text-${cor}-700 cursor-pointer hover:bg-${cor}-200`}>
+                            <Badge className={`${badgeClass} cursor-pointer`}>
                               {label}
                             </Badge>
                           </td>
