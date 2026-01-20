@@ -22,7 +22,8 @@ import {
         Search,
         MessageCircle,
         CheckCircle2,
-        Trophy
+        Trophy,
+        Zap
       } from "lucide-react";
 import {
   Sidebar,
