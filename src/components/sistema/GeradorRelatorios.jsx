@@ -238,9 +238,35 @@ export default function GeradorRelatorios({ empresaId }) {
           
           return (
             <Card key={relatorio.id} className="border-2 hover:shadow-lg transition-all">
-              <CardHeader className="border-b" style={{backgroundColor: `var(--color-${relatorio.cor}-50)`}}>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Icon style={{color: `var(--color-${relatorio.cor}-600)`}} className="w-5 h-5" />
+              <CardHeader className={`border-b ${
+                relatorio.cor === 'blue' ? 'bg-blue-50' :
+                relatorio.cor === 'purple' ? 'bg-purple-50' :
+                relatorio.cor === 'green' ? 'bg-green-50' :
+                relatorio.cor === 'red' ? 'bg-red-50' :
+                relatorio.cor === 'orange' ? 'bg-orange-50' :
+                relatorio.cor === 'cyan' ? 'bg-cyan-50' :
+                relatorio.cor === 'indigo' ? 'bg-indigo-50' :
+                relatorio.cor === 'pink' ? 'bg-pink-50' :
+                relatorio.cor === 'teal' ? 'bg-teal-50' :
+                relatorio.cor === 'slate' ? 'bg-slate-50' :
+                relatorio.cor === 'violet' ? 'bg-violet-50' :
+                'bg-emerald-50'
+              }`}>
+                <CardTitle className={`flex items-center gap-2 text-base ${
+                relatorio.cor === 'blue' ? 'text-blue-600' :
+                relatorio.cor === 'purple' ? 'text-purple-600' :
+                relatorio.cor === 'green' ? 'text-green-600' :
+                relatorio.cor === 'red' ? 'text-red-600' :
+                relatorio.cor === 'orange' ? 'text-orange-600' :
+                relatorio.cor === 'cyan' ? 'text-cyan-600' :
+                relatorio.cor === 'indigo' ? 'text-indigo-600' :
+                relatorio.cor === 'pink' ? 'text-pink-600' :
+                relatorio.cor === 'teal' ? 'text-teal-600' :
+                relatorio.cor === 'slate' ? 'text-slate-600' :
+                relatorio.cor === 'violet' ? 'text-violet-600' :
+                'text-emerald-600'
+              }`}>
+                  <Icon className="w-5 h-5" />
                   {relatorio.titulo}
                 </CardTitle>
                 <p className="text-xs text-slate-600 mt-1">{relatorio.descricao}</p>
@@ -250,8 +276,20 @@ export default function GeradorRelatorios({ empresaId }) {
                   <Button
                     onClick={() => handleExportarExcel(relatorio)}
                     disabled={isGerando}
-                    style={{backgroundColor: `var(--color-${relatorio.cor}-600)`}}
-                    className="flex-1"
+                    className={`flex-1 ${
+                relatorio.cor === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
+                relatorio.cor === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :
+                relatorio.cor === 'green' ? 'bg-green-600 hover:bg-green-700' :
+                relatorio.cor === 'red' ? 'bg-red-600 hover:bg-red-700' :
+                relatorio.cor === 'orange' ? 'bg-orange-600 hover:bg-orange-700' :
+                relatorio.cor === 'cyan' ? 'bg-cyan-600 hover:bg-cyan-700' :
+                relatorio.cor === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-700' :
+                relatorio.cor === 'pink' ? 'bg-pink-600 hover:bg-pink-700' :
+                relatorio.cor === 'teal' ? 'bg-teal-600 hover:bg-teal-700' :
+                relatorio.cor === 'slate' ? 'bg-slate-600 hover:bg-slate-700' :
+                relatorio.cor === 'violet' ? 'bg-violet-600 hover:bg-violet-700' :
+                'bg-emerald-600 hover:bg-emerald-700'
+              }`}
                     size="sm"
                   >
                     {isGerando ? (
