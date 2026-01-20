@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Code, Lightbulb, Zap, CheckCircle } from 'lucide-react';
+import { BookOpen, Code, Lightbulb, CheckCircle } from 'lucide-react';
 
 /**
  * V22.0 ETAPA 3 - Guia de Implementação Prática
@@ -138,7 +138,7 @@ import { createPageUrl } from '@/utils';
           <Card className="border-purple-300 bg-purple-50">
             <CardContent className="p-4">
               <h3 className="font-semibold text-purple-900 mb-3 flex items-center gap-2">
-                <Zap className="w-5 h-5" />
+                <Lightbulb className="w-5 h-5" />
                 Dicas de Implementação
               </h3>
               <ul className="space-y-2 text-sm text-purple-800">

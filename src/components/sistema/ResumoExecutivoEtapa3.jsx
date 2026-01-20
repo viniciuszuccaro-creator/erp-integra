@@ -140,7 +140,7 @@ export default function ResumoExecutivoEtapa3() {
       <Card className="border-2 border-indigo-300">
         <CardHeader className="bg-indigo-50 border-b">
           <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-indigo-600" />
+            <TrendingUp className="w-5 h-5 text-indigo-600" />
             Métricas de Impacto
           </CardTitle>
         </CardHeader>
