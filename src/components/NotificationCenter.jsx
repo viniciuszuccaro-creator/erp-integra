@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bell, X, Check, AlertTriangle, Info, CheckCircle2, XCircle, Zap, Target } from "lucide-react";
+import { Bell, X, Check, AlertTriangle, Info, CheckCircle2, XCircle, Target } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
