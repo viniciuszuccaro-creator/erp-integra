@@ -230,7 +230,7 @@ export default function DashboardPerformance({ empresaId, grupoId }) {
         <Card className="border-2 border-purple-200">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Zap className="w-8 h-8 text-purple-600" />
+              <Bolt className="w-8 h-8 text-purple-600" />
               <div>
                 <p className="text-xs text-purple-700">P95</p>
                 <p className="text-2xl font-bold text-purple-900">
