@@ -46,12 +46,12 @@ export default function ValidadorLayoutResponsivo() {
         if (el.offsetWidth < 100 || el.offsetHeight < 100) return;
         // IGNORAR elementos que são apenas UI (badges, spans, labels, SVG)
         if (['SPAN', 'LABEL', 'A', 'P', 'BUTTON', 'SVG', 'I'].includes(el.tagName)) return;
+
+        const classes = el.className || '';
         // IGNORAR divs de styling puro
         if (classes.includes('absolute') || classes.includes('fixed') || classes.includes('relative')) return;
 
         totalContainers++;
-
-        const classes = el.className || '';
         const style = window.getComputedStyle(el);
         const parentStyle = window.getComputedStyle(el.parentElement);
         const parentClasses = el.parentElement?.className || '';
