@@ -8,12 +8,12 @@ import {
   Shield,
   CheckCircle,
   Activity,
-  Zap,
   AlertTriangle,
   TrendingUp,
   Eye,
   RefreshCw,
-  Layers
+  Layers,
+  Zap as ZapIcon
 } from 'lucide-react';
 import ValidadorElementosInterativos from './ValidadorElementosInterativos';
 import ActionStateMonitor from '../lib/ActionStateMonitor';
