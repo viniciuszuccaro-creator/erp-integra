@@ -14,7 +14,6 @@ import {
   TrendingUp,
   TrendingDown,
   AlertTriangle,
-  Zap,
   Factory,
   CreditCard,
   Target,
@@ -147,7 +146,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
           </Select>
 
           <Badge className="bg-purple-600 px-3 py-2">
-            <Zap className="w-4 h-4 mr-2" />
+            <Sparkles className="w-4 h-4 mr-2" />
             IA Ativa
           </Badge>
         </div>
@@ -326,7 +325,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
       <Card className="border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-purple-600" />
+            <Sparkles className="w-5 h-5 text-purple-600" />
             Sugestões Inteligentes da IA
           </CardTitle>
         </CardHeader>

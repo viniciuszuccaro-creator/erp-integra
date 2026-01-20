@@ -12,7 +12,6 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
-  Zap,
   Target,
   Sparkles
 } from 'lucide-react';
@@ -509,7 +508,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
 
       {/* Timestamp */}
       <div className="text-center text-xs text-slate-500">
-        <Zap className="w-3 h-3 inline mr-1" />
+        <Activity className="w-3 h-3 inline mr-1" />
         Atualizado automaticamente a cada 10 segundos
       </div>
       </div>
