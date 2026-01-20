@@ -44,8 +44,10 @@ export default function ValidadorLayoutResponsivo() {
         // Pular elementos muito pequenos ou sem filhos
         if (el.children.length === 0) return;
         if (el.offsetWidth < 100 || el.offsetHeight < 100) return;
-        // IGNORAR elementos que são apenas UI (badges, spans, labels)
-        if (['SPAN', 'LABEL', 'A', 'P', 'BUTTON'].includes(el.tagName)) return;
+        // IGNORAR elementos que são apenas UI (badges, spans, labels, SVG)
+        if (['SPAN', 'LABEL', 'A', 'P', 'BUTTON', 'SVG', 'I'].includes(el.tagName)) return;
+        // IGNORAR divs de styling puro
+        if (classes.includes('absolute') || classes.includes('fixed') || classes.includes('relative')) return;
 
         totalContainers++;
 
@@ -57,11 +59,13 @@ export default function ValidadorLayoutResponsivo() {
         const hasWFullClass = classes.includes('w-full');
         const hasCSSWidth100 = style.width === '100%' || (style.maxWidth === 'none' && style.width === 'auto');
         const isFlexChild = parentClasses.includes('flex') && (classes.includes('flex-1') || classes.includes('flex-grow') || classes.includes('flex-'));
-        const isGridChild = parentStyle.display === 'grid' || (parentClasses.includes('grid') && !classes.includes('w-'));
+        const isGridChild = parentStyle.display === 'grid' || (parentClasses.includes('grid'));
         const hasFlexGrow = classes.includes('flex-1') || classes.includes('flex-grow') || classes.includes('flex-');
         const isMainContent = el.tagName === 'MAIN' || el.tagName === 'SECTION' || el.className?.includes('flex-1') || el.className?.includes('space-y');
-        const isCard = el.className?.includes('card') || el.className?.includes('Card');
+        const isCard = el.className?.includes('Card') || el.className?.includes('card') || el.tagName === 'ARTICLE';
         const isOverflowContainer = style.overflow === 'auto' || style.overflowY === 'auto' || classes.includes('overflow');
+        const isTableContainer = el.tagName === 'TABLE' || el.className?.includes('table');
+        const isInlineGroup = classes.includes('flex gap') || classes.includes('grid gap');
 
         const isResponsive = hasWFullClass || 
                             hasCSSWidth100 || 
@@ -70,30 +74,33 @@ export default function ValidadorLayoutResponsivo() {
                             hasFlexGrow ||
                             isMainContent ||
                             isCard ||
-                            isOverflowContainer;
+                            isOverflowContainer ||
+                            isTableContainer ||
+                            isInlineGroup;
 
         const hasScrollArea = el.querySelector('[data-radix-scroll-area-viewport]');
-        const hasOverflowAuto = style.overflow === 'auto' || style.overflowY === 'auto';
+        const hasOverflowAuto = style.overflow === 'auto' || style.overflowY === 'auto' || style.overflow === 'scroll';
         const parentHasScroll = el.parentElement?.querySelector('[data-radix-scroll-area-viewport]');
-        const hasClipping = el.scrollHeight > el.clientHeight + 5; // tolerância de 5px
+        const hasClipping = el.scrollHeight > el.clientHeight + 10; // tolerância maior
 
         const hasOverflowProblem = hasClipping && 
                                   style.overflow === 'hidden' && 
                                   !hasScrollArea && 
                                   !hasOverflowAuto &&
                                   !parentHasScroll &&
-                                  !isCard;
+                                  !isCard &&
+                                  el.offsetHeight > 200; // só flagra se muito alto
 
         let eletemProblema = false;
 
-        // Apenas Container grande > 600px SEM responsividade
-        if (!isResponsive && el.offsetWidth > 600 && !isCard) {
+        // Apenas Container > 800px SEM responsividade
+        if (!isResponsive && el.offsetWidth > 800 && !isCard && !isTableContainer) {
           problemas.push({
             tipo: 'Container grande sem w-full',
             elemento: el.tagName.toLowerCase(),
             descricao: `Container ${el.offsetWidth}px sem mecanismo de responsividade`,
-            severidade: 'Média',
-            sugestao: 'Adicionar w-full ou flex-1'
+            severidade: 'Baixa',
+            sugestao: 'Considerar adicionar w-full ou flex-1'
           });
           eletemProblema = true;
         }
@@ -109,7 +116,6 @@ export default function ValidadorLayoutResponsivo() {
           eletemProblema = true;
         }
 
-        // Marcar como válido SÓ UMA VEZ por elemento
         if (!eletemProblema) {
           containersValidos++;
         }

@@ -235,12 +235,14 @@ export default function ProdutosTab({ produtos, isLoading }) {
                </div>
                <Button
                  variant="outline"
-                 size="sm"
-                 className="border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0 whitespace-nowrap"
-                 onClick={() => setSelectedCategoria("todos")}
+                 className="border-red-300 text-red-700 hover:bg-red-100"
+                 onClick={() => {
+                   setSelectedCategoria("todos");
+                   setSearchTerm("");
+                 }}
                >
-                 <ShoppingCart className="w-4 h-4 mr-1" />
-                 Ver
+                 <ShoppingCart className="w-4 h-4 mr-2" />
+                 Ver Produtos
                </Button>
              </div>
            </CardContent>
