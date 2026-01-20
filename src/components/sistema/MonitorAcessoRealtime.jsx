@@ -16,7 +16,7 @@ import {
   Shield,
   TrendingUp,
   TrendingDown,
-  Zap
+  Bolt
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 
@@ -207,7 +207,7 @@ export default function MonitorAcessoRealtime() {
       <Card>
         <CardHeader className="bg-purple-50 border-b">
           <CardTitle className="text-base flex items-center gap-2">
-            <Zap className="w-4 h-4 text-purple-600" />
+            <Bolt className="w-4 h-4 text-purple-600" />
             Ações Mais Frequentes
           </CardTitle>
         </CardHeader>
