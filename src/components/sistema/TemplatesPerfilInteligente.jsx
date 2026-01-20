@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sparkles,
-  Zap,
+  Bolt,
   ShieldCheck,
   Eye,
   Users,
@@ -106,7 +106,7 @@ const TEMPLATES_PREDEFINIDOS = [
   {
     id: "assistente_financeiro",
     nome: "Assistente Financeiro",
-    icone: Zap,
+    icone: Bolt,
     cor: "yellow",
     descricao: "Operacional financeiro",
     nivel: "Operacional",
