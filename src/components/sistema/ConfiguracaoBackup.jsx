@@ -22,7 +22,7 @@ import {
   Save,
   Mail,
   Settings,
-  Zap
+  Bolt
 } from 'lucide-react';
 import { toast } from 'sonner';
 

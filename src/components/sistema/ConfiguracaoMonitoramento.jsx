@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Activity,
   Database,
-  Zap,
+  Bolt,
   Shield,
   Mail,
   Settings,
@@ -140,7 +140,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
             Geral
           </TabsTrigger>
           <TabsTrigger value="thresholds">
-            <Zap className="w-4 h-4 mr-2" />
+            <Bolt className="w-4 h-4 mr-2" />
             Thresholds
           </TabsTrigger>
           <TabsTrigger value="alertas">
@@ -270,7 +270,7 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2">
-                <Zap className="w-5 h-5 text-yellow-600" />
+                <Bolt className="w-5 h-5 text-yellow-600" />
                 Limites de Performance
               </CardTitle>
             </CardHeader>
