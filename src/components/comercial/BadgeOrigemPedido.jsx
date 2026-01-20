@@ -2,7 +2,7 @@ import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
-import { Lock, Zap, User } from "lucide-react";
+import { Lock, Bolt, User } from "lucide-react";
 
 /**
  * Badge visual inteligente para origem de pedido
@@ -60,8 +60,8 @@ export default function BadgeOrigemPedido({
 
   const iconesTipo = {
     'Manual': User,
-    'Automático': Zap,
-    'Misto': Zap
+    'Automático': Bolt,
+    'Misto': Bolt
   };
 
   const Icone = parametro?.tipo_criacao 
