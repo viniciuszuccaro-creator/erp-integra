@@ -238,9 +238,9 @@ export default function GeradorRelatorios({ empresaId }) {
           
           return (
             <Card key={relatorio.id} className="border-2 hover:shadow-lg transition-all">
-              <CardHeader className={`bg-${relatorio.cor}-50 border-b`}>
+              <CardHeader className="border-b" style={{backgroundColor: `var(--color-${relatorio.cor}-50)`}}>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Icon className={`w-5 h-5 text-${relatorio.cor}-600`} />
+                  <Icon style={{color: `var(--color-${relatorio.cor}-600)`}} className="w-5 h-5" />
                   {relatorio.titulo}
                 </CardTitle>
                 <p className="text-xs text-slate-600 mt-1">{relatorio.descricao}</p>
@@ -250,7 +250,8 @@ export default function GeradorRelatorios({ empresaId }) {
                   <Button
                     onClick={() => handleExportarExcel(relatorio)}
                     disabled={isGerando}
-                    className={`flex-1 bg-${relatorio.cor}-600 hover:bg-${relatorio.cor}-700`}
+                    style={{backgroundColor: `var(--color-${relatorio.cor}-600)`}}
+                    className="flex-1"
                     size="sm"
                   >
                     {isGerando ? (
