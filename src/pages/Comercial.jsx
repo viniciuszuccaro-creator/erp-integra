@@ -47,7 +47,7 @@ export default function Comercial() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) {
-      try { initial = localStorage.getItem('Comercial_tab'); } catch {}
+      try {initial = localStorage.getItem('Comercial_tab');} catch {}
     }
     if (initial) setActiveTab(initial);
   }, []);
@@ -57,7 +57,7 @@ export default function Comercial() {
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Comercial_tab', value); } catch {}
+    try {localStorage.setItem('Comercial_tab', value);} catch {}
   };
   const [painelClienteAberto, setPainelClienteAberto] = useState(false);
   const [clienteParaPainel, setClienteParaPainel] = useState(null);
@@ -68,44 +68,44 @@ export default function Comercial() {
   const { user } = useUser();
 
   const { data: clientes = [], isLoading: loadingClientes } = useQuery({
-        queryKey: ['clientes'],
-        queryFn: () => base44.entities.Cliente.filter(getFiltroContexto('empresa_id'), '-created_date'),
-      });
+    queryKey: ['clientes'],
+    queryFn: () => base44.entities.Cliente.filter(getFiltroContexto('empresa_id'), '-created_date')
+  });
 
   const pedidosQuery = useQuery({
-        queryKey: ['pedidos'],
-        queryFn: () => base44.entities.Pedido.filter(getFiltroContexto('empresa_id'), '-created_date'),
-      });
+    queryKey: ['pedidos'],
+    queryFn: () => base44.entities.Pedido.filter(getFiltroContexto('empresa_id'), '-created_date')
+  });
 
   const { data: pedidos = [], isLoading: loadingPedidos } = pedidosQuery;
 
   const { data: comissoes = [] } = useQuery({
     queryKey: ['comissoes'],
-    queryFn: () => base44.entities.Comissao.list(),
+    queryFn: () => base44.entities.Comissao.list()
   });
 
   const queryClient = useQueryClient();
-  
+
   const { data: notasFiscais = [] } = useQuery({
-        queryKey: ['notasFiscais'],
-        queryFn: () => base44.entities.NotaFiscal.filter(getFiltroContexto('empresa_id'), '-created_date'),
-      });
+    queryKey: ['notasFiscais'],
+    queryFn: () => base44.entities.NotaFiscal.filter(getFiltroContexto('empresa_id'), '-created_date')
+  });
 
   // Keeping this query as per outline, even if not displayed
   const { data: tabelasPreco = [] } = useQuery({
     queryKey: ['tabelas-preco'],
-    queryFn: () => base44.entities.TabelaPreco.list('-updated_date'),
+    queryFn: () => base44.entities.TabelaPreco.list('-updated_date')
   });
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: () => base44.entities.Empresa.list()
   });
 
   // NOVO: Query para pedidos externos
   const { data: pedidosExternos = [] } = useQuery({
     queryKey: ['pedidos-externos'],
-    queryFn: () => base44.entities.PedidoExterno.list('-created_date'),
+    queryFn: () => base44.entities.PedidoExterno.list('-created_date')
   });
 
   const clientesFiltrados = filtrarPorContexto(clientes, 'empresa_id');
@@ -113,12 +113,12 @@ export default function Comercial() {
   const notasFiscaisFiltradas = filtrarPorContexto(notasFiscais, 'empresa_id');
 
   const pedidosExternosPendentes = pedidosExternos.filter(
-    p => p.status_importacao === 'A Validar'
+    (p) => p.status_importacao === 'A Validar'
   ).length;
 
-  const totalVendas = pedidosFiltrados
-    .filter(p => p.status !== 'Cancelado')
-    .reduce((sum, p) => sum + (p.valor_total || 0), 0);
+  const totalVendas = pedidosFiltrados.
+  filter((p) => p.status !== 'Cancelado').
+  reduce((sum, p) => sum + (p.valor_total || 0), 0);
 
   const ticketMedio = pedidosFiltrados.length > 0 ? totalVendas / pedidosFiltrados.length : 0;
 
@@ -128,7 +128,7 @@ export default function Comercial() {
       e.preventDefault();
       // Salvar será tratado no formulário, não diretamente no componente pai
       toast.info('Use Ctrl+S dentro do formulário');
-    },
+    }
     // ctrl+n (new order) and ctrl+p (print order) logic is now handled within PedidosTab
     // or expected to be registered by PedidosTab itself if it needs global shortcuts.
   });
@@ -136,10 +136,10 @@ export default function Comercial() {
   // V21.5: Handlers usando sistema de janelas - COM PROTEÇÃO ANTI-DUPLICAÇÃO
   const handleCreateNewPedido = () => {
     let pedidoCriado = false; // Flag para evitar duplicação
-    
+
     openWindow(
       PedidoFormCompleto,
-      { 
+      {
         clientes,
         windowMode: true,
         pedido: { status: 'Rascunho' }, // Criar como rascunho, aprovar depois com baixa
@@ -148,16 +148,16 @@ export default function Comercial() {
             console.warn('⚠️ Tentativa de criação duplicada bloqueada');
             return;
           }
-          
+
           pedidoCriado = true;
-          
+
           try {
             const created = await base44.entities.Pedido.create({
               ...formData,
               empresa_id: formData.empresa_id || empresaAtual?.id,
               group_id: formData.group_id || grupoAtual?.id,
               vendedor: formData.vendedor || user?.full_name,
-              vendedor_id: formData.vendedor_id || user?.id,
+              vendedor_id: formData.vendedor_id || user?.id
             });
             await base44.entities.AuditLog.create({
               usuario: user?.full_name || user?.email || 'Usuário',
@@ -168,7 +168,7 @@ export default function Comercial() {
               modulo: 'Comercial',
               entidade: 'Pedido',
               registro_id: created.id,
-              descricao: `Pedido ${created.numero_pedido || ''} criado`,
+              descricao: `Pedido ${created.numero_pedido || ''} criado`
             });
             toast.success("✅ Pedido criado com sucesso!");
             await pedidosQuery.refetch();
@@ -190,13 +190,13 @@ export default function Comercial() {
   const handleEditPedido = (pedido) => {
     let atualizacaoEmAndamento = false;
     let windowIdRef = null;
-    
+
     // V21.6: Guardar função openWindow para uso posterior
     window.__currentOpenWindow = openWindow;
-    
+
     windowIdRef = openWindow(
       PedidoFormCompleto,
-      { 
+      {
         pedido,
         clientes,
         windowMode: true,
@@ -205,9 +205,9 @@ export default function Comercial() {
             console.warn('⚠️ Tentativa de atualização duplicada bloqueada');
             return;
           }
-          
+
           atualizacaoEmAndamento = true;
-          
+
           try {
             await base44.entities.Pedido.update(formData.id, formData);
             await base44.entities.AuditLog.create({
@@ -219,16 +219,16 @@ export default function Comercial() {
               modulo: 'Comercial',
               entidade: 'Pedido',
               registro_id: formData.id,
-              descricao: `Pedido ${formData.numero_pedido || ''} atualizado`,
+              descricao: `Pedido ${formData.numero_pedido || ''} atualizado`
             });
             toast.success("✅ Pedido atualizado com sucesso!");
             await pedidosQuery.refetch();
-            
+
             // Fechar a janela após salvar
             if (windowIdRef) {
               closeWindow(windowIdRef);
             }
-            
+
             return formData; // Retornar dados atualizados
           } catch (error) {
             atualizacaoEmAndamento = false;
@@ -255,8 +255,8 @@ export default function Comercial() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
+      </div>);
+
   }
 
   return (
@@ -268,19 +268,19 @@ export default function Comercial() {
         </div>
         
         {/* NOVO: Alerta de Pedidos Externos */}
-        {pedidosExternosPendentes > 0 && (
-          <Badge 
-            className="bg-orange-100 text-orange-700 px-4 py-2 cursor-pointer hover:bg-orange-200"
-            onClick={() => setActiveTab('externos')}
-          >
+        {pedidosExternosPendentes > 0 &&
+        <Badge
+          className="bg-orange-100 text-orange-700 px-4 py-2 cursor-pointer hover:bg-orange-200"
+          onClick={() => setActiveTab('externos')}>
+
             <AlertCircle className="w-4 h-4 mr-2" />
             {pedidosExternosPendentes} pedido(s) externo(s) a validar
           </Badge>
-        )}
+        }
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card 
+        <Card
           className="border-0 shadow-md hover:shadow-xl transition-all cursor-pointer hover:scale-105"
           onClick={() => openWindow(
             VisualizadorUniversalEntidade,
@@ -293,33 +293,33 @@ export default function Comercial() {
               windowMode: true
             },
             { title: '👥 Todos os Clientes', width: 1400, height: 800, zIndex: 50000 }
-          )}
-        >
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          )}>
+
+          <CardHeader className="mx-1 my-1 pt-1 pr-6 pb-1 pl-6 rounded space-y-1.5 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-slate-600">Clientes</CardTitle>
             <Users className="w-5 h-5 text-blue-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{clientesFiltrados.length}</div>
+          <CardContent className="pt-6 pr-6 pb-6 pl-6">
+            <div className="text-blue-600 text-3xl font-bold">{clientesFiltrados.length}</div>
             <p className="text-xs text-slate-500 mt-1">
-              {clientes.filter(c => c.status === 'Ativo').length} ativos
+              {clientes.filter((c) => c.status === 'Ativo').length} ativos
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="pt-1 pr-6 pb-1 pl-6 space-y-1.5 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-slate-600">Pedidos</CardTitle>
             <ShoppingCart className="w-5 h-5 text-purple-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-purple-600">{pedidosFiltrados.length}</div>
+          <CardContent className="pt-6 pr-6 pb-6 pl-6">
+            <div className="text-purple-600 text-3xl font-bold">{pedidosFiltrados.length}</div>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total Vendas</CardTitle>
+          <CardHeader className="pt-1 pr-6 pb-1 pl-6 space-y-1.5 flex flex-row items-center justify-between">
+            <CardTitle className="text-slate-600 text-sm font-medium tracking-tight">Total Vendas</CardTitle>
             <TrendingUp className="w-5 h-5 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -330,7 +330,7 @@ export default function Comercial() {
         </Card>
 
         <Card className="border-0 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="px-6 py-1 space-y-1.5 flex flex-row items-center justify-between">
             <CardTitle className="text-sm font-medium text-slate-600">Ticket Médio</CardTitle>
             <FileText className="w-5 h-5 text-orange-600" />
           </CardHeader>
@@ -350,100 +350,100 @@ export default function Comercial() {
       <ErrorBoundary>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap">
-          <TabsTrigger 
-            value="clientes" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
+          <TabsTrigger
+              value="clientes"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+
             <Users className="w-4 h-4 mr-2" />
             Clientes
           </TabsTrigger>
-          <TabsTrigger 
-            value="pedidos" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
+          <TabsTrigger
+              value="pedidos"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+
             <ShoppingCart className="w-4 h-4 mr-2" />
             Pedidos
           </TabsTrigger>
-          <TabsTrigger 
-            value="entrega" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative"
-          >
+          <TabsTrigger
+              value="entrega"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative">
+
             <Truck className="w-4 h-4 mr-2" />
             Logística de Entrega
-            {pedidosFiltrados.filter(p => 
-              (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') && 
+            {pedidosFiltrados.filter((p) =>
+              (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') &&
               ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito'].includes(p.status)
-            ).length > 0 && (
+              ).length > 0 &&
               <Badge className="ml-2 bg-blue-500 text-white">
-                {pedidosFiltrados.filter(p => 
-                  (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') && 
-                  ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito'].includes(p.status)
+                {pedidosFiltrados.filter((p) =>
+                (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') &&
+                ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito'].includes(p.status)
                 ).length}
               </Badge>
-            )}
+              }
           </TabsTrigger>
-          <TabsTrigger 
-            value="retirada" 
-            className="data-[state=active]:bg-green-600 data-[state=active]:text-white relative"
-          >
+          <TabsTrigger
+              value="retirada"
+              className="data-[state=active]:bg-green-600 data-[state=active]:text-white relative">
+
             <Package className="w-4 h-4 mr-2" />
             Pedidos p/ Retirada
-            {pedidosFiltrados.filter(p => 
-              p.tipo_frete === 'Retirada' && 
+            {pedidosFiltrados.filter((p) =>
+              p.tipo_frete === 'Retirada' &&
               ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Pronto para Retirada'].includes(p.status)
-            ).length > 0 && (
+              ).length > 0 &&
               <Badge className="ml-2 bg-green-500 text-white">
-                {pedidosFiltrados.filter(p => 
-                  p.tipo_frete === 'Retirada' && 
-                  ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Pronto para Retirada'].includes(p.status)
+                {pedidosFiltrados.filter((p) =>
+                p.tipo_frete === 'Retirada' &&
+                ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Pronto para Retirada'].includes(p.status)
                 ).length}
               </Badge>
-            )}
+              }
           </TabsTrigger>
           {/* Removed Tabelas de Preço TabTrigger */}
-          <TabsTrigger 
-            value="comissoes" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
+          <TabsTrigger
+              value="comissoes"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+
             <TrendingUp className="w-4 h-4 mr-2" />
             Comissões
           </TabsTrigger>
-          <TabsTrigger 
-            value="notas" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
+          <TabsTrigger
+              value="notas"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+
             <FileText className="w-4 h-4 mr-2" />
             Notas Fiscais
           </TabsTrigger>
           {/* NOVO: Tab Vendas Externas */}
-          <TabsTrigger 
-            value="externos" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative"
-          >
+          <TabsTrigger
+              value="externos"
+              className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative">
+
             <ShoppingCart className="w-4 h-4 mr-2" />
             Vendas Externas
-            {pedidosExternosPendentes > 0 && (
+            {pedidosExternosPendentes > 0 &&
               <Badge className="ml-2 bg-orange-500 text-white">
                 {pedidosExternosPendentes}
               </Badge>
-            )}
+              }
           </TabsTrigger>
-          <TabsTrigger 
-            value="aprovacoes" 
-            className="data-[state=active]:bg-orange-600 data-[state=active]:text-white relative"
-          >
+          <TabsTrigger
+              value="aprovacoes"
+              className="data-[state=active]:bg-orange-600 data-[state=active]:text-white relative">
+
             <ShieldCheck className="w-4 h-4 mr-2" />
             Central de Aprovações
-            {pedidos.filter(p => p.status_aprovacao === "pendente").length > 0 && (
+            {pedidos.filter((p) => p.status_aprovacao === "pendente").length > 0 &&
               <Badge className="ml-2 bg-red-500 text-white animate-pulse">
-                {pedidos.filter(p => p.status_aprovacao === "pendente").length}
+                {pedidos.filter((p) => p.status_aprovacao === "pendente").length}
               </Badge>
-            )}
+              }
           </TabsTrigger>
-          <TabsTrigger 
-            value="tabelas-preco" 
-            className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white"
-          >
+          <TabsTrigger
+              value="tabelas-preco"
+              className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+
             <DollarSign className="w-4 h-4 mr-2" />
             Tabelas de Preço
           </TabsTrigger>
@@ -451,27 +451,27 @@ export default function Comercial() {
 
         <TabsContent value="clientes">
           <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-            <ClientesTab 
-              clientes={clientes} 
-              isLoading={loadingClientes} 
-              onViewCliente={(cliente) => {
-                setClienteParaPainel(cliente);
-                setPainelClienteAberto(true);
-              }}
-            />
+            <ClientesTab
+                clientes={clientes}
+                isLoading={loadingClientes}
+                onViewCliente={(cliente) => {
+                  setClienteParaPainel(cliente);
+                  setPainelClienteAberto(true);
+                }} />
+
           </Suspense>
         </TabsContent>
 
         <TabsContent value="pedidos">
           <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-            <PedidosTab 
-              pedidos={pedidosFiltrados} 
-              clientes={clientesFiltrados} 
-              isLoading={loadingPedidos} 
-              empresas={empresas}
-              onCreatePedido={handleCreateNewPedido}
-              onEditPedido={handleEditPedido}
-            />
+            <PedidosTab
+                pedidos={pedidosFiltrados}
+                clientes={clientesFiltrados}
+                isLoading={loadingPedidos}
+                empresas={empresas}
+                onCreatePedido={handleCreateNewPedido}
+                onEditPedido={handleEditPedido} />
+
           </Suspense>
         </TabsContent>
 
@@ -497,47 +497,47 @@ export default function Comercial() {
 
         <TabsContent value="notas">
           <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-            <NotasFiscaisTab 
-               notasFiscais={notasFiscaisFiltradas} 
-               pedidos={pedidosFiltrados} 
-               clientes={clientesFiltrados}
-               onCreateNFe={() => openWindow(
-                NotaFiscalFormCompleto,
-                { 
-                  windowMode: true,
-                  onSubmit: async (formData) => {
-                    try {
-                      const nf = await base44.entities.NotaFiscal.create({
-                        ...formData,
-                        group_id: formData.group_id || grupoAtual?.id,
-                        empresa_faturamento_id: formData.empresa_faturamento_id || empresaAtual?.id,
-                      });
-                      await base44.entities.AuditLog.create({
-                        usuario: user?.full_name || user?.email || 'Usuário',
-                        usuario_id: user?.id,
-                        empresa_id: empresaAtual?.id,
-                        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || '',
-                        acao: 'Criação',
-                        modulo: 'Fiscal',
-                        entidade: 'NotaFiscal',
-                        registro_id: nf.id,
-                        descricao: `NF ${nf.numero || ''}/${nf.serie || ''} criada`,
-                      });
-                      toast.success("✅ NF-e salva com sucesso!");
-                      queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
-                    } catch (error) {
-                      toast.error("Erro ao salvar NF-e: " + error.message);
-                    }
+            <NotasFiscaisTab
+                notasFiscais={notasFiscaisFiltradas}
+                pedidos={pedidosFiltrados}
+                clientes={clientesFiltrados}
+                onCreateNFe={() => openWindow(
+                  NotaFiscalFormCompleto,
+                  {
+                    windowMode: true,
+                    onSubmit: async (formData) => {
+                      try {
+                        const nf = await base44.entities.NotaFiscal.create({
+                          ...formData,
+                          group_id: formData.group_id || grupoAtual?.id,
+                          empresa_faturamento_id: formData.empresa_faturamento_id || empresaAtual?.id
+                        });
+                        await base44.entities.AuditLog.create({
+                          usuario: user?.full_name || user?.email || 'Usuário',
+                          usuario_id: user?.id,
+                          empresa_id: empresaAtual?.id,
+                          empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || '',
+                          acao: 'Criação',
+                          modulo: 'Fiscal',
+                          entidade: 'NotaFiscal',
+                          registro_id: nf.id,
+                          descricao: `NF ${nf.numero || ''}/${nf.serie || ''} criada`
+                        });
+                        toast.success("✅ NF-e salva com sucesso!");
+                        queryClient.invalidateQueries({ queryKey: ['notasFiscais'] });
+                      } catch (error) {
+                        toast.error("Erro ao salvar NF-e: " + error.message);
+                      }
+                    },
+                    onCancel: () => {}
                   },
-                  onCancel: () => {}
-                },
-                {
-                  title: '📄 Nova NF-e',
-                  width: 1200,
-                  height: 750
-                }
-              )}
-            />
+                  {
+                    title: '📄 Nova NF-e',
+                    width: 1200,
+                    height: 750
+                  }
+                )} />
+
           </Suspense>
         </TabsContent>
 
@@ -551,10 +551,10 @@ export default function Comercial() {
               <p className="text-slate-600 mb-4">
                 Valide e importe pedidos recebidos de Mercado Livre, Shopee, Amazon, Site e API.
               </p>
-              {pedidosExternos.length > 0 ? (
+              {pedidosExternos.length > 0 ?
                 <div className="space-y-3">
-                  {pedidosExternos.map(pe => (
-                    <div key={pe.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                  {pedidosExternos.map((pe) =>
+                  <div key={pe.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-semibold">{pe.numero_pedido_externo}</p>
@@ -567,22 +567,22 @@ export default function Comercial() {
                           <Badge variant="outline">
                             {pe.status_importacao}
                           </Badge>
-                          {pe.status_importacao === 'A Validar' && (
-                            <Button size="sm">
+                          {pe.status_importacao === 'A Validar' &&
+                        <Button size="sm">
                               Validar e Importar
                             </Button>
-                          )}
+                        }
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
+                  )}
+                </div> :
+
                 <div className="text-center py-12 text-slate-500">
                   <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-30" />
                   <p>Nenhum pedido externo pendente</p>
                 </div>
-              )}
+                }
             </CardContent>
           </Card>
         </TabsContent>
@@ -607,9 +607,9 @@ export default function Comercial() {
           onClose={() => {
             setPainelClienteAberto(false);
             setClienteParaPainel(null);
-          }}
-        />
+          }} />
+
       </Suspense>
-    </div>
-  );
+    </div>);
+
 }
