@@ -95,8 +95,8 @@ export default function StatusFinalEtapa3_100() {
   const progresso = 100;
 
   return (
-    <Card className="border-2 border-purple-500 bg-gradient-to-br from-purple-50 to-indigo-50">
-      <CardHeader className="border-b border-purple-200 bg-white/50">
+    <Card className="border-2 border-purple-500 bg-gradient-to-br from-purple-50 to-indigo-50 w-full h-full flex flex-col">
+      <CardHeader className="border-b border-purple-200 bg-white/50 flex-shrink-0">
         <CardTitle className="flex items-center gap-2">
           <div className="p-2 rounded-lg bg-gradient-to-br from-purple-600 to-indigo-600">
             <CheckCircle className="w-6 h-6 text-white" />
@@ -116,18 +116,18 @@ export default function StatusFinalEtapa3_100() {
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 space-y-6">
-        {/* Progresso */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-slate-700">Progresso Geral</span>
-            <span className="text-2xl font-bold text-purple-600">{progresso}%</span>
-          </div>
-          <Progress value={progresso} className="h-3 bg-purple-200" />
-        </div>
+      <CardContent className="p-6 space-y-6 overflow-auto flex-1">
+         {/* Progresso */}
+         <div className="flex-shrink-0">
+           <div className="flex items-center justify-between mb-2">
+             <span className="text-sm font-semibold text-slate-700">Progresso Geral</span>
+             <span className="text-2xl font-bold text-purple-600">{progresso}%</span>
+           </div>
+           <Progress value={progresso} className="h-3 bg-purple-200" />
+         </div>
 
-        {/* Itens Validados */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+         {/* Itens Validados */}
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
           {items.map((item, idx) => {
             const Icone = item.icone;
             return (

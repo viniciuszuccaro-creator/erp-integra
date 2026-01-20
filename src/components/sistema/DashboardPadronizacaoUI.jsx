@@ -131,34 +131,34 @@ export default function DashboardPadronizacaoUI() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="validador" className="w-full">
-        <TabsList className="bg-white border shadow-sm">
-          <TabsTrigger value="validador" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-            <Layout className="w-4 h-4 mr-2" />
-            Validador
-          </TabsTrigger>
-          <TabsTrigger value="modais" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Layers className="w-4 h-4 mr-2" />
-            Modais→Janelas
-          </TabsTrigger>
-          <TabsTrigger value="dashboards" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Dashboards
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="validador" className="w-full h-full flex flex-col flex-1">
+         <TabsList className="bg-white border shadow-sm w-full flex-shrink-0">
+           <TabsTrigger value="validador" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white flex-1">
+             <Layout className="w-4 h-4 mr-2" />
+             Validador
+           </TabsTrigger>
+           <TabsTrigger value="modais" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex-1">
+             <Layers className="w-4 h-4 mr-2" />
+             Modais→Janelas
+           </TabsTrigger>
+           <TabsTrigger value="dashboards" className="data-[state=active]:bg-green-600 data-[state=active]:text-white flex-1">
+             <TrendingUp className="w-4 h-4 mr-2" />
+             Dashboards
+           </TabsTrigger>
+         </TabsList>
 
-        <TabsContent value="validador" className="mt-4">
-          <ValidadorLayoutResponsivo />
-        </TabsContent>
+         <TabsContent value="validador" className="mt-4 flex-1 overflow-auto">
+           <ValidadorLayoutResponsivo />
+         </TabsContent>
 
-        <TabsContent value="modais" className="mt-4">
-          <ConversorModaisJanelas />
-        </TabsContent>
+         <TabsContent value="modais" className="mt-4 flex-1 overflow-auto">
+           <ConversorModaisJanelas />
+         </TabsContent>
 
-        <TabsContent value="dashboards" className="mt-4">
-          <DashboardInterativoDemo />
-        </TabsContent>
-      </Tabs>
+         <TabsContent value="dashboards" className="mt-4 flex-1 overflow-auto">
+           <DashboardInterativoDemo />
+         </TabsContent>
+       </Tabs>
     </div>
   );
 }
