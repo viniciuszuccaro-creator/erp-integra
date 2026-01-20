@@ -6,7 +6,7 @@ import GuiaImplementacaoEtapa3 from '@/components/sistema/GuiaImplementacaoEtapa
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Layout, CheckCircle, Trophy, FileText, BookOpen } from 'lucide-react';
+import { Layout, CheckCircle, Trophy, FileText, BookOpen, Award } from 'lucide-react';
 
 /**
  * V22.0 ETAPA 3 - Página de Padronização UI/UX
