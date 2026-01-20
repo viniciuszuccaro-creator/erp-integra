@@ -167,9 +167,9 @@ export default function ProdutosTab({ produtos, isLoading }) {
   const produtosRevenda = produtos.filter(p => p.tipo_item !== 'Matéria-Prima Produção');
 
   return (
-    <div className="space-y-6 w-full h-full">
+    <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
       {/* V21.6: NOVO - Estatísticas Rápidas */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="w-full flex-shrink-0 grid grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -221,35 +221,33 @@ export default function ProdutosTab({ produtos, isLoading }) {
 
       {/* ALERTA DE ESTOQUE BAIXO */}
       {produtosBaixoEstoque.length > 0 && (
-        <Card className="border-red-300 bg-red-50">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
-              <div className="flex-1">
-                <p className="font-semibold text-red-900">
-                  ⚠️ {produtosBaixoEstoque.length} produtos com estoque baixo
-                </p>
-                <p className="text-sm text-red-700">
-                  Alguns produtos estão abaixo do estoque mínimo e precisam de reposição
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                className="border-red-300 text-red-700 hover:bg-red-100"
-                onClick={() => {
-                  setSelectedCategoria("todos");
-                  setSearchTerm("");
-                }}
-              >
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Ver Produtos
-              </Button>
-            </div>
-          </CardContent>
+        <Card className="border-red-300 bg-red-50 flex-shrink-0">
+           <CardContent className="p-4">
+             <div className="flex items-center gap-3">
+               <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
+               <div className="flex-1 min-w-0">
+                 <p className="font-semibold text-red-900">
+                   ⚠️ {produtosBaixoEstoque.length} produtos com estoque baixo
+                 </p>
+                 <p className="text-sm text-red-700">
+                   Alguns produtos estão abaixo do estoque mínimo e precisam de reposição
+                 </p>
+               </div>
+               <Button
+                 variant="outline"
+                 size="sm"
+                 className="border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0 whitespace-nowrap"
+                 onClick={() => setSelectedCategoria("todos")}
+               >
+                 <ShoppingCart className="w-4 h-4 mr-1" />
+                 Ver
+               </Button>
+             </div>
+           </CardContent>
         </Card>
       )}
 
-      <div className="flex justify-between items-center">
+      <div className="w-full flex-shrink-0 flex justify-between items-center">
         <h2 className="text-2xl font-bold">Produtos</h2>
         <div className="flex gap-2">
           {/* V21.6: NOVO - Dashboard de Produção */}
@@ -352,9 +350,9 @@ export default function ProdutosTab({ produtos, isLoading }) {
         </div>
       </div>
 
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md flex-shrink-0">
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
@@ -376,13 +374,13 @@ export default function ProdutosTab({ produtos, isLoading }) {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md">
-        <CardHeader className="bg-slate-50 border-b">
+      <Card className="border-0 shadow-md flex-1 flex flex-col min-h-0">
+        <CardHeader className="bg-slate-50 border-b flex-shrink-0">
           <CardTitle>Lista de Produtos ({filteredProdutos.length})</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex flex-col h-full">
           {selectedProdutos.length > 0 && (
-            <Alert className="m-4 border-blue-300 bg-blue-50">
+            <Alert className="m-4 border-blue-300 bg-blue-50 flex-shrink-0">
               <AlertDescription className="flex items-center justify-between">
                 <div className="text-blue-900 font-semibold">{selectedProdutos.length} produto(s) selecionado(s)</div>
                 <div className="flex gap-2">
@@ -394,7 +392,7 @@ export default function ProdutosTab({ produtos, isLoading }) {
               </AlertDescription>
             </Alert>
           )}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto flex-1">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
@@ -555,13 +553,15 @@ export default function ProdutosTab({ produtos, isLoading }) {
           </div>
 
           {filteredProdutos.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">Nenhum produto encontrado</p>
+            <div className="text-center py-12 flex-1 flex items-center justify-center">
+              <div>
+                <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500">Nenhum produto encontrado</p>
+              </div>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+          </CardContent>
+          </Card>
+          </div>
+          );
+          }

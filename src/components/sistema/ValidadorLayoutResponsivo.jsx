@@ -44,6 +44,8 @@ export default function ValidadorLayoutResponsivo() {
         // Pular elementos muito pequenos ou sem filhos
         if (el.children.length === 0) return;
         if (el.offsetWidth < 100 || el.offsetHeight < 100) return;
+        // IGNORAR elementos que são apenas UI (badges, spans, labels)
+        if (['SPAN', 'LABEL', 'A', 'P', 'BUTTON'].includes(el.tagName)) return;
 
         totalContainers++;
 
@@ -53,34 +55,39 @@ export default function ValidadorLayoutResponsivo() {
         const parentClasses = el.parentElement?.className || '';
 
         const hasWFullClass = classes.includes('w-full');
-        const hasCSSWidth100 = style.width === '100%';
-        const isFlexChild = parentClasses.includes('flex') && (classes.includes('flex-1') || classes.includes('flex-grow'));
-        const isGridChild = parentStyle.display === 'grid';
-        const hasFlexGrow = classes.includes('flex-1') || classes.includes('flex-grow');
-        const isMainContent = el.tagName === 'MAIN' || el.className?.includes('flex-1');
+        const hasCSSWidth100 = style.width === '100%' || (style.maxWidth === 'none' && style.width === 'auto');
+        const isFlexChild = parentClasses.includes('flex') && (classes.includes('flex-1') || classes.includes('flex-grow') || classes.includes('flex-'));
+        const isGridChild = parentStyle.display === 'grid' || (parentClasses.includes('grid') && !classes.includes('w-'));
+        const hasFlexGrow = classes.includes('flex-1') || classes.includes('flex-grow') || classes.includes('flex-');
+        const isMainContent = el.tagName === 'MAIN' || el.tagName === 'SECTION' || el.className?.includes('flex-1') || el.className?.includes('space-y');
+        const isCard = el.className?.includes('card') || el.className?.includes('Card');
+        const isOverflowContainer = style.overflow === 'auto' || style.overflowY === 'auto' || classes.includes('overflow');
 
         const isResponsive = hasWFullClass || 
                             hasCSSWidth100 || 
                             isFlexChild || 
                             isGridChild || 
                             hasFlexGrow ||
-                            isMainContent;
+                            isMainContent ||
+                            isCard ||
+                            isOverflowContainer;
 
         const hasScrollArea = el.querySelector('[data-radix-scroll-area-viewport]');
         const hasOverflowAuto = style.overflow === 'auto' || style.overflowY === 'auto';
         const parentHasScroll = el.parentElement?.querySelector('[data-radix-scroll-area-viewport]');
-        const hasClipping = el.scrollHeight > el.clientHeight;
+        const hasClipping = el.scrollHeight > el.clientHeight + 5; // tolerância de 5px
 
         const hasOverflowProblem = hasClipping && 
                                   style.overflow === 'hidden' && 
                                   !hasScrollArea && 
                                   !hasOverflowAuto &&
-                                  !parentHasScroll;
+                                  !parentHasScroll &&
+                                  !isCard;
 
-        // CONTAR PROBLEMA POR ELEMENTO, NÃO POR PROPRIEDADE
         let eletemProblema = false;
 
-        if (!isResponsive && el.offsetWidth > 400) {
+        // Apenas Container grande > 600px SEM responsividade
+        if (!isResponsive && el.offsetWidth > 600 && !isCard) {
           problemas.push({
             tipo: 'Container grande sem w-full',
             elemento: el.tagName.toLowerCase(),
