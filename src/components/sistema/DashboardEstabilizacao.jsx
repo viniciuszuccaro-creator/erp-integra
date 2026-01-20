@@ -70,9 +70,9 @@ export default function DashboardEstabilizacao() {
   }, []);
 
   return (
-    <div className="w-full h-full p-6 space-y-6">
+    <div className="w-full h-full p-6 space-y-6 flex flex-col overflow-auto">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 flex-shrink-0">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
             <span className="p-3 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg">
@@ -102,7 +102,7 @@ export default function DashboardEstabilizacao() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-shrink-0 w-full">
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -163,31 +163,31 @@ export default function DashboardEstabilizacao() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="validador" className="w-full">
-        <TabsList className="bg-white border shadow-sm">
-          <TabsTrigger value="validador" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+      <Tabs defaultValue="validador" className="w-full h-full flex flex-col flex-1">
+        <TabsList className="bg-white border shadow-sm w-full flex-shrink-0">
+          <TabsTrigger value="validador" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex-1">
             <Shield className="w-4 h-4 mr-2" />
             Validador
           </TabsTrigger>
-          <TabsTrigger value="monitor" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+          <TabsTrigger value="monitor" className="data-[state=active]:bg-green-600 data-[state=active]:text-white flex-1">
             <Activity className="w-4 h-4 mr-2" />
             Monitor Real-time
           </TabsTrigger>
-          <TabsTrigger value="metricas" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+          <TabsTrigger value="metricas" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white flex-1">
             <TrendingUp className="w-4 h-4 mr-2" />
             Métricas
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="validador" className="mt-4">
+        <TabsContent value="validador" className="mt-4 flex-1 overflow-auto">
           <ValidadorElementosInterativos />
         </TabsContent>
 
-        <TabsContent value="monitor" className="mt-4">
+        <TabsContent value="monitor" className="mt-4 flex-1 overflow-auto">
           <ActionStateMonitor />
         </TabsContent>
 
-        <TabsContent value="metricas" className="mt-4">
+        <TabsContent value="metricas" className="mt-4 flex-1 overflow-auto">
           <Card>
             <CardHeader className="border-b bg-slate-50">
               <CardTitle className="flex items-center gap-2">

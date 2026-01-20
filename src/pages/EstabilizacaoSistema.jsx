@@ -18,46 +18,46 @@ import { Shield, CheckCircle, Activity, Trophy, FileText } from 'lucide-react';
 export default function EstabilizacaoSistema() {
   return (
     <div className="w-full h-full p-6 space-y-6">
-      <Tabs defaultValue="dashboard" className="w-full h-full">
-        <TabsList className="bg-white border shadow-sm">
-          <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Activity className="w-4 h-4 mr-2" />
-            Dashboard
-          </TabsTrigger>
-          <TabsTrigger value="status" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Status Final
-          </TabsTrigger>
-          <TabsTrigger value="certificado" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white">
-            <Trophy className="w-4 h-4 mr-2" />
-            Certificado
-          </TabsTrigger>
-          <TabsTrigger value="resumo" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <FileText className="w-4 h-4 mr-2" />
-            Resumo Executivo
-          </TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="dashboard" className="w-full h-full flex flex-col">
+         <TabsList className="bg-white border shadow-sm w-full">
+           <TabsTrigger value="dashboard" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex-1">
+             <Activity className="w-4 h-4 mr-2" />
+             Dashboard
+           </TabsTrigger>
+           <TabsTrigger value="status" className="data-[state=active]:bg-green-600 data-[state=active]:text-white flex-1">
+             <CheckCircle className="w-4 h-4 mr-2" />
+             Status Final
+           </TabsTrigger>
+           <TabsTrigger value="certificado" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white flex-1">
+             <Trophy className="w-4 h-4 mr-2" />
+             Certificado
+           </TabsTrigger>
+           <TabsTrigger value="resumo" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white flex-1">
+             <FileText className="w-4 h-4 mr-2" />
+             Resumo Executivo
+           </TabsTrigger>
+         </TabsList>
 
-        <TabsContent value="dashboard" className="w-full h-full">
-          <DashboardEstabilizacao />
-        </TabsContent>
+         <TabsContent value="dashboard" className="w-full h-full flex-1 overflow-auto">
+           <DashboardEstabilizacao />
+         </TabsContent>
 
-        <TabsContent value="status" className="w-full h-full">
-          <StatusFinalEtapa1_100 />
-        </TabsContent>
+         <TabsContent value="status" className="w-full h-full flex-1 overflow-auto">
+           <StatusFinalEtapa1_100 />
+         </TabsContent>
 
-        <TabsContent value="certificado" className="w-full h-full">
-          <div className="max-w-4xl mx-auto py-8">
-            <CertificadoEtapa1 />
-          </div>
-        </TabsContent>
+         <TabsContent value="certificado" className="w-full h-full flex-1 overflow-auto flex items-center justify-center">
+           <div className="w-full max-w-4xl py-8">
+             <CertificadoEtapa1 />
+           </div>
+         </TabsContent>
 
-        <TabsContent value="resumo" className="w-full h-full">
-          <div className="max-w-6xl mx-auto py-6">
-            <ResumoExecutivoEtapa1 />
-          </div>
-        </TabsContent>
-      </Tabs>
+         <TabsContent value="resumo" className="w-full h-full flex-1 overflow-auto flex items-center justify-center">
+           <div className="w-full max-w-6xl py-6">
+             <ResumoExecutivoEtapa1 />
+           </div>
+         </TabsContent>
+       </Tabs>
     </div>
   );
 }
