@@ -51,12 +51,13 @@ export default function DashboardEstabilizacao() {
         ? actionLogs.reduce((acc, l) => acc + (l.duration || 50), 0) / total
         : 50;
       
-      // Score ponderado - mais generoso
-      const scoreTaxaSucesso = Math.min(70, taxaSucesso * 0.7);
-      const scorePerformance = avgDuration < 100 ? 20 : avgDuration < 500 ? 15 : 10;
+      // Score ponderado - CAP EM 100 SEMPRE
+      const scoreTaxaSucesso = Math.min(60, taxaSucesso * 0.6);
+      const scorePerformance = avgDuration < 100 ? 30 : avgDuration < 500 ? 20 : 10;
       const scoreBonusUso = 10; // Sempre 10
       
-      const finalScore = Math.min(100, Math.round(scoreTaxaSucesso + scorePerformance + scoreBonusUso));
+      const totalScore = scoreTaxaSucesso + scorePerformance + scoreBonusUso;
+      const finalScore = Math.min(100, Math.max(0, Math.round(totalScore)));
       
       setHealthScore(finalScore);
       setStats({
