@@ -22,7 +22,7 @@ import {
   Eye, Pencil, Trash2, AlertTriangle, RefreshCw, Sparkles, UserPlus, UserCheck,
   Key, ShieldCheck, CheckSquare, LayoutDashboard, ShoppingCart, DollarSign,
   Package, Truck, Factory, UserCircle, FileText, BarChart3, Download,
-  MessageCircle, Briefcase, Calendar, Layers, ChevronDown, Info
+  MessageCircle, Briefcase, Calendar, Layers, ChevronDown, Info, Zap as ZapIcon
 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
