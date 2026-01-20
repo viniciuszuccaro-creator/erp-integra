@@ -9,7 +9,7 @@ import {
   TrendingUp,
   CheckCircle,
   Activity,
-  Zap
+  BarChart3
 } from 'lucide-react';
 import ValidadorLayoutResponsivo from './ValidadorLayoutResponsivo';
 import DashboardInterativoDemo from './DashboardInterativoDemo';

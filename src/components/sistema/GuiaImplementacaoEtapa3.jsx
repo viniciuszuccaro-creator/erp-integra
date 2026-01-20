@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { BookOpen, Code, Lightbulb, Zap } from 'lucide-react';
+import { BookOpen, Code, Lightbulb, Zap, CheckCircle } from 'lucide-react';
 
 /**
  * V22.0 ETAPA 3 - Guia de Implementação Prática
