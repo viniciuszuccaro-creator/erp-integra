@@ -1084,8 +1084,24 @@ export default function CentralPerfisAcesso() {
                         <AccordionItem key={moduloId} value={moduloId} className="border-b">
                           <AccordionTrigger className="px-4 py-3 hover:bg-white/50">
                             <div className="flex items-center gap-3 flex-1">
-                              <Icone className={`w-5 h-5 text-${modulo.cor}-600`} />
-                              <span className="font-medium">{modulo.nome}</span>
+                               <Icone className={`w-5 h-5 ${
+                                  modulo.cor === 'blue' ? 'text-blue-600' :
+                                  modulo.cor === 'green' ? 'text-green-600' :
+                                  modulo.cor === 'emerald' ? 'text-emerald-600' :
+                                  modulo.cor === 'purple' ? 'text-purple-600' :
+                                  modulo.cor === 'orange' ? 'text-orange-600' :
+                                  modulo.cor === 'cyan' ? 'text-cyan-600' :
+                                  modulo.cor === 'indigo' ? 'text-indigo-600' :
+                                  modulo.cor === 'pink' ? 'text-pink-600' :
+                                  modulo.cor === 'slate' ? 'text-slate-600' :
+                                  modulo.cor === 'red' ? 'text-red-600' :
+                                  modulo.cor === 'violet' ? 'text-violet-600' :
+                                  modulo.cor === 'amber' ? 'text-amber-600' :
+                                  modulo.cor === 'teal' ? 'text-teal-600' :
+                                  modulo.cor === 'sky' ? 'text-sky-600' :
+                                  'text-gray-600'
+                               }`} />
+                               <span className="font-medium">{modulo.nome}</span>
                               {qtdPerms > 0 && (
                                 <Badge className="bg-blue-100 text-blue-700 ml-2">
                                   {qtdPerms}
