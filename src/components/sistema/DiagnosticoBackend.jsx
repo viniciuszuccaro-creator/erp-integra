@@ -3,7 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, XCircle, Loader2, Zap } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, Bolt } from 'lucide-react';
 
 /**
  * 🔧 DIAGNÓSTICO DE BACKEND FUNCTIONS
@@ -44,7 +44,7 @@ export default function DiagnosticoBackend() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-yellow-600" />
+          <Bolt className="w-5 h-5 text-yellow-600" />
           Diagnóstico de Backend Functions
         </CardTitle>
       </CardHeader>
@@ -61,7 +61,7 @@ export default function DiagnosticoBackend() {
             </>
           ) : (
             <>
-              <Zap className="w-4 h-4 mr-2" />
+              <Bolt className="w-4 h-4 mr-2" />
               Testar Backend Functions
             </>
           )}
