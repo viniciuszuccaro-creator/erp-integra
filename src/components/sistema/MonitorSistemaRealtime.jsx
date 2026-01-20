@@ -6,7 +6,7 @@ import { base44 } from '@/api/base44Client';
 import { 
   Activity, 
   Database, 
-  Zap, 
+  Bolt, 
   Users, 
   Building2,
   CheckCircle2,

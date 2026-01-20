@@ -18,7 +18,7 @@ import {
   Bell,
   Shield,
   Database,
-  Zap
+  Bolt
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
