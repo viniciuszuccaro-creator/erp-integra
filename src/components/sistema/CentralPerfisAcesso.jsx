@@ -1155,7 +1155,7 @@ export default function CentralPerfisAcesso() {
                                               key={acao.id}
                                               className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded border text-xs transition-all ${
                                                 marcado
-                                                  ? `bg-${acao.cor}-100 border-${acao.cor}-300 text-${acao.cor}-700 font-semibold`
+                                                  ? 'bg-blue-100 border-blue-300 text-blue-700 font-semibold'
                                                   : 'bg-white border-slate-200 hover:bg-slate-50'
                                               }`}
                                             >
