@@ -1,4 +1,4 @@
-import { ShoppingCart, Users, Package, DollarSign, FileText, Truck, Calendar } from "lucide-react";
+import { ShoppingCart, Users, Package, DollarSign, FileText, Truck, Calendar, Zap } from "lucide-react";
 
 // Centraliza metadados dos módulos e ações rápidas
 // Mantém nomes compatíveis com os módulos existentes para controle de acesso e navegação
