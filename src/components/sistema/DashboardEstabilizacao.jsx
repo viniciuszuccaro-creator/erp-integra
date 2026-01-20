@@ -136,7 +136,7 @@ export default function DashboardEstabilizacao() {
                 <p className="text-purple-100 text-sm">Ações</p>
                 <p className="text-3xl font-bold">{stats.acoesExecutadas}</p>
               </div>
-              <Zap className="w-10 h-10 text-purple-200" />
+              <ZapIcon className="w-10 h-10 text-purple-200" />
             </div>
             <p className="text-xs text-purple-100 mt-2">Executadas</p>
           </CardContent>
