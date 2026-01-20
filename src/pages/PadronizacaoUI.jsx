@@ -4,6 +4,8 @@ import StatusFinalEtapa3_100 from '@/components/sistema/StatusFinalEtapa3_100';
 import ResumoExecutivoEtapa3 from '@/components/sistema/ResumoExecutivoEtapa3';
 import GuiaImplementacaoEtapa3 from '@/components/sistema/GuiaImplementacaoEtapa3';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Layout, CheckCircle, Trophy, FileText, BookOpen } from 'lucide-react';
 
 /**
