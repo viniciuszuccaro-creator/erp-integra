@@ -1,8 +1,10 @@
 import React from 'react';
 import DashboardPadronizacaoUI from '@/components/sistema/DashboardPadronizacaoUI';
 import StatusFinalEtapa3_100 from '@/components/sistema/StatusFinalEtapa3_100';
+import ResumoExecutivoEtapa3 from '@/components/sistema/ResumoExecutivoEtapa3';
+import GuiaImplementacaoEtapa3 from '@/components/sistema/GuiaImplementacaoEtapa3';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Layout, CheckCircle, Trophy } from 'lucide-react';
+import { Layout, CheckCircle, Trophy, FileText, BookOpen } from 'lucide-react';
 
 /**
  * V22.0 ETAPA 3 - Página de Padronização UI/UX
@@ -29,6 +31,14 @@ export default function PadronizacaoUI() {
             <Trophy className="w-4 h-4 mr-2" />
             Certificado
           </TabsTrigger>
+          <TabsTrigger value="resumo" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <FileText className="w-4 h-4 mr-2" />
+            Resumo Executivo
+          </TabsTrigger>
+          <TabsTrigger value="guia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <BookOpen className="w-4 h-4 mr-2" />
+            Guia de Uso
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="w-full h-full">
@@ -41,6 +51,18 @@ export default function PadronizacaoUI() {
 
         <TabsContent value="certificado" className="w-full h-full">
           <CertificadoEtapa3 />
+        </TabsContent>
+
+        <TabsContent value="resumo" className="w-full h-full">
+          <div className="max-w-6xl mx-auto py-6">
+            <ResumoExecutivoEtapa3 />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="guia" className="w-full h-full">
+          <div className="max-w-5xl mx-auto py-6">
+            <GuiaImplementacaoEtapa3 />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
