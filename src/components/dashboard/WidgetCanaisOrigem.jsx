@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Activity, TrendingUp, Zap } from "lucide-react";
+import { Activity, TrendingUp, ArrowRight } from "lucide-react";
 import BadgeOrigemPedido from "@/components/comercial/BadgeOrigemPedido";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
@@ -138,7 +138,7 @@ export default function WidgetCanaisOrigem({ empresaId }) {
         {/* Footer */}
         <div className="pt-2 mt-2 border-t flex items-center justify-between text-xs">
           <span className="text-slate-600">Clique para ver dashboard completo</span>
-          <Zap className="w-4 h-4 text-blue-600" />
+          <ArrowRight className="w-4 h-4 text-blue-600" />
         </div>
 
       </CardContent>
