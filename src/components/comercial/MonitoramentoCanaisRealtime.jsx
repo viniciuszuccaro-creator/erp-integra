@@ -24,14 +24,14 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
       return base44.entities.Pedido.list('-created_date', 100);
     },
     initialData: [],
-    refetchInterval: autoRefresh ? 30000 : false, // 30 segundos
+    refetchInterval: autoRefresh ? 30000 : false // 30 segundos
   });
 
   // Buscar parâmetros
   const { data: parametros = [] } = useQuery({
     queryKey: ['parametros-origem-pedido'],
     queryFn: () => base44.entities.ParametroOrigemPedido.list(),
-    initialData: [],
+    initialData: []
   });
 
   useEffect(() => {
@@ -45,13 +45,13 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
   const agora = new Date();
   const ultimos30min = new Date(agora.getTime() - 30 * 60 * 1000);
 
-  const pedidosRecentes = pedidos.filter(p => {
+  const pedidosRecentes = pedidos.filter((p) => {
     const dataPedido = new Date(p.created_date || p.data_pedido);
     return dataPedido >= ultimos30min;
   });
 
   // Agrupar por canal
-  const porCanal = parametros.map(param => {
+  const porCanal = parametros.map((param) => {
     const origemMap = {
       'ERP': 'Manual',
       'Site': 'Site',
@@ -65,8 +65,8 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
     };
 
     const origemEsperada = origemMap[param.canal] || param.canal;
-    
-    const pedidosCanal = pedidosRecentes.filter(p => {
+
+    const pedidosCanal = pedidosRecentes.filter((p) => {
       const origemPedido = origemMap[p.origem_pedido] || p.origem_pedido;
       return origemPedido === param.canal || p.origem_pedido === origemEsperada;
     });
@@ -78,7 +78,7 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
       count: pedidosCanal.length,
       ultimoPedido: pedidosCanal[0]?.created_date || null
     };
-  }).filter(c => c.count > 0);
+  }).filter((c) => c.count > 0);
 
   const CORES = {
     blue: 'from-blue-500 to-blue-600',
@@ -95,7 +95,7 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
 
   return (
     <Card className="border-cyan-300 bg-gradient-to-r from-cyan-50 to-blue-50">
-      <CardHeader className="pb-3">
+      <CardHeader className="px-6 flex flex-col space-y-1.5">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <Activity className="w-5 h-5 text-cyan-600 animate-pulse" />
@@ -115,7 +115,7 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
       <CardContent>
         
         {/* Resumo Últimos 30min */}
-        <div className="flex items-center gap-4 mb-4 p-3 bg-white/60 rounded-lg border border-cyan-200">
+        <div className="bg-white/60 mb-1 px-3 rounded-lg flex items-center gap-4 border border-cyan-200">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-cyan-600" />
             <div>
@@ -131,40 +131,40 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
             <p className="text-xs text-slate-600 mb-1">Por Canal:</p>
             <div className="flex gap-2 flex-wrap">
               <AnimatePresence>
-                {porCanal.map((canal, idx) => (
-                  <motion.div
-                    key={canal.canal}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ delay: idx * 0.1 }}
-                  >
+                {porCanal.map((canal, idx) =>
+                <motion.div
+                  key={canal.canal}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ delay: idx * 0.1 }}>
+
                     <Badge className={`bg-gradient-to-r ${CORES[canal.cor] || CORES.blue} text-white`}>
                       {canal.nome}: {canal.count}
                     </Badge>
                   </motion.div>
-                ))}
+                )}
               </AnimatePresence>
             </div>
           </div>
         </div>
 
         {/* Lista de Canais Ativos */}
-        {porCanal.length > 0 ? (
-          <div className="space-y-2">
+        {porCanal.length > 0 ?
+        <div className="space-y-2">
             {porCanal.map((canal, idx) => {
-              const tempoUltimo = canal.ultimoPedido 
-                ? Math.floor((agora - new Date(canal.ultimoPedido)) / 60000) 
-                : null;
+            const tempoUltimo = canal.ultimoPedido ?
+            Math.floor((agora - new Date(canal.ultimoPedido)) / 60000) :
+            null;
 
-              return (
-                <motion.div
-                  key={canal.canal}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="flex items-center justify-between p-3 bg-white rounded-lg border hover:shadow-md transition-all"
-                >
+            return (
+              <motion.div
+                key={canal.canal}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="flex items-center justify-between p-3 bg-white rounded-lg border hover:shadow-md transition-all">
+
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 bg-gradient-to-br ${CORES[canal.cor] || CORES.blue} rounded-lg flex items-center justify-center`}>
                       <span className="text-white font-bold text-lg">{canal.count}</span>
@@ -172,37 +172,37 @@ export default function MonitoramentoCanaisRealtime({ empresaId, autoRefresh = t
                     <div>
                       <p className="font-semibold text-slate-900">{canal.nome}</p>
                       <p className="text-xs text-slate-500">
-                        {tempoUltimo !== null ? (
-                          tempoUltimo === 0 ? 'Agora mesmo' :
-                          tempoUltimo === 1 ? 'Há 1 minuto' :
-                          `Há ${tempoUltimo} minutos`
-                        ) : 'Sem pedidos recentes'}
+                        {tempoUltimo !== null ?
+                      tempoUltimo === 0 ? 'Agora mesmo' :
+                      tempoUltimo === 1 ? 'Há 1 minuto' :
+                      `Há ${tempoUltimo} minutos` :
+                      'Sem pedidos recentes'}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <div className={`w-3 h-3 rounded-full ${
-                      tempoUltimo !== null && tempoUltimo < 5 
-                        ? 'bg-green-500 animate-pulse' 
-                        : tempoUltimo < 15
-                        ? 'bg-yellow-500'
-                        : 'bg-slate-300'
-                    }`} />
+                  tempoUltimo !== null && tempoUltimo < 5 ?
+                  'bg-green-500 animate-pulse' :
+                  tempoUltimo < 15 ?
+                  'bg-yellow-500' :
+                  'bg-slate-300'}`
+                  } />
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        ) : (
-          <Alert className="border-slate-300">
+                </motion.div>);
+
+          })}
+          </div> :
+
+        <Alert className="border-slate-300">
             <AlertDescription className="text-sm text-slate-600">
               Nenhum pedido recebido nos últimos 30 minutos
             </AlertDescription>
           </Alert>
-        )}
+        }
 
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 }
