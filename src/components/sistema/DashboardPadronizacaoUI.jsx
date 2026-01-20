@@ -35,10 +35,10 @@ export default function DashboardPadronizacaoUI() {
   });
 
   return (
-    <div className="w-full h-full p-6 space-y-6">
+    <div className="w-full h-full flex flex-col overflow-auto">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div>
+      <div className="w-full flex-shrink-0 p-6 pb-0 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div className="w-full">
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
             <span className="p-3 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 shadow-lg">
               <Layout className="w-7 h-7 text-white" />
@@ -50,7 +50,7 @@ export default function DashboardPadronizacaoUI() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-shrink-0">
           <Badge className="bg-purple-600 text-white">
             <Layout className="w-3 h-3 mr-1" />
             {stats.telasComWFull} telas w-full
@@ -63,7 +63,7 @@ export default function DashboardPadronizacaoUI() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="w-full flex-shrink-0 p-6 pb-0 grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -131,34 +131,34 @@ export default function DashboardPadronizacaoUI() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="validador" className="w-full h-full flex flex-col flex-1">
+      <Tabs defaultValue="validador" className="w-full flex-1 flex flex-col p-6 pt-0">
          <TabsList className="bg-white border shadow-sm w-full flex-shrink-0">
-           <TabsTrigger value="validador" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white flex-1">
-             <Layout className="w-4 h-4 mr-2" />
-             Validador
-           </TabsTrigger>
-           <TabsTrigger value="modais" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex-1">
-             <Layers className="w-4 h-4 mr-2" />
-             Modais→Janelas
-           </TabsTrigger>
-           <TabsTrigger value="dashboards" className="data-[state=active]:bg-green-600 data-[state=active]:text-white flex-1">
-             <TrendingUp className="w-4 h-4 mr-2" />
-             Dashboards
-           </TabsTrigger>
-         </TabsList>
+            <TabsTrigger value="validador" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white flex-1">
+              <Layout className="w-4 h-4 mr-2" />
+              Validador
+            </TabsTrigger>
+            <TabsTrigger value="modais" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex-1">
+              <Layers className="w-4 h-4 mr-2" />
+              Modais→Janelas
+            </TabsTrigger>
+            <TabsTrigger value="dashboards" className="data-[state=active]:bg-green-600 data-[state=active]:text-white flex-1">
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Dashboards
+            </TabsTrigger>
+          </TabsList>
 
-         <TabsContent value="validador" className="mt-4 flex-1 overflow-auto">
-           <ValidadorLayoutResponsivo />
-         </TabsContent>
+         <TabsContent value="validador" className="w-full flex-1 overflow-auto mt-4">
+            <ValidadorLayoutResponsivo />
+          </TabsContent>
 
-         <TabsContent value="modais" className="mt-4 flex-1 overflow-auto">
-           <ConversorModaisJanelas />
-         </TabsContent>
+          <TabsContent value="modais" className="w-full flex-1 overflow-auto mt-4">
+            <ConversorModaisJanelas />
+          </TabsContent>
 
-         <TabsContent value="dashboards" className="mt-4 flex-1 overflow-auto">
-           <DashboardInterativoDemo />
-         </TabsContent>
-       </Tabs>
-    </div>
-  );
+          <TabsContent value="dashboards" className="w-full flex-1 overflow-auto mt-4">
+            <DashboardInterativoDemo />
+          </TabsContent>
+        </Tabs>
+      </div>
+      );
 }

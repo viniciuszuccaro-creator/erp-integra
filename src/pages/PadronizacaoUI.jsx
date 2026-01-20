@@ -18,55 +18,55 @@ import { Layout, CheckCircle, Trophy, FileText, BookOpen } from 'lucide-react';
  */
 export default function PadronizacaoUI() {
   return (
-    <div className="w-full h-full p-6 space-y-6">
-      <Tabs defaultValue="dashboard" className="w-full h-full flex flex-col">
-         <TabsList className="bg-white border shadow-sm w-full">
-           <TabsTrigger value="dashboard" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white flex-1">
-             <Layout className="w-4 h-4 mr-2" />
-             Dashboard
-           </TabsTrigger>
-           <TabsTrigger value="status" className="data-[state=active]:bg-green-600 data-[state=active]:text-white flex-1">
-             <CheckCircle className="w-4 h-4 mr-2" />
-             Status Final
-           </TabsTrigger>
-           <TabsTrigger value="certificado" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white flex-1">
-             <Trophy className="w-4 h-4 mr-2" />
-             Certificado
-           </TabsTrigger>
-           <TabsTrigger value="resumo" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white flex-1">
-             <FileText className="w-4 h-4 mr-2" />
-             Resumo Executivo
-           </TabsTrigger>
-           <TabsTrigger value="guia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex-1">
-             <BookOpen className="w-4 h-4 mr-2" />
-             Guia de Uso
-           </TabsTrigger>
+    <div className="w-full h-full p-6 space-y-6 flex flex-col overflow-auto">
+      <Tabs defaultValue="dashboard" className="w-full flex-1 flex flex-col">
+         <TabsList className="bg-white border shadow-sm w-full flex-shrink-0">
+            <TabsTrigger value="dashboard" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white flex-1">
+              <Layout className="w-4 h-4 mr-2" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="status" className="data-[state=active]:bg-green-600 data-[state=active]:text-white flex-1">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Status Final
+            </TabsTrigger>
+            <TabsTrigger value="certificado" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white flex-1">
+              <Trophy className="w-4 h-4 mr-2" />
+              Certificado
+            </TabsTrigger>
+            <TabsTrigger value="resumo" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white flex-1">
+              <FileText className="w-4 h-4 mr-2" />
+              Resumo Executivo
+            </TabsTrigger>
+            <TabsTrigger value="guia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white flex-1">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Guia de Uso
+            </TabsTrigger>
          </TabsList>
 
-         <TabsContent value="dashboard" className="w-full h-full flex-1 overflow-auto">
-           <DashboardPadronizacaoUI />
-         </TabsContent>
+         <TabsContent value="dashboard" className="w-full flex-1 overflow-auto">
+            <DashboardPadronizacaoUI />
+          </TabsContent>
 
-         <TabsContent value="status" className="w-full h-full flex-1 overflow-auto">
-           <StatusFinalEtapa3_100 />
-         </TabsContent>
+          <TabsContent value="status" className="w-full flex-1 overflow-auto">
+            <StatusFinalEtapa3_100 />
+          </TabsContent>
 
-         <TabsContent value="certificado" className="w-full h-full flex-1 overflow-auto flex items-center justify-center">
-           <CertificadoEtapa3 />
-         </TabsContent>
+          <TabsContent value="certificado" className="w-full flex-1 overflow-auto flex items-center justify-center">
+            <CertificadoEtapa3 />
+          </TabsContent>
 
-         <TabsContent value="resumo" className="w-full h-full flex-1 overflow-auto flex items-center justify-center">
-           <div className="w-full max-w-6xl py-6">
-             <ResumoExecutivoEtapa3 />
-           </div>
-         </TabsContent>
+          <TabsContent value="resumo" className="w-full flex-1 overflow-auto flex items-center justify-center">
+            <div className="w-full h-full max-w-6xl py-6">
+              <ResumoExecutivoEtapa3 />
+            </div>
+          </TabsContent>
 
-         <TabsContent value="guia" className="w-full h-full flex-1 overflow-auto flex items-center justify-center">
-           <div className="w-full max-w-5xl py-6">
-             <GuiaImplementacaoEtapa3 />
-           </div>
-         </TabsContent>
-       </Tabs>
+          <TabsContent value="guia" className="w-full flex-1 overflow-auto flex items-center justify-center">
+            <div className="w-full h-full max-w-5xl py-6">
+              <GuiaImplementacaoEtapa3 />
+            </div>
+          </TabsContent>
+        </Tabs>
     </div>
   );
 }
