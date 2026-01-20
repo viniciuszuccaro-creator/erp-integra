@@ -22,7 +22,8 @@ import {
   Mail,
   Phone,
   Briefcase,
-  Settings
+  Settings,
+  Eye
 } from "lucide-react";
 
 export default function GestaoUsuariosAvancada({ 
