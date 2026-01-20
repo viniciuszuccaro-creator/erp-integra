@@ -1,8 +1,10 @@
 import React from 'react';
 import DashboardEstabilizacao from '@/components/sistema/DashboardEstabilizacao';
 import StatusFinalEtapa1_100 from '@/components/sistema/StatusFinalEtapa1_100';
+import CertificadoEtapa1 from '@/components/sistema/CertificadoEtapa1';
+import ResumoExecutivoEtapa1 from '@/components/sistema/ResumoExecutivoEtapa1';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, CheckCircle, Activity } from 'lucide-react';
+import { Shield, CheckCircle, Activity, Trophy, FileText } from 'lucide-react';
 
 /**
  * V22.0 ETAPA 1 - Página de Estabilização do Sistema
@@ -26,6 +28,14 @@ export default function EstabilizacaoSistema() {
             <CheckCircle className="w-4 h-4 mr-2" />
             Status Final
           </TabsTrigger>
+          <TabsTrigger value="certificado" className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white">
+            <Trophy className="w-4 h-4 mr-2" />
+            Certificado
+          </TabsTrigger>
+          <TabsTrigger value="resumo" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
+            <FileText className="w-4 h-4 mr-2" />
+            Resumo Executivo
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="w-full h-full">
@@ -34,6 +44,18 @@ export default function EstabilizacaoSistema() {
 
         <TabsContent value="status" className="w-full h-full">
           <StatusFinalEtapa1_100 />
+        </TabsContent>
+
+        <TabsContent value="certificado" className="w-full h-full">
+          <div className="max-w-4xl mx-auto py-8">
+            <CertificadoEtapa1 />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="resumo" className="w-full h-full">
+          <div className="max-w-6xl mx-auto py-6">
+            <ResumoExecutivoEtapa1 />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
