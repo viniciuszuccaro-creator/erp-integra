@@ -15,6 +15,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ConversorModaisJanelas from './ConversorModaisJanelas';
 
 /**
  * V22.0 ETAPA 3 - Validador de Layout Responsivo
@@ -343,6 +344,3 @@ export default function ValidadorLayoutResponsivo() {
     </div>
   );
 }
-
-// Importar componente de exemplo
-import ConversorModaisJanelas from './ConversorModaisJanelas';
