@@ -27,7 +27,7 @@ export default function StatusFinalEtapa4_100() {
     {
       titulo: 'Detalhes Pagamento Completos',
       descricao: 'Forma, bandeira, taxa, autorização',
-      componentes: ['DetalhesLiquidacao', 'RegistroPagamentoCompleto'],
+      componentes: ['DetalhesLiquidacao', 'RegistroPagamentoCompleto', 'EstagiosRecebimentoWidget'],
       icone: CreditCard,
       progresso: 100
     },
@@ -41,8 +41,15 @@ export default function StatusFinalEtapa4_100() {
     {
       titulo: 'Conciliação em Lote',
       descricao: 'Por pedido, NF, cliente, período',
-      componentes: ['ConciliacaoEmLote', 'CriteriosConciliacao'],
+      componentes: ['ConciliacaoEmLote', 'CriteriosConciliacao', 'AuditoriaLiquidacoes'],
       icone: DollarSign,
+      progresso: 100
+    },
+    {
+      titulo: 'IA & Segurança Financeira',
+      descricao: 'Anomalias, validações, auditoria',
+      componentes: ['IADetectorAnomalias', 'ValidadorSegurancaFinanceira'],
+      icone: CheckCircle,
       progresso: 100
     }
   ];
@@ -124,14 +131,18 @@ export default function StatusFinalEtapa4_100() {
           <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-400">
             <CardContent className="p-6">
               <h3 className="text-lg font-bold text-blue-900 mb-4">Estatísticas da Etapa 4</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <div className="text-center p-4 bg-white rounded-lg border-2 border-green-300">
-                  <p className="text-3xl font-bold text-green-600">4</p>
+                  <p className="text-3xl font-bold text-green-600">5</p>
                   <p className="text-xs text-slate-600">Funcionalidades</p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg border-2 border-blue-300">
-                  <p className="text-3xl font-bold text-blue-600">8+</p>
-                  <p className="text-xs text-slate-600">Componentes</p>
+                  <p className="text-3xl font-bold text-blue-600">11</p>
+                  <p className="text-xs text-slate-600">Componentes Novos</p>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg border-2 border-cyan-300">
+                  <p className="text-3xl font-bold text-cyan-600">5</p>
+                  <p className="text-xs text-slate-600">Melhorados</p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg border-2 border-purple-300">
                   <p className="text-3xl font-bold text-purple-600">100%</p>
@@ -139,7 +150,7 @@ export default function StatusFinalEtapa4_100() {
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg border-2 border-orange-300">
                   <p className="text-3xl font-bold text-orange-600">100%</p>
-                  <p className="text-xs text-slate-600">Operacional</p>
+                  <p className="text-xs text-slate-600">Seguro</p>
                 </div>
               </div>
             </CardContent>
@@ -169,7 +180,7 @@ export default function StatusFinalEtapa4_100() {
                 </Badge>
 
                 <div className="bg-white/70 backdrop-blur rounded-xl p-6 border-2 border-yellow-400 mt-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
                     <div>
                       <p className="text-xs text-slate-600 mb-1">Caixa Central</p>
                       <p className="text-2xl font-bold text-green-600">100%</p>
@@ -185,6 +196,10 @@ export default function StatusFinalEtapa4_100() {
                     <div>
                       <p className="text-xs text-slate-600 mb-1">Conciliação</p>
                       <p className="text-2xl font-bold text-orange-600">100%</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-600 mb-1">IA & Segurança</p>
+                      <p className="text-2xl font-bold text-cyan-600">100%</p>
                     </div>
                   </div>
                 </div>

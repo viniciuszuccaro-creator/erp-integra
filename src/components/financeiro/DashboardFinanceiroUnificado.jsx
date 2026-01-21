@@ -9,6 +9,8 @@ import IADetectorAnomalias from './IADetectorAnomalias';
 import ContasReceberTab from './ContasReceberTab';
 import ContasPagarTab from './ContasPagarTab';
 import CriteriosConciliacao from './CriteriosConciliacao';
+import AuditoriaLiquidacoes from './AuditoriaLiquidacoes';
+import ValidadorSegurancaFinanceira from './ValidadorSegurancaFinanceira';
 
 /**
  * V22.0 ETAPA 4 - Dashboard Financeiro Unificado
@@ -34,18 +36,18 @@ export default function DashboardFinanceiroUnificado() {
       </Card>
 
       <Tabs defaultValue="caixa" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="mx-4 mt-4 grid grid-cols-5 w-auto flex-shrink-0">
+        <TabsList className="mx-4 mt-4 grid grid-cols-7 w-auto flex-shrink-0">
           <TabsTrigger value="caixa" className="flex items-center gap-2">
             <Wallet className="w-4 h-4" />
-            Caixa Central
+            Caixa
           </TabsTrigger>
           <TabsTrigger value="receber" className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" />
-            A Receber
+            Receber
           </TabsTrigger>
           <TabsTrigger value="pagar" className="flex items-center gap-2">
             <DollarSign className="w-4 h-4" />
-            A Pagar
+            Pagar
           </TabsTrigger>
           <TabsTrigger value="conciliacao" className="flex items-center gap-2">
             <CreditCard className="w-4 h-4" />
@@ -53,7 +55,15 @@ export default function DashboardFinanceiroUnificado() {
           </TabsTrigger>
           <TabsTrigger value="ia" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
-            IA Anomalias
+            IA
+          </TabsTrigger>
+          <TabsTrigger value="auditoria" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Auditoria
+          </TabsTrigger>
+          <TabsTrigger value="seguranca" className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            Segurança
           </TabsTrigger>
         </TabsList>
 
@@ -81,6 +91,12 @@ export default function DashboardFinanceiroUnificado() {
             <div className="p-4 h-full overflow-auto">
               <IADetectorAnomalias />
             </div>
+          </TabsContent>
+          <TabsContent value="auditoria" className="h-full m-0 p-0">
+            <AuditoriaLiquidacoes />
+          </TabsContent>
+          <TabsContent value="seguranca" className="h-full m-0 p-0">
+            <ValidadorSegurancaFinanceira />
           </TabsContent>
         </div>
       </Tabs>
