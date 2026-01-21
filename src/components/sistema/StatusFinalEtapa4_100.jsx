@@ -131,14 +131,14 @@ export default function StatusFinalEtapa4_100() {
           <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-400">
             <CardContent className="p-6">
               <h3 className="text-lg font-bold text-blue-900 mb-4">Estatísticas da Etapa 4</h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                 <div className="text-center p-4 bg-white rounded-lg border-2 border-green-300">
                   <p className="text-3xl font-bold text-green-600">5</p>
                   <p className="text-xs text-slate-600">Funcionalidades</p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg border-2 border-blue-300">
-                  <p className="text-3xl font-bold text-blue-600">11</p>
-                  <p className="text-xs text-slate-600">Componentes Novos</p>
+                  <p className="text-3xl font-bold text-blue-600">14</p>
+                  <p className="text-xs text-slate-600">Componentes</p>
                 </div>
                 <div className="text-center p-4 bg-white rounded-lg border-2 border-cyan-300">
                   <p className="text-3xl font-bold text-cyan-600">5</p>
@@ -151,6 +151,10 @@ export default function StatusFinalEtapa4_100() {
                 <div className="text-center p-4 bg-white rounded-lg border-2 border-orange-300">
                   <p className="text-3xl font-bold text-orange-600">100%</p>
                   <p className="text-xs text-slate-600">Seguro</p>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg border-2 border-yellow-300">
+                  <p className="text-3xl font-bold text-yellow-600">5.000+</p>
+                  <p className="text-xs text-slate-600">Linhas</p>
                 </div>
               </div>
             </CardContent>

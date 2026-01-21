@@ -11,6 +11,9 @@ import ContasPagarTab from './ContasPagarTab';
 import CriteriosConciliacao from './CriteriosConciliacao';
 import AuditoriaLiquidacoes from './AuditoriaLiquidacoes';
 import ValidadorSegurancaFinanceira from './ValidadorSegurancaFinanceira';
+import FluxoLiquidacaoCompleto from './FluxoLiquidacaoCompleto';
+import MetricasRastreabilidade from './MetricasRastreabilidade';
+import IntegracaoCaixaPDV from './IntegracaoCaixaPDV';
 
 /**
  * V22.0 ETAPA 4 - Dashboard Financeiro Unificado
@@ -69,7 +72,15 @@ export default function DashboardFinanceiroUnificado() {
 
         <div className="flex-1 min-h-0 overflow-hidden">
           <TabsContent value="caixa" className="h-full m-0 p-0">
-            <CaixaCentralLiquidacao />
+            <div className="w-full h-full flex flex-col lg:flex-row gap-4 overflow-auto p-4">
+              <div className="flex-1 min-w-0">
+                <CaixaCentralLiquidacao />
+              </div>
+              <div className="w-full lg:w-96 space-y-4 flex-shrink-0">
+                <FluxoLiquidacaoCompleto />
+                <IntegracaoCaixaPDV />
+              </div>
+            </div>
           </TabsContent>
           <TabsContent value="receber" className="h-full m-0 p-0">
             <div className="h-full overflow-auto p-4">
@@ -96,7 +107,14 @@ export default function DashboardFinanceiroUnificado() {
             <AuditoriaLiquidacoes />
           </TabsContent>
           <TabsContent value="seguranca" className="h-full m-0 p-0">
-            <ValidadorSegurancaFinanceira />
+            <div className="w-full h-full flex flex-col lg:flex-row gap-4 overflow-auto p-4">
+              <div className="flex-1">
+                <ValidadorSegurancaFinanceira />
+              </div>
+              <div className="w-full lg:w-96 flex-shrink-0">
+                <MetricasRastreabilidade />
+              </div>
+            </div>
           </TabsContent>
         </div>
       </Tabs>
