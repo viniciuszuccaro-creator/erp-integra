@@ -26,10 +26,16 @@ export default function Acessos() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) { try { initial = localStorage.getItem('Acessos_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
+    if (initial) {
+      React.startTransition(() => {
+        setActiveTab(initial);
+      });
+    }
   }, []);
   const handleTabChange = (value) => {
-    setActiveTab(value);
+    React.startTransition(() => {
+      setActiveTab(value);
+    });
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
