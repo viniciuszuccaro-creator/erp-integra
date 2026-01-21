@@ -468,31 +468,18 @@ export default function DashboardFinanceiroMestre({ windowMode = false }) {
         </CardContent>
       </Card>
 
-      {/* DASHBOARDS UNIFICADOS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-slate-50 border-b">
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-slate-700" />
-              Realtime Financeiro
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} windowMode={true} />
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-lg">
-          <CardHeader className="bg-slate-50 border-b">
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-slate-700" />
-              Visão Unificada
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <DashboardFinanceiroUnificado empresaId={empresaAtual?.id} windowMode={true} />
-          </CardContent>
-        </Card>
-      </div>
+      {/* DASHBOARD REALTIME */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-600" />
+            Realtime Financeiro
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <DashboardFinanceiroRealtime empresaId={empresaAtual?.id} windowMode={true} />
+        </CardContent>
+      </Card>
 
       {/* CERTIFICAÇÃO */}
       <Card className="border-4 border-green-500 bg-gradient-to-br from-green-100 to-emerald-100 shadow-2xl">
