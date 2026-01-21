@@ -14,6 +14,7 @@ import MovimentosDiarios from './caixa-central/MovimentosDiarios';
 import OrdensLiquidacaoPendentes from './caixa-central/OrdensLiquidacaoPendentes';
 import LiquidarReceberPagar from './caixa-central/LiquidarReceberPagar';
 import HistoricoLiquidacoes from './caixa-central/HistoricoLiquidacoes';
+import ExtratoBancarioResumo from './caixa-central/ExtratoBancarioResumo';
 import CartoesACompensar from './CartoesACompensar';
 import ConciliacaoBancariaTab from './ConciliacaoBancariaTab';
 
@@ -179,8 +180,11 @@ export default function CaixaCentralLiquidacao() {
           <TabsTrigger value="cartoes" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
             💳 Cartões
           </TabsTrigger>
+          <TabsTrigger value="extrato" className="data-[state=active]:bg-teal-600 data-[state=active]:text-white">
+            🏦 Extrato
+          </TabsTrigger>
           <TabsTrigger value="conciliacao" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            🏦 Conciliação
+            🔄 Conciliação
           </TabsTrigger>
           <TabsTrigger value="historico" className="data-[state=active]:bg-slate-700 data-[state=active]:text-white">
             <FileText className="w-4 h-4 mr-2" />
@@ -258,6 +262,10 @@ export default function CaixaCentralLiquidacao() {
 
         <TabsContent value="cartoes" className="mt-3">
           <CartoesACompensar />
+        </TabsContent>
+
+        <TabsContent value="extrato" className="mt-3">
+          <ExtratoBancarioResumo />
         </TabsContent>
 
         <TabsContent value="conciliacao" className="mt-3">
