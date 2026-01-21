@@ -14,7 +14,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Clock, TrendingUp, TrendingDown, CheckCircle2, XCircle, Wallet } from 'lucide-react';
 
 export default function OrdensLiquidacaoPendentes() {
-  const { filterInContext, empresaAtual, carimbarContexto } = useContextoVisual();
+  const { filterInContext, empresaAtual } = useContextoVisual();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);
@@ -78,7 +78,8 @@ export default function OrdensLiquidacaoPendentes() {
   const cancelarOrdemMutation = useMutation({
     mutationFn: async (ordemId) => {
       await base44.entities.CaixaOrdemLiquidacao.update(ordemId, {
-        status: "Cancelado"
+        status: "Cancelado",
+        data_cancelamento: new Date().toISOString()
       });
     },
     onSuccess: () => {
@@ -133,62 +134,64 @@ export default function OrdensLiquidacaoPendentes() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>Data</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Origem</TableHead>
-                <TableHead>Títulos Vinculados</TableHead>
-                <TableHead>Valor Total</TableHead>
-                <TableHead>Forma</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ordensPendentes.map(ordem => (
-                <TableRow key={ordem.id} className="hover:bg-slate-50">
-                  <TableCell className="text-sm">{new Date(ordem.created_date).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell>
-                    <Badge className={ordem.tipo_operacao === "Recebimento" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
-                      {ordem.tipo_operacao === "Recebimento" ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                      {ordem.tipo_operacao}
-                    </Badge>
-                  </TableCell>
-                  <TableCell><Badge variant="outline" className="text-xs">{ordem.origem}</Badge></TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
-                      {ordem.titulos_vinculados?.map((titulo, idx) => (
-                        <div key={idx} className="text-xs">
-                          <span className="font-semibold">{titulo.numero_titulo}</span>
-                          <span className="text-slate-500"> • {titulo.cliente_fornecedor_nome}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-bold text-base">R$ {(ordem.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell><Badge className="bg-blue-100 text-blue-700">{ordem.forma_pagamento_pretendida}</Badge></TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => handleLiquidar(ordem)} className="bg-emerald-600 hover:bg-emerald-700">
-                        <CheckCircle2 className="w-4 h-4 mr-1" />
-                        Liquidar
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => cancelarOrdemMutation.mutate(ordem.id)} 
-                        className="border-red-300 text-red-600"
-                        disabled={cancelarOrdemMutation.isPending}
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          <div className="max-h-[500px] overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50">
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Origem</TableHead>
+                  <TableHead>Títulos Vinculados</TableHead>
+                  <TableHead>Valor Total</TableHead>
+                  <TableHead>Forma</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {ordensPendentes.map(ordem => (
+                  <TableRow key={ordem.id} className="hover:bg-slate-50">
+                    <TableCell className="text-sm">{new Date(ordem.created_date).toLocaleDateString('pt-BR')}</TableCell>
+                    <TableCell>
+                      <Badge className={ordem.tipo_operacao === "Recebimento" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                        {ordem.tipo_operacao === "Recebimento" ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                        {ordem.tipo_operacao}
+                      </Badge>
+                    </TableCell>
+                    <TableCell><Badge variant="outline" className="text-xs">{ordem.origem}</Badge></TableCell>
+                    <TableCell>
+                      <div className="space-y-1">
+                        {ordem.titulos_vinculados?.map((titulo, idx) => (
+                          <div key={idx} className="text-xs">
+                            <span className="font-semibold">{titulo.numero_titulo}</span>
+                            <span className="text-slate-500"> • {titulo.cliente_fornecedor_nome}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold text-base">R$ {(ordem.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell><Badge className="bg-blue-100 text-blue-700">{ordem.forma_pagamento_pretendida}</Badge></TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => handleLiquidar(ordem)} className="bg-emerald-600 hover:bg-emerald-700">
+                          <CheckCircle2 className="w-4 h-4 mr-1" />
+                          Liquidar
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => cancelarOrdemMutation.mutate(ordem.id)} 
+                          className="border-red-300 text-red-600"
+                          disabled={cancelarOrdemMutation.isPending}
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
           {ordensPendentes.length === 0 && (
             <div className="text-center py-12 text-slate-500">
               <Clock className="w-16 h-16 mx-auto mb-4 opacity-30" />

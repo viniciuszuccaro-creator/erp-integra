@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import { CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
 
@@ -38,41 +37,55 @@ export default function HistoricoLiquidacoes() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-50">
-              <TableHead>Data Processamento</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Origem</TableHead>
-              <TableHead>Títulos</TableHead>
-              <TableHead>Valor</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {[...ordensLiquidadas, ...ordensCanceladas].map(ordem => (
-              <TableRow key={ordem.id} className={ordem.status === "Cancelado" ? "opacity-50" : ""}>
-                <TableCell className="text-sm">
-                  {ordem.data_processamento ? new Date(ordem.data_processamento).toLocaleString('pt-BR') : '-'}
-                </TableCell>
-                <TableCell>
-                  <Badge className={ordem.tipo_operacao === "Recebimento" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
-                    {ordem.tipo_operacao === "Recebimento" ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
-                    {ordem.tipo_operacao}
-                  </Badge>
-                </TableCell>
-                <TableCell><Badge variant="outline" className="text-xs">{ordem.origem}</Badge></TableCell>
-                <TableCell>{ordem.titulos_vinculados?.length || 0} título(s)</TableCell>
-                <TableCell className="font-bold">R$ {(ordem.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
-                <TableCell>
-                  <Badge className={ordem.status === "Liquidado" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
-                    {ordem.status}
-                  </Badge>
-                </TableCell>
+        <div className="max-h-[500px] overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                <TableHead>Data Processamento</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Origem</TableHead>
+                <TableHead>Títulos Vinculados</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {[...ordensLiquidadas, ...ordensCanceladas].map(ordem => (
+                <TableRow key={ordem.id} className={ordem.status === "Cancelado" ? "opacity-50" : ""}>
+                  <TableCell className="text-sm">
+                    {ordem.data_processamento ? new Date(ordem.data_processamento).toLocaleString('pt-BR') : '-'}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className={ordem.tipo_operacao === "Recebimento" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                      {ordem.tipo_operacao === "Recebimento" ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                      {ordem.tipo_operacao}
+                    </Badge>
+                  </TableCell>
+                  <TableCell><Badge variant="outline" className="text-xs">{ordem.origem}</Badge></TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      {ordem.titulos_vinculados?.slice(0, 2).map((titulo, idx) => (
+                        <div key={idx} className="text-xs">
+                          <span className="font-semibold">{titulo.numero_titulo}</span>
+                          <span className="text-slate-500"> • {titulo.cliente_fornecedor_nome}</span>
+                        </div>
+                      ))}
+                      {ordem.titulos_vinculados?.length > 2 && (
+                        <p className="text-xs text-slate-500">+{ordem.titulos_vinculados.length - 2} mais</p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-bold">R$ {(ordem.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell>
+                    <Badge className={ordem.status === "Liquidado" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                      {ordem.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
         {ordensLiquidadas.length === 0 && ordensCanceladas.length === 0 && (
           <div className="text-center py-12 text-slate-500">
             <CheckCircle2 className="w-16 h-16 mx-auto mb-4 opacity-30" />
