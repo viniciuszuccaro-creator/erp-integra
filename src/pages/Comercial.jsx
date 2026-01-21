@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, startTransition } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
