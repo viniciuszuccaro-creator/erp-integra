@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, startTransition } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,7 +86,7 @@ export default function PortalCliente() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
-    if (tab) startTransition(() => setActiveTab(tab));
+    if (tab) setActiveTab(tab);
   }, []);
 
   const { data: fetchedCliente, isLoading: isClienteLoading } = useQuery({
@@ -392,7 +392,7 @@ export default function PortalCliente() {
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={(v) => startTransition(() => setActiveTab(v))} className="space-y-6 w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full">
           <div className="overflow-x-auto">
             <TabsList className="inline-flex w-auto min-w-full bg-white shadow-sm p-1">
               <TabsTrigger value="dashboard" className="flex items-center gap-2 whitespace-nowrap">

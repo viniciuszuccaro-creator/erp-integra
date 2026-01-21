@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, startTransition } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shield, Activity, Settings, Database } from 'lucide-react';
 import PainelGovernanca from '../components/governanca/PainelGovernanca';
@@ -25,10 +25,10 @@ export default function Seguranca() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) { try { initial = localStorage.getItem('Seguranca_tab'); } catch {} }
-    if (initial) startTransition(() => setActiveTab(initial));
+    if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    startTransition(() => setActiveTab(value));
+    setActiveTab(value);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
