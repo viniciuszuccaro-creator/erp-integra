@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, Suspense, startTransition } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,12 +57,12 @@ function Agenda() {
     if (!d) { try { d = localStorage.getItem('Agenda_date') || null; } catch {} }
     if (!u) { try { u = localStorage.getItem('Agenda_user') || null; } catch {} }
 
-    if (v) startTransition(() => setVisualizacao(v));
+    if (v) setVisualizacao(v);
     if (d) {
       const parsed = new Date(d);
-      if (!isNaN(parsed)) startTransition(() => setDataAtual(parsed));
+      if (!isNaN(parsed)) setDataAtual(parsed);
     }
-    if (u) startTransition(() => setFiltroUsuario(u));
+    if (u) setFiltroUsuario(u);
   }, []);
 
   // Sincronizar estado -> URL + localStorage
@@ -442,7 +442,7 @@ function Agenda() {
     } else {
       novaData.setDate(novaData.getDate() - 1);
     }
-    startTransition(() => setDataAtual(novaData));
+    setDataAtual(novaData);
   };
 
   const navegarProximo = () => {
@@ -454,11 +454,11 @@ function Agenda() {
     } else {
       novaData.setDate(novaData.getDate() + 1);
     }
-    startTransition(() => setDataAtual(novaData));
+    setDataAtual(novaData);
   };
 
   const irParaHoje = () => {
-    startTransition(() => setDataAtual(new Date()));
+    setDataAtual(new Date());
   };
 
   // Filtrar eventos
@@ -958,21 +958,21 @@ function Agenda() {
                 <Button
                   variant={visualizacao === 'mes' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => startTransition(() => setVisualizacao('mes'))}
+                  onClick={() => setVisualizacao('mes')}
                 >
                   Mês
                 </Button>
                 <Button
                   variant={visualizacao === 'semana' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => startTransition(() => setVisualizacao('semana'))}
+                  onClick={() => setVisualizacao('semana')}
                 >
                   Semana
                 </Button>
                 <Button
                   variant={visualizacao === 'dia' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={() => startTransition(() => setVisualizacao('dia'))}
+                  onClick={() => setVisualizacao('dia')}
                 >
                   Dia
                 </Button>
