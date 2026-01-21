@@ -49,9 +49,12 @@ export default function MovimentosDiarios() {
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-movimentos'],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryKey: ['pedidos-movimentos', empresaAtual?.id],
+    queryFn: () => filterInContext('Pedido', {}, undefined, 100),
+    enabled: !!empresaAtual?.id
   });
+
+  const { filterInContext } = useContextoVisual();
 
   const operadoresUnicos = [...new Set(movimentos.map(m => m.usuario_operador_nome).filter(Boolean))];
   const movimentosFiltrados = abaOperador === "todos" 

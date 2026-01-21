@@ -10,13 +10,24 @@ import { CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
 export default function HistoricoLiquidacoes() {
   const { filterInContext, empresaAtual } = useContextoVisual();
 
-  const { data: ordensLiquidacao = [] } = useQuery({
-    queryKey: ['caixa-ordens-liquidacao-historico', empresaAtual?.id],
+  const { data: ordensLiquidacao = [], isLoading } = useQuery({
+    queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
     queryFn: () => filterInContext('CaixaOrdemLiquidacao', {}, '-created_date'),
+    enabled: !!empresaAtual?.id
   });
 
-  const ordensLiquidadas = ordensLiquidacao.filter(o => o.status === "Processado");
+  const ordensLiquidadas = ordensLiquidacao.filter(o => o.status === "Liquidado");
   const ordensCanceladas = ordensLiquidacao.filter(o => o.status === "Cancelado");
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center text-slate-500">
+          Carregando histórico...
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-0 shadow-md">
@@ -54,7 +65,7 @@ export default function HistoricoLiquidacoes() {
                 <TableCell>{ordem.titulos_vinculados?.length || 0} título(s)</TableCell>
                 <TableCell className="font-bold">R$ {(ordem.valor_total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
                 <TableCell>
-                  <Badge className={ordem.status === "Processado" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
+                  <Badge className={ordem.status === "Liquidado" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}>
                     {ordem.status}
                   </Badge>
                 </TableCell>

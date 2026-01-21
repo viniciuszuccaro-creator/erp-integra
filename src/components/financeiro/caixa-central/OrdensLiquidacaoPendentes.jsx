@@ -22,9 +22,10 @@ export default function OrdensLiquidacaoPendentes() {
   const [formaPagamentoLiquidacao, setFormaPagamentoLiquidacao] = useState("");
   const [observacoesLiquidacao, setObservacoesLiquidacao] = useState("");
 
-  const { data: ordensLiquidacao = [] } = useQuery({
+  const { data: ordensLiquidacao = [], isLoading } = useQuery({
     queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
     queryFn: () => filterInContext('CaixaOrdemLiquidacao', {}, '-created_date'),
+    enabled: !!empresaAtual?.id
   });
 
   const liquidarOrdemMutation = useMutation({
@@ -52,8 +53,9 @@ export default function OrdensLiquidacaoPendentes() {
       }
 
       await base44.entities.CaixaOrdemLiquidacao.update(ordemId, {
-        status: "Processado",
+        status: "Liquidado",
         data_processamento: new Date().toISOString(),
+        usuario_processou_id: dados.usuario_id,
         detalhes_processamento: {
           forma_pagamento: dados.forma_pagamento,
           observacoes: dados.observacoes
@@ -86,6 +88,16 @@ export default function OrdensLiquidacaoPendentes() {
   });
 
   const ordensPendentes = ordensLiquidacao.filter(o => o.status === "Pendente");
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center text-slate-500">
+          Carregando ordens...
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleLiquidar = (ordem) => {
     setOrdemSelecionada(ordem);
