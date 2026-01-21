@@ -1,4 +1,4 @@
-import React, { useState, useEffect, startTransition, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -57,10 +57,10 @@ export default function RH() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab') || null;
     if (!initial) { try { initial = localStorage.getItem('RH_tab'); } catch {} }
-    if (initial) startTransition(() => setActiveTab(initial));
+    if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    startTransition(() => setActiveTab(value));
+    setActiveTab(value);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
