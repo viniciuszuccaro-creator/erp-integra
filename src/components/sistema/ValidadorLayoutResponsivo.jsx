@@ -52,6 +52,8 @@ export default function ValidadorLayoutResponsivo() {
         if (classes.includes('absolute') || classes.includes('fixed') || classes.includes('relative')) return;
         // IGNORAR wrappers de UI
         if (classes.includes('inline') || classes.includes('gap-') || classes.includes('items-') || classes.includes('justify-')) return;
+        // IGNORAR containers de animação e efeitos visuais
+        if (classes.includes('animate-') || classes.includes('blur') || classes.includes('opacity-') || classes.includes('backdrop-')) return;
 
         totalContainers++;
         const style = window.getComputedStyle(el);
