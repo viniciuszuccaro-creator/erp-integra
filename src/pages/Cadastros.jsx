@@ -1,4 +1,4 @@
-import React, { useState, useEffect, startTransition, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -175,18 +175,18 @@ export default function Cadastros() {
     let s = params.get('sub');
     if (!t) { try { t = localStorage.getItem('Cadastros_tab'); } catch {} }
     if (!s) { try { s = localStorage.getItem('Cadastros_subtab'); } catch {} }
-    if (t) startTransition(() => setAbaGerenciamento(t));
-    if (s) startTransition(() => setAbaIntegracoes(s));
+    if (t) setAbaGerenciamento(t);
+    if (s) setAbaIntegracoes(s);
   }, []);
   const handleAbaChange = (value) => {
-    startTransition(() => setAbaGerenciamento(value));
+    setAbaGerenciamento(value);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Cadastros_tab', value); } catch {}
   };
   const handleSubChange = (value) => {
-    startTransition(() => setAbaIntegracoes(value));
+    setAbaIntegracoes(value);
     const url = new URL(window.location.href);
     url.searchParams.set('sub', value);
     window.history.replaceState({}, '', url.toString());

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, startTransition } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -78,7 +78,7 @@ export default function Dashboard() {
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    startTransition(() => setActiveTab(value));
+    setActiveTab(value);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());

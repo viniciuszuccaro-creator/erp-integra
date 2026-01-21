@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, startTransition } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -60,7 +60,7 @@ export default function CRMPage() {
     if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    startTransition(() => setActiveTab(value));
+    setActiveTab(value);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());
