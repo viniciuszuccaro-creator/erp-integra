@@ -57,7 +57,7 @@ export default function MiniMapaNavegacao({ contextoAdicional = [] }) {
     <div className="flex items-center gap-2 text-sm text-slate-600 w-full">
       <div className="flex items-center gap-2 flex-1 min-w-0">
         {breadcrumbs.map((crumb, idx) => (
-          <React.Fragment key={idx}>
+          <div key={idx} className="flex items-center gap-2">
             {idx > 0 && <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />}
             {idx === breadcrumbs.length - 1 ? (
               <span className="font-semibold text-slate-900 flex items-center gap-1.5 truncate">
@@ -73,7 +73,7 @@ export default function MiniMapaNavegacao({ contextoAdicional = [] }) {
                 <span className="truncate">{crumb.nome}</span>
               </Link>
             )}
-          </React.Fragment>
+          </div>
         ))}
       </div>
 
