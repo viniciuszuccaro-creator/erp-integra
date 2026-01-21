@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function LiquidarReceberPagar() {
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, carimbarContexto } = useContextoVisual();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [abaAtiva, setAbaAtiva] = useState("receber");
@@ -45,9 +45,7 @@ export default function LiquidarReceberPagar() {
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async ({ titulos, tipo }) => {
       const ordens = await Promise.all(titulos.map(async (titulo) => {
-        return await base44.entities.CaixaOrdemLiquidacao.create({
-          empresa_id: titulo.empresa_id,
-          group_id: titulo.group_id,
+        const ordemData = carimbarContexto({
           tipo_operacao: tipo === 'receber' ? 'Recebimento' : 'Pagamento',
           origem: tipo === 'receber' ? 'Contas a Receber' : 'Contas a Pagar',
           valor_total: titulo.valor,
@@ -62,6 +60,7 @@ export default function LiquidarReceberPagar() {
           }],
           data_ordem: new Date().toISOString()
         });
+        return await base44.entities.CaixaOrdemLiquidacao.create(ordemData);
       }));
       return ordens;
     },

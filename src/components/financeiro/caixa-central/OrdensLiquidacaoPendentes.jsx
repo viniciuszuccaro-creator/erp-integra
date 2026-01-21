@@ -14,7 +14,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Clock, TrendingUp, TrendingDown, CheckCircle2, XCircle, Wallet } from 'lucide-react';
 
 export default function OrdensLiquidacaoPendentes() {
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { filterInContext, empresaAtual, carimbarContexto } = useContextoVisual();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);
