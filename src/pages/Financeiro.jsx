@@ -16,7 +16,7 @@ import LaunchpadCard from "@/components/financeiro/LaunchpadCard";
 import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunchpad";
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
 
-const DashboardFinanceiroUnificado = React.lazy(() => import("../components/financeiro/DashboardFinanceiroUnificado"));
+const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro/CaixaCentralLiquidacao"));
 const ContasReceberTab = React.lazy(() => import("../components/financeiro/ContasReceberTab"));
 const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
 const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
@@ -134,7 +134,7 @@ export default function Financeiro() {
       description: 'Hub unificado de liquidações',
       icon: Wallet,
       color: 'green',
-      component: DashboardFinanceiroUnificado,
+      component: CaixaCentralLiquidacao,
       windowTitle: '💰 Caixa Central V22.0',
       width: 1600,
       height: 900,
