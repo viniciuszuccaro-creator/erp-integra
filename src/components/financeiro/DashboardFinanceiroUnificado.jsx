@@ -14,6 +14,7 @@ import ValidadorSegurancaFinanceira from './ValidadorSegurancaFinanceira';
 import FluxoLiquidacaoCompleto from './FluxoLiquidacaoCompleto';
 import MetricasRastreabilidade from './MetricasRastreabilidade';
 import IntegracaoCaixaPDV from './IntegracaoCaixaPDV';
+import EstatisticasLiquidacao from './EstatisticasLiquidacao';
 
 /**
  * V22.0 ETAPA 4 - Dashboard Financeiro Unificado
@@ -39,7 +40,7 @@ export default function DashboardFinanceiroUnificado() {
       </Card>
 
       <Tabs defaultValue="caixa" className="flex-1 flex flex-col min-h-0">
-        <TabsList className="mx-4 mt-4 grid grid-cols-7 w-auto flex-shrink-0">
+        <TabsList className="mx-4 mt-4 grid grid-cols-4 md:grid-cols-8 w-auto flex-shrink-0">
           <TabsTrigger value="caixa" className="flex items-center gap-2">
             <Wallet className="w-4 h-4" />
             Caixa
@@ -67,6 +68,10 @@ export default function DashboardFinanceiroUnificado() {
           <TabsTrigger value="seguranca" className="flex items-center gap-2">
             <Shield className="w-4 h-4" />
             Segurança
+          </TabsTrigger>
+          <TabsTrigger value="stats" className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            📊 Stats
           </TabsTrigger>
         </TabsList>
 
@@ -115,6 +120,9 @@ export default function DashboardFinanceiroUnificado() {
                 <MetricasRastreabilidade />
               </div>
             </div>
+          </TabsContent>
+          <TabsContent value="stats" className="h-full m-0 p-0">
+            <EstatisticasLiquidacao />
           </TabsContent>
         </div>
       </Tabs>

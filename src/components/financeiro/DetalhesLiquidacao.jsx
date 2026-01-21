@@ -8,6 +8,7 @@ import { CreditCard, CheckCircle, Calendar, DollarSign } from 'lucide-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import SeletorFormaPagamento from './SeletorFormaPagamento';
 
 /**
  * V22.0 ETAPA 4 - Detalhes Completos de Liquidação
@@ -100,24 +101,12 @@ export default function DetalhesLiquidacao({ item, onClose }) {
           </div>
 
           {/* Forma de Pagamento */}
-          <div>
-            <Label>Forma de Pagamento *</Label>
-            <select
-              value={dados.forma_pagamento}
-              onChange={(e) => setDados({ ...dados, forma_pagamento: e.target.value })}
-              className="w-full px-3 py-2 border rounded"
-              required
-            >
-              <option value="">Selecione...</option>
-              <option value="PIX">PIX</option>
-              <option value="Dinheiro">Dinheiro</option>
-              <option value="Boleto">Boleto</option>
-              <option value="Cartão Crédito">Cartão Crédito</option>
-              <option value="Cartão Débito">Cartão Débito</option>
-              <option value="Transferência">Transferência</option>
-              <option value="Cheque">Cheque</option>
-            </select>
-          </div>
+          <SeletorFormaPagamento
+            value={dados.forma_pagamento}
+            onChange={(v) => setDados({ ...dados, forma_pagamento: v })}
+            label="Forma de Pagamento"
+            required
+          />
 
           {/* Detalhes de Cartão */}
           {(dados.forma_pagamento.includes('Cartão')) && (

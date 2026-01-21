@@ -6,6 +6,7 @@ import CertificadoEtapa4Oficial from '@/components/sistema/CertificadoEtapa4Ofic
 import ResumoExecutivoEtapa3 from '@/components/sistema/ResumoExecutivoEtapa3';
 import ResumoExecutivoEtapa4 from '@/components/financeiro/ResumoExecutivoEtapa4';
 import GuiaImplementacaoEtapa3 from '@/components/sistema/GuiaImplementacaoEtapa3';
+import GuiaUsoEtapa4 from '@/components/financeiro/GuiaUsoEtapa4';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -84,9 +85,14 @@ export default function PadronizacaoUI() {
             </div>
           </TabsContent>
 
-          <TabsContent value="guia" className="w-full flex-1 overflow-auto flex items-center justify-center">
-            <div className="w-full h-full max-w-5xl py-6">
-              <GuiaImplementacaoEtapa3 />
+          <TabsContent value="guia" className="w-full flex-1 overflow-auto">
+            <div className="w-full h-full grid grid-cols-1 xl:grid-cols-2 gap-6 p-6">
+              <div className="max-w-5xl">
+                <GuiaImplementacaoEtapa3 />
+              </div>
+              <div className="max-w-5xl">
+                <GuiaUsoEtapa4 />
+              </div>
             </div>
           </TabsContent>
         </Tabs>

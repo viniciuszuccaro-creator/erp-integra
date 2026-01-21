@@ -8,6 +8,7 @@ import { base44 } from '@/api/base44Client';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import LiquidacaoEmLote from './LiquidacaoEmLote';
 import DetalhesLiquidacao from './DetalhesLiquidacao';
+import EstatisticasLiquidacao from './EstatisticasLiquidacao';
 
 /**
  * V22.0 ETAPA 4 - Caixa Central de Liquidação
@@ -45,6 +46,8 @@ export default function CaixaCentralLiquidacao() {
     }
   });
 
+  const [mostrarStats, setMostrarStats] = useState(false);
+
   return (
     <div className="w-full h-full flex flex-col space-y-4 overflow-auto p-4">
       {/* Header */}
@@ -57,15 +60,23 @@ export default function CaixaCentralLiquidacao() {
               </div>
               <div>
                 <CardTitle className="text-2xl">Caixa Central de Liquidação</CardTitle>
-                <Badge className="bg-blue-600 text-white mt-1">V22.0 Etapa 4</Badge>
+                <Badge className="bg-blue-600 text-white mt-1">V22.0 Etapa 4 - 100%</Badge>
               </div>
             </div>
-            <Button onClick={() => setModalLote(true)} className="bg-green-600 hover:bg-green-700">
-              Liquidação em Lote
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setMostrarStats(!mostrarStats)} variant="outline">
+                {mostrarStats ? 'Ocultar' : 'Ver'} Estatísticas
+              </Button>
+              <Button onClick={() => setModalLote(true)} className="bg-green-600 hover:bg-green-700">
+                Liquidação em Lote
+              </Button>
+            </div>
           </div>
         </CardHeader>
       </Card>
+
+      {/* Estatísticas (condicional) */}
+      {mostrarStats && <EstatisticasLiquidacao />}
 
       {/* KPIs Financeiros */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
