@@ -8,6 +8,7 @@ import ConciliacaoEmLote from './ConciliacaoEmLote';
 import IADetectorAnomalias from './IADetectorAnomalias';
 import ContasReceberTab from './ContasReceberTab';
 import ContasPagarTab from './ContasPagarTab';
+import CriteriosConciliacao from './CriteriosConciliacao';
 
 /**
  * V22.0 ETAPA 4 - Dashboard Financeiro Unificado
@@ -61,16 +62,25 @@ export default function DashboardFinanceiroUnificado() {
             <CaixaCentralLiquidacao />
           </TabsContent>
           <TabsContent value="receber" className="h-full m-0 p-0">
-            <ContasReceberTab />
+            <div className="h-full overflow-auto p-4">
+              <ContasReceberTab contas={[]} />
+            </div>
           </TabsContent>
           <TabsContent value="pagar" className="h-full m-0 p-0">
-            <ContasPagarTab />
+            <div className="h-full overflow-auto p-4">
+              <ContasPagarTab contas={[]} />
+            </div>
           </TabsContent>
           <TabsContent value="conciliacao" className="h-full m-0 p-0">
-            <ConciliacaoEmLote />
+            <div className="w-full h-full flex flex-col space-y-4 overflow-auto p-4">
+              <CriteriosConciliacao />
+              <ConciliacaoEmLote />
+            </div>
           </TabsContent>
           <TabsContent value="ia" className="h-full m-0 p-0">
-            <IADetectorAnomalias />
+            <div className="p-4 h-full overflow-auto">
+              <IADetectorAnomalias />
+            </div>
           </TabsContent>
         </div>
       </Tabs>

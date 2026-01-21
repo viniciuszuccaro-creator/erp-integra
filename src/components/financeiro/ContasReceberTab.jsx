@@ -47,6 +47,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
+import EstagiosRecebimentoWidget from "./EstagiosRecebimentoWidget";
 
 export default function ContasReceberTab({ contas, empresas = [] }) {
   const queryClient = useQueryClient();
@@ -864,6 +865,7 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                   <TableHead>Canal Origem</TableHead>
                   <TableHead>Marketplace</TableHead>
                   <TableHead>Cobrança</TableHead>
+                  <TableHead>Estágios (V22.0)</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -934,6 +936,14 @@ export default function ContasReceberTab({ contas, empresas = [] }) {
                           </Badge>
                         ) : (
                           <Badge variant="outline">Não Gerada</Badge>
+                        )}
+                      </TableCell>
+                      
+                      <TableCell>
+                        {conta.status === "Recebido" && conta.detalhes_pagamento ? (
+                          <EstagiosRecebimentoWidget conta={conta} />
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
                         )}
                       </TableCell>
 

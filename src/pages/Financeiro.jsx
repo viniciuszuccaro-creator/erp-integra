@@ -44,6 +44,7 @@ const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/Co
 const AprovacaoDescontosManager = React.lazy(() => import("../components/comercial/AprovacaoDescontosManager"));
 const DashboardFinanceiroUnificado = React.lazy(() => import("../components/financeiro/DashboardFinanceiroUnificado"));
 const DashboardFinanceiroRealtime = React.lazy(() => import("../components/financeiro/DashboardFinanceiroRealtime"));
+const StatusFinalEtapa4_100 = React.lazy(() => import("../components/sistema/StatusFinalEtapa4_100"));
 const DashboardFinanceiroMestre = React.lazy(() => import("../components/sistema/DashboardFinanceiroMestre"));
 const CaixaPDVCompleto = React.lazy(() => import("../components/financeiro/CaixaPDVCompleto"));
 const GestaoRemessaRetorno = React.lazy(() => import("../components/financeiro/GestaoRemessaRetorno"));
@@ -347,6 +348,11 @@ export default function Financeiro() {
       <ErrorBoundary>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
+          <TabsTrigger value="caixa-central" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white">
+            <Wallet className="w-4 h-4 mr-2" />
+            💰 Caixa Central V22.0
+          </TabsTrigger>
+
           <TabsTrigger value="dashboard-mestre" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
             <BarChart3 className="w-4 h-4 mr-2" />
             🏆 Dashboard Mestre
@@ -410,7 +416,17 @@ export default function Financeiro() {
             <AlertCircle className="w-4 h-4 mr-2" />
             Alertas por Empresa
           </TabsTrigger>
+          <TabsTrigger value="status-etapa4" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-600 data-[state=active]:to-emerald-600 data-[state=active]:text-white">
+            <CheckCircle2 className="w-4 h-4 mr-2" />
+            🏆 Status Etapa 4
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="caixa-central" className="mt-6">
+          <Suspense fallback={<div className="p-6 text-center">Carregando Caixa Central...</div>}>
+            <DashboardFinanceiroUnificado />
+          </Suspense>
+        </TabsContent>
 
         <TabsContent value="dashboard-mestre" className="mt-6">
           <DashboardFinanceiroMestre windowMode={false} />
@@ -655,6 +671,12 @@ export default function Financeiro() {
 
         <TabsContent value="alertas" className="mt-6">
           <AlertasFinanceirosEmpresa empresaId={empresaAtual?.id} groupId={empresasDoGrupo[0]?.group_id} windowMode={false} />
+        </TabsContent>
+
+        <TabsContent value="status-etapa4" className="mt-6">
+          <Suspense fallback={<div className="p-6 text-center">Carregando Status Etapa 4...</div>}>
+            <StatusFinalEtapa4_100 />
+          </Suspense>
         </TabsContent>
       </Tabs>
       </ErrorBoundary>
