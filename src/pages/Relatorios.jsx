@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, Suspense, startTransition } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,10 +36,10 @@ export default function Relatorios() {
     const params = new URLSearchParams(window.location.search);
     let initial = params.get('tab');
     if (!initial) { try { initial = localStorage.getItem('Relatorios_tab'); } catch {} }
-    if (initial) startTransition(() => setActiveTab(initial));
+    if (initial) setActiveTab(initial);
   }, []);
   const handleTabChange = (value) => {
-    startTransition(() => setActiveTab(value));
+    setActiveTab(value);
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.replaceState({}, '', url.toString());

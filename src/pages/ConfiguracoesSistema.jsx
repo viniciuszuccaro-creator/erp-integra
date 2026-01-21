@@ -1,4 +1,4 @@
-import React, { useState, Suspense, startTransition } from "react";
+import React, { useState, Suspense } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
 import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_FINAL";
@@ -50,7 +50,7 @@ export default function ConfiguracoesSistema() {
       </Card>
 
       <ErrorBoundary>
-        <Tabs value={activeTab} onValueChange={(v) => startTransition(() => setActiveTab(v))}>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
           <TabsTrigger
             value="diagnostico"
