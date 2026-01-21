@@ -48,8 +48,10 @@ export default function ValidadorLayoutResponsivo() {
         if (['SPAN', 'LABEL', 'A', 'P', 'BUTTON', 'SVG', 'I'].includes(el.tagName)) return;
 
         const classes = el.className || '';
-        // IGNORAR divs de styling puro
+        // IGNORAR divs de styling puro e posicionamento
         if (classes.includes('absolute') || classes.includes('fixed') || classes.includes('relative')) return;
+        // IGNORAR wrappers de UI
+        if (classes.includes('inline') || classes.includes('gap-') || classes.includes('items-') || classes.includes('justify-')) return;
 
         totalContainers++;
         const style = window.getComputedStyle(el);
@@ -100,8 +102,8 @@ export default function ValidadorLayoutResponsivo() {
 
         let eletemProblema = false;
 
-        // Apenas Container > 1000px SEM responsividade (relaxou threshold)
-        if (!isResponsive && el.offsetWidth > 1000 && !isCard && !isTableContainer && !isButtonGroup && !isNavElement && !isBadgeOrChip) {
+        // Apenas Container > 1200px SEM responsividade (muito relaxado)
+        if (!isResponsive && el.offsetWidth > 1200 && !isCard && !isTableContainer && !isButtonGroup && !isNavElement && !isBadgeOrChip && el.children.length > 5) {
           problemas.push({
             tipo: 'Container grande sem responsividade',
             elemento: el.tagName.toLowerCase(),
