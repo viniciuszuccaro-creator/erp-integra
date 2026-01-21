@@ -52,37 +52,6 @@ export default function CaixaCentralLiquidacao() {
     }
   });
 
-export default function CaixaCentralLiquidacao() {
-  const { filterInContext } = useContextoVisual();
-  const [modalLote, setModalLote] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [abaAtiva, setAbaAtiva] = useState("visao-geral");
-  const [mostrarStats, setMostrarStats] = useState(false);
-
-  const { data: contasReceber = [] } = useQuery({
-    queryKey: ['liquidacao', 'receber'],
-    queryFn: () => filterInContext('ContaReceber', { status: 'Pendente' }, '-data_vencimento', 50),
-  });
-
-  const { data: contasPagar = [] } = useQuery({
-    queryKey: ['liquidacao', 'pagar'],
-    queryFn: () => filterInContext('ContaPagar', { status: 'Pendente' }, '-data_vencimento', 50),
-  });
-
-  const totalReceber = contasReceber.reduce((sum, c) => sum + (c.valor || 0), 0);
-  const totalPagar = contasPagar.reduce((sum, c) => sum + (c.valor || 0), 0);
-  const saldoLiquido = totalReceber - totalPagar;
-
-  const porForma = {};
-  [...contasReceber, ...contasPagar].forEach(c => {
-    const forma = c.forma_recebimento || c.forma_pagamento || 'Não definido';
-    if (!porForma[forma]) porForma[forma] = { receber: 0, pagar: 0 };
-    if (c.valor) {
-      if (contasReceber.includes(c)) porForma[forma].receber += c.valor;
-      else porForma[forma].pagar += c.valor;
-    }
-  });
-
   return (
     <div className="w-full h-full flex flex-col space-y-3 overflow-auto p-3">
       {/* Header Compacto */}
