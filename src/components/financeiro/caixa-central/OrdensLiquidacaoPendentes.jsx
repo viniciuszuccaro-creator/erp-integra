@@ -93,17 +93,20 @@ export default function OrdensLiquidacaoPendentes() {
     setLiquidacaoDialogOpen(true);
   };
 
-  const confirmarLiquidacao = () => {
+  const confirmarLiquidacao = async () => {
     if (!formaPagamentoLiquidacao) {
       toast({ title: "⚠️ Selecione a forma de pagamento", variant: "destructive" });
       return;
     }
 
+    const user = await base44.auth.me();
+
     liquidarOrdemMutation.mutate({
       ordemId: ordemSelecionada.id,
       dados: {
         forma_pagamento: formaPagamentoLiquidacao,
-        observacoes: observacoesLiquidacao
+        observacoes: observacoesLiquidacao,
+        usuario_id: user?.id
       }
     });
   };
