@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense, startTransition } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { 
@@ -130,10 +130,10 @@ function LayoutContent({ children, currentPageName }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       const ctrl = e.ctrlKey || e.metaKey;
-      
+
       if (ctrl && e.key === 'k') {
         e.preventDefault();
-        startTransition(() => setPesquisaOpen(true));
+        setPesquisaOpen(true);
       }
 
       if (ctrl && e.shiftKey && e.key === 'D') {
@@ -148,11 +148,8 @@ function LayoutContent({ children, currentPageName }) {
 
       if (ctrl && e.key === 'm') {
         e.preventDefault();
-        startTransition(() => setModoEscuro(prev => !prev));
+        setModoEscuro(prev => !prev);
       }
-
-      // V21.0 FASE 1: Atalhos para abrir janelas multitarefa
-      // Atalhos de janelas removidos (causavam problemas com require dinâmico)
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -501,7 +498,7 @@ function LayoutContent({ children, currentPageName }) {
             
             <div className="mt-2 pt-2 border-t border-slate-200">
               <button
-                onClick={() => startTransition(() => setModoEscuro(!modoEscuro))}
+                onClick={() => setModoEscuro(!modoEscuro)}
                 className="w-full flex items-center gap-2 p-2 rounded hover:bg-slate-100 text-sm text-slate-600 transition-colors"
                 title="Ctrl+M"
               >
@@ -532,7 +529,7 @@ function LayoutContent({ children, currentPageName }) {
 
               <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => startTransition(() => setPesquisaOpen(true))}
+                  onClick={() => setPesquisaOpen(true)}
                   className="p-2 hover:bg-slate-100 rounded-lg transition-colors hidden md:flex items-center gap-2"
                   title="Pesquisa Universal (Ctrl+K)"
                 >
@@ -570,7 +567,7 @@ function LayoutContent({ children, currentPageName }) {
 
         <PesquisaUniversal 
           open={pesquisaOpen} 
-          onOpenChange={(v) => startTransition(() => setPesquisaOpen(v))} 
+          onOpenChange={setPesquisaOpen} 
         />
 
         {/* Sistema de Janelas Multitarefa V21.0 */}
