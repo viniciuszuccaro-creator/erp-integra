@@ -183,6 +183,6 @@ export default function MetricasRastreabilidade() {
           )}
         </CardContent>
       </Card>
-    </Card>
+    </div>
   );
 }
