@@ -21,7 +21,7 @@ const ContasReceberTab = React.lazy(() => import("../components/financeiro/Conta
 const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
 const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
 const AprovacaoDescontosManager = React.lazy(() => import("../components/comercial/AprovacaoDescontosManager"));
-const DashboardFinanceiroMestre = React.lazy(() => import("../components/sistema/DashboardFinanceiroMestre"));
+const DashboardFinanceiroMestre = React.lazy(() => import("../components/financeiro/FinanceiroLaunchpadCompacto"));
 const CaixaPDVCompleto = React.lazy(() => import("../components/financeiro/CaixaPDVCompleto"));
 const GestaoRemessaRetorno = React.lazy(() => import("../components/financeiro/GestaoRemessaRetorno"));
 const VendasMulticanal = React.lazy(() => import("../components/financeiro/VendasMulticanal"));
@@ -142,13 +142,13 @@ export default function Financeiro() {
     },
     {
       title: 'Dashboard Mestre',
-      description: 'Visão executiva e análises',
+      description: 'Visão executiva compacta',
       icon: Wallet,
       color: 'blue',
       component: DashboardFinanceiroMestre,
-      windowTitle: '🏆 Dashboard Mestre Financeiro',
-      width: 1600,
-      height: 900,
+      windowTitle: '📊 Dashboard Financeiro',
+      width: 1400,
+      height: 800,
     },
     {
       title: 'Formas de Pagamento',
