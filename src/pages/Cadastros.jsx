@@ -165,7 +165,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [acordeonAberto, setAcordeonAberto] = useState([]);
+  const [acordeonAberto, setAcordeonAberto] = useState(['bloco1', 'bloco2', 'bloco3', 'bloco4', 'bloco5', 'bloco6']);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
   const [abaIntegracoes, setAbaIntegracoes] = useState("gerenciamento");
 
