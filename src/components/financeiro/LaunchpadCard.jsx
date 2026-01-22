@@ -31,11 +31,13 @@ export default function LaunchpadCard({
         border-0 
         bg-gradient-to-br ${colorClasses[color]} 
         text-white
-        transition-shadow duration-200
+        transition-all duration-200
         hover:shadow-xl
+        active:scale-[0.98]
         relative
         overflow-hidden
       `}
+      style={{ willChange: 'transform, box-shadow' }}
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12" />
