@@ -577,4 +577,10 @@ Retorne JSON com:
       </Card>
     </div>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-orange-50 overflow-auto p-1.5">{content}</div>;
+  }
+
+  return content;
 }
