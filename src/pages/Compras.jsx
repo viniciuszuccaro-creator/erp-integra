@@ -1,43 +1,32 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, ShoppingCart, Building2, FileText, TrendingUp, Upload } from "lucide-react";
+import { Building2, Users, ShoppingCart, FileText, Upload, Package } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import { useWindow } from "@/components/lib/useWindow";
+import usePermissions from "@/components/lib/usePermissions";
+import HeaderComprasCompacto from "@/components/compras/compras-launchpad/HeaderComprasCompacto";
+import KPIsCompras from "@/components/compras/compras-launchpad/KPIsCompras";
+import ModulosGridCompras from "@/components/compras/compras-launchpad/ModulosGridCompras";
+
 const FornecedoresTab = React.lazy(() => import("../components/compras/FornecedoresTab"));
 const OrdensCompraTab = React.lazy(() => import("../components/compras/OrdensCompraTab"));
 const SolicitacoesCompraTab = React.lazy(() => import("../components/compras/SolicitacoesCompraTab"));
 const CotacoesTab = React.lazy(() => import("../components/compras/CotacoesTab"));
 const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/ImportacaoNFeRecebimento"));
-import usePermissions from "@/components/lib/usePermissions";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import ErrorBoundary from "@/components/lib/ErrorBoundary";
-
 
 export default function Compras() {
-  const [activeTab, setActiveTab] = useState("fornecedores");
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    let initial = params.get('tab');
-    if (!initial) { try { initial = localStorage.getItem('Compras_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
-  }, []);
-  const handleTabChange = (value) => {
-    setActiveTab(value);
-    const url = new URL(window.location.href);
-    url.searchParams.set('tab', value);
-    window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Compras_tab', value); } catch {}
-  };
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto } = useContextoVisual();
+  const { openWindow } = useWindow();
 
-  const { data: fornecedores = [], isLoading: loadingFornecedores } = useQuery({
+  const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores'],
     queryFn: () => base44.entities.Fornecedor.list('-created_date'),
   });
 
-  const { data: ordensCompra = [], isLoading: loadingOrdens } = useQuery({
+  const { data: ordensCompra = [] } = useQuery({
     queryKey: ['ordensCompra'],
     queryFn: () => base44.entities.OrdemCompra.list('-created_date'),
   });
@@ -60,7 +49,8 @@ export default function Compras() {
     .filter(o => o.status !== 'Cancelada')
     .reduce((sum, o) => sum + (o.valor_total || 0), 0);
 
-  const fornecedoresAtivos = fornecedores.filter(f => f.status === 'Ativo').length;
+  const fornecedoresAtivos = fornecedoresFiltrados.filter(f => f.status === 'Ativo').length;
+  const solicitacoesPendentes = solicitacoesFiltradas.filter(s => s.status === 'Pendente').length;
 
   if (loadingPermissions) {
     return (
@@ -70,104 +60,98 @@ export default function Compras() {
     );
   }
 
+  const modules = [
+    {
+      title: 'Fornecedores',
+      description: 'Cadastro e gestão',
+      icon: Users,
+      color: 'cyan',
+      component: FornecedoresTab,
+      windowTitle: '👥 Fornecedores',
+      width: 1500,
+      height: 850,
+      props: { fornecedores: fornecedoresFiltrados, isLoading: false }
+    },
+    {
+      title: 'Recebimento NF-e',
+      description: 'Importação automática',
+      icon: Upload,
+      color: 'blue',
+      component: ImportacaoNFeRecebimento,
+      windowTitle: '📥 Recebimento NF-e',
+      width: 1400,
+      height: 800,
+    },
+    {
+      title: 'Solicitações',
+      description: 'Requisições internas',
+      icon: FileText,
+      color: 'orange',
+      component: SolicitacoesCompraTab,
+      windowTitle: '📋 Solicitações de Compra',
+      width: 1400,
+      height: 800,
+      props: { solicitacoes: solicitacoesFiltradas },
+      badge: solicitacoesPendentes > 0 ? `${solicitacoesPendentes} pendentes` : null
+    },
+    {
+      title: 'Cotações',
+      description: 'Comparativo de preços',
+      icon: FileText,
+      color: 'indigo',
+      component: CotacoesTab,
+      windowTitle: '💰 Cotações',
+      width: 1400,
+      height: 800,
+    },
+    {
+      title: 'Ordens de Compra',
+      description: 'Pedidos a fornecedores',
+      icon: ShoppingCart,
+      color: 'purple',
+      component: OrdensCompraTab,
+      windowTitle: '🛒 Ordens de Compra',
+      width: 1500,
+      height: 850,
+      props: { ordensCompra: ordensCompraFiltradas, fornecedores: fornecedoresFiltrados, empresas, isLoading: false }
+    },
+  ];
+
+  const handleModuleClick = (module) => {
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { 
+          ...(module.props || {}),
+          windowMode: true 
+        },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `compras-${module.title.toLowerCase().replace(/\s/g, '-')}`
+        }
+      );
+    });
+  };
+
   return (
-    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Compras e Suprimentos</h1>
-        <p className="text-slate-600">Gestão de fornecedores e ordens de compra</p>
+    <ErrorBoundary>
+      <div className="w-full min-h-screen p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-cyan-50">
+        <HeaderComprasCompacto />
+        
+        <KPIsCompras
+          totalFornecedores={fornecedoresFiltrados.length}
+          fornecedoresAtivos={fornecedoresAtivos}
+          totalOrdens={ordensCompraFiltradas.length}
+          totalCompras={totalCompras}
+        />
+
+        <ModulosGridCompras 
+          modules={modules}
+          onModuleClick={handleModuleClick}
+        />
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-0 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Fornecedores</CardTitle>
-            <Users className="w-5 h-5 text-cyan-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-cyan-600">{fornecedoresFiltrados.length}</div>
-            <p className="text-xs text-slate-500 mt-1">{fornecedoresFiltrados.filter(f => f.status === 'Ativo').length} ativos</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Ordens de Compra</CardTitle>
-            <ShoppingCart className="w-5 h-5 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-600">{ordensCompraFiltradas.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total em Compras</CardTitle>
-            <Package className="w-5 h-5 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-purple-600">
-              R$ {totalCompras.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <ErrorBoundary>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="bg-white border shadow-sm">
-          <TabsTrigger value="fornecedores" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
-            <Building2 className="w-4 h-4 mr-2" />
-            Fornecedores
-          </TabsTrigger>
-          <TabsTrigger value="recebimento" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
-            <Upload className="w-4 h-4 mr-2" />
-            Recebimento NF-e
-          </TabsTrigger>
-          <TabsTrigger value="solicitacoes" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
-            <FileText className="w-4 h-4 mr-2" />
-            Solicitações ({solicitacoesFiltradas.filter(s => s.status === 'Pendente').length})
-          </TabsTrigger>
-          <TabsTrigger value="cotacoes" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Cotações
-          </TabsTrigger>
-          <TabsTrigger value="ordens" className="data-[state=active]:bg-cyan-600 data-[state=active]:text-white">
-            <ShoppingCart className="w-4 h-4 mr-2" />
-            Ordens de Compra
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="fornecedores">
-          <Suspense fallback={<div>Carregando...</div>}>
-            <FornecedoresTab fornecedores={fornecedoresFiltrados} isLoading={loadingFornecedores} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="recebimento">
-          <Suspense fallback={<div>Carregando...</div>}>
-            <ImportacaoNFeRecebimento />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="solicitacoes">
-          <Suspense fallback={<div>Carregando...</div>}>
-            <SolicitacoesCompraTab solicitacoes={solicitacoesFiltradas} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="cotacoes">
-          <Suspense fallback={<div>Carregando...</div>}>
-            <CotacoesTab />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="ordens">
-          <Suspense fallback={<div>Carregando...</div>}>
-            <OrdensCompraTab ordensCompra={ordensCompraFiltradas} fornecedores={fornecedoresFiltrados} empresas={empresas} isLoading={loadingOrdens} />
-          </Suspense>
-        </TabsContent>
-        </Tabs>
-      </ErrorBoundary>
-    </div>
+    </ErrorBoundary>
   );
 }
