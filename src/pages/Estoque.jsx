@@ -1,70 +1,30 @@
-import React, { useState, useEffect, Suspense } from "react";
+import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import ProtectedField from "@/components/security/ProtectedField";
-import { 
-  Box, 
-  PackageOpen, 
-  AlertTriangle, 
-  TrendingUp, 
-  PackageCheck, 
-  PackageMinus, 
-  Building2, 
-  ArrowLeftRight, 
-  Clock, 
-  BarChart3,
-  Package,
-  TrendingDown,
-  ShoppingCart,
-  FileText,
-  Sparkles
-} from "lucide-react";
-import ProdutosTab from "../components/estoque/ProdutosTab";
-import MovimentacoesTab from "../components/estoque/MovimentacoesTab";
-import SolicitacoesTab from "../components/estoque/SolicitacoesTab";
-import RecebimentoTab from "../components/estoque/RecebimentoTab";
-import RequisicoesAlmoxarifadoTab from "../components/estoque/RequisicoesAlmoxarifadoTab";
-import ControleLotesValidade from "../components/estoque/ControleLotesValidade";
-import RelatoriosEstoque from "../components/estoque/RelatoriosEstoque";
+import { Box, TrendingUp, PackageCheck, PackageMinus, PackageOpen, Clock, BarChart3, Sparkles, ArrowLeftRight } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import usePermissions from "@/components/lib/usePermissions";
-import IAReposicao from "../components/estoque/IAReposicao";
 import { useWindow } from "@/components/lib/useWindow";
-import TransferenciaEntreEmpresasForm from "../components/estoque/TransferenciaEntreEmpresasForm";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import { Button } from "@/components/ui/button";
+import HeaderEstoqueCompacto from "@/components/estoque/estoque-launchpad/HeaderEstoqueCompacto";
+import KPIsEstoque from "@/components/estoque/estoque-launchpad/KPIsEstoque";
+import ModulosGridEstoque from "@/components/estoque/estoque-launchpad/ModulosGridEstoque";
+import TransferenciaEntreEmpresasForm from "../components/estoque/TransferenciaEntreEmpresasForm";
 
+const ProdutosTab = React.lazy(() => import("../components/estoque/ProdutosTab"));
+const MovimentacoesTab = React.lazy(() => import("../components/estoque/MovimentacoesTab"));
+const SolicitacoesTab = React.lazy(() => import("../components/estoque/SolicitacoesTab"));
+const RecebimentoTab = React.lazy(() => import("../components/estoque/RecebimentoTab"));
+const RequisicoesAlmoxarifadoTab = React.lazy(() => import("../components/estoque/RequisicoesAlmoxarifadoTab"));
+const ControleLotesValidade = React.lazy(() => import("../components/estoque/ControleLotesValidade"));
+const RelatoriosEstoque = React.lazy(() => import("../components/estoque/RelatoriosEstoque"));
+const IAReposicao = React.lazy(() => import("../components/estoque/IAReposicao"));
 
 export default function Estoque() {
-  const [activeTab, setActiveTab] = useState("produtos");
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    let initial = params.get('tab');
-    if (!initial) { try { initial = localStorage.getItem('Estoque_tab'); } catch {} }
-    if (initial) setActiveTab(initial);
-  }, []);
-  const handleTabChange = (value) => {
-    setActiveTab(value);
-    const url = new URL(window.location.href);
-    url.searchParams.set('tab', value);
-    window.history.replaceState({}, '', url.toString());
-    try { localStorage.setItem('Estoque_tab', value); } catch {}
-  };
-  const [visaoConsolidada, setVisaoConsolidada] = useState(false);
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
-
-  const {
-    contexto,
-    estaNoGrupo,
-    empresaAtual,
-    empresasDoGrupo,
-    filtrarPorContexto
-  } = useContextoVisual();
+  const { estaNoGrupo, empresaAtual, empresasDoGrupo, filtrarPorContexto } = useContextoVisual();
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
@@ -86,90 +46,142 @@ export default function Estoque() {
     queryFn: () => base44.entities.OrdemCompra.list('-created_date'),
   });
 
-  const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list(),
-  });
-
-  const { data: ops = [] } = useQuery({
-    queryKey: ['ordens-producao'],
-    queryFn: () => base44.entities.OrdemProducao.list(),
-  });
-
   const produtosFiltrados = filtrarPorContexto(produtos, 'empresa_id');
   const movimentacoesFiltradas = filtrarPorContexto(movimentacoes, 'empresa_id');
 
   const produtosAtivos = produtosFiltrados.filter(p => p.status === 'Ativo').length;
-  const produtosBaixoEstoque = produtosFiltrados.filter(p => 
-    p.estoque_atual <= p.estoque_minimo && p.status === 'Ativo'
-  ).length;
-  const valorTotalEstoque = produtosFiltrados.reduce((sum, p) => 
-    sum + ((p.estoque_atual || 0) * (p.custo_aquisicao || 0)), 0
-  );
-  const solicitacoesPendentes = solicitacoes.filter(s => s.status === 'Pendente').length;
-
+  const produtosBaixoEstoque = produtosFiltrados.filter(p => p.estoque_atual <= p.estoque_minimo && p.status === 'Ativo').length;
+  const totalReservado = produtosFiltrados.reduce((sum, p) => sum + ((p.estoque_reservado || 0) * (p.custo_aquisicao || 0)), 0);
   const estoqueDisponivel = produtosFiltrados.reduce((sum, p) => {
     const disp = (p.estoque_atual || 0) - (p.estoque_reservado || 0);
     return sum + (disp * (p.custo_aquisicao || 0));
   }, 0);
 
-  const totalReservado = produtosFiltrados.reduce((sum, p) => 
-    sum + ((p.estoque_reservado || 0) * (p.custo_aquisicao || 0)), 0
-  );
-
-  const estoqueConsolidado = estaNoGrupo ? produtos.reduce((acc, produto) => {
-    const key = produto.codigo || produto.descricao;
-    if (!acc[key]) {
-      acc[key] = {
-        codigo: produto.codigo,
-        descricao: produto.descricao,
-        unidade: produto.unidade_medida,
-        total: 0,
-        porEmpresa: {}
-      };
-    }
-    
-    acc[key].total += produto.estoque_atual || 0;
-    
-    const nomeEmpresa = empresasDoGrupo.find(e => e.id === produto.empresa_id)?.nome_fantasia || 'Sem Empresa';
-    if (!acc[key].porEmpresa[nomeEmpresa]) {
-      acc[key].porEmpresa[nomeEmpresa] = 0;
-    }
-    acc[key].porEmpresa[nomeEmpresa] += produto.estoque_atual || 0;
-    
-    return acc;
-  }, {}) : {};
-
-  const listaConsolidada = Object.values(estoqueConsolidado);
-
-  const recebimentos = movimentacoesFiltradas.filter(m => 
-    m.tipo_movimento === 'entrada' && (m.origem_movimento === 'compra' || m.documento?.startsWith('REC-'))
-  );
-
-  const requisicoesAlmoxarifado = movimentacoesFiltradas.filter(m => 
-    m.tipo_movimento === 'saida' && m.documento?.startsWith('REQ-ALM-')
-  );
+  const recebimentos = movimentacoesFiltradas.filter(m => m.tipo_movimento === 'entrada' && (m.origem_movimento === 'compra' || m.documento?.startsWith('REC-')));
+  const requisicoesAlmoxarifado = movimentacoesFiltradas.filter(m => m.tipo_movimento === 'saida' && m.documento?.startsWith('REQ-ALM-'));
 
   if (loadingPermissions) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>;
   }
 
+  const modules = [
+    {
+      title: 'Produtos',
+      description: 'Cadastro e estoque',
+      icon: Box,
+      color: 'indigo',
+      component: ProdutosTab,
+      windowTitle: '📦 Produtos',
+      width: 1500,
+      height: 850,
+      props: { produtos: produtosFiltrados, isLoading: false }
+    },
+    {
+      title: 'Movimentações',
+      description: 'Entradas e saídas',
+      icon: TrendingUp,
+      color: 'blue',
+      component: MovimentacoesTab,
+      windowTitle: '📊 Movimentações',
+      width: 1500,
+      height: 850,
+      props: { movimentacoes: movimentacoesFiltradas, produtos: produtosFiltrados }
+    },
+    {
+      title: 'Recebimento',
+      description: 'Entrada de mercadorias',
+      icon: PackageCheck,
+      color: 'green',
+      component: RecebimentoTab,
+      windowTitle: '📥 Recebimento',
+      width: 1400,
+      height: 800,
+      props: { recebimentos, ordensCompra, produtos: produtosFiltrados }
+    },
+    {
+      title: 'Requisições Almox.',
+      description: 'Saídas almoxarifado',
+      icon: PackageMinus,
+      color: 'orange',
+      component: RequisicoesAlmoxarifadoTab,
+      windowTitle: '📤 Requisições Almoxarifado',
+      width: 1400,
+      height: 800,
+      props: { requisicoes: requisicoesAlmoxarifado, produtos: produtosFiltrados }
+    },
+    {
+      title: 'Solicitações Compra',
+      description: 'Requisições internas',
+      icon: PackageOpen,
+      color: 'purple',
+      component: SolicitacoesTab,
+      windowTitle: '📋 Solicitações Compra',
+      width: 1400,
+      height: 800,
+      props: { solicitacoes, produtos: produtosFiltrados }
+    },
+    {
+      title: 'Lotes e Validade',
+      description: 'Controle de lotes',
+      icon: Clock,
+      color: 'amber',
+      component: ControleLotesValidade,
+      windowTitle: '⏰ Lotes e Validade',
+      width: 1400,
+      height: 800,
+      props: { empresaId: empresaAtual?.id }
+    },
+    {
+      title: 'Relatórios',
+      description: 'Analytics de estoque',
+      icon: BarChart3,
+      color: 'slate',
+      component: RelatoriosEstoque,
+      windowTitle: '📈 Relatórios Estoque',
+      width: 1400,
+      height: 800,
+      props: { produtos: produtosFiltrados, movimentacoes: movimentacoesFiltradas }
+    },
+    {
+      title: 'IA Reposição',
+      description: 'Sugestões inteligentes',
+      icon: Sparkles,
+      color: 'blue',
+      component: IAReposicao,
+      windowTitle: '🤖 IA Reposição',
+      width: 1300,
+      height: 750,
+      props: { empresaId: empresaAtual?.id }
+    },
+  ];
+
+  const handleModuleClick = (module) => {
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { ...(module.props || {}), windowMode: true },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `estoque-${module.title.toLowerCase().replace(/\s/g, '-')}`
+        }
+      );
+    });
+  };
+
   return (
-    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Estoque e Almoxarifado</h1>
-          <p className="text-slate-600">
-            {estaNoGrupo 
-              ? 'Visão consolidada de todos os estoques' 
-              : `Gestão de estoque - ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || ''}`
-            }
-          </p>
-        </div>
+    <ErrorBoundary>
+      <div className="w-full min-h-screen p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-indigo-50">
+        <HeaderEstoqueCompacto />
+        
+        <KPIsEstoque
+          produtosAtivos={produtosAtivos}
+          produtosBaixoEstoque={produtosBaixoEstoque}
+          totalReservado={totalReservado}
+          estoqueDisponivel={estoqueDisponivel}
+        />
+
         {estaNoGrupo && (
           <Button
             onClick={() => openWindow(TransferenciaEntreEmpresasForm, {
@@ -181,218 +193,19 @@ export default function Estoque() {
               width: 900,
               height: 600
             })}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-purple-600 hover:bg-purple-700 w-full"
+            size="sm"
           >
-            <ArrowLeftRight className="w-4 h-4 mr-2" />
+            <ArrowLeftRight className="w-3 h-3 mr-2" />
             Transferir entre Empresas
           </Button>
         )}
+
+        <ModulosGridEstoque 
+          modules={modules}
+          onModuleClick={handleModuleClick}
+        />
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Total de Produtos</CardTitle>
-            <Box className="w-5 h-5 text-indigo-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-indigo-600">{produtosAtivos}</div>
-            <p className="text-xs text-slate-500 mt-1">ativos no sistema</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-slate-600">Estoque Baixo</CardTitle>
-            <AlertTriangle className="w-5 h-5 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-orange-600">{produtosBaixoEstoque}</div>
-            <p className="text-xs text-slate-500 mt-1">produtos abaixo do mínimo</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md bg-blue-50">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">Reservado</CardTitle>
-            <PackageOpen className="w-5 h-5 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-900">
-              <ProtectedField module="Estoque" submodule="KPIs" field="valores" action="ver" asText>
-                R$ {totalReservado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </ProtectedField>
-            </div>
-            <p className="text-xs text-blue-700 mt-1">em pedidos/produção</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md bg-green-50">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-green-700">Disponível</CardTitle>
-            <TrendingUp className="w-5 h-5 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-green-900">
-              <ProtectedField module="Estoque" submodule="KPIs" field="valores" action="ver" asText>
-                R$ {estoqueDisponivel.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </ProtectedField>
-            </div>
-            <p className="text-xs text-green-700 mt-1">para venda/produção</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {estaNoGrupo && (
-        <Card className="border-0 shadow-md">
-          <CardHeader className="border-b bg-slate-50">
-            <div className="flex justify-between items-center">
-              <CardTitle>Estoque Consolidado por Empresa</CardTitle>
-              
-              <button 
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={() => setVisaoConsolidada(!visaoConsolidada)}
-              >
-                {visaoConsolidada ? 'Ocultar' : 'Ver por Empresa'}
-              </button>
-            </div>
-          </CardHeader>
-          {visaoConsolidada && (
-            <CardContent className="p-6">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead>Produto</TableHead>
-                      <TableHead>Unidade</TableHead>
-                      <TableHead className="text-right">Total Grupo</TableHead>
-                      {empresasDoGrupo.map(emp => (
-                        <TableHead key={emp.id} className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Building2 className="w-3 h-3" />
-                            {emp.nome_fantasia || emp.razao_social}
-                          </div>
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {listaConsolidada.slice(0, 20).map((item, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-medium">
-                          {item.codigo && <span className="text-xs text-slate-500 mr-2">{item.codigo}</span>}
-                          {item.descricao}
-                        </TableCell>
-                        <TableCell>{item.unidade}</TableCell>
-                        <TableCell className="text-right font-bold text-blue-600">
-                          {item.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </TableCell>
-                        {empresasDoGrupo.map(emp => {
-                          const nomeEmp = emp.nome_fantasia || emp.razao_social;
-                          const qtd = item.porEmpresa[nomeEmp] || 0;
-                          return (
-                            <TableCell key={emp.id} className="text-right">
-                              {qtd > 0 ? (
-                                <span className="font-semibold">{qtd.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                              ) : (
-                                <span className="text-slate-400">-</span>
-                              )}
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              {listaConsolidada.length === 0 && (
-                <div className="text-center py-12 text-slate-500">
-                  <Box className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                  <p>Nenhum produto com estoque encontrado</p>
-                </div>
-              )}
-            </CardContent>
-          )}
-        </Card>
-      )}
-
-      <ErrorBoundary>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-        <TabsList className="bg-white border shadow-sm flex-wrap h-auto">
-          <TabsTrigger value="produtos" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <Box className="w-4 h-4 mr-2" />
-            Produtos
-          </TabsTrigger>
-          <TabsTrigger value="movimentacoes" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Movimentações
-          </TabsTrigger>
-          <TabsTrigger value="recebimento" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <PackageCheck className="w-4 h-4 mr-2" />
-            Recebimento
-          </TabsTrigger>
-          <TabsTrigger value="requisicoes-almox" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <PackageMinus className="w-4 h-4 mr-2" />
-            Requisições Almox.
-          </TabsTrigger>
-          <TabsTrigger value="solicitacoes" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <PackageOpen className="w-4 h-4 mr-2" />
-            Solicitações Compra
-          </TabsTrigger>
-          <TabsTrigger value="lotes" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <Clock className="w-4 h-4 mr-2" />
-            Lotes e Validade
-          </TabsTrigger>
-          <TabsTrigger value="relatorios" className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Relatórios
-          </TabsTrigger>
-          
-          <TabsTrigger 
-            value="ia-reposicao" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            IA Reposição
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="produtos">
-          <ProdutosTab produtos={produtosFiltrados} isLoading={false} />
-        </TabsContent>
-
-        
-
-        <TabsContent value="movimentacoes">
-          <MovimentacoesTab movimentacoes={movimentacoesFiltradas} produtos={produtosFiltrados} />
-        </TabsContent>
-
-        <TabsContent value="recebimento">
-          <RecebimentoTab recebimentos={recebimentos} ordensCompra={ordensCompra} produtos={produtosFiltrados} />
-        </TabsContent>
-
-        <TabsContent value="requisicoes-almox">
-          <RequisicoesAlmoxarifadoTab requisicoes={requisicoesAlmoxarifado} produtos={produtosFiltrados} />
-        </TabsContent>
-
-        <TabsContent value="solicitacoes">
-          <SolicitacoesTab solicitacoes={solicitacoes} produtos={produtosFiltrados} />
-        </TabsContent>
-        
-        <TabsContent value="lotes">
-          <ControleLotesValidade empresaId={empresaAtual?.id} />
-        </TabsContent>
-
-        <TabsContent value="relatorios">
-          <RelatoriosEstoque produtos={produtosFiltrados} movimentacoes={movimentacoesFiltradas} />
-        </TabsContent>
-
-        
-        <TabsContent value="ia-reposicao">
-          <IAReposicao empresaId={empresaAtual?.id} />
-        </TabsContent>
-        </Tabs>
-      </ErrorBoundary>
-    </div>
+    </ErrorBoundary>
   );
 }
