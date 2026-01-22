@@ -167,4 +167,10 @@ export default function FornecedoresTab({ fornecedores, windowMode = false }) {
       </Card>
     </div>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-cyan-50 overflow-auto p-1.5">{content}</div>;
+  }
+
+  return content;
 }
