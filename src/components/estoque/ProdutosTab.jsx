@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download, Upload } from "lucide-react";
+import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download, Upload, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import SearchInput from "@/components/ui/SearchInput";
 import ProtectedField from "@/components/security/ProtectedField";
@@ -31,6 +31,8 @@ export default function ProdutosTab({ produtos, isLoading }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduto, setEditingProduto] = useState(null);
   const [solicitacaoModal, setSolicitacaoModal] = useState(null);
+  const [colunaOrdenacao, setColunaOrdenacao] = useState(null);
+  const [direcaoOrdenacao, setDirecaoOrdenacao] = useState('asc');
   const { openWindow } = useWindow();
   const { empresaAtual, contexto } = useContextoVisual();
   const { canCreate, canEdit, hasPermission } = usePermissions();
@@ -149,13 +151,53 @@ export default function ProdutosTab({ produtos, isLoading }) {
     }
   };
 
-  const filteredProdutos = produtos.filter(p => {
-    const matchSearch = p.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       p.codigo?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchGrupo = selectedCategoria === "todos" || p.grupo === selectedCategoria;
-    const matchStatus = true;
-    return matchSearch && matchGrupo && matchStatus;
-  });
+  // ✅ Função de ordenação por coluna
+  const handleOrdenarPorColuna = (campo, isNumeric = false) => {
+    if (colunaOrdenacao === campo) {
+      setDirecaoOrdenacao(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setColunaOrdenacao(campo);
+      setDirecaoOrdenacao('asc');
+    }
+  };
+
+  // ✅ Aplicar filtros e ordenação
+  const produtosProcessados = useMemo(() => {
+    let resultado = produtos.filter(p => {
+      const matchSearch = p.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         p.codigo?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchGrupo = selectedCategoria === "todos" || p.grupo === selectedCategoria;
+      return matchSearch && matchGrupo;
+    });
+
+    // Aplicar ordenação se uma coluna foi selecionada
+    if (colunaOrdenacao) {
+      resultado = [...resultado].sort((a, b) => {
+        let valA = a[colunaOrdenacao];
+        let valB = b[colunaOrdenacao];
+
+        // Tratamento especial para campos aninhados
+        if (colunaOrdenacao === 'grupo_produto_nome') {
+          valA = a.grupo_produto_nome || a.grupo || '';
+          valB = b.grupo_produto_nome || b.grupo || '';
+        }
+
+        // Ordenação numérica
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return direcaoOrdenacao === 'asc' ? valA - valB : valB - valA;
+        }
+
+        // Ordenação alfabética
+        const strA = String(valA || '');
+        const strB = String(valB || '');
+        return direcaoOrdenacao === 'asc' 
+          ? strA.localeCompare(strB)
+          : strB.localeCompare(strA);
+      });
+    }
+
+    return resultado;
+  }, [produtos, searchTerm, selectedCategoria, colunaOrdenacao, direcaoOrdenacao]);
 
   const produtosBaixoEstoque = produtos.filter(p => {
     const disponivel = (p.estoque_disponivel ?? ((p.estoque_atual || 0) - (p.estoque_reservado || 0)));
@@ -165,6 +207,30 @@ export default function ProdutosTab({ produtos, isLoading }) {
   // V21.6: Estatísticas de produtos em produção
   const produtosProducao = produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção');
   const produtosRevenda = produtos.filter(p => p.tipo_item !== 'Matéria-Prima Produção');
+
+  // ✅ Componente de cabeçalho de coluna clicável
+  const ColunaOrdenavel = ({ campo, label, isNumeric = false }) => {
+    const isOrdenada = colunaOrdenacao === campo;
+    return (
+      <TableHead 
+        className="cursor-pointer select-none hover:bg-slate-100 transition-colors"
+        onClick={() => handleOrdenarPorColuna(campo, isNumeric)}
+      >
+        <div className="flex items-center gap-2">
+          <span>{label}</span>
+          {isOrdenada ? (
+            direcaoOrdenacao === 'asc' ? (
+              <ArrowUp className="w-4 h-4 text-blue-600" />
+            ) : (
+              <ArrowDown className="w-4 h-4 text-blue-600" />
+            )
+          ) : (
+            <ArrowUpDown className="w-4 h-4 text-slate-400" />
+          )}
+        </div>
+      </TableHead>
+    );
+  };
 
   return (
     <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
@@ -378,19 +444,32 @@ export default function ProdutosTab({ produtos, isLoading }) {
             </Select>
             <Button
               variant="outline"
-              onClick={() => exportarProdutosCSV(filteredProdutos)}
+              onClick={() => exportarProdutosCSV(produtosProcessados)}
               className="border-slate-300"
             >
               <Download className="w-4 h-4 mr-2" />
               Exportar CSV
             </Button>
+            {colunaOrdenacao && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setColunaOrdenacao(null);
+                  setDirecaoOrdenacao('asc');
+                }}
+                className="whitespace-nowrap"
+              >
+                Limpar Ordenação
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
 
       <Card className="border-0 shadow-md flex-1 flex flex-col min-h-0">
         <CardHeader className="bg-slate-50 border-b flex-shrink-0">
-          <CardTitle>Lista de Produtos ({filteredProdutos.length})</CardTitle>
+          <CardTitle>Lista de Produtos ({produtosProcessados.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0 flex flex-col h-full">
           {selectedProdutos.length > 0 && (
@@ -398,7 +477,7 @@ export default function ProdutosTab({ produtos, isLoading }) {
               <AlertDescription className="flex items-center justify-between">
                 <div className="text-blue-900 font-semibold">{selectedProdutos.length} produto(s) selecionado(s)</div>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => exportarProdutosCSV(filteredProdutos.filter(p => selectedProdutos.includes(p.id)))}>
+                  <Button variant="outline" onClick={() => exportarProdutosCSV(produtosProcessados.filter(p => selectedProdutos.includes(p.id)))}>
                     <Download className="w-4 h-4 mr-2" /> Exportar CSV
                   </Button>
                   <Button variant="ghost" onClick={() => setSelectedProdutos([])}>Limpar Seleção</Button>
@@ -412,28 +491,28 @@ export default function ProdutosTab({ produtos, isLoading }) {
                 <TableRow className="bg-slate-50">
                   <TableHead>
                     <Checkbox
-                      checked={selectedProdutos.length > 0 && selectedProdutos.length === filteredProdutos.length}
-                      onCheckedChange={(v) => toggleAllProdutos(!!v, filteredProdutos)}
+                      checked={selectedProdutos.length > 0 && selectedProdutos.length === produtosProcessados.length}
+                      onCheckedChange={(v) => toggleAllProdutos(!!v, produtosProcessados)}
                       aria-label="Selecionar todos"
                     />
                   </TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Peso Teórico</TableHead>
-                  <TableHead>Setor</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Estoque Atual</TableHead>
-                  <TableHead>Estoque Mín.</TableHead>
-                  <TableHead>Disponível</TableHead>
-                  <TableHead>Custo</TableHead>
-                  <TableHead>Preço Venda</TableHead>
-                  <TableHead>Status</TableHead>
+                  <ColunaOrdenavel campo="codigo" label="Código" />
+                  <ColunaOrdenavel campo="descricao" label="Descrição" />
+                  <ColunaOrdenavel campo="peso_teorico_kg_m" label="Peso Teórico" isNumeric />
+                  <ColunaOrdenavel campo="setor_atividade_nome" label="Setor" />
+                  <ColunaOrdenavel campo="tipo_item" label="Tipo" />
+                  <ColunaOrdenavel campo="grupo_produto_nome" label="Categoria" />
+                  <ColunaOrdenavel campo="estoque_atual" label="Estoque Atual" isNumeric />
+                  <ColunaOrdenavel campo="estoque_minimo" label="Estoque Mín." isNumeric />
+                  <ColunaOrdenavel campo="estoque_disponivel" label="Disponível" isNumeric />
+                  <ColunaOrdenavel campo="custo_medio" label="Custo" isNumeric />
+                  <ColunaOrdenavel campo="preco_venda" label="Preço Venda" isNumeric />
+                  <ColunaOrdenavel campo="status" label="Status" />
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProdutos.map((produto) => {
+                {produtosProcessados.map((produto) => {
                   const disponivelCalc = Math.max(0, (produto.estoque_disponivel ?? ((produto.estoque_atual || 0) - (produto.estoque_reservado || 0))));
                   const estoqueBaixo = disponivelCalc <= (produto.estoque_minimo || 0);
                   const estoqueZerado = disponivelCalc === 0;
@@ -580,7 +659,7 @@ export default function ProdutosTab({ produtos, isLoading }) {
             </Table>
           </div>
 
-          {filteredProdutos.length === 0 && (
+          {produtosProcessados.length === 0 && (
             <div className="text-center py-12 flex-1 flex items-center justify-center">
               <div>
                 <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
