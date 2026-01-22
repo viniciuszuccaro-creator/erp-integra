@@ -345,20 +345,22 @@ export default function Financeiro() {
                   color={module.color}
                   badge={module.badge}
                   onClick={() => {
-                    openWindow(
-                      module.component,
-                      { 
-                        ...(module.props || {}),
-                        empresaAtual,
-                        windowMode: true 
-                      },
-                      {
-                        title: module.windowTitle,
-                        width: module.width,
-                        height: module.height,
-                        uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}`
-                      }
-                    );
+                    React.startTransition(() => {
+                      openWindow(
+                        module.component,
+                        { 
+                          ...(module.props || {}),
+                          empresaAtual,
+                          windowMode: true 
+                        },
+                        {
+                          title: module.windowTitle,
+                          width: module.width,
+                          height: module.height,
+                          uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}`
+                        }
+                      );
+                    });
                   }}
                 />
               ))}
