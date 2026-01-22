@@ -211,22 +211,26 @@ export default function Cadastros() {
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list('-created_date'),
+    queryFn: () => base44.entities.Cliente.list('-created_date', 50),
+    staleTime: 300000,
   });
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list('-created_date'),
+    queryFn: () => base44.entities.Fornecedor.list('-created_date', 50),
+    staleTime: 300000,
   });
 
   const { data: transportadoras = [] } = useQuery({
     queryKey: ['transportadoras'],
-    queryFn: () => base44.entities.Transportadora.list('-created_date'),
+    queryFn: () => base44.entities.Transportadora.list('-created_date', 50),
+    staleTime: 300000,
   });
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list('-created_date'),
+    queryFn: () => base44.entities.Colaborador.list('-created_date', 50),
+    staleTime: 300000,
   });
 
   const { data: representantes = [] } = useQuery({
@@ -242,7 +246,8 @@ export default function Cadastros() {
   // QUERIES - BLOCO 2: PRODUTOS & SERVIÇOS
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryFn: () => base44.entities.Produto.list('-created_date', 50),
+    staleTime: 300000,
   });
 
   const { data: servicos = [] } = useQuery({
