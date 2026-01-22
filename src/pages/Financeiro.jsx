@@ -17,11 +17,9 @@ const ContasReceberTab = React.lazy(() => import("../components/financeiro/Conta
 const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
 const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
 const AprovacaoDescontosManager = React.lazy(() => import("../components/comercial/AprovacaoDescontosManager"));
-const DashboardFinanceiroMestre = React.lazy(() => import("../components/financeiro/DashboardFinanceiroMestreCompacto"));
 const CaixaPDVCompleto = React.lazy(() => import("../components/financeiro/CaixaPDVCompleto"));
 const GestaoRemessaRetorno = React.lazy(() => import("../components/financeiro/GestaoRemessaRetorno"));
 const VendasMulticanal = React.lazy(() => import("../components/financeiro/VendasMulticanal"));
-const CaixaDiarioTab = React.lazy(() => import("../components/financeiro/CaixaDiarioTab"));
 const RateioMultiempresa = React.lazy(() => import("../components/financeiro/RateioMultiempresa"));
 const AlertasFinanceirosEmpresa = React.lazy(() => import("../components/financeiro/AlertasFinanceirosEmpresa"));
 const RelatorioFinanceiro = React.lazy(() => import("../components/financeiro/RelatorioFinanceiro"));
@@ -135,16 +133,7 @@ export default function Financeiro() {
       height: 900,
       badge: ordensLiquidacaoPendentes > 0 ? `${ordensLiquidacaoPendentes} pendentes` : null,
     },
-    {
-      title: 'Dashboard Mestre',
-      description: 'Visão executiva compacta',
-      icon: Wallet,
-      color: 'blue',
-      component: DashboardFinanceiroMestre,
-      windowTitle: '📊 Dashboard Financeiro',
-      width: 1400,
-      height: 800,
-    },
+
     {
       title: 'Formas de Pagamento',
       description: 'Gestão centralizada de meios',
@@ -165,16 +154,7 @@ export default function Financeiro() {
       width: 1500,
       height: 850,
     },
-    {
-      title: 'Caixa Diário • Cartões',
-      description: 'Movimentos e compensação diária',
-      icon: Wallet,
-      color: 'cyan',
-      component: CaixaDiarioTab,
-      windowTitle: '💳 Caixa Diário',
-      width: 1500,
-      height: 850,
-    },
+
     {
       title: 'Vendas Multicanal',
       description: 'E-commerce e marketplaces',
