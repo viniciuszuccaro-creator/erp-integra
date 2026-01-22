@@ -59,39 +59,39 @@ export default function InsightsFinanceirosCompacto({
   }
 
   return (
-    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 min-h-[140px]">
-      <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 border-b px-3 py-2">
-        <CardTitle className="text-sm flex items-center gap-2 text-purple-900">
-          <Zap className="w-4 h-4" />
-          🤖 Insights da IA Financeira
+    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 min-h-[120px] max-h-[120px]">
+      <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 border-b px-2 py-1.5">
+        <CardTitle className="text-xs flex items-center gap-1.5 text-purple-900">
+          <Zap className="w-3 h-3 flex-shrink-0" />
+          🤖 Insights IA
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-3">
-        <div className="space-y-1.5">
+      <CardContent className="p-2 overflow-auto">
+        <div className="space-y-1">
           {insights.slice(0, 4).map((insight, idx) => {
             const Icon = insight.icon;
             return (
-              <div key={idx} className="flex items-start gap-2 p-2 bg-white rounded-lg border border-purple-100 min-h-[40px]">
-                <Icon className={`w-4 h-4 ${insight.color} flex-shrink-0 mt-0.5`} />
-                <p className="text-xs text-slate-700 leading-snug">{insight.text}</p>
+              <div key={idx} className="flex items-start gap-1.5 p-1.5 bg-white rounded-lg border border-purple-100 min-h-[32px]">
+                <Icon className={`w-3 h-3 ${insight.color} flex-shrink-0 mt-0.5`} />
+                <p className="text-xs text-slate-700 leading-tight truncate">{insight.text}</p>
               </div>
             );
           })}
           
           {insights.length === 0 && (
-            <div className="p-2 text-center text-xs text-slate-500">
-              Nenhum insight disponível no momento
+            <div className="p-1.5 text-center text-xs text-slate-500">
+              Monitorando...
             </div>
           )}
         </div>
 
-        <div className="mt-2.5 p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg border border-blue-200">
-          <div className="flex items-center gap-2">
-            <Badge className="bg-blue-600 text-white text-xs px-2 py-0.5">
+        <div className="mt-1.5 p-1.5 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-1.5">
+            <Badge className="bg-blue-600 text-white text-xs px-1.5 py-0 flex-shrink-0">
               V22.0
             </Badge>
-            <p className="text-xs text-blue-800">
-              Sistema 100% operacional e estável
+            <p className="text-xs text-blue-800 truncate">
+              100% operacional
             </p>
           </div>
         </div>

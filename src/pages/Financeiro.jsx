@@ -299,7 +299,7 @@ export default function Financeiro() {
 
   return (
     <ErrorBoundary>
-      <div className="w-full min-h-screen p-2 space-y-2 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="w-full min-h-screen p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderFinanceiroCompacto 
           estaNoGrupo={estaNoGrupo}
           empresaAtual={empresaAtual}
@@ -336,11 +336,11 @@ export default function Financeiro() {
           onModuleClick={handleModuleClick}
         />
 
-        <div className="p-1.5 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg">
+        <div className="p-1.5 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg min-h-[28px] max-h-[28px]">
           <div className="flex items-center gap-1.5 text-xs text-blue-700">
             <Zap className="w-3 h-3 flex-shrink-0" />
-            <span className="font-semibold">Sistema Multitarefa V22.0:</span>
-            <span>Janelas independentes • Compacto • Estável • 100%</span>
+            <span className="font-semibold">V22.0:</span>
+            <span className="truncate">Janelas independentes • Compacto • Estável • 100%</span>
           </div>
         </div>
       </div>
