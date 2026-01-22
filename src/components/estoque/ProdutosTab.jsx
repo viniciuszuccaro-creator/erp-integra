@@ -376,6 +376,14 @@ export default function ProdutosTab({ produtos, isLoading }) {
                 <SelectItem value="Insumo">Insumo</SelectItem>
               </SelectContent>
             </Select>
+            <Button
+              variant="outline"
+              onClick={() => exportarProdutosCSV(filteredProdutos)}
+              className="border-slate-300"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Exportar CSV
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -411,6 +419,8 @@ export default function ProdutosTab({ produtos, isLoading }) {
                   </TableHead>
                   <TableHead>Código</TableHead>
                   <TableHead>Descrição</TableHead>
+                  <TableHead>Peso Teórico</TableHead>
+                  <TableHead>Setor</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Estoque Atual</TableHead>
@@ -446,6 +456,18 @@ export default function ProdutosTab({ produtos, isLoading }) {
                             <p className="text-xs text-slate-500">EAN: {produto.codigo_barras}</p>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-slate-600">
+                        {produto.peso_teorico_kg_m ? `${produto.peso_teorico_kg_m.toFixed(3)} kg/m` : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {produto.setor_atividade_nome ? (
+                          <Badge variant="outline" className="bg-indigo-50 text-indigo-700">
+                            {produto.setor_atividade_nome}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         {ehProducao ? (

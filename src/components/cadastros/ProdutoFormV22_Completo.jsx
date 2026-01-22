@@ -98,9 +98,18 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
       };
     }
     
+    // V22.0: Auto-incremento de código
+    const ultimoCodigo = todosProdutos
+      .map(p => p.codigo)
+      .filter(c => c && /^\d+$/.test(c))
+      .map(c => parseInt(c))
+      .sort((a, b) => b - a)[0] || 0;
+    
+    const proximoCodigo = (ultimoCodigo + 1).toString().padStart(4, '0');
+    
     return {
       descricao: '',
-      codigo: '',
+      codigo: proximoCodigo,
       codigo_barras: '',
       tipo_item: 'Revenda',
       grupo: 'Outros',
@@ -167,6 +176,12 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
   const [modoManual, setModoManual] = useState(false);
   const [gerandoDescricaoSEO, setGerandoDescricaoSEO] = useState(false);
   const [gerandoImagem, setGerandoImagem] = useState(false);
+
+  // V22.0: Query de produtos para auto-incremento
+  const { data: todosProdutos = [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: () => base44.entities.Produto.list(),
+  });
 
   // V21.2 FASE 2: Queries dos estruturantes
   const { data: setores = [] } = useQuery({
@@ -439,6 +454,20 @@ Caso contrário, sugira:
     if (!formData.descricao) {
       toast.error('Preencha a descrição do produto');
       return;
+    }
+
+    // V22.0: Validação de código duplicado
+    if (formData.codigo && !produto?.id) {
+      try {
+        const produtosExistentes = await base44.entities.Produto.filter({ codigo: formData.codigo });
+        if (produtosExistentes.length > 0) {
+          toast.error(`❌ Código "${formData.codigo}" já existe em outro produto`);
+          setAbaAtiva('dados-gerais');
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao verificar código duplicado:', error);
+      }
     }
 
     // V21.2 FASE 2: Validação tripla classificação
@@ -742,12 +771,16 @@ Caso contrário, sugira:
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Código/SKU</Label>
+                  <Label>Código/SKU *</Label>
                   <Input
                     value={formData.codigo}
                     onChange={(e) => setFormData(prev => ({...prev, codigo: e.target.value}))}
-                    placeholder="SKU-001"
+                    placeholder="0001"
+                    required
                   />
+                  <p className="text-xs text-slate-500 mt-1">
+                    {produto ? 'Código do produto' : `Próximo: ${formData.codigo}`}
+                  </p>
                 </div>
 
                 <div>
