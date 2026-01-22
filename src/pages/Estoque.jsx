@@ -28,7 +28,11 @@ export default function Estoque() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryFn: () => base44.entities.Produto.list('-created_date', 100),
+    staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false
   });
 
   const { data: movimentacoes = [] } = useQuery({
@@ -38,12 +42,14 @@ export default function Estoque() {
 
   const { data: solicitacoes = [] } = useQuery({
     queryKey: ['solicitacoes'],
-    queryFn: () => base44.entities.SolicitacaoCompra.list('-created_date'),
+    queryFn: () => base44.entities.SolicitacaoCompra.list('-created_date', 50),
+    staleTime: 600000,
   });
 
   const { data: ordensCompra = [] } = useQuery({
     queryKey: ['ordensCompra'],
-    queryFn: () => base44.entities.OrdemCompra.list('-created_date'),
+    queryFn: () => base44.entities.OrdemCompra.list('-created_date', 50),
+    staleTime: 600000,
   });
 
   const produtosFiltrados = filtrarPorContexto(produtos, 'empresa_id');
