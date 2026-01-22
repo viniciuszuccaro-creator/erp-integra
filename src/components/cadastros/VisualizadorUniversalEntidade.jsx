@@ -246,16 +246,18 @@ export default function VisualizadorUniversalEntidade({
     queryKey: queryKey,
     queryFn: async () => {
       try {
-        return await base44.entities[nomeEntidade].list('-created_date', 1000);
+        const result = await base44.entities[nomeEntidade].list('-created_date', 1000);
+        return result || [];
       } catch (error) {
         console.error(`Erro ao carregar ${nomeEntidade}:`, error);
         return [];
       }
     },
-    staleTime: 5000,
+    staleTime: 1000,
     refetchInterval: 30000,
     refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always'
   });
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
