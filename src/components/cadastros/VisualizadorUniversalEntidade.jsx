@@ -21,7 +21,8 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Plus
+  Plus,
+  Table as TableIcon
   } from 'lucide-react';
 import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -34,9 +35,10 @@ import { useToast } from "@/components/ui/use-toast";
  * Componente genérico que lista qualquer entidade com:
  * - ✅ Real-time: Auto-refresh a cada 30s
  * - ✅ Organização avançada específica por entidade
+ * - ✅ Ordenação por clique nas colunas (visualização tabela)
  * - ✅ Busca universal em todos os campos
  * - ✅ Filtros multi-empresa
- * - ✅ Grid/Lista view
+ * - ✅ Grid/Lista/Tabela view
  * - ✅ Ações de editar/visualizar/excluir
  * - ✅ Exportação
  * - ✅ w-full/h-full responsivo
@@ -163,6 +165,38 @@ const ALIAS_QUERY_KEYS = {
   TabelaFiscal: ['tabelas-fiscais']
 };
 
+// ✅ Mapeamento de colunas clicáveis para ordenação por entidade
+const COLUNAS_ORDENACAO = {
+  Produto: [
+    { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '' },
+    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' },
+    { campo: 'tipo_item', label: 'Tipo', getValue: (item) => item.tipo_item || '' },
+    { campo: 'setor_atividade_nome', label: 'Setor de Atividade', getValue: (item) => item.setor_atividade_nome || '' },
+    { campo: 'grupo_produto_nome', label: 'Categoria/Grupo', getValue: (item) => item.grupo_produto_nome || item.grupo || '' },
+    { campo: 'marca_nome', label: 'Marca', getValue: (item) => item.marca_nome || '' },
+    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' },
+    { campo: 'estoque_atual', label: 'Estoque', getValue: (item) => item.estoque_atual || 0, isNumeric: true },
+    { campo: 'preco_venda', label: 'Preço Venda', getValue: (item) => item.preco_venda || 0, isNumeric: true }
+  ],
+  Cliente: [
+    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
+    { campo: 'tipo', label: 'Tipo', getValue: (item) => item.tipo || '' },
+    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' },
+    { campo: 'cidade', label: 'Cidade', getValue: (item) => item.endereco_principal?.cidade || '' },
+    { campo: 'vendedor_responsavel', label: 'Vendedor', getValue: (item) => item.vendedor_responsavel || '' }
+  ],
+  Fornecedor: [
+    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
+    { campo: 'categoria', label: 'Categoria', getValue: (item) => item.categoria || '' },
+    { campo: 'cidade', label: 'Cidade', getValue: (item) => item.endereco_principal?.cidade || '' },
+    { campo: 'nota_media', label: 'Avaliação', getValue: (item) => item.nota_media || 0, isNumeric: true }
+  ],
+  default: [
+    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || item.descricao || item.titulo || '' },
+    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+  ]
+};
+
 export default function VisualizadorUniversalEntidade({ 
   nomeEntidade,
   tituloDisplay,
@@ -176,9 +210,11 @@ export default function VisualizadorUniversalEntidade({
   onSelectionChange
 }) {
   const [busca, setBusca] = useState('');
-  const [visualizacao, setVisualizacao] = useState('grid');
+  const [visualizacao, setVisualizacao] = useState('table'); // ✅ Default: tabela
   const [expandidos, setExpandidos] = useState({});
   const [ordenacao, setOrdenacao] = useState('recent');
+  const [colunaOrdenacao, setColunaOrdenacao] = useState(null);
+  const [direcaoOrdenacao, setDirecaoOrdenacao] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
   const { openWindow, closeWindow } = useWindow();
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
@@ -200,8 +236,9 @@ export default function VisualizadorUniversalEntidade({
 
   // Obter opções de ordenação específicas da entidade
   const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
+  const colunasOrdenacao = COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default;
 
-  // ✅ REAL-TIME: Buscar dados com auto-refresh a cada 30s
+  // ✅ REAL-TIME: Buscar dados com auto-refresh a cada 30s - SEM initialData
   const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
@@ -218,8 +255,7 @@ export default function VisualizadorUniversalEntidade({
     staleTime: 5000,
     refetchInterval: 30000,
     refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
-    refetchOnMount: 'always'
+    refetchOnWindowFocus: true
   });
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
@@ -237,7 +273,17 @@ export default function VisualizadorUniversalEntidade({
     return filtrarPorContexto(dados, 'empresa_id');
   }, [dados, empresaAtual]);
 
-  // Busca universal em todos os campos + ✅ ORDENAÇÃO AVANÇADA
+  // ✅ Ordenação por clique em coluna
+  const handleOrdenarPorColuna = (campo) => {
+    if (colunaOrdenacao === campo) {
+      setDirecaoOrdenacao(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setColunaOrdenacao(campo);
+      setDirecaoOrdenacao('asc');
+    }
+  };
+
+  // Busca universal em todos os campos + ✅ ORDENAÇÃO AVANÇADA (menu + colunas)
   const dadosBuscadosEOrdenados = useMemo(() => {
     // 1️⃣ Aplicar busca
     let resultado = dadosFiltrados;
@@ -252,14 +298,34 @@ export default function VisualizadorUniversalEntidade({
       });
     }
 
-    // 2️⃣ Aplicar ordenação específica
-    const opcaoSelecionada = opcoesOrdenacao.find(op => op.value === ordenacao);
-    if (opcaoSelecionada?.sortFn) {
-      resultado = [...resultado].sort(opcaoSelecionada.sortFn);
+    // 2️⃣ Aplicar ordenação
+    if (colunaOrdenacao) {
+      // Ordenação por coluna clicada
+      const colConfig = colunasOrdenacao.find(c => c.campo === colunaOrdenacao);
+      if (colConfig) {
+        resultado = [...resultado].sort((a, b) => {
+          const valA = colConfig.getValue(a);
+          const valB = colConfig.getValue(b);
+          
+          if (colConfig.isNumeric) {
+            return direcaoOrdenacao === 'asc' ? valA - valB : valB - valA;
+          } else {
+            return direcaoOrdenacao === 'asc' 
+              ? String(valA).localeCompare(String(valB))
+              : String(valB).localeCompare(String(valA));
+          }
+        });
+      }
+    } else {
+      // Ordenação por menu dropdown
+      const opcaoSelecionada = opcoesOrdenacao.find(op => op.value === ordenacao);
+      if (opcaoSelecionada?.sortFn) {
+        resultado = [...resultado].sort(opcaoSelecionada.sortFn);
+      }
     }
 
     return resultado;
-  }, [dadosFiltrados, busca, ordenacao, opcoesOrdenacao]);
+  }, [dadosFiltrados, busca, ordenacao, colunaOrdenacao, direcaoOrdenacao, opcoesOrdenacao, colunasOrdenacao]);
 
   // Seleção em massa + exclusão
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
@@ -277,8 +343,6 @@ export default function VisualizadorUniversalEntidade({
     });
   };
   
-  // Utilitário para forçar fechamento de janela após sucesso do form interno
-
   const excluirSelecionados = async () => {
     if (selectedIds.size === 0) return;
     await Promise.all(Array.from(selectedIds).map(id => base44.entities[nomeEntidade].delete(id)));
@@ -545,20 +609,20 @@ onClose: invalidateAllRelated,
                 Exportar
               </Button>
               <Button
-                                    variant="primary"
-                                    size="sm"
-                                    onClick={handleAbrirNovo}
-                                    disabled={!hasPermission(moduloPermissao, 'criar')}
-                                  >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Novo {tituloDisplay}
-                                  </Button>
+                                variant="primary"
+                                size="sm"
+                                onClick={handleAbrirNovo}
+                                disabled={!hasPermission(moduloPermissao, 'criar')}
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Novo {tituloDisplay}
+                              </Button>
 
-                                  <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={toggleSelectAll}
-                                >
+                              <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={toggleSelectAll}
+                            >
                 {allSelected ? 'Limpar Seleção' : 'Selecionar Todos'}
               </Button>
               <Button
@@ -586,32 +650,57 @@ onClose: invalidateAllRelated,
               />
             </div>
             
-            {/* ✅ NOVA ORDENAÇÃO AVANÇADA */}
-            <Select value={ordenacao} onValueChange={(value) => {
-              setOrdenacao(value);
-              toast({ title: '✅ Ordenação alterada', description: opcoesOrdenacao.find(o => o.value === value)?.label });
-            }}>
-              <SelectTrigger className="w-full sm:w-64">
-                <div className="flex items-center gap-2">
-                  <ArrowUpDown className="w-4 h-4" />
-                  <SelectValue placeholder="Organizar por..." />
-                </div>
-              </SelectTrigger>
-              <SelectContent position="popper" sideOffset={5}>
-                {opcoesOrdenacao.map(opcao => (
-                  <SelectItem key={opcao.value} value={opcao.value}>
-                    {opcao.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* ✅ ORDENAÇÃO POR MENU (quando não estiver usando ordenação por coluna) */}
+            {!colunaOrdenacao && (
+              <Select value={ordenacao} onValueChange={setOrdenacao}>
+                <SelectTrigger className="w-full sm:w-64">
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown className="w-4 h-4" />
+                    <SelectValue placeholder="Organizar por..." />
+                  </div>
+                </SelectTrigger>
+                <SelectContent position="popper" sideOffset={5}>
+                  {opcoesOrdenacao.map(opcao => (
+                    <SelectItem key={opcao.value} value={opcao.value}>
+                      {opcao.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* ✅ Botão para limpar ordenação por coluna */}
+            {colunaOrdenacao && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setColunaOrdenacao(null);
+                  setDirecaoOrdenacao('asc');
+                }}
+                className="whitespace-nowrap"
+              >
+                <ArrowUpDown className="w-4 h-4 mr-2" />
+                Limpar Ordenação
+              </Button>
+            )}
 
             <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
+              <Button
+                variant={visualizacao === 'table' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setVisualizacao('table')}
+                className="h-8"
+                title="Visualização em Tabela"
+              >
+                <TableIcon className="w-4 h-4" />
+              </Button>
               <Button
                 variant={visualizacao === 'grid' ? 'default' : 'ghost'}
                 size="sm"
                 onClick={() => setVisualizacao('grid')}
                 className="h-8"
+                title="Visualização em Cards"
               >
                 <Grid3x3 className="w-4 h-4" />
               </Button>
@@ -620,6 +709,7 @@ onClose: invalidateAllRelated,
                 size="sm"
                 onClick={() => setVisualizacao('list')}
                 className="h-8"
+                title="Visualização em Lista"
               >
                 <List className="w-4 h-4" />
               </Button>
@@ -647,6 +737,103 @@ onClose: invalidateAllRelated,
             </div>
           ) : (
             <>
+              {/* ✅ NOVA VISUALIZAÇÃO EM TABELA COM COLUNAS CLICÁVEIS */}
+              {visualizacao === 'table' && (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b-2 border-slate-200">
+                        <th className="p-3 text-left">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={allSelected}
+                            onChange={toggleSelectAll}
+                          />
+                        </th>
+                        {colunasOrdenacao.map((coluna) => (
+                          <th
+                            key={coluna.campo}
+                            className="p-3 text-left font-semibold text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors select-none"
+                            onClick={() => handleOrdenarPorColuna(coluna.campo)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span>{coluna.label}</span>
+                              {colunaOrdenacao === coluna.campo && (
+                                direcaoOrdenacao === 'asc' ? (
+                                  <ArrowUp className="w-4 h-4 text-blue-600" />
+                                ) : (
+                                  <ArrowDown className="w-4 h-4 text-blue-600" />
+                                )
+                              )}
+                              {colunaOrdenacao !== coluna.campo && (
+                                <ArrowUpDown className="w-4 h-4 text-slate-400" />
+                              )}
+                            </div>
+                          </th>
+                        ))}
+                        <th className="p-3 text-right font-semibold text-slate-700">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dadosBuscadosEOrdenados.map((item) => (
+                        <tr
+                          key={item.id}
+                          className="border-b border-slate-100 hover:bg-blue-50 transition-colors"
+                        >
+                          <td className="p-3">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4"
+                              checked={selectedIds.has(item.id)}
+                              onChange={() => toggleItem(item.id)}
+                            />
+                          </td>
+                          {colunasOrdenacao.map((coluna) => {
+                            const valor = coluna.getValue(item);
+                            return (
+                              <td key={coluna.campo} className="p-3 text-sm">
+                                {coluna.isNumeric ? (
+                                  <span className="font-medium">
+                                    {typeof valor === 'number' ? valor.toLocaleString('pt-BR') : valor}
+                                  </span>
+                                ) : (
+                                  <span className="truncate max-w-xs block" title={String(valor)}>
+                                    {String(valor)}
+                                  </span>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td className="p-3">
+                            <div className="flex items-center justify-end gap-2">
+                              {componenteVisualizacao && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => abrirVisualizacao(item)}
+                                >
+                                  <Eye className="w-3 h-3" />
+                                </Button>
+                              )}
+                              {componenteEdicao && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => abrirEdicao(item)}
+                                  disabled={!hasPermission(moduloPermissao, 'editar')}
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
               {/* Visualização em Grid */}
               {visualizacao === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
