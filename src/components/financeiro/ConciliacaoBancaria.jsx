@@ -215,10 +215,10 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
 
         <TabsContent value="conciliados" className="mt-2 flex-1">
           <Card className="border-0 shadow-sm h-full flex flex-col">
-            <CardContent className="p-0">
+            <CardContent className="p-0 flex-1 overflow-auto">
               <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
+                <TableHeader className="sticky top-0 bg-slate-50 z-10">
+                  <TableRow>
                     <TableHead>Data</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Valor</TableHead>
@@ -258,10 +258,10 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
 
         <TabsContent value="divergencias" className="mt-2 flex-1">
           <Card className="border-0 shadow-sm h-full flex flex-col">
-            <CardContent className="p-0">
+            <CardContent className="p-0 flex-1 overflow-auto">
               <Table>
-                <TableHeader>
-                  <TableRow className="bg-slate-50">
+                <TableHeader className="sticky top-0 bg-slate-50 z-10">
+                  <TableRow>
                     <TableHead>Data</TableHead>
                     <TableHead>Descrição</TableHead>
                     <TableHead>Diferença</TableHead>
