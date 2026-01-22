@@ -17,7 +17,7 @@ const ContasReceberTab = React.lazy(() => import("../components/financeiro/Conta
 const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
 const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
 const AprovacaoDescontosManager = React.lazy(() => import("../components/comercial/AprovacaoDescontosManager"));
-const DashboardFinanceiroMestre = React.lazy(() => import("../components/financeiro/FinanceiroLaunchpadCompacto"));
+const DashboardFinanceiroMestre = React.lazy(() => import("../components/financeiro/DashboardFinanceiroMestreCompacto"));
 const CaixaPDVCompleto = React.lazy(() => import("../components/financeiro/CaixaPDVCompleto"));
 const GestaoRemessaRetorno = React.lazy(() => import("../components/financeiro/GestaoRemessaRetorno"));
 const VendasMulticanal = React.lazy(() => import("../components/financeiro/VendasMulticanal"));
