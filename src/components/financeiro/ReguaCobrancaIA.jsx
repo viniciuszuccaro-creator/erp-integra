@@ -232,14 +232,14 @@ export default function ReguaCobrancaIA({ empresaId, windowMode = false }) {
   });
 
   const content = (
-    <Card className="border-purple-200 bg-purple-50">
-      <CardHeader className="bg-white/80 border-b">
+    <Card className="border-purple-200 bg-purple-50 min-h-[200px]">
+      <CardHeader className="bg-white/80 border-b px-3 py-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-purple-600" />
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-purple-600" />
             Régua de Cobrança IA
             {ativa && (
-              <Badge className="bg-green-600 text-white animate-pulse">
+              <Badge className="bg-green-600 text-white animate-pulse text-xs px-2 py-0.5">
                 ATIVA
               </Badge>
             )}
@@ -248,13 +248,14 @@ export default function ReguaCobrancaIA({ empresaId, windowMode = false }) {
             onClick={() => setAtiva(!ativa)}
             variant="outline"
             size="sm"
+            className="h-7 px-2 text-xs"
           >
             {ativa ? 'Desativar' : 'Ativar'}
           </Button>
         </div>
       </CardHeader>
       
-      <CardContent className="p-6 space-y-4">
+      <CardContent className="p-3 space-y-3">
         {titulosVencidos.length === 0 ? (
           <div className="text-center py-8 text-green-600">
             <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-50" />
@@ -264,46 +265,46 @@ export default function ReguaCobrancaIA({ empresaId, windowMode = false }) {
         ) : (
           <>
             {/* Estatísticas */}
-            <div className="grid grid-cols-3 gap-4">
-              <Card className="border-blue-200 bg-blue-50">
-                <CardContent className="p-4 text-center">
-                  <p className="text-sm text-blue-700">1-3 dias</p>
-                  <p className="text-2xl font-bold text-blue-900">{ate3Dias.length}</p>
-                  <p className="text-xs text-blue-600">WhatsApp Amigável</p>
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="border-blue-200 bg-blue-50 min-h-[90px]">
+                <CardContent className="p-3 text-center flex flex-col justify-center h-full">
+                  <p className="text-xs text-blue-700">1-3 dias</p>
+                  <p className="text-xl font-bold text-blue-900">{ate3Dias.length}</p>
+                  <p className="text-xs text-blue-600">WhatsApp</p>
                 </CardContent>
               </Card>
 
-              <Card className="border-orange-200 bg-orange-50">
-                <CardContent className="p-4 text-center">
-                  <p className="text-sm text-orange-700">4-10 dias</p>
-                  <p className="text-2xl font-bold text-orange-900">{de4a10Dias.length}</p>
-                  <p className="text-xs text-orange-600">WhatsApp + E-mail</p>
+              <Card className="border-orange-200 bg-orange-50 min-h-[90px]">
+                <CardContent className="p-3 text-center flex flex-col justify-center h-full">
+                  <p className="text-xs text-orange-700">4-10 dias</p>
+                  <p className="text-xl font-bold text-orange-900">{de4a10Dias.length}</p>
+                  <p className="text-xs text-orange-600">Multi-canal</p>
                 </CardContent>
               </Card>
 
-              <Card className="border-red-200 bg-red-50">
-                <CardContent className="p-4 text-center">
-                  <p className="text-sm text-red-700">&gt;10 dias</p>
-                  <p className="text-2xl font-bold text-red-900">{acima10Dias.length}</p>
-                  <p className="text-xs text-red-600">Ligar (CRM)</p>
+              <Card className="border-red-200 bg-red-50 min-h-[90px]">
+                <CardContent className="p-3 text-center flex flex-col justify-center h-full">
+                  <p className="text-xs text-red-700">&gt;10 dias</p>
+                  <p className="text-xl font-bold text-red-900">{acima10Dias.length}</p>
+                  <p className="text-xs text-red-600">CRM</p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Ações Automáticas */}
             <Alert className="border-purple-300 bg-purple-50">
-              <Sparkles className="w-4 h-4 text-purple-600" />
-              <AlertDescription>
-                <p className="font-semibold text-purple-900 mb-2">Ações que serão executadas:</p>
-                <ul className="text-sm text-purple-800 space-y-1">
+              <Sparkles className="w-3 h-3 text-purple-600" />
+              <AlertDescription className="text-xs">
+                <p className="font-semibold text-purple-900 mb-1">Ações programadas:</p>
+                <ul className="text-xs text-purple-800 space-y-0.5">
                   {ate3Dias.length > 0 && (
-                    <li>✓ {ate3Dias.length} WhatsApp(s) amigável com link PIX</li>
+                    <li>✓ {ate3Dias.length} WhatsApp com PIX</li>
                   )}
                   {de4a10Dias.length > 0 && (
-                    <li>✓ {de4a10Dias.length} WhatsApp(s) + E-mail de cobrança</li>
+                    <li>✓ {de4a10Dias.length} Multi-canal</li>
                   )}
                   {acima10Dias.length > 0 && (
-                    <li>✓ {acima10Dias.length} tarefa(s) no CRM para ligação</li>
+                    <li>✓ {acima10Dias.length} CRM</li>
                   )}
                 </ul>
               </AlertDescription>
@@ -313,24 +314,23 @@ export default function ReguaCobrancaIA({ empresaId, windowMode = false }) {
             <Button
               onClick={handleExecutar}
               disabled={executando || executarReguaMutation.isPending}
-              className="w-full bg-purple-600 hover:bg-purple-700"
-              size="lg"
+              className="w-full bg-purple-600 hover:bg-purple-700 h-9"
             >
               {executando ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                  Executando Régua...
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
+                  Executando...
                 </>
               ) : (
                 <>
-                  <Send className="w-5 h-5 mr-2" />
-                  Executar Régua Manualmente
+                  <Send className="w-4 h-4 mr-2" />
+                  Executar Régua
                 </>
               )}
             </Button>
 
             <p className="text-xs text-center text-slate-500">
-              Ações manuais são registradas no histórico do cliente.
+              Automático a cada 1h • Manual sob demanda
             </p>
           </>
         )}
