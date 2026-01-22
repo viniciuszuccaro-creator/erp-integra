@@ -108,7 +108,7 @@ export default function RH() {
       title: 'Rankings',
       description: 'Gamificação produção',
       icon: Trophy,
-      color: 'yellow',
+      color: 'orange',
       component: GameficacaoProducao,
       windowTitle: '🏆 Rankings e Gamificação',
       width: 1400,
