@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
-export default function FornecedoresTab({ fornecedores }) {
+export default function FornecedoresTab({ fornecedores, windowMode = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
   
