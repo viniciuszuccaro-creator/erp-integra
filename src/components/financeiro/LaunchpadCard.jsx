@@ -26,37 +26,35 @@ export default function LaunchpadCard({
     <Card 
       onClick={onClick}
       className={`
-        w-full min-h-[120px] max-h-[120px]
+        min-w-[280px] min-h-[140px] 
         cursor-pointer 
         border-0 
         bg-gradient-to-br ${colorClasses[color]} 
         text-white
         transition-shadow duration-200
-        hover:shadow-lg
-        active:shadow-md
+        hover:shadow-xl
         relative
         overflow-hidden
       `}
-      style={{ willChange: 'box-shadow' }}
     >
-      <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -mr-10 -mt-10 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-16 h-16 bg-black/10 rounded-full -ml-8 -mb-8 pointer-events-none" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
+      <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12" />
       
-      <CardContent className="p-3 relative z-10 flex flex-col h-full justify-between">
-        <div className="flex items-start justify-between mb-1.5">
-          <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
-            <Icon className="w-4 h-4 text-white" />
+      <CardContent className="p-5 relative z-10 flex flex-col h-full justify-between min-h-[140px]">
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
+            <Icon className="w-6 h-6 text-white" />
           </div>
           {badge && (
-            <Badge className="bg-white/30 text-white border-white/50 text-xs px-1.5 py-0">
+            <Badge className="bg-white/30 text-white border-white/50">
               {badge}
             </Badge>
           )}
         </div>
         
         <div>
-          <h3 className="text-sm font-bold mb-0.5 leading-tight line-clamp-1">{title}</h3>
-          <p className="text-xs text-white/90 leading-snug line-clamp-2">{description}</p>
+          <h3 className="text-lg font-bold mb-1">{title}</h3>
+          <p className="text-sm text-white/90 leading-tight">{description}</p>
         </div>
       </CardContent>
     </Card>
