@@ -245,18 +245,15 @@ export default function VisualizadorUniversalEntidade({
   const { data: dados = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: queryKey,
     queryFn: async () => {
-      try {
-        const result = await base44.entities[nomeEntidade].list('-created_date', 200);
-        return result || [];
-      } catch (error) {
-        console.error(`Erro ao carregar ${nomeEntidade}:`, error);
-        return [];
-      }
+      const result = await base44.entities[nomeEntidade].list('-created_date', 100);
+      return result || [];
     },
-    staleTime: 300000,
+    staleTime: 600000,
+    gcTime: 900000,
     refetchInterval: false,
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
