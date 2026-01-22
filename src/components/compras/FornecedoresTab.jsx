@@ -31,34 +31,34 @@ export default function FornecedoresTab({ fornecedores, windowMode = false }) {
   };
 
   const content = (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Fornecedores</h2>
+        <h2 className="text-lg font-bold">Fornecedores</h2>
         <Link to={createPageUrl('Cadastros') + '?tab=fornecedores'}>
-          <Button className="bg-cyan-600 hover:bg-cyan-700">
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Gerenciar em Cadastros Gerais
+          <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700">
+            <ExternalLink className="w-3 h-3 mr-1" />
+            Cadastros
           </Button>
         </Link>
       </div>
 
-      <Card className="border-0 shadow-md bg-cyan-50 border-cyan-200">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <Package className="w-10 h-10 text-cyan-600" />
+      <Card className="border-0 shadow-sm bg-cyan-50 border-cyan-200">
+        <CardContent className="p-3">
+          <div className="flex items-center gap-2">
+            <Package className="w-8 h-8 text-cyan-600" />
             <div>
-              <p className="text-sm text-cyan-700 font-medium">Cadastros Centralizados</p>
+              <p className="text-xs text-cyan-700 font-medium">Cadastros Centralizados</p>
               <p className="text-xs text-cyan-600">
-                Para criar ou editar fornecedores, acesse o módulo <strong>Cadastros Gerais</strong>
+                Criar/editar em <strong>Cadastros Gerais</strong>
               </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+      <Card className="border-0 shadow-sm">
+        <CardContent className="p-3">
+          <div className="flex flex-col sm:flex-row gap-2">
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
@@ -79,11 +79,11 @@ export default function FornecedoresTab({ fornecedores, windowMode = false }) {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md">
-        <CardHeader className="bg-slate-50 border-b">
-          <CardTitle>Lista de Fornecedores ({filteredFornecedores.length})</CardTitle>
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="bg-slate-50 border-b py-2 px-3">
+          <CardTitle className="text-sm">Fornecedores ({filteredFornecedores.length})</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -158,9 +158,9 @@ export default function FornecedoresTab({ fornecedores, windowMode = false }) {
           </div>
 
           {filteredFornecedores.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">Nenhum fornecedor encontrado</p>
+            <div className="text-center py-8">
+              <Package className="w-12 h-12 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-500">Nenhum fornecedor encontrado</p>
             </div>
           )}
         </CardContent>

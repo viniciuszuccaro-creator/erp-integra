@@ -414,24 +414,24 @@ export default function CotacoesTab({ windowMode = false }) {
       </div>
 
       {/* Lista de Cotações */}
-      <div className="grid gap-4">
+      <div className="grid gap-2">
         {cotacoes.map(cotacao => (
-          <Card key={cotacao.id} className="border-0 shadow-md">
-            <CardHeader className="bg-slate-50 border-b">
+          <Card key={cotacao.id} className="border-0 shadow-sm">
+            <CardHeader className="bg-slate-50 border-b py-2 px-3">
               <div className="flex justify-between items-start">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-cyan-600" />
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <FileText className="w-4 h-4 text-cyan-600" />
                     {cotacao.numero_cotacao} - {cotacao.descricao}
                   </CardTitle>
-                  <div className="flex items-center gap-3 mt-2">
+                  <div className="flex items-center gap-2 mt-1">
                     <Badge className={getStatusColor(cotacao.status)}>
                       {cotacao.status}
                     </Badge>
-                    <span className="text-sm text-slate-600">
-                      Criada em {new Date(cotacao.data_criacao).toLocaleDateString('pt-BR')}
+                    <span className="text-xs text-slate-600">
+                      Criada: {new Date(cotacao.data_criacao).toLocaleDateString('pt-BR')}
                     </span>
-                    <span className="text-sm text-slate-600">
+                    <span className="text-xs text-slate-600">
                       Limite: {new Date(cotacao.data_limite).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
@@ -488,16 +488,16 @@ export default function CotacoesTab({ windowMode = false }) {
         ))}
 
         {cotacoes.length === 0 && (
-          <Card className="border-0 shadow-md">
-            <CardContent className="p-12 text-center">
-              <TrendingUp className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-slate-700 mb-2">Nenhuma Cotação Criada</h3>
-              <p className="text-slate-500 mb-4">
-                Crie cotações para comparar propostas de múltiplos fornecedores
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-8 text-center">
+              <TrendingUp className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <h3 className="text-base font-semibold text-slate-700 mb-2">Nenhuma Cotação</h3>
+              <p className="text-xs text-slate-500 mb-3">
+                Compare propostas de fornecedores
               </p>
-              <Button onClick={() => setDialogOpen(true)} className="bg-cyan-600 hover:bg-cyan-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Criar Primeira Cotação
+              <Button size="sm" onClick={() => setDialogOpen(true)} className="bg-cyan-600 hover:bg-cyan-700">
+                <Plus className="w-3 h-3 mr-1" />
+                Criar Cotação
               </Button>
             </CardContent>
           </Card>

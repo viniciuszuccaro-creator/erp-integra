@@ -423,15 +423,16 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   };
 
   const content = (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+    <div className="space-y-1.5">
+      <div className="flex justify-between items-center gap-2">
+        <h2 className="text-lg font-bold">Ordens de Compra</h2>
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
           <Input
-            placeholder="Buscar ordem..."
+            placeholder="Buscar..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
+            className="pl-7 h-8 text-sm"
           />
         </div>
 
@@ -451,9 +452,10 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             width: 1100,
             height: 700
           })}
+          size="sm"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Ordem de Compra
+          <Plus className="w-3 h-3 mr-1" />
+          Nova OC
         </Button>
 
         {/* BACKUP: Dialog removido */}
@@ -586,21 +588,21 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         </Dialog>
       </div>
 
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-sm">
         {selectedOCs.length > 0 && (
-          <Alert className="m-4 border-blue-300 bg-blue-50">
-            <AlertDescription className="flex items-center justify-between">
+          <Alert className="m-2 border-blue-300 bg-blue-50 py-2 px-3">
+            <AlertDescription className="flex items-center justify-between text-xs">
               <div className="text-blue-900 font-semibold">{selectedOCs.length} OC selecionada(s)</div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => exportarOCsCSV(filteredOCs.filter(o => selectedOCs.includes(o.id)))}>
-                  <Download className="w-4 h-4 mr-2" /> Exportar CSV
+              <div className="flex gap-1">
+                <Button variant="outline" size="sm" onClick={() => exportarOCsCSV(filteredOCs.filter(o => selectedOCs.includes(o.id)))}>
+                  <Download className="w-3 h-3 mr-1" /> CSV
                 </Button>
-                <Button variant="ghost" onClick={() => setSelectedOCs([])}>Limpar Seleção</Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelectedOCs([])}>Limpar</Button>
               </div>
             </AlertDescription>
           </Alert>
         )}
-        <div className="overflow-x-auto">
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
@@ -752,13 +754,13 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
               ))}
             </TableBody>
           </Table>
-        </div>
 
-        {filteredOCs.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-slate-500">Nenhuma ordem de compra encontrada</p>
-          </div>
-        )}
+          {filteredOCs.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-sm text-slate-500">Nenhuma ordem de compra encontrada</p>
+            </div>
+          )}
+        </CardContent>
       </Card>
 
       {/* DIALOGS REMOVIDOS - Agora usam Windows */}

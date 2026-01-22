@@ -309,28 +309,28 @@ Retorne JSON com:
   };
 
   const content = (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Solicitações de Compra</h2>
-        <div className="flex gap-2">
+        <h2 className="text-lg font-bold">Solicitações de Compra</h2>
+        <div className="flex gap-1">
           <Button
             onClick={() => sugerirComprasIA.mutate()}
             disabled={sugerirComprasIA.isPending}
             variant="outline"
+            size="sm"
             className="border-purple-300 text-purple-700 hover:bg-purple-50"
           >
             {sugerirComprasIA.isPending ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600 mr-2" />
-                Analisando...
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-purple-600 mr-1" />
+                <span className="text-xs">Analisando...</span>
               </>
             ) : (
-              <>
-                🤖 IA: Sugerir Compras
-              </>
+              <span className="text-xs">🤖 IA</span>
             )}
           </Button>
           <Button
+            size="sm"
             className="bg-blue-600 hover:bg-blue-700"
             onClick={() => openWindow(SolicitacaoCompraForm, {
               windowMode: true,
@@ -348,8 +348,8 @@ Retorne JSON com:
               height: 650
             })}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Solicitação
+            <Plus className="w-3 h-3 mr-1" />
+            Nova
           </Button>
 
           {/* BACKUP: Dialog removido */}
@@ -568,9 +568,9 @@ Retorne JSON com:
           </Table>
 
           {solicitacoes.length === 0 && (
-            <div className="text-center py-12">
-              <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">Nenhuma solicitação cadastrada</p>
+            <div className="text-center py-8">
+              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm text-slate-500">Nenhuma solicitação cadastrada</p>
             </div>
           )}
         </CardContent>
