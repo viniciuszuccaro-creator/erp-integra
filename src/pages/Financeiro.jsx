@@ -16,10 +16,6 @@ const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro
 const ContasReceberTab = React.lazy(() => import("../components/financeiro/ContasReceberTab"));
 const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
 const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
-const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro/CaixaCentralLiquidacao"));
-const ContasReceberTab = React.lazy(() => import("../components/financeiro/ContasReceberTab"));
-const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
-const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
 const AprovacaoDescontosManager = React.lazy(() => import("../components/comercial/AprovacaoDescontosManager"));
 const DashboardFinanceiroMestre = React.lazy(() => import("../components/financeiro/FinanceiroLaunchpadCompacto"));
 const CaixaPDVCompleto = React.lazy(() => import("../components/financeiro/CaixaPDVCompleto"));
