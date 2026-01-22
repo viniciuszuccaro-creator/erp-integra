@@ -1,21 +1,21 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Wallet,
-  Building2,
-  Zap,
-} from "lucide-react";
+import { Wallet, Zap } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
-import LaunchpadCard from "@/components/financeiro/LaunchpadCard";
+import HeaderFinanceiroCompacto from "@/components/financeiro/HeaderFinanceiroCompacto";
 import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunchpad";
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
+import InsightsFinanceirosCompacto from "@/components/financeiro/InsightsFinanceirosCompacto";
+import ModulosGridFinanceiro from "@/components/financeiro/ModulosGridFinanceiro";
 
+const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro/CaixaCentralLiquidacao"));
+const ContasReceberTab = React.lazy(() => import("../components/financeiro/ContasReceberTab"));
+const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
+const ConciliacaoBancaria = React.lazy(() => import("../components/financeiro/ConciliacaoBancaria"));
 const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro/CaixaCentralLiquidacao"));
 const ContasReceberTab = React.lazy(() => import("../components/financeiro/ContasReceberTab"));
 const ContasPagarTab = React.lazy(() => import("../components/financeiro/ContasPagarTab"));
@@ -30,7 +30,6 @@ const RateioMultiempresa = React.lazy(() => import("../components/financeiro/Rat
 const AlertasFinanceirosEmpresa = React.lazy(() => import("../components/financeiro/AlertasFinanceirosEmpresa"));
 const RelatorioFinanceiro = React.lazy(() => import("../components/financeiro/RelatorioFinanceiro"));
 const DashboardFormasPagamento = React.lazy(() => import("../components/financeiro/DashboardFormasPagamento"));
-const ReguaCobrancaIA = React.lazy(() => import("../components/financeiro/ReguaCobrancaIA"));
 
 export default function Financeiro() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -283,26 +282,32 @@ export default function Financeiro() {
 
   const allModules = [...modules, ...grupoModules];
 
+  const handleModuleClick = (module) => {
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { 
+          ...(module.props || {}),
+          empresaAtual,
+          windowMode: true 
+        },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}`
+        }
+      );
+    });
+  };
+
   return (
     <ErrorBoundary>
       <div className="w-full min-h-screen p-3 space-y-3 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 mb-1">Financeiro Multi-Empresa</h1>
-            <p className="text-xs text-slate-600">
-              {estaNoGrupo
-                ? 'Visão consolidada • Caixa Central • Conciliação • Omnichannel'
-                : `Gestão financeira completa - ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || ''}`
-              }
-            </p>
-          </div>
-          {estaNoGrupo && (
-            <Badge className="bg-blue-100 text-blue-700 px-2 py-1 text-xs">
-              <Building2 className="w-3 h-3 mr-1" />
-              Visão Consolidada
-            </Badge>
-          )}
-        </div>
+        <HeaderFinanceiroCompacto 
+          estaNoGrupo={estaNoGrupo}
+          empresaAtual={empresaAtual}
+        />
 
         <KPIsFinanceiroLaunchpad
           receberPendente={receberPendente}
@@ -323,50 +328,17 @@ export default function Financeiro() {
           totalPendentesAprovacao={totalPendentesAprovacao}
         />
 
-        <Suspense fallback={<div className="p-3 text-center text-slate-500 text-sm">Carregando régua de cobrança...</div>}>
-          <ReguaCobrancaIA empresaId={empresaAtual?.id} />
-        </Suspense>
+        <InsightsFinanceirosCompacto 
+          saldo={saldo}
+          contasVencidas={contasReceberVencidas + contasPagarVencidas}
+          scoreIA={85}
+          automacaoAtiva={true}
+        />
 
-        <Card className="border-0 shadow-md">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b px-3 py-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="w-4 h-4 text-blue-600" />
-              Módulos Financeiros
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {allModules.map((module, idx) => (
-                <LaunchpadCard
-                  key={idx}
-                  title={module.title}
-                  description={module.description}
-                  icon={module.icon}
-                  color={module.color}
-                  badge={module.badge}
-                  onClick={() => {
-                    React.startTransition(() => {
-                      openWindow(
-                        module.component,
-                        { 
-                          ...(module.props || {}),
-                          empresaAtual,
-                          windowMode: true 
-                        },
-                        {
-                          title: module.windowTitle,
-                          width: module.width,
-                          height: module.height,
-                          uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}`
-                        }
-                      );
-                    });
-                  }}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <ModulosGridFinanceiro 
+          modules={allModules}
+          onModuleClick={handleModuleClick}
+        />
 
         <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2 text-xs text-blue-700">
