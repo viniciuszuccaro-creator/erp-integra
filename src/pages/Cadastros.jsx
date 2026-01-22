@@ -211,105 +211,164 @@ export default function Cadastros() {
   // QUERIES - BLOCO 1: PESSOAS & PARCEIROS
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list('-created_date', 30),
+    queryFn: () => base44.entities.Cliente.list('-created_date'),
     staleTime: 600000,
     gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list('-created_date', 30),
+    queryFn: () => base44.entities.Fornecedor.list('-created_date'),
     staleTime: 600000,
     gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: transportadoras = [] } = useQuery({
     queryKey: ['transportadoras'],
-    queryFn: () => base44.entities.Transportadora.list('-created_date', 30),
+    queryFn: () => base44.entities.Transportadora.list('-created_date'),
     staleTime: 600000,
     gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list('-created_date', 30),
+    queryFn: () => base44.entities.Colaborador.list('-created_date'),
     staleTime: 600000,
     gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: representantes = [] } = useQuery({
     queryKey: ['representantes'],
-    queryFn: () => base44.entities.Representante.list('-created_date', 30),
+    queryFn: () => base44.entities.Representante.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: contatosB2B = [] } = useQuery({
     queryKey: ['contatos-b2b'],
-    queryFn: () => base44.entities.ContatoB2B.list('-created_date', 30),
+    queryFn: () => base44.entities.ContatoB2B.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   // QUERIES - BLOCO 2: PRODUTOS & SERVIÇOS
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('-created_date', 30),
+    queryFn: () => base44.entities.Produto.list('-created_date'),
     staleTime: 600000,
     gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: servicos = [] } = useQuery({
     queryKey: ['servicos'],
-    queryFn: () => base44.entities.Servico.list('-created_date', 30),
+    queryFn: () => base44.entities.Servico.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: setoresAtividade = [] } = useQuery({
     queryKey: ['setores-atividade'],
-    queryFn: () => base44.entities.SetorAtividade.list('-created_date', 50),
+    queryFn: () => base44.entities.SetorAtividade.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: gruposProduto = [] } = useQuery({
     queryKey: ['grupos-produto'],
-    queryFn: () => base44.entities.GrupoProduto.list('-created_date', 50),
+    queryFn: () => base44.entities.GrupoProduto.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: marcas = [] } = useQuery({
     queryKey: ['marcas'],
-    queryFn: () => base44.entities.Marca.list('-created_date', 50),
+    queryFn: () => base44.entities.Marca.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: tabelasPreco = [] } = useQuery({
     queryKey: ['tabelas-preco'],
-    queryFn: () => base44.entities.TabelaPreco.list('-created_date', 30),
+    queryFn: () => base44.entities.TabelaPreco.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: catalogoWeb = [] } = useQuery({
     queryKey: ['catalogo-web'],
-    queryFn: () => base44.entities.CatalogoWeb.list('-created_date', 30),
+    queryFn: () => base44.entities.CatalogoWeb.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: kits = [] } = useQuery({
     queryKey: ['kits-produto'],
-    queryFn: () => base44.entities.KitProduto.list('-created_date', 30),
+    queryFn: () => base44.entities.KitProduto.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   // QUERIES - BLOCO 3: FINANCEIRO
   const { data: bancos = [] } = useQuery({
     queryKey: ['bancos'],
-    queryFn: () => base44.entities.Banco.list('-created_date', 30),
+    queryFn: () => base44.entities.Banco.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: formasPagamento = [] } = useQuery({
     queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list('-created_date', 50),
+    queryFn: () => base44.entities.FormaPagamento.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: operadoresCaixa = [] } = useQuery({
@@ -324,8 +383,12 @@ export default function Cadastros() {
 
   const { data: centrosCusto = [] } = useQuery({
     queryKey: ['centrosCusto'],
-    queryFn: () => base44.entities.CentroCusto.list('-created_date', 30),
+    queryFn: () => base44.entities.CentroCusto.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: centrosResultado = [] } = useQuery({

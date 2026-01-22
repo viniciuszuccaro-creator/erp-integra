@@ -28,28 +28,42 @@ export default function Estoque() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('-created_date', 100),
+    queryFn: () => base44.entities.Produto.list('-created_date'),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: movimentacoes = [] } = useQuery({
     queryKey: ['movimentacoes'],
-    queryFn: () => base44.entities.MovimentacaoEstoque.list('-created_date', 100),
+    queryFn: () => base44.entities.MovimentacaoEstoque.list('-created_date'),
+    staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: solicitacoes = [] } = useQuery({
     queryKey: ['solicitacoes'],
-    queryFn: () => base44.entities.SolicitacaoCompra.list('-created_date', 50),
+    queryFn: () => base44.entities.SolicitacaoCompra.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const { data: ordensCompra = [] } = useQuery({
     queryKey: ['ordensCompra'],
-    queryFn: () => base44.entities.OrdemCompra.list('-created_date', 50),
+    queryFn: () => base44.entities.OrdemCompra.list('-created_date'),
     staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const produtosFiltrados = filtrarPorContexto(produtos, 'empresa_id');
