@@ -24,11 +24,9 @@ import {
 import { useUser } from "@/components/lib/UserContext";
 import { toast } from "sonner";
 import ConciliacaoAutomaticaIA from "./ConciliacaoAutomaticaIA";
+import HeaderConciliacaoCompacto from "./conciliacao/HeaderConciliacaoCompacto";
+import KPIsConciliacao from "./conciliacao/KPIsConciliacao";
 
-/**
- * ETAPA 4 - Conciliação Bancária Avançada
- * Módulo para conciliar extratos bancários com movimentos do Caixa
- */
 export default function ConciliacaoBancaria({ windowMode = false }) {
   const { user } = useUser();
   const queryClient = useQueryClient();
@@ -113,59 +111,25 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
   const extratosComDivergencia = conciliacoes.filter(c => c.tem_divergencia && c.status !== 'resolvido');
 
   const content = (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <Building2 className="w-6 h-6 text-blue-600" />
-            Conciliação Bancária Inteligente
-          </h2>
-          <p className="text-sm text-slate-600 mt-1">
-            Pareamento automático de extratos com movimentos do Caixa • ETAPA 4 + IA
-          </p>
-        </div>
-      </div>
+    <div className="space-y-1.5">
+      <HeaderConciliacaoCompacto />
+      <KPIsConciliacao 
+        extratosPendentes={extratosPendentes.length}
+        extratosConciliados={extratosConciliados.length}
+        divergencias={extratosComDivergencia.length}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-4">
-            <p className="text-sm text-blue-700">Extratos Pendentes</p>
-            <p className="text-2xl font-bold text-blue-900">{extratosPendentes.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-green-50 border-green-200">
-          <CardContent className="p-4">
-            <p className="text-sm text-green-700">Conciliados</p>
-            <p className="text-2xl font-bold text-green-900">{extratosConciliados.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-orange-50 border-orange-200">
-          <CardContent className="p-4">
-            <p className="text-sm text-orange-700">Divergências</p>
-            <p className="text-2xl font-bold text-orange-900">{extratosComDivergencia.length}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-purple-50 border-purple-200">
-          <CardContent className="p-4">
-            <p className="text-sm text-purple-700">IA Ativada</p>
-            <p className="text-2xl font-bold text-purple-900">
-              <Sparkles className="w-6 h-6 inline" />
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-4">
+      <Card className="border-0 shadow-sm min-h-[80px] max-h-[80px]">
+        <CardContent className="p-3">
+          <div className="flex gap-3">
             <div className="flex-1">
-              <Label>Empresa</Label>
+              <Label className="text-xs">Empresa</Label>
               <Select value={empresaSelecionada} onValueChange={setEmpresaSelecionada}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as empresas" />
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={null}>Todas as empresas</SelectItem>
+                  <SelectItem value={null}>Todas</SelectItem>
                   {empresas.map(emp => (
                     <SelectItem key={emp.id} value={emp.id}>
                       {emp.nome_fantasia || emp.razao_social}
@@ -175,35 +139,34 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
               </Select>
             </div>
             <div>
-              <Label>&nbsp;</Label>
-              <Button variant="outline" className="w-full">
-                <Upload className="w-4 h-4 mr-2" />
-                Importar Extrato
+              <Label className="text-xs">&nbsp;</Label>
+              <Button variant="outline" size="sm" className="h-8">
+                <Upload className="w-3 h-3 mr-1" /> Importar
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Tabs value={tabAtiva} onValueChange={setTabAtiva}>
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="pendentes">
+      <Tabs value={tabAtiva} onValueChange={setTabAtiva} className="flex-1 flex flex-col min-h-0">
+        <TabsList className="grid grid-cols-4 w-full bg-white border shadow-sm">
+          <TabsTrigger value="pendentes" className="text-xs data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             Pendentes ({extratosPendentes.length})
           </TabsTrigger>
-          <TabsTrigger value="conciliados">
+          <TabsTrigger value="conciliados" className="text-xs data-[state=active]:bg-green-600 data-[state=active]:text-white">
             Conciliados ({extratosConciliados.length})
           </TabsTrigger>
-          <TabsTrigger value="divergencias">
+          <TabsTrigger value="divergencias" className="text-xs data-[state=active]:bg-orange-600 data-[state=active]:text-white">
             Divergências ({extratosComDivergencia.length})
           </TabsTrigger>
-          <TabsTrigger value="ia">
-            <Sparkles className="w-4 h-4 mr-1" />
-            IA Automática
+          <TabsTrigger value="ia" className="text-xs data-[state=active]:bg-purple-600 data-[state=active]:text-white">
+            <Sparkles className="w-3 h-3 mr-1" />
+            IA
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pendentes" className="mt-4">
-          <Card>
+        <TabsContent value="pendentes" className="mt-2 flex-1">
+          <Card className="border-0 shadow-sm h-full flex flex-col">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -250,8 +213,8 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="conciliados" className="mt-4">
-          <Card>
+        <TabsContent value="conciliados" className="mt-2 flex-1">
+          <Card className="border-0 shadow-sm h-full flex flex-col">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -293,8 +256,8 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="divergencias" className="mt-4">
-          <Card>
+        <TabsContent value="divergencias" className="mt-2 flex-1">
+          <Card className="border-0 shadow-sm h-full flex flex-col">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -343,7 +306,7 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="ia" className="mt-4">
+        <TabsContent value="ia" className="mt-2 flex-1 overflow-auto">
           <ConciliacaoAutomaticaIA empresaId={empresaSelecionada} />
         </TabsContent>
       </Tabs>
@@ -428,13 +391,7 @@ export default function ConciliacaoBancaria({ windowMode = false }) {
   );
 
   if (windowMode) {
-    return (
-      <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex-1 overflow-auto p-6">
-          {content}
-        </div>
-      </div>
-    );
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-teal-50 overflow-auto p-1.5">{content}</div>;
   }
 
   return content;

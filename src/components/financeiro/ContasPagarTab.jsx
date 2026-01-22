@@ -1,62 +1,35 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, DollarSign, Building2, Shield, Plus, Edit2, CheckCircle2, AlertCircle, TrendingDown, Calendar, FileText, Eye, Send, Printer, Download } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
-import StatusBadge from "../StatusBadge";
-import useContextoVisual from "@/components/lib/useContextoVisual";
-import usePermissions from "@/components/lib/usePermissions";
-import { ProtectedAction } from "@/components/ProtectedAction";
-import FiltroEmpresaContexto from "@/components/FiltroEmpresaContexto";
 import ContaPagarForm from "./ContaPagarForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
-import DuplicarMesAnterior from "./DuplicarMesAnterior";
+import HeaderPagarCompacto from "./contas-pagar/HeaderPagarCompacto";
+import KPIsPagar from "./contas-pagar/KPIsPagar";
+import FiltrosPagar from "./contas-pagar/FiltrosPagar";
+import TabelaPagar from "./contas-pagar/TabelaPagar";
 
-export default function ContasPagarTab({ contas }) {
+export default function ContasPagarTab({ contas, windowMode = false }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
-  const { formasPagamento, obterBancoPorTipo } = useFormasPagamento();
+  const { formasPagamento } = useFormasPagamento();
   const { user: authUser } = useUser();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingConta, setEditingConta] = useState(null);
-  const [formData, setFormData] = useState({
-    descricao: "",
-    fornecedor: "",
-    fornecedor_id: "",
-    valor: 0,
-    data_emissao: new Date().toISOString().split('T')[0],
-    data_vencimento: new Date().toISOString().split('T')[0],
-    status: "Pendente",
-    forma_pagamento: "Boleto",
-    categoria: "Fornecedores",
-    centro_custo: "",
-    observacoes: "",
-    empresa_id: ""
-  });
-  
   const [dialogBaixaOpen, setDialogBaixaOpen] = useState(false);
-  const [dialogAprovacaoOpen, setDialogAprovacaoOpen] = useState(false);
   const [contasSelecionadas, setContasSelecionadas] = useState([]);
   const [contaAtual, setContaAtual] = useState(null);
-  
   const [dadosBaixa, setDadosBaixa] = useState({
     data_pagamento: new Date().toISOString().split('T')[0],
     valor_pago: 0,
@@ -72,22 +45,6 @@ export default function ContasPagarTab({ contas }) {
     queryFn: () => base44.entities.Empresa.list(),
   });
 
-  const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
-  });
-
-  const { data: tiposDespesa = [] } = useQuery({
-    queryKey: ['tipos-despesa'],
-    queryFn: () => base44.entities.TipoDespesa.list(),
-  });
-
-  const { data: configsRecorrentes = [] } = useQuery({
-    queryKey: ['configs-recorrentes'],
-    queryFn: () => base44.entities.ConfiguracaoDespesaRecorrente.list(),
-  });
-
-  // ETAPA 4: Mutation para enviar títulos para o Caixa
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async (titulos) => {
       const ordens = await Promise.all(titulos.map(async (titulo) => {
@@ -114,12 +71,6 @@ export default function ContasPagarTab({ contas }) {
       queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
       toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
       setContasSelecionadas([]);
-      base44.entities.AuditLog.create({
-        acao: 'Exportação', modulo: 'Financeiro', entidade: 'ContaPagar',
-        descricao: `Envio de ${ordens.length} título(s) para caixa`,
-        usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
-        data_hora: new Date().toISOString(), sucesso: true
-      });
     }
   });
 
@@ -158,18 +109,29 @@ export default function ContasPagarTab({ contas }) {
         observacoes: dados.observacoes
       });
     },
-    onSuccess: (res, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
       queryClient.invalidateQueries({ queryKey: ['caixa-movimentos'] });
       setDialogBaixaOpen(false);
       setContaAtual(null);
-      toast({ title: "✅ Título pago e registrado no caixa!" });
-      base44.entities.AuditLog.create({
-        acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaPagar', registro_id: variables?.id,
-        usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
-        descricao: 'Baixa de título (pagamento) registrada', data_hora: new Date().toISOString(), sucesso: true
-      });
+      toast({ title: "✅ Título pago!" });
+    }
+  });
+
+  const baixarMultiplaMutation = useMutation({
+    mutationFn: async (dados) => {
+      await Promise.all(contasSelecionadas.map(async (contaId) => {
+        const conta = contas.find(c => c.id === contaId);
+        if (conta) {
+          await baixarTituloMutation.mutateAsync({ id: contaId, dados });
+        }
+      }));
     },
+    onSuccess: () => {
+      setContasSelecionadas([]);
+      setDialogBaixaOpen(false);
+      toast({ title: `✅ ${contasSelecionadas.length} título(s) pago(s)!` });
+    }
   });
 
   const aprovarPagamentoMutation = useMutation({
@@ -181,92 +143,34 @@ export default function ContasPagarTab({ contas }) {
         data_aprovacao: new Date().toISOString()
       });
     },
-    onSuccess: (res, contaId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
       toast({ title: "✅ Pagamento aprovado!" });
-      base44.entities.AuditLog.create({
-        acao: 'Aprovação', modulo: 'Financeiro', entidade: 'ContaPagar', registro_id: contaId,
-        usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
-        descricao: 'Aprovação de pagamento', data_hora: new Date().toISOString(), sucesso: true
-      });
-    },
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.ContaPagar.create({
-      ...data,
-      criado_por: authUser?.full_name || authUser?.email,
-      criado_por_id: authUser?.id
-    }),
-    onSuccess: async (created) => {
-      queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
-      setIsDialogOpen(false);
-      resetForm();
-      toast({ title: "✅ Conta criada com sucesso!" });
-      if (created?.id) {
-        await base44.entities.AuditLog.create({
-          acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaPagar', registro_id: created.id,
-          usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
-          empresa_id: created?.empresa_id, descricao: 'Conta a pagar criada', dados_novos: created,
-          data_hora: new Date().toISOString(), sucesso: true
-        });
-      }
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.ContaPagar.update(id, data),
-    onSuccess: async (updated) => {
-      queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
-      setIsDialogOpen(false);
-      resetForm();
-      toast({ title: "✅ Conta atualizada!" });
-      if (updated?.id) {
-        await base44.entities.AuditLog.create({
-          acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaPagar', registro_id: updated.id,
-          usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
-          empresa_id: updated?.empresa_id, descricao: 'Conta a pagar atualizada', dados_novos: updated,
-          data_hora: new Date().toISOString(), sucesso: true
-        });
-      }
-    },
-  });
-
-  const resetForm = () => {
-    setFormData({
-      descricao: "",
-      fornecedor: "",
-      fornecedor_id: "",
-      valor: 0,
-      data_emissao: new Date().toISOString().split('T')[0],
-      data_vencimento: new Date().toISOString().split('T')[0],
-      status: "Pendente",
-      forma_pagamento: "Boleto",
-      categoria: "Fornecedores",
-      centro_custo: "",
-      observacoes: "",
-      empresa_id: ""
-    });
-    setEditingConta(null);
-  };
-
-  const handleEdit = (conta) => {
-    setEditingConta(conta);
-    setFormData({ 
-      ...conta,
-      data_emissao: conta.data_emissao ? new Date(conta.data_emissao).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-      data_vencimento: conta.data_vencimento ? new Date(conta.data_vencimento).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editingConta) {
-      updateMutation.mutate({ id: editingConta.id, data: formData });
-    } else {
-      createMutation.mutate(formData);
     }
+  });
+
+  const contasFiltradas = contas
+    .filter(c => statusFilter === "todos" || c.status === statusFilter)
+    .filter(c =>
+      c.fornecedor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+  const totalSelecionado = contas
+    .filter(c => contasSelecionadas.includes(c.id))
+    .reduce((sum, c) => sum + (c.valor || 0), 0);
+
+  const totais = {
+    total: contasFiltradas.reduce((sum, c) => sum + (c.valor || 0), 0),
+    pendente: contasFiltradas.filter(c => c.status === 'Pendente').reduce((sum, c) => sum + (c.valor || 0), 0),
+    pago: contasFiltradas.filter(c => c.status === 'Pago').reduce((sum, c) => sum + (c.valor || 0), 0),
+    vencido: contasFiltradas.filter(c => c.status === 'Atrasado').reduce((sum, c) => sum + (c.valor || 0), 0)
+  };
+
+  const toggleSelecao = (contaId) => {
+    setContasSelecionadas(prev =>
+      prev.includes(contaId) ? prev.filter(id => id !== contaId) : [...prev, contaId]
+    );
   };
 
   const handleBaixar = (conta) => {
@@ -283,41 +187,9 @@ export default function ContasPagarTab({ contas }) {
     setDialogBaixaOpen(true);
   };
 
-  const baixarMultiplaMutation = useMutation({
-    mutationFn: async (dados) => {
-      const baixaPromises = contasSelecionadas.map(async (contaId) => {
-        const conta = contas.find(c => c.id === contaId);
-        if (conta) {
-          await baixarTituloMutation.mutateAsync({
-            id: contaId,
-            dados: dados
-          });
-        }
-      });
-      await Promise.all(baixaPromises);
-    },
-    onSuccess: () => {
-      setContasSelecionadas([]);
-      setDialogBaixaOpen(false);
-      toast({ title: `✅ ${contasSelecionadas.length} título(s) pago(s)!` });
-    },
-  });
-
-  const handleSubmitBaixa = (e) => {
-    e.preventDefault();
-    if (contaAtual) {
-      baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
-    } else {
-      baixarMultiplaMutation.mutate(dadosBaixa);
-    }
-  };
-
   const handleBaixarMultipla = () => {
     if (contasSelecionadas.length === 0) {
-      toast({
-        title: "⚠️ Selecione pelo menos um título",
-        variant: "destructive"
-      });
+      toast({ title: "⚠️ Selecione pelo menos um título", variant: "destructive" });
       return;
     }
     setContaAtual(null);
@@ -333,305 +205,82 @@ export default function ContasPagarTab({ contas }) {
     setDialogBaixaOpen(true);
   };
 
-  const toggleSelecao = (contaId) => {
-    setContasSelecionadas(prev =>
-      prev.includes(contaId)
-        ? prev.filter(id => id !== contaId)
-        : [...prev, contaId]
-    );
+  const handleSubmitBaixa = (e) => {
+    e.preventDefault();
+    if (contaAtual) {
+      baixarTituloMutation.mutate({ id: contaAtual.id, dados: dadosBaixa });
+    } else {
+      baixarMultiplaMutation.mutate(dadosBaixa);
+    }
   };
 
-  const contasFiltradas = contas
-    .filter(c => statusFilter === "todos" || c.status === statusFilter)
-    .filter(c =>
-      c.fornecedor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const content = (
+    <div className="space-y-1.5">
+      <HeaderPagarCompacto />
+      <KPIsPagar totais={totais} />
+      <FiltrosPagar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        contasSelecionadas={contasSelecionadas}
+        totalSelecionado={totalSelecionado}
+        onExportar={() => {
+          const itens = contasSelecionadas.length > 0
+            ? contas.filter(c => contasSelecionadas.includes(c.id))
+            : contasFiltradas;
+          const headers = ['fornecedor','descricao','empresa_id','data_vencimento','valor','status'];
+          const csv = [headers.join(','), ...itens.map(c => headers.map(h => JSON.stringify(c[h] ?? '')).join(','))].join('\n');
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `contas_pagar_${new Date().toISOString().slice(0,10)}.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+        }}
+        onBaixarMultipla={handleBaixarMultipla}
+        onNovaConta={() => openWindow(ContaPagarForm, {
+          windowMode: true,
+          onSubmit: async (data) => {
+            const created = await base44.entities.ContaPagar.create({
+              ...data,
+              criado_por: authUser?.full_name || authUser?.email,
+              criado_por_id: authUser?.id
+            });
+            queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
+            toast({ title: "✅ Conta criada!" });
+          }
+        }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600 })}
+        onEnviarCaixa={() => {
+          const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
+          enviarParaCaixaMutation.mutate(titulos);
+        }}
+        empresaId={empresas[0]?.id}
+        baixarPending={baixarMultiplaMutation.isPending}
+        enviarPending={enviarParaCaixaMutation.isPending}
+      />
+      
+      <TabelaPagar
+        contas={contasFiltradas}
+        empresas={empresas}
+        contasSelecionadas={contasSelecionadas}
+        toggleSelecao={toggleSelecao}
+        onPrint={(conta, empresa) => ImprimirBoleto({ conta, empresa, tipo: 'pagar' })}
+        onEdit={(conta) => openWindow(ContaPagarForm, {
+          conta,
+          windowMode: true,
+          onSubmit: async (data) => {
+            await base44.entities.ContaPagar.update(conta.id, data);
+            queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
+            toast({ title: "✅ Conta atualizada!" });
+          }
+        }, { title: `✏️ Editar: ${conta.fornecedor}`, width: 900, height: 600 })}
+        onAprovar={(contaId) => aprovarPagamentoMutation.mutate(contaId)}
+        onBaixar={handleBaixar}
+        aprovarPending={aprovarPagamentoMutation.isPending}
+      />
 
-  const totalSelecionado = contas
-    .filter(c => contasSelecionadas.includes(c.id))
-    .reduce((sum, c) => sum + (c.valor || 0), 0);
-
-  return (
-    <div className="space-y-4">
-      {/* ETAPA 4: ALERTA DE ENVIO PARA CAIXA */}
-      {contasSelecionadas.length > 0 && (
-        <Alert className="border-red-300 bg-red-50">
-          <AlertDescription className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-red-900">💸 {contasSelecionadas.length} título(s) selecionado(s)</p>
-              <p className="text-xs text-red-700">Total: R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-            </div>
-            <Button
-              onClick={() => {
-                const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
-                enviarParaCaixaMutation.mutate(titulos);
-              }}
-              disabled={enviarParaCaixaMutation.isPending}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              <Send className="w-4 h-4 mr-2" />
-              Enviar para Caixa
-            </Button>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Filtros */}
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex gap-3">
-           {/* Exportar CSV */}
-           <ProtectedAction permission="financeiro_pagar_exportar">
-             <Button
-               variant="outline"
-               onClick={() => {
-                 const itens = (contasSelecionadas.length > 0)
-                   ? contas.filter(c => contasSelecionadas.includes(c.id))
-                   : contasFiltradas;
-                 const headers = ['fornecedor','descricao','empresa_id','data_vencimento','valor','status'];
-                 const csv = [
-                   headers.join(','),
-                   ...itens.map(c => headers.map(h => JSON.stringify(c[h] ?? '')).join(','))
-                 ].join('\n');
-                 const blob = new Blob([csv], { type: 'text/csv' });
-                 const url = URL.createObjectURL(blob);
-                 const a = document.createElement('a');
-                 a.href = url;
-                 a.download = `contas_pagar_${new Date().toISOString().slice(0,10)}.csv`;
-                 a.click();
-                 URL.revokeObjectURL(url);
-               }}
-             >
-               <Download className="w-4 h-4 mr-2" /> Exportar CSV
-             </Button>
-           </ProtectedAction>
-            <Input
-              placeholder="Buscar fornecedor..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-xs"
-            />
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="Pendente">Pendente</SelectItem>
-                <SelectItem value="Aprovado">Aprovado</SelectItem>
-                <SelectItem value="Pago">Pago</SelectItem>
-                <SelectItem value="Cancelado">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {contasSelecionadas.length > 0 && (
-              <>
-                <Badge className="bg-blue-100 text-blue-700 px-4 py-2">
-                  {contasSelecionadas.length} selecionado(s) - R$ {totalSelecionado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </Badge>
-                <ProtectedAction permission="financeiro_pagar_baixar_multiplos">
-                  <Button
-                    variant="outline"
-                    onClick={handleBaixarMultipla}
-                    disabled={baixarMultiplaMutation.isPending}
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Pagar Múltiplos
-                  </Button>
-                </ProtectedAction>
-              </>
-            )}
-
-            <DuplicarMesAnterior empresaId={empresas[0]?.id} />
-            
-            <Button 
-              className="bg-red-600 hover:bg-red-700" 
-              onClick={() => openWindow(ContaPagarForm, {
-                windowMode: true,
-                onSubmit: async (data) => {
-                  try {
-                    const created = await base44.entities.ContaPagar.create({
-                      ...data,
-                      criado_por: authUser?.full_name || authUser?.email,
-                      criado_por_id: authUser?.id
-                    });
-                    queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
-                    toast({ title: "✅ Conta criada!" });
-                    if (created?.id) {
-                      await base44.entities.AuditLog.create({
-                        acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaPagar', registro_id: created.id,
-                        usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
-                        empresa_id: created?.empresa_id, descricao: 'Conta a pagar criada (janela)', dados_novos: created,
-                        data_hora: new Date().toISOString(), sucesso: true
-                      });
-                    }
-                  } catch (error) {
-                    toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
-                  }
-                }
-              }, {
-                title: '💸 Nova Conta a Pagar',
-                width: 900,
-                height: 600
-              })}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Adicionar Conta
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabela */}
-      <Card className="border-0 shadow-md">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead className="w-12">
-                    <Checkbox
-                      checked={contasSelecionadas.length === contasFiltradas.filter(c => c.status === "Pendente" || c.status === "Aprovado").length}
-                      onCheckedChange={(checked) => {
-                        const pendentes = contasFiltradas.filter(c => c.status === "Pendente" || c.status === "Aprovado");
-                        setContasSelecionadas(checked ? pendentes.map(c => c.id) : []);
-                      }}
-                    />
-                  </TableHead>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contasFiltradas.map((conta) => {
-                  const empresa = empresas.find(e => e.id === conta.empresa_id);
-                  const vencida = conta.status === "Pendente" && new Date(conta.data_vencimento) < new Date();
-
-                  return (
-                    <TableRow key={conta.id} className={vencida ? 'bg-red-50' : ''}>
-                      <TableCell>
-                        {(conta.status === "Pendente" || conta.status === "Aprovado") && (
-                          <Checkbox
-                            checked={contasSelecionadas.includes(conta.id)}
-                            onCheckedChange={() => toggleSelecao(conta.id)}
-                          />
-                        )}
-                        {conta.e_replicado && (
-                          <Badge variant="outline" className="text-xs ml-1" title="Vindo de rateio do grupo">
-                            📊
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium">{conta.fornecedor}</TableCell>
-                      <TableCell className="max-w-xs truncate">{conta.descricao}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Building2 className="w-3 h-3 text-purple-600" />
-                          <span className="text-xs">{empresa?.nome_fantasia || '-'}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {new Date(conta.data_vencimento).toLocaleDateString('pt-BR')}
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        R$ {conta.valor?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={conta.status} size="sm" />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1 justify-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              const empresaData = empresas.find(e => e.id === conta.empresa_id);
-                              ImprimirBoleto({ conta, empresa: empresaData, tipo: 'pagar' });
-                            }}
-                            title="Imprimir Comprovante"
-                            className="text-slate-600"
-                          >
-                            <Printer className="w-4 h-4" />
-                          </Button>
-
-                          <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openWindow(ContaPagarForm, {
-                                conta,
-                                windowMode: true,
-                                onSubmit: async (data) => {
-                                  try {
-                                    const updated = await base44.entities.ContaPagar.update(conta.id, data);
-                                                                         queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
-                                                                         toast({ title: "✅ Conta atualizada!" });
-                                                                         if (updated?.id) {
-                                                                           await base44.entities.AuditLog.create({
-                                                                             acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaPagar', registro_id: updated.id,
-                                                                             usuario: authUser?.full_name || authUser?.email, usuario_id: authUser?.id,
-                                                                             empresa_id: updated?.empresa_id, descricao: 'Conta a pagar editada (janela)', dados_novos: updated,
-                                                                             data_hora: new Date().toISOString(), sucesso: true
-                                                                           });
-                                                                         }
-                                  } catch (error) {
-                                    toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
-                                  }
-                                }
-                              }, {
-                                title: `✏️ Editar: ${conta.fornecedor}`,
-                                width: 900,
-                                height: 600
-                              })}
-                              title="Editar Conta"
-                          >
-                              <Edit2 className="w-4 h-4 text-gray-500" />
-                          </Button>
-                          {conta.status === "Pendente" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => aprovarPagamentoMutation.mutate(conta.id)}
-                              disabled={aprovarPagamentoMutation.isPending}
-                              title="Aprovar Pagamento"
-                            >
-                              <Shield className="w-4 h-4 text-blue-600" />
-                            </Button>
-                          )}
-                          {conta.status === "Aprovado" && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleBaixar(conta)}
-                              title="Registrar Pagamento"
-                            >
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-
-          {contasFiltradas.length === 0 && (
-            <div className="text-center py-12 text-slate-500">
-              <DollarSign className="w-16 h-16 mx-auto mb-4 opacity-30" />
-              <p>Nenhuma conta a pagar encontrada</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Dialog Baixa */}
       <Dialog open={dialogBaixaOpen} onOpenChange={setDialogBaixaOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -640,18 +289,10 @@ export default function ContasPagarTab({ contas }) {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmitBaixa} className="space-y-4">
-            {contaAtual ? (
-              <div>
-                <Label>Fornecedor</Label>
-                <Input value={contaAtual?.fornecedor || ''} disabled />
-              </div>
-            ) : (
+            {!contaAtual && (
               <Alert className="bg-blue-50 border-blue-200">
                 <AlertDescription>
                   <p className="font-semibold text-blue-900">Pagando {contasSelecionadas.length} título(s)</p>
-                  <p className="text-xs text-blue-700 mt-1">
-                    Os valores de juros, multa e desconto serão aplicados individualmente a cada título
-                  </p>
                 </AlertDescription>
               </Alert>
             )}
@@ -659,8 +300,8 @@ export default function ContasPagarTab({ contas }) {
             <div className="grid grid-cols-2 gap-4">
               {contaAtual && (
                 <div>
-                  <Label>Valor Original</Label>
-                  <Input value={`R$ ${contaAtual?.valor?.toFixed(2) || 0}`} disabled />
+                  <Label>Fornecedor</Label>
+                  <Input value={contaAtual?.fornecedor || ''} disabled />
                 </div>
               )}
               <div className={contaAtual ? '' : 'col-span-2'}>
@@ -676,10 +317,7 @@ export default function ContasPagarTab({ contas }) {
 
             <div>
               <Label>Forma de Pagamento *</Label>
-              <Select
-                value={dadosBaixa.forma_pagamento}
-                onValueChange={(v) => setDadosBaixa({ ...dadosBaixa, forma_pagamento: v })}
-              >
+              <Select value={dadosBaixa.forma_pagamento} onValueChange={(v) => setDadosBaixa({ ...dadosBaixa, forma_pagamento: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {formasPagamento.map(forma => (
@@ -692,66 +330,26 @@ export default function ContasPagarTab({ contas }) {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label>Juros (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={dadosBaixa.juros}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div>
-                <Label>Multa (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={dadosBaixa.multa}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
-              <div>
-                <Label>Desconto (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={dadosBaixa.desconto}
-                  onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) || 0 })}
-                />
-              </div>
+              <div><Label>Juros (R$)</Label><Input type="number" step="0.01" value={dadosBaixa.juros} onChange={(e) => setDadosBaixa({ ...dadosBaixa, juros: parseFloat(e.target.value) || 0 })} /></div>
+              <div><Label>Multa (R$)</Label><Input type="number" step="0.01" value={dadosBaixa.multa} onChange={(e) => setDadosBaixa({ ...dadosBaixa, multa: parseFloat(e.target.value) || 0 })} /></div>
+              <div><Label>Desconto (R$)</Label><Input type="number" step="0.01" value={dadosBaixa.desconto} onChange={(e) => setDadosBaixa({ ...dadosBaixa, desconto: parseFloat(e.target.value) || 0 })} /></div>
             </div>
 
             {contaAtual && (
               <div className="bg-slate-50 p-4 rounded-lg border">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Valor Total a Pagar (Ajustado):</span>
+                  <span className="text-sm font-medium">Valor Total:</span>
                   <span className="text-xl font-bold text-red-700">
-                    R$ {(
-                      (contaAtual?.valor || 0) + 
-                      (dadosBaixa.juros || 0) + 
-                      (dadosBaixa.multa || 0) - 
-                      (dadosBaixa.desconto || 0)
-                    ).toFixed(2)}
+                    R$ {((contaAtual?.valor || 0) + (dadosBaixa.juros || 0) + (dadosBaixa.multa || 0) - (dadosBaixa.desconto || 0)).toFixed(2)}
                   </span>
                 </div>
               </div>
             )}
 
-            <div>
-              <Label>Observações</Label>
-              <Input
-                value={dadosBaixa.observacoes}
-                onChange={(e) => setDadosBaixa({ ...dadosBaixa, observacoes: e.target.value })}
-                placeholder="Observações sobre o pagamento..."
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)}>
-                Cancelar
-              </Button>
+            <div className="flex justify-end gap-3">
+              <Button type="button" variant="outline" onClick={() => setDialogBaixaOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={baixarTituloMutation.isPending || baixarMultiplaMutation.isPending} className="bg-green-600">
-                {(baixarTituloMutation.isPending || baixarMultiplaMutation.isPending) ? 'Registrando...' : 'Confirmar Pagamento'}
+                {(baixarTituloMutation.isPending || baixarMultiplaMutation.isPending) ? 'Registrando...' : 'Confirmar'}
               </Button>
             </div>
           </form>
@@ -759,4 +357,10 @@ export default function ContasPagarTab({ contas }) {
       </Dialog>
     </div>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-red-50 overflow-auto p-1.5">{content}</div>;
+  }
+
+  return content;
 }
