@@ -110,92 +110,92 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
 
   return (
     <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full"}>
-      <div className="p-3 space-y-3 bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="p-2 space-y-2 bg-gradient-to-br from-slate-50 to-blue-50">
         
         {/* HEADER COMPACTO */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between min-h-[50px] max-h-[50px]">
           <div>
-            <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-blue-600 flex-shrink-0" />
+            <h1 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-blue-600 flex-shrink-0" />
               Dashboard Financeiro
             </h1>
-            <p className="text-xs text-slate-600">
-              {estaNoGrupo ? '🌐 Visão Consolidada' : `${empresaAtual?.nome_fantasia || ''}`}
+            <p className="text-xs text-slate-600 truncate">
+              {estaNoGrupo ? '🌐 Consolidado' : `${empresaAtual?.nome_fantasia || ''}`}
             </p>
           </div>
-          <Badge className="bg-green-600 text-white text-xs px-2 py-0.5">
-            V22.0 • 100%
+          <Badge className="bg-green-600 text-white text-xs px-2 py-0.5 flex-shrink-0">
+            V22.0
           </Badge>
         </div>
 
         {/* KPIS COMPACTOS - SEM REDIMENSIONAMENTO */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <Card className="border-green-300 bg-gradient-to-br from-green-50 to-emerald-100 min-h-[95px] max-h-[95px]">
-            <CardContent className="p-2.5">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingUp className="w-4 h-4 text-green-700 flex-shrink-0" />
-                <p className="text-xs text-green-700 font-medium">A Receber</p>
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <Card className="border-green-300 bg-gradient-to-br from-green-50 to-emerald-100 min-h-[90px] max-h-[90px]">
+            <CardContent className="p-2">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <TrendingUp className="w-3 h-3 text-green-700 flex-shrink-0" />
+                <p className="text-xs text-green-700 font-medium truncate">A Receber</p>
               </div>
-              <p className="text-lg font-bold text-green-700 truncate">
+              <p className="text-base font-bold text-green-700 truncate">
                 R$ {(totalReceber / 1000).toFixed(0)}k
               </p>
-              <p className="text-xs text-green-600">
+              <p className="text-xs text-green-600 truncate">
                 {crFiltradas.filter(c => c.status === 'Pendente').length} títulos
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-red-300 bg-gradient-to-br from-red-50 to-pink-100 min-h-[95px] max-h-[95px]">
-            <CardContent className="p-2.5">
-              <div className="flex items-center gap-2 mb-1">
-                <TrendingDown className="w-4 h-4 text-red-700 flex-shrink-0" />
-                <p className="text-xs text-red-700 font-medium">A Pagar</p>
+          <Card className="border-red-300 bg-gradient-to-br from-red-50 to-pink-100 min-h-[90px] max-h-[90px]">
+            <CardContent className="p-2">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <TrendingDown className="w-3 h-3 text-red-700 flex-shrink-0" />
+                <p className="text-xs text-red-700 font-medium truncate">A Pagar</p>
               </div>
-              <p className="text-lg font-bold text-red-700 truncate">
+              <p className="text-base font-bold text-red-700 truncate">
                 R$ {(totalPagar / 1000).toFixed(0)}k
               </p>
-              <p className="text-xs text-red-600">
+              <p className="text-xs text-red-600 truncate">
                 {cpFiltradas.filter(c => c.status === 'Pendente').length} títulos
               </p>
             </CardContent>
           </Card>
 
-          <Card className={`${saldoLiquido >= 0 ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-cyan-100' : 'border-orange-400 bg-gradient-to-br from-orange-50 to-amber-100'} min-h-[100px]`}>
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <DollarSign className="w-4 h-4 flex-shrink-0" />
-                <p className="text-xs font-medium">Saldo</p>
+          <Card className={`${saldoLiquido >= 0 ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-cyan-100' : 'border-orange-400 bg-gradient-to-br from-orange-50 to-amber-100'} min-h-[90px] max-h-[90px]`}>
+            <CardContent className="p-2">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <DollarSign className="w-3 h-3 flex-shrink-0" />
+                <p className="text-xs font-medium truncate">Saldo</p>
               </div>
-              <p className={`text-lg font-bold truncate ${saldoLiquido >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+              <p className={`text-base font-bold truncate ${saldoLiquido >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
                 R$ {(saldoLiquido / 1000).toFixed(0)}k
               </p>
-              <p className={`text-xs ${saldoLiquido >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
+              <p className={`text-xs truncate ${saldoLiquido >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
                 {saldoLiquido >= 0 ? '✅ Positivo' : '⚠️ Negativo'}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-purple-300 bg-gradient-to-br from-purple-50 to-indigo-100 min-h-[95px] max-h-[95px]">
-            <CardContent className="p-2.5">
-              <div className="flex items-center gap-2 mb-1">
-                <Repeat className="w-4 h-4 text-purple-700 flex-shrink-0" />
-                <p className="text-xs text-purple-700 font-medium">Recorrentes</p>
+          <Card className="border-purple-300 bg-gradient-to-br from-purple-50 to-indigo-100 min-h-[90px] max-h-[90px]">
+            <CardContent className="p-2">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <Repeat className="w-3 h-3 text-purple-700 flex-shrink-0" />
+                <p className="text-xs text-purple-700 font-medium truncate">Recorrentes</p>
               </div>
-              <p className="text-lg font-bold text-purple-700">{totalRecorrentesAtivas}</p>
+              <p className="text-base font-bold text-purple-700">{totalRecorrentesAtivas}</p>
               <p className="text-xs text-purple-600 truncate">
                 R$ {(valorMensalRecorrente / 1000).toFixed(0)}k/mês
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-cyan-300 bg-gradient-to-br from-cyan-50 to-teal-100 min-h-[95px] max-h-[95px]">
-            <CardContent className="p-2.5">
-              <div className="flex items-center gap-2 mb-1">
-                <Link2 className="w-4 h-4 text-cyan-700 flex-shrink-0" />
-                <p className="text-xs text-cyan-700 font-medium">Conciliação</p>
+          <Card className="border-cyan-300 bg-gradient-to-br from-cyan-50 to-teal-100 min-h-[90px] max-h-[90px]">
+            <CardContent className="p-2">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <Link2 className="w-3 h-3 text-cyan-700 flex-shrink-0" />
+                <p className="text-xs text-cyan-700 font-medium truncate">Conciliação</p>
               </div>
-              <p className="text-lg font-bold text-cyan-700">{conciliacoesAutomaticas}</p>
-              <p className="text-xs text-cyan-600">
+              <p className="text-base font-bold text-cyan-700">{conciliacoesAutomaticas}</p>
+              <p className="text-xs text-cyan-600 truncate">
                 Score: {scoreMedioConciliacao.toFixed(0)}%
               </p>
             </CardContent>
@@ -203,92 +203,92 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
         </div>
 
         {/* MÉTRICAS SECUNDÁRIAS COMPACTAS */}
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-          <Card className="bg-white border min-h-[65px] max-h-[65px]">
-            <CardContent className="p-2">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-1.5">
+          <Card className="bg-white border min-h-[60px] max-h-[60px]">
+            <CardContent className="p-1.5">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-slate-600 truncate">Formas</p>
-                  <p className="text-base font-bold text-blue-600">{formasAtivas}</p>
+                  <p className="text-sm font-bold text-blue-600">{formasAtivas}</p>
                 </div>
-                <CreditCard className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                <CreditCard className="w-4 h-4 text-blue-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[65px] max-h-[65px]">
-            <CardContent className="p-2">
+          <Card className="bg-white border min-h-[60px] max-h-[60px]">
+            <CardContent className="p-1.5">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-slate-600 truncate">Tipos Desp.</p>
-                  <p className="text-base font-bold text-orange-600">{tiposDespesa.length}</p>
+                  <p className="text-xs text-slate-600 truncate">Tipos</p>
+                  <p className="text-sm font-bold text-orange-600">{tiposDespesa.length}</p>
                 </div>
-                <FileText className="w-5 h-5 text-orange-400 flex-shrink-0" />
+                <FileText className="w-4 h-4 text-orange-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[65px] max-h-[65px]">
-            <CardContent className="p-2">
+          <Card className="bg-white border min-h-[60px] max-h-[60px]">
+            <CardContent className="p-1.5">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-slate-600 truncate">Recorr.</p>
-                  <p className="text-base font-bold text-green-600">{configsRecorrentes.length}</p>
+                  <p className="text-sm font-bold text-green-600">{configsRecorrentes.length}</p>
                 </div>
-                <Repeat className="w-5 h-5 text-green-400 flex-shrink-0" />
+                <Repeat className="w-4 h-4 text-green-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[65px] max-h-[65px]">
-            <CardContent className="p-2">
+          <Card className="bg-white border min-h-[60px] max-h-[60px]">
+            <CardContent className="p-1.5">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-slate-600 truncate">Extratos</p>
-                  <p className="text-base font-bold text-teal-600">{extratosPendentes}</p>
+                  <p className="text-sm font-bold text-teal-600">{extratosPendentes}</p>
                 </div>
-                <AlertCircle className="w-5 h-5 text-teal-400 flex-shrink-0" />
+                <AlertCircle className="w-4 h-4 text-teal-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[65px] max-h-[65px]">
-            <CardContent className="p-2">
+          <Card className="bg-white border min-h-[60px] max-h-[60px]">
+            <CardContent className="p-1.5">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-slate-600 truncate">Recebido</p>
-                  <p className="text-base font-bold text-blue-600">{(totalRecebido / 1000).toFixed(0)}k</p>
+                  <p className="text-sm font-bold text-blue-600">{(totalRecebido / 1000).toFixed(0)}k</p>
                 </div>
-                <TrendingUp className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                <TrendingUp className="w-4 h-4 text-blue-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[65px] max-h-[65px]">
-            <CardContent className="p-2">
+          <Card className="bg-white border min-h-[60px] max-h-[60px]">
+            <CardContent className="p-1.5">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-slate-600 truncate">Pago</p>
-                  <p className="text-base font-bold text-orange-600">{(totalPago / 1000).toFixed(0)}k</p>
+                  <p className="text-sm font-bold text-orange-600">{(totalPago / 1000).toFixed(0)}k</p>
                 </div>
-                <TrendingDown className="w-5 h-5 text-orange-400 flex-shrink-0" />
+                <TrendingDown className="w-4 h-4 text-orange-400 flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* GRÁFICOS COMPACTOS */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
           {/* FLUXO DE CAIXA */}
-          <Card className="border-0 shadow-md">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b p-2">
-              <CardTitle className="text-sm flex items-center gap-2 font-semibold">
-                <BarChart3 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b p-1.5">
+              <CardTitle className="text-xs flex items-center gap-1.5 font-semibold">
+                <BarChart3 className="w-3 h-3 text-blue-600 flex-shrink-0" />
                 Fluxo Financeiro
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-2">
-              <ResponsiveContainer width="100%" height={180}>
+            <CardContent className="p-1.5">
+              <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={dadosFluxo}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="nome" style={{ fontSize: '11px' }} />
@@ -305,15 +305,15 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
           </Card>
 
           {/* DESPESAS POR CATEGORIA */}
-          <Card className="border-0 shadow-md">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b p-2">
-              <CardTitle className="text-sm flex items-center gap-2 font-semibold">
-                <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b p-1.5">
+              <CardTitle className="text-xs flex items-center gap-1.5 font-semibold">
+                <FileText className="w-3 h-3 text-purple-600 flex-shrink-0" />
                 Despesas por Categoria
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-2">
-              <ResponsiveContainer width="100%" height={180}>
+            <CardContent className="p-1.5">
+              <ResponsiveContainer width="100%" height={160}>
                 <PieChart>
                   <Pie
                     data={dadosCategorias}
@@ -321,9 +321,9 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
                     nameKey="categoria"
                     cx="50%"
                     cy="50%"
-                    outerRadius={70}
+                    outerRadius={60}
                     label={({ categoria, value }) => `${categoria}: ${(value / 1000).toFixed(0)}k`}
-                    labelStyle={{ fontSize: '10px' }}
+                    labelStyle={{ fontSize: '9px' }}
                   >
                     {dadosCategorias.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -338,62 +338,62 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
 
         {/* IA INSIGHTS COMPACTO */}
         <Card className="border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
-          <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 border-b p-2">
-            <CardTitle className="text-sm flex items-center gap-2 text-purple-900 font-semibold">
-              <Zap className="w-4 h-4 flex-shrink-0" />
+          <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 border-b p-1.5">
+            <CardTitle className="text-xs flex items-center gap-1.5 text-purple-900 font-semibold">
+              <Zap className="w-3 h-3 flex-shrink-0" />
               🤖 Insights IA
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-2.5 space-y-2.5">
-            <div className="grid grid-cols-3 gap-2.5">
-              <div className="p-2.5 bg-white rounded-lg border border-purple-200 min-h-[75px] max-h-[75px]">
-                <p className="text-xs text-slate-600 mb-2">Score Conciliação</p>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-slate-200 rounded-full h-2">
+          <CardContent className="p-2 space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="p-2 bg-white rounded-lg border border-purple-200 min-h-[65px] max-h-[65px]">
+                <p className="text-xs text-slate-600 mb-1 truncate">Score Concil.</p>
+                <div className="flex items-center gap-1.5">
+                  <div className="flex-1 bg-slate-200 rounded-full h-1.5">
                     <div 
-                      className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all"
+                      className="bg-gradient-to-r from-purple-500 to-blue-500 h-1.5 rounded-full transition-all"
                       style={{ width: `${scoreMedioConciliacao}%` }}
                     />
                   </div>
-                  <span className="text-sm font-bold text-purple-700">{scoreMedioConciliacao.toFixed(0)}%</span>
+                  <span className="text-xs font-bold text-purple-700">{scoreMedioConciliacao.toFixed(0)}%</span>
                 </div>
               </div>
 
-              <div className="p-2.5 bg-white rounded-lg border border-green-200 min-h-[75px] max-h-[75px]">
-                <p className="text-xs text-slate-600 mb-1.5">Taxa Automação</p>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-slate-200 rounded-full h-2">
+              <div className="p-2 bg-white rounded-lg border border-green-200 min-h-[65px] max-h-[65px]">
+                <p className="text-xs text-slate-600 mb-1 truncate">Taxa Autom.</p>
+                <div className="flex items-center gap-1.5">
+                  <div className="flex-1 bg-slate-200 rounded-full h-1.5">
                     <div 
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all"
+                      className="bg-gradient-to-r from-green-500 to-emerald-500 h-1.5 rounded-full transition-all"
                       style={{ width: `${(conciliacoesAutomaticas / (conciliacoes.length || 1)) * 100}%` }}
                     />
                   </div>
-                  <span className="text-sm font-bold text-green-700">
+                  <span className="text-xs font-bold text-green-700">
                     {((conciliacoesAutomaticas / (conciliacoes.length || 1)) * 100).toFixed(0)}%
                   </span>
                 </div>
               </div>
 
-              <div className="p-2.5 bg-white rounded-lg border border-orange-200 min-h-[75px] max-h-[75px] flex flex-col justify-center">
-                <p className="text-xs text-slate-600 mb-1">Extratos Pendentes</p>
-                <div className="flex items-center gap-2">
-                  <AlertCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
-                  <span className="text-xl font-bold text-orange-700">{extratosPendentes}</span>
+              <div className="p-2 bg-white rounded-lg border border-orange-200 min-h-[65px] max-h-[65px] flex flex-col justify-center">
+                <p className="text-xs text-slate-600 mb-0.5 truncate">Extratos Pend.</p>
+                <div className="flex items-center gap-1.5">
+                  <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                  <span className="text-base font-bold text-orange-700">{extratosPendentes}</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-2.5 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg border border-blue-300">
-              <p className="text-xs font-semibold text-blue-900 mb-1.5">💡 Recomendações</p>
+            <div className="p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg border border-blue-300">
+              <p className="text-xs font-semibold text-blue-900 mb-1">💡 Recomendações</p>
               <ul className="space-y-0.5 text-xs text-blue-800">
                 {totalReceber > totalPagar && (
-                  <li>✅ Saldo positivo previsto. Fluxo saudável.</li>
+                  <li className="truncate">✅ Saldo positivo. Fluxo saudável.</li>
                 )}
                 {extratosPendentes > 10 && (
-                  <li>⚠️ {extratosPendentes} extratos pendentes. Execute conciliação.</li>
+                  <li className="truncate">⚠️ {extratosPendentes} extratos. Execute conciliação.</li>
                 )}
                 {scoreMedioConciliacao > 80 && (
-                  <li>🎯 Precisão de {scoreMedioConciliacao.toFixed(0)}%. IA treinada.</li>
+                  <li className="truncate">🎯 Precisão {scoreMedioConciliacao.toFixed(0)}%. IA treinada.</li>
                 )}
               </ul>
             </div>
