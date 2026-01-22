@@ -285,11 +285,11 @@ export default function Financeiro() {
 
   return (
     <ErrorBoundary>
-      <div className="w-full min-h-screen p-4 space-y-4 overflow-auto">
+      <div className="w-full min-h-screen p-3 space-y-3 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 mb-1">Financeiro Multi-Empresa</h1>
-            <p className="text-sm text-slate-600">
+            <h1 className="text-xl font-bold text-slate-900 mb-1">Financeiro Multi-Empresa</h1>
+            <p className="text-xs text-slate-600">
               {estaNoGrupo
                 ? 'Visão consolidada • Caixa Central • Conciliação • Omnichannel'
                 : `Gestão financeira completa - ${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || ''}`
@@ -297,8 +297,8 @@ export default function Financeiro() {
             </p>
           </div>
           {estaNoGrupo && (
-            <Badge className="bg-blue-100 text-blue-700 px-3 py-1">
-              <Building2 className="w-4 h-4 mr-2" />
+            <Badge className="bg-blue-100 text-blue-700 px-2 py-1 text-xs">
+              <Building2 className="w-3 h-3 mr-1" />
               Visão Consolidada
             </Badge>
           )}
@@ -323,19 +323,19 @@ export default function Financeiro() {
           totalPendentesAprovacao={totalPendentesAprovacao}
         />
 
-        <Suspense fallback={<div className="p-4 text-center text-slate-500">Carregando régua de cobrança...</div>}>
+        <Suspense fallback={<div className="p-3 text-center text-slate-500 text-sm">Carregando régua de cobrança...</div>}>
           <ReguaCobrancaIA empresaId={empresaAtual?.id} />
         </Suspense>
 
-        <Card className="border-0 shadow-md mt-4">
-          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b px-4 py-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Zap className="w-5 h-5 text-blue-600" />
+        <Card className="border-0 shadow-md">
+          <CardHeader className="bg-gradient-to-r from-slate-50 to-blue-50 border-b px-3 py-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Zap className="w-4 h-4 text-blue-600" />
               Módulos Financeiros
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <CardContent className="p-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
               {allModules.map((module, idx) => (
                 <LaunchpadCard
                   key={idx}
@@ -368,9 +368,9 @@ export default function Financeiro() {
           </CardContent>
         </Card>
 
-        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="p-2 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2 text-xs text-blue-700">
-            <Zap className="w-4 h-4" />
+            <Zap className="w-3 h-3 flex-shrink-0" />
             <span className="font-medium">Sistema Multitarefa:</span>
             <span>Todos os módulos abrem em janelas independentes e redimensionáveis</span>
           </div>
