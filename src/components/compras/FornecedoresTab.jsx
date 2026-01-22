@@ -30,8 +30,8 @@ export default function FornecedoresTab({ fornecedores }) {
     return empresa?.nome_fantasia || empresa?.razao_social || '-';
   };
 
-  return (
-    <div className="space-y-6">
+  const content = (
+    <div className="space-y-2">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Fornecedores</h2>
         <Link to={createPageUrl('Cadastros') + '?tab=fornecedores'}>

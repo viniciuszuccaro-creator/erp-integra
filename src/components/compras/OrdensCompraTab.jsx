@@ -22,7 +22,7 @@ import { toast as sonnerToast } from "sonner";
 import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
 import { useUser } from "@/components/lib/UserContext";
 
-export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [] }) {
+export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -422,8 +422,8 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
     'Cancelada': 'bg-gray-100 text-gray-700'
   };
 
-  return (
-    <div className="space-y-4">
+  const content = (
+    <div className="space-y-2">
       <div className="flex justify-between items-center gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -764,4 +764,10 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       {/* DIALOGS REMOVIDOS - Agora usam Windows */}
     </div>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-cyan-50 overflow-auto p-1.5">{content}</div>;
+  }
+
+  return content;
 }

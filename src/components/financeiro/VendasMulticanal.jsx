@@ -118,9 +118,8 @@ export default function VendasMulticanal({ windowMode = false }) {
     }
   });
 
-  return (
-    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6"}>
-      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
+  const content = (
+    <div className="space-y-1.5">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -370,6 +369,12 @@ export default function VendasMulticanal({ windowMode = false }) {
           )}
         </CardContent>
       </Card>
-    </div></div>
+    </div>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto p-1.5">{content}</div>;
+  }
+
+  return content;
 }

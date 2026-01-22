@@ -398,13 +398,7 @@ export default function RateioMultiempresa({ empresas, grupoId, windowMode = fal
   );
 
   if (windowMode) {
-    return (
-      <div className="w-full h-full flex flex-col overflow-auto">
-        <div className="p-6 flex-1">
-          {content}
-        </div>
-      </div>
-    );
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-purple-50 overflow-auto p-1.5">{content}</div>;
   }
 
   return content;

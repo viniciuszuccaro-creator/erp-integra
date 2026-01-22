@@ -108,9 +108,8 @@ export default function RelatorioFinanceiro({ empresaId, windowMode = false }) {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
-  return (
-    <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6"}>
-      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
+  const content = (
+    <div className="space-y-1.5">
       {/* Filtros */}
       <Card>
         <CardContent className="p-4">
@@ -332,6 +331,12 @@ export default function RelatorioFinanceiro({ empresaId, windowMode = false }) {
           </Card>
         </TabsContent>
       </Tabs>
-    </div></div>
+    </div>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-indigo-50 overflow-auto p-1.5">{content}</div>;
+  }
+
+  return content;
 }
