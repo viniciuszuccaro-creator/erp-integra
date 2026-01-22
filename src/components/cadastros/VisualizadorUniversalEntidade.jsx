@@ -245,7 +245,7 @@ export default function VisualizadorUniversalEntidade({
   const { data: dados = [], isLoading, isFetching, refetch } = useQuery({
     queryKey: queryKey,
     queryFn: async () => {
-      const result = await base44.entities[nomeEntidade].list('-created_date', 100);
+      const result = await base44.entities[nomeEntidade].list('-created_date');
       return result || [];
     },
     staleTime: 600000,
