@@ -26,37 +26,37 @@ export default function LaunchpadCard({
     <Card 
       onClick={onClick}
       className={`
-        min-w-[280px] min-h-[140px] 
+        w-full min-h-[130px] max-h-[130px]
         cursor-pointer 
         border-0 
         bg-gradient-to-br ${colorClasses[color]} 
         text-white
-        transition-all duration-200
-        hover:shadow-xl
-        active:scale-[0.98]
+        transition-shadow duration-200
+        hover:shadow-xl ${colorClasses[color].split('hover:shadow-')[1]}
+        active:shadow-md
         relative
         overflow-hidden
       `}
-      style={{ willChange: 'transform, box-shadow' }}
+      style={{ willChange: 'box-shadow' }}
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12" />
+      <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-12 -mt-12 pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-20 h-20 bg-black/10 rounded-full -ml-10 -mb-10 pointer-events-none" />
       
-      <CardContent className="p-5 relative z-10 flex flex-col h-full justify-between min-h-[140px]">
-        <div className="flex items-start justify-between mb-3">
-          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
-            <Icon className="w-6 h-6 text-white" />
+      <CardContent className="p-4 relative z-10 flex flex-col h-full justify-between">
+        <div className="flex items-start justify-between mb-2">
+          <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
+            <Icon className="w-5 h-5 text-white" />
           </div>
           {badge && (
-            <Badge className="bg-white/30 text-white border-white/50">
+            <Badge className="bg-white/30 text-white border-white/50 text-xs px-2 py-0.5">
               {badge}
             </Badge>
           )}
         </div>
         
         <div>
-          <h3 className="text-lg font-bold mb-1">{title}</h3>
-          <p className="text-sm text-white/90 leading-tight">{description}</p>
+          <h3 className="text-base font-bold mb-1 leading-tight">{title}</h3>
+          <p className="text-xs text-white/90 leading-snug line-clamp-2">{description}</p>
         </div>
       </CardContent>
     </Card>

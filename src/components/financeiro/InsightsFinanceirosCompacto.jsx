@@ -67,25 +67,25 @@ export default function InsightsFinanceirosCompacto({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3">
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {insights.slice(0, 4).map((insight, idx) => {
             const Icon = insight.icon;
             return (
-              <div key={idx} className="flex items-start gap-2 p-2 bg-white rounded-lg border border-purple-100">
+              <div key={idx} className="flex items-start gap-2 p-2 bg-white rounded-lg border border-purple-100 min-h-[40px]">
                 <Icon className={`w-4 h-4 ${insight.color} flex-shrink-0 mt-0.5`} />
-                <p className="text-xs text-slate-700 leading-relaxed">{insight.text}</p>
+                <p className="text-xs text-slate-700 leading-snug">{insight.text}</p>
               </div>
             );
           })}
           
           {insights.length === 0 && (
-            <div className="p-3 text-center text-xs text-slate-500">
+            <div className="p-2 text-center text-xs text-slate-500">
               Nenhum insight disponível no momento
             </div>
           )}
         </div>
 
-        <div className="mt-3 p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg border border-blue-200">
+        <div className="mt-2.5 p-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg border border-blue-200">
           <div className="flex items-center gap-2">
             <Badge className="bg-blue-600 text-white text-xs px-2 py-0.5">
               V22.0

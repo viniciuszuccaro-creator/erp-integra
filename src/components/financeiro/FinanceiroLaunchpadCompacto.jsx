@@ -110,28 +110,28 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
 
   return (
     <div className={windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full"}>
-      <div className="p-4 space-y-4 bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="p-3 space-y-3 bg-gradient-to-br from-slate-50 to-blue-50">
         
         {/* HEADER COMPACTO */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
+            <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-blue-600 flex-shrink-0" />
               Dashboard Financeiro
             </h1>
             <p className="text-xs text-slate-600">
               {estaNoGrupo ? '🌐 Visão Consolidada' : `${empresaAtual?.nome_fantasia || ''}`}
             </p>
           </div>
-          <Badge className="bg-green-600 text-white text-xs px-3 py-1">
+          <Badge className="bg-green-600 text-white text-xs px-2 py-0.5">
             V22.0 • 100%
           </Badge>
         </div>
 
         {/* KPIS COMPACTOS - SEM REDIMENSIONAMENTO */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <Card className="border-green-300 bg-gradient-to-br from-green-50 to-emerald-100 min-h-[100px]">
-            <CardContent className="p-3">
+          <Card className="border-green-300 bg-gradient-to-br from-green-50 to-emerald-100 min-h-[95px] max-h-[95px]">
+            <CardContent className="p-2.5">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp className="w-4 h-4 text-green-700 flex-shrink-0" />
                 <p className="text-xs text-green-700 font-medium">A Receber</p>
@@ -145,8 +145,8 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
             </CardContent>
           </Card>
 
-          <Card className="border-red-300 bg-gradient-to-br from-red-50 to-pink-100 min-h-[100px]">
-            <CardContent className="p-3">
+          <Card className="border-red-300 bg-gradient-to-br from-red-50 to-pink-100 min-h-[95px] max-h-[95px]">
+            <CardContent className="p-2.5">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingDown className="w-4 h-4 text-red-700 flex-shrink-0" />
                 <p className="text-xs text-red-700 font-medium">A Pagar</p>
@@ -175,8 +175,8 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
             </CardContent>
           </Card>
 
-          <Card className="border-purple-300 bg-gradient-to-br from-purple-50 to-indigo-100 min-h-[100px]">
-            <CardContent className="p-3">
+          <Card className="border-purple-300 bg-gradient-to-br from-purple-50 to-indigo-100 min-h-[95px] max-h-[95px]">
+            <CardContent className="p-2.5">
               <div className="flex items-center gap-2 mb-1">
                 <Repeat className="w-4 h-4 text-purple-700 flex-shrink-0" />
                 <p className="text-xs text-purple-700 font-medium">Recorrentes</p>
@@ -188,8 +188,8 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
             </CardContent>
           </Card>
 
-          <Card className="border-cyan-300 bg-gradient-to-br from-cyan-50 to-teal-100 min-h-[100px]">
-            <CardContent className="p-3">
+          <Card className="border-cyan-300 bg-gradient-to-br from-cyan-50 to-teal-100 min-h-[95px] max-h-[95px]">
+            <CardContent className="p-2.5">
               <div className="flex items-center gap-2 mb-1">
                 <Link2 className="w-4 h-4 text-cyan-700 flex-shrink-0" />
                 <p className="text-xs text-cyan-700 font-medium">Conciliação</p>
@@ -204,7 +204,7 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
 
         {/* MÉTRICAS SECUNDÁRIAS COMPACTAS */}
         <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-          <Card className="bg-white border min-h-[70px]">
+          <Card className="bg-white border min-h-[65px] max-h-[65px]">
             <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
@@ -216,7 +216,7 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[70px]">
+          <Card className="bg-white border min-h-[65px] max-h-[65px]">
             <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
@@ -228,7 +228,7 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[70px]">
+          <Card className="bg-white border min-h-[65px] max-h-[65px]">
             <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
@@ -240,7 +240,7 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[70px]">
+          <Card className="bg-white border min-h-[65px] max-h-[65px]">
             <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
@@ -252,7 +252,7 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[70px]">
+          <Card className="bg-white border min-h-[65px] max-h-[65px]">
             <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
@@ -264,7 +264,7 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
             </CardContent>
           </Card>
 
-          <Card className="bg-white border min-h-[70px]">
+          <Card className="bg-white border min-h-[65px] max-h-[65px]">
             <CardContent className="p-2">
               <div className="flex items-center justify-between">
                 <div className="min-w-0 flex-1">
@@ -278,17 +278,17 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
         </div>
 
         {/* GRÁFICOS COMPACTOS */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {/* FLUXO DE CAIXA */}
           <Card className="border-0 shadow-md">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b p-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-blue-600" />
+            <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b p-2">
+              <CardTitle className="text-sm flex items-center gap-2 font-semibold">
+                <BarChart3 className="w-4 h-4 text-blue-600 flex-shrink-0" />
                 Fluxo Financeiro
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-3">
-              <ResponsiveContainer width="100%" height={200}>
+            <CardContent className="p-2">
+              <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={dadosFluxo}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="nome" style={{ fontSize: '11px' }} />
@@ -306,14 +306,14 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
 
           {/* DESPESAS POR CATEGORIA */}
           <Card className="border-0 shadow-md">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b p-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <FileText className="w-4 h-4 text-purple-600" />
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b p-2">
+              <CardTitle className="text-sm flex items-center gap-2 font-semibold">
+                <FileText className="w-4 h-4 text-purple-600 flex-shrink-0" />
                 Despesas por Categoria
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-3">
-              <ResponsiveContainer width="100%" height={200}>
+            <CardContent className="p-2">
+              <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
                     data={dadosCategorias}
@@ -338,15 +338,15 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
 
         {/* IA INSIGHTS COMPACTO */}
         <Card className="border-purple-300 bg-gradient-to-br from-purple-50 to-pink-50">
-          <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 border-b p-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-purple-900">
-              <Zap className="w-4 h-4" />
+          <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 border-b p-2">
+            <CardTitle className="text-sm flex items-center gap-2 text-purple-900 font-semibold">
+              <Zap className="w-4 h-4 flex-shrink-0" />
               🤖 Insights IA
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-3 space-y-3">
-            <div className="grid grid-cols-3 gap-3">
-              <div className="p-3 bg-white rounded-lg border border-purple-200 min-h-[80px]">
+          <CardContent className="p-2.5 space-y-2.5">
+            <div className="grid grid-cols-3 gap-2.5">
+              <div className="p-2.5 bg-white rounded-lg border border-purple-200 min-h-[75px] max-h-[75px]">
                 <p className="text-xs text-slate-600 mb-2">Score Conciliação</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-slate-200 rounded-full h-2">
@@ -359,8 +359,8 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
                 </div>
               </div>
 
-              <div className="p-3 bg-white rounded-lg border border-green-200 min-h-[80px]">
-                <p className="text-xs text-slate-600 mb-2">Taxa Automação</p>
+              <div className="p-2.5 bg-white rounded-lg border border-green-200 min-h-[75px] max-h-[75px]">
+                <p className="text-xs text-slate-600 mb-1.5">Taxa Automação</p>
                 <div className="flex items-center gap-2">
                   <div className="flex-1 bg-slate-200 rounded-full h-2">
                     <div 
@@ -374,7 +374,7 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
                 </div>
               </div>
 
-              <div className="p-3 bg-white rounded-lg border border-orange-200 min-h-[80px] flex flex-col justify-center">
+              <div className="p-2.5 bg-white rounded-lg border border-orange-200 min-h-[75px] max-h-[75px] flex flex-col justify-center">
                 <p className="text-xs text-slate-600 mb-1">Extratos Pendentes</p>
                 <div className="flex items-center gap-2">
                   <AlertCircle className="w-6 h-6 text-orange-600 flex-shrink-0" />
@@ -383,9 +383,9 @@ export default function FinanceiroLaunchpadCompacto({ windowMode = false }) {
               </div>
             </div>
 
-            <div className="p-3 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg border border-blue-300">
-              <p className="text-xs font-semibold text-blue-900 mb-2">💡 Recomendações</p>
-              <ul className="space-y-1 text-xs text-blue-800">
+            <div className="p-2.5 bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg border border-blue-300">
+              <p className="text-xs font-semibold text-blue-900 mb-1.5">💡 Recomendações</p>
+              <ul className="space-y-0.5 text-xs text-blue-800">
                 {totalReceber > totalPagar && (
                   <li>✅ Saldo positivo previsto. Fluxo saudável.</li>
                 )}
