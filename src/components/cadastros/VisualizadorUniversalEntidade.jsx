@@ -73,13 +73,23 @@ const OPCOES_ORDENACAO = {
   Produto: [
     { value: 'descricao', label: 'Descrição (A-Z)', sortFn: (a, b) => (a.descricao || '').localeCompare(b.descricao || '') },
     { value: 'descricao_desc', label: 'Descrição (Z-A)', sortFn: (a, b) => (b.descricao || '').localeCompare(a.descricao || '') },
-    { value: 'setor', label: 'Setor de Atividade', sortFn: (a, b) => (a.setor_atividade_nome || '').localeCompare(b.setor_atividade_nome || '') },
-    { value: 'grupo', label: 'Grupo/Linha', sortFn: (a, b) => (a.grupo_produto_nome || '').localeCompare(b.grupo_produto_nome || '') },
-    { value: 'marca', label: 'Marca', sortFn: (a, b) => (a.marca_nome || '').localeCompare(b.marca_nome || '') },
+    { value: 'codigo', label: 'Código (A-Z)', sortFn: (a, b) => (a.codigo || '').localeCompare(b.codigo || '') },
+    { value: 'codigo_desc', label: 'Código (Z-A)', sortFn: (a, b) => (b.codigo || '').localeCompare(a.codigo || '') },
+    { value: 'tipo', label: 'Tipo (A-Z)', sortFn: (a, b) => (a.tipo_item || '').localeCompare(b.tipo_item || '') },
+    { value: 'tipo_desc', label: 'Tipo (Z-A)', sortFn: (a, b) => (b.tipo_item || '').localeCompare(a.tipo_item || '') },
+    { value: 'setor', label: 'Setor de Atividade (A-Z)', sortFn: (a, b) => (a.setor_atividade_nome || '').localeCompare(b.setor_atividade_nome || '') },
+    { value: 'setor_desc', label: 'Setor de Atividade (Z-A)', sortFn: (a, b) => (b.setor_atividade_nome || '').localeCompare(a.setor_atividade_nome || '') },
+    { value: 'grupo', label: 'Categoria/Grupo (A-Z)', sortFn: (a, b) => (a.grupo_produto_nome || a.grupo || '').localeCompare(b.grupo_produto_nome || b.grupo || '') },
+    { value: 'grupo_desc', label: 'Categoria/Grupo (Z-A)', sortFn: (a, b) => (b.grupo_produto_nome || b.grupo || '').localeCompare(a.grupo_produto_nome || a.grupo || '') },
+    { value: 'marca', label: 'Marca (A-Z)', sortFn: (a, b) => (a.marca_nome || '').localeCompare(b.marca_nome || '') },
+    { value: 'status', label: 'Status (A-Z)', sortFn: (a, b) => (a.status || '').localeCompare(b.status || '') },
+    { value: 'status_desc', label: 'Status (Z-A)', sortFn: (a, b) => (b.status || '').localeCompare(a.status || '') },
     { value: 'mais_vendidos', label: 'Mais Vendidos', sortFn: (a, b) => (b.quantidade_vendida_12meses || 0) - (a.quantidade_vendida_12meses || 0) },
     { value: 'menos_vendidos', label: 'Menos Vendidos', sortFn: (a, b) => (a.quantidade_vendida_12meses || 0) - (b.quantidade_vendida_12meses || 0) },
     { value: 'estoque_baixo', label: 'Estoque Baixo', sortFn: (a, b) => (a.estoque_disponivel || 0) - (b.estoque_disponivel || 0) },
+    { value: 'estoque_alto', label: 'Estoque Alto', sortFn: (a, b) => (b.estoque_atual || 0) - (a.estoque_atual || 0) },
     { value: 'preco', label: 'Preço (Maior)', sortFn: (a, b) => (b.preco_venda || 0) - (a.preco_venda || 0) },
+    { value: 'preco_menor', label: 'Preço (Menor)', sortFn: (a, b) => (a.preco_venda || 0) - (b.preco_venda || 0) },
     { value: 'recent', label: 'Mais Recentes', sortFn: (a, b) => new Date(b.created_date) - new Date(a.created_date) }
   ],
   Colaborador: [
@@ -205,11 +215,11 @@ export default function VisualizadorUniversalEntidade({
         return [];
       }
     },
-    staleTime: 30000,
-    refetchInterval: 30000, // ✅ Auto-refresh a cada 30 segundos
-    refetchIntervalInBackground: true, // ✅ Continua atualizando mesmo em background
-    refetchOnWindowFocus: true, // ✅ Atualiza quando volta para a aba
-    initialData: []
+    staleTime: 5000,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    refetchOnMount: 'always'
   });
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
@@ -577,14 +587,17 @@ onClose: invalidateAllRelated,
             </div>
             
             {/* ✅ NOVA ORDENAÇÃO AVANÇADA */}
-            <Select value={ordenacao} onValueChange={setOrdenacao}>
+            <Select value={ordenacao} onValueChange={(value) => {
+              setOrdenacao(value);
+              toast({ title: '✅ Ordenação alterada', description: opcoesOrdenacao.find(o => o.value === value)?.label });
+            }}>
               <SelectTrigger className="w-full sm:w-64">
                 <div className="flex items-center gap-2">
                   <ArrowUpDown className="w-4 h-4" />
                   <SelectValue placeholder="Organizar por..." />
                 </div>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper" sideOffset={5}>
                 {opcoesOrdenacao.map(opcao => (
                   <SelectItem key={opcao.value} value={opcao.value}>
                     {opcao.label}
