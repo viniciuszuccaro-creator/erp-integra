@@ -27,7 +27,7 @@ import SolicitacaoCompraForm from "./SolicitacaoCompraForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
-export default function SolicitacoesCompraTab({ solicitacoes }) {
+export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const { openWindow } = useWindow();
@@ -308,8 +308,8 @@ Retorne JSON com:
     'Finalizada': 'bg-gray-100 text-gray-700'
   };
 
-  return (
-    <div className="space-y-6">
+  const content = (
+    <div className="space-y-2">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Solicitações de Compra</h2>
         <div className="flex gap-2">

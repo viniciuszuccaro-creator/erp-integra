@@ -17,7 +17,7 @@ import CotacaoForm from "./CotacaoForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
-export default function CotacoesTab() {
+export default function CotacoesTab({ windowMode = false }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [cotacaoSelecionada, setCotacaoSelecionada] = useState(null);
   const [comparativoModal, setComparativoModal] = useState(null);
@@ -199,8 +199,8 @@ export default function CotacoesTab() {
     return cores[status] || 'bg-slate-100 text-slate-700';
   };
 
-  return (
-    <div className="space-y-6">
+  const content = (
+    <div className="space-y-2">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Sistema de Cotações</h2>
@@ -709,4 +709,10 @@ export default function CotacoesTab() {
       )}
     </div>
   );
+
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-indigo-50 overflow-auto p-1.5">{content}</div>;
+  }
+
+  return content;
 }
