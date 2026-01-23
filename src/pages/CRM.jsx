@@ -18,32 +18,75 @@ const IAChurnDetection = React.lazy(() => import("../components/crm/IAChurnDetec
 
 export default function CRMPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, filterInContext } = useContextoVisual();
+  const { filtrarPorContexto, filterInContext, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
+  const { empresaAtual } = useContextoVisual();
+
   const { data: oportunidades = [] } = useQuery({
-    queryKey: ['oportunidades'],
-    queryFn: () => filterInContext('Oportunidade', {}, '-created_date'),
+    queryKey: ['oportunidades', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Oportunidade.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar oportunidades:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
   const { data: interacoes = [] } = useQuery({
-    queryKey: ['interacoes'],
-    queryFn: () => filterInContext('Interacao', {}, '-created_date'),
+    queryKey: ['interacoes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Interacao.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar interações:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: campanhas = [] } = useQuery({
-    queryKey: ['campanhas'],
-    queryFn: () => filterInContext('Campanha', {}, '-created_date', undefined, 'empresa_dona_id'),
+    queryKey: ['campanhas', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
+        return await base44.entities.Campanha.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar campanhas:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar clientes:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
-  const oportunidadesFiltradas = filtrarPorContexto(oportunidades, 'empresa_id');
-  const interacoesFiltradas = filtrarPorContexto(interacoes, 'empresa_id');
-  const campanhasFiltradas = filtrarPorContexto(campanhas, 'empresa_dona_id');
+  // Dados já vêm filtrados do servidor
+  const oportunidadesFiltradas = oportunidades;
+  const interacoesFiltradas = interacoes;
+  const campanhasFiltradas = campanhas;
 
   const totalOportunidades = oportunidadesFiltradas.length;
   const oportunidadesAbertas = oportunidadesFiltradas.filter(o => o.status === 'Aberto' || o.status === 'Em Andamento').length;

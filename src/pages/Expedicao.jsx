@@ -48,31 +48,82 @@ export default function Expedicao() {
   const [ocorrenciaOpen, setOcorrenciaOpen] = React.useState(false);
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.filter(getFiltroContexto('empresa_id'), '-created_date'),
+    queryKey: ['entregas', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Entrega.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar entregas:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.filter(getFiltroContexto('empresa_id')),
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar clientes:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.filter(getFiltroContexto('empresa_id')),
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Pedido.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: romaneios = [] } = useQuery({
-    queryKey: ['romaneios'],
-    queryFn: () => base44.entities.Romaneio.filter(getFiltroContexto('empresa_id'), '-created_date'),
+    queryKey: ['romaneios', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Romaneio.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar romaneios:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: rotas = [] } = useQuery({
-    queryKey: ['rotas'],
-    queryFn: () => base44.entities.Rota.filter(getFiltroContexto('empresa_id'), '-created_date'),
+    queryKey: ['rotas', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Rota.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar rotas:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
-  const entregasFiltradas = filtrarPorContexto(entregas, 'empresa_id');
+  // Dados já vêm filtrados do servidor
+  const entregasFiltradas = entregas;
   const { data: entregasRealtime, hasChanges } = useRealtimeEntregas(empresaAtual?.id);
 
   const statusCounts = {

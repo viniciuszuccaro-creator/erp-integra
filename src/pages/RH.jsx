@@ -18,25 +18,56 @@ const DashboardRHRealtime = React.lazy(() => import("../components/rh/DashboardR
 
 export default function RH() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto } = useContextoVisual();
+  const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
+  const { empresaAtual } = useContextoVisual();
+
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list()
+    queryKey: ['colaboradores', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
+        return await base44.entities.Colaborador.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar colaboradores:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
   const { data: pontos = [] } = useQuery({
-    queryKey: ['pontos'],
-    queryFn: () => base44.entities.Ponto.list()
+    queryKey: ['pontos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Ponto.list('-data', 100);
+      } catch (err) {
+        console.error('Erro ao buscar pontos:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: ferias = [] } = useQuery({
-    queryKey: ['ferias'],
-    queryFn: () => base44.entities.Ferias.list()
+    queryKey: ['ferias', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Ferias.list('-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar férias:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
-  const colaboradoresFiltrados = filtrarPorContexto(colaboradores, 'empresa_id');
+  // Dados já vêm filtrados do servidor
+  const colaboradoresFiltrados = colaboradores;
   const colaboradoresAtivos = colaboradoresFiltrados.filter(c => c.status === "Ativo").length;
   const feriasAprovadas = ferias.filter(f => f.status === "Aprovada").length;
   const feriasPendentes = ferias.filter(f => f.status === "Solicitada").length;

@@ -18,32 +18,74 @@ const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/
 
 export default function Compras() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto } = useContextoVisual();
+  const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
+  const { empresaAtual } = useContextoVisual();
+
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list('-created_date'),
+    queryKey: ['fornecedores', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
+        return await base44.entities.Fornecedor.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar fornecedores:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
   const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordensCompra'],
-    queryFn: () => base44.entities.OrdemCompra.list('-created_date'),
+    queryKey: ['ordensCompra', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.OrdemCompra.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar ordens de compra:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
   const { data: solicitacoes = [] } = useQuery({
-    queryKey: ['solicitacoes-compra'],
-    queryFn: () => base44.entities.SolicitacaoCompra.list('-data_solicitacao'),
+    queryKey: ['solicitacoes-compra', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 100);
+      } catch (err) {
+        console.error('Erro ao buscar solicitações:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: async () => {
+      try {
+        return await base44.entities.Empresa.list();
+      } catch (err) {
+        console.error('Erro ao buscar empresas:', err);
+        return [];
+      }
+    },
+    staleTime: 60000,
+    retry: 1
   });
 
-  const fornecedoresFiltrados = filtrarPorContexto(fornecedores, 'empresa_dona_id');
-  const ordensCompraFiltradas = filtrarPorContexto(ordensCompra, 'empresa_id');
-  const solicitacoesFiltradas = filtrarPorContexto(solicitacoes, 'empresa_id');
+  // Dados já vêm filtrados do servidor
+  const fornecedoresFiltrados = fornecedores;
+  const ordensCompraFiltradas = ordensCompra;
+  const solicitacoesFiltradas = solicitacoes;
 
   const totalCompras = ordensCompraFiltradas
     .filter(o => o.status !== 'Cancelada')

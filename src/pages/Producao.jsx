@@ -25,12 +25,22 @@ export default function Producao() {
   const { filtrarPorContexto, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: ops = [] } = useQuery({
-    queryKey: ['ordens-producao', getFiltroContexto('empresa_id')],
-    queryFn: () => base44.entities.OrdemProducao.filter(getFiltroContexto('empresa_id'), '-created_date'),
-  });
+  const { empresaAtual } = useContextoVisual();
 
-  const ordensProducao = filtrarPorContexto(ops, 'empresa_id');
+  const { data: ordensProducao = [] } = useQuery({
+    queryKey: ['ordens-producao', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.OrdemProducao.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar ordens de produção:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
+  });
 
   const totalOPs = ordensProducao.length;
   const opsLiberadas = ordensProducao.filter(op => op.status === "Liberada").length;
