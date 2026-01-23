@@ -81,6 +81,24 @@ export default function CRMPage() {
     retry: 1
   });
 
+  const { data: totalClientes = 0 } = useQuery({
+    queryKey: ['clientes-count-crm', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Cliente',
+          filter: filtro
+        });
+        return response.data?.count || clientes.length;
+      } catch {
+        return clientes.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   // Dados já vêm filtrados do servidor
   const oportunidadesFiltradas = oportunidades;
   const interacoesFiltradas = interacoes;

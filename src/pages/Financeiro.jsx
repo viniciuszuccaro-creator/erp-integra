@@ -53,6 +53,24 @@ export default function Financeiro() {
     retry: 2
   });
 
+  const { data: totalContasReceber = 0 } = useQuery({
+    queryKey: ['contas-receber-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'ContaReceber',
+          filter: filtro
+        });
+        return response.data?.count || contasReceber.length;
+      } catch {
+        return contasReceber.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['contasPagar', empresaAtual?.id],
     queryFn: async () => {
@@ -66,6 +84,24 @@ export default function Financeiro() {
     },
     staleTime: 30000,
     retry: 2
+  });
+
+  const { data: totalContasPagar = 0 } = useQuery({
+    queryKey: ['contas-pagar-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'ContaPagar',
+          filter: filtro
+        });
+        return response.data?.count || contasPagar.length;
+      } catch {
+        return contasPagar.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
   });
 
   const { data: rateios = [] } = useQuery({

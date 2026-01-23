@@ -36,6 +36,24 @@ export default function Compras() {
     retry: 2
   });
 
+  const { data: totalFornecedores = 0 } = useQuery({
+    queryKey: ['fornecedores-count-compras', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Fornecedor',
+          filter: filtro
+        });
+        return response.data?.count || fornecedores.length;
+      } catch {
+        return fornecedores.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   const { data: ordensCompra = [] } = useQuery({
     queryKey: ['ordensCompra', empresaAtual?.id],
     queryFn: async () => {
@@ -181,7 +199,7 @@ export default function Compras() {
         <HeaderComprasCompacto />
         
         <KPIsCompras
-          totalFornecedores={fornecedoresFiltrados.length}
+          totalFornecedores={totalFornecedores}
           fornecedoresAtivos={fornecedoresAtivos}
           totalOrdens={ordensCompraFiltradas.length}
           totalCompras={totalCompras}
