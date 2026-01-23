@@ -247,7 +247,7 @@ export default function ProdutosTab({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-blue-700 mb-1">Total Produtos</p>
-                <p className="text-2xl font-bold text-blue-900">{produtos.length}</p>
+                <p className="text-2xl font-bold text-blue-900">{totalItems || produtos.length}</p>
               </div>
               <Package className="w-8 h-8 text-blue-600" />
             </div>
