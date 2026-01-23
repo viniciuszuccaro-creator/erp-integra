@@ -29,7 +29,7 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
 /**
  * Pesquisa Universal (Ctrl+K)
  * Busca em todas as entidades do sistema
- * V21.7: Integrada com sistema multiempresa
+ * V21.7: Integrada com sistema multiempresa + Debounce para evitar rate limit
  */
 export default function PesquisaUniversal({ open, onOpenChange }) {
   const [query, setQuery] = useState('');
@@ -39,11 +39,17 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
   const { filtrarPorContexto, estaNoGrupo, empresaAtual } = useContextoVisual();
 
   useEffect(() => {
-    if (query.length >= 2) {
-      buscar();
-    } else {
-      setResultados([]);
-    }
+    const handler = setTimeout(() => {
+      if (query.length >= 2) {
+        buscar();
+      } else {
+        setResultados([]);
+      }
+    }, 400); // Debounce de 400ms para evitar rate limit
+
+    return () => {
+      clearTimeout(handler);
+    };
   }, [query]);
 
   const buscar = async () => {
@@ -60,28 +66,28 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
         comissoesRaw, campanhasRaw, eventosRaw, contratosRaw, solicitacoesCompraRaw,
         movimentacoesRaw, representantesRaw, centroCustoRaw
       ] = await Promise.all([
-        base44.entities.Cliente.list('-created_date', 9999),
-        base44.entities.Pedido.list('-created_date', 9999),
-        base44.entities.Produto.list('-created_date', 9999),
-        base44.entities.Entrega.list('-created_date', 9999),
-        base44.entities.Fornecedor.list('-created_date', 9999),
-        base44.entities.OrdemProducao.list('-created_date', 9999),
-        base44.entities.Colaborador.list('-created_date', 9999),
-        base44.entities.ContaPagar.list('-created_date', 9999),
-        base44.entities.ContaReceber.list('-created_date', 9999),
-        base44.entities.Oportunidade.list('-created_date', 9999),
-        base44.entities.Transportadora.list('-created_date', 9999),
-        base44.entities.NotaFiscal.list('-created_date', 9999),
-        base44.entities.OrdemCompra.list('-created_date', 9999),
-        base44.entities.Interacao.list('-created_date', 9999),
-        base44.entities.Comissao.list('-created_date', 9999).catch(() => []),
-        base44.entities.Campanha.list('-created_date', 9999).catch(() => []),
-        base44.entities.Evento.list('-created_date', 9999).catch(() => []),
-        base44.entities.Contrato.list('-created_date', 9999).catch(() => []),
-        base44.entities.SolicitacaoCompra.list('-created_date', 9999).catch(() => []),
-        base44.entities.MovimentacaoEstoque.list('-created_date', 9999).catch(() => []),
-        base44.entities.Representante.list('-created_date', 9999).catch(() => []),
-        base44.entities.CentroCusto.list('-created_date', 9999).catch(() => [])
+        base44.entities.Cliente.list('-created_date', 100).catch(() => []),
+        base44.entities.Pedido.list('-created_date', 100).catch(() => []),
+        base44.entities.Produto.list('-created_date', 100).catch(() => []),
+        base44.entities.Entrega.list('-created_date', 100).catch(() => []),
+        base44.entities.Fornecedor.list('-created_date', 100).catch(() => []),
+        base44.entities.OrdemProducao.list('-created_date', 100).catch(() => []),
+        base44.entities.Colaborador.list('-created_date', 100).catch(() => []),
+        base44.entities.ContaPagar.list('-created_date', 100).catch(() => []),
+        base44.entities.ContaReceber.list('-created_date', 100).catch(() => []),
+        base44.entities.Oportunidade.list('-created_date', 100).catch(() => []),
+        base44.entities.Transportadora.list('-created_date', 100).catch(() => []),
+        base44.entities.NotaFiscal.list('-created_date', 100).catch(() => []),
+        base44.entities.OrdemCompra.list('-created_date', 100).catch(() => []),
+        base44.entities.Interacao.list('-created_date', 100).catch(() => []),
+        base44.entities.Comissao.list('-created_date', 100).catch(() => []),
+        base44.entities.Campanha.list('-created_date', 100).catch(() => []),
+        base44.entities.Evento.list('-created_date', 100).catch(() => []),
+        base44.entities.Contrato.list('-created_date', 100).catch(() => []),
+        base44.entities.SolicitacaoCompra.list('-created_date', 100).catch(() => []),
+        base44.entities.MovimentacaoEstoque.list('-created_date', 100).catch(() => []),
+        base44.entities.Representante.list('-created_date', 100).catch(() => []),
+        base44.entities.CentroCusto.list('-created_date', 100).catch(() => [])
       ]);
 
       // Filtrar por contexto empresa/grupo - TODAS AS ENTIDADES
