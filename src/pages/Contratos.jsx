@@ -648,10 +648,19 @@ export default function ContratosPage() {
   };
 
   const filteredContratos = contratosContexto.filter(c => {
+    const searchLower = searchTerm.toLowerCase();
     const searchMatch = (
-      c.numero_contrato?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.parte_contratante?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.objeto?.toLowerCase().includes(searchTerm.toLowerCase())
+      c.numero_contrato?.toLowerCase().includes(searchLower) ||
+      c.parte_contratante?.toLowerCase().includes(searchLower) ||
+      c.objeto?.toLowerCase().includes(searchLower) ||
+      c.titulo?.toLowerCase().includes(searchLower) ||
+      c.descricao?.toLowerCase().includes(searchLower) ||
+      c.tipo?.toLowerCase().includes(searchLower) ||
+      c.status?.toLowerCase().includes(searchLower) ||
+      c.responsavel_empresa?.toLowerCase().includes(searchLower) ||
+      c.forma_pagamento?.toLowerCase().includes(searchLower) ||
+      c.indice_reajuste?.toLowerCase().includes(searchLower) ||
+      c.observacoes?.toLowerCase().includes(searchLower)
     );
 
     if (!searchMatch) return false;
@@ -1122,7 +1131,7 @@ export default function ContratosPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
             <Input
-              placeholder="Buscar por número, parte contratante ou objeto..."
+              placeholder="Buscar por número, contratante, objeto, tipo, status, responsável, forma pagamento..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
