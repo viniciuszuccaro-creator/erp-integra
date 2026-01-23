@@ -290,17 +290,38 @@ export default function VisualizadorUniversalEntidade({
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000) // Backoff exponencial
   });
 
-  // V22.0 - Query para contar total (otimizada com cache longo)
-  const { data: totalItemsCount = 0 } = useQuery({
+  // V22.0 - Query para contar total via BACKEND (escalável para 25k+ registros)
+  const { data: totalItemsCount = 0, isLoading: isLoadingCount } = useQuery({
     queryKey: [...queryKey, 'count', empresaAtual?.id],
     queryFn: async () => {
       try {
         const filtroContexto = getFiltroContexto('empresa_id', true);
-        const allData = await base44.entities[nomeEntidade].filter(filtroContexto, undefined, 5000); // Max 5000
+        
+        // Usa função backend otimizada para contagem de grandes volumes
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: nomeEntidade,
+          filter: filtroContexto
+        });
+
+        if (response.data?.count !== undefined) {
+          return response.data.count;
+        }
+
+        // Fallback para método antigo se a função backend falhar
+        console.warn(`Função countEntities falhou, usando fallback para ${nomeEntidade}`);
+        const allData = await base44.entities[nomeEntidade].filter(filtroContexto, undefined, 5000);
         return allData.length;
       } catch (err) {
         console.error(`Erro ao contar ${nomeEntidade}:`, err);
-        return 0;
+        // Fallback: tenta contar localmente com limite
+        try {
+          const filtroContexto = getFiltroContexto('empresa_id', true);
+          const allData = await base44.entities[nomeEntidade].filter(filtroContexto, undefined, 5000);
+          return allData.length;
+        } catch (fallbackErr) {
+          console.error(`Fallback também falhou para ${nomeEntidade}:`, fallbackErr);
+          return 0;
+        }
       }
     },
     staleTime: 60000, // Cache de 1 minuto (contagem muda menos)
@@ -771,7 +792,7 @@ onClose: invalidateAllRelated,
         </CardHeader>
 
         <CardContent className={`p-6 ${contentClass}`}>
-          {isLoading ? (
+          {(isLoading || isLoadingCount) ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando dados...</p>
