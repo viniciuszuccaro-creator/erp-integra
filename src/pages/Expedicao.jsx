@@ -62,6 +62,24 @@ export default function Expedicao() {
     retry: 2
   });
 
+  const { data: totalEntregas = 0 } = useQuery({
+    queryKey: ['entregas-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Entrega',
+          filter: filtro
+        });
+        return response.data?.count || entregas.length;
+      } catch {
+        return entregas.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
     queryFn: async () => {

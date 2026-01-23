@@ -40,6 +40,24 @@ export default function Producao() {
     retry: 2
   });
 
+  const { data: totalOrdensProducao = 0 } = useQuery({
+    queryKey: ['ordens-producao-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'OrdemProducao',
+          filter: filtro
+        });
+        return response.data?.count || ordensProducao.length;
+      } catch {
+        return ordensProducao.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   const totalOPs = ordensProducao.length;
   const opsLiberadas = ordensProducao.filter(op => op.status === "Liberada").length;
   const opsEmProducao = ordensProducao.filter(op =>

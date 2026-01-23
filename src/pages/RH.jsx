@@ -36,6 +36,24 @@ export default function RH() {
     retry: 2
   });
 
+  const { data: totalColaboradores = 0 } = useQuery({
+    queryKey: ['colaboradores-count-rh', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Colaborador',
+          filter: filtro
+        });
+        return response.data?.count || colaboradores.length;
+      } catch {
+        return colaboradores.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   const { data: pontos = [] } = useQuery({
     queryKey: ['pontos', empresaAtual?.id],
     queryFn: async () => {
@@ -182,6 +200,7 @@ export default function RH() {
         
         <KPIsRH
           colaboradoresAtivos={colaboradoresAtivos}
+          totalColaboradores={totalColaboradores}
           feriasAprovadas={feriasAprovadas}
           feriasPendentes={feriasPendentes}
           totalPontos={pontos.length}
