@@ -25,8 +25,6 @@ export default function Producao() {
   const { filtrarPorContexto, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { empresaAtual } = useContextoVisual();
-
   const { data: ordensProducao = [] } = useQuery({
     queryKey: ['ordens-producao', empresaAtual?.id],
     queryFn: async () => {

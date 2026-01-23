@@ -21,8 +21,6 @@ export default function RH() {
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { empresaAtual } = useContextoVisual();
-
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', empresaAtual?.id],
     queryFn: async () => {

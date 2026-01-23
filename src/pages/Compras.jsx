@@ -21,8 +21,6 @@ export default function Compras() {
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { empresaAtual } = useContextoVisual();
-
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores', empresaAtual?.id],
     queryFn: async () => {

@@ -21,8 +21,6 @@ export default function CRMPage() {
   const { filtrarPorContexto, filterInContext, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { empresaAtual } = useContextoVisual();
-
   const { data: oportunidades = [] } = useQuery({
     queryKey: ['oportunidades', empresaAtual?.id],
     queryFn: async () => {
