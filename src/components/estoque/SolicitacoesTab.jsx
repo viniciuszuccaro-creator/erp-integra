@@ -67,10 +67,19 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
     }
   };
 
-  const filteredSolicitacoes = solicitacoes.filter(s =>
-    s.produto_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.solicitante?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredSolicitacoes = solicitacoes.filter(s => {
+    const searchLower = searchTerm.toLowerCase();
+    return s.produto_nome?.toLowerCase().includes(searchLower) ||
+      s.produto_descricao?.toLowerCase().includes(searchLower) ||
+      s.numero_solicitacao?.toLowerCase().includes(searchLower) ||
+      s.solicitante?.toLowerCase().includes(searchLower) ||
+      s.setor?.toLowerCase().includes(searchLower) ||
+      s.aprovador?.toLowerCase().includes(searchLower) ||
+      s.justificativa?.toLowerCase().includes(searchLower) ||
+      s.prioridade?.toLowerCase().includes(searchLower) ||
+      s.status?.toLowerCase().includes(searchLower) ||
+      s.observacoes?.toLowerCase().includes(searchLower);
+  });
 
   const statusColors = {
     'Pendente': 'bg-yellow-100 text-yellow-700',
@@ -94,7 +103,7 @@ export default function SolicitacoesTab({ solicitacoes, produtos }) {
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Buscar por produto, solicitante ou nº"
+            placeholder="Buscar por produto, nº solicitação, solicitante, setor, status, aprovador..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"

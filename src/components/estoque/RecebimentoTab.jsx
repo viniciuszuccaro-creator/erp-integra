@@ -163,10 +163,18 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
     'Divergente': 'bg-red-100 text-red-700'
   };
 
-  const filteredRecebimentos = recebimentos.filter(r =>
-    r.numero_recebimento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    r.fornecedor?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRecebimentos = recebimentos.filter(r => {
+    const searchLower = searchTerm.toLowerCase();
+    return r.numero_recebimento?.toLowerCase().includes(searchLower) ||
+      r.documento?.toLowerCase().includes(searchLower) ||
+      r.fornecedor?.toLowerCase().includes(searchLower) ||
+      r.numero_nf?.includes(searchLower) ||
+      r.responsavel_recebimento?.toLowerCase().includes(searchLower) ||
+      r.responsavel?.toLowerCase().includes(searchLower) ||
+      r.status?.toLowerCase().includes(searchLower) ||
+      r.observacoes?.toLowerCase().includes(searchLower) ||
+      r.itens_recebidos?.some(i => i?.produto_descricao?.toLowerCase().includes(searchLower));
+  });
 
   return (
     <div className="space-y-6">
@@ -174,7 +182,7 @@ export default function RecebimentoTab({ recebimentos, ordensCompra, produtos })
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
           <Input
-            placeholder="Buscar recebimento..."
+            placeholder="Buscar por nº recebimento, fornecedor, NF, responsável, produto, status..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
