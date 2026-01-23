@@ -57,6 +57,7 @@ import ZIndexGuard from "@/components/lib/ZIndexFix";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import "@/components/lib/networkGuard";
 import BootstrapGuard from "@/components/lib/BootstrapGuard";
+import GlobalNetworkErrorHandler from "@/components/lib/GlobalNetworkErrorHandler";
 
 const navigationItems = [
         { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -585,6 +586,7 @@ export default function Layout({ children, currentPageName }) {
     <UserProvider>
       <WindowProvider>
         <ZIndexGuard>
+          <GlobalNetworkErrorHandler />
           <LayoutContent children={children} currentPageName={currentPageName} />
         </ZIndexGuard>
       </WindowProvider>
