@@ -18,6 +18,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
 export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
+  const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
   const { empresaAtual, contexto } = useContextoVisual();
@@ -144,9 +145,33 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
     'Entregue': 'bg-blue-100 text-blue-700'
   };
 
+  const filteredRequisicoes = requisicoes.filter(r => {
+    const searchLower = searchTerm.toLowerCase();
+    return r.numero_requisicao?.toLowerCase().includes(searchLower) ||
+      r.documento?.toLowerCase().includes(searchLower) ||
+      r.solicitante?.toLowerCase().includes(searchLower) ||
+      r.setor?.toLowerCase().includes(searchLower) ||
+      r.centro_custo?.toLowerCase().includes(searchLower) ||
+      r.finalidade?.toLowerCase().includes(searchLower) ||
+      r.responsavel?.toLowerCase().includes(searchLower) ||
+      r.status?.toLowerCase().includes(searchLower) ||
+      r.observacoes?.toLowerCase().includes(searchLower) ||
+      r.motivo?.toLowerCase().includes(searchLower) ||
+      r.localizacao_destino?.toLowerCase().includes(searchLower);
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center gap-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="Buscar por nº requisição, solicitante, setor, produto, status..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
+        </div>
         {canCreate('Estoque', 'Requisicoes') && (
           <Button
             className="bg-orange-600 hover:bg-orange-700"
@@ -339,7 +364,7 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {requisicoes.map((req) => (
+              {filteredRequisicoes.map((req) => (
                 <TableRow key={req.id} className="hover:bg-slate-50">
                   <TableCell className="font-medium font-mono text-sm">{req.numero_requisicao}</TableCell>
                   <TableCell>
@@ -359,7 +384,7 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
           </Table>
         </div>
 
-        {requisicoes.length === 0 && (
+        {filteredRequisicoes.length === 0 && (
           <div className="text-center py-12">
             <PackageMinus className="w-16 h-16 mx-auto mb-4 opacity-30 text-slate-400" />
             <p className="text-slate-500">Nenhuma requisição de almoxarifado registrada</p>
