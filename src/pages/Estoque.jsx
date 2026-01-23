@@ -40,6 +40,7 @@ export default function Estoque() {
         const skip = (currentPageProdutos - 1) * itemsPerPageProdutos;
         const limit = itemsPerPageProdutos;
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        // ✅ Ordenação no backend por data de criação (mais recentes primeiro)
         const result = await base44.entities.Produto.filter(filtro, '-created_date', limit, skip);
         return result || [];
       } catch (err) {

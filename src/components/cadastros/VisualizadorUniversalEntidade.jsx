@@ -248,26 +248,59 @@ export default function VisualizadorUniversalEntidade({
   const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
-  // V22.0 - Query SERVER-SIDE otimizada com filtro multiempresa + retry robusto
+  // V22.0 - Query SERVER-SIDE otimizada com ordenação no backend
   const { getFiltroContexto } = useContextoVisual();
   
+  // ✅ Mapear ordenação do menu/coluna para string de ordenação do backend
+  const getBackendSortString = () => {
+    if (colunaOrdenacao) {
+      return direcaoOrdenacao === 'desc' ? `-${colunaOrdenacao}` : colunaOrdenacao;
+    }
+    
+    // Mapear ordenações do menu para campos do backend
+    const sortMap = {
+      'recent': '-created_date',
+      'oldest': 'created_date',
+      'nome': 'nome',
+      'nome_desc': '-nome',
+      'descricao': 'descricao',
+      'descricao_desc': '-descricao',
+      'codigo': 'codigo',
+      'codigo_desc': '-codigo',
+      'tipo': 'tipo_item',
+      'tipo_desc': '-tipo_item',
+      'setor': 'setor_atividade_nome',
+      'setor_desc': '-setor_atividade_nome',
+      'grupo': 'grupo_produto_nome',
+      'grupo_desc': '-grupo_produto_nome',
+      'status': 'status',
+      'status_desc': '-status',
+      'preco': '-preco_venda',
+      'preco_menor': 'preco_venda',
+      'estoque_alto': '-estoque_atual',
+      'estoque_baixo': 'estoque_disponivel'
+    };
+    
+    return sortMap[ordenacao] || '-created_date';
+  };
+  
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id],
+    queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao],
     queryFn: async () => {
       try {
-        // Filtro multiempresa completo (grupo + empresa)
         const filtroContexto = getFiltroContexto('empresa_id', true);
-        
-        // Busca com limite no servidor (evita trazer tudo)
         const skip = (currentPage - 1) * itemsPerPage;
+        const sortString = getBackendSortString();
+        
+        // ✅ Ordenação aplicada no BACKEND (escalável para 25k+ registros)
         const result = await base44.entities[nomeEntidade].filter(
           filtroContexto, 
-          '-created_date', 
-          itemsPerPage + 50 // Buffer extra para garantir dados
+          sortString,
+          itemsPerPage,
+          skip
         );
         
-        // Slice apenas os dados da página atual
-        return result.slice(skip, skip + itemsPerPage) || [];
+        return result || [];
       } catch (err) {
         console.error(`Erro ao buscar ${nomeEntidade}:`, err);
         if (err.message?.includes('Network Error')) {
@@ -285,9 +318,9 @@ export default function VisualizadorUniversalEntidade({
     refetchInterval: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchOnReconnect: true, // Reconecta automaticamente
-    retry: 3, // 3 tentativas
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000) // Backoff exponencial
+    refetchOnReconnect: true,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000)
   });
 
   // V22.0 - Query para contar total via BACKEND (escalável para 25k+ registros)
@@ -355,11 +388,11 @@ export default function VisualizadorUniversalEntidade({
     }
   };
 
-  // Busca universal em todos os campos + ✅ ORDENAÇÃO AVANÇADA (menu + colunas)
+  // ✅ Busca universal em todos os campos (SOMENTE busca - ordenação no backend)
   const dadosBuscadosEOrdenados = useMemo(() => {
-    // 1️⃣ Aplicar busca
     let resultado = dadosFiltrados;
     
+    // Aplicar busca local (backend não suporta busca universal em múltiplos campos)
     if (busca.trim()) {
       const termoBusca = busca.toLowerCase();
       resultado = resultado.filter(item => {
@@ -370,34 +403,9 @@ export default function VisualizadorUniversalEntidade({
       });
     }
 
-    // 2️⃣ Aplicar ordenação
-    if (colunaOrdenacao) {
-      // Ordenação por coluna clicada
-      const colConfig = colunasOrdenacao.find(c => c.campo === colunaOrdenacao);
-      if (colConfig) {
-        resultado = [...resultado].sort((a, b) => {
-          const valA = colConfig.getValue(a);
-          const valB = colConfig.getValue(b);
-          
-          if (colConfig.isNumeric) {
-            return direcaoOrdenacao === 'asc' ? valA - valB : valB - valA;
-          } else {
-            return direcaoOrdenacao === 'asc' 
-              ? String(valA).localeCompare(String(valB))
-              : String(valB).localeCompare(String(valA));
-          }
-        });
-      }
-    } else {
-      // Ordenação por menu dropdown
-      const opcaoSelecionada = opcoesOrdenacao.find(op => op.value === ordenacao);
-      if (opcaoSelecionada?.sortFn) {
-        resultado = [...resultado].sort(opcaoSelecionada.sortFn);
-      }
-    }
-
+    // ✅ ORDENAÇÃO JÁ VEM DO BACKEND - não ordenar novamente no frontend
     return resultado;
-  }, [dadosFiltrados, busca, ordenacao, colunaOrdenacao, direcaoOrdenacao, opcoesOrdenacao, colunasOrdenacao]);
+  }, [dadosFiltrados, busca]);
 
   // Seleção em massa + exclusão
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;

@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download, Upload, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import SearchInput from "@/components/ui/SearchInput";
 import ProtectedField from "@/components/security/ProtectedField";
@@ -42,8 +42,6 @@ export default function ProdutosTab({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduto, setEditingProduto] = useState(null);
   const [solicitacaoModal, setSolicitacaoModal] = useState(null);
-  const [colunaOrdenacao, setColunaOrdenacao] = useState(null);
-  const [direcaoOrdenacao, setDirecaoOrdenacao] = useState('asc');
   const { openWindow } = useWindow();
   const { empresaAtual, contexto } = useContextoVisual();
   const { canCreate, canEdit, hasPermission } = usePermissions();
@@ -162,48 +160,13 @@ export default function ProdutosTab({
     }
   };
 
-  // ✅ Função de ordenação por coluna
-  const handleOrdenarPorColuna = (campo, isNumeric = false) => {
-    if (colunaOrdenacao === campo) {
-      setDirecaoOrdenacao(prev => prev === 'asc' ? 'desc' : 'asc');
-    } else {
-      setColunaOrdenacao(campo);
-      setDirecaoOrdenacao('asc');
-    }
-  };
 
-  // V21.0 - Produtos já vêm filtrados e paginados do pai, apenas aplicar ordenação
+
+  // ✅ V22.0 - Produtos já vêm ordenados do backend, sem ordenação local
+  // A ordenação local só funciona nos dados da página - inútil para grandes volumes
   const produtosProcessados = useMemo(() => {
-    let resultado = produtos;
-
-    // Aplicar ordenação se uma coluna foi selecionada
-    if (colunaOrdenacao) {
-      resultado = [...resultado].sort((a, b) => {
-        let valA = a[colunaOrdenacao];
-        let valB = b[colunaOrdenacao];
-
-        // Tratamento especial para campos aninhados
-        if (colunaOrdenacao === 'grupo_produto_nome') {
-          valA = a.grupo_produto_nome || a.grupo || '';
-          valB = b.grupo_produto_nome || b.grupo || '';
-        }
-
-        // Ordenação numérica
-        if (typeof valA === 'number' && typeof valB === 'number') {
-          return direcaoOrdenacao === 'asc' ? valA - valB : valB - valA;
-        }
-
-        // Ordenação alfabética
-        const strA = String(valA || '');
-        const strB = String(valB || '');
-        return direcaoOrdenacao === 'asc' 
-          ? strA.localeCompare(strB)
-          : strB.localeCompare(strA);
-      });
-    }
-
-    return resultado;
-  }, [produtos, colunaOrdenacao, direcaoOrdenacao]);
+    return produtos;
+  }, [produtos]);
 
   // ✅ CORREÇÃO: Buscar produtos com estoque baixo de TODAS as páginas via backend
   const { data: produtosBaixoEstoque = [] } = useQuery({
@@ -230,29 +193,7 @@ export default function ProdutosTab({
   const produtosProducao = produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção');
   const produtosRevenda = produtos.filter(p => p.tipo_item !== 'Matéria-Prima Produção');
 
-  // ✅ Componente de cabeçalho de coluna clicável
-  const ColunaOrdenavel = ({ campo, label, isNumeric = false }) => {
-    const isOrdenada = colunaOrdenacao === campo;
-    return (
-      <TableHead 
-        className="cursor-pointer select-none hover:bg-slate-100 transition-colors"
-        onClick={() => handleOrdenarPorColuna(campo, isNumeric)}
-      >
-        <div className="flex items-center gap-2">
-          <span>{label}</span>
-          {isOrdenada ? (
-            direcaoOrdenacao === 'asc' ? (
-              <ArrowUp className="w-4 h-4 text-blue-600" />
-            ) : (
-              <ArrowDown className="w-4 h-4 text-blue-600" />
-            )
-          ) : (
-            <ArrowUpDown className="w-4 h-4 text-slate-400" />
-          )}
-        </div>
-      </TableHead>
-    );
-  };
+
 
   return (
     <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
@@ -478,19 +419,6 @@ export default function ProdutosTab({
               <Download className="w-4 h-4 mr-2" />
               Exportar CSV
             </Button>
-            {colunaOrdenacao && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setColunaOrdenacao(null);
-                  setDirecaoOrdenacao('asc');
-                }}
-                className="whitespace-nowrap"
-              >
-                Limpar Ordenação
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -524,18 +452,18 @@ export default function ProdutosTab({
                       aria-label="Selecionar todos"
                     />
                   </TableHead>
-                  <ColunaOrdenavel campo="codigo" label="Código" />
-                  <ColunaOrdenavel campo="descricao" label="Descrição" />
-                  <ColunaOrdenavel campo="peso_teorico_kg_m" label="Peso Teórico" isNumeric />
-                  <ColunaOrdenavel campo="setor_atividade_nome" label="Setor" />
-                  <ColunaOrdenavel campo="tipo_item" label="Tipo" />
-                  <ColunaOrdenavel campo="grupo_produto_nome" label="Categoria" />
-                  <ColunaOrdenavel campo="estoque_atual" label="Estoque Atual" isNumeric />
-                  <ColunaOrdenavel campo="estoque_minimo" label="Estoque Mín." isNumeric />
-                  <ColunaOrdenavel campo="estoque_disponivel" label="Disponível" isNumeric />
-                  <ColunaOrdenavel campo="custo_medio" label="Custo" isNumeric />
-                  <ColunaOrdenavel campo="preco_venda" label="Preço Venda" isNumeric />
-                  <ColunaOrdenavel campo="status" label="Status" />
+                  <TableHead>Código</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Peso Teórico</TableHead>
+                  <TableHead>Setor</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Estoque Atual</TableHead>
+                  <TableHead>Estoque Mín.</TableHead>
+                  <TableHead>Disponível</TableHead>
+                  <TableHead>Custo</TableHead>
+                  <TableHead>Preço Venda</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
