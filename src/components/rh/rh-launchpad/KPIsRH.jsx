@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserCircle, Calendar, Clock, CheckCircle } from "lucide-react";
 
 export default function KPIsRH({ 
-  colaboradoresAtivos, 
+  colaboradoresAtivos,
+  totalColaboradores,
   feriasAprovadas, 
   feriasPendentes, 
   totalPontos 
@@ -17,7 +18,7 @@ export default function KPIsRH({
         </CardHeader>
         <CardContent className="px-3 pb-2">
           <div className="text-2xl font-bold text-purple-600">{colaboradoresAtivos}</div>
-          <p className="text-xs text-slate-500">colaboradores</p>
+          <p className="text-xs text-slate-500">de {totalColaboradores || colaboradoresAtivos}</p>
         </CardContent>
       </Card>
 
