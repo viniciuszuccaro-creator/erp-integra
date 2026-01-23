@@ -247,32 +247,32 @@ export default function VisualizadorUniversalEntidade({
   const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
-  // V21.0 - Query paginada com busca
+  // V21.0 - Query SOMENTE com paginação (SEM busca duplicada)
   const { data: dados = [], isLoading, isFetching, refetch } = useQuery({
-    queryKey: [...queryKey, currentPage, itemsPerPage, busca],
+    queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id],
     queryFn: async () => {
       const skip = (currentPage - 1) * itemsPerPage;
       const limit = itemsPerPage;
       const result = await base44.entities[nomeEntidade].list('-created_date', limit, skip);
       return result || [];
     },
-    staleTime: 600000,
-    gcTime: 900000,
+    staleTime: 30000,
+    gcTime: 60000,
     refetchInterval: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false
   });
 
-  // V21.0 - Query para contar total
+  // V21.0 - Query para contar total (otimizada)
   const { data: totalItemsCount = 0 } = useQuery({
-    queryKey: [...queryKey, 'count', busca],
+    queryKey: [...queryKey, 'count', empresaAtual?.id],
     queryFn: async () => {
       const allData = await base44.entities[nomeEntidade].list();
       return allData.length;
     },
-    staleTime: 600000,
-    gcTime: 900000,
+    staleTime: 30000,
+    gcTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false
