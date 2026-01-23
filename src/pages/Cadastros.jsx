@@ -490,7 +490,7 @@ export default function Cadastros() {
   // QUERIES - BLOCO 3: FINANCEIRO
   const { data: bancos = [] } = useQuery({
     queryKey: ['bancos'],
-    queryFn: () => base44.entities.Banco.list('-created_date'),
+    queryFn: () => base44.entities.Banco.list('-created_date', 9999),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -500,7 +500,7 @@ export default function Cadastros() {
 
   const { data: formasPagamento = [] } = useQuery({
     queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list('-created_date'),
+    queryFn: () => base44.entities.FormaPagamento.list('-created_date', 9999),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -510,17 +510,17 @@ export default function Cadastros() {
 
   const { data: operadoresCaixa = [] } = useQuery({
     queryKey: ['operadores-caixa'],
-    queryFn: () => base44.entities.OperadorCaixa.list(),
+    queryFn: () => base44.entities.OperadorCaixa.list('-created_date', 9999),
   });
 
   const { data: planoContas = [] } = useQuery({
     queryKey: ['plano-contas'],
-    queryFn: () => base44.entities.PlanoDeContas.list(),
+    queryFn: () => base44.entities.PlanoDeContas.list('-created_date', 9999),
   });
 
   const { data: centrosCusto = [] } = useQuery({
     queryKey: ['centrosCusto'],
-    queryFn: () => base44.entities.CentroCusto.list('-created_date'),
+    queryFn: () => base44.entities.CentroCusto.list('-created_date', 9999),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -530,183 +530,183 @@ export default function Cadastros() {
 
   const { data: centrosResultado = [] } = useQuery({
     queryKey: ['centros-resultado'],
-    queryFn: () => base44.entities.CentroResultado.list(),
+    queryFn: () => base44.entities.CentroResultado.list('-created_date', 9999),
   });
 
   const { data: tiposDespesa = [] } = useQuery({
     queryKey: ['tipos-despesa'],
-    queryFn: () => base44.entities.TipoDespesa.list(),
+    queryFn: () => base44.entities.TipoDespesa.list('-created_date', 9999),
   });
 
   const { data: moedasIndices = [] } = useQuery({
     queryKey: ['moedas-indices'],
-    queryFn: () => base44.entities.MoedaIndice.list(),
+    queryFn: () => base44.entities.MoedaIndice.list('-created_date', 9999),
   });
 
   const { data: condicoesComerciais = [] } = useQuery({
     queryKey: ['condicoes-comerciais'],
-    queryFn: () => base44.entities.CondicaoComercial.list(),
+    queryFn: () => base44.entities.CondicaoComercial.list('-created_date', 9999),
   });
 
   // FASE 3: Queries adicionais
   const { data: segmentosCliente = [] } = useQuery({
     queryKey: ['segmentos-cliente'],
-    queryFn: () => base44.entities.SegmentoCliente.list(),
+    queryFn: () => base44.entities.SegmentoCliente.list('-created_date', 9999),
   });
 
   const { data: regioesAtendimento = [] } = useQuery({
     queryKey: ['regioes-atendimento'],
-    queryFn: () => base44.entities.RegiaoAtendimento.list(),
+    queryFn: () => base44.entities.RegiaoAtendimento.list('-created_date', 9999),
   });
 
   const { data: unidadesMedida = [] } = useQuery({
     queryKey: ['unidades-medida'],
-    queryFn: () => base44.entities.UnidadeMedida.list(),
+    queryFn: () => base44.entities.UnidadeMedida.list('-created_date', 9999),
   });
 
   const { data: webhooks = [] } = useQuery({
     queryKey: ['webhooks'],
-    queryFn: () => base44.entities.Webhook.list(),
+    queryFn: () => base44.entities.Webhook.list('-created_date', 9999),
   });
 
   const { data: rotasPadrao = [] } = useQuery({
     queryKey: ['rotas-padrao'],
-    queryFn: () => base44.entities.RotaPadrao.list(),
+    queryFn: () => base44.entities.RotaPadrao.list('-created_date', 9999),
   });
 
   const { data: modelosDocumento = [] } = useQuery({
     queryKey: ['modelos-documento'],
-    queryFn: () => base44.entities.ModeloDocumento.list(),
+    queryFn: () => base44.entities.ModeloDocumento.list('-created_date', 9999),
   });
 
   const { data: apisExternas = [] } = useQuery({
     queryKey: ['apis-externas'],
-    queryFn: () => base44.entities.ApiExterna.list(),
+    queryFn: () => base44.entities.ApiExterna.list('-created_date', 9999),
   });
 
   const { data: jobsAgendados = [] } = useQuery({
     queryKey: ['jobs-agendados'],
-    queryFn: () => base44.entities.JobAgendado.list(),
+    queryFn: () => base44.entities.JobAgendado.list('-created_date', 9999),
   });
 
   const { data: configsIA = [] } = useQuery({
     queryKey: ['configs-ia'],
-    queryFn: () => base44.entities.IAConfig.list(),
+    queryFn: () => base44.entities.IAConfig.list('-created_date', 9999),
   });
 
   // PARÂMETROS OPERACIONAIS - FASE 3
   const { data: parametrosPortal = [] } = useQuery({
     queryKey: ['parametros-portal'],
-    queryFn: () => base44.entities.ParametroPortalCliente.list(),
+    queryFn: () => base44.entities.ParametroPortalCliente.list('-created_date', 9999),
   });
 
   const { data: parametrosOrigemPedido = [] } = useQuery({
     queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list(),
+    queryFn: () => base44.entities.ParametroOrigemPedido.list('-created_date', 9999),
   });
 
   const { data: parametrosRecebimentoNFe = [] } = useQuery({
     queryKey: ['parametros-recebimento-nfe'],
-    queryFn: () => base44.entities.ParametroRecebimentoNFe.list(),
+    queryFn: () => base44.entities.ParametroRecebimentoNFe.list('-created_date', 9999),
   });
 
   const { data: parametrosRoteirizacao = [] } = useQuery({
     queryKey: ['parametros-roteirizacao'],
-    queryFn: () => base44.entities.ParametroRoteirizacao.list(),
+    queryFn: () => base44.entities.ParametroRoteirizacao.list('-created_date', 9999),
   });
 
   const { data: parametrosConciliacao = [] } = useQuery({
     queryKey: ['parametros-conciliacao'],
-    queryFn: () => base44.entities.ParametroConciliacaoBancaria.list(),
+    queryFn: () => base44.entities.ParametroConciliacaoBancaria.list('-created_date', 9999),
   });
 
   const { data: parametrosCaixa = [] } = useQuery({
     queryKey: ['parametros-caixa'],
-    queryFn: () => base44.entities.ParametroCaixaDiario.list(),
+    queryFn: () => base44.entities.ParametroCaixaDiario.list('-created_date', 9999),
   });
 
   // QUERIES - BLOCO 4: LOGÍSTICA
   const { data: veiculos = [] } = useQuery({
     queryKey: ['veiculos'],
-    queryFn: () => base44.entities.Veiculo.list('-created_date'),
+    queryFn: () => base44.entities.Veiculo.list('-created_date', 9999),
   });
 
   const { data: motoristas = [] } = useQuery({
     queryKey: ['motoristas'],
-    queryFn: () => base44.entities.Motorista.list(),
+    queryFn: () => base44.entities.Motorista.list('-created_date', 9999),
   });
 
   const { data: tiposFrete = [] } = useQuery({
     queryKey: ['tipos-frete'],
-    queryFn: () => base44.entities.TipoFrete.list(),
+    queryFn: () => base44.entities.TipoFrete.list('-created_date', 9999),
   });
 
   const { data: chatbotIntents = [] } = useQuery({
     queryKey: ['chatbotIntents'],
-    queryFn: () => base44.entities.ChatbotIntent.list(),
+    queryFn: () => base44.entities.ChatbotIntent.list('-created_date', 9999),
   });
 
   const { data: chatbotCanais = [] } = useQuery({
     queryKey: ['chatbotCanais'],
-    queryFn: () => base44.entities.ChatbotCanal.list(),
+    queryFn: () => base44.entities.ChatbotCanal.list('-created_date', 9999),
   });
 
   // QUERIES - BLOCO 5: ORGANIZACIONAL
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: () => base44.entities.Empresa.list('-created_date', 9999),
   });
 
   const { data: grupos = [] } = useQuery({
     queryKey: ['grupos'],
-    queryFn: () => base44.entities.GrupoEmpresarial.list(),
+    queryFn: () => base44.entities.GrupoEmpresarial.list('-created_date', 9999),
   });
 
   const { data: departamentos = [] } = useQuery({
     queryKey: ['departamentos'],
-    queryFn: () => base44.entities.Departamento.list(),
+    queryFn: () => base44.entities.Departamento.list('-created_date', 9999),
   });
 
   const { data: cargos = [] } = useQuery({
     queryKey: ['cargos'],
-    queryFn: () => base44.entities.Cargo.list(),
+    queryFn: () => base44.entities.Cargo.list('-created_date', 9999),
   });
 
   const { data: turnos = [] } = useQuery({
     queryKey: ['turnos'],
-    queryFn: () => base44.entities.Turno.list(),
+    queryFn: () => base44.entities.Turno.list('-created_date', 9999),
   });
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios'],
-    queryFn: () => base44.entities.User.list(),
+    queryFn: () => base44.entities.User.list('-created_date', 9999),
   });
 
   const { data: perfisAcesso = [] } = useQuery({
     queryKey: ['perfis-acesso'],
-    queryFn: () => base44.entities.PerfilAcesso.list(),
+    queryFn: () => base44.entities.PerfilAcesso.list('-created_date', 9999),
   });
 
   // QUERIES - BLOCO 6: INTEGRAÇÕES & IA
   const { data: eventosNotificacao = [] } = useQuery({
     queryKey: ['eventos-notificacao'],
-    queryFn: () => base44.entities.EventoNotificacao.list('-created_date'),
+    queryFn: () => base44.entities.EventoNotificacao.list('-created_date', 9999),
   });
 
   const { data: configsIntegracao = [] } = useQuery({
     queryKey: ['configs-integracao-marketplace'],
-    queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list(),
+    queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list('-created_date', 9999),
   });
 
   // FASE 2: Novos cadastros
   const { data: locaisEstoque = [] } = useQuery({
     queryKey: ['locais-estoque'],
-    queryFn: () => base44.entities.LocalEstoque.list(),
+    queryFn: () => base44.entities.LocalEstoque.list('-created_date', 9999),
   });
 
   const { data: tabelasFiscais = [] } = useQuery({
     queryKey: ['tabelas-fiscais'],
-    queryFn: () => base44.entities.TabelaFiscal.list(),
+    queryFn: () => base44.entities.TabelaFiscal.list('-created_date', 9999),
   });
 
   const { data: configuracao } = useQuery({
