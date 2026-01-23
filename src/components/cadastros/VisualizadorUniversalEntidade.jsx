@@ -221,7 +221,7 @@ export default function VisualizadorUniversalEntidade({
   
   // V21.0 - Estados de Paginação
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(50);
+  const [itemsPerPage, setItemsPerPage] = useState(100);
   const { openWindow, closeWindow } = useWindow();
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
@@ -711,8 +711,7 @@ onClose: invalidateAllRelated,
 
           {/* Barra de Busca, Ordenação e Filtros */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <div className="flex-1">
               <Input
                 placeholder="🔍 Busca universal em todos os campos..."
                 value={busca}
@@ -720,7 +719,6 @@ onClose: invalidateAllRelated,
                   setBusca(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-10"
               />
             </div>
             

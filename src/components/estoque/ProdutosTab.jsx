@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ export default function ProdutosTab({
   isLoading = false,
   currentPage = 1,
   totalItems = 0,
-  itemsPerPage = 50,
+  itemsPerPage = 100,
   onPageChange,
   onItemsPerPageChange,
   searchTerm = '',
@@ -205,9 +205,25 @@ export default function ProdutosTab({
     return resultado;
   }, [produtos, colunaOrdenacao, direcaoOrdenacao]);
 
-  const produtosBaixoEstoque = produtos.filter(p => {
-    const disponivel = (p.estoque_disponivel ?? ((p.estoque_atual || 0) - (p.estoque_reservado || 0)));
-    return p.status === 'Ativo' && (Math.max(0, disponivel) <= (p.estoque_minimo || 0));
+  // ✅ CORREÇÃO: Buscar produtos com estoque baixo de TODAS as páginas via backend
+  const { data: produtosBaixoEstoque = [] } = useQuery({
+    queryKey: ['produtos-estoque-baixo', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const todosProdutos = await base44.entities.Produto.filter(filtro, '-created_date', 5000);
+        return todosProdutos.filter(p => {
+          const disponivel = (p.estoque_disponivel ?? ((p.estoque_atual || 0) - (p.estoque_reservado || 0)));
+          return p.status === 'Ativo' && (Math.max(0, disponivel) <= (p.estoque_minimo || 0));
+        });
+      } catch (err) {
+        console.error('Erro ao buscar produtos baixo estoque:', err);
+        return [];
+      }
+    },
+    staleTime: 60000,
+    gcTime: 120000,
+    refetchOnWindowFocus: false
   });
 
   // V21.6: Estatísticas de produtos em produção

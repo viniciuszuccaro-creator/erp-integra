@@ -52,6 +52,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SearchInput from "@/components/ui/SearchInput";
 import CadastroClienteCompleto from "../components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "../components/cadastros/CadastroFornecedorCompleto";
 import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
@@ -893,15 +894,12 @@ export default function Cadastros() {
           </div>
 
           {/* BUSCA UNIVERSAL */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <Input
-              placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 h-12 text-base shadow-md border-slate-300"
-            />
-          </div>
+          <SearchInput
+            placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
+            value={searchTerm}
+            onChange={(val) => setSearchTerm(val)}
+            className="h-12 text-base shadow-md border-slate-300"
+          />
 
           {/* ACCORDIONS - 6 BLOCOS */}
           <Accordion type="multiple" value={acordeonAberto} onValueChange={setAcordeonAberto} className="space-y-4">
