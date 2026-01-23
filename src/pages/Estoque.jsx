@@ -145,12 +145,24 @@ export default function Estoque() {
   const produtosFiltrados = useMemo(() => {
     let resultado = produtos;
 
-    // Aplicar busca local
+    // Aplicar busca local UNIVERSAL
     if (searchTerm.trim()) {
       const termo = searchTerm.toLowerCase();
       resultado = resultado.filter(p => 
         (p.descricao || '').toLowerCase().includes(termo) ||
-        (p.codigo || '').toLowerCase().includes(termo)
+        (p.codigo || '').toLowerCase().includes(termo) ||
+        (p.codigo_barras || '').includes(termo) ||
+        (p.grupo || '').toLowerCase().includes(termo) ||
+        (p.grupo_produto_nome || '').toLowerCase().includes(termo) ||
+        (p.marca_nome || '').toLowerCase().includes(termo) ||
+        (p.setor_atividade_nome || '').toLowerCase().includes(termo) ||
+        (p.tipo_item || '').toLowerCase().includes(termo) ||
+        (p.fornecedor_principal || '').toLowerCase().includes(termo) ||
+        (p.ncm || '').includes(termo) ||
+        (p.cest || '').includes(termo) ||
+        (p.subgrupo || '').toLowerCase().includes(termo) ||
+        (p.localizacao || '').toLowerCase().includes(termo) ||
+        (p.observacoes || '').toLowerCase().includes(termo)
       );
     }
 
