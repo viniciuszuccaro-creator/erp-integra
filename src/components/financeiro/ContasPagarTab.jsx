@@ -151,10 +151,20 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const contasFiltradas = contas
     .filter(c => statusFilter === "todos" || c.status === statusFilter)
-    .filter(c =>
-      c.fornecedor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    .filter(c => {
+      const searchLower = searchTerm.toLowerCase();
+      return c.fornecedor?.toLowerCase().includes(searchLower) ||
+        c.descricao?.toLowerCase().includes(searchLower) ||
+        c.numero_documento?.toLowerCase().includes(searchLower) ||
+        c.favorecido_cpf_cnpj?.includes(searchLower) ||
+        c.categoria?.toLowerCase().includes(searchLower) ||
+        c.status?.toLowerCase().includes(searchLower) ||
+        c.origem_tipo?.toLowerCase().includes(searchLower) ||
+        c.canal_origem?.toLowerCase().includes(searchLower) ||
+        c.centro_custo?.toLowerCase().includes(searchLower) ||
+        c.projeto_obra?.toLowerCase().includes(searchLower) ||
+        c.observacoes?.toLowerCase().includes(searchLower);
+    });
 
   const totalSelecionado = contas
     .filter(c => contasSelecionadas.includes(c.id))

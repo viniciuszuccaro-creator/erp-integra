@@ -166,11 +166,20 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const filteredContas = contas
     .filter(c => statusFilter === "todas" || c.status === statusFilter)
-    .filter(c =>
-      c.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.numero_documento?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    .filter(c => {
+      const searchLower = searchTerm.toLowerCase();
+      return c.cliente?.toLowerCase().includes(searchLower) ||
+        c.descricao?.toLowerCase().includes(searchLower) ||
+        c.numero_documento?.toLowerCase().includes(searchLower) ||
+        c.forma_cobranca?.toLowerCase().includes(searchLower) ||
+        c.status?.toLowerCase().includes(searchLower) ||
+        c.origem_tipo?.toLowerCase().includes(searchLower) ||
+        c.canal_origem?.toLowerCase().includes(searchLower) ||
+        c.marketplace_origem?.toLowerCase().includes(searchLower) ||
+        c.centro_custo?.toLowerCase().includes(searchLower) ||
+        c.projeto_obra?.toLowerCase().includes(searchLower) ||
+        c.observacoes?.toLowerCase().includes(searchLower);
+    });
 
   const totalSelecionado = contas
     .filter(c => contasSelecionadas.includes(c.id))
