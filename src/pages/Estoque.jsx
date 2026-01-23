@@ -28,7 +28,7 @@ export default function Estoque() {
   
   // V21.0 - Estados de Paginação e Filtros para Produtos
   const [currentPageProdutos, setCurrentPageProdutos] = useState(1);
-  const [itemsPerPageProdutos, setItemsPerPageProdutos] = useState(100);
+  const [itemsPerPageProdutos, setItemsPerPageProdutos] = useState(100); // ✅ V22.0 ETAPA 2: Alterado de 50 para 100
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('todos');
 

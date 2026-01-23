@@ -893,7 +893,7 @@ export default function Cadastros() {
             </Card>
           </div>
 
-          {/* BUSCA UNIVERSAL */}
+          {/* ✅ V22.0 ETAPA 5 e 6: BUSCA UNIVERSAL LIMPA */}
           <SearchInput
             placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
             value={searchTerm}

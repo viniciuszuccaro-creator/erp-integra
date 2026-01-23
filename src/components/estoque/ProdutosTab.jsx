@@ -31,7 +31,7 @@ export default function ProdutosTab({
   isLoading = false,
   currentPage = 1,
   totalItems = 0,
-  itemsPerPage = 100,
+  itemsPerPage = 100, // ✅ V22.0 ETAPA 2: Alterado de 50 para 100
   onPageChange,
   onItemsPerPageChange,
   searchTerm = '',

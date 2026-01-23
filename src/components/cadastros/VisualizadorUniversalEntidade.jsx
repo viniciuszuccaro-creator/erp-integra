@@ -221,7 +221,7 @@ export default function VisualizadorUniversalEntidade({
   
   // V21.0 - Estados de Paginação
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [itemsPerPage, setItemsPerPage] = useState(100); // ✅ V22.0 ETAPA 2: Alterado de 50 para 100
   const { openWindow, closeWindow } = useWindow();
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
