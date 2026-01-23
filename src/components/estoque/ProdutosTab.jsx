@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import SearchInput from "@/components/ui/SearchInput";
+
 import ProtectedField from "@/components/security/ProtectedField";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -388,15 +388,18 @@ export default function ProdutosTab({
       <Card className="border-0 shadow-md flex-shrink-0">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <SearchInput
-              value={searchTerm}
-              onChange={(val) => {
-                onSearchChange && onSearchChange(val);
-                onPageChange && onPageChange(1);
-              }}
-              placeholder="Buscar por código, descrição, grupo, marca, setor, tipo, fornecedor, NCM..."
-              className="flex-1"
-            />
+            <div className="relative flex-1">
+              <Input
+                placeholder="Buscar por código, descrição, grupo, marca, setor, tipo, fornecedor, NCM..."
+                value={searchTerm || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onSearchChange && onSearchChange(val);
+                  onPageChange && onPageChange(1);
+                }}
+                className="w-full"
+              />
+            </div>
             <Select value={selectedCategoria} onValueChange={(val) => {
               onCategoriaChange && onCategoriaChange(val);
               onPageChange && onPageChange(1);
