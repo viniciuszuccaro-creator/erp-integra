@@ -102,7 +102,7 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Pedido.filter(filtro, '-created_date', 200);
+        return await base44.entities.Pedido.filter(filtro, '-created_date');
       } catch (err) {
         console.error('Erro ao buscar pedidos:', err);
         return [];
@@ -118,7 +118,7 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.ContaReceber.filter(filtro, '-data_vencimento', 200);
+        return await base44.entities.ContaReceber.filter(filtro, '-data_vencimento');
       } catch (err) {
         console.error('Erro ao buscar contas a receber:', err);
         return [];
@@ -134,7 +134,7 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.ContaPagar.filter(filtro, '-data_vencimento', 200);
+        return await base44.entities.ContaPagar.filter(filtro, '-data_vencimento');
       } catch (err) {
         console.error('Erro ao buscar contas a pagar:', err);
         return [];
@@ -150,7 +150,7 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Entrega.filter(filtro, '-created_date', 100);
+        return await base44.entities.Entrega.filter(filtro, '-created_date');
       } catch (err) {
         console.error('Erro ao buscar entregas:', err);
         return [];
@@ -166,7 +166,7 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
-        return await base44.entities.Colaborador.filter(filtro, '-created_date', 100);
+        return await base44.entities.Colaborador.filter(filtro, '-created_date');
       } catch (err) {
         console.error('Erro ao buscar colaboradores:', err);
         return [];
@@ -182,7 +182,7 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Produto.filter(filtro, '-created_date', 100);
+        return await base44.entities.Produto.filter(filtro, '-created_date');
       } catch (err) {
         console.error('Erro ao buscar produtos:', err);
         return [];
@@ -216,7 +216,7 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+        return await base44.entities.Cliente.filter(filtro, '-created_date');
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
         return [];
@@ -250,7 +250,7 @@ export default function Dashboard() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.OrdemProducao.filter(filtro, '-data_emissao', 100);
+        return await base44.entities.OrdemProducao.filter(filtro, '-data_emissao');
       } catch (err) {
         console.error('Erro ao buscar ordens de produção:', err);
         return [];
