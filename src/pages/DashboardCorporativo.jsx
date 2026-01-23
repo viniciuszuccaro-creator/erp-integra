@@ -92,7 +92,24 @@ export default function DashboardCorporativo() {
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes-dashboard'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryFn: () => base44.entities.Cliente.list('-created_date', 100),
+  });
+
+  const { data: totalClientes = 0 } = useQuery({
+    queryKey: ['clientes-count-corp'],
+    queryFn: async () => {
+      try {
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Cliente',
+          filter: {}
+        });
+        return response.data?.count || clientes.length;
+      } catch {
+        return clientes.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
   });
 
   const { data: empresas = [] } = useQuery({
@@ -102,7 +119,24 @@ export default function DashboardCorporativo() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos-dashboard'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryFn: () => base44.entities.Produto.list('-created_date', 100),
+  });
+
+  const { data: totalProdutos = 0 } = useQuery({
+    queryKey: ['produtos-count-corp'],
+    queryFn: async () => {
+      try {
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Produto',
+          filter: {}
+        });
+        return response.data?.count || produtos.length;
+      } catch {
+        return produtos.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
   });
 
   const { data: contasReceber = [] } = useQuery({
@@ -167,10 +201,9 @@ export default function DashboardCorporativo() {
     return c.status === 'Ativo' && daEmpresa;
   }).length;
 
-  const produtosAtivos = produtos.filter(p => {
-    const daEmpresa = empresaSelecionada === "todas" || p.empresa_id === empresaSelecionada;
-    return p.status === 'Ativo' && daEmpresa;
-  }).length;
+  const produtosAtivos = empresaSelecionada === "todas" 
+    ? totalProdutos 
+    : produtos.filter(p => p.empresa_id === empresaSelecionada && p.status === 'Ativo').length;
 
   const valorEstoqueTotal = produtos
     .filter(p => empresaSelecionada === "todas" || p.empresa_id === empresaSelecionada)

@@ -193,6 +193,24 @@ export default function Dashboard() {
     retry: 1
   });
 
+  const { data: totalProdutos = 0 } = useQuery({
+    queryKey: ['produtos-count-dash', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Produto',
+          filter: filtro
+        });
+        return response.data?.count || produtos.length;
+      } catch {
+        return produtos.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
     queryFn: async () => {
@@ -205,6 +223,24 @@ export default function Dashboard() {
       }
     },
     refetchInterval,
+    staleTime: 60000,
+    retry: 1
+  });
+
+  const { data: totalClientes = 0 } = useQuery({
+    queryKey: ['clientes-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Cliente',
+          filter: filtro
+        });
+        return response.data?.count || clientes.length;
+      } catch {
+        return clientes.length;
+      }
+    },
     staleTime: 60000,
     retry: 1
   });
@@ -273,8 +309,8 @@ export default function Dashboard() {
 
   const colaboradoresAtivos = colaboradores.filter(c => c.status === 'Ativo').length;
   const clientesAtivos = clientes.filter(c => c.status === 'Ativo').length;
-  const taxaConversao = clientes.length > 0 
-    ? ((pedidosPeriodo.filter(p => p.status !== 'Cancelado').length / clientes.length) * 100).toFixed(1)
+  const taxaConversao = totalClientes > 0 
+    ? ((pedidosPeriodo.filter(p => p.status !== 'Cancelado').length / totalClientes) * 100).toFixed(1)
     : 0;
 
   const entregasPendentes = entregas.filter(e => 
@@ -602,7 +638,7 @@ export default function Dashboard() {
     },
     {
       title: "Produtos Cadastrados",
-      value: produtos.filter(p => p.status === 'Ativo').length,
+      value: totalProdutos,
       icon: Package,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",

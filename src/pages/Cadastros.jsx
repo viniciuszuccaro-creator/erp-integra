@@ -225,6 +225,24 @@ export default function Cadastros() {
     retry: 2
   });
 
+  // V22.0: Contagem total otimizada para grandes volumes
+  const { data: totalClientes = 0 } = useQuery({
+    queryKey: ['clientes-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Cliente',
+          filter: {}
+        });
+        return response.data?.count || clientes.length;
+      } catch {
+        return clientes.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores', empresaAtual?.id],
     queryFn: async () => {
@@ -239,6 +257,23 @@ export default function Cadastros() {
     gcTime: 60000,
     refetchOnWindowFocus: false,
     retry: 2
+  });
+
+  const { data: totalFornecedores = 0 } = useQuery({
+    queryKey: ['fornecedores-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Fornecedor',
+          filter: {}
+        });
+        return response.data?.count || fornecedores.length;
+      } catch {
+        return fornecedores.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
   });
 
   const { data: transportadoras = [] } = useQuery({
@@ -319,6 +354,24 @@ export default function Cadastros() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
+    retry: 1
+  });
+
+  const { data: totalProdutos = 0 } = useQuery({
+    queryKey: ['produtos-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Produto',
+          filter: filtro
+        });
+        return response.data?.count || produtos.length;
+      } catch {
+        return produtos.length;
+      }
+    },
+    staleTime: 60000,
     retry: 1
   });
 
@@ -664,9 +717,9 @@ export default function Cadastros() {
     },
   });
 
-  // Cálculo de totais por bloco
-  const totalBloco1 = clientes.length + fornecedores.length + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
-  const totalBloco2 = produtos.length + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
+  // V22.0: Cálculo de totais por bloco com contagens otimizadas
+  const totalBloco1 = totalClientes + totalFornecedores + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
+  const totalBloco2 = totalProdutos + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
   const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
@@ -886,7 +939,7 @@ export default function Cadastros() {
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
                           <Users className="w-5 h-5 text-blue-600" />
-                          Clientes ({clientesFiltrados.length})
+                          Clientes ({totalClientes})
                         </CardTitle>
                         <div className="flex items-center gap-2">
                           <Button
@@ -965,7 +1018,7 @@ export default function Cadastros() {
                           )}
                         >
                           <Building2 className="w-5 h-5 text-cyan-600" />
-                          Fornecedores ({fornecedoresFiltrados.length})
+                          Fornecedores ({totalFornecedores})
                         </CardTitle>
                         <div className="flex items-center gap-2">
                           <Button
@@ -1553,7 +1606,7 @@ export default function Cadastros() {
                           )}
                         >
                           <Package className="w-5 h-5 text-purple-600" />
-                          Produtos ({produtos.length})
+                          Produtos ({totalProdutos})
                         </CardTitle>
                         <div className="flex items-center gap-2">
                            <Button
