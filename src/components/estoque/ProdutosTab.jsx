@@ -266,8 +266,8 @@ export default function ProdutosTab({
                  variant="outline"
                  className="border-red-300 text-red-700 hover:bg-red-100"
                  onClick={() => {
-                   setSelectedCategoria("todos");
-                   setSearchTerm("");
+                   onCategoriaChange && onCategoriaChange("todos");
+                   onSearchChange && onSearchChange("");
                    // Scroll para tabela de produtos
                    setTimeout(() => {
                      document.querySelector('[role="tablist"]')?.scrollIntoView({ behavior: 'smooth' });
