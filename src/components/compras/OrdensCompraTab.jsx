@@ -407,10 +407,19 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
     });
   };
 
-  const filteredOCs = ordensCompra.filter(oc =>
-    oc.numero_oc?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    oc.fornecedor_nome?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOCs = ordensCompra.filter(oc => {
+    const searchLower = searchTerm.toLowerCase();
+    return oc.numero_oc?.toLowerCase().includes(searchLower) ||
+      oc.fornecedor_nome?.toLowerCase().includes(searchLower) ||
+      oc.status?.toLowerCase().includes(searchLower) ||
+      oc.solicitante?.toLowerCase().includes(searchLower) ||
+      oc.aprovador?.toLowerCase().includes(searchLower) ||
+      oc.centro_custo?.toLowerCase().includes(searchLower) ||
+      oc.condicao_pagamento?.toLowerCase().includes(searchLower) ||
+      oc.forma_pagamento?.toLowerCase().includes(searchLower) ||
+      oc.nota_fiscal_entrada?.includes(searchLower) ||
+      oc.observacoes?.toLowerCase().includes(searchLower);
+  });
 
   const statusColors = {
     'Solicitada': 'bg-blue-100 text-blue-700',
@@ -429,7 +438,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
           <Input
-            placeholder="Buscar..."
+            placeholder="Buscar por OC, fornecedor, status, solicitante, centro custo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-7 h-8 text-sm"

@@ -21,9 +21,20 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
   const { openWindow } = useWindow();
 
   const filteredEntregas = entregas.filter(e => {
-    const matchSearch = e.numero_pedido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       e.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       e.codigo_rastreamento?.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const matchSearch = e.numero_pedido?.toLowerCase().includes(searchLower) ||
+                       e.cliente_nome?.toLowerCase().includes(searchLower) ||
+                       e.codigo_rastreamento?.toLowerCase().includes(searchLower) ||
+                       e.qr_code?.toLowerCase().includes(searchLower) ||
+                       e.motorista?.toLowerCase().includes(searchLower) ||
+                       e.transportadora?.toLowerCase().includes(searchLower) ||
+                       e.regiao_entrega_nome?.toLowerCase().includes(searchLower) ||
+                       e.status?.toLowerCase().includes(searchLower) ||
+                       e.endereco_entrega_completo?.cidade?.toLowerCase().includes(searchLower) ||
+                       e.endereco_entrega_completo?.bairro?.toLowerCase().includes(searchLower) ||
+                       e.endereco_entrega_completo?.logradouro?.toLowerCase().includes(searchLower) ||
+                       e.contato_entrega?.nome?.toLowerCase().includes(searchLower) ||
+                       e.contato_entrega?.telefone?.includes(searchLower);
     const matchStatus = selectedStatus === "todos" || e.status === selectedStatus;
     return matchSearch && matchStatus;
   });
@@ -51,7 +62,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
             <div className="relative flex-1">
               <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
               <Input
-                placeholder="Buscar pedido, cliente, rastreio..."
+                placeholder="Buscar por pedido, cliente, rastreio, motorista, cidade, bairro, região..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8 h-8"
