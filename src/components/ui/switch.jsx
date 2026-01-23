@@ -40,7 +40,9 @@ import { uiAuditWrap } from "@/components/lib/uiAudit";
 const _Switch = Switch;
 const AuditedSwitch = React.forwardRef(({ onCheckedChange, ...props }, ref) => {
   const audited = typeof onCheckedChange === 'function' ? uiAuditWrap('Switch.onCheckedChange', onCheckedChange, { kind: 'switch', toastSuccess: true }) : undefined;
-  return (<_Switch ref={ref} onCheckedChange={audited} {...props} />);
+  // CORREÇÃO CRÍTICA: Remove __wrapped_audit before passing to component
+  const { __wrapped_audit, ...cleanProps } = props;
+  return (<_Switch ref={ref} onCheckedChange={audited} {...cleanProps} />);
 });
 AuditedSwitch.displayName = 'AuditedSwitch';
 

@@ -12,6 +12,9 @@ const Textarea = React.forwardRef(({ className, onChange, onBlur, ...props }, re
   const auditedOnChange = typeof onChange === 'function' ? uiAuditWrap('Textarea.onChange', onChange, { kind: 'textarea' }) : undefined;
   const auditedOnBlur = typeof onBlur === 'function' ? uiAuditWrap('Textarea.onBlur', onBlur, { kind: 'textarea' }) : undefined;
 
+  // CORREÇÃO CRÍTICA: Remover __wrapped_audit antes de passar para elemento nativo
+  const { __wrapped_audit, ...cleanProps } = props;
+
   return (
     <textarea
       className={cn(
@@ -21,7 +24,7 @@ const Textarea = React.forwardRef(({ className, onChange, onBlur, ...props }, re
       ref={ref}
       onChange={auditedOnChange}
       onBlur={auditedOnBlur}
-      {...props}
+      {...cleanProps}
     />
   )
 })

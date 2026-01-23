@@ -138,7 +138,9 @@ function withAuditRoot(props) {
     p.onValueChange = uiAuditWrap(p['data-action'] || 'Select.onValueChange', p.onValueChange, { kind: 'select', toastSuccess: true });
     p.__wrapped_audit = true;
   }
-  return p;
+  // CORREÇÃO CRÍTICA: Remove __wrapped_audit before passing to Radix UI
+  const { __wrapped_audit, ...cleanProps } = p;
+  return cleanProps;
 }
 
 const AuditedSelect = (props) => (

@@ -53,8 +53,9 @@ function withUIAudit(props) {
   if (typeof p.onClick === 'function' && !p.__wrapped_audit) {
     const meta = { kind: 'button', toastSuccess: true };
     p.onClick = uiAuditWrap(p['data-action'] || 'Button.onClick', p.onClick, meta);
+    p.__wrapped_audit = true;
   }
-  // Remove __wrapped_audit from props to avoid React warning
+  // CORREÇÃO CRÍTICA: Remove __wrapped_audit from props to avoid React warning
   delete p.__wrapped_audit;
   return p;
 }

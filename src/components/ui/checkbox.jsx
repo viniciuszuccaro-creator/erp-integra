@@ -29,7 +29,9 @@ const WrappedCheckbox = React.forwardRef((props, ref) => {
     p.onCheckedChange = uiAuditWrap(p['data-action'] || 'Checkbox.onCheckedChange', p.onCheckedChange, { kind: 'checkbox', toastSuccess: true });
     p.__wrapped_audit = true;
   }
-  return (<_orig {...p} ref={ref} />);
+  // CORREÇÃO CRÍTICA: Remove __wrapped_audit before passing to native element
+  const { __wrapped_audit, ...cleanProps } = p;
+  return (<_orig {...cleanProps} ref={ref} />);
 });
 WrappedCheckbox.displayName = "WrappedCheckbox";
 

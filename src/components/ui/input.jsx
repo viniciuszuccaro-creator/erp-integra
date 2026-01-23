@@ -13,6 +13,9 @@ const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props },
   const auditedOnChange = typeof onChange === 'function' ? uiAuditWrap('Input.onChange', onChange, { name: props?.name }) : undefined;
   const auditedOnBlur = typeof onBlur === 'function' ? uiAuditWrap('Input.onBlur', onBlur, { name: props?.name }) : undefined;
 
+  // CORREÇÃO CRÍTICA: Remover __wrapped_audit antes de passar para elemento nativo
+  const { __wrapped_audit, ...cleanProps } = props;
+
   return (
     (<input
       type={type}
@@ -23,7 +26,7 @@ const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props },
       ref={ref}
       onChange={auditedOnChange}
       onBlur={auditedOnBlur}
-      {...props} />)
+      {...cleanProps} />)
   );
 })
 Input.displayName = "Input"
