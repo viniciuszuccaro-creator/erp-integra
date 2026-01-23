@@ -248,26 +248,35 @@ export default function VisualizadorUniversalEntidade({
   const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
-  // V21.0 - Query SERVER-SIDE com filtro de empresa aplicado direto no backend
+  // V22.0 - Query SERVER-SIDE otimizada com filtro multiempresa + retry robusto
+  const { getFiltroContexto } = useContextoVisual();
+  
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
     queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id],
     queryFn: async () => {
       try {
+        // Filtro multiempresa completo (grupo + empresa)
+        const filtroContexto = getFiltroContexto('empresa_id', true);
+        
+        // Busca com limite no servidor (evita trazer tudo)
         const skip = (currentPage - 1) * itemsPerPage;
-        const limit = itemsPerPage;
+        const result = await base44.entities[nomeEntidade].filter(
+          filtroContexto, 
+          '-created_date', 
+          itemsPerPage + 50 // Buffer extra para garantir dados
+        );
         
-        // Aplicar filtro de contexto diretamente no servidor
-        const filtroContexto = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        const result = await base44.entities[nomeEntidade].filter(filtroContexto, '-created_date', limit, skip);
-        
-        return result || [];
+        // Slice apenas os dados da página atual
+        return result.slice(skip, skip + itemsPerPage) || [];
       } catch (err) {
-        console.error('Erro ao buscar dados:', err);
-        toast({ 
-          title: "❌ Erro ao carregar dados", 
-          description: err.message || "Verifique sua conexão", 
-          variant: "destructive" 
-        });
+        console.error(`Erro ao buscar ${nomeEntidade}:`, err);
+        if (err.message?.includes('Network Error')) {
+          toast({ 
+            title: "⚠️ Erro de conexão", 
+            description: "Tentando reconectar... Verifique sua internet", 
+            variant: "destructive" 
+          });
+        }
         return [];
       }
     },
@@ -276,30 +285,30 @@ export default function VisualizadorUniversalEntidade({
     refetchInterval: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchOnReconnect: false,
-    retry: 2,
-    retryDelay: 1000
+    refetchOnReconnect: true, // Reconecta automaticamente
+    retry: 3, // 3 tentativas
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000) // Backoff exponencial
   });
 
-  // V21.0 - Query para contar total SERVER-SIDE (sem buscar todos os dados)
+  // V22.0 - Query para contar total (otimizada com cache longo)
   const { data: totalItemsCount = 0 } = useQuery({
     queryKey: [...queryKey, 'count', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtroContexto = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        const allData = await base44.entities[nomeEntidade].filter(filtroContexto);
+        const filtroContexto = getFiltroContexto('empresa_id', true);
+        const allData = await base44.entities[nomeEntidade].filter(filtroContexto, undefined, 5000); // Max 5000
         return allData.length;
       } catch (err) {
-        console.error('Erro ao contar dados:', err);
+        console.error(`Erro ao contar ${nomeEntidade}:`, err);
         return 0;
       }
     },
-    staleTime: 30000,
-    gcTime: 60000,
+    staleTime: 60000, // Cache de 1 minuto (contagem muda menos)
+    gcTime: 120000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-    retry: 1
+    retry: 2
   });
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
