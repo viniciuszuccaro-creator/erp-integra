@@ -98,59 +98,131 @@ export default function Dashboard() {
   const refetchInterval = autoRefresh ? 60000 : false; // 60 segundos
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Pedido.filter(filtro, '-created_date', 200);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos:', err);
+        return [];
+      }
+    },
     refetchInterval,
-    staleTime: 30000, // Cache de 30s
+    staleTime: 30000,
+    retry: 2
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list(),
+    queryKey: ['contasReceber', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.ContaReceber.filter(filtro, '-data_vencimento', 200);
+      } catch (err) {
+        console.error('Erro ao buscar contas a receber:', err);
+        return [];
+      }
+    },
     refetchInterval,
     staleTime: 30000,
+    retry: 2
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar'],
-    queryFn: () => base44.entities.ContaPagar.list(),
+    queryKey: ['contasPagar', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.ContaPagar.filter(filtro, '-data_vencimento', 200);
+      } catch (err) {
+        console.error('Erro ao buscar contas a pagar:', err);
+        return [];
+      }
+    },
     refetchInterval,
     staleTime: 30000,
+    retry: 2
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.list('-created_date', 100),
+    queryKey: ['entregas', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Entrega.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar entregas:', err);
+        return [];
+      }
+    },
     refetchInterval,
     staleTime: 30000,
+    retry: 1
   });
 
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores'],
-    queryFn: () => base44.entities.Colaborador.list(),
+    queryKey: ['colaboradores', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
+        return await base44.entities.Colaborador.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar colaboradores:', err);
+        return [];
+      }
+    },
     refetchInterval,
-    staleTime: 60000, // Cache de 1 minuto para dados menos voláteis
+    staleTime: 60000,
+    retry: 1
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Produto.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar produtos:', err);
+        return [];
+      }
+    },
     refetchInterval,
     staleTime: 60000,
+    retry: 1
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar clientes:', err);
+        return [];
+      }
+    },
     refetchInterval,
     staleTime: 60000,
+    retry: 1
   });
 
   const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ordensProducao'],
-    queryFn: () => base44.entities.OrdemProducao.list('-data_emissao'),
+    queryKey: ['ordensProducao', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.OrdemProducao.filter(filtro, '-data_emissao', 100);
+      } catch (err) {
+        console.error('Erro ao buscar ordens de produção:', err);
+        return [];
+      }
+    },
     refetchInterval,
     staleTime: 30000,
+    retry: 1
   });
 
   // Filtros de período

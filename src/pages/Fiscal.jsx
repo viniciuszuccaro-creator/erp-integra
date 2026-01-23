@@ -23,11 +23,22 @@ export default function FiscalPage() {
   const { openWindow } = useWindow();
 
   const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notasFiscais'],
-    queryFn: () => base44.entities.NotaFiscal.list('-created_date'),
+    queryKey: ['notasFiscais', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_faturamento_id: empresaAtual.id } : {};
+        return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar notas fiscais:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
-  const notasFiltradasContexto = filtrarPorContexto(notasFiscais, 'empresa_faturamento_id');
+  // Dados já vêm filtrados do servidor
+  const notasFiltradasContexto = notasFiscais;
 
   const statusCounts = {
     total: notasFiltradasContexto.length,
