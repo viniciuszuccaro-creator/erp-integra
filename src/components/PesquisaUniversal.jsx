@@ -166,21 +166,31 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
 
       const ops = opsFiltradas.filter(op =>
         op.numero_op?.toLowerCase().includes(q) ||
+        op.pedido_numero?.toLowerCase().includes(q) ||
         op.cliente_nome?.toLowerCase().includes(q) ||
         op.status?.toLowerCase().includes(q) ||
         op.tipo_producao?.toLowerCase().includes(q) ||
-        op.descricao_produto?.toLowerCase().includes(q)
+        op.descricao_produto?.toLowerCase().includes(q) ||
+        op.tipo_peca?.toLowerCase().includes(q) ||
+        op.prioridade?.toLowerCase().includes(q) ||
+        op.responsavel_producao?.toLowerCase().includes(q) ||
+        op.observacoes_producao?.toLowerCase().includes(q)
       ).slice(0, 4);
 
       const colaboradores = colaboradoresFiltrados.filter(c =>
         c.nome_completo?.toLowerCase().includes(q) ||
         c.cpf?.includes(q) ||
+        c.rg?.includes(q) ||
         c.email?.toLowerCase().includes(q) ||
+        c.email_corporativo?.toLowerCase().includes(q) ||
         c.telefone?.includes(q) ||
         c.whatsapp?.includes(q) ||
         c.cargo?.toLowerCase().includes(q) ||
         c.departamento?.toLowerCase().includes(q) ||
-        c.status?.toLowerCase().includes(q)
+        c.tipo_contrato?.toLowerCase().includes(q) ||
+        c.status?.toLowerCase().includes(q) ||
+        c.endereco?.toLowerCase().includes(q) ||
+        c.observacoes?.toLowerCase().includes(q)
       ).slice(0, 3);
 
       const contasPagar = contasPagarFiltradas.filter(c =>
@@ -188,58 +198,104 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
         c.fornecedor?.toLowerCase().includes(q) ||
         c.numero_documento?.toLowerCase().includes(q) ||
         c.categoria?.toLowerCase().includes(q) ||
+        c.centro_custo?.toLowerCase().includes(q) ||
+        c.projeto_obra?.toLowerCase().includes(q) ||
+        c.forma_pagamento?.toLowerCase().includes(q) ||
         c.status?.toLowerCase().includes(q) ||
-        c.favorecido_cpf_cnpj?.includes(q)
+        c.status_pagamento?.toLowerCase().includes(q) ||
+        c.aprovado_por?.toLowerCase().includes(q) ||
+        c.favorecido_cpf_cnpj?.includes(q) ||
+        c.observacoes?.toLowerCase().includes(q)
       ).slice(0, 3);
 
       const contasReceber = contasReceberFiltradas.filter(c =>
         c.descricao?.toLowerCase().includes(q) ||
         c.cliente?.toLowerCase().includes(q) ||
         c.numero_documento?.toLowerCase().includes(q) ||
+        c.numero_parcela?.includes(q) ||
+        c.centro_custo?.toLowerCase().includes(q) ||
+        c.projeto_obra?.toLowerCase().includes(q) ||
+        c.forma_recebimento?.toLowerCase().includes(q) ||
+        c.forma_cobranca?.toLowerCase().includes(q) ||
         c.status?.toLowerCase().includes(q) ||
-        c.forma_cobranca?.toLowerCase().includes(q)
+        c.linha_digitavel?.includes(q) ||
+        c.pix_copia_cola?.includes(q) ||
+        c.nosso_numero?.includes(q) ||
+        c.observacoes?.toLowerCase().includes(q)
       ).slice(0, 3);
 
       const oportunidades = oportunidadesFiltradas.filter(o =>
         o.titulo?.toLowerCase().includes(q) ||
+        o.descricao?.toLowerCase().includes(q) ||
         o.cliente_nome?.toLowerCase().includes(q) ||
         o.cliente_email?.toLowerCase().includes(q) ||
         o.cliente_telefone?.includes(q) ||
         o.responsavel?.toLowerCase().includes(q) ||
         o.etapa?.toLowerCase().includes(q) ||
+        o.temperatura?.toLowerCase().includes(q) ||
         o.origem?.toLowerCase().includes(q) ||
-        o.status?.toLowerCase().includes(q)
+        o.status?.toLowerCase().includes(q) ||
+        o.motivo_perda?.toLowerCase().includes(q) ||
+        o.concorrente?.toLowerCase().includes(q) ||
+        o.necessidades?.toLowerCase().includes(q) ||
+        o.proxima_acao?.toLowerCase().includes(q) ||
+        o.observacoes?.toLowerCase().includes(q)
       ).slice(0, 3);
 
       const transportadoras = transportadorasFiltradas.filter(t =>
         t.razao_social?.toLowerCase().includes(q) ||
         t.nome_fantasia?.toLowerCase().includes(q) ||
         t.cnpj?.includes(q) ||
-        t.contato_responsavel?.toLowerCase().includes(q) ||
+        t.inscricao_estadual?.includes(q) ||
         t.rntrc?.includes(q) ||
+        t.contato_responsavel?.toLowerCase().includes(q) ||
+        t.whatsapp?.includes(q) ||
+        t.cidade?.toLowerCase().includes(q) ||
+        t.estado?.toLowerCase().includes(q) ||
+        t.status?.toLowerCase().includes(q) ||
+        t.observacoes?.toLowerCase().includes(q) ||
+        buscarEmArray(t.emails, ['email']) ||
         buscarEmArray(t.telefones, ['numero'])
       ).slice(0, 2);
 
       const notasFiscais = notasFiscaisFiltradas.filter(n =>
         n.numero?.toLowerCase().includes(q) ||
+        n.serie?.toLowerCase().includes(q) ||
         n.cliente_fornecedor?.toLowerCase().includes(q) ||
+        n.cliente_cpf_cnpj?.includes(q) ||
         n.chave_acesso?.includes(q) ||
+        n.protocolo_autorizacao?.includes(q) ||
         n.tipo?.toLowerCase().includes(q) ||
-        n.status?.toLowerCase().includes(q)
+        n.natureza_operacao?.toLowerCase().includes(q) ||
+        n.cfop?.includes(q) ||
+        n.numero_pedido?.includes(q) ||
+        n.status?.toLowerCase().includes(q) ||
+        n.observacoes?.toLowerCase().includes(q) ||
+        n.informacoes_complementares?.toLowerCase().includes(q)
       ).slice(0, 3);
 
       const ordensCompra = ordensCompraFiltradas.filter(oc =>
         oc.numero_oc?.toLowerCase().includes(q) ||
         oc.fornecedor_nome?.toLowerCase().includes(q) ||
-        oc.status?.toLowerCase().includes(q)
+        oc.solicitante?.toLowerCase().includes(q) ||
+        oc.aprovador?.toLowerCase().includes(q) ||
+        oc.centro_custo?.toLowerCase().includes(q) ||
+        oc.condicao_pagamento?.toLowerCase().includes(q) ||
+        oc.forma_pagamento?.toLowerCase().includes(q) ||
+        oc.nota_fiscal_entrada?.includes(q) ||
+        oc.status?.toLowerCase().includes(q) ||
+        oc.observacoes?.toLowerCase().includes(q)
       ).slice(0, 2);
 
       const interacoes = interacoesFiltradas.filter(i =>
         i.titulo?.toLowerCase().includes(q) ||
+        i.descricao?.toLowerCase().includes(q) ||
         i.cliente_nome?.toLowerCase().includes(q) ||
         i.tipo?.toLowerCase().includes(q) ||
         i.responsavel?.toLowerCase().includes(q) ||
-        i.descricao?.toLowerCase().includes(q)
+        i.resultado?.toLowerCase().includes(q) ||
+        i.proxima_acao?.toLowerCase().includes(q) ||
+        i.observacoes?.toLowerCase().includes(q)
       ).slice(0, 2);
 
       const todosResultados = [
@@ -405,7 +461,7 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Pesquisar clientes, pedidos, produtos, entregas..."
+              placeholder="Pesquisar em TODOS os módulos: nome, CPF, CNPJ, email, telefone, descrição..."
               className="pl-10 text-lg border-0 focus-visible:ring-0"
               autoFocus
             />
@@ -451,7 +507,7 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
             <div className="text-center py-12 text-slate-500">
               <Search className="w-12 h-12 mx-auto mb-2 opacity-30" />
               <p className="text-sm">Digite para buscar em todo o sistema</p>
-              <p className="text-xs mt-2">Clientes • Pedidos • Produtos • Entregas • Fornecedores • OPs • Colaboradores • Financeiro • CRM</p>
+              <p className="text-xs mt-2">Clientes • Pedidos • Produtos • Entregas • Fornecedores • OPs • Colaboradores • Pagar • Receber • CRM • NF-e • OCs • Interações • Transportadoras</p>
             </div>
           )}
         </div>

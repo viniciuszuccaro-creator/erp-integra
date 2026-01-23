@@ -132,11 +132,23 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
     });
   };
 
-  const filteredMovimentacoes = movimentacoes.filter(m =>
-    m.produto_nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.produto_descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    m.tipo_movimentacao?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredMovimentacoes = movimentacoes.filter(m => {
+    const searchLower = searchTerm.toLowerCase();
+    return m.produto_nome?.toLowerCase().includes(searchLower) ||
+      m.produto_descricao?.toLowerCase().includes(searchLower) ||
+      m.codigo_produto?.toLowerCase().includes(searchLower) ||
+      m.tipo_movimentacao?.toLowerCase().includes(searchLower) ||
+      m.tipo_movimento?.toLowerCase().includes(searchLower) ||
+      m.origem_movimento?.toLowerCase().includes(searchLower) ||
+      m.documento?.toLowerCase().includes(searchLower) ||
+      m.motivo?.toLowerCase().includes(searchLower) ||
+      m.responsavel?.toLowerCase().includes(searchLower) ||
+      m.centro_custo_nome?.toLowerCase().includes(searchLower) ||
+      m.localizacao_origem?.toLowerCase().includes(searchLower) ||
+      m.localizacao_destino?.toLowerCase().includes(searchLower) ||
+      m.lote?.toLowerCase().includes(searchLower) ||
+      m.observacoes?.toLowerCase().includes(searchLower);
+  });
 
   const tipoIcons = {
     'Entrada': <ArrowDown className="w-4 h-4 text-green-600" />,
@@ -160,7 +172,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
         <div className="relative flex-1 max-w-md mr-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
           <Input
-            placeholder="Buscar movimentações..."
+            placeholder="Buscar por produto, código, tipo, movimento, documento, lote, responsável, centro custo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"

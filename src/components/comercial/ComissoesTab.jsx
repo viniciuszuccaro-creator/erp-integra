@@ -126,12 +126,18 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
     }
   };
 
-  // Filtros e KPIs
-  const comissoesFiltradas = comissoes.filter(c =>
-    (c.vendedor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.numero_pedido?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-    (statusFilter === "todas" || c.status === statusFilter)
-  );
+  // Filtros e KPIs - BUSCA UNIVERSAL COMPLETA
+  const comissoesFiltradas = comissoes.filter(c => {
+    const searchLower = searchTerm.toLowerCase();
+    const matchSearch = c.vendedor?.toLowerCase().includes(searchLower) ||
+      c.numero_pedido?.toLowerCase().includes(searchLower) ||
+      c.cliente?.toLowerCase().includes(searchLower) ||
+      c.status?.toLowerCase().includes(searchLower) ||
+      c.observacoes?.toLowerCase().includes(searchLower) ||
+      c.aprovador?.toLowerCase().includes(searchLower);
+    const matchStatus = statusFilter === "todas" || c.status === statusFilter;
+    return matchSearch && matchStatus;
+  });
 
   const comissoesPendentes = comissoes.filter(c => c.status === 'Pendente').length;
   const comissoesAprovadas = comissoes.filter(c => c.status === 'Aprovada').length;
@@ -235,7 +241,7 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <Input
-                  placeholder="Buscar vendedor..."
+                  placeholder="Buscar por vendedor, pedido, cliente, status, aprovador..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9 w-64"
