@@ -1,4 +1,4 @@
-import React, { Suspense, useState } from "react";
+import React, { Suspense, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Box, TrendingUp, PackageCheck, PackageMinus, PackageOpen, Clock, BarChart3, Sparkles, ArrowLeftRight } from "lucide-react";
@@ -32,68 +32,124 @@ export default function Estoque() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState('todos');
 
-  // V21.0 - Query paginada de produtos
+  // V21.0 - Query paginada SERVER-SIDE com filtro de empresa
   const { data: produtos = [], isLoading: loadingProdutos } = useQuery({
-    queryKey: ['produtos', currentPageProdutos, itemsPerPageProdutos, searchTerm, selectedCategoria],
+    queryKey: ['produtos', currentPageProdutos, itemsPerPageProdutos, empresaAtual?.id],
     queryFn: async () => {
-      const skip = (currentPageProdutos - 1) * itemsPerPageProdutos;
-      const limit = itemsPerPageProdutos;
-      const result = await base44.entities.Produto.list('-created_date', limit, skip);
-      return result || [];
+      try {
+        const skip = (currentPageProdutos - 1) * itemsPerPageProdutos;
+        const limit = itemsPerPageProdutos;
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const result = await base44.entities.Produto.filter(filtro, '-created_date', limit, skip);
+        return result || [];
+      } catch (err) {
+        console.error('Erro ao buscar produtos:', err);
+        return [];
+      }
     },
-    staleTime: 600000,
-    gcTime: 900000,
+    staleTime: 30000,
+    gcTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchOnReconnect: false
+    refetchOnReconnect: false,
+    retry: 2,
+    retryDelay: 1000
   });
 
-  // V21.0 - Query para total de produtos
+  // V21.0 - Query para total SERVER-SIDE
   const { data: totalProdutos = 0 } = useQuery({
-    queryKey: ['produtos-count', searchTerm, selectedCategoria],
+    queryKey: ['produtos-count', empresaAtual?.id],
     queryFn: async () => {
-      const allData = await base44.entities.Produto.list();
-      return allData.length;
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const allData = await base44.entities.Produto.filter(filtro);
+        return allData.length;
+      } catch (err) {
+        console.error('Erro ao contar produtos:', err);
+        return 0;
+      }
     },
-    staleTime: 600000,
-    gcTime: 900000,
+    staleTime: 30000,
+    gcTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchOnReconnect: false
+    refetchOnReconnect: false,
+    retry: 1
   });
 
   const { data: movimentacoes = [] } = useQuery({
-    queryKey: ['movimentacoes'],
-    queryFn: () => base44.entities.MovimentacaoEstoque.list('-created_date'),
-    staleTime: 600000,
-    gcTime: 900000,
+    queryKey: ['movimentacoes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.MovimentacaoEstoque.filter(filtro, '-data_movimentacao', 50);
+      } catch (err) {
+        console.error('Erro ao buscar movimentações:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    gcTime: 60000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false
+    retry: 1
   });
 
   const { data: solicitacoes = [] } = useQuery({
-    queryKey: ['solicitacoes'],
-    queryFn: () => base44.entities.SolicitacaoCompra.list('-created_date'),
-    staleTime: 600000,
-    gcTime: 900000,
+    queryKey: ['solicitacoes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 50);
+      } catch (err) {
+        console.error('Erro ao buscar solicitações:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    gcTime: 60000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false
+    retry: 1
   });
 
   const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordensCompra'],
-    queryFn: () => base44.entities.OrdemCompra.list('-created_date'),
-    staleTime: 600000,
-    gcTime: 900000,
+    queryKey: ['ordensCompra', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.OrdemCompra.filter(filtro, '-data_solicitacao', 50);
+      } catch (err) {
+        console.error('Erro ao buscar ordens:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    gcTime: 60000,
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false
+    retry: 1
   });
 
-  const produtosFiltrados = filtrarPorContexto(produtos, 'empresa_id');
-  const movimentacoesFiltradas = filtrarPorContexto(movimentacoes, 'empresa_id');
+  // Dados já vêm filtrados do servidor, aplicar filtros locais se necessário
+  const produtosFiltrados = useMemo(() => {
+    let resultado = produtos;
+
+    // Aplicar busca local
+    if (searchTerm.trim()) {
+      const termo = searchTerm.toLowerCase();
+      resultado = resultado.filter(p => 
+        (p.descricao || '').toLowerCase().includes(termo) ||
+        (p.codigo || '').toLowerCase().includes(termo)
+      );
+    }
+
+    // Aplicar filtro de categoria
+    if (selectedCategoria !== 'todos') {
+      resultado = resultado.filter(p => p.grupo === selectedCategoria);
+    }
+
+    return resultado;
+  }, [produtos, searchTerm, selectedCategoria]);
+
+  const movimentacoesFiltradas = movimentacoes;
 
   const produtosAtivos = produtosFiltrados.filter(p => p.status === 'Ativo').length;
   const produtosBaixoEstoque = produtosFiltrados.filter(p => p.estoque_atual <= p.estoque_minimo && p.status === 'Ativo').length;
