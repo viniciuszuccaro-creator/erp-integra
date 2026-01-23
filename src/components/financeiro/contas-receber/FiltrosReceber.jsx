@@ -32,10 +32,10 @@ export default function FiltrosReceber({
           </ProtectedAction>
 
           <Input
-            placeholder="Buscar..."
+            placeholder="Buscar por cliente, descrição, documento, origem, status, projeto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xs h-8"
+            className="max-w-md h-8"
           />
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>

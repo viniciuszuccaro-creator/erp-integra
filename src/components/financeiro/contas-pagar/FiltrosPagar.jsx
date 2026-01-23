@@ -34,10 +34,10 @@ export default function FiltrosPagar({
           </ProtectedAction>
 
           <Input
-            placeholder="Buscar fornecedor..."
+            placeholder="Buscar por fornecedor, descrição, documento, CPF/CNPJ, categoria, projeto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xs h-8"
+            className="max-w-md h-8"
           />
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
