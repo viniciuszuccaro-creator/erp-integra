@@ -19,7 +19,8 @@ import {
   TrendingUp,
   Calendar,
   Briefcase,
-  Factory
+  Factory,
+  User
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -51,11 +52,13 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
     try {
       const q = query.toLowerCase();
 
-      // Buscar em paralelo em TODAS as entidades do sistema
+      // Buscar em paralelo em TODAS as entidades do sistema - 100% COMPLETO
       const [
         clientesRaw, pedidosRaw, produtosRaw, entregasRaw, fornecedoresRaw, opsRaw,
         colaboradoresRaw, contasPagarRaw, contasReceberRaw, oportunidadesRaw,
-        transportadorasRaw, notasFiscaisRaw, ordensCompraRaw, interacoesRaw
+        transportadorasRaw, notasFiscaisRaw, ordensCompraRaw, interacoesRaw,
+        comissoesRaw, campanhasRaw, eventosRaw, contratosRaw, solicitacoesCompraRaw,
+        movimentacoesRaw, representantesRaw, centroCustoRaw
       ] = await Promise.all([
         base44.entities.Cliente.list('-created_date', 9999),
         base44.entities.Pedido.list('-created_date', 9999),
@@ -70,10 +73,18 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
         base44.entities.Transportadora.list('-created_date', 9999),
         base44.entities.NotaFiscal.list('-created_date', 9999),
         base44.entities.OrdemCompra.list('-created_date', 9999),
-        base44.entities.Interacao.list('-created_date', 9999)
+        base44.entities.Interacao.list('-created_date', 9999),
+        base44.entities.Comissao.list('-created_date', 9999).catch(() => []),
+        base44.entities.Campanha.list('-created_date', 9999).catch(() => []),
+        base44.entities.Evento.list('-created_date', 9999).catch(() => []),
+        base44.entities.Contrato.list('-created_date', 9999).catch(() => []),
+        base44.entities.SolicitacaoCompra.list('-created_date', 9999).catch(() => []),
+        base44.entities.MovimentacaoEstoque.list('-created_date', 9999).catch(() => []),
+        base44.entities.Representante.list('-created_date', 9999).catch(() => []),
+        base44.entities.CentroCusto.list('-created_date', 9999).catch(() => [])
       ]);
 
-      // Filtrar por contexto empresa/grupo
+      // Filtrar por contexto empresa/grupo - TODAS AS ENTIDADES
       const clientesFiltrados = filtrarPorContexto(clientesRaw, 'empresa_id');
       const pedidosFiltrados = filtrarPorContexto(pedidosRaw, 'empresa_id');
       const produtosFiltrados = filtrarPorContexto(produtosRaw, 'empresa_id');
@@ -88,6 +99,14 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
       const notasFiscaisFiltradas = filtrarPorContexto(notasFiscaisRaw, 'empresa_faturamento_id');
       const ordensCompraFiltradas = filtrarPorContexto(ordensCompraRaw, 'empresa_id');
       const interacoesFiltradas = filtrarPorContexto(interacoesRaw, 'empresa_id');
+      const comissoesFiltradas = filtrarPorContexto(comissoesRaw, 'empresa_id');
+      const campanhasFiltradas = filtrarPorContexto(campanhasRaw, 'empresa_dona_id');
+      const eventosFiltrados = filtrarPorContexto(eventosRaw, 'empresa_id');
+      const contratosFiltrados = filtrarPorContexto(contratosRaw, 'empresa_id');
+      const solicitacoesCompraFiltradas = filtrarPorContexto(solicitacoesCompraRaw, 'empresa_id');
+      const movimentacoesFiltradas = filtrarPorContexto(movimentacoesRaw, 'empresa_id');
+      const representantesFiltrados = filtrarPorContexto(representantesRaw, 'empresa_dona_id');
+      const centroCustoFiltrados = filtrarPorContexto(centroCustoRaw, 'empresa_id');
 
       // Função helper para buscar em arrays de objetos
       const buscarEmArray = (array, campos) => {
@@ -298,6 +317,88 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
         i.observacoes?.toLowerCase().includes(q)
       ).slice(0, 2);
 
+      const comissoes = comissoesFiltradas.filter(c =>
+        c.vendedor?.toLowerCase().includes(q) ||
+        c.numero_pedido?.toLowerCase().includes(q) ||
+        c.cliente?.toLowerCase().includes(q) ||
+        c.status?.toLowerCase().includes(q) ||
+        c.aprovador?.toLowerCase().includes(q) ||
+        c.observacoes?.toLowerCase().includes(q)
+      ).slice(0, 2);
+
+      const campanhas = campanhasFiltradas.filter(c =>
+        c.nome?.toLowerCase().includes(q) ||
+        c.titulo?.toLowerCase().includes(q) ||
+        c.descricao?.toLowerCase().includes(q) ||
+        c.tipo?.toLowerCase().includes(q) ||
+        c.canal?.toLowerCase().includes(q) ||
+        c.status?.toLowerCase().includes(q) ||
+        c.responsavel?.toLowerCase().includes(q)
+      ).slice(0, 2);
+
+      const eventos = eventosFiltrados.filter(e =>
+        e.titulo?.toLowerCase().includes(q) ||
+        e.descricao?.toLowerCase().includes(q) ||
+        e.tipo?.toLowerCase().includes(q) ||
+        e.cliente_nome?.toLowerCase().includes(q) ||
+        e.participantes?.some(p => p?.toLowerCase().includes(q)) ||
+        e.responsavel?.toLowerCase().includes(q) ||
+        e.local?.toLowerCase().includes(q)
+      ).slice(0, 2);
+
+      const contratos = contratosFiltrados.filter(c =>
+        c.numero_contrato?.toLowerCase().includes(q) ||
+        c.titulo?.toLowerCase().includes(q) ||
+        c.cliente_nome?.toLowerCase().includes(q) ||
+        c.fornecedor_nome?.toLowerCase().includes(q) ||
+        c.tipo?.toLowerCase().includes(q) ||
+        c.status?.toLowerCase().includes(q) ||
+        c.responsavel?.toLowerCase().includes(q) ||
+        c.objeto?.toLowerCase().includes(q)
+      ).slice(0, 2);
+
+      const solicitacoesCompra = solicitacoesCompraFiltradas.filter(s =>
+        s.numero_solicitacao?.toLowerCase().includes(q) ||
+        s.produto_descricao?.toLowerCase().includes(q) ||
+        s.solicitante?.toLowerCase().includes(q) ||
+        s.setor?.toLowerCase().includes(q) ||
+        s.aprovador?.toLowerCase().includes(q) ||
+        s.justificativa?.toLowerCase().includes(q) ||
+        s.prioridade?.toLowerCase().includes(q) ||
+        s.status?.toLowerCase().includes(q)
+      ).slice(0, 2);
+
+      const movimentacoes = movimentacoesFiltradas.filter(m =>
+        m.produto_descricao?.toLowerCase().includes(q) ||
+        m.codigo_produto?.toLowerCase().includes(q) ||
+        m.tipo_movimento?.toLowerCase().includes(q) ||
+        m.origem_movimento?.toLowerCase().includes(q) ||
+        m.documento?.toLowerCase().includes(q) ||
+        m.responsavel?.toLowerCase().includes(q) ||
+        m.lote?.toLowerCase().includes(q) ||
+        m.centro_custo_nome?.toLowerCase().includes(q)
+      ).slice(0, 2);
+
+      const representantes = representantesFiltrados.filter(r =>
+        r.nome?.toLowerCase().includes(q) ||
+        r.razao_social?.toLowerCase().includes(q) ||
+        r.cpf?.includes(q) ||
+        r.cnpj?.includes(q) ||
+        r.tipo?.toLowerCase().includes(q) ||
+        r.categoria?.toLowerCase().includes(q) ||
+        r.status?.toLowerCase().includes(q) ||
+        r.telefone?.includes(q) ||
+        r.email?.toLowerCase().includes(q)
+      ).slice(0, 2);
+
+      const centrosCusto = centroCustoFiltrados.filter(cc =>
+        cc.codigo?.toLowerCase().includes(q) ||
+        cc.descricao?.toLowerCase().includes(q) ||
+        cc.tipo?.toLowerCase().includes(q) ||
+        cc.categoria?.toLowerCase().includes(q) ||
+        cc.responsavel?.toLowerCase().includes(q)
+      ).slice(0, 2);
+
       const todosResultados = [
         ...clientes.map(c => ({
           tipo: 'Cliente',
@@ -424,6 +525,78 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
           subtitulo: `${i.tipo} • ${i.cliente_nome} • ${i.responsavel}`,
           url: createPageUrl('CRM') + '?tab=interacoes&view=' + i.id,
           data: i
+        })),
+        ...comissoes.map(c => ({
+          tipo: 'Comissão',
+          icone: DollarSign,
+          cor: 'green',
+          titulo: `Comissão - ${c.vendedor}`,
+          subtitulo: `${c.numero_pedido} • R$ ${c.valor_comissao?.toLocaleString('pt-BR')} • ${c.status}`,
+          url: createPageUrl('Comercial') + '?tab=comissoes&view=' + c.id,
+          data: c
+        })),
+        ...campanhas.map(c => ({
+          tipo: 'Campanha',
+          icone: Target,
+          cor: 'purple',
+          titulo: c.nome || c.titulo,
+          subtitulo: `${c.tipo || ''} • ${c.canal || ''} • ${c.status || ''}`,
+          url: createPageUrl('CRM') + '?tab=campanhas&view=' + c.id,
+          data: c
+        })),
+        ...eventos.map(e => ({
+          tipo: 'Evento',
+          icone: Calendar,
+          cor: 'blue',
+          titulo: e.titulo,
+          subtitulo: `${e.tipo || ''} • ${e.cliente_nome || e.local || ''} • ${new Date(e.data_inicio).toLocaleDateString('pt-BR')}`,
+          url: createPageUrl('Agenda') + '?view=' + e.id,
+          data: e
+        })),
+        ...contratos.map(c => ({
+          tipo: 'Contrato',
+          icone: FileText,
+          cor: 'indigo',
+          titulo: c.numero_contrato || c.titulo,
+          subtitulo: `${c.cliente_nome || c.fornecedor_nome || ''} • ${c.status || ''}`,
+          url: createPageUrl('Contratos') + '?view=' + c.id,
+          data: c
+        })),
+        ...solicitacoesCompra.map(s => ({
+          tipo: 'Sol. Compra',
+          icone: Briefcase,
+          cor: 'orange',
+          titulo: s.numero_solicitacao,
+          subtitulo: `${s.produto_descricao} • ${s.solicitante} • ${s.status}`,
+          url: createPageUrl('Estoque') + '?tab=solicitacoes&view=' + s.id,
+          data: s
+        })),
+        ...movimentacoes.map(m => ({
+          tipo: 'Movimentação',
+          icone: TrendingUp,
+          cor: 'blue',
+          titulo: `${m.tipo_movimento || ''} - ${m.produto_descricao}`,
+          subtitulo: `${m.quantidade || 0} ${m.unidade_medida || ''} • ${m.documento || ''} • ${new Date(m.data_movimentacao).toLocaleDateString('pt-BR')}`,
+          url: createPageUrl('Estoque') + '?tab=movimentacoes&view=' + m.id,
+          data: m
+        })),
+        ...representantes.map(r => ({
+          tipo: 'Representante',
+          icone: User,
+          cor: 'purple',
+          titulo: r.nome || r.razao_social,
+          subtitulo: `${r.tipo || ''} • ${r.categoria || ''} • ${r.telefone || r.email || ''}`,
+          url: createPageUrl('Cadastros') + '?tab=representantes&view=' + r.id,
+          data: r
+        })),
+        ...centrosCusto.map(cc => ({
+          tipo: 'Centro de Custo',
+          icone: Briefcase,
+          cor: 'slate',
+          titulo: `${cc.codigo} - ${cc.descricao}`,
+          subtitulo: `${cc.tipo || ''} • ${cc.categoria || ''} • ${cc.responsavel || ''}`,
+          url: createPageUrl('Cadastros') + '?tab=centros-custo&view=' + cc.id,
+          data: cc
         }))
       ];
 
@@ -506,8 +679,8 @@ export default function PesquisaUniversal({ open, onOpenChange }) {
           ) : (
             <div className="text-center py-12 text-slate-500">
               <Search className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p className="text-sm">Digite para buscar em todo o sistema</p>
-              <p className="text-xs mt-2">Clientes • Pedidos • Produtos • Entregas • Fornecedores • OPs • Colaboradores • Pagar • Receber • CRM • NF-e • OCs • Interações • Transportadoras</p>
+              <p className="text-sm">Digite para buscar em TODO o sistema (14+ módulos)</p>
+              <p className="text-xs mt-2">Clientes • Pedidos • Produtos • Entregas • Fornecedores • OPs • Colaboradores • Pagar • Receber • Oportunidades • NF-e • OCs • Interações • Transportadoras • Comissões • Campanhas • Eventos • Contratos • Sol. Compra • Movimentações • Representantes • Centros Custo</p>
             </div>
           )}
         </div>
