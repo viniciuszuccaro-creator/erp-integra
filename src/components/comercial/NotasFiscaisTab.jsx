@@ -198,12 +198,22 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   };
 
   const filteredNotas = notasFiscais.filter(n => {
-    const matchSearch = n.cliente_fornecedor?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       n.numero?.toString().includes(searchTerm) ||
-                       n.chave_acesso?.includes(searchTerm);
-    const matchStatus = statusFilter === "todas" || n.status === statusFilter; // Changed from selectedStatus
-    const matchTipo = tipoFilter === "todas" || n.tipo === tipoFilter; // Added tipoFilter
-    return matchSearch && matchStatus && matchTipo; // Included matchTipo
+    const searchLower = searchTerm.toLowerCase();
+    const matchSearch = n.cliente_fornecedor?.toLowerCase().includes(searchLower) ||
+                       n.numero?.toString().includes(searchLower) ||
+                       n.serie?.toString().includes(searchLower) ||
+                       n.chave_acesso?.includes(searchLower) ||
+                       n.protocolo_autorizacao?.includes(searchLower) ||
+                       n.tipo?.toLowerCase().includes(searchLower) ||
+                       n.status?.toLowerCase().includes(searchLower) ||
+                       n.natureza_operacao?.toLowerCase().includes(searchLower) ||
+                       n.cfop?.includes(searchLower) ||
+                       n.numero_pedido?.includes(searchLower) ||
+                       n.cliente_cpf_cnpj?.includes(searchLower) ||
+                       n.observacoes?.toLowerCase().includes(searchLower);
+    const matchStatus = statusFilter === "todas" || n.status === statusFilter;
+    const matchTipo = tipoFilter === "todas" || n.tipo === tipoFilter;
+    return matchSearch && matchStatus && matchTipo;
   });
 
   const totalAutorizada = notasFiscais.filter(n => n.status === "Autorizada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
@@ -259,7 +269,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <Input
-                placeholder="Buscar por cliente, número ou chave..."
+                placeholder="Buscar por cliente, número, série, chave, CPF/CNPJ, tipo, pedido..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
