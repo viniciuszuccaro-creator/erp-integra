@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { InputClean } from '@/components/ui/input-clean';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -720,14 +720,16 @@ onClose: invalidateAllRelated,
 
           {/* Barra de Busca, Ordenação e Filtros */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
-            <div className="flex-1">
-              <Input
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" />
+              <InputClean
                 placeholder="🔍 Busca universal em todos os campos..."
                 value={busca}
                 onChange={(e) => {
                   setBusca(e.target.value);
                   setCurrentPage(1);
                 }}
+                className="pl-10"
               />
             </div>
             

@@ -1,14 +1,10 @@
 import React from "react";
-import { Input } from "@/components/ui/input";
+import { InputClean } from "@/components/ui/input-clean";
 import { Search } from "lucide-react";
 
 /**
- * Componente de busca reutilizável com ícone de lupa
- * 
- * @param {string} value - Valor atual da busca
- * @param {function} onChange - Callback quando o valor muda
- * @param {string} placeholder - Texto placeholder
- * @param {string} className - Classes CSS adicionais
+ * SearchInput - Campo de busca LIMPO sem auditoria
+ * V22.0 - Usa InputClean para evitar interferências de event listeners
  */
 export default function SearchInput({ 
   value = "", 
@@ -19,7 +15,7 @@ export default function SearchInput({
   return (
     <div className={`relative ${className}`}>
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
-      <Input
+      <InputClean
         type="text"
         placeholder={placeholder}
         value={value}
