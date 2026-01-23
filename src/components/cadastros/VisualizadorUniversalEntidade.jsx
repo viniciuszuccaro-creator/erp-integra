@@ -23,7 +23,8 @@ import {
   ArrowUp,
   ArrowDown,
   Plus,
-  Table as TableIcon
+  Table as TableIcon,
+  AlertCircle
   } from 'lucide-react';
 import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
@@ -247,35 +248,58 @@ export default function VisualizadorUniversalEntidade({
   const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
-  // V21.0 - Query SOMENTE com paginação (SEM busca duplicada)
-  const { data: dados = [], isLoading, isFetching, refetch } = useQuery({
+  // V21.0 - Query SERVER-SIDE com filtro de empresa aplicado direto no backend
+  const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
     queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id],
     queryFn: async () => {
-      const skip = (currentPage - 1) * itemsPerPage;
-      const limit = itemsPerPage;
-      const result = await base44.entities[nomeEntidade].list('-created_date', limit, skip);
-      return result || [];
+      try {
+        const skip = (currentPage - 1) * itemsPerPage;
+        const limit = itemsPerPage;
+        
+        // Aplicar filtro de contexto diretamente no servidor
+        const filtroContexto = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const result = await base44.entities[nomeEntidade].filter(filtroContexto, '-created_date', limit, skip);
+        
+        return result || [];
+      } catch (err) {
+        console.error('Erro ao buscar dados:', err);
+        toast({ 
+          title: "❌ Erro ao carregar dados", 
+          description: err.message || "Verifique sua conexão", 
+          variant: "destructive" 
+        });
+        return [];
+      }
     },
     staleTime: 30000,
     gcTime: 60000,
     refetchInterval: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchOnReconnect: false
+    refetchOnReconnect: false,
+    retry: 2,
+    retryDelay: 1000
   });
 
-  // V21.0 - Query para contar total (otimizada)
+  // V21.0 - Query para contar total SERVER-SIDE (sem buscar todos os dados)
   const { data: totalItemsCount = 0 } = useQuery({
     queryKey: [...queryKey, 'count', empresaAtual?.id],
     queryFn: async () => {
-      const allData = await base44.entities[nomeEntidade].list();
-      return allData.length;
+      try {
+        const filtroContexto = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const allData = await base44.entities[nomeEntidade].filter(filtroContexto);
+        return allData.length;
+      } catch (err) {
+        console.error('Erro ao contar dados:', err);
+        return 0;
+      }
     },
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchOnReconnect: false
+    refetchOnReconnect: false,
+    retry: 1
   });
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
@@ -288,10 +312,8 @@ export default function VisualizadorUniversalEntidade({
     ]);
   };
 
-  // Aplicar filtro multi-empresa
-  const dadosFiltrados = useMemo(() => {
-    return filtrarPorContexto(dados, 'empresa_id');
-  }, [dados, empresaAtual]);
+  // Dados já vêm filtrados do servidor, não precisa filtrar novamente no cliente
+  const dadosFiltrados = dados;
 
   // ✅ Ordenação por clique em coluna
   const handleOrdenarPorColuna = (campo) => {
@@ -744,6 +766,16 @@ onClose: invalidateAllRelated,
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando dados...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-3" />
+              <p className="text-slate-900 font-semibold mb-2">Erro ao carregar dados</p>
+              <p className="text-slate-600 text-sm mb-4">{error.message || 'Verifique sua conexão com a internet'}</p>
+              <Button onClick={() => refetch()} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Tentar Novamente
+              </Button>
             </div>
           ) : dadosBuscadosEOrdenados.length === 0 ? (
             <div className="text-center py-12">
