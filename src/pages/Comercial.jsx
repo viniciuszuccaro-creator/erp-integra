@@ -32,44 +32,113 @@ export default function Comercial() {
   const queryClient = useQueryClient();
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.filter(getFiltroContexto('empresa_id'), '-created_date')
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar clientes:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
   const pedidosQuery = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.filter(getFiltroContexto('empresa_id'), '-created_date')
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Pedido.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
   const { data: pedidos = [] } = pedidosQuery;
   const { data: comissoes = [] } = useQuery({
-    queryKey: ['comissoes'],
-    queryFn: () => base44.entities.Comissao.list()
+    queryKey: ['comissoes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Comissao.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar comissões:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notasFiscais'],
-    queryFn: () => base44.entities.NotaFiscal.filter(getFiltroContexto('empresa_id'), '-created_date')
+    queryKey: ['notasFiscais', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar notas fiscais:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: tabelasPreco = [] } = useQuery({
-    queryKey: ['tabelas-preco'],
-    queryFn: () => base44.entities.TabelaPreco.list('-updated_date')
+    queryKey: ['tabelas-preco', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        return await base44.entities.TabelaPreco.list('-updated_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar tabelas de preço:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list()
+    queryFn: async () => {
+      try {
+        return await base44.entities.Empresa.list();
+      } catch (err) {
+        console.error('Erro ao buscar empresas:', err);
+        return [];
+      }
+    },
+    staleTime: 60000,
+    retry: 1
   });
 
   const { data: pedidosExternos = [] } = useQuery({
-    queryKey: ['pedidos-externos'],
-    queryFn: () => base44.entities.PedidoExterno.list('-created_date')
+    queryKey: ['pedidos-externos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.PedidoExterno.filter(filtro, '-created_date', 30);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos externos:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
-  const clientesFiltrados = filtrarPorContexto(clientes, 'empresa_id');
-  const pedidosFiltrados = filtrarPorContexto(pedidos, 'empresa_id');
-  const notasFiscaisFiltradas = filtrarPorContexto(notasFiscais, 'empresa_id');
+  // Dados já vêm filtrados do servidor
+  const clientesFiltrados = clientes;
+  const pedidosFiltrados = pedidos;
+  const notasFiscaisFiltradas = notasFiscais;
 
   const pedidosExternosPendentes = pedidosExternos.filter(p => p.status_importacao === 'A Validar').length;
   const totalVendas = pedidosFiltrados.filter(p => p.status !== 'Cancelado').reduce((sum, p) => sum + (p.valor_total || 0), 0);

@@ -39,45 +39,112 @@ export default function Financeiro() {
   } = useContextoVisual();
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber'],
-    queryFn: () => base44.entities.ContaReceber.list('-data_vencimento'),
+    queryKey: ['contasReceber', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.ContaReceber.filter(filtro, '-data_vencimento', 100);
+      } catch (err) {
+        console.error('Erro ao buscar contas a receber:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar'],
-    queryFn: () => base44.entities.ContaPagar.list('-data_vencimento'),
+    queryKey: ['contasPagar', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.ContaPagar.filter(filtro, '-data_vencimento', 100);
+      } catch (err) {
+        console.error('Erro ao buscar contas a pagar:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 2
   });
 
   const { data: rateios = [] } = useQuery({
-    queryKey: ['rateios'],
-    queryFn: () => base44.entities.RateioFinanceiro.list('-created_date'),
+    queryKey: ['rateios', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.RateioFinanceiro.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar rateios:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: extratosBancarios = [] } = useQuery({
-    queryKey: ['extratos'],
-    queryFn: () => base44.entities.ExtratoBancario.list('-data_movimento', 100),
+    queryKey: ['extratos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.ExtratoBancario.filter(filtro, '-data_movimento', 100);
+      } catch (err) {
+        console.error('Erro ao buscar extratos:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: configsGateway = [] } = useQuery({
-    queryKey: ['configs-gateway'],
-    queryFn: () => base44.entities.ConfiguracaoGatewayPagamento.list(),
+    queryKey: ['configs-gateway', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        return await base44.entities.ConfiguracaoGatewayPagamento.list();
+      } catch (err) {
+        console.error('Erro ao buscar configs gateway:', err);
+        return [];
+      }
+    },
+    staleTime: 60000,
+    retry: 1
   });
 
   const { data: ordensLiquidacao = [] } = useQuery({
-    queryKey: ['caixa-ordens-liquidacao'],
-    queryFn: () => base44.entities.CaixaOrdemLiquidacao.list(),
+    queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.CaixaOrdemLiquidacao.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar ordens de liquidação:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
   });
 
   const { data: pedidosPendentesAprovacao = [] } = useQuery({
-    queryKey: ['pedidos-pendentes-aprovacao'],
+    queryKey: ['pedidos-pendentes-aprovacao', empresaAtual?.id],
     queryFn: async () => {
-      const pedidos = await base44.entities.Pedido.list();
-      return pedidos.filter(p => p.status_aprovacao === "pendente");
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id, status_aprovacao: "pendente" } : { status_aprovacao: "pendente" };
+        return await base44.entities.Pedido.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos pendentes:', err);
+        return [];
+      }
     },
+    staleTime: 30000,
+    retry: 1
   });
 
-  const contasReceberFiltradas = filtrarPorContexto(contasReceber, 'empresa_id');
-  const contasPagarFiltradas = filtrarPorContexto(contasPagar, 'empresa_id');
+  // Dados já vêm filtrados do servidor
+  const contasReceberFiltradas = contasReceber;
+  const contasPagarFiltradas = contasPagar;
 
   const contasReceberComContexto = adicionarColunasContexto(contasReceberFiltradas);
   const contasPagarComContexto = adicionarColunasContexto(contasPagarFiltradas);
