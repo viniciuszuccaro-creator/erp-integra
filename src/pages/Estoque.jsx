@@ -56,25 +56,38 @@ export default function Estoque() {
     retryDelay: 1000
   });
 
-  // V21.0 - Query para total SERVER-SIDE
+  // V22.0 - Contagem otimizada via backend para grandes volumes (893+ produtos)
   const { data: totalProdutos = 0 } = useQuery({
     queryKey: ['produtos-count', empresaAtual?.id],
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        const allData = await base44.entities.Produto.filter(filtro);
-        return allData.length;
+        
+        // Usa função backend otimizada
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Produto',
+          filter: filtro
+        });
+
+        return response.data?.count || 0;
       } catch (err) {
         console.error('Erro ao contar produtos:', err);
-        return 0;
+        // Fallback
+        try {
+          const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+          const allData = await base44.entities.Produto.filter(filtro, undefined, 5000);
+          return allData.length;
+        } catch {
+          return 0;
+        }
       }
     },
-    staleTime: 30000,
-    gcTime: 60000,
+    staleTime: 60000,
+    gcTime: 120000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-    retry: 1
+    retry: 2
   });
 
   const { data: movimentacoes = [] } = useQuery({
