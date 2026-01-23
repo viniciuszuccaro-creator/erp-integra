@@ -328,7 +328,7 @@ export default function Cadastros() {
     queryKey: ['contatos-b2b', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.ContatoB2B.list('-created_date', 50);
+        return await base44.entities.ContatoB2B.list('-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar contatos B2B:', err);
         return [];
@@ -379,7 +379,7 @@ export default function Cadastros() {
     queryKey: ['servicos'],
     queryFn: async () => {
       try {
-        return await base44.entities.Servico.list('-created_date', 50);
+        return await base44.entities.Servico.list('-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar serviços:', err);
         return [];
@@ -395,7 +395,7 @@ export default function Cadastros() {
     queryKey: ['setores-atividade'],
     queryFn: async () => {
       try {
-        return await base44.entities.SetorAtividade.list('-created_date', 50);
+        return await base44.entities.SetorAtividade.list('-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar setores:', err);
         return [];
@@ -411,7 +411,7 @@ export default function Cadastros() {
     queryKey: ['grupos-produto'],
     queryFn: async () => {
       try {
-        return await base44.entities.GrupoProduto.list('-created_date', 50);
+        return await base44.entities.GrupoProduto.list('-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar grupos de produto:', err);
         return [];
@@ -427,7 +427,7 @@ export default function Cadastros() {
     queryKey: ['marcas'],
     queryFn: async () => {
       try {
-        return await base44.entities.Marca.list('-created_date', 50);
+        return await base44.entities.Marca.list('-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar marcas:', err);
         return [];
@@ -443,7 +443,7 @@ export default function Cadastros() {
     queryKey: ['tabelas-preco'],
     queryFn: async () => {
       try {
-        return await base44.entities.TabelaPreco.list('-created_date', 50);
+        return await base44.entities.TabelaPreco.list('-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar tabelas de preço:', err);
         return [];
@@ -459,7 +459,7 @@ export default function Cadastros() {
     queryKey: ['catalogo-web'],
     queryFn: async () => {
       try {
-        return await base44.entities.CatalogoWeb.list('-created_date', 30);
+        return await base44.entities.CatalogoWeb.list('-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar catálogo web:', err);
         return [];
@@ -475,7 +475,7 @@ export default function Cadastros() {
     queryKey: ['kits-produto'],
     queryFn: async () => {
       try {
-        return await base44.entities.KitProduto.list('-created_date', 50);
+        return await base44.entities.KitProduto.list('-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar kits:', err);
         return [];
