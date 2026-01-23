@@ -725,8 +725,8 @@ onClose: invalidateAllRelated,
               <InputClean
                 placeholder="🔍 Busca universal em todos os campos..."
                 value={busca}
-                onChange={(e) => {
-                  setBusca(e.target.value);
+                onChange={(val) => {
+                  setBusca(val);
                   setCurrentPage(1);
                 }}
                 className="pl-10"

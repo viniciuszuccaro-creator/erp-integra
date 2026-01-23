@@ -190,8 +190,13 @@ export default function ProdutosTab({
   });
 
   // V21.6: Estatísticas de produtos em produção
-  const produtosProducao = produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção');
-  const produtosRevenda = produtos.filter(p => p.tipo_item !== 'Matéria-Prima Produção');
+  const produtosProducao = useMemo(() => {
+    return produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção');
+  }, [produtos]);
+
+  const produtosRevenda = useMemo(() => {
+    return produtos.filter(p => p.tipo_item !== 'Matéria-Prima Produção');
+  }, [produtos]);
 
 
 
@@ -204,7 +209,7 @@ export default function ProdutosTab({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-blue-700 mb-1">Total Produtos</p>
-                <p className="text-2xl font-bold text-blue-900">{totalItems || produtos.length}</p>
+                <p className="text-2xl font-bold text-blue-900">{totalItems}</p>
               </div>
               <Package className="w-8 h-8 text-blue-600" />
             </div>
@@ -268,9 +273,11 @@ export default function ProdutosTab({
                  onClick={() => {
                    onCategoriaChange && onCategoriaChange("todos");
                    onSearchChange && onSearchChange("");
-                   // Scroll para tabela de produtos
+                   onPageChange && onPageChange(1);
+                   // Filtrar apenas produtos com estoque baixo
                    setTimeout(() => {
-                     document.querySelector('[role="tablist"]')?.scrollIntoView({ behavior: 'smooth' });
+                     const table = document.querySelector('table');
+                     if (table) table.scrollIntoView({ behavior: 'smooth' });
                    }, 100);
                  }}
                >
