@@ -437,7 +437,7 @@ export default function ProdutosTab({
                 onSearchChange && onSearchChange(val);
                 onPageChange && onPageChange(1);
               }}
-              placeholder="Buscar por descrição ou código..."
+              placeholder="Buscar por código, descrição, grupo, marca, setor, tipo, fornecedor, NCM..."
               className="flex-1"
             />
             <Select value={selectedCategoria} onValueChange={(val) => {

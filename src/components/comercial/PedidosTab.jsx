@@ -71,9 +71,19 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
 
   const filteredPedidos = pedidos.filter(p => {
     const matchStatus = statusFilter === "todos" || p.status === statusFilter;
-    const matchSearch = p.numero_pedido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       p.cliente_nome?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchEmpresa = !empresaId || p.empresa_id === empresaId; // V21.6: Filtro empresa
+    const searchLower = searchTerm.toLowerCase();
+    const matchSearch = 
+      p.numero_pedido?.toLowerCase().includes(searchLower) ||
+      p.cliente_nome?.toLowerCase().includes(searchLower) ||
+      p.vendedor?.toLowerCase().includes(searchLower) ||
+      p.tipo_pedido?.toLowerCase().includes(searchLower) ||
+      p.origem_pedido?.toLowerCase().includes(searchLower) ||
+      p.status?.toLowerCase().includes(searchLower) ||
+      p.observacoes_publicas?.toLowerCase().includes(searchLower) ||
+      p.observacoes_internas?.toLowerCase().includes(searchLower) ||
+      p.indicador_nome?.toLowerCase().includes(searchLower) ||
+      p.obra_destino_nome?.toLowerCase().includes(searchLower);
+    const matchEmpresa = !empresaId || p.empresa_id === empresaId;
     return matchStatus && matchSearch && matchEmpresa;
   });
 
@@ -161,7 +171,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
-              placeholder="Buscar por número ou cliente..."
+              placeholder="Buscar por número, cliente, vendedor, tipo, origem, status..."
               className="flex-1"
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>

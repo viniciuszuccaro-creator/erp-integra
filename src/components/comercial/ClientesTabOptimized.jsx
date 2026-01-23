@@ -63,12 +63,31 @@ export default function ClientesTabOptimized({ onEdit, onCreate }) {
 
     if (searchTerm.trim()) {
       const termo = searchTerm.toLowerCase();
-      resultado = resultado.filter(c =>
-        (c.nome || '').toLowerCase().includes(termo) ||
-        (c.razao_social || '').toLowerCase().includes(termo) ||
-        (c.cnpj || '').toLowerCase().includes(termo) ||
-        (c.cpf || '').toLowerCase().includes(termo)
-      );
+      resultado = resultado.filter(c => {
+        const matchNome = (c.nome || '').toLowerCase().includes(termo) ||
+          (c.razao_social || '').toLowerCase().includes(termo) ||
+          (c.nome_fantasia || '').toLowerCase().includes(termo);
+        
+        const matchDocumento = (c.cnpj || '').includes(termo) ||
+          (c.cpf || '').includes(termo) ||
+          (c.rg || '').includes(termo);
+        
+        const matchContato = c.contatos?.some(ct => 
+          (ct.nome || '').toLowerCase().includes(termo) ||
+          (ct.valor || '').includes(termo)
+        );
+        
+        const matchOutros = (c.vendedor_responsavel || '').toLowerCase().includes(termo) ||
+          (c.indicador_nome || '').toLowerCase().includes(termo) ||
+          (c.ramo_atividade || '').toLowerCase().includes(termo) ||
+          (c.segmento_cliente_id || '').toLowerCase().includes(termo) ||
+          (c.regiao_atendimento_nome || '').toLowerCase().includes(termo) ||
+          (c.observacoes || '').toLowerCase().includes(termo) ||
+          (c.endereco_principal?.cidade || '').toLowerCase().includes(termo) ||
+          (c.endereco_principal?.bairro || '').toLowerCase().includes(termo);
+        
+        return matchNome || matchDocumento || matchContato || matchOutros;
+      });
     }
 
     if (statusFilter !== 'todos') {
@@ -133,7 +152,7 @@ export default function ClientesTabOptimized({ onEdit, onCreate }) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
-            placeholder="Buscar por nome, razão social, CPF, CNPJ..."
+            placeholder="Buscar por nome, razão, CPF, CNPJ, telefone, vendedor, região, cidade..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"

@@ -59,11 +59,29 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
 
     if (searchTerm.trim()) {
       const termo = searchTerm.toLowerCase();
-      resultado = resultado.filter(f =>
-        (f.nome || '').toLowerCase().includes(termo) ||
-        (f.razao_social || '').toLowerCase().includes(termo) ||
-        (f.cnpj || '').toLowerCase().includes(termo)
-      );
+      resultado = resultado.filter(f => {
+        const matchNome = (f.nome || '').toLowerCase().includes(termo) ||
+          (f.razao_social || '').toLowerCase().includes(termo) ||
+          (f.nome_fantasia || '').toLowerCase().includes(termo);
+        
+        const matchDocumento = (f.cnpj || '').includes(termo) ||
+          (f.cpf || '').includes(termo);
+        
+        const matchContato = f.emails?.some(e => 
+          (e.email || '').toLowerCase().includes(termo)
+        ) || f.telefones?.some(t => 
+          (t.numero || '').includes(termo)
+        ) || (f.whatsapp || '').includes(termo) ||
+          (f.contato_responsavel || '').toLowerCase().includes(termo);
+        
+        const matchOutros = (f.categoria || '').toLowerCase().includes(termo) ||
+          (f.tipo_fornecedor || '').toLowerCase().includes(termo) ||
+          (f.ramo_atividade || '').toLowerCase().includes(termo) ||
+          (f.cnae_principal || '').includes(termo) ||
+          (f.observacoes || '').toLowerCase().includes(termo);
+        
+        return matchNome || matchDocumento || matchContato || matchOutros;
+      });
     }
 
     if (statusFilter !== 'todos') {
@@ -131,7 +149,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input
-            placeholder="Buscar por nome, razão social, CNPJ..."
+            placeholder="Buscar por nome, razão, CNPJ, CPF, telefone, email, categoria, tipo..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
