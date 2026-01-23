@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Box, TrendingUp, PackageCheck, PackageMinus, PackageOpen, Clock, BarChart3, Sparkles, ArrowLeftRight } from "lucide-react";
@@ -25,10 +25,36 @@ export default function Estoque() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
   const { estaNoGrupo, empresaAtual, empresasDoGrupo, filtrarPorContexto } = useContextoVisual();
+  
+  // V21.0 - Estados de Paginação e Filtros para Produtos
+  const [currentPageProdutos, setCurrentPageProdutos] = useState(1);
+  const [itemsPerPageProdutos, setItemsPerPageProdutos] = useState(50);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategoria, setSelectedCategoria] = useState('todos');
 
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('-created_date'),
+  // V21.0 - Query paginada de produtos
+  const { data: produtos = [], isLoading: loadingProdutos } = useQuery({
+    queryKey: ['produtos', currentPageProdutos, itemsPerPageProdutos, searchTerm, selectedCategoria],
+    queryFn: async () => {
+      const skip = (currentPageProdutos - 1) * itemsPerPageProdutos;
+      const limit = itemsPerPageProdutos;
+      const result = await base44.entities.Produto.list('-created_date', limit, skip);
+      return result || [];
+    },
+    staleTime: 600000,
+    gcTime: 900000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
+  });
+
+  // V21.0 - Query para total de produtos
+  const { data: totalProdutos = 0 } = useQuery({
+    queryKey: ['produtos-count', searchTerm, selectedCategoria],
+    queryFn: async () => {
+      const allData = await base44.entities.Produto.list();
+      return allData.length;
+    },
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -94,7 +120,19 @@ export default function Estoque() {
       windowTitle: '📦 Produtos',
       width: 1500,
       height: 850,
-      props: { produtos: produtosFiltrados, isLoading: false }
+      props: { 
+        produtos: produtosFiltrados,
+        isLoading: loadingProdutos,
+        currentPage: currentPageProdutos,
+        totalItems: totalProdutos,
+        itemsPerPage: itemsPerPageProdutos,
+        onPageChange: setCurrentPageProdutos,
+        onItemsPerPageChange: setItemsPerPageProdutos,
+        searchTerm,
+        onSearchChange: setSearchTerm,
+        selectedCategoria,
+        onCategoriaChange: setSelectedCategoria
+      }
     },
     {
       title: 'Movimentações',

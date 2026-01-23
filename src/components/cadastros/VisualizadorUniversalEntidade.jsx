@@ -216,6 +216,10 @@ export default function VisualizadorUniversalEntidade({
   const [colunaOrdenacao, setColunaOrdenacao] = useState(null);
   const [direcaoOrdenacao, setDirecaoOrdenacao] = useState('asc');
   const [selectedIds, setSelectedIds] = useState(new Set());
+  
+  // V21.0 - Estados de Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   const { openWindow, closeWindow } = useWindow();
   const { empresaAtual, filtrarPorContexto } = useContextoVisual();
   const { hasPermission } = usePermissions();
@@ -242,15 +246,32 @@ export default function VisualizadorUniversalEntidade({
   const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
+  // V21.0 - Query paginada com busca
   const { data: dados = [], isLoading, isFetching, refetch } = useQuery({
-    queryKey: queryKey,
+    queryKey: [...queryKey, currentPage, itemsPerPage, busca],
     queryFn: async () => {
-      const result = await base44.entities[nomeEntidade].list('-created_date');
+      const skip = (currentPage - 1) * itemsPerPage;
+      const limit = itemsPerPage;
+      const result = await base44.entities[nomeEntidade].list('-created_date', limit, skip);
       return result || [];
     },
     staleTime: 600000,
     gcTime: 900000,
     refetchInterval: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
+  });
+
+  // V21.0 - Query para contar total
+  const { data: totalItemsCount = 0 } = useQuery({
+    queryKey: [...queryKey, 'count', busca],
+    queryFn: async () => {
+      const allData = await base44.entities[nomeEntidade].list();
+      return allData.length;
+    },
+    staleTime: 600000,
+    gcTime: 900000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false
@@ -573,8 +594,7 @@ onClose: invalidateAllRelated,
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
-                  {dadosBuscadosEOrdenados.length} {dadosBuscadosEOrdenados.length === 1 ? 'registro' : 'registros'}
-                  {busca && ` (filtrado de ${dadosFiltrados.length})`}
+                  Mostrando {dadosBuscadosEOrdenados.length} de {totalItemsCount} {totalItemsCount === 1 ? 'registro' : 'registros'}
                 </p>
               </div>
             </div>
@@ -643,7 +663,10 @@ onClose: invalidateAllRelated,
               <Input
                 placeholder="🔍 Busca universal em todos os campos..."
                 value={busca}
-                onChange={(e) => setBusca(e.target.value)}
+                onChange={(e) => {
+                  setBusca(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="pl-10"
               />
             </div>
@@ -975,6 +998,25 @@ onClose: invalidateAllRelated,
                 </div>
               )}
             </>
+          )}
+
+          {/* V21.0 - Controles de Paginação */}
+          {!isLoading && totalItemsCount > 0 && (
+            <PaginationControls
+              currentPage={currentPage}
+              totalItems={totalItemsCount}
+              itemsPerPage={itemsPerPage}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                setSelectedIds(new Set());
+              }}
+              onItemsPerPageChange={(items) => {
+                setItemsPerPage(items);
+                setCurrentPage(1);
+                setSelectedIds(new Set());
+              }}
+              isLoading={isFetching}
+            />
           )}
         </CardContent>
       </Card>

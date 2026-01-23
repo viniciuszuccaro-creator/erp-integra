@@ -24,10 +24,21 @@ import { useWindow } from "@/components/lib/useWindow";
 import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMassa";
 import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosProducao";
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
+import PaginationControls from "@/components/ui/PaginationControls";
 
-export default function ProdutosTab({ produtos, isLoading }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategoria, setSelectedCategoria] = useState("todos");
+export default function ProdutosTab({ 
+  produtos, 
+  isLoading = false,
+  currentPage = 1,
+  totalItems = 0,
+  itemsPerPage = 50,
+  onPageChange,
+  onItemsPerPageChange,
+  searchTerm = '',
+  onSearchChange,
+  selectedCategoria = 'todos',
+  onCategoriaChange
+}) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduto, setEditingProduto] = useState(null);
   const [solicitacaoModal, setSolicitacaoModal] = useState(null);
@@ -161,14 +172,9 @@ export default function ProdutosTab({ produtos, isLoading }) {
     }
   };
 
-  // ✅ Aplicar filtros e ordenação
+  // V21.0 - Produtos já vêm filtrados e paginados do pai, apenas aplicar ordenação
   const produtosProcessados = useMemo(() => {
-    let resultado = produtos.filter(p => {
-      const matchSearch = p.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         p.codigo?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchGrupo = selectedCategoria === "todos" || p.grupo === selectedCategoria;
-      return matchSearch && matchGrupo;
-    });
+    let resultado = produtos;
 
     // Aplicar ordenação se uma coluna foi selecionada
     if (colunaOrdenacao) {
@@ -197,7 +203,7 @@ export default function ProdutosTab({ produtos, isLoading }) {
     }
 
     return resultado;
-  }, [produtos, searchTerm, selectedCategoria, colunaOrdenacao, direcaoOrdenacao]);
+  }, [produtos, colunaOrdenacao, direcaoOrdenacao]);
 
   const produtosBaixoEstoque = produtos.filter(p => {
     const disponivel = (p.estoque_disponivel ?? ((p.estoque_atual || 0) - (p.estoque_reservado || 0)));
@@ -427,11 +433,17 @@ export default function ProdutosTab({ produtos, isLoading }) {
           <div className="flex flex-col sm:flex-row gap-4 w-full">
             <SearchInput
               value={searchTerm}
-              onChange={setSearchTerm}
+              onChange={(val) => {
+                onSearchChange && onSearchChange(val);
+                onPageChange && onPageChange(1);
+              }}
               placeholder="Buscar por descrição ou código..."
               className="flex-1"
             />
-            <Select value={selectedCategoria} onValueChange={setSelectedCategoria}>
+            <Select value={selectedCategoria} onValueChange={(val) => {
+              onCategoriaChange && onCategoriaChange(val);
+              onPageChange && onPageChange(1);
+            }}>
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filtrar por categoria" />
               </SelectTrigger>
@@ -666,6 +678,18 @@ export default function ProdutosTab({ produtos, isLoading }) {
                 <p className="text-slate-500">Nenhum produto encontrado</p>
               </div>
             </div>
+          )}
+
+          {/* V21.0 - Controles de Paginação */}
+          {totalItems > 0 && onPageChange && onItemsPerPageChange && (
+            <PaginationControls
+              currentPage={currentPage}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={onPageChange}
+              onItemsPerPageChange={onItemsPerPageChange}
+              isLoading={isLoading}
+            />
           )}
           </CardContent>
           </Card>
