@@ -346,13 +346,36 @@ export default function VisualizadorUniversalEntidade({
     queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, busca],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
-      const skip = (currentPage - 1) * itemsPerPage;
       
-      // ✅ Para código de produtos, não ordenar no backend (faremos no frontend numericamente)
-      let sortString = getBackendSortString();
+      // ✅ CORREÇÃO: Para ordenação por código, buscar TODOS os produtos (não paginar)
       if (nomeEntidade === 'Produto' && (colunaOrdenacao === 'codigo' || ordenacao === 'codigo' || ordenacao === 'codigo_desc')) {
-        sortString = '-created_date'; // Usa ordenação padrão, faremos numérica no frontend
+        console.log('🔢 Buscando TODOS os produtos para ordenação numérica por código');
+        let todosOsProdutos = [];
+        let skip = 0;
+        const batchSize = 500;
+        let hasMore = true;
+        
+        while (hasMore) {
+          const batch = await base44.entities[nomeEntidade].filter(filtro, '-created_date', batchSize, skip);
+          if (!batch || batch.length === 0) {
+            hasMore = false;
+          } else {
+            todosOsProdutos = [...todosOsProdutos, ...batch];
+            if (batch.length < batchSize) {
+              hasMore = false;
+            } else {
+              skip += batchSize;
+            }
+          }
+        }
+        
+        console.log('📦 Total de produtos carregados:', todosOsProdutos.length);
+        return todosOsProdutos;
       }
+      
+      // Para outras ordenações, usar paginação normal
+      const skip = (currentPage - 1) * itemsPerPage;
+      const sortString = getBackendSortString();
       
       console.log('🔍 BUSCA BACKEND:', { filtro, sortString, limit: itemsPerPage, skip });
       
@@ -423,27 +446,31 @@ export default function VisualizadorUniversalEntidade({
 
   // ✅ Busca já aplicada no BACKEND, mas ordenação de código precisa ser numérica no FRONTEND
   const dadosBuscadosEOrdenados = useMemo(() => {
-    let resultado = [...dados]; // Sempre criar nova array para evitar mutação
+    let resultado = [...dados];
     
     // Aplicar filtro adicional se fornecido (ex: estoque baixo)
     if (filtroAdicional && typeof filtroAdicional === 'function') {
       resultado = resultado.filter(filtroAdicional);
     }
     
-    // ✅ ORDENAÇÃO NUMÉRICA DE CÓDIGO NO FRONTEND (backend não suporta)
+    // ✅ ORDENAÇÃO NUMÉRICA DE CÓDIGO NO FRONTEND - já vem tudo carregado quando ordenando por código
     if (nomeEntidade === 'Produto' && (colunaOrdenacao === 'codigo' || ordenacao === 'codigo' || ordenacao === 'codigo_desc')) {
-      console.log('🔢 Ordenando por código numericamente:', { colunaOrdenacao, ordenacao, direcaoOrdenacao });
+      console.log('🔢 Ordenando por código numericamente - TODOS os produtos');
       resultado.sort((a, b) => {
         const aNum = parseFloat(a.codigo) || 0;
         const bNum = parseFloat(b.codigo) || 0;
         const isDesc = ordenacao === 'codigo_desc' || (colunaOrdenacao === 'codigo' && direcaoOrdenacao === 'desc');
-        console.log('Comparando:', aNum, 'vs', bNum, 'desc:', isDesc);
         return isDesc ? bNum - aNum : aNum - bNum;
       });
+      
+      // ✅ Aplicar paginação MANUALMENTE após ordenar tudo
+      const skip = (currentPage - 1) * itemsPerPage;
+      resultado = resultado.slice(skip, skip + itemsPerPage);
+      console.log(`📄 Página ${currentPage}: mostrando itens ${skip} a ${skip + itemsPerPage}`);
     }
     
     return resultado;
-  }, [dados, filtroAdicional, nomeEntidade, colunaOrdenacao, ordenacao, direcaoOrdenacao]);
+  }, [dados, filtroAdicional, nomeEntidade, colunaOrdenacao, ordenacao, direcaoOrdenacao, currentPage, itemsPerPage]);
 
   // Seleção em massa + exclusão
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
