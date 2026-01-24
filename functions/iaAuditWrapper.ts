@@ -1,61 +1,43 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 /**
- * IA AUDIT WRAPPER - AUDITORIA DE INTERAÇÕES COM IA
- * Registra todas as chamadas à IA no sistema
+ * IA AUDIT WRAPPER - Auditoria de Chamadas de IA
+ * Registra todas as interações com modelos de IA
  */
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { 
-      prompt,
-      response,
-      model,
-      modulo,
-      entidade,
-      registro_id,
-      usuario_id,
-      empresa_id,
-      tokens_usados,
-      custo_estimado,
-      duracao_ms
-    } = await req.json();
+    const { prompt, model, response } = await req.json();
 
-    // Registro em AuditoriaIA (específico)
-    await base44.asServiceRole.entities.AuditoriaIA.create({
-      prompt_resumo: prompt?.substring(0, 200),
-      resposta_resumo: response?.substring(0, 200),
-      modelo: model || 'InvokeLLM',
-      modulo: modulo || 'Sistema',
-      entidade: entidade || 'Genérica',
-      registro_id: registro_id || null,
-      usuario_id: usuario_id || null,
-      empresa_id: empresa_id || null,
-      tokens_usados: tokens_usados || 0,
-      custo_estimado: custo_estimado || 0,
-      duracao_ms: duracao_ms || 0,
-      status: 'concluido',
-      data_execucao: new Date().toISOString()
-    });
+    const user = await base44.auth.me();
 
-    // Registro em AuditLog (universal)
+    // Registrar auditoria da chamada IA
     await base44.asServiceRole.entities.AuditLog.create({
-      usuario: 'IA',
-      usuario_id: usuario_id || null,
-      empresa_id: empresa_id || null,
-      acao: 'Processamento',
-      modulo: modulo || 'IA',
-      entidade: entidade || 'IA',
-      registro_id: registro_id || null,
-      descricao: `IA processou: ${prompt?.substring(0, 100)}`,
-      dados_novos: { model, tokens: tokens_usados, duracao_ms },
-      data_hora: new Date().toISOString()
+      usuario: user?.full_name || 'Sistema',
+      usuario_id: user?.id || 'auto',
+      acao: 'Execução',
+      modulo: 'IA',
+      entidade: 'LLM',
+      descricao: `Chamada IA com modelo "${model}"`,
+      dados_novos: { 
+        model,
+        promptLength: prompt?.length || 0,
+        hasResponse: !!response
+      },
+      data_hora: new Date().toISOString(),
+      sucesso: true
     });
 
-    return Response.json({ success: true });
+    return Response.json({ 
+      valid: true,
+      message: 'Chamada IA auditada com sucesso'
+    });
 
-  } catch (err) {
-    return Response.json({ success: false, error: err.message }, { status: 500 });
+  } catch (error) {
+    return Response.json({ 
+      valid: false, 
+      reason: error.message 
+    }, { status: 500 });
   }
 });
