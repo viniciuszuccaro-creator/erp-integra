@@ -218,19 +218,21 @@ export function useContextoVisual() {
       throw new Error('Contexto multiempresa obrigatório: defina grupo ou empresa');
     }
 
-    // Validação backend antes da criação
+    // ETAPA 1: Validação completa (RBAC + Multiempresa) no backend
     try {
-      const validation = await base44.functions.invoke('multiempresaValidator', {
+      const validation = await base44.functions.invoke('entityOperationGuard', {
         operation: 'create',
         entityName,
-        data: stamped
+        data: stamped,
+        module: entityName,
+        action: 'criar'
       });
 
       if (!validation.data?.valid) {
-        throw new Error(validation.data?.reason || 'Validação multiempresa falhou');
+        throw new Error(validation.data?.reason || 'Validação falhou');
       }
     } catch (err) {
-      console.error('Validação multiempresa falhou:', err);
+      console.error('Validação backend falhou:', err);
       throw err;
     }
 
@@ -246,20 +248,22 @@ export function useContextoVisual() {
       return s;
     });
 
-    // Validar primeiro item como amostra
+    // ETAPA 1: Validar primeiro item com guard completo
     if (stampedList.length > 0) {
       try {
-        const validation = await base44.functions.invoke('multiempresaValidator', {
+        const validation = await base44.functions.invoke('entityOperationGuard', {
           operation: 'create',
           entityName,
-          data: stampedList[0]
+          data: stampedList[0],
+          module: entityName,
+          action: 'criar'
         });
 
         if (!validation.data?.valid) {
-          throw new Error(validation.data?.reason || 'Validação multiempresa falhou');
+          throw new Error(validation.data?.reason || 'Validação falhou');
         }
       } catch (err) {
-        console.error('Validação multiempresa falhou:', err);
+        console.error('Validação backend falhou:', err);
         throw err;
       }
     }
