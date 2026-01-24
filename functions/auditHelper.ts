@@ -24,8 +24,14 @@ Deno.serve(async (req) => {
       ip_address,
       user_agent,
       sucesso = true,
-      duracao_ms
+      duracao_ms,
+      test
     } = await req.json();
+
+    // Modo teste - retornar sucesso imediatamente
+    if (test === true) {
+      return Response.json({ success: true, message: 'Audit Helper operacional' });
+    }
 
     // Criar log de auditoria
     const log = await base44.asServiceRole.entities.AuditLog.create({
