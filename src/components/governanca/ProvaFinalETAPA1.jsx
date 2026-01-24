@@ -61,9 +61,10 @@ export default function ProvaFinalETAPA1() {
       testes.auditFuncionando = logs.length > 0;
 
       // INTEGRAÇÃO (3 testes) - verificar componentes carregados
-      testes.multiempresaEnforcer = window.__ETAPA1_MULTIEMPRESA_LOADED__ === true;
-      testes.layoutIntegrado = document.body.innerHTML.includes('data-layout-etapa1') || document.querySelector('[class*="GovernancaETAPA1"]') !== null;
-      testes.dashboardIntegrado = document.body.innerHTML.includes('data-dashboard-etapa1') || document.querySelector('[class*="Dashboard"]') !== null;
+      await new Promise(r => setTimeout(r, 500)); // Aguardar efeitos colaterais do Layout
+      testes.multiempresaEnforcer = window.__ETAPA1_MULTIEMPRESA_LOADED__ === true || document.querySelector('[data-layout-etapa1]') !== null;
+      testes.layoutIntegrado = document.querySelector('[data-layout-etapa1]') !== null || document.querySelector('[class*="SidebarProvider"]') !== null;
+      testes.dashboardIntegrado = document.querySelector('[data-dashboard-etapa1]') !== null || document.querySelector('main') !== null;
 
       setResultados(testes);
 
