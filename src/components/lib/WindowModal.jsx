@@ -123,7 +123,7 @@ export default function WindowModal({ window, children }) {
       } ${
         !isDragging && !isResizing ? 'transition-all duration-200' : ''
       }`}
-      onClick={(e) => {
+      onMouseDown={(e) => {
         e.stopPropagation();
         bringToFront(window.id);
       }}

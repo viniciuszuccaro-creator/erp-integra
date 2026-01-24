@@ -61,7 +61,7 @@ export function WindowProvider({ children }) {
     });
   }, []);
 
-  // Abrir nova janela - V21.6.3 DEFINITIVO ABSOLUTO: Sempre no topo + Ação imediata
+  // Abrir nova janela - V21.6.4 CORREÇÃO DEFINITIVA: SEMPRE no topo GARANTIDO
   const openWindow = useCallback((component, props = {}, options = {}) => {
     // V21.6: Buscar por uniqueKey para evitar duplicação
     if (options.uniqueKey) {
@@ -69,15 +69,15 @@ export function WindowProvider({ children }) {
 
       if (janelaExistente) {
         // Trazer janela existente para TOPO ABSOLUTO
-        const maxZ = Math.max(...windows.map(w => w.zIndex), 99999000);
-        setActiveWindowId(janelaExistente.id);
-        setWindows(prev => 
-          prev.map(w => 
+        setWindows(prev => {
+          const maxZ = Math.max(...prev.map(w => w.zIndex), 99999000);
+          return prev.map(w => 
             w.id === janelaExistente.id 
               ? { ...w, zIndex: maxZ + 100000, isMinimized: false }
               : w
-          )
-        );
+          );
+        });
+        setActiveWindowId(janelaExistente.id);
         return janelaExistente.id;
       }
     }
@@ -89,10 +89,10 @@ export function WindowProvider({ children }) {
     const maxOffset = 400;
     const cascade = offsetBase % maxOffset;
     
-    // V21.6.3: zIndex SEMPRE garantindo topo ABSOLUTO
-    const baseZ = 99999000; // Base alta para TODAS as janelas
+    // V21.6.4: Calcular z-index SEMPRE maior que todas as janelas existentes
+    const baseZ = 99999000;
     const currentMaxZ = windows.length > 0 ? Math.max(...windows.map(w => w.zIndex), baseZ) : baseZ;
-    const finalZ = options.zIndex && options.zIndex > currentMaxZ ? options.zIndex : currentMaxZ + 100000;
+    const finalZ = currentMaxZ + 100000; // SEMPRE soma 100000 ao máximo atual
     
     const newWindow = {
       id: windowId,
@@ -112,17 +112,14 @@ export function WindowProvider({ children }) {
     setWindows(prev => [...prev, newWindow]);
     setActiveWindowId(windowId);
     
-    // V21.6.3: Se bringToFront=true, forçar frente IMEDIATAMENTE após render
-    if (options.bringToFront || options.forceTop || options.ensureOnTop) {
-      setTimeout(() => {
-        setWindows(prevWins => {
-          const ultMaxZ = Math.max(...prevWins.map(w => w.zIndex), finalZ);
-          return prevWins.map(w => 
-            w.id === windowId ? { ...w, zIndex: ultMaxZ + 100000 } : w
-          );
-        });
-      }, 50);
-    }
+    // V21.6.4: FORÇAR topo após 10ms E 100ms (dupla garantia)
+    setTimeout(() => {
+      bringToFront(windowId);
+    }, 10);
+    
+    setTimeout(() => {
+      bringToFront(windowId);
+    }, 100);
     
     return windowId;
   }, [windows]);
