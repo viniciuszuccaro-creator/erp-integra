@@ -343,7 +343,7 @@ export default function VisualizadorUniversalEntidade({
   };
   
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, busca],
+    queryKey: [...queryKey, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, busca],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
       
@@ -356,7 +356,7 @@ export default function VisualizadorUniversalEntidade({
         let hasMore = true;
         
         while (hasMore) {
-          const batch = await base44.entities[nomeEntidade].filter(filtro, '-created_date', batchSize, skip);
+          const batch = await base44.entities[nomeEntidade].filter(filtro, undefined, batchSize, skip);
           if (!batch || batch.length === 0) {
             hasMore = false;
           } else {
@@ -369,7 +369,8 @@ export default function VisualizadorUniversalEntidade({
           }
         }
         
-        console.log('📦 Total de produtos carregados:', todosOsProdutos.length);
+        console.log('📦 Total de produtos carregados para ordenação:', todosOsProdutos.length);
+        console.log('📦 Primeiros 10 códigos:', todosOsProdutos.slice(0, 10).map(p => p.codigo));
         return todosOsProdutos;
       }
       
@@ -390,10 +391,10 @@ export default function VisualizadorUniversalEntidade({
       
       return result || [];
     },
-    staleTime: 10000,
-    gcTime: 30000,
+    staleTime: 30000,
+    gcTime: 60000,
     refetchInterval: false,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
     retry: 1
   });
@@ -455,18 +456,24 @@ export default function VisualizadorUniversalEntidade({
     
     // ✅ ORDENAÇÃO NUMÉRICA DE CÓDIGO NO FRONTEND - já vem tudo carregado quando ordenando por código
     if (nomeEntidade === 'Produto' && (colunaOrdenacao === 'codigo' || ordenacao === 'codigo' || ordenacao === 'codigo_desc')) {
-      console.log('🔢 Ordenando por código numericamente - TODOS os produtos');
+      console.log('🔢 Ordenando por código numericamente - TODOS os produtos:', resultado.length);
       resultado.sort((a, b) => {
         const aNum = parseFloat(a.codigo) || 0;
         const bNum = parseFloat(b.codigo) || 0;
         const isDesc = ordenacao === 'codigo_desc' || (colunaOrdenacao === 'codigo' && direcaoOrdenacao === 'desc');
-        return isDesc ? bNum - aNum : aNum - bNum;
+        const comparison = isDesc ? bNum - aNum : aNum - bNum;
+        if (resultado.length < 10) {
+          console.log(`Comparando: ${a.codigo}(${aNum}) vs ${b.codigo}(${bNum}) = ${comparison}`);
+        }
+        return comparison;
       });
       
       // ✅ Aplicar paginação MANUALMENTE após ordenar tudo
       const skip = (currentPage - 1) * itemsPerPage;
-      resultado = resultado.slice(skip, skip + itemsPerPage);
-      console.log(`📄 Página ${currentPage}: mostrando itens ${skip} a ${skip + itemsPerPage}`);
+      const paginado = resultado.slice(skip, skip + itemsPerPage);
+      console.log(`📄 Página ${currentPage}: mostrando ${paginado.length} itens (${skip} a ${skip + itemsPerPage})`);
+      console.log('🔢 Primeiros códigos:', paginado.slice(0, 5).map(p => p.codigo));
+      return paginado;
     }
     
     return resultado;
