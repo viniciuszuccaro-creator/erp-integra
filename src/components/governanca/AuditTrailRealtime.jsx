@@ -57,10 +57,12 @@ export default function AuditTrailRealtime() {
   const usuariosAtivos = new Set(logs.map(l => l.usuario_id).filter(Boolean)).size;
   const empresasAfetadas = new Set(logs.map(l => l.empresa_id).filter(Boolean)).size;
 
-  const acoesPorTipo = logs.reduce((acc, log) => {
-    acc[log.acao] = (acc[log.acao] || 0) + 1;
-    return acc;
-  }, {});
+  const acoesPorTipo = useMemo(() => {
+    return logs.reduce((acc, log) => {
+      acc[log.acao] = (acc[log.acao] || 0) + 1;
+      return acc;
+    }, {});
+  }, [logs]);
 
   const exportarLogs = () => {
     const csv = [
