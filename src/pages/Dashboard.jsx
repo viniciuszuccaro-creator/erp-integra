@@ -790,6 +790,14 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
+          {/* ETAPA 1: Widget Governança */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <StatusFinalEtapa1_100 />
+            <div className="lg:col-span-2">
+              <ResumoExecutivoEtapa1 />
+            </div>
+          </div>
+
           {/* KPIs Principais + Widget Canais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statsCards.map((stat, index) => (
