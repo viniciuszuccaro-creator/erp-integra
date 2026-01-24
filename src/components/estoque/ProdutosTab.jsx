@@ -37,7 +37,26 @@ export default function ProdutosTab(props) {
         base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtro, tipo_item: 'Matéria-Prima Produção' } })
       ]);
 
-      const todosParaBaixo = await base44.entities.Produto.filter(filtro, undefined, 500);
+      // Buscar TODOS os produtos em lotes para contagem correta de estoque baixo
+      let todosParaBaixo = [];
+      let skip = 0;
+      const batchSize = 500;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const batch = await base44.entities.Produto.filter(filtro, undefined, batchSize, skip);
+        if (!batch || batch.length === 0) {
+          hasMore = false;
+        } else {
+          todosParaBaixo = [...todosParaBaixo, ...batch];
+          if (batch.length < batchSize) {
+            hasMore = false;
+          } else {
+            skip += batchSize;
+          }
+        }
+      }
+      
       const estoqueBaixo = todosParaBaixo.filter(p => 
         p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
       ).length;

@@ -11,9 +11,17 @@ export default function SearchInput({
   placeholder = "Buscar...", 
   className = "" 
 }) {
+  const [internalValue, setInternalValue] = React.useState(value);
+
+  React.useEffect(() => {
+    setInternalValue(value);
+  }, [value]);
+
   const handleChange = (e) => {
+    const newValue = e.target.value;
+    setInternalValue(newValue);
     if (onChange && typeof onChange === 'function') {
-      onChange(e.target.value);
+      onChange(newValue);
     }
   };
 
@@ -23,7 +31,7 @@ export default function SearchInput({
       <input
         type="text"
         placeholder={placeholder}
-        value={value || ''}
+        value={internalValue}
         onChange={handleChange}
         className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
       />

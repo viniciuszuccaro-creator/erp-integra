@@ -75,37 +75,27 @@ const OPCOES_ORDENACAO = {
     { value: 'recent', label: 'Mais Recentes', sortFn: (a, b) => new Date(b.created_date) - new Date(a.created_date) }
   ],
   Produto: [
-    { value: 'descricao', label: 'Descrição (A-Z)', sortFn: (a, b) => (a.descricao || '').localeCompare(b.descricao || '') },
-    { value: 'descricao_desc', label: 'Descrição (Z-A)', sortFn: (a, b) => (b.descricao || '').localeCompare(a.descricao || '') },
-    { value: 'codigo', label: 'Código (Crescente)', sortFn: (a, b) => {
-      const aNum = parseFloat(a.codigo) || 0;
-      const bNum = parseFloat(b.codigo) || 0;
-      if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
-      return (a.codigo || '').localeCompare(b.codigo || '', 'pt-BR', { numeric: true });
-    }},
-    { value: 'codigo_desc', label: 'Código (Decrescente)', sortFn: (a, b) => {
-      const aNum = parseFloat(a.codigo) || 0;
-      const bNum = parseFloat(b.codigo) || 0;
-      if (!isNaN(aNum) && !isNaN(bNum)) return bNum - aNum;
-      return (b.codigo || '').localeCompare(a.codigo || '', 'pt-BR', { numeric: true });
-    }},
-    { value: 'tipo', label: 'Tipo (A-Z)', sortFn: (a, b) => (a.tipo_item || '').localeCompare(b.tipo_item || '') },
-    { value: 'tipo_desc', label: 'Tipo (Z-A)', sortFn: (a, b) => (b.tipo_item || '').localeCompare(a.tipo_item || '') },
-    { value: 'setor', label: 'Setor de Atividade (A-Z)', sortFn: (a, b) => (a.setor_atividade_nome || '').localeCompare(b.setor_atividade_nome || '') },
-    { value: 'setor_desc', label: 'Setor de Atividade (Z-A)', sortFn: (a, b) => (b.setor_atividade_nome || '').localeCompare(a.setor_atividade_nome || '') },
-    { value: 'grupo', label: 'Categoria/Grupo (A-Z)', sortFn: (a, b) => (a.grupo_produto_nome || a.grupo || '').localeCompare(b.grupo_produto_nome || b.grupo || '') },
-    { value: 'grupo_desc', label: 'Categoria/Grupo (Z-A)', sortFn: (a, b) => (b.grupo_produto_nome || b.grupo || '').localeCompare(a.grupo_produto_nome || a.grupo || '') },
-    { value: 'marca', label: 'Marca (A-Z)', sortFn: (a, b) => (a.marca_nome || '').localeCompare(b.marca_nome || '') },
-    { value: 'marca_desc', label: 'Marca (Z-A)', sortFn: (a, b) => (b.marca_nome || '').localeCompare(a.marca_nome || '') },
-    { value: 'status', label: 'Status (A-Z)', sortFn: (a, b) => (a.status || '').localeCompare(b.status || '') },
-    { value: 'status_desc', label: 'Status (Z-A)', sortFn: (a, b) => (b.status || '').localeCompare(a.status || '') },
-    { value: 'mais_vendidos', label: 'Mais Vendidos', sortFn: (a, b) => (b.quantidade_vendida_12meses || 0) - (a.quantidade_vendida_12meses || 0) },
-    { value: 'menos_vendidos', label: 'Menos Vendidos', sortFn: (a, b) => (a.quantidade_vendida_12meses || 0) - (b.quantidade_vendida_12meses || 0) },
-    { value: 'estoque_baixo', label: 'Estoque Baixo', sortFn: (a, b) => (a.estoque_disponivel || 0) - (b.estoque_disponivel || 0) },
-    { value: 'estoque_alto', label: 'Estoque Alto', sortFn: (a, b) => (b.estoque_atual || 0) - (a.estoque_atual || 0) },
-    { value: 'preco', label: 'Preço (Maior)', sortFn: (a, b) => (b.preco_venda || 0) - (a.preco_venda || 0) },
-    { value: 'preco_menor', label: 'Preço (Menor)', sortFn: (a, b) => (a.preco_venda || 0) - (b.preco_venda || 0) },
-    { value: 'recent', label: 'Mais Recentes', sortFn: (a, b) => new Date(b.created_date) - new Date(a.created_date) }
+    { value: 'descricao', label: 'Descrição (A-Z)' },
+    { value: 'descricao_desc', label: 'Descrição (Z-A)' },
+    { value: 'codigo', label: 'Código (Crescente) ⬆️' },
+    { value: 'codigo_desc', label: 'Código (Decrescente) ⬇️' },
+    { value: 'tipo', label: 'Tipo (A-Z)' },
+    { value: 'tipo_desc', label: 'Tipo (Z-A)' },
+    { value: 'setor', label: 'Setor de Atividade (A-Z)' },
+    { value: 'setor_desc', label: 'Setor de Atividade (Z-A)' },
+    { value: 'grupo', label: 'Categoria/Grupo (A-Z)' },
+    { value: 'grupo_desc', label: 'Categoria/Grupo (Z-A)' },
+    { value: 'marca', label: 'Marca (A-Z)' },
+    { value: 'marca_desc', label: 'Marca (Z-A)' },
+    { value: 'status', label: 'Status (A-Z)' },
+    { value: 'status_desc', label: 'Status (Z-A)' },
+    { value: 'mais_vendidos', label: 'Mais Vendidos' },
+    { value: 'menos_vendidos', label: 'Menos Vendidos' },
+    { value: 'estoque_baixo', label: 'Estoque Baixo' },
+    { value: 'estoque_alto', label: 'Estoque Alto' },
+    { value: 'preco', label: 'Preço (Maior)' },
+    { value: 'preco_menor', label: 'Preço (Menor)' },
+    { value: 'recent', label: 'Mais Recentes' }
   ],
   Colaborador: [
     { value: 'nome', label: 'Nome (A-Z)', sortFn: (a, b) => (a.nome_completo || '').localeCompare(b.nome_completo || '') },
@@ -357,7 +347,12 @@ export default function VisualizadorUniversalEntidade({
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
       const skip = (currentPage - 1) * itemsPerPage;
-      const sortString = getBackendSortString();
+      
+      // ✅ Para código de produtos, não ordenar no backend (faremos no frontend numericamente)
+      let sortString = getBackendSortString();
+      if (nomeEntidade === 'Produto' && (colunaOrdenacao === 'codigo' || ordenacao === 'codigo' || ordenacao === 'codigo_desc')) {
+        sortString = '-created_date'; // Usa ordenação padrão, faremos numérica no frontend
+      }
       
       console.log('🔍 BUSCA BACKEND:', { filtro, sortString, limit: itemsPerPage, skip });
       
@@ -426,14 +421,27 @@ export default function VisualizadorUniversalEntidade({
     setCurrentPage(1); // ✅ Resetar para primeira página ao ordenar
   };
 
-  // ✅ Busca e ordenação já aplicadas no BACKEND
-  // Aplicar filtro adicional se fornecido (ex: estoque baixo)
+  // ✅ Busca já aplicada no BACKEND, mas ordenação de código precisa ser numérica no FRONTEND
   const dadosBuscadosEOrdenados = useMemo(() => {
-    if (!filtroAdicional || typeof filtroAdicional !== 'function') {
-      return dados;
+    let resultado = dados;
+    
+    // Aplicar filtro adicional se fornecido (ex: estoque baixo)
+    if (filtroAdicional && typeof filtroAdicional === 'function') {
+      resultado = resultado.filter(filtroAdicional);
     }
-    return dados.filter(filtroAdicional);
-  }, [dados, filtroAdicional]);
+    
+    // ✅ ORDENAÇÃO NUMÉRICA DE CÓDIGO NO FRONTEND (backend não suporta)
+    if (nomeEntidade === 'Produto' && (colunaOrdenacao === 'codigo' || ordenacao === 'codigo' || ordenacao === 'codigo_desc')) {
+      resultado = [...resultado].sort((a, b) => {
+        const aNum = parseFloat(a.codigo) || 0;
+        const bNum = parseFloat(b.codigo) || 0;
+        const isDesc = ordenacao === 'codigo_desc' || (colunaOrdenacao === 'codigo' && direcaoOrdenacao === 'desc');
+        return isDesc ? bNum - aNum : aNum - bNum;
+      });
+    }
+    
+    return resultado;
+  }, [dados, filtroAdicional, nomeEntidade, colunaOrdenacao, ordenacao, direcaoOrdenacao]);
 
   // Seleção em massa + exclusão
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
