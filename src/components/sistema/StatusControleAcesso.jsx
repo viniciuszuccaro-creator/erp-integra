@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Shield, Award, Sparkles } from "lucide-react";
+import { CheckCircle, CheckCircle2, Shield, Award, Sparkles } from "lucide-react";
 
 export default function StatusControleAcesso() {
   const componentes = [

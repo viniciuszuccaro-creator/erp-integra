@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, XCircle, AlertTriangle, Play } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Play, CheckCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { base44 } from '@/api/base44Client';
 
