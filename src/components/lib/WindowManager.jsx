@@ -50,79 +50,97 @@ export function WindowProvider({ children }) {
     ));
   }, []);
 
-  // Trazer janela para frente - V21.6.2 DEFINITIVO: SEMPRE no topo
+  // Trazer janela para frente - V21.6.4 CORREÇÃO TOTAL
   const bringToFront = useCallback((windowId) => {
     setActiveWindowId(windowId);
     setWindows(prev => {
-      const maxZ = Math.max(...prev.map(w => w.zIndex), 50000);
+      const maxZ = Math.max(...prev.map(w => w.zIndex), 99999000);
       return prev.map(w => 
-        w.id === windowId ? { ...w, zIndex: maxZ + 1000, isMinimized: false } : w
+        w.id === windowId ? { ...w, zIndex: maxZ + 100000, isMinimized: false } : w
       );
     });
   }, []);
 
-  // Abrir nova janela - V21.6.4 CORREÇÃO DEFINITIVA: SEMPRE no topo GARANTIDO
+  // Abrir nova janela - V21.6.4 CORREÇÃO 100% DEFINITIVA
   const openWindow = useCallback((component, props = {}, options = {}) => {
+    const windowId = `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     // V21.6: Buscar por uniqueKey para evitar duplicação
     if (options.uniqueKey) {
-      const janelaExistente = windows.find(w => w.uniqueKey === options.uniqueKey);
+      setWindows(prev => {
+        const janelaExistente = prev.find(w => w.uniqueKey === options.uniqueKey);
 
-      if (janelaExistente) {
-        // Trazer janela existente para TOPO ABSOLUTO
-        setWindows(prev => {
+        if (janelaExistente) {
+          // Trazer janela existente para TOPO ABSOLUTO
           const maxZ = Math.max(...prev.map(w => w.zIndex), 99999000);
+          setActiveWindowId(janelaExistente.id);
           return prev.map(w => 
             w.id === janelaExistente.id 
               ? { ...w, zIndex: maxZ + 100000, isMinimized: false }
               : w
           );
-        });
-        setActiveWindowId(janelaExistente.id);
-        return janelaExistente.id;
-      }
-    }
-    
-    const windowId = `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Cascata inteligente com limite de tela
-    const offsetBase = windows.length * 40;
-    const maxOffset = 400;
-    const cascade = offsetBase % maxOffset;
-    
-    // V21.6.4: Calcular z-index SEMPRE maior que todas as janelas existentes
-    const baseZ = 99999000;
-    const currentMaxZ = windows.length > 0 ? Math.max(...windows.map(w => w.zIndex), baseZ) : baseZ;
-    const finalZ = currentMaxZ + 100000; // SEMPRE soma 100000 ao máximo atual
-    
-    const newWindow = {
-      id: windowId,
-      component,
-      props,
-      title: options.title || 'Nova Janela',
-      isMinimized: false,
-      isMaximized: false,
-      width: options.width || 900,
-      height: options.height || 600,
-      x: options.x !== undefined ? options.x : 100 + cascade,
-      y: options.y !== undefined ? options.y : 80 + cascade,
-      zIndex: finalZ,
-      uniqueKey: options.uniqueKey
-    };
+        }
 
-    setWindows(prev => [...prev, newWindow]);
-    setActiveWindowId(windowId);
-    
-    // V21.6.4: FORÇAR topo após 10ms E 100ms (dupla garantia)
-    setTimeout(() => {
-      bringToFront(windowId);
-    }, 10);
-    
-    setTimeout(() => {
-      bringToFront(windowId);
-    }, 100);
+        // Se não existe, criar nova janela com z-index no topo
+        const offsetBase = prev.length * 40;
+        const maxOffset = 400;
+        const cascade = offsetBase % maxOffset;
+        
+        const maxZ = Math.max(...prev.map(w => w.zIndex), 99999000);
+        const finalZ = maxZ + 100000; // SEMPRE maior que todas
+        
+        const newWindow = {
+          id: windowId,
+          component,
+          props,
+          title: options.title || 'Nova Janela',
+          isMinimized: false,
+          isMaximized: false,
+          width: options.width || 900,
+          height: options.height || 600,
+          x: options.x !== undefined ? options.x : 100 + cascade,
+          y: options.y !== undefined ? options.y : 80 + cascade,
+          zIndex: finalZ,
+          uniqueKey: options.uniqueKey
+        };
+
+        setActiveWindowId(windowId);
+        return [...prev, newWindow];
+      });
+      
+      return windowId;
+    }
+
+    // Criar nova janela SEM uniqueKey
+    setWindows(prev => {
+      const offsetBase = prev.length * 40;
+      const maxOffset = 400;
+      const cascade = offsetBase % maxOffset;
+      
+      const maxZ = Math.max(...prev.map(w => w.zIndex), 99999000);
+      const finalZ = maxZ + 100000;
+      
+      const newWindow = {
+        id: windowId,
+        component,
+        props,
+        title: options.title || 'Nova Janela',
+        isMinimized: false,
+        isMaximized: false,
+        width: options.width || 900,
+        height: options.height || 600,
+        x: options.x !== undefined ? options.x : 100 + cascade,
+        y: options.y !== undefined ? options.y : 80 + cascade,
+        zIndex: finalZ,
+        uniqueKey: options.uniqueKey
+      };
+
+      setActiveWindowId(windowId);
+      return [...prev, newWindow];
+    });
     
     return windowId;
-  }, [windows]);
+  }, []);
 
   // Atualizar posição e tamanho
   const updateWindow = useCallback((windowId, updates) => {

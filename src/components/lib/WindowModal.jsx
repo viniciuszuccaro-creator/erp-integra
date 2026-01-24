@@ -17,7 +17,7 @@ export default function WindowModal({ window, children }) {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
 
-  // Estilo da janela - V21.6.3: GARANTIA TOTAL de position e zIndex
+  // Estilo da janela - V21.6.4: z-index GARANTIDO sempre aplicado
   const windowStyle = window.isMaximized
     ? {
         position: 'fixed',
@@ -27,7 +27,7 @@ export default function WindowModal({ window, children }) {
         bottom: 0,
         width: '100vw',
         height: '100vh',
-        zIndex: window.zIndex || 999999999,
+        zIndex: window.zIndex,
       }
     : {
         position: 'fixed',
@@ -35,7 +35,7 @@ export default function WindowModal({ window, children }) {
         left: window.x,
         width: window.width,
         height: window.height,
-        zIndex: window.zIndex || 999999999,
+        zIndex: window.zIndex,
       };
 
   // Iniciar drag - MELHORADO
@@ -112,9 +112,7 @@ export default function WindowModal({ window, children }) {
       ref={windowRef}
       style={{
         ...windowStyle,
-        zIndex: window.zIndex || 99999999,
-        pointerEvents: 'auto',
-        position: 'fixed'
+        pointerEvents: 'auto'
       }}
       className={`bg-white rounded-lg shadow-2xl border-2 flex flex-col overflow-hidden select-none ${
         isDragging ? 'cursor-grabbing shadow-blue-500/50 transition-none' : ''
