@@ -30,26 +30,27 @@ export default function Estoque() {
 
   // Query removida - VisualizadorUniversalEntidade busca os dados
 
-  // ✅ Contagens diretas simplificadas - sem backend
+  // ✅ Contagens via backend otimizado
   const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: loadingContagens } = useQuery({
     queryKey: ['produtos-contagens-dashboard', empresaAtual?.id],
     queryFn: async () => {
       const filtroBase = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
 
-      const [todos, revenda, producao] = await Promise.all([
-        base44.entities.Produto.filter(filtroBase, undefined, 200),
-        base44.entities.Produto.filter({ ...filtroBase, tipo_item: 'Revenda' }, undefined, 200),
-        base44.entities.Produto.filter({ ...filtroBase, tipo_item: 'Matéria-Prima Produção' }, undefined, 200)
+      const [totalRes, revendaRes, producaoRes] = await Promise.all([
+        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtroBase }),
+        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtroBase, tipo_item: 'Revenda' } }),
+        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtroBase, tipo_item: 'Matéria-Prima Produção' } })
       ]);
 
-      const estoqueBaixo = todos.filter(p => 
+      const todosParaBaixo = await base44.entities.Produto.filter(filtroBase, undefined, 500);
+      const estoqueBaixo = todosParaBaixo.filter(p => 
         p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
       ).length;
 
       return {
-        total: todos.length,
-        revenda: revenda.length,
-        producao: producao.length,
+        total: totalRes.data?.count || 0,
+        revenda: revendaRes.data?.count || 0,
+        producao: producaoRes.data?.count || 0,
         estoqueBaixo
       };
     },
@@ -157,10 +158,7 @@ export default function Estoque() {
       windowTitle: '📦 Produtos',
       width: 1500,
       height: 850,
-      props: { 
-        contagensTotais,
-        isLoadingContagens: loadingContagens
-      }
+      props: {}
     },
     {
       title: 'Movimentações',

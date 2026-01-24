@@ -220,7 +220,8 @@ export default function VisualizadorUniversalEntidade({
   windowMode = false,
   queryKeyOverride,
   queryKey: legacyQueryKey,
-  onSelectionChange
+  onSelectionChange,
+  filtroAdicional = null
 }) {
   const [busca, setBusca] = useState('');
   const [visualizacao, setVisualizacao] = useState('table'); // ✅ Default: tabela
@@ -259,7 +260,6 @@ export default function VisualizadorUniversalEntidade({
   const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
-  // V22.0 - Query SERVER-SIDE otimizada com ordenação no backend
   const { getFiltroContexto } = useContextoVisual();
   
   // ✅ Mapear ordenação do menu/coluna para string de ordenação do backend
@@ -268,7 +268,6 @@ export default function VisualizadorUniversalEntidade({
       return direcaoOrdenacao === 'desc' ? `-${colunaOrdenacao}` : colunaOrdenacao;
     }
     
-    // Mapear ordenações do menu para campos do backend
     const sortMap = {
       'recent': '-created_date',
       'oldest': 'created_date',
@@ -298,16 +297,49 @@ export default function VisualizadorUniversalEntidade({
     
     return sortMap[ordenacao] || '-created_date';
   };
+
+  // ✅ Construir filtro com busca integrada ao backend
+  const buildFilterWithSearch = () => {
+    const filtroContexto = getFiltroContexto('empresa_id', true);
+    
+    if (!busca.trim()) {
+      return filtroContexto;
+    }
+
+    // Busca universal no backend - procura em múltiplos campos
+    const termoBusca = busca.trim();
+    const buscaFiltros = [];
+    
+    // Campos principais para busca conforme a entidade
+    const camposBusca = {
+      'Produto': ['descricao', 'codigo', 'codigo_barras', 'grupo_produto_nome', 'marca_nome', 'setor_atividade_nome'],
+      'Cliente': ['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj'],
+      'Fornecedor': ['nome', 'razao_social', 'nome_fantasia', 'cnpj'],
+      'Colaborador': ['nome_completo', 'cpf', 'cargo', 'departamento'],
+      'Transportadora': ['razao_social', 'nome_fantasia', 'cnpj']
+    };
+
+    const campos = camposBusca[nomeEntidade] || ['nome', 'descricao', 'codigo'];
+    
+    campos.forEach(campo => {
+      buscaFiltros.push({ [campo]: { $regex: termoBusca, $options: 'i' } });
+    });
+
+    return {
+      ...filtroContexto,
+      $or: buscaFiltros
+    };
+  };
   
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao],
+    queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, busca],
     queryFn: async () => {
-      const filtroContexto = getFiltroContexto('empresa_id', true);
+      const filtro = buildFilterWithSearch();
       const skip = (currentPage - 1) * itemsPerPage;
       const sortString = getBackendSortString();
       
       const result = await base44.entities[nomeEntidade].filter(
-        filtroContexto, 
+        filtro, 
         sortString,
         itemsPerPage,
         skip
@@ -323,9 +355,24 @@ export default function VisualizadorUniversalEntidade({
     retry: 1
   });
 
-  // ✅ Contagem simplificada - usa length dos dados carregados
-  const totalItemsCount = dados.length;
-  const isEstimateCount = dados.length >= itemsPerPage;
+  // ✅ CONTAGEM TOTAL via backend (necessária para paginação correta)
+  const { data: totalItemsCount = 0, isLoading: isLoadingCount } = useQuery({
+    queryKey: [...queryKey, 'total-count', empresaAtual?.id, busca],
+    queryFn: async () => {
+      const filtro = buildFilterWithSearch();
+      const response = await base44.functions.invoke('countEntities', {
+        entityName: nomeEntidade,
+        filter: filtro
+      });
+      return response.data?.count || 0;
+    },
+    staleTime: 60000,
+    gcTime: 120000,
+    refetchOnWindowFocus: false,
+    retry: 1
+  });
+
+  const isEstimateCount = false;
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
   const invalidateAllRelated = async () => {
@@ -352,29 +399,14 @@ export default function VisualizadorUniversalEntidade({
     setCurrentPage(1); // ✅ Resetar para primeira página ao ordenar
   };
 
-  // ✅ Busca universal em todos os campos + ordenação numérica para códigos
+  // ✅ Busca e ordenação já aplicadas no BACKEND
+  // Aplicar filtro adicional se fornecido (ex: estoque baixo)
   const dadosBuscadosEOrdenados = useMemo(() => {
-    let resultado = dadosFiltrados;
-    
-    // Aplicar busca local (backend não suporta busca universal em múltiplos campos)
-    if (busca.trim()) {
-      const termoBusca = busca.toLowerCase();
-      resultado = resultado.filter(item => {
-        return Object.values(item).some(valor => {
-          if (valor === null || valor === undefined) return false;
-          if (typeof valor === 'object') {
-            return Object.values(valor).some(subValor => 
-              subValor ? String(subValor).toLowerCase().includes(termoBusca) : false
-            );
-          }
-          return String(valor).toLowerCase().includes(termoBusca);
-        });
-      });
+    if (!filtroAdicional || typeof filtroAdicional !== 'function') {
+      return dados;
     }
-
-    // ✅ ORDENAÇÃO JÁ VEM DO BACKEND - não ordenar novamente no frontend
-    return resultado;
-  }, [dadosFiltrados, busca]);
+    return dados.filter(filtroAdicional);
+  }, [dados, filtroAdicional]);
 
   // Seleção em massa + exclusão
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
@@ -690,7 +722,7 @@ onClose: invalidateAllRelated,
           {/* Barra de Busca, Ordenação e Filtros - CORREÇÃO: input nativo para garantir funcionamento */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
             <SearchInput
-              value={busca || ''}
+              value={busca}
               onChange={(val) => {
                 setBusca(val);
                 setCurrentPage(1);
@@ -761,7 +793,7 @@ onClose: invalidateAllRelated,
         </CardHeader>
 
         <CardContent className={`p-6 ${contentClass}`}>
-          {isLoading ? (
+          {(isLoading || isLoadingCount) ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando dados...</p>
