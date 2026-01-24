@@ -1,11 +1,9 @@
 import React from "react";
-import { InputClean } from "@/components/ui/input-clean";
 import { Search } from "lucide-react";
 
 /**
- * SearchInput - Campo de busca LIMPO sem auditoria
- * V22.0 - Usa InputClean para evitar interferências de event listeners
- * CORREÇÃO FINAL: onChange recebe e.target.value diretamente
+ * SearchInput - Campo de busca nativo sem auditoria
+ * V22.0 - Input HTML nativo para evitar dependências
  */
 export default function SearchInput({ 
   value = "", 
@@ -16,12 +14,12 @@ export default function SearchInput({
   return (
     <div className={`relative ${className}`}>
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
-      <InputClean
+      <input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-10"
+        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 pl-10"
       />
     </div>
   );
