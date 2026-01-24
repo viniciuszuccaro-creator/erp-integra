@@ -25,34 +25,32 @@ export default function ProdutosTab(props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: isLoadingContagens, refetch: refetchContagens } = useQuery({
-    queryKey: ['produtos-contagens', getFiltroContexto('empresa_id', true)],
+  const calcularContagensLocal = (produtos) => {
+    const total = produtos.length;
+    const revenda = produtos.filter(p => p.tipo_item === 'Revenda').length;
+    const producao = produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção').length;
+    const estoqueBaixo = produtos.filter(p => 
+      p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
+    ).length;
+    
+    return { total, revenda, producao, estoqueBaixo };
+  };
+
+  const { data: todosProdutos = [], refetch: refetchProdutos } = useQuery({
+    queryKey: ['produtos-todos-contagem'],
     queryFn: async () => {
       const filtro = getFiltroContexto('empresa_id', true);
-      
-      const [totalRes, revendaRes, producaoRes] = await Promise.all([
-        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro }),
-        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtro, tipo_item: 'Revenda' } }),
-        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtro, tipo_item: 'Matéria-Prima Produção' } })
-      ]);
-
-      let todosAtivos = [];
+      let todos = [];
       let skip = 0;
       const batchSize = 500;
       let hasMore = true;
       
       while (hasMore) {
-        const batch = await base44.entities.Produto.filter(
-          { ...filtro, status: 'Ativo' }, 
-          undefined, 
-          batchSize, 
-          skip
-        );
-        
+        const batch = await base44.entities.Produto.filter(filtro, undefined, batchSize, skip);
         if (!batch || batch.length === 0) {
           hasMore = false;
         } else {
-          todosAtivos = [...todosAtivos, ...batch];
+          todos = [...todos, ...batch];
           if (batch.length < batchSize) {
             hasMore = false;
           } else {
@@ -61,30 +59,22 @@ export default function ProdutosTab(props) {
         }
       }
       
-      const estoqueBaixo = todosAtivos.filter(p => 
-        (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
-      ).length;
-      
-      console.log(`✅ ESTOQUE BAIXO: ${estoqueBaixo} de ${todosAtivos.length} produtos ativos`);
-
-      return {
-        total: totalRes.data?.count || 0,
-        revenda: revendaRes.data?.count || 0,
-        producao: producaoRes.data?.count || 0,
-        estoqueBaixo
-      };
+      return todos;
     },
     staleTime: Infinity,
-    refetchOnWindowFocus: false,
-    refetchInterval: false
+    refetchOnWindowFocus: false
   });
+
+  const contagensTotais = useMemo(() => calcularContagensLocal(todosProdutos), [todosProdutos]);
+  const isLoadingContagens = !todosProdutos || todosProdutos.length === 0;
 
   React.useEffect(() => {
     const unsubscribe = base44.entities.Produto.subscribe(() => {
-      refetchContagens();
+      queryClient.invalidateQueries({ queryKey: ['produtos-todos-contagem'] });
+      queryClient.invalidateQueries({ queryKey: ['produtos'] });
     });
     return unsubscribe;
-  }, [refetchContagens]);
+  }, [queryClient]);
 
   return (
     <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
