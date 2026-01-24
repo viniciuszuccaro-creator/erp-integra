@@ -423,7 +423,7 @@ export default function VisualizadorUniversalEntidade({
 
   // ✅ Busca já aplicada no BACKEND, mas ordenação de código precisa ser numérica no FRONTEND
   const dadosBuscadosEOrdenados = useMemo(() => {
-    let resultado = dados;
+    let resultado = [...dados]; // Sempre criar nova array para evitar mutação
     
     // Aplicar filtro adicional se fornecido (ex: estoque baixo)
     if (filtroAdicional && typeof filtroAdicional === 'function') {
@@ -432,10 +432,12 @@ export default function VisualizadorUniversalEntidade({
     
     // ✅ ORDENAÇÃO NUMÉRICA DE CÓDIGO NO FRONTEND (backend não suporta)
     if (nomeEntidade === 'Produto' && (colunaOrdenacao === 'codigo' || ordenacao === 'codigo' || ordenacao === 'codigo_desc')) {
-      resultado = [...resultado].sort((a, b) => {
+      console.log('🔢 Ordenando por código numericamente:', { colunaOrdenacao, ordenacao, direcaoOrdenacao });
+      resultado.sort((a, b) => {
         const aNum = parseFloat(a.codigo) || 0;
         const bNum = parseFloat(b.codigo) || 0;
         const isDesc = ordenacao === 'codigo_desc' || (colunaOrdenacao === 'codigo' && direcaoOrdenacao === 'desc');
+        console.log('Comparando:', aNum, 'vs', bNum, 'desc:', isDesc);
         return isDesc ? bNum - aNum : aNum - bNum;
       });
     }

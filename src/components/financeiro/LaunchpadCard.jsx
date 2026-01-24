@@ -20,6 +20,7 @@ export default function LaunchpadCard({
     cyan: 'from-cyan-500 to-cyan-600 hover:shadow-cyan-200',
     emerald: 'from-emerald-500 to-emerald-600 hover:shadow-emerald-200',
     indigo: 'from-indigo-500 to-indigo-600 hover:shadow-indigo-200',
+    pink: 'from-pink-500 to-pink-600 hover:shadow-pink-200',
   };
 
   return (
