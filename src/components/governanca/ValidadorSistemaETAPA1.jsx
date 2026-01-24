@@ -118,7 +118,8 @@ export default function ValidadorSistemaETAPA1() {
       // Teste 11: SoD Validator existe
       try {
         await base44.functions.invoke('sodValidator', {
-          perfilId: 'test'
+          perfilId: 'test',
+          test: true
         });
         testes.sodValidator = true;
       } catch {
