@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Activity, Database, BarChart3, CheckCircle2, Settings } from 'lucide-react';
+import { Shield, Activity, Database, BarChart3, CheckCircle2, Settings, Bell, ShieldAlert, Award } from 'lucide-react';
 import PainelRBACRealtime from '@/components/governanca/PainelRBACRealtime';
 import MultiempresaDashboard from '@/components/governanca/MultiempresaDashboard';
 import AuditTrailRealtime from '@/components/governanca/AuditTrailRealtime';
 import StatusGovernancaETAPA1 from '@/components/governanca/StatusGovernancaETAPA1';
 import ValidadorSistemaETAPA1 from '@/components/governanca/ValidadorSistemaETAPA1';
 import ConfiguracaoIsolamentoEmpresa from '@/components/governanca/ConfiguracaoIsolamentoEmpresa';
+import MonitorConflitosSOD from '@/components/governanca/MonitorConflitosSOD';
+import AlertasSegurancaAutomaticos from '@/components/governanca/AlertasSegurancaAutomaticos';
+import DashboardConformidade from '@/components/governanca/DashboardConformidade';
+import CertificacaoETAPA1Final from '@/components/governanca/CertificacaoETAPA1Final';
 import AdminOnlyZone from '@/components/security/AdminOnlyZone';
 
 /**
@@ -32,32 +36,51 @@ export default function GovernancaETAPA1() {
           </div>
 
           <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 bg-white p-1 rounded-xl shadow-sm">
-              <TabsTrigger value="status" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-9 bg-white p-1 rounded-xl shadow-sm text-xs">
+              <TabsTrigger value="conformidade" className="flex items-center gap-1">
+                <Award className="w-4 h-4" />
+                <span className="hidden lg:inline">Conformidade</span>
+              </TabsTrigger>
+              <TabsTrigger value="status" className="flex items-center gap-1">
                 <BarChart3 className="w-4 h-4" />
-                Status
+                <span className="hidden lg:inline">Status</span>
               </TabsTrigger>
-              <TabsTrigger value="validador" className="flex items-center gap-2">
+              <TabsTrigger value="validador" className="flex items-center gap-1">
                 <CheckCircle2 className="w-4 h-4" />
-                Validador
+                <span className="hidden lg:inline">Validador</span>
               </TabsTrigger>
-              <TabsTrigger value="rbac" className="flex items-center gap-2">
+              <TabsTrigger value="rbac" className="flex items-center gap-1">
                 <Shield className="w-4 h-4" />
-                RBAC
+                <span className="hidden lg:inline">RBAC</span>
               </TabsTrigger>
-              <TabsTrigger value="multiempresa" className="flex items-center gap-2">
+              <TabsTrigger value="multiempresa" className="flex items-center gap-1">
                 <Database className="w-4 h-4" />
-                Multiempresa
+                <span className="hidden lg:inline">Multi</span>
               </TabsTrigger>
-              <TabsTrigger value="configuracoes" className="flex items-center gap-2">
+              <TabsTrigger value="configuracoes" className="flex items-center gap-1">
                 <Settings className="w-4 h-4" />
-                Configs
+                <span className="hidden lg:inline">Configs</span>
               </TabsTrigger>
-              <TabsTrigger value="auditoria" className="flex items-center gap-2">
+              <TabsTrigger value="sod" className="flex items-center gap-1">
+                <ShieldAlert className="w-4 h-4" />
+                <span className="hidden lg:inline">SoD</span>
+              </TabsTrigger>
+              <TabsTrigger value="alertas" className="flex items-center gap-1">
+                <Bell className="w-4 h-4" />
+                <span className="hidden lg:inline">Alertas</span>
+              </TabsTrigger>
+              <TabsTrigger value="auditoria" className="flex items-center gap-1">
                 <Activity className="w-4 h-4" />
-                Auditoria
+                <span className="hidden lg:inline">Auditoria</span>
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="conformidade" className="mt-6">
+              <div className="space-y-6">
+                <CertificacaoETAPA1Final />
+                <DashboardConformidade />
+              </div>
+            </TabsContent>
 
             <TabsContent value="status" className="mt-6">
               <StatusGovernancaETAPA1 />
@@ -77,6 +100,14 @@ export default function GovernancaETAPA1() {
 
             <TabsContent value="configuracoes" className="mt-6">
               <ConfiguracaoIsolamentoEmpresa />
+            </TabsContent>
+
+            <TabsContent value="sod" className="mt-6">
+              <MonitorConflitosSOD />
+            </TabsContent>
+
+            <TabsContent value="alertas" className="mt-6">
+              <AlertasSegurancaAutomaticos />
             </TabsContent>
 
             <TabsContent value="auditoria" className="mt-6">
