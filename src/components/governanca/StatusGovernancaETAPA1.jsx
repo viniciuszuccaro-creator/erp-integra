@@ -52,6 +52,12 @@ export default function StatusGovernancaETAPA1() {
   const totalChecks = Object.keys(checks).length;
   const percentualCompleto = Math.round((checksPassados / totalChecks) * 100);
 
+  // Calcular distribuição de ações
+  const acoesPorTipo = logs24h.reduce((acc, log) => {
+    acc[log.acao] = (acc[log.acao] || 0) + 1;
+    return acc;
+  }, {});
+
   const checklist = [
     { 
       key: 'rbacBasico', 
