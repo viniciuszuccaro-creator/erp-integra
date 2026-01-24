@@ -344,7 +344,7 @@ export default function VisualizadorUniversalEntidade({
           width: 1000,
           height: 700,
           onClose: invalidateAllRelated,
-          uniqueKey: `edit-${nomeEntidade}-${item?.id || 'new'}-${Date.now()}`
+          uniqueKey: `edit-${nomeEntidade}-${item?.id || 'new'}`
         }
       );
     }
@@ -362,7 +362,7 @@ export default function VisualizadorUniversalEntidade({
           width: 900,
           height: 600,
           onClose: invalidateAllRelated,
-          uniqueKey: `view-${nomeEntidade}-${item.id}-${Date.now()}`
+          uniqueKey: `view-${nomeEntidade}-${item.id}`
         }
       );
     }

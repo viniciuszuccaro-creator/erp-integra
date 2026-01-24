@@ -122,8 +122,12 @@ export default function WindowModal({ window, children }) {
         !isDragging && !isResizing ? 'transition-all duration-200' : ''
       }`}
       onMouseDown={(e) => {
-        e.stopPropagation();
-        bringToFront(window.id);
+        // Só ativar janela se não clicar em input/textarea/select/button
+        const isInteractiveElement = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(e.target.tagName);
+        if (!isInteractiveElement) {
+          e.stopPropagation();
+          bringToFront(window.id);
+        }
       }}
     >
       {/* Header - CURSOR MOVE VISÍVEL */}

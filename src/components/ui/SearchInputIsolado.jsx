@@ -12,7 +12,7 @@ export default function SearchInputIsolado({ value, onChange, placeholder = "Bus
 
   // Sincroniza valor externo apenas se diferente (evita loop)
   useEffect(() => {
-    if (value !== valorInterno) {
+    if (value !== undefined && value !== valorInterno) {
       setValorInterno(value || "");
     }
   }, [value]);

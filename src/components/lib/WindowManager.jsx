@@ -61,64 +61,34 @@ export function WindowProvider({ children }) {
     });
   }, []);
 
-  // Abrir nova janela - V21.6.4 CORREÇÃO 100% DEFINITIVA
+  // Abrir nova janela - V21.7 CORREÇÃO ESTADO UNIFICADO
   const openWindow = useCallback((component, props = {}, options = {}) => {
     const windowId = `window-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     
-    // V21.6: Buscar por uniqueKey para evitar duplicação
-    if (options.uniqueKey) {
-      setWindows(prev => {
-        const janelaExistente = prev.find(w => w.uniqueKey === options.uniqueKey);
-
+    setWindows(prevWindows => {
+      // 1. Verificar uniqueKey para evitar duplicação
+      if (options.uniqueKey) {
+        const janelaExistente = prevWindows.find(w => w.uniqueKey === options.uniqueKey);
         if (janelaExistente) {
-          // Trazer janela existente para TOPO ABSOLUTO
-          const maxZ = Math.max(...prev.map(w => w.zIndex), 99999000);
           setActiveWindowId(janelaExistente.id);
-          return prev.map(w => 
+          const maxZ = Math.max(...prevWindows.map(w => w.zIndex), 99999000);
+          return prevWindows.map(w => 
             w.id === janelaExistente.id 
               ? { ...w, zIndex: maxZ + 100000, isMinimized: false }
               : w
           );
         }
+      }
 
-        // Se não existe, criar nova janela com z-index no topo
-        const offsetBase = prev.length * 40;
-        const maxOffset = 400;
-        const cascade = offsetBase % maxOffset;
-        
-        const maxZ = Math.max(...prev.map(w => w.zIndex), 99999000);
-        const finalZ = maxZ + 100000; // SEMPRE maior que todas
-        
-        const newWindow = {
-          id: windowId,
-          component,
-          props,
-          title: options.title || 'Nova Janela',
-          isMinimized: false,
-          isMaximized: false,
-          width: options.width || 900,
-          height: options.height || 600,
-          x: options.x !== undefined ? options.x : 100 + cascade,
-          y: options.y !== undefined ? options.y : 80 + cascade,
-          zIndex: finalZ,
-          uniqueKey: options.uniqueKey
-        };
+      // 2. Calcular z-index sempre no topo
+      const baseZ = 99999000;
+      const currentMaxZ = prevWindows.length > 0 ? Math.max(...prevWindows.map(w => w.zIndex), baseZ) : baseZ;
+      const finalZ = currentMaxZ + 100000;
 
-        setActiveWindowId(windowId);
-        return [...prev, newWindow];
-      });
-      
-      return windowId;
-    }
-
-    // Criar nova janela SEM uniqueKey
-    setWindows(prev => {
-      const offsetBase = prev.length * 40;
+      // 3. Cascata inteligente
+      const offsetBase = prevWindows.length * 40;
       const maxOffset = 400;
       const cascade = offsetBase % maxOffset;
-      
-      const maxZ = Math.max(...prev.map(w => w.zIndex), 99999000);
-      const finalZ = maxZ + 100000;
       
       const newWindow = {
         id: windowId,
@@ -136,7 +106,7 @@ export function WindowProvider({ children }) {
       };
 
       setActiveWindowId(windowId);
-      return [...prev, newWindow];
+      return [...prevWindows, newWindow];
     });
     
     return windowId;
