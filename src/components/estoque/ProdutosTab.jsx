@@ -123,7 +123,7 @@ export default function ProdutosTab(props) {
                <Button
                  variant="outline"
                  className="border-red-300 text-red-700 hover:bg-red-100"
-                 onClick={handleVerProdutosEstoqueBaixo}
+                 onClick={() => setFiltroEstoqueBaixo(true)}
                >
                  <ShoppingCart className="w-4 h-4 mr-2" />
                  Ver Produtos
@@ -165,7 +165,7 @@ export default function ProdutosTab(props) {
             </Button>
             )}
 
-          {canEdit('Estoque', 'Produtos') && (
+          {hasPermission('Estoque', 'Produtos', 'editar') && (
             <Button 
               variant="outline"
               className="border-purple-300 text-purple-700 hover:bg-purple-50" 
@@ -185,7 +185,7 @@ export default function ProdutosTab(props) {
             </Button>
             )}
 
-          {canCreate('Estoque', 'Produtos') && (
+          {hasPermission('Estoque', 'Produtos', 'criar') && (
             <Button 
               variant="outline"
               className="border-green-300 text-green-700 hover:bg-green-50"
@@ -205,7 +205,7 @@ export default function ProdutosTab(props) {
             </Button>
             )}
 
-          {canCreate('Estoque', 'Produtos') && (
+          {hasPermission('Estoque', 'Produtos', 'criar') && (
             <Button 
               className="bg-blue-600 hover:bg-blue-700" 
               onClick={() => openWindow(ProdutoFormV22_Completo, {

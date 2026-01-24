@@ -265,6 +265,10 @@ export default function VisualizadorUniversalEntidade({
   // ✅ Mapear ordenação do menu/coluna para string de ordenação do backend
   const getBackendSortString = () => {
     if (colunaOrdenacao) {
+      // Ordenação numérica especial para código
+      if (colunaOrdenacao === 'codigo' && nomeEntidade === 'Produto') {
+        return direcaoOrdenacao === 'desc' ? '-codigo' : 'codigo';
+      }
       return direcaoOrdenacao === 'desc' ? `-${colunaOrdenacao}` : colunaOrdenacao;
     }
     
@@ -292,7 +296,19 @@ export default function VisualizadorUniversalEntidade({
       'estoque_alto': '-estoque_atual',
       'estoque_baixo': 'estoque_disponivel',
       'mais_vendidos': '-quantidade_vendida_12meses',
-      'menos_vendidos': 'quantidade_vendida_12meses'
+      'menos_vendidos': 'quantidade_vendida_12meses',
+      'cidade': 'endereco_principal.cidade',
+      'limite_credito': '-condicao_comercial.limite_credito',
+      'limite_credito_menor': 'condicao_comercial.limite_credito',
+      'mais_compras': '-valor_compras_12meses',
+      'menos_compras': 'valor_compras_12meses',
+      'razao_social': 'razao_social',
+      'nota_media': '-nota_media',
+      'entregas_prazo': '-percentual_entregas_prazo',
+      'cargo': 'cargo',
+      'departamento': 'departamento',
+      'admissao': '-data_admissao',
+      'salario': '-salario'
     };
     
     return sortMap[ordenacao] || '-created_date';
@@ -793,7 +809,7 @@ onClose: invalidateAllRelated,
         </CardHeader>
 
         <CardContent className={`p-6 ${contentClass}`}>
-          {(isLoading || isLoadingCount) ? (
+          {isLoading ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando dados...</p>
@@ -1065,7 +1081,7 @@ onClose: invalidateAllRelated,
           )}
 
           {/* V21.0 - Controles de Paginação */}
-          {!isLoading && totalItemsCount > 0 && (
+          {!isLoading && !isLoadingCount && totalItemsCount > 0 && (
             <PaginationControls
               currentPage={currentPage}
               totalItems={totalItemsCount}
