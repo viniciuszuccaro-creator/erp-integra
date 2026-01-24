@@ -25,7 +25,7 @@ export default function ProdutosTab(props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // ✅ Contagens via query própria com invalidação automática e busca em lotes
+  // ✅ V22.0.8 - Contagens OTIMIZADAS: SEM refetchInterval, COM subscription real-time
   const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: isLoadingContagens } = useQuery({
     queryKey: ['produtos-contagens', getFiltroContexto('empresa_id', true)],
     queryFn: async () => {
@@ -37,7 +37,7 @@ export default function ProdutosTab(props) {
         base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtro, tipo_item: 'Matéria-Prima Produção' } })
       ]);
 
-      // ✅ CORREÇÃO DEFINITIVA: Buscar TODOS os produtos ativos em lotes para calcular estoque baixo com precisão
+      // ✅ CORREÇÃO DEFINITIVA: Buscar TODOS os produtos ativos em lotes para calcular estoque baixo
       let todosParaBaixo = [];
       let skip = 0;
       const batchSize = 500;
@@ -81,16 +81,16 @@ export default function ProdutosTab(props) {
         estoqueBaixo
       };
     },
-    staleTime: 2000,
-    refetchOnWindowFocus: true,
-    refetchInterval: 5000
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    refetchInterval: false // ✅ REMOVIDO para evitar rate limit
   });
 
-  // ✅ Invalidar contagens quando produtos mudam
+  // ✅ REAL-TIME via subscription (sem polling)
   React.useEffect(() => {
     const unsubscribe = base44.entities.Produto.subscribe((event) => {
+      console.log('[ProdutosTab] Produto subscription event:', event.type);
       queryClient.invalidateQueries({ queryKey: ['produtos-contagens'] });
-      queryClient.refetchQueries({ queryKey: ['produtos-contagens'] });
     });
     return unsubscribe;
   }, [queryClient]);
