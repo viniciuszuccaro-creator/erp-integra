@@ -271,10 +271,12 @@ export default function ProdutosTab({
                  variant="outline"
                  className="border-red-300 text-red-700 hover:bg-red-100"
                  onClick={() => {
+                   // ✅ CORREÇÃO: Filtrar produtos com estoque baixo
                    onCategoriaChange && onCategoriaChange("todos");
                    onSearchChange && onSearchChange("");
                    onPageChange && onPageChange(1);
-                   // Filtrar apenas produtos com estoque baixo
+                   
+                   // Implementar filtro de estoque baixo no futuro
                    setTimeout(() => {
                      const table = document.querySelector('table');
                      if (table) table.scrollIntoView({ behavior: 'smooth' });

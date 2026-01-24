@@ -718,15 +718,15 @@ onClose: invalidateAllRelated,
             </div>
           </div>
 
-          {/* Barra de Busca, Ordenação e Filtros */}
+          {/* Barra de Busca, Ordenação e Filtros - CORREÇÃO: onChange com e.target.value */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" />
               <InputClean
                 placeholder="🔍 Busca universal em todos os campos..."
                 value={busca}
-                onChange={(val) => {
-                  setBusca(val);
+                onChange={(e) => {
+                  setBusca(e.target.value);
                   setCurrentPage(1);
                 }}
                 className="pl-10"

@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 /**
  * SearchInput - Campo de busca LIMPO sem auditoria
  * V22.0 - Usa InputClean para evitar interferências de event listeners
+ * CORREÇÃO FINAL: onChange recebe e.target.value diretamente
  */
 export default function SearchInput({ 
   value = "", 

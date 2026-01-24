@@ -57,6 +57,43 @@ export default function Estoque() {
     retryDelay: 1000
   });
 
+  // ✅ V22.0 CORREÇÃO FINAL: Contagens CORRETAS via backend para TODOS os produtos
+  const { data: contagensTotais = {}, isLoading: loadingContagens } = useQuery({
+    queryKey: ['produtos-contagens-totais', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        
+        // Buscar TODOS os produtos do backend (máximo 5000)
+        const todosProdutos = await base44.entities.Produto.filter(filtro, '-created_date', 5000);
+        
+        // Calcular contagens localmente
+        const totalProdutos = todosProdutos.length;
+        const produtosRevenda = todosProdutos.filter(p => p.tipo_item !== 'Matéria-Prima Produção').length;
+        const produtosProducao = todosProdutos.filter(p => p.tipo_item === 'Matéria-Prima Produção').length;
+        const produtosEstoqueBaixo = todosProdutos.filter(p => {
+          const disponivel = (p.estoque_disponivel ?? ((p.estoque_atual || 0) - (p.estoque_reservado || 0)));
+          return p.status === 'Ativo' && (Math.max(0, disponivel) <= (p.estoque_minimo || 0));
+        }).length;
+        
+        return {
+          total: totalProdutos,
+          revenda: produtosRevenda,
+          producao: produtosProducao,
+          estoqueBaixo: produtosEstoqueBaixo
+        };
+      } catch (err) {
+        console.error('Erro ao contar produtos:', err);
+        return { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 };
+      }
+    },
+    staleTime: 60000,
+    gcTime: 120000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 2
+  });
+
   // V22.0 - Contagem otimizada via backend para grandes volumes (893+ produtos)
   const { data: totalProdutos = 0 } = useQuery({
     queryKey: ['produtos-count', empresaAtual?.id],
@@ -70,17 +107,11 @@ export default function Estoque() {
           filter: filtro
         });
 
-        return response.data?.count || 0;
+        return response.data?.count || contagensTotais.total || 0;
       } catch (err) {
         console.error('Erro ao contar produtos:', err);
         // Fallback
-        try {
-          const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-          const allData = await base44.entities.Produto.filter(filtro, undefined, 5000);
-          return allData.length;
-        } catch {
-          return 0;
-        }
+        return contagensTotais.total || 0;
       }
     },
     staleTime: 60000,
@@ -316,10 +347,12 @@ export default function Estoque() {
         <HeaderEstoqueCompacto />
         
         <KPIsEstoque
-          produtosAtivos={produtosAtivos}
-          produtosBaixoEstoque={produtosBaixoEstoque}
+          produtosAtivos={contagensTotais.total || totalProdutos}
+          produtosBaixoEstoque={contagensTotais.estoqueBaixo || 0}
           totalReservado={totalReservado}
           estoqueDisponivel={estoqueDisponivel}
+          produtosRevenda={contagensTotais.revenda || 0}
+          produtosProducao={contagensTotais.producao || 0}
         />
 
         {estaNoGrupo && (
