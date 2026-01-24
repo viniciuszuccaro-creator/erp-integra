@@ -302,81 +302,30 @@ export default function VisualizadorUniversalEntidade({
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
     queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao],
     queryFn: async () => {
-      try {
-        const filtroContexto = getFiltroContexto('empresa_id', true);
-        const skip = (currentPage - 1) * itemsPerPage;
-        const sortString = getBackendSortString();
-        
-        // ✅ Ordenação aplicada no BACKEND (escalável para 25k+ registros)
-        const result = await base44.entities[nomeEntidade].filter(
-          filtroContexto, 
-          sortString,
-          itemsPerPage,
-          skip
-        );
-        
-        return result || [];
-      } catch (err) {
-        console.error(`Erro ao buscar ${nomeEntidade}:`, err);
-        if (err.message?.includes('Network Error')) {
-          toast({ 
-            title: "⚠️ Erro de conexão", 
-            description: "Tentando reconectar... Verifique sua internet", 
-            variant: "destructive" 
-          });
-        }
-        return [];
-      }
+      const filtroContexto = getFiltroContexto('empresa_id', true);
+      const skip = (currentPage - 1) * itemsPerPage;
+      const sortString = getBackendSortString();
+      
+      const result = await base44.entities[nomeEntidade].filter(
+        filtroContexto, 
+        sortString,
+        itemsPerPage,
+        skip
+      );
+      
+      return result || [];
     },
-    staleTime: 30000,
-    gcTime: 60000,
+    staleTime: 10000,
+    gcTime: 30000,
     refetchInterval: false,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: true,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000)
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    retry: 1
   });
 
-  // ✅ V22.0 OTIMIZADO - Contagem via BACKEND com estimativa para grandes volumes
-  const { data: countData = { count: 0, isEstimate: false }, isLoading: isLoadingCount } = useQuery({
-    queryKey: [...queryKey, 'count', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtroContexto = getFiltroContexto('empresa_id', true);
-        
-        // Usa função backend otimizada que retorna estimativas para grandes volumes
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: nomeEntidade,
-          filter: filtroContexto
-        });
-
-        if (response.data?.count !== undefined) {
-          return {
-            count: response.data.count,
-            isEstimate: response.data.isEstimate || false
-          };
-        }
-
-        // Fallback rápido: retorna estimativa baixa se backend falhar
-        console.warn(`countEntities falhou para ${nomeEntidade}, usando estimativa`);
-        return { count: 100, isEstimate: true };
-      } catch (err) {
-        console.error(`Erro ao contar ${nomeEntidade}:`, err);
-        // Retorna estimativa conservadora para não quebrar a UI
-        return { count: 100, isEstimate: true };
-      }
-    },
-    staleTime: 120000, // Cache de 2 minutos (contagem muda raramente)
-    gcTime: 300000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    retry: 1 // Apenas 1 tentativa para não sobrecarregar
-  });
-
-  const totalItemsCount = countData.count;
-  const isEstimateCount = countData.isEstimate;
+  // ✅ Contagem simplificada - usa length dos dados carregados
+  const totalItemsCount = dados.length;
+  const isEstimateCount = dados.length >= itemsPerPage;
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
   const invalidateAllRelated = async () => {
@@ -812,7 +761,7 @@ onClose: invalidateAllRelated,
         </CardHeader>
 
         <CardContent className={`p-6 ${contentClass}`}>
-          {(isLoading || isLoadingCount) ? (
+          {isLoading ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando dados...</p>
