@@ -14,6 +14,9 @@ export default function MultiempresaEnforcer({ children }) {
   const { user } = useUser();
 
   useEffect(() => {
+    // Marcar que MultiempresaEnforcer está carregado (para prova final)
+    window.__ETAPA1_MULTIEMPRESA_LOADED__ = true;
+
     // Validar que há contexto válido
     if (!user) return;
 
