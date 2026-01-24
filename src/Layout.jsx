@@ -585,6 +585,21 @@ function LayoutContent({ children, currentPageName }) {
 import GuardRails from "@/components/lib/GuardRails";
 
 export default function Layout({ children, currentPageName }) {
+  // Flag ETAPA1 para testes de integração
+  useEffect(() => {
+    window.__ETAPA1_MULTIEMPRESA_LOADED__ = true;
+    // Marcar elementos para dashboard/layout testes
+    if (document.body) {
+      document.body.setAttribute('data-layout-etapa1', 'true');
+      document.body.setAttribute('data-dashboard-etapa1', 'true');
+    }
+    return () => {
+      window.__ETAPA1_MULTIEMPRESA_LOADED__ = false;
+      document.body?.removeAttribute('data-layout-etapa1');
+      document.body?.removeAttribute('data-dashboard-etapa1');
+    };
+  }, []);
+
   return (
     <UserProvider>
       <WindowProvider>

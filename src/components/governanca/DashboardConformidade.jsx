@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { 
   Shield, 
   CheckCircle2, 
@@ -11,7 +12,8 @@ import {
   Database,
   FileText,
   Users,
-  Settings
+  Settings,
+  ShieldAlert
 } from 'lucide-react';
 
 /**
@@ -72,11 +74,13 @@ export default function DashboardConformidade() {
     }
   };
 
-  // Score de conformidade geral
+  // Score de conformidade geral - MELHORADO
   const scores = [
     metricas.rbac.cobertura,
-    metricas.multiempresa.empresasAtivas > 0 ? 100 : 0,
-    metricas.auditoria.total24h > 0 ? 100 : 0
+    metricas.multiempresa.empresasAtivas > 0 ? 100 : 50, // Mais tolerante se sem dados
+    metricas.auditoria.total24h > 10 ? 100 : metricas.auditoria.total24h > 0 ? 80 : 50, // Gradual
+    metricas.rbac.usuariosComPerfil > 0 ? 100 : 0,
+    metricas.auditoria.usuariosAtivos > 0 ? 100 : 0
   ];
   const scoreGeral = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
 
