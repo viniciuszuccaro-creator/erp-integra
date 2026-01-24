@@ -34,14 +34,17 @@ export default function GovernancaETAPA1() {
     <AdminOnlyZone message="Esta página é exclusiva para administradores do sistema. Monitoramento de Governança e Segurança.">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-              <Shield className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Shield className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-900">Governança e Segurança</h1>
+                <p className="text-slate-600">ETAPA 1 - Controle Total de Acesso e Isolamento</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">Governança e Segurança</h1>
-              <p className="text-slate-600">ETAPA 1 - Controle Total de Acesso e Isolamento</p>
-            </div>
+            <SeloETAPA1_100 size="lg" />
           </div>
 
           <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="space-y-6">
