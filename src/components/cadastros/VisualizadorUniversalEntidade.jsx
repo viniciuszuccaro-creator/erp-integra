@@ -345,7 +345,7 @@ export default function VisualizadorUniversalEntidade({
   const abortControllerRef = React.useRef(null);
 
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, busca],
+    queryKey: [...queryKey, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao],
     queryFn: async () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -418,7 +418,7 @@ export default function VisualizadorUniversalEntidade({
   const countAbortControllerRef = React.useRef(null);
 
   const { data: totalItemsCount = 0, isLoading: isLoadingCount } = useQuery({
-    queryKey: [...queryKey, 'total-count', empresaAtual?.id, busca],
+    queryKey: [...queryKey, 'total-count', empresaAtual?.id],
     queryFn: async () => {
       if (countAbortControllerRef.current) {
         countAbortControllerRef.current.abort();
@@ -467,10 +467,19 @@ export default function VisualizadorUniversalEntidade({
     await Promise.all([
       queryClient.invalidateQueries({ queryKey }),
       queryClient.refetchQueries({ queryKey }),
+      queryClient.invalidateQueries({ queryKey: [...queryKey, 'total-count'] }),
+      queryClient.refetchQueries({ queryKey: [...queryKey, 'total-count'] }),
       ...aliasKeys.map((k) => queryClient.invalidateQueries({ queryKey: [k] })),
       ...aliasKeys.map((k) => queryClient.refetchQueries({ queryKey: [k] })),
     ]);
   };
+
+  React.useEffect(() => {
+    const unsubscribe = base44.entities[nomeEntidade].subscribe(() => {
+      invalidateAllRelated();
+    });
+    return unsubscribe;
+  }, [nomeEntidade]);
 
   // Dados já vêm filtrados do servidor, não precisa filtrar novamente no cliente
   const dadosFiltrados = dados;
@@ -849,15 +858,16 @@ onClose: invalidateAllRelated,
 
           {/* Barra de Busca, Ordenação e Filtros */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
-            <SearchInput
-              value={busca}
-              onChange={(val) => {
-                setBusca(val);
-                setCurrentPage(1);
-              }}
-              placeholder="🔍 Busca universal em todos os campos..."
-              className="flex-1"
-            />
+            <div className="flex-1">
+              <SearchInput
+                value={busca}
+                onChange={(val) => {
+                  setBusca(val);
+                  setCurrentPage(1);
+                }}
+                placeholder="🔍 Busca universal em todos os campos..."
+              />
+            </div>
             
             {/* ✅ ORDENAÇÃO POR MENU */}
             <Select value={ordenacao || 'recent'} onValueChange={(val) => {
