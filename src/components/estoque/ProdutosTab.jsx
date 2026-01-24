@@ -1,215 +1,56 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import SearchInput from "@/components/ui/SearchInput";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit2, AlertCircle, AlertTriangle, ShoppingCart, Package, Trash2, BarChart3, Factory, ArrowUpRight, Download, Upload } from "lucide-react";
+import { AlertTriangle, Factory, ShoppingCart, Plus, Upload, Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-import ProtectedField from "@/components/security/ProtectedField";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import SolicitarCompraRapidoModal from "../compras/SolicitarCompraRapidoModal";
-import { toast as sonnerToast } from "sonner";
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
 import { useWindow } from "@/components/lib/useWindow";
 import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMassa";
 import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosProducao";
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
-import PaginationControls from "@/components/ui/PaginationControls";
+import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 
-export default function ProdutosTab({ 
-  produtos, 
-  isLoading = false,
-  currentPage = 1,
-  totalItems = 0,
-  itemsPerPage = 100, // ✅ V22.0 ETAPA 2: Alterado de 50 para 100
-  onPageChange,
-  onItemsPerPageChange,
-  searchTerm = '',
-  onSearchChange,
-  selectedCategoria = 'todos',
-  onCategoriaChange
+export default function ProdutosTab({
+  contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 },
+  isLoadingContagens = false,
 }) {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProduto, setEditingProduto] = useState(null);
-  const [solicitacaoModal, setSolicitacaoModal] = useState(null);
   const { openWindow } = useWindow();
-  const { empresaAtual, contexto } = useContextoVisual();
+  const { empresaAtual } = useContextoVisual();
   const { canCreate, canEdit, hasPermission } = usePermissions();
-
-  // Seleção em massa + exportação
-  const [selectedProdutos, setSelectedProdutos] = useState([]);
-  const toggleProduto = (id) => setSelectedProdutos(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const toggleAllProdutos = (checked, lista) => setSelectedProdutos(checked ? lista.map(p => p.id) : []);
-  const exportarProdutosCSV = (lista) => {
-    const headers = ['codigo','descricao','grupo','unidade_medida','estoque_atual','estoque_disponivel','estoque_minimo','preco_venda','status'];
-    const csv = [
-      headers.join(','),
-      ...lista.map(p => headers.map(h => JSON.stringify((p[h] ?? '')).toString()).join(','))
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `produtos_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-  const [formData, setFormData] = useState({
-    codigo: "",
-    descricao: "",
-    grupo: "Produto Acabado",
-    unidade_medida: "UN",
-    custo_aquisicao: 0,
-    preco_venda: 0,
-    estoque_atual: 0,
-    estoque_minimo: 0,
-    status: "Ativo"
-  });
-  
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
-  const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Produto.create({
-      ...data,
-      empresa_id: empresaAtual?.id || data.empresa_id,
-      group_id: contexto?.group_id || data.group_id
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['produtos'] });
-      setIsDialogOpen(false);
-      resetForm();
-      toast({ title: "✅ Produto criado!" });
-    },
-  });
+  const [filterLowStock, setFilterLowStock] = useState(false);
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Produto.update(id, {
-      ...data,
-      empresa_id: data.empresa_id || empresaAtual?.id,
-      group_id: data.group_id || contexto?.group_id
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['produtos'] });
-      setIsDialogOpen(false);
-      setEditingProduto(null);
-      resetForm();
-      toast({ title: "✅ Produto atualizado!" });
-    },
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (editingProduto) {
-      updateMutation.mutate({ id: editingProduto.id, data: formData });
-    } else {
-      createMutation.mutate(formData);
-    }
+  const handleVerProdutosEstoqueBaixo = () => {
+    setFilterLowStock(true);
   };
 
-  const handleEdit = (produto) => {
-    setEditingProduto(produto);
-    setFormData(produto);
-    setIsDialogOpen(true);
+  const commonViewerProps = {
+    nomeEntidade: "Produto",
+    tituloDisplay: "Produtos",
+    icone: Package,
+    componenteEdicao: ProdutoFormV22_Completo,
+    queryKeyOverride: "produtos-estoque",
+    filterOverride: filterLowStock ? { 'estoque_atual': { '$lte': 'estoque_minimo' }, 'status': 'Ativo' } : {},
   };
-
-  const handleNovoProduto = () => {
-    setEditingProduto(null);
-    resetForm();
-    setIsDialogOpen(true);
-  };
-
-  const resetForm = () => {
-    setEditingProduto(null);
-    setFormData({
-      codigo: "",
-      descricao: "",
-      grupo: "Produto Acabado",
-      unidade_medida: "UN",
-      custo_aquisicao: 0,
-      preco_venda: 0,
-      estoque_atual: 0,
-      estoque_minimo: 0,
-      status: "Ativo"
-    });
-  };
-
-  // V21.6: Função para enviar produto único para produção
-  const enviarParaProducao = async (produto) => {
-    try {
-      await base44.entities.Produto.update(produto.id, {
-        tipo_item: 'Matéria-Prima Produção',
-        setor_atividade_id: 'setor-fabrica-001',
-        setor_atividade_nome: 'Fábrica'
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ['produtos'] });
-      sonnerToast.success('🏭 Produto enviado para Produção!');
-    } catch (error) {
-      sonnerToast.error('Erro ao converter produto');
-    }
-  };
-
-
-
-  // ✅ V22.0 - Produtos já vêm ordenados do backend, sem ordenação local
-  // A ordenação local só funciona nos dados da página - inútil para grandes volumes
-  const produtosProcessados = useMemo(() => {
-    return produtos;
-  }, [produtos]);
-
-  // ✅ CORREÇÃO: Buscar produtos com estoque baixo de TODAS as páginas via backend
-  const { data: produtosBaixoEstoque = [] } = useQuery({
-    queryKey: ['produtos-estoque-baixo', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        const todosProdutos = await base44.entities.Produto.filter(filtro, '-created_date', 5000);
-        return todosProdutos.filter(p => {
-          const disponivel = (p.estoque_disponivel ?? ((p.estoque_atual || 0) - (p.estoque_reservado || 0)));
-          return p.status === 'Ativo' && (Math.max(0, disponivel) <= (p.estoque_minimo || 0));
-        });
-      } catch (err) {
-        console.error('Erro ao buscar produtos baixo estoque:', err);
-        return [];
-      }
-    },
-    staleTime: 60000,
-    gcTime: 120000,
-    refetchOnWindowFocus: false
-  });
-
-  // V21.6: Estatísticas de produtos em produção
-  const produtosProducao = useMemo(() => {
-    return produtos.filter(p => p.tipo_item === 'Matéria-Prima Produção');
-  }, [produtos]);
-
-  const produtosRevenda = useMemo(() => {
-    return produtos.filter(p => p.tipo_item !== 'Matéria-Prima Produção');
-  }, [produtos]);
-
-
 
   return (
     <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
-      {/* V21.6: NOVO - Estatísticas Rápidas */}
-      <div className="w-full flex-shrink-0 grid grid-cols-4 gap-4">
+      {/* Estatísticas Rápidas */}
+      <div className="w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-blue-700 mb-1">Total Produtos</p>
-                <p className="text-2xl font-bold text-blue-900">{totalItems}</p>
+                <p className="text-2xl font-bold text-blue-900">{isLoadingContagens ? '...' : contagensTotais.total}</p>
               </div>
               <Package className="w-8 h-8 text-blue-600" />
             </div>
@@ -221,7 +62,7 @@ export default function ProdutosTab({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-orange-700 mb-1">Em Produção</p>
-                <p className="text-2xl font-bold text-orange-900">{produtosProducao.length}</p>
+                <p className="text-2xl font-bold text-orange-900">{isLoadingContagens ? '...' : contagensTotais.producao}</p>
               </div>
               <Factory className="w-8 h-8 text-orange-600" />
             </div>
@@ -233,7 +74,7 @@ export default function ProdutosTab({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-purple-700 mb-1">Revenda</p>
-                <p className="text-2xl font-bold text-purple-900">{produtosRevenda.length}</p>
+                <p className="text-2xl font-bold text-purple-900">{isLoadingContagens ? '...' : contagensTotais.revenda}</p>
               </div>
               <ShoppingCart className="w-8 h-8 text-purple-600" />
             </div>
@@ -245,7 +86,7 @@ export default function ProdutosTab({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-red-700 mb-1">Estoque Baixo</p>
-                <p className="text-2xl font-bold text-red-900">{produtosBaixoEstoque.length}</p>
+                <p className="text-2xl font-bold text-red-900">{isLoadingContagens ? '...' : contagensTotais.estoqueBaixo}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
@@ -254,14 +95,14 @@ export default function ProdutosTab({
       </div>
 
       {/* ALERTA DE ESTOQUE BAIXO */}
-      {produtosBaixoEstoque.length > 0 && (
+      {contagensTotais.estoqueBaixo > 0 && (
         <Card className="border-red-300 bg-red-50 flex-shrink-0">
            <CardContent className="p-4">
              <div className="flex items-center gap-3">
                <AlertTriangle className="w-6 h-6 text-red-600 flex-shrink-0" />
                <div className="flex-1 min-w-0">
                  <p className="font-semibold text-red-900">
-                   ⚠️ {produtosBaixoEstoque.length} produtos com estoque baixo
+                   ⚠️ {contagensTotais.estoqueBaixo} produtos com estoque baixo
                  </p>
                  <p className="text-sm text-red-700">
                    Alguns produtos estão abaixo do estoque mínimo e precisam de reposição
@@ -270,18 +111,7 @@ export default function ProdutosTab({
                <Button
                  variant="outline"
                  className="border-red-300 text-red-700 hover:bg-red-100"
-                 onClick={() => {
-                   // ✅ CORREÇÃO: Filtrar produtos com estoque baixo
-                   onCategoriaChange && onCategoriaChange("todos");
-                   onSearchChange && onSearchChange("");
-                   onPageChange && onPageChange(1);
-                   
-                   // Implementar filtro de estoque baixo no futuro
-                   setTimeout(() => {
-                     const table = document.querySelector('table');
-                     if (table) table.scrollIntoView({ behavior: 'smooth' });
-                   }, 100);
-                 }}
+                 onClick={handleVerProdutosEstoqueBaixo}
                >
                  <ShoppingCart className="w-4 h-4 mr-2" />
                  Ver Produtos
@@ -291,10 +121,9 @@ export default function ProdutosTab({
         </Card>
       )}
 
-      <div className="w-full flex-shrink-0 flex justify-between items-center">
+      <div className="w-full flex-shrink-0 flex flex-wrap justify-between items-center gap-2">
         <h2 className="text-2xl font-bold">Produtos</h2>
-        <div className="flex gap-2">
-          {/* V21.6: NOVO - Dashboard de Produção */}
+        <div className="flex gap-2 flex-wrap">
           {hasPermission('Estoque', 'Produtos', 'visualizar') && (
             <Button 
               variant="outline"
@@ -303,7 +132,6 @@ export default function ProdutosTab({
               windowMode: true,
               onAbrirConversao: () => {
                 openWindow(ConversaoProducaoMassa, {
-                  produtos,
                   windowMode: true,
                   onConcluido: () => {
                     queryClient.invalidateQueries({ queryKey: ['produtos'] });
@@ -325,13 +153,11 @@ export default function ProdutosTab({
             </Button>
             )}
 
-          {/* V21.6: NOVO - Conversão em Massa */}
           {canEdit('Estoque', 'Produtos') && (
             <Button 
               variant="outline"
               className="border-purple-300 text-purple-700 hover:bg-purple-50" 
               onClick={() => openWindow(ConversaoProducaoMassa, {
-              produtos,
               windowMode: true,
               onConcluido: () => {
                 queryClient.invalidateQueries({ queryKey: ['produtos'] });
@@ -342,7 +168,7 @@ export default function ProdutosTab({
               height: 700
             })}
           >
-            <ArrowUpRight className="w-4 h-4 mr-2" />
+            <Plus className="w-4 h-4 mr-2" />
             Converter em Massa
             </Button>
             )}
@@ -394,264 +220,8 @@ export default function ProdutosTab({
         </div>
       </div>
 
-      <Card className="border-0 shadow-md flex-shrink-0">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="Buscar por código, descrição, grupo, marca, setor, tipo, fornecedor, NCM..."
-                value={searchTerm || ''}
-                onChange={(e) => {
-                  onSearchChange && onSearchChange(e.target.value);
-                  onPageChange && onPageChange(1);
-                }}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-10"
-              />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                <Package className="w-4 h-4 text-slate-400" />
-              </div>
-            </div>
-            <Select value={selectedCategoria} onValueChange={(val) => {
-              onCategoriaChange && onCategoriaChange(val);
-              onPageChange && onPageChange(1);
-            }}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filtrar por categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="Matéria Prima">Matéria Prima</SelectItem>
-                <SelectItem value="Produto Acabado">Produto Acabado</SelectItem>
-                <SelectItem value="Insumo">Insumo</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              onClick={() => exportarProdutosCSV(produtosProcessados)}
-              className="border-slate-300"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Exportar CSV
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-0 shadow-md flex-1 flex flex-col min-h-0">
-        <CardHeader className="bg-slate-50 border-b flex-shrink-0">
-          <CardTitle>Lista de Produtos ({produtosProcessados.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0 flex flex-col h-full">
-          {selectedProdutos.length > 0 && (
-            <Alert className="m-4 border-blue-300 bg-blue-50 flex-shrink-0">
-              <AlertDescription className="flex items-center justify-between">
-                <div className="text-blue-900 font-semibold">{selectedProdutos.length} produto(s) selecionado(s)</div>
-                <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => exportarProdutosCSV(produtosProcessados.filter(p => selectedProdutos.includes(p.id)))}>
-                    <Download className="w-4 h-4 mr-2" /> Exportar CSV
-                  </Button>
-                  <Button variant="ghost" onClick={() => setSelectedProdutos([])}>Limpar Seleção</Button>
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-          <div className="overflow-x-auto flex-1">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead>
-                    <Checkbox
-                      checked={selectedProdutos.length > 0 && selectedProdutos.length === produtosProcessados.length}
-                      onCheckedChange={(v) => toggleAllProdutos(!!v, produtosProcessados)}
-                      aria-label="Selecionar todos"
-                    />
-                  </TableHead>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Peso Teórico</TableHead>
-                  <TableHead>Setor</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Estoque Atual</TableHead>
-                  <TableHead>Estoque Mín.</TableHead>
-                  <TableHead>Disponível</TableHead>
-                  <TableHead>Custo</TableHead>
-                  <TableHead>Preço Venda</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {produtosProcessados.map((produto) => {
-                  const disponivelCalc = Math.max(0, (produto.estoque_disponivel ?? ((produto.estoque_atual || 0) - (produto.estoque_reservado || 0))));
-                  const estoqueBaixo = disponivelCalc <= (produto.estoque_minimo || 0);
-                  const estoqueZerado = disponivelCalc === 0;
-                  const ehProducao = produto.tipo_item === 'Matéria-Prima Produção';
-                  
-                  return (
-                    <TableRow key={produto.id} className={`hover:bg-slate-50 ${estoqueBaixo ? 'bg-red-50/50' : ''}`}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedProdutos.includes(produto.id)}
-                          onCheckedChange={() => toggleProduto(produto.id)}
-                          aria-label={`Selecionar ${produto.descricao}`}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{produto.codigo}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{produto.descricao}</p>
-                          {produto.codigo_barras && (
-                            <p className="text-xs text-slate-500">EAN: {produto.codigo_barras}</p>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-600">
-                        {produto.peso_teorico_kg_m ? `${produto.peso_teorico_kg_m.toFixed(3)} kg/m` : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {produto.setor_atividade_nome ? (
-                          <Badge variant="outline" className="bg-indigo-50 text-indigo-700">
-                            {produto.setor_atividade_nome}
-                          </Badge>
-                        ) : (
-                          <span className="text-xs text-slate-400">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {ehProducao ? (
-                          <Badge className="bg-orange-600 text-white">
-                            <Factory className="w-3 h-3 mr-1" />
-                            Produção
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">
-                            <ShoppingCart className="w-3 h-3 mr-1" />
-                            Revenda
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{produto.grupo || produto.grupo_produto_nome || 'Sem Grupo'}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <span className={estoqueBaixo ? 'text-red-600 font-bold' : 'font-semibold'}>
-                          {(produto.estoque_atual ?? 0)} {produto.unidade_medida}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-slate-600">
-                        {(produto.estoque_minimo ?? 0)} {produto.unidade_medida}
-                      </TableCell>
-                      <TableCell>
-                        <span className={estoqueZerado ? 'text-red-600 font-bold' : ''}>
-                          {Number.isFinite(disponivelCalc) ? disponivelCalc : 0} {produto.unidade_medida}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        <ProtectedField module="Estoque" submodule="Produtos" field="custo" action="ver" asText>
-                          R$ {(produto.custo_medio || produto.custo_aquisicao || 0).toFixed(2)}
-                        </ProtectedField>
-                      </TableCell>
-                      <TableCell className="font-semibold text-green-600">
-                        R$ {(produto.preco_venda || 0).toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={
-                          produto.status === 'Ativo' ? 'bg-green-100 text-green-700' :
-                          'bg-gray-100 text-gray-700'
-                        }>
-                          {produto.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          {/* V21.6: NOVO - Botão para enviar para produção */}
-                          {!ehProducao && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => enviarParaProducao(produto)}
-                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                              title="Enviar para Produção"
-                            >
-                              <Factory className="w-4 h-4" />
-                            </Button>
-                          )}
-                          
-                          {estoqueBaixo && produto.status === 'Ativo' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openWindow(SolicitarCompraRapidoModal, {
-                                produto,
-                                windowMode: true,
-                                onClose: () => {}
-                              }, {
-                                title: `🛒 Solicitar: ${produto.descricao}`,
-                                width: 800,
-                                height: 700
-                              })}
-                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                              title="Solicitar Compra"
-                            >
-                              <ShoppingCart className="w-4 h-4" />
-                            </Button>
-                          )}
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => openWindow(ProdutoFormV22_Completo, {
-                              produto,
-                              windowMode: true,
-                              onSubmit: async (data) => {
-                                try {
-                                  await base44.entities.Produto.update(produto.id, data);
-                                  queryClient.invalidateQueries({ queryKey: ['produtos'] });
-                                  toast({ title: "✅ Produto atualizado!" });
-                                } catch (error) {
-                                  toast({ title: "❌ Erro", description: error.message, variant: "destructive" });
-                                }
-                              }
-                            }, {
-                              title: `✏️ Editar: ${produto.descricao}`,
-                              width: 1200,
-                              height: 700
-                            })}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
-
-          {produtosProcessados.length === 0 && (
-            <div className="text-center py-12 flex-1 flex items-center justify-center">
-              <div>
-                <Package className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">Nenhum produto encontrado</p>
-              </div>
-            </div>
-          )}
-
-          {/* V21.0 - Controles de Paginação */}
-          {totalItems > 0 && onPageChange && onItemsPerPageChange && (
-            <PaginationControls
-              currentPage={currentPage}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={onPageChange}
-              onItemsPerPageChange={onItemsPerPageChange}
-              isLoading={isLoading}
-            />
-          )}
-          </CardContent>
-          </Card>
-          </div>
-          );
-          }
+      {/* Renderiza o VisualizadorUniversalEntidade com todos os recursos */}
+      <VisualizadorUniversalEntidade {...commonViewerProps} />
+    </div>
+  );
+}

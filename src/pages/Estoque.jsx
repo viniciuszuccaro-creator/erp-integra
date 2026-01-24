@@ -26,56 +26,32 @@ export default function Estoque() {
   const { openWindow } = useWindow();
   const { estaNoGrupo, empresaAtual, empresasDoGrupo, filtrarPorContexto } = useContextoVisual();
   
-  // V21.0 - Estados de Paginação e Filtros para Produtos
-  const [currentPageProdutos, setCurrentPageProdutos] = useState(1);
-  const [itemsPerPageProdutos, setItemsPerPageProdutos] = useState(100); // ✅ V22.0 ETAPA 2: Alterado de 50 para 100
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategoria, setSelectedCategoria] = useState('todos');
+  // Estados removidos - VisualizadorUniversalEntidade gerencia tudo internamente
 
-  // V21.0 - Query paginada SERVER-SIDE com filtro de empresa
-  const { data: produtos = [], isLoading: loadingProdutos } = useQuery({
-    queryKey: ['produtos', currentPageProdutos, itemsPerPageProdutos, empresaAtual?.id],
+  // Query removida - VisualizadorUniversalEntidade busca os dados
+
+  // ✅ V22.0 CORREÇÃO FINAL: Contagens otimizadas via backend
+  const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: loadingContagens } = useQuery({
+    queryKey: ['produtos-contagens-dashboard', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const skip = (currentPageProdutos - 1) * itemsPerPageProdutos;
-        const limit = itemsPerPageProdutos;
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        // ✅ Ordenação no backend por data de criação (mais recentes primeiro)
-        const result = await base44.entities.Produto.filter(filtro, '-created_date', limit, skip);
-        return result || [];
-      } catch (err) {
-        console.error('Erro ao buscar produtos:', err);
-        return [];
-      }
-    },
-    staleTime: 30000,
-    gcTime: 60000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-    retry: 2,
-    retryDelay: 1000
-  });
+        const filtroBase = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
 
-  // ✅ V22.0 CORREÇÃO FINAL: Contagens CORRETAS via backend para TODOS os produtos
-  const { data: contagensTotais = {}, isLoading: loadingContagens } = useQuery({
-    queryKey: ['produtos-contagens-totais', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        
-        // Buscar TODOS os produtos do backend (máximo 5000)
-        const todosProdutos = await base44.entities.Produto.filter(filtro, '-created_date', 5000);
-        
-        // Calcular contagens localmente
-        const totalProdutos = todosProdutos.length;
-        const produtosRevenda = todosProdutos.filter(p => p.tipo_item !== 'Matéria-Prima Produção').length;
-        const produtosProducao = todosProdutos.filter(p => p.tipo_item === 'Matéria-Prima Produção').length;
-        const produtosEstoqueBaixo = todosProdutos.filter(p => {
+        const totalProdutosResponse = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtroBase });
+        const totalProdutos = totalProdutosResponse.data?.count || 0;
+
+        const produtosRevendaResponse = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtroBase, tipo_item: { '$ne': 'Matéria-Prima Produção' } } });
+        const produtosRevenda = produtosRevendaResponse.data?.count || 0;
+
+        const produtosProducaoResponse = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtroBase, tipo_item: 'Matéria-Prima Produção' } });
+        const produtosProducao = produtosProducaoResponse.data?.count || 0;
+
+        const todosProdutosParaEstoqueBaixo = await base44.entities.Produto.filter(filtroBase, '-created_date', 5000);
+        const produtosEstoqueBaixo = todosProdutosParaEstoqueBaixo.filter(p => {
           const disponivel = (p.estoque_disponivel ?? ((p.estoque_atual || 0) - (p.estoque_reservado || 0)));
           return p.status === 'Ativo' && (Math.max(0, disponivel) <= (p.estoque_minimo || 0));
         }).length;
-        
+
         return {
           total: totalProdutos,
           revenda: produtosRevenda,
@@ -83,7 +59,7 @@ export default function Estoque() {
           estoqueBaixo: produtosEstoqueBaixo
         };
       } catch (err) {
-        console.error('Erro ao contar produtos:', err);
+        console.error('Erro ao contar produtos para dashboard:', err);
         return { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 };
       }
     },
@@ -91,34 +67,6 @@ export default function Estoque() {
     gcTime: 120000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 2
-  });
-
-  // V22.0 - Contagem otimizada via backend para grandes volumes (893+ produtos)
-  const { data: totalProdutos = 0 } = useQuery({
-    queryKey: ['produtos-count', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        
-        // Usa função backend otimizada
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Produto',
-          filter: filtro
-        });
-
-        return response.data?.count || contagensTotais.total || 0;
-      } catch (err) {
-        console.error('Erro ao contar produtos:', err);
-        // Fallback
-        return contagensTotais.total || 0;
-      }
-    },
-    staleTime: 60000,
-    gcTime: 120000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
     retry: 2
   });
 
@@ -173,48 +121,36 @@ export default function Estoque() {
     retry: 1
   });
 
-  // Dados já vêm filtrados do servidor, aplicar filtros locais se necessário
-  const produtosFiltrados = useMemo(() => {
-    let resultado = produtos;
-
-    // Aplicar busca local UNIVERSAL
-    if (searchTerm.trim()) {
-      const termo = searchTerm.toLowerCase();
-      resultado = resultado.filter(p => 
-        (p.descricao || '').toLowerCase().includes(termo) ||
-        (p.codigo || '').toLowerCase().includes(termo) ||
-        (p.codigo_barras || '').includes(termo) ||
-        (p.grupo || '').toLowerCase().includes(termo) ||
-        (p.grupo_produto_nome || '').toLowerCase().includes(termo) ||
-        (p.marca_nome || '').toLowerCase().includes(termo) ||
-        (p.setor_atividade_nome || '').toLowerCase().includes(termo) ||
-        (p.tipo_item || '').toLowerCase().includes(termo) ||
-        (p.fornecedor_principal || '').toLowerCase().includes(termo) ||
-        (p.ncm || '').includes(termo) ||
-        (p.cest || '').includes(termo) ||
-        (p.subgrupo || '').toLowerCase().includes(termo) ||
-        (p.localizacao || '').toLowerCase().includes(termo) ||
-        (p.observacoes || '').toLowerCase().includes(termo)
-      );
-    }
-
-    // Aplicar filtro de categoria
-    if (selectedCategoria !== 'todos') {
-      resultado = resultado.filter(p => p.grupo === selectedCategoria);
-    }
-
-    return resultado;
-  }, [produtos, searchTerm, selectedCategoria]);
+  // Buscar produtos simples para KPIs de valor de estoque
+  const { data: produtosParaKPIs = [] } = useQuery({
+    queryKey: ['produtos-kpis', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Produto.filter(filtro, undefined, 5000);
+      } catch (err) {
+        console.error('Erro ao buscar produtos para KPIs:', err);
+        return [];
+      }
+    },
+    staleTime: 60000,
+    gcTime: 120000,
+    refetchOnWindowFocus: false,
+    retry: 1
+  });
 
   const movimentacoesFiltradas = movimentacoes;
 
-  const produtosAtivos = produtosFiltrados.filter(p => p.status === 'Ativo').length;
-  const produtosBaixoEstoque = produtosFiltrados.filter(p => p.estoque_atual <= p.estoque_minimo && p.status === 'Ativo').length;
-  const totalReservado = produtosFiltrados.reduce((sum, p) => sum + ((p.estoque_reservado || 0) * (p.custo_aquisicao || 0)), 0);
-  const estoqueDisponivel = produtosFiltrados.reduce((sum, p) => {
-    const disp = (p.estoque_atual || 0) - (p.estoque_reservado || 0);
-    return sum + (disp * (p.custo_aquisicao || 0));
-  }, 0);
+  const totalReservado = useMemo(() => {
+    return produtosParaKPIs.reduce((sum, p) => sum + ((p.estoque_reservado || 0) * (p.custo_aquisicao || 0)), 0);
+  }, [produtosParaKPIs]);
+
+  const estoqueDisponivel = useMemo(() => {
+    return produtosParaKPIs.reduce((sum, p) => {
+      const disp = (p.estoque_atual || 0) - (p.estoque_reservado || 0);
+      return sum + (disp * (p.custo_aquisicao || 0));
+    }, 0);
+  }, [produtosParaKPIs]);
 
   const recebimentos = movimentacoesFiltradas.filter(m => m.tipo_movimento === 'entrada' && (m.origem_movimento === 'compra' || m.documento?.startsWith('REC-')));
   const requisicoesAlmoxarifado = movimentacoesFiltradas.filter(m => m.tipo_movimento === 'saida' && m.documento?.startsWith('REQ-ALM-'));
@@ -256,7 +192,7 @@ export default function Estoque() {
       windowTitle: '📊 Movimentações',
       width: 1500,
       height: 850,
-      props: { movimentacoes: movimentacoesFiltradas, produtos: produtosFiltrados }
+      props: { movimentacoes: movimentacoesFiltradas, produtos: produtosParaKPIs }
     },
     {
       title: 'Recebimento',
@@ -267,7 +203,7 @@ export default function Estoque() {
       windowTitle: '📥 Recebimento',
       width: 1400,
       height: 800,
-      props: { recebimentos, ordensCompra, produtos: produtosFiltrados }
+      props: { recebimentos, ordensCompra, produtos: produtosParaKPIs }
     },
     {
       title: 'Requisições Almox.',
@@ -278,7 +214,7 @@ export default function Estoque() {
       windowTitle: '📤 Requisições Almoxarifado',
       width: 1400,
       height: 800,
-      props: { requisicoes: requisicoesAlmoxarifado, produtos: produtosFiltrados }
+      props: { requisicoes: requisicoesAlmoxarifado, produtos: produtosParaKPIs }
     },
     {
       title: 'Solicitações Compra',
@@ -289,7 +225,7 @@ export default function Estoque() {
       windowTitle: '📋 Solicitações Compra',
       width: 1400,
       height: 800,
-      props: { solicitacoes, produtos: produtosFiltrados }
+      props: { solicitacoes, produtos: produtosParaKPIs }
     },
     {
       title: 'Lotes e Validade',
@@ -311,7 +247,7 @@ export default function Estoque() {
       windowTitle: '📈 Relatórios Estoque',
       width: 1400,
       height: 800,
-      props: { produtos: produtosFiltrados, movimentacoes: movimentacoesFiltradas }
+      props: { produtos: produtosParaKPIs, movimentacoes: movimentacoesFiltradas }
     },
     {
       title: 'IA Reposição',
@@ -359,7 +295,7 @@ export default function Estoque() {
           <Button
             onClick={() => openWindow(TransferenciaEntreEmpresasForm, {
               empresasDoGrupo,
-              produtos,
+              produtos: produtosParaKPIs,
               windowMode: true
             }, {
               title: '↔️ Transferência Entre Empresas',
