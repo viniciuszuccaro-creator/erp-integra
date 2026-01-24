@@ -25,52 +25,27 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'entityName é obrigatório' }, { status: 400 });
     }
 
-    // Estratégia de contagem otimizada
+    // ✅ ESTRATÉGIA OTIMIZADA: Retornar estimativa rápida para grandes volumes
     let totalCount = 0;
-    const BATCH_SIZE = 1000;
-    const MAX_ITERATIONS = 100; // Limite de segurança para evitar loops infinitos
+    const QUICK_SAMPLE = 500; // Amostra rápida para estimativa
 
     try {
-      // Tenta buscar o primeiro lote
-      const firstBatch = await base44.entities[entityName].filter(filter, undefined, BATCH_SIZE);
-      totalCount = firstBatch.length;
+      // Busca amostra inicial rápida
+      const sample = await base44.entities[entityName].filter(filter, undefined, QUICK_SAMPLE);
+      totalCount = sample.length;
 
-      // Se o primeiro lote está cheio, há mais dados - continua paginando
-      if (firstBatch.length === BATCH_SIZE) {
-        let iteration = 1;
-        let hasMore = true;
-
-        while (hasMore && iteration < MAX_ITERATIONS) {
-          const nextBatch = await base44.entities[entityName].filter(
-            filter,
-            undefined,
-            BATCH_SIZE,
-            iteration * BATCH_SIZE // skip
-          );
-
-          if (nextBatch.length === 0) {
-            hasMore = false;
-          } else {
-            totalCount += nextBatch.length;
-            if (nextBatch.length < BATCH_SIZE) {
-              hasMore = false;
-            }
-          }
-
-          iteration++;
-        }
-
-        // Se atingiu o limite de iterações, retorna estimativa
-        if (iteration >= MAX_ITERATIONS) {
-          console.warn(`Contagem atingiu limite de ${MAX_ITERATIONS} iterações para ${entityName}`);
-          return Response.json({
-            count: totalCount,
-            isEstimate: true,
-            message: `Estimativa baseada em ${MAX_ITERATIONS * BATCH_SIZE} primeiros registros`
-          });
-        }
+      // Se a amostra está cheia, provavelmente há MUITO mais dados
+      // Retorna ESTIMATIVA para evitar sobrecarga no servidor
+      if (sample.length === QUICK_SAMPLE) {
+        console.log(`${entityName}: Amostra cheia (${QUICK_SAMPLE}), retornando estimativa`);
+        return Response.json({
+          count: QUICK_SAMPLE,
+          isEstimate: true,
+          message: `Estimativa: ${QUICK_SAMPLE}+ registros`
+        });
       }
 
+      // Se a amostra não está cheia, é a contagem exata
       return Response.json({
         count: totalCount,
         isEstimate: false,
