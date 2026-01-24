@@ -409,8 +409,9 @@ export default function VisualizadorUniversalEntidade({
   // Dados já vêm filtrados do servidor, não precisa filtrar novamente no cliente
   const dadosFiltrados = dados;
 
-  // ✅ Ordenação por clique em coluna - Resetar para página 1
+  // ✅ Ordenação por clique em coluna - SEMPRE Resetar para página 1
   const handleOrdenarPorColuna = (campo) => {
+    setCurrentPage(1); // ✅ PRIMEIRO reseta a página
     if (colunaOrdenacao === campo) {
       setDirecaoOrdenacao(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
@@ -418,7 +419,6 @@ export default function VisualizadorUniversalEntidade({
       setDirecaoOrdenacao('asc');
     }
     setOrdenacao(''); // Limpa ordenação do menu
-    setCurrentPage(1); // ✅ Resetar para primeira página ao ordenar
   };
 
   // ✅ Busca já aplicada no BACKEND, mas ordenação de código precisa ser numérica no FRONTEND
@@ -768,9 +768,9 @@ onClose: invalidateAllRelated,
             
             {/* ✅ ORDENAÇÃO POR MENU */}
             <Select value={ordenacao || 'recent'} onValueChange={(val) => {
+              setCurrentPage(1); // ✅ PRIMEIRO reseta a página
               setOrdenacao(val);
               setColunaOrdenacao(null); // Limpa ordenação por coluna
-              setCurrentPage(1); // ✅ Resetar para primeira página ao ordenar
             }}>
               <SelectTrigger className="w-full sm:w-64">
                 <div className="flex items-center gap-2">
