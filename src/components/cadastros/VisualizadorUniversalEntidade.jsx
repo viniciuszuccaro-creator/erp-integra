@@ -304,96 +304,58 @@ export default function VisualizadorUniversalEntidade({
     return sortMap[ordenacao] || '-created_date';
   };
 
-  // ✅ Construir filtro com busca integrada ao backend
+  // ✅ BUSCA NO FRONTEND - Base44 não suporta $regex
   const buildFilterWithSearch = () => {
     const filtroContexto = getFiltroContexto('empresa_id', true);
-    
-    if (!busca.trim()) {
-      console.log('🔍 Sem busca, retornando filtro contexto:', filtroContexto);
-      return filtroContexto;
-    }
-
-    // Busca universal no backend - procura em múltiplos campos
-    const termoBusca = busca.trim();
-    const buscaFiltros = [];
-    
-    // Campos principais para busca conforme a entidade
-    const camposBusca = {
-      'Produto': ['descricao', 'codigo', 'codigo_barras', 'grupo_produto_nome', 'marca_nome', 'setor_atividade_nome'],
-      'Cliente': ['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj'],
-      'Fornecedor': ['nome', 'razao_social', 'nome_fantasia', 'cnpj'],
-      'Colaborador': ['nome_completo', 'cpf', 'cargo', 'departamento'],
-      'Transportadora': ['razao_social', 'nome_fantasia', 'cnpj']
-    };
-
-    const campos = camposBusca[nomeEntidade] || ['nome', 'descricao', 'codigo'];
-    
-    campos.forEach(campo => {
-      buscaFiltros.push({ [campo]: { $regex: termoBusca, $options: 'i' } });
-    });
-
-    const filtroFinal = {
-      ...filtroContexto,
-      $or: buscaFiltros
-    };
-    
-    console.log('🔍 Filtro com busca construído:', filtroFinal);
-    
-    return filtroFinal;
+    console.log('🔍 Retornando filtro contexto SEM busca (busca será no frontend):', filtroContexto);
+    return filtroContexto;
   };
   
-  const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, currentPage, itemsPerPage, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, busca],
+  // ✅ BUSCAR TODOS OS DADOS para fazer busca e ordenação no FRONTEND
+  const { data: todosDados = [], isLoading, isFetching, refetch, error } = useQuery({
+    queryKey: [...queryKey, empresaAtual?.id],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
-      const skip = (currentPage - 1) * itemsPerPage;
       
-      // ✅ Para código de produtos, não ordenar no backend (faremos no frontend numericamente)
-      let sortString = getBackendSortString();
-      if (nomeEntidade === 'Produto' && (colunaOrdenacao === 'codigo' || ordenacao === 'codigo' || ordenacao === 'codigo_desc')) {
-        sortString = '-created_date'; // Usa ordenação padrão, faremos numérica no frontend
+      // ✅ BUSCAR TODOS OS DADOS EM LOTES
+      let todosResultados = [];
+      let skip = 0;
+      const batchSize = 500;
+      let hasMore = true;
+      
+      console.log('🔍 BUSCANDO TODOS OS DADOS:', { filtro });
+      
+      while (hasMore) {
+        const batch = await base44.entities[nomeEntidade].filter(filtro, '-created_date', batchSize, skip);
+        
+        if (!batch || batch.length === 0) {
+          hasMore = false;
+        } else {
+          todosResultados = [...todosResultados, ...batch];
+          
+          if (batch.length < batchSize) {
+            hasMore = false;
+          } else {
+            skip += batchSize;
+          }
+        }
       }
       
-      console.log('🔍 BUSCA BACKEND:', { filtro, sortString, limit: itemsPerPage, skip });
+      console.log('📦 TOTAL DE DADOS CARREGADOS:', todosResultados.length);
       
-      const result = await base44.entities[nomeEntidade].filter(
-        filtro, 
-        sortString,
-        itemsPerPage,
-        skip
-      );
-      
-      console.log('📦 RESULTADO:', result?.length, 'itens retornados');
-      
-      return result || [];
+      return todosResultados;
     },
-    staleTime: 10000,
-    gcTime: 30000,
+    staleTime: 30000,
+    gcTime: 60000,
     refetchInterval: false,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     retry: 1
   });
 
-  // ✅ CONTAGEM TOTAL via backend (necessária para paginação correta)
-  const { data: totalItemsCount = 0, isLoading: isLoadingCount } = useQuery({
-    queryKey: [...queryKey, 'total-count', empresaAtual?.id, busca],
-    queryFn: async () => {
-      const filtro = buildFilterWithSearch();
-      console.log('📊 CONTAGEM BACKEND:', { entityName: nomeEntidade, filtro });
-      const response = await base44.functions.invoke('countEntities', {
-        entityName: nomeEntidade,
-        filter: filtro
-      });
-      console.log('📊 CONTAGEM RESPOSTA:', response.data);
-      return response.data?.count || 0;
-    },
-    staleTime: 60000,
-    gcTime: 120000,
-    refetchOnWindowFocus: false,
-    retry: 1
-  });
-
+  // ✅ Contagem a partir dos dados carregados
+  const totalItemsCount = todosDados.length;
+  const isLoadingCount = isLoading;
   const isEstimateCount = false;
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
@@ -406,8 +368,14 @@ export default function VisualizadorUniversalEntidade({
     ]);
   };
 
-  // Dados já vêm filtrados do servidor, não precisa filtrar novamente no cliente
-  const dadosFiltrados = dados;
+  // ✅ PAGINAÇÃO NO FRONTEND dos dados já buscados/ordenados
+  const dados = useMemo(() => {
+    const inicio = (currentPage - 1) * itemsPerPage;
+    const fim = inicio + itemsPerPage;
+    const paginados = dadosBuscadosEOrdenados.slice(inicio, fim);
+    console.log(`📄 PAGINAÇÃO: Página ${currentPage}, itens ${inicio}-${fim}, mostrando ${paginados.length}`);
+    return paginados;
+  }, [dadosBuscadosEOrdenados, currentPage, itemsPerPage]);
 
   // ✅ Ordenação por clique em coluna - Resetar para página 1
   const handleOrdenarPorColuna = (campo) => {
@@ -421,32 +389,91 @@ export default function VisualizadorUniversalEntidade({
     setCurrentPage(1); // ✅ Resetar para primeira página ao ordenar
   };
 
-  // ✅ Busca já aplicada no BACKEND, mas ordenação de código precisa ser numérica no FRONTEND
+  // ✅ BUSCA E ORDENAÇÃO NO FRONTEND (Base44 não suporta $regex)
   const dadosBuscadosEOrdenados = useMemo(() => {
-    let resultado = dados;
+    let resultado = [...todosDados];
     
-    // Aplicar filtro adicional se fornecido (ex: estoque baixo)
+    // 1️⃣ APLICAR BUSCA NO FRONTEND
+    if (busca.trim()) {
+      const termoBusca = busca.trim().toLowerCase();
+      
+      const camposBusca = {
+        'Produto': ['descricao', 'codigo', 'codigo_barras', 'grupo_produto_nome', 'marca_nome', 'setor_atividade_nome', 'grupo'],
+        'Cliente': ['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj'],
+        'Fornecedor': ['nome', 'razao_social', 'nome_fantasia', 'cnpj'],
+        'Colaborador': ['nome_completo', 'cpf', 'cargo', 'departamento'],
+        'Transportadora': ['razao_social', 'nome_fantasia', 'cnpj']
+      };
+      
+      const campos = camposBusca[nomeEntidade] || ['nome', 'descricao', 'codigo'];
+      
+      resultado = resultado.filter(item => {
+        return campos.some(campo => {
+          const valor = String(item[campo] || '').toLowerCase();
+          return valor.includes(termoBusca);
+        });
+      });
+      
+      console.log(`🔍 BUSCA FRONTEND: "${termoBusca}" encontrou ${resultado.length} de ${todosDados.length}`);
+    }
+    
+    // 2️⃣ APLICAR FILTRO ADICIONAL (ex: estoque baixo)
     if (filtroAdicional && typeof filtroAdicional === 'function') {
       resultado = resultado.filter(filtroAdicional);
     }
     
-    // ✅ ORDENAÇÃO NUMÉRICA DE CÓDIGO NO FRONTEND (backend não suporta)
-    if (nomeEntidade === 'Produto' && (colunaOrdenacao === 'codigo' || ordenacao === 'codigo' || ordenacao === 'codigo_desc')) {
-      resultado = [...resultado].sort((a, b) => {
-        const aNum = parseFloat(a.codigo) || 0;
-        const bNum = parseFloat(b.codigo) || 0;
-        const isDesc = ordenacao === 'codigo_desc' || (colunaOrdenacao === 'codigo' && direcaoOrdenacao === 'desc');
-        return isDesc ? bNum - aNum : aNum - bNum;
-      });
+    // 3️⃣ APLICAR ORDENAÇÃO NO FRONTEND
+    if (colunaOrdenacao) {
+      const coluna = colunasOrdenacao.find(c => c.campo === colunaOrdenacao);
+      if (coluna) {
+        resultado = [...resultado].sort((a, b) => {
+          const valorA = coluna.getValue(a);
+          const valorB = coluna.getValue(b);
+          
+          if (coluna.isNumeric) {
+            const diff = (valorA || 0) - (valorB || 0);
+            return direcaoOrdenacao === 'desc' ? -diff : diff;
+          } else {
+            const cmp = String(valorA).localeCompare(String(valorB), 'pt-BR', { numeric: true });
+            return direcaoOrdenacao === 'desc' ? -cmp : cmp;
+          }
+        });
+      }
+    } else if (ordenacao) {
+      const opcao = opcoesOrdenacao.find(o => o.value === ordenacao);
+      if (opcao) {
+        // Ordenações específicas
+        if (ordenacao === 'codigo' || ordenacao === 'codigo_desc') {
+          resultado = [...resultado].sort((a, b) => {
+            const aNum = parseFloat(a.codigo) || 0;
+            const bNum = parseFloat(b.codigo) || 0;
+            return ordenacao === 'codigo_desc' ? bNum - aNum : aNum - bNum;
+          });
+        } else if (ordenacao === 'recent') {
+          resultado = [...resultado].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+        } else if (ordenacao === 'oldest') {
+          resultado = [...resultado].sort((a, b) => new Date(a.created_date) - new Date(b.created_date));
+        } else if (ordenacao === 'descricao') {
+          resultado = [...resultado].sort((a, b) => (a.descricao || '').localeCompare(b.descricao || ''));
+        } else if (ordenacao === 'descricao_desc') {
+          resultado = [...resultado].sort((a, b) => (b.descricao || '').localeCompare(a.descricao || ''));
+        } else if (ordenacao === 'nome') {
+          resultado = [...resultado].sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+        } else if (ordenacao === 'nome_desc') {
+          resultado = [...resultado].sort((a, b) => (b.nome || '').localeCompare(a.nome || ''));
+        }
+      }
     }
     
+    console.log(`📊 APÓS BUSCA/ORDENAÇÃO/FILTRO: ${resultado.length} itens`);
+    
     return resultado;
-  }, [dados, filtroAdicional, nomeEntidade, colunaOrdenacao, ordenacao, direcaoOrdenacao]);
+  }, [todosDados, busca, filtroAdicional, nomeEntidade, colunaOrdenacao, ordenacao, direcaoOrdenacao, opcoesOrdenacao, colunasOrdenacao]);
 
   // Seleção em massa + exclusão
-  const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
+  const allSelected = dados.length > 0 && selectedIds.size === dados.length;
   const toggleSelectAll = () => {
-    const ns = allSelected ? new Set() : new Set(dadosBuscadosEOrdenados.map(i => i.id));
+    const ns = allSelected ? new Set() : new Set(dados.map(i => i.id));
     setSelectedIds(ns);
     if (typeof onSelectionChange === 'function') onSelectionChange(ns);
   };
@@ -469,7 +496,7 @@ export default function VisualizadorUniversalEntidade({
   // Determinar campos a exibir
   const camposExibicao = camposPrincipais.length > 0 
     ? camposPrincipais 
-    : Object.keys(dadosBuscadosEOrdenados[0] || {}).filter(k => 
+    : Object.keys(dados[0] || {}).filter(k => 
         !['id', 'created_date', 'updated_date', 'created_by'].includes(k)
       ).slice(0, 6);
 
@@ -691,8 +718,8 @@ onClose: invalidateAllRelated,
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
-                  Mostrando {dadosBuscadosEOrdenados.length} de {isEstimateCount ? `~${totalItemsCount}` : totalItemsCount} {totalItemsCount === 1 ? 'registro' : 'registros'}
-                  {isEstimateCount && <span className="text-xs text-amber-600 ml-1">(estimativa)</span>}
+                  Mostrando {dados.length} de {totalItemsCount} {totalItemsCount === 1 ? 'registro' : 'registros'}
+                  {busca && ` (${dadosBuscadosEOrdenados.length} encontrados na busca)`}
                 </p>
               </div>
             </div>
@@ -843,7 +870,7 @@ onClose: invalidateAllRelated,
                 Tentar Novamente
               </Button>
             </div>
-          ) : dadosBuscadosEOrdenados.length === 0 ? (
+          ) : dados.length === 0 ? (
             <div className="text-center py-12">
               <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
               <p className="text-slate-600 font-medium">
@@ -896,7 +923,7 @@ onClose: invalidateAllRelated,
                       </tr>
                     </thead>
                     <tbody>
-                      {dadosBuscadosEOrdenados.map((item) => (
+                      {dados.map((item) => (
                         <tr
                           key={item.id}
                           className="border-b border-slate-100 hover:bg-blue-50 transition-colors"
@@ -957,7 +984,7 @@ onClose: invalidateAllRelated,
               {/* Visualização em Grid */}
               {visualizacao === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {dadosBuscadosEOrdenados.map((item) => (
+                  {dados.map((item) => (
                     <Card key={item.id} className="border-2 hover:border-blue-400 transition-all hover:shadow-lg">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-2">
@@ -1017,7 +1044,7 @@ onClose: invalidateAllRelated,
               {/* Visualização em Lista */}
               {visualizacao === 'list' && (
                 <div className="space-y-2">
-                  {dadosBuscadosEOrdenados.map((item) => (
+                  {dados.map((item) => (
                     <Card key={item.id} className="border hover:border-blue-400 transition-all">
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
@@ -1100,10 +1127,10 @@ onClose: invalidateAllRelated,
           )}
 
           {/* V21.0 - Controles de Paginação */}
-          {!isLoading && !isLoadingCount && totalItemsCount > 0 && (
+          {!isLoading && dadosBuscadosEOrdenados.length > 0 && (
             <PaginationControls
               currentPage={currentPage}
-              totalItems={totalItemsCount}
+              totalItems={dadosBuscadosEOrdenados.length}
               itemsPerPage={itemsPerPage}
               onPageChange={(page) => {
                 setCurrentPage(page);
