@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Activity, Database, BarChart3 } from 'lucide-react';
+import { Shield, Activity, Database, BarChart3, CheckCircle2, Settings } from 'lucide-react';
 import PainelRBACRealtime from '@/components/governanca/PainelRBACRealtime';
 import MultiempresaDashboard from '@/components/governanca/MultiempresaDashboard';
 import AuditTrailRealtime from '@/components/governanca/AuditTrailRealtime';
 import StatusGovernancaETAPA1 from '@/components/governanca/StatusGovernancaETAPA1';
+import ValidadorSistemaETAPA1 from '@/components/governanca/ValidadorSistemaETAPA1';
+import ConfiguracaoIsolamentoEmpresa from '@/components/governanca/ConfiguracaoIsolamentoEmpresa';
 import AdminOnlyZone from '@/components/security/AdminOnlyZone';
 
 /**
@@ -30,10 +32,14 @@ export default function GovernancaETAPA1() {
           </div>
 
           <Tabs value={abaAtiva} onValueChange={setAbaAtiva} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 bg-white p-1 rounded-xl shadow-sm">
+            <TabsList className="grid w-full grid-cols-6 bg-white p-1 rounded-xl shadow-sm">
               <TabsTrigger value="status" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
-                Status Geral
+                Status
+              </TabsTrigger>
+              <TabsTrigger value="validador" className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4" />
+                Validador
               </TabsTrigger>
               <TabsTrigger value="rbac" className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
@@ -42,6 +48,10 @@ export default function GovernancaETAPA1() {
               <TabsTrigger value="multiempresa" className="flex items-center gap-2">
                 <Database className="w-4 h-4" />
                 Multiempresa
+              </TabsTrigger>
+              <TabsTrigger value="configuracoes" className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                Configs
               </TabsTrigger>
               <TabsTrigger value="auditoria" className="flex items-center gap-2">
                 <Activity className="w-4 h-4" />
@@ -53,12 +63,20 @@ export default function GovernancaETAPA1() {
               <StatusGovernancaETAPA1 />
             </TabsContent>
 
+            <TabsContent value="validador" className="mt-6">
+              <ValidadorSistemaETAPA1 />
+            </TabsContent>
+
             <TabsContent value="rbac" className="mt-6">
               <PainelRBACRealtime />
             </TabsContent>
 
             <TabsContent value="multiempresa" className="mt-6">
               <MultiempresaDashboard />
+            </TabsContent>
+
+            <TabsContent value="configuracoes" className="mt-6">
+              <ConfiguracaoIsolamentoEmpresa />
             </TabsContent>
 
             <TabsContent value="auditoria" className="mt-6">

@@ -30,6 +30,7 @@ import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
 import GovernancaETAPA1 from './pages/GovernancaETAPA1';
+import ExemplosRBAC from './pages/ExemplosRBAC';
 import __Layout from './Layout.jsx';
 
 
@@ -66,6 +67,7 @@ export const PAGES = {
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
     "GovernancaETAPA1": GovernancaETAPA1,
+    "ExemplosRBAC": ExemplosRBAC,
 }
 
 export const pagesConfig = {

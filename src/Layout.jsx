@@ -81,6 +81,7 @@ const navigationItems = [
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🛡️ Governança ETAPA 1", url: createPageUrl("GovernancaETAPA1"), icon: Shield, group: "sistema", adminOnly: true },
+  { title: "📘 Exemplos RBAC", url: createPageUrl("ExemplosRBAC"), icon: BookOpen, group: "sistema", adminOnly: true },
   { title: "Auditoria de UI", url: createPageUrl("AuditoriaUI"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "⚡ Estabilização do Sistema", url: createPageUrl("EstabilizacaoSistema"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🎨 Padronização UI/UX", url: createPageUrl("PadronizacaoUI"), icon: Shield, group: "sistema", adminOnly: true },
