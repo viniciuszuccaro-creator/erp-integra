@@ -43,10 +43,7 @@ export default function StatusGovernancaETAPA1() {
     queryKey: ['test-rbac-backend'],
     queryFn: async () => {
       try {
-        await base44.functions.invoke('rbacValidator', { 
-          module: 'Teste', 
-          action: 'visualizar' 
-        });
+        await base44.functions.invoke('rbacValidator', { test: true });
         return true;
       } catch {
         return false;
@@ -59,11 +56,7 @@ export default function StatusGovernancaETAPA1() {
     queryKey: ['test-multi-backend'],
     queryFn: async () => {
       try {
-        await base44.functions.invoke('multiempresaValidator', {
-          operation: 'create',
-          entityName: 'Teste',
-          data: {}
-        });
+        await base44.functions.invoke('multiempresaValidator', { test: true });
         return true;
       } catch {
         return false;
