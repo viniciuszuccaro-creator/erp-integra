@@ -123,6 +123,10 @@ export default function usePermissions() {
     return hasPermission(module, section, 'visualizar') || hasPermission(module, section, 'ver');
   };
 
+  const canExecuteAction = (module, section = null, action) => {
+    return hasPermission(module, section, action);
+  };
+
   const hasAnyPermission = (module, section = null) => {
     if (!user) return false;
     if (user.role === "admin") return true;
@@ -144,6 +148,7 @@ export default function usePermissions() {
     canExport,
     canCancel,
     canView,
+    canExecuteAction,
     hasAnyPermission,
     isLoading: loadingUser || loadingPerfil,
     user,

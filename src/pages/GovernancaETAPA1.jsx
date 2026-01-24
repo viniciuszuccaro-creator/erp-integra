@@ -11,6 +11,9 @@ import MonitorConflitosSOD from '@/components/governanca/MonitorConflitosSOD';
 import AlertasSegurancaAutomaticos from '@/components/governanca/AlertasSegurancaAutomaticos';
 import DashboardConformidade from '@/components/governanca/DashboardConformidade';
 import CertificacaoETAPA1Final from '@/components/governanca/CertificacaoETAPA1Final';
+import MonitoramentoETAPA1 from '@/components/governanca/MonitoramentoETAPA1';
+import IntegracaoModulosETAPA1 from '@/components/governanca/IntegracaoModulosETAPA1';
+import DocumentacaoETAPA1 from '@/components/governanca/DocumentacaoETAPA1';
 import AdminOnlyZone from '@/components/security/AdminOnlyZone';
 
 /**
@@ -78,7 +81,12 @@ export default function GovernancaETAPA1() {
             <TabsContent value="conformidade" className="mt-6">
               <div className="space-y-6">
                 <CertificacaoETAPA1Final />
+                <MonitoramentoETAPA1 />
                 <DashboardConformidade />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <IntegracaoModulosETAPA1 />
+                  <DocumentacaoETAPA1 />
+                </div>
               </div>
             </TabsContent>
 

@@ -16,10 +16,12 @@ import Documentacao from './pages/Documentacao';
 import Empresas from './pages/Empresas';
 import EstabilizacaoSistema from './pages/EstabilizacaoSistema';
 import Estoque from './pages/Estoque';
+import ExemplosRBAC from './pages/ExemplosRBAC';
 import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
 import Fiscal from './pages/Fiscal';
 import GerenciamentoAcessosCompleto from './pages/GerenciamentoAcessosCompleto';
+import GovernancaETAPA1 from './pages/GovernancaETAPA1';
 import Home from './pages/Home';
 import HubAtendimento from './pages/HubAtendimento';
 import PadronizacaoUI from './pages/PadronizacaoUI';
@@ -29,8 +31,6 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
-import GovernancaETAPA1 from './pages/GovernancaETAPA1';
-import ExemplosRBAC from './pages/ExemplosRBAC';
 import __Layout from './Layout.jsx';
 
 
@@ -53,10 +53,12 @@ export const PAGES = {
     "Empresas": Empresas,
     "EstabilizacaoSistema": EstabilizacaoSistema,
     "Estoque": Estoque,
+    "ExemplosRBAC": ExemplosRBAC,
     "Expedicao": Expedicao,
     "Financeiro": Financeiro,
     "Fiscal": Fiscal,
     "GerenciamentoAcessosCompleto": GerenciamentoAcessosCompleto,
+    "GovernancaETAPA1": GovernancaETAPA1,
     "Home": Home,
     "HubAtendimento": HubAtendimento,
     "PadronizacaoUI": PadronizacaoUI,
@@ -66,8 +68,6 @@ export const PAGES = {
     "RH": RH,
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
-    "GovernancaETAPA1": GovernancaETAPA1,
-    "ExemplosRBAC": ExemplosRBAC,
 }
 
 export const pagesConfig = {
