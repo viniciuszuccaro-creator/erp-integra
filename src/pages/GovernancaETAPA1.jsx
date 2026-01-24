@@ -32,7 +32,7 @@ export default function GovernancaETAPA1() {
 
   return (
     <AdminOnlyZone message="Esta página é exclusiva para administradores do sistema. Monitoramento de Governança e Segurança.">
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6" data-layout-etapa1="true" data-dashboard-etapa1="true">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
