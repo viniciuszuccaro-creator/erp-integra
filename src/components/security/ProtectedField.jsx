@@ -1,45 +1,42 @@
 import React from 'react';
 import usePermissions from '@/components/lib/usePermissions';
-import { Lock } from 'lucide-react';
 
 /**
- * PROTECTED FIELD - CAMPO COM CONTROLE GRANULAR
- * Componente modular para campos sensíveis
- * ETAPA 1: Granularidade por campo
+ * PROTECTED FIELD - Proteção granular por campo dentro de uma seção
+ * ETAPA 1: Controle a nível de campo
  */
 
-export default function ProtectedField({ 
-  module, 
-  section, 
-  field,
-  action = 'visualizar',
-  value,
+export default function ProtectedField({
+  module,
+  section = null,
+  field = null,
+  action = 'editar',
   children,
-  hideWhenDenied = false
+  readOnly = false,
+  show = true
 }) {
-  const { hasFieldPermission, isAdmin } = usePermissions();
+  const { hasPermission, isLoading } = usePermissions();
 
-  const canView = isAdmin() || hasFieldPermission(module, section, null, field, 'visualizar');
-  const canEdit = isAdmin() || hasFieldPermission(module, section, null, field, action);
-
-  if (!canView) {
-    if (hideWhenDenied) return null;
-    return (
-      <div className="flex items-center gap-2 text-slate-400">
-        <Lock className="w-4 h-4" />
-        <span className="text-sm">Campo restrito</span>
-      </div>
-    );
+  if (isLoading) {
+    return children;
   }
 
-  if (!canEdit && value !== undefined) {
-    return (
-      <div className="flex items-center gap-2 p-2 bg-slate-50 rounded border">
-        <Lock className="w-4 h-4 text-slate-400" />
-        <span className="text-sm text-slate-700">{value || '-'}</span>
-      </div>
-    );
+  const path = [section, field].filter(Boolean);
+  const allowed = show && hasPermission(module, path.length > 0 ? path : section, action);
+
+  if (!allowed) {
+    // Se não tem permissão para editar, renderizar como read-only
+    return React.Children.map(children, (child) => {
+      if (React.isValidElement(child)) {
+        return React.cloneElement(child, {
+          disabled: true,
+          readOnly: true,
+          className: `${child.props.className || ''} opacity-60 cursor-not-allowed`
+        });
+      }
+      return child;
+    });
   }
 
-  return <>{children}</>;
+  return children;
 }

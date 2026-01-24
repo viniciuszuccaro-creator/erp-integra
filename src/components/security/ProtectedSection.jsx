@@ -1,44 +1,38 @@
 import React from 'react';
 import usePermissions from '@/components/lib/usePermissions';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldAlert } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 
 /**
- * PROTECTED SECTION - PROTEÇÃO VISUAL DE SEÇÕES
- * Componente modular para controlar visibilidade
- * ETAPA 1: Componentização
+ * PROTECTED SECTION - Oculta seções inteiras baseado em permissões
+ * ETAPA 1: Granularidade por módulo/seção/aba
  */
 
-export default function ProtectedSection({ 
-  module, 
-  section = null, 
+export default function ProtectedSection({
+  module,
+  section = null,
   action = 'visualizar',
   children,
   fallback = null,
-  showDenied = false
+  show = true
 }) {
-  const { hasPermission, isAdmin, isLoading } = usePermissions();
+  const { hasPermission, isLoading } = usePermissions();
 
   if (isLoading) {
-    return <div className="animate-pulse bg-slate-100 rounded h-20 w-full" />;
+    return <div className="p-4 text-slate-500">Carregando permissões...</div>;
   }
 
-  const allowed = isAdmin() || hasPermission(module, section, action);
+  const allowed = show && hasPermission(module, section, action);
 
   if (!allowed) {
-    if (showDenied) {
-      return (
-        <Alert variant="destructive">
-          <ShieldAlert className="h-4 w-4" />
-          <AlertTitle>Acesso Restrito</AlertTitle>
-          <AlertDescription>
-            Você não tem permissão para visualizar esta seção.
-          </AlertDescription>
-        </Alert>
-      );
-    }
-    return fallback;
+    return fallback || (
+      <div className="p-4 bg-yellow-50 border border-yellow-300 rounded-lg flex items-center gap-3">
+        <AlertCircle className="w-5 h-5 text-yellow-600" />
+        <span className="text-sm text-yellow-700">
+          Você não tem permissão para acessar esta seção.
+        </span>
+      </div>
+    );
   }
 
-  return <>{children}</>;
+  return children;
 }
