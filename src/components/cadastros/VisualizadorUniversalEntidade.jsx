@@ -319,6 +319,7 @@ export default function VisualizadorUniversalEntidade({
     const filtroContexto = getFiltroContexto('empresa_id', true);
     
     if (!busca.trim()) {
+      console.log('🔍 Sem busca, retornando filtro contexto:', filtroContexto);
       return filtroContexto;
     }
 
@@ -341,10 +342,14 @@ export default function VisualizadorUniversalEntidade({
       buscaFiltros.push({ [campo]: { $regex: termoBusca, $options: 'i' } });
     });
 
-    return {
+    const filtroFinal = {
       ...filtroContexto,
       $or: buscaFiltros
     };
+    
+    console.log('🔍 Filtro com busca construído:', filtroFinal);
+    
+    return filtroFinal;
   };
   
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
@@ -354,12 +359,16 @@ export default function VisualizadorUniversalEntidade({
       const skip = (currentPage - 1) * itemsPerPage;
       const sortString = getBackendSortString();
       
+      console.log('🔍 BUSCA BACKEND:', { filtro, sortString, limit: itemsPerPage, skip });
+      
       const result = await base44.entities[nomeEntidade].filter(
         filtro, 
         sortString,
         itemsPerPage,
         skip
       );
+      
+      console.log('📦 RESULTADO:', result?.length, 'itens retornados');
       
       return result || [];
     },
@@ -376,10 +385,12 @@ export default function VisualizadorUniversalEntidade({
     queryKey: [...queryKey, 'total-count', empresaAtual?.id, busca],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
+      console.log('📊 CONTAGEM BACKEND:', { entityName: nomeEntidade, filtro });
       const response = await base44.functions.invoke('countEntities', {
         entityName: nomeEntidade,
         filter: filtro
       });
+      console.log('📊 CONTAGEM RESPOSTA:', response.data);
       return response.data?.count || 0;
     },
     staleTime: 60000,

@@ -25,27 +25,31 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'entityName é obrigatório' }, { status: 400 });
     }
 
-    // ✅ ESTRATÉGIA OTIMIZADA: Retornar estimativa rápida para grandes volumes
+    // ✅ CONTAGEM REAL COMPLETA - busca tudo até encontrar o total
     let totalCount = 0;
-    const QUICK_SAMPLE = 500; // Amostra rápida para estimativa
+    const BATCH_SIZE = 500;
+    let skip = 0;
+    let hasMore = true;
 
     try {
-      // Busca amostra inicial rápida
-      const sample = await base44.entities[entityName].filter(filter, undefined, QUICK_SAMPLE);
-      totalCount = sample.length;
-
-      // Se a amostra está cheia, provavelmente há MUITO mais dados
-      // Retorna ESTIMATIVA para evitar sobrecarga no servidor
-      if (sample.length === QUICK_SAMPLE) {
-        console.log(`${entityName}: Amostra cheia (${QUICK_SAMPLE}), retornando estimativa`);
-        return Response.json({
-          count: QUICK_SAMPLE,
-          isEstimate: true,
-          message: `Estimativa: ${QUICK_SAMPLE}+ registros`
-        });
+      // Busca em lotes até obter todos os registros
+      while (hasMore) {
+        const batch = await base44.entities[entityName].filter(filter, undefined, BATCH_SIZE, skip);
+        
+        if (!batch || batch.length === 0) {
+          hasMore = false;
+        } else {
+          totalCount += batch.length;
+          
+          // Se retornou menos que BATCH_SIZE, chegamos ao fim
+          if (batch.length < BATCH_SIZE) {
+            hasMore = false;
+          } else {
+            skip += BATCH_SIZE;
+          }
+        }
       }
 
-      // Se a amostra não está cheia, é a contagem exata
       return Response.json({
         count: totalCount,
         isEstimate: false,
