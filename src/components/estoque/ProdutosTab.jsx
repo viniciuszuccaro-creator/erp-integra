@@ -25,7 +25,7 @@ export default function ProdutosTab(props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // ✅ Contagens via query própria
+  // ✅ Contagens via query própria com invalidação automática
   const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: isLoadingContagens } = useQuery({
     queryKey: ['produtos-contagens', getFiltroContexto('empresa_id', true)],
     queryFn: async () => {
@@ -68,9 +68,19 @@ export default function ProdutosTab(props) {
         estoqueBaixo
       };
     },
-    staleTime: 30000,
-    refetchOnWindowFocus: true
+    staleTime: 5000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000
   });
+
+  // ✅ Invalidar contagens quando produtos mudam
+  React.useEffect(() => {
+    const unsubscribe = base44.entities.Produto.subscribe((event) => {
+      queryClient.invalidateQueries({ queryKey: ['produtos-contagens'] });
+      queryClient.refetchQueries({ queryKey: ['produtos-contagens'] });
+    });
+    return unsubscribe;
+  }, [queryClient]);
 
   return (
     <div className="w-full h-full flex flex-col space-y-4 overflow-auto">

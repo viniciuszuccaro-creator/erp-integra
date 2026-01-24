@@ -849,15 +849,17 @@ onClose: invalidateAllRelated,
 
           {/* Barra de Busca, Ordenação e Filtros - CORREÇÃO: input nativo para garantir funcionamento */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
-            <SearchInput
-              value={busca}
-              onChange={(val) => {
-                setBusca(val);
-                setCurrentPage(1);
-              }}
-              placeholder="🔍 Busca universal em todos os campos..."
-              className="flex-1"
-            />
+            <div className="flex-1" onClick={(e) => e.stopPropagation()}>
+              <SearchInput
+                value={busca}
+                onChange={(val) => {
+                  setBusca(val);
+                  setCurrentPage(1);
+                }}
+                placeholder="🔍 Busca universal em todos os campos..."
+                className="w-full"
+              />
+            </div>
             
             {/* ✅ ORDENAÇÃO POR MENU */}
             <Select value={ordenacao || 'recent'} onValueChange={(val) => {
