@@ -1,36 +1,48 @@
-import { useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useUser } from './UserContext';
-import { useContextoVisual } from './useContextoVisual';
+import useContextoVisual from './useContextoVisual';
 
 /**
- * USE AUDIT ACTION - HOOK SIMPLES PARA AUDITORIA
- * Auditoria manual de ações específicas
+ * AUDIT ACTION - Wrapper automático para auditoria em qualquer ação
+ * ETAPA 1: Simplifica integração de auditoria em operações
  */
 
 export function useAuditAction() {
   const { user } = useUser();
   const { empresaAtual } = useContextoVisual();
 
-  const audit = useCallback(async (acao, modulo, entidade, descricao, dados = {}) => {
+  const auditAction = async (action, module, entity, entityId = null, details = {}) => {
     try {
-      await base44.functions.invoke('auditHelper', {
-        usuario: user?.full_name || user?.email,
+      await base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
         usuario_id: user?.id,
         empresa_id: empresaAtual?.id,
-        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social,
-        acao,
-        modulo,
-        entidade,
-        descricao,
-        dados_novos: dados
+        acao: action,
+        modulo: module,
+        entidade: entity,
+        registro_id: entityId,
+        descricao: `${action} em ${entity}${entityId ? ` #${entityId}` : ''}`,
+        dados_novos: details,
+        data_hora: new Date().toISOString(),
+        sucesso: true
       });
-    } catch (error) {
-      console.warn('Erro ao auditar:', error);
+    } catch (err) {
+      console.error('Erro ao registrar auditoria:', err);
     }
-  }, [user, empresaAtual]);
+  };
 
-  return { audit };
+  const wrapAction = (actionName, module, entity) => (fn) => async (...args) => {
+    try {
+      const result = await fn(...args);
+      await auditAction(actionName, module, entity, null, { result: typeof result === 'object' ? JSON.stringify(result).substring(0, 200) : String(result) });
+      return result;
+    } catch (error) {
+      await auditAction(`${actionName} (Erro)`, module, entity, null, { erro: error.message });
+      throw error;
+    }
+  };
+
+  return { auditAction, wrapAction };
 }
 
 export default useAuditAction;
