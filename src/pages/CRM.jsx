@@ -1,8 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
@@ -231,32 +230,10 @@ export default function CRMPage() {
     });
   };
 
-  const handleNovaCampanha = () => {
-    openWindow(
-      () => <div className="p-6">Formulário de Nova Campanha (em desenvolvimento)</div>,
-      { windowMode: true },
-      {
-        title: '📧 Nova Campanha',
-        width: 900,
-        height: 600
-      }
-    );
-  };
-
   return (
     <ErrorBoundary>
       <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
-        <div className="flex items-center justify-between gap-2">
-          <HeaderCRMCompacto />
-          <Button 
-            onClick={handleNovaCampanha}
-            className="bg-pink-600 hover:bg-pink-700"
-            disabled={!hasPermission('CRM', 'Campanhas', 'criar')}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Campanha
-          </Button>
-        </div>
+        <HeaderCRMCompacto />
         
         <KPIsCRM
           oportunidadesAbertas={oportunidadesAbertas}
