@@ -14,6 +14,10 @@ import CertificacaoETAPA1Final from '@/components/governanca/CertificacaoETAPA1F
 import MonitoramentoETAPA1 from '@/components/governanca/MonitoramentoETAPA1';
 import IntegracaoModulosETAPA1 from '@/components/governanca/IntegracaoModulosETAPA1';
 import DocumentacaoETAPA1 from '@/components/governanca/DocumentacaoETAPA1';
+import CertificadoOficialETAPA1 from '@/components/governanca/CertificadoOficialETAPA1';
+import GuiaUsoETAPA1 from '@/components/governanca/GuiaUsoETAPA1';
+import ChecklistImplementacaoETAPA1 from '@/components/governanca/ChecklistImplementacaoETAPA1';
+import MetricasConformidadeETAPA1 from '@/components/governanca/MetricasConformidadeETAPA1';
 import AdminOnlyZone from '@/components/security/AdminOnlyZone';
 
 /**
@@ -80,22 +84,31 @@ export default function GovernancaETAPA1() {
 
             <TabsContent value="conformidade" className="mt-6">
               <div className="space-y-6">
-                <CertificacaoETAPA1Final />
+                <CertificadoOficialETAPA1 />
+                <MetricasConformidadeETAPA1 />
                 <MonitoramentoETAPA1 />
                 <DashboardConformidade />
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <IntegracaoModulosETAPA1 />
                   <DocumentacaoETAPA1 />
                 </div>
+                <GuiaUsoETAPA1 />
+                <CertificacaoETAPA1Final />
               </div>
             </TabsContent>
 
             <TabsContent value="status" className="mt-6">
-              <StatusGovernancaETAPA1 />
+              <div className="space-y-6">
+                <StatusGovernancaETAPA1 />
+                <ChecklistImplementacaoETAPA1 />
+              </div>
             </TabsContent>
 
             <TabsContent value="validador" className="mt-6">
-              <ValidadorSistemaETAPA1 />
+              <div className="space-y-6">
+                <ValidadorSistemaETAPA1 />
+                <ChecklistImplementacaoETAPA1 />
+              </div>
             </TabsContent>
 
             <TabsContent value="rbac" className="mt-6">
