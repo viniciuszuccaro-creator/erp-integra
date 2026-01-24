@@ -369,7 +369,7 @@ export default function VisualizadorUniversalEntidade({
   };
 
   // ✅ PAGINAÇÃO NO FRONTEND dos dados já buscados/ordenados
-  const dados = useMemo(() => {
+  const dadosPaginados = useMemo(() => {
     const inicio = (currentPage - 1) * itemsPerPage;
     const fim = inicio + itemsPerPage;
     const paginados = dadosBuscadosEOrdenados.slice(inicio, fim);
@@ -471,9 +471,9 @@ export default function VisualizadorUniversalEntidade({
   }, [todosDados, busca, filtroAdicional, nomeEntidade, colunaOrdenacao, ordenacao, direcaoOrdenacao, opcoesOrdenacao, colunasOrdenacao]);
 
   // Seleção em massa + exclusão
-  const allSelected = dados.length > 0 && selectedIds.size === dados.length;
+  const allSelected = dadosPaginados.length > 0 && selectedIds.size === dadosPaginados.length;
   const toggleSelectAll = () => {
-    const ns = allSelected ? new Set() : new Set(dados.map(i => i.id));
+    const ns = allSelected ? new Set() : new Set(dadosPaginados.map(i => i.id));
     setSelectedIds(ns);
     if (typeof onSelectionChange === 'function') onSelectionChange(ns);
   };
@@ -496,15 +496,16 @@ export default function VisualizadorUniversalEntidade({
   // Determinar campos a exibir
   const camposExibicao = camposPrincipais.length > 0 
     ? camposPrincipais 
-    : Object.keys(dados[0] || {}).filter(k => 
+    : Object.keys(dadosPaginados[0] || {}).filter(k => 
         !['id', 'created_date', 'updated_date', 'created_by'].includes(k)
       ).slice(0, 6);
 
   // Função de exportação
   const exportarDados = () => {
+    const dadosParaExportar = dadosBuscadosEOrdenados.length > 0 ? dadosBuscadosEOrdenados : dadosPaginados;
     const csv = [
       camposExibicao.join(','),
-      ...dadosBuscadosEOrdenados.map(item => 
+      ...dadosParaExportar.map(item => 
         camposExibicao.map(campo => 
           JSON.stringify(item[campo] || '')
         ).join(',')
@@ -718,7 +719,7 @@ onClose: invalidateAllRelated,
                   </Badge>
                 </CardTitle>
                 <p className="text-sm text-slate-600 mt-1">
-                  Mostrando {dados.length} de {totalItemsCount} {totalItemsCount === 1 ? 'registro' : 'registros'}
+                  Mostrando {dadosPaginados.length} de {totalItemsCount} {totalItemsCount === 1 ? 'registro' : 'registros'}
                   {busca && ` (${dadosBuscadosEOrdenados.length} encontrados na busca)`}
                 </p>
               </div>
@@ -870,7 +871,7 @@ onClose: invalidateAllRelated,
                 Tentar Novamente
               </Button>
             </div>
-          ) : dados.length === 0 ? (
+          ) : dadosPaginados.length === 0 ? (
             <div className="text-center py-12">
               <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
               <p className="text-slate-600 font-medium">
@@ -923,7 +924,7 @@ onClose: invalidateAllRelated,
                       </tr>
                     </thead>
                     <tbody>
-                      {dados.map((item) => (
+                      {dadosPaginados.map((item) => (
                         <tr
                           key={item.id}
                           className="border-b border-slate-100 hover:bg-blue-50 transition-colors"
@@ -984,7 +985,7 @@ onClose: invalidateAllRelated,
               {/* Visualização em Grid */}
               {visualizacao === 'grid' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {dados.map((item) => (
+                  {dadosPaginados.map((item) => (
                     <Card key={item.id} className="border-2 hover:border-blue-400 transition-all hover:shadow-lg">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-2">
@@ -1044,7 +1045,7 @@ onClose: invalidateAllRelated,
               {/* Visualização em Lista */}
               {visualizacao === 'list' && (
                 <div className="space-y-2">
-                  {dados.map((item) => (
+                  {dadosPaginados.map((item) => (
                     <Card key={item.id} className="border hover:border-blue-400 transition-all">
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
