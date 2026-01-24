@@ -342,9 +342,16 @@ export default function VisualizadorUniversalEntidade({
     return filtroFinal;
   };
   
+  const abortControllerRef = React.useRef(null);
+
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
     queryKey: [...queryKey, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, busca],
     queryFn: async () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+
       const filtro = buildFilterWithSearch();
       
       // ✅ CORREÇÃO: Para ordenação por código, buscar TODOS os produtos (não paginar)
@@ -397,26 +404,61 @@ export default function VisualizadorUniversalEntidade({
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     retry: 1
-  });
+    });
+
+    React.useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+    }, []);
 
   // ✅ CONTAGEM TOTAL via backend (necessária para paginação correta)
+  const countAbortControllerRef = React.useRef(null);
+
   const { data: totalItemsCount = 0, isLoading: isLoadingCount } = useQuery({
     queryKey: [...queryKey, 'total-count', empresaAtual?.id, busca],
     queryFn: async () => {
+      if (countAbortControllerRef.current) {
+        countAbortControllerRef.current.abort();
+      }
+      countAbortControllerRef.current = new AbortController();
+
       const filtro = buildFilterWithSearch();
       console.log('📊 CONTAGEM BACKEND:', { entityName: nomeEntidade, filtro });
-      const response = await base44.functions.invoke('countEntities', {
-        entityName: nomeEntidade,
-        filter: filtro
-      });
-      console.log('📊 CONTAGEM RESPOSTA:', response.data);
-      return response.data?.count || 0;
+      try {
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: nomeEntidade,
+          filter: filtro
+        });
+        console.log('📊 CONTAGEM RESPOSTA:', response.data);
+        return response.data?.count || 0;
+      } catch (err) {
+        if (err.name === 'AbortError' || String(err?.message || '').includes('aborted')) {
+          return 0;
+        }
+        throw err;
+      }
     },
     staleTime: 60000,
     gcTime: 120000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: (failureCount, error) => {
+      if (error.name === 'AbortError' || String(error?.message || '').includes('aborted')) {
+        return false;
+      }
+      return failureCount < 1;
+    }
   });
+
+  React.useEffect(() => {
+    return () => {
+      if (countAbortControllerRef.current) {
+        countAbortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const isEstimateCount = false;
 
@@ -486,7 +528,15 @@ export default function VisualizadorUniversalEntidade({
     setSelectedIds(ns);
     if (typeof onSelectionChange === 'function') onSelectionChange(ns);
   };
+  const scrollContainerRef = React.useRef(null);
+  const scrollPositionRef = React.useRef(0);
+
   const toggleItem = (id) => {
+    // Salvar posição de rolagem antes de atualizar o estado
+    if (scrollContainerRef.current) {
+      scrollPositionRef.current = scrollContainerRef.current.scrollTop;
+    }
+
     setSelectedIds(prev => {
       const ns = new Set(prev);
       if (ns.has(id)) ns.delete(id); else ns.add(id);
@@ -494,6 +544,13 @@ export default function VisualizadorUniversalEntidade({
       return ns;
     });
   };
+
+  // Restaurar posição de rolagem após renderização
+  React.useEffect(() => {
+    if (scrollContainerRef.current && scrollPositionRef.current > 0) {
+      scrollContainerRef.current.scrollTop = scrollPositionRef.current;
+    }
+  }, [selectedIds]);
   
   const excluirSelecionados = async () => {
     if (selectedIds.size === 0) return;
@@ -863,7 +920,7 @@ onClose: invalidateAllRelated,
           </div>
         </CardHeader>
 
-        <CardContent className={`p-6 ${contentClass}`}>
+        <CardContent className={`p-6 ${contentClass}`} ref={scrollContainerRef}>
           {isLoading ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />

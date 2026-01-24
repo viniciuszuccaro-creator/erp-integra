@@ -189,8 +189,9 @@ const [importarParaTodasEmpresas, setImportarParaTodasEmpresas] = useState(false
 const [baseProdutos, setBaseProdutos] = useState([]);
 const [validationErrors, setValidationErrors] = useState([]); // {empresa_id, codigo, motivo}
 const [duplicidades, setDuplicidades] = useState([]); // {empresa_id, codigo, existente, novo}
-const [escolhasDuplicidades, setEscolhasDuplicidades] = useState({}); // key -> 'atualizar' | 'pular'
+const [escolhasDuplicidades, setEscolhasDuplicidades] = useState({}); // key -> 'atualizar' | 'pular' | 'substituir'
 const [checando, setChecando] = useState(false);
+const [estrategiaDuplicidadeGlobal, setEstrategiaDuplicidadeGlobal] = useState('pular'); // 'pular' | 'atualizar' | 'substituir'
 const [invalidNCMKeys, setInvalidNCMKeys] = useState(new Set());
 const [ncmSuggestions, setNcmSuggestions] = useState({});
 const [suggesting, setSuggesting] = useState(false);
@@ -1074,15 +1075,19 @@ const [suggesting, setSuggesting] = useState(false);
       // Garantir que group_id e empresa_id sejam mantidos, e IDs resolvidos por nome/código já aplicados em montarProduto.
 
       let updatedTotal = 0;
+      let replacedTotal = 0;
       if (!skipDupFlow) {
-        // Executar atualizações para duplicidades marcadas como "atualizar"
-        const dupChoice = (d) => {
+        // Processar duplicidades conforme escolha do usuário
+        const paraAtualizar = duplicidades.filter(d => {
           const k = makeKey(d.empresa_id, d.codigo);
-          const choice = escolhasDuplicidades[k];
-          return choice ? choice === 'atualizar' : false; // padrão: pular (não atualizar)
-        };
-        const paraAtualizar = duplicidades.filter(dupChoice);
-        /* updatedTotal acumulado */
+          return escolhasDuplicidades[k] === 'atualizar';
+        });
+        const paraSubstituir = duplicidades.filter(d => {
+          const k = makeKey(d.empresa_id, d.codigo);
+          return escolhasDuplicidades[k] === 'substituir';
+        });
+        
+        // Atualizar (mesclar dados)
         if (paraAtualizar.length > 0) {
           const chunkU = 20;
           for (let i = 0; i < paraAtualizar.length; i += chunkU) {
@@ -1095,7 +1100,7 @@ const [suggesting, setSuggesting] = useState(false);
               delete patch.created_date;
               delete patch.updated_date;
               delete patch.created_by;
-              delete patch.codigo; // não alteramos o código-chave na atualização
+              delete patch.codigo;
               if (patch.ncm != null) patch.ncm = sanitizeNCM(patch.ncm);
               Object.keys(patch).forEach(k => patch[k] === undefined && delete patch[k]);
               try {
@@ -1104,7 +1109,6 @@ const [suggesting, setSuggesting] = useState(false);
                 const msg = String(err?.message || '').toLowerCase();
                 const status = err?.response?.status || err?.status;
                 if (status === 404 || msg.includes('not found') || msg.includes('does not exist') || msg.includes('no such')) {
-                  // registro não existe mais: criar novamente com os dados novos
                   return await base44.entities.Produto.create({
                     ...patch,
                     empresa_id: d.empresa_id,
@@ -1131,8 +1135,46 @@ const [suggesting, setSuggesting] = useState(false);
             await sleep(300);
           }
         }
+        
+        // Substituir (deletar e recriar)
+        if (paraSubstituir.length > 0) {
+          const chunkS = 20;
+          for (let i = 0; i < paraSubstituir.length; i += chunkS) {
+            const parte = paraSubstituir.slice(i, i + chunkS);
+            const res = await Promise.allSettled(parte.map(async (d) => {
+              try {
+                await base44.entities.Produto.delete(d.existente.id);
+                await sleep(200);
+                return await base44.entities.Produto.create({
+                  ...d.novo,
+                  empresa_id: d.empresa_id,
+                  codigo: d.codigo,
+                });
+              } catch (err) {
+                const msg = String(err?.message || '').toLowerCase();
+                if (msg.includes('rate limit')) {
+                  await sleep(600 + Math.floor(Math.random() * 200));
+                  try {
+                    await base44.entities.Produto.delete(d.existente.id);
+                    await sleep(200);
+                    return await base44.entities.Produto.create({
+                      ...d.novo,
+                      empresa_id: d.empresa_id,
+                      codigo: d.codigo,
+                    });
+                  } catch (err2) {
+                    throw err2;
+                  }
+                }
+                throw err;
+              }
+            }));
+            replacedTotal += res.filter(r => r.status === 'fulfilled').length;
+            await sleep(300);
+          }
+        }
 
-        // Remover todas as duplicidades (atualizadas ou puladas) da criação
+        // Remover todas as duplicidades da criação (pular, atualizar ou substituir)
         const dupKeys = new Set(duplicidades.map(d => makeKey(d.empresa_id, d.codigo)));
         produtos = produtos.filter(p => !dupKeys.has(makeKey(p.empresa_id, p.codigo)));
       }
@@ -1266,11 +1308,17 @@ const [suggesting, setSuggesting] = useState(false);
         await sleep(300 + Math.floor(Math.random() * 150));
       }
 
-      const processados = createdTotal + (updatedTotal || 0);
+      const processados = createdTotal + (updatedTotal || 0) + (replacedTotal || 0);
+      const msgs = [];
+      if (createdTotal > 0) msgs.push(`${createdTotal} criados`);
+      if (updatedTotal > 0) msgs.push(`${updatedTotal} atualizados`);
+      if (replacedTotal > 0) msgs.push(`${replacedTotal} substituídos`);
+      if (failedTotal > 0) msgs.push(`${failedTotal} falharam`);
+      
       if (failedTotal > 0) {
-        toast.warning(`Importação concluída: ${processados} processados (${createdTotal} novos, ${updatedTotal} atualizados, ${failedTotal} falharam).`);
+        toast.warning(`Importação concluída: ${processados} processados (${msgs.join(', ')}).`);
       } else {
-        toast.success(`Importação concluída: ${processados} processados (${createdTotal} novos, ${updatedTotal} atualizados).`);
+        toast.success(`Importação concluída: ${processados} processados (${msgs.join(', ')}).`);
       }
       onConcluido && onConcluido();
       closeSelf && closeSelf();
@@ -1460,15 +1508,32 @@ const [suggesting, setSuggesting] = useState(false);
               <CardTitle className="text-sm">Produtos duplicados por código na empresa ({duplicidades.length})</CardTitle>
             </CardHeader>
             <CardContent className="p-3 space-y-3">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => {
-                  const all = {}; duplicidades.forEach(d => { all[makeKey(d.empresa_id, d.codigo)] = 'atualizar'; });
-                  setEscolhasDuplicidades(all);
-                }}>Marcar todos como Atualizar</Button>
-                <Button variant="outline" size="sm" onClick={() => {
-                  const all = {}; duplicidades.forEach(d => { all[makeKey(d.empresa_id, d.codigo)] = 'pular'; });
-                  setEscolhasDuplicidades(all);
-                }}>Marcar todos como Pular</Button>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Label className="text-sm font-semibold">Estratégia Global:</Label>
+                  <Select value={estrategiaDuplicidadeGlobal} onValueChange={(v) => {
+                    setEstrategiaDuplicidadeGlobal(v);
+                    const all = {};
+                    duplicidades.forEach(d => { all[makeKey(d.empresa_id, d.codigo)] = v; });
+                    setEscolhasDuplicidades(all);
+                  }}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Escolha o que fazer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pular">Pular (manter existente)</SelectItem>
+                      <SelectItem value="atualizar">Atualizar (mesclar dados)</SelectItem>
+                      <SelectItem value="substituir">Substituir (sobrescrever tudo)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Alert className="bg-blue-50 border-blue-200">
+                  <AlertDescription className="text-xs text-blue-800">
+                    <strong>Pular:</strong> Mantém o produto existente sem alterações.<br />
+                    <strong>Atualizar:</strong> Atualiza apenas os campos novos na planilha, preservando dados existentes.<br />
+                    <strong>Substituir:</strong> Sobrescreve completamente o produto com os dados da planilha.
+                  </AlertDescription>
+                </Alert>
               </div>
               <div className="max-h-56 overflow-auto border rounded">
                 <Table>
@@ -1500,8 +1565,9 @@ const [suggesting, setSuggesting] = useState(false);
                                 <SelectValue placeholder="Escolha" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="atualizar">Atualizar produto existente</SelectItem>
-                                <SelectItem value="pular">Pular produto</SelectItem>
+                                <SelectItem value="pular">Pular (manter existente)</SelectItem>
+                                <SelectItem value="atualizar">Atualizar (mesclar dados)</SelectItem>
+                                <SelectItem value="substituir">Substituir (sobrescrever tudo)</SelectItem>
                               </SelectContent>
                             </Select>
                           </TableCell>

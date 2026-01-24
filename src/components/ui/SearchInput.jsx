@@ -12,6 +12,19 @@ export default function SearchInput({
   className = "" 
 }) {
   const inputRef = React.useRef(null);
+  const [localValue, setLocalValue] = React.useState(value);
+
+  React.useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    setLocalValue(newValue);
+    if (onChange && typeof onChange === 'function') {
+      onChange(newValue);
+    }
+  };
 
   return (
     <div className={`relative ${className}`}>
@@ -20,12 +33,9 @@ export default function SearchInput({
         ref={inputRef}
         type="text"
         placeholder={placeholder}
-        defaultValue={value}
-        onInput={(e) => {
-          if (onChange && typeof onChange === 'function') {
-            onChange(e.target.value);
-          }
-        }}
+        value={localValue}
+        onChange={handleChange}
+        autoComplete="off"
         className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 pl-10"
       />
     </div>
