@@ -2,8 +2,10 @@ import React from "react";
 import { Search } from "lucide-react";
 
 /**
- * SearchInput - DEFINITIVO V22.0.3
- * Input controlado com estado interno para evitar perda de foco
+ * SearchInput - CORREÇÃO DEFINITIVA V22.0.8
+ * Componente de input TOTALMENTE CONTROLADO, sem estado interno.
+ * O valor vem diretamente da prop 'value', mudanças via 'onChange'.
+ * Isso previne perda de foco e permite digitação fluida.
  */
 export default function SearchInput({ 
   value = "", 
@@ -11,22 +13,16 @@ export default function SearchInput({
   placeholder = "Buscar...", 
   className = "" 
 }) {
-  const [internalValue, setInternalValue] = React.useState(value);
-
-  const handleChange = (e) => {
-    const newVal = e.target.value;
-    setInternalValue(newVal);
-    if (onChange) onChange(newVal);
-  };
-
   return (
     <div className={`relative ${className}`}>
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none z-10" />
       <input
         type="text"
         placeholder={placeholder}
-        value={internalValue}
-        onChange={handleChange}
+        value={value}
+        onChange={(e) => {
+          if (onChange) onChange(e.target.value);
+        }}
         autoComplete="off"
         spellCheck="false"
         className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 pl-10"

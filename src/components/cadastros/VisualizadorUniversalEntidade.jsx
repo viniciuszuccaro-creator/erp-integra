@@ -32,7 +32,7 @@ import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from "@/components/ui/use-toast";
 
 /**
- * V21.7 - VISUALIZADOR UNIVERSAL DE ENTIDADES - REAL-TIME + ORGANIZAÇÃO AVANÇADA
+ * V22.0 - VISUALIZADOR UNIVERSAL DE ENTIDADES - REAL-TIME + ORGANIZAÇÃO AVANÇADA
  * 
  * Componente genérico que lista qualquer entidade com:
  * - ✅ Real-time: Auto-refresh a cada 30s
@@ -847,19 +847,17 @@ onClose: invalidateAllRelated,
             </div>
           </div>
 
-          {/* Barra de Busca, Ordenação e Filtros - CORREÇÃO: input nativo para garantir funcionamento */}
+          {/* Barra de Busca, Ordenação e Filtros */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
-            <div className="flex-1" onClick={(e) => e.stopPropagation()}>
-              <SearchInput
-                value={busca}
-                onChange={(val) => {
-                  setBusca(val);
-                  setCurrentPage(1);
-                }}
-                placeholder="🔍 Busca universal em todos os campos..."
-                className="w-full"
-              />
-            </div>
+            <SearchInput
+              value={busca}
+              onChange={(val) => {
+                setBusca(val);
+                setCurrentPage(1);
+              }}
+              placeholder="🔍 Busca universal em todos os campos..."
+              className="flex-1"
+            />
             
             {/* ✅ ORDENAÇÃO POR MENU */}
             <Select value={ordenacao || 'recent'} onValueChange={(val) => {
