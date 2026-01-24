@@ -30,34 +30,55 @@ export default function Estoque() {
 
   // Query removida - VisualizadorUniversalEntidade busca os dados
 
-  // ✅ Contagens via backend otimizado
-  const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: loadingContagens } = useQuery({
+  // ✅ Contagens via backend otimizado - CARREGA TUDO para cálculo correto
+  const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: loadingContagens, refetch: refetchContagens } = useQuery({
     queryKey: ['produtos-contagens-dashboard', empresaAtual?.id],
     queryFn: async () => {
       const filtroBase = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
 
-      const [totalRes, revendaRes, producaoRes] = await Promise.all([
-        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtroBase }),
-        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtroBase, tipo_item: 'Revenda' } }),
-        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtroBase, tipo_item: 'Matéria-Prima Produção' } })
-      ]);
+      // Buscar TODOS os produtos para contagem correta
+      let todosProdutos = [];
+      let skip = 0;
+      const batchSize = 500;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const batch = await base44.entities.Produto.filter(filtroBase, undefined, batchSize, skip);
+        if (!batch || batch.length === 0) {
+          hasMore = false;
+        } else {
+          todosProdutos = [...todosProdutos, ...batch];
+          if (batch.length < batchSize) {
+            hasMore = false;
+          } else {
+            skip += batchSize;
+          }
+        }
+      }
 
-      const todosParaBaixo = await base44.entities.Produto.filter(filtroBase, undefined, 500);
-      const estoqueBaixo = todosParaBaixo.filter(p => 
+      const total = todosProdutos.length;
+      const revenda = todosProdutos.filter(p => p.tipo_item === 'Revenda').length;
+      const producao = todosProdutos.filter(p => p.tipo_item === 'Matéria-Prima Produção').length;
+      const estoqueBaixo = todosProdutos.filter(p => 
         p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
       ).length;
 
-      return {
-        total: totalRes.data?.count || 0,
-        revenda: revendaRes.data?.count || 0,
-        producao: producaoRes.data?.count || 0,
-        estoqueBaixo
-      };
+      console.log(`✅ CONTAGENS CORRETAS: Total=${total}, Revenda=${revenda}, Produção=${producao}, EstoqueBaixo=${estoqueBaixo}`);
+
+      return { total, revenda, producao, estoqueBaixo };
     },
-    staleTime: 30000,
-    refetchOnWindowFocus: true,
-    retry: 1
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchInterval: false
   });
+
+  // ✅ Real-time update via subscription
+  React.useEffect(() => {
+    const unsubscribe = base44.entities.Produto.subscribe(() => {
+      refetchContagens();
+    });
+    return unsubscribe;
+  }, [refetchContagens]);
 
   const { data: movimentacoes = [] } = useQuery({
     queryKey: ['movimentacoes', empresaAtual?.id],

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PaginationControls from '@/components/ui/PaginationControls';
+import SearchInputIsolado from '@/components/ui/SearchInputIsolado';
 import { 
   Search, 
   Eye, 
@@ -429,18 +430,13 @@ export default function VisualizadorUniversalEntidade({
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 pointer-events-none" />
-                <input
-                  type="text"
-                  placeholder="🔍 Busca universal..."
-                  value={buscaLocal}
-                  onChange={(e) => setBuscaLocal(e.target.value)}
-                  className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 pl-10"
-                />
-              </div>
-            </div>
+            <SearchInputIsolado
+              value={buscaLocal}
+              onChange={(val) => setBuscaLocal(val)}
+              placeholder="🔍 Busca universal em todos os campos..."
+              className="flex-1"
+              debounceMs={500}
+            />
             
             <Select value={ordenacao || 'recent'} onValueChange={(val) => {
               setCurrentPage(1);
