@@ -8,7 +8,13 @@ import { cn } from "@/lib/utils"
  * Este componente é 100% nativo, sem qualquer lógica de auditoria que possa
  * interferir com a digitação do usuário.
  */
-const InputClean = React.forwardRef(({ className, type, ...props }, ref) => {
+const InputClean = React.forwardRef(({ className, type, onChange, ...props }, ref) => {
+  const handleChange = (e) => {
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
   return (
     <input
       type={type}
@@ -17,6 +23,7 @@ const InputClean = React.forwardRef(({ className, type, ...props }, ref) => {
         className
       )}
       ref={ref}
+      onChange={handleChange}
       {...props}
     />
   );
