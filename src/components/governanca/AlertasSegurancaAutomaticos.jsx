@@ -9,7 +9,8 @@ import {
   AlertTriangle, 
   ShieldAlert,
   Clock,
-  Activity
+  Activity,
+  CheckCircle2
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
