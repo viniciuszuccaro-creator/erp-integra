@@ -38,12 +38,46 @@ export default function StatusGovernancaETAPA1() {
     }
   });
 
+  // Testar backends via chamada real
+  const { data: rbacBackendOk = false } = useQuery({
+    queryKey: ['test-rbac-backend'],
+    queryFn: async () => {
+      try {
+        await base44.functions.invoke('rbacValidator', { 
+          module: 'Teste', 
+          action: 'visualizar' 
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    staleTime: 60000
+  });
+
+  const { data: multiBackendOk = false } = useQuery({
+    queryKey: ['test-multi-backend'],
+    queryFn: async () => {
+      try {
+        await base44.functions.invoke('multiempresaValidator', {
+          operation: 'create',
+          entityName: 'Teste',
+          data: {}
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    staleTime: 60000
+  });
+
   // Validações ETAPA 1
   const checks = {
     rbacBasico: perfis.length > 0,
-    rbacBackend: logs24h.some(l => l.entidade === 'RBACValidator' || l.modulo === 'rbacValidator'),
+    rbacBackend: rbacBackendOk,
     multiempresaAtivo: empresas.length > 0,
-    multiempresaBackend: logs24h.some(l => l.entidade === 'MultiempresaValidator'),
+    multiempresaBackend: multiBackendOk,
     auditCompleta: logs24h.length > 0,
     usuariosComPerfil: usuarios.filter(u => u.perfil_acesso_id).length === usuarios.length
   };
