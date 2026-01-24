@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import WidgetETAPA1Mini from '@/components/governanca/WidgetETAPA1Mini';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -354,6 +355,9 @@ export default function DashboardCorporativo() {
 
           {/* ABA: Visão Geral */}
           <TabsContent value="visao-geral" className="space-y-6 mt-6">
+            {/* ETAPA 1: Widget Governança */}
+            <WidgetETAPA1Mini />
+
             {/* KPIs Principais */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="border-0 shadow-md bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-lg transition-all">
