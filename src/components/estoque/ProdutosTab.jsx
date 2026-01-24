@@ -25,8 +25,7 @@ export default function ProdutosTab(props) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // ✅ V22.0.8 - Contagens OTIMIZADAS: SEM refetchInterval, COM subscription real-time
-  const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: isLoadingContagens } = useQuery({
+  const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: isLoadingContagens, refetch: refetchContagens } = useQuery({
     queryKey: ['produtos-contagens', getFiltroContexto('empresa_id', true)],
     queryFn: async () => {
       const filtro = getFiltroContexto('empresa_id', true);
@@ -37,14 +36,12 @@ export default function ProdutosTab(props) {
         base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtro, tipo_item: 'Matéria-Prima Produção' } })
       ]);
 
-      // ✅ CORREÇÃO DEFINITIVA: Buscar TODOS os produtos ativos em lotes para calcular estoque baixo
-      let todosParaBaixo = [];
+      let todosAtivos = [];
       let skip = 0;
       const batchSize = 500;
       let hasMore = true;
       
       while (hasMore) {
-        console.log(`[ProdutosTab] Fetching batch: skip=${skip}, limit=${batchSize}`);
         const batch = await base44.entities.Produto.filter(
           { ...filtro, status: 'Ativo' }, 
           undefined, 
@@ -54,25 +51,21 @@ export default function ProdutosTab(props) {
         
         if (!batch || batch.length === 0) {
           hasMore = false;
-          console.log("[ProdutosTab] Batch empty, stopping.");
         } else {
-          todosParaBaixo = [...todosParaBaixo, ...batch];
-          console.log(`[ProdutosTab] Fetched ${batch.length} items. Total: ${todosParaBaixo.length}`);
-          
+          todosAtivos = [...todosAtivos, ...batch];
           if (batch.length < batchSize) {
             hasMore = false;
-            console.log("[ProdutosTab] Last batch received.");
           } else {
             skip += batchSize;
           }
         }
       }
       
-      const estoqueBaixo = todosParaBaixo.filter(p => 
+      const estoqueBaixo = todosAtivos.filter(p => 
         (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
       ).length;
       
-      console.log(`[ProdutosTab] ✅ RESULTADO FINAL: ${estoqueBaixo} produtos com estoque baixo de ${todosParaBaixo.length} ativos`);
+      console.log(`✅ ESTOQUE BAIXO: ${estoqueBaixo} de ${todosAtivos.length} produtos ativos`);
 
       return {
         total: totalRes.data?.count || 0,
@@ -81,23 +74,20 @@ export default function ProdutosTab(props) {
         estoqueBaixo
       };
     },
-    staleTime: 30000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false,
-    refetchInterval: false // ✅ REMOVIDO para evitar rate limit
+    refetchInterval: false
   });
 
-  // ✅ REAL-TIME via subscription (sem polling)
   React.useEffect(() => {
-    const unsubscribe = base44.entities.Produto.subscribe((event) => {
-      console.log('[ProdutosTab] Produto subscription event:', event.type);
-      queryClient.invalidateQueries({ queryKey: ['produtos-contagens'] });
+    const unsubscribe = base44.entities.Produto.subscribe(() => {
+      refetchContagens();
     });
     return unsubscribe;
-  }, [queryClient]);
+  }, [refetchContagens]);
 
   return (
     <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
-      {/* Estatísticas Rápidas */}
       <div className="w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4">
@@ -148,7 +138,6 @@ export default function ProdutosTab(props) {
         </Card>
       </div>
 
-      {/* ALERTA DE ESTOQUE BAIXO */}
       {contagensTotais.estoqueBaixo > 0 && (
         <Card className="border-red-300 bg-red-50 flex-shrink-0">
            <CardContent className="p-4">
@@ -274,7 +263,6 @@ export default function ProdutosTab(props) {
         </div>
       </div>
 
-      {/* Renderiza o VisualizadorUniversalEntidade com todos os recursos */}
       <VisualizadorUniversalEntidade
         nomeEntidade="Produto"
         tituloDisplay="Produto"
