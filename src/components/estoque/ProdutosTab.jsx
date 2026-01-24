@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,30 +17,41 @@ import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosP
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 
-export default function ProdutosTab({
-  contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 },
-  isLoadingContagens = false,
-}) {
+export default function ProdutosTab(props) {
+  const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
-  const { empresaAtual } = useContextoVisual();
-  const { canCreate, canEdit, hasPermission } = usePermissions();
+  const { getFiltroContexto } = useContextoVisual();
+  const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const [filterLowStock, setFilterLowStock] = useState(false);
+  // ✅ Contagens via query própria
+  const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: isLoadingContagens } = useQuery({
+    queryKey: ['produtos-contagens', getFiltroContexto('empresa_id', true)],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      
+      const [totalRes, revendaRes, producaoRes] = await Promise.all([
+        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtro }),
+        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtro, tipo_item: 'Revenda' } }),
+        base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtro, tipo_item: 'Matéria-Prima Produção' } })
+      ]);
 
-  const handleVerProdutosEstoqueBaixo = () => {
-    setFilterLowStock(true);
-  };
+      const todosParaBaixo = await base44.entities.Produto.filter(filtro, undefined, 500);
+      const estoqueBaixo = todosParaBaixo.filter(p => 
+        p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
+      ).length;
 
-  const commonViewerProps = {
-    nomeEntidade: "Produto",
-    tituloDisplay: "Produtos",
-    icone: Package,
-    componenteEdicao: ProdutoFormV22_Completo,
-    queryKeyOverride: "produtos-estoque",
-    filterOverride: filterLowStock ? { 'estoque_atual': { '$lte': 'estoque_minimo' }, 'status': 'Ativo' } : {},
-  };
+      return {
+        total: totalRes.data?.count || 0,
+        revenda: revendaRes.data?.count || 0,
+        producao: producaoRes.data?.count || 0,
+        estoqueBaixo
+      };
+    },
+    staleTime: 30000,
+    refetchOnWindowFocus: true
+  });
 
   return (
     <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
@@ -221,7 +233,19 @@ export default function ProdutosTab({
       </div>
 
       {/* Renderiza o VisualizadorUniversalEntidade com todos os recursos */}
-      <VisualizadorUniversalEntidade {...commonViewerProps} />
+      <VisualizadorUniversalEntidade
+        nomeEntidade="Produto"
+        tituloDisplay="Produto"
+        icone={Package}
+        camposPrincipais={['codigo', 'descricao', 'tipo_item', 'unidade_medida', 'estoque_atual', 'preco_venda']}
+        componenteEdicao={ProdutoFormV22_Completo}
+        queryKey={['produtos']}
+        filtroAdicional={filtroEstoqueBaixo ? (produto) => {
+          const disponivel = (produto.estoque_disponivel || 0);
+          return produto.status === 'Ativo' && disponivel <= (produto.estoque_minimo || 0);
+        } : null}
+        windowMode={props.windowMode}
+      />
     </div>
   );
 }
