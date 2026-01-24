@@ -1,111 +1,100 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 /**
- * ENTITY OPERATION GUARD - GUARDIÃO DE OPERAÇÕES
- * Middleware universal para validar RBAC + Multiempresa antes de qualquer operação
- * Chamado antes de create/update/delete em entidades sensíveis
+ * ENTITY OPERATION GUARD - MIDDLEWARE UNIVERSAL DE VALIDAÇÃO
+ * Combina RBAC + Multiempresa + Auditoria em um único endpoint
+ * ETAPA 1: Enforcement total antes de qualquer operação de entidade
  */
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const { 
-      operation, 
+      operation,
       entityName, 
       data, 
-      recordId,
+      entityId,
       module,
+      section,
       action 
     } = await req.json();
 
     const user = await base44.auth.me();
+
     if (!user) {
       return Response.json({ 
-        allowed: false, 
+        valid: false, 
         reason: 'Não autenticado' 
       }, { status: 401 });
     }
 
-    // 1. VALIDAÇÃO RBAC
-    if (user.role !== 'admin') {
-      const rbacCheck = await base44.functions.invoke('rbacValidator', {
-        module: module || 'Sistema',
-        section: null,
-        action: action || operation
+    const results = {
+      rbac: { valid: false, reason: '' },
+      multiempresa: { valid: false, reason: '' }
+    };
+
+    // 1. Validar RBAC
+    try {
+      const rbacResponse = await base44.functions.invoke('rbacValidator', {
+        module: module || entityName,
+        section,
+        action: action || operation,
+        userId: user.id
       });
 
-      if (!rbacCheck.data?.authorized) {
-        await base44.asServiceRole.entities.AuditLog.create({
-          usuario: user.full_name || user.email,
-          usuario_id: user.id,
-          acao: 'Bloqueio',
-          modulo: module || 'Sistema',
-          entidade: entityName,
-          registro_id: recordId,
-          descricao: `RBAC bloqueou ${operation} em ${entityName}: ${rbacCheck.data?.reason}`,
-          dados_novos: { operation, data },
-          data_hora: new Date().toISOString(),
-          sucesso: false
-        });
-
-        return Response.json({ 
-          allowed: false, 
-          reason: rbacCheck.data?.reason || 'Sem permissão' 
-        }, { status: 403 });
-      }
+      results.rbac = rbacResponse.data;
+    } catch (error) {
+      results.rbac = { valid: false, reason: error.message };
     }
 
-    // 2. VALIDAÇÃO MULTIEMPRESA
-    const multiempresaCheck = await base44.functions.invoke('multiempresaValidator', {
-      operation,
-      entityName,
-      data,
-      filter: data,
-      recordId
-    });
-
-    if (!multiempresaCheck.data?.valid) {
-      await base44.asServiceRole.entities.AuditLog.create({
-        usuario: user.full_name || user.email,
-        usuario_id: user.id,
-        acao: 'Bloqueio',
-        modulo: 'Sistema',
-        entidade: entityName,
-        registro_id: recordId,
-        descricao: `Multiempresa bloqueou ${operation} em ${entityName}: ${multiempresaCheck.data?.reason}`,
-        dados_novos: { operation, data },
-        data_hora: new Date().toISOString(),
-        sucesso: false
+    // 2. Validar Multiempresa
+    try {
+      const multiempresaResponse = await base44.functions.invoke('multiempresaValidator', {
+        operation,
+        entityName,
+        data,
+        entityId,
+        userId: user.id
       });
 
-      return Response.json({ 
-        allowed: false, 
-        reason: multiempresaCheck.data?.reason || 'Contexto multiempresa inválido' 
-      }, { status: 403 });
+      results.multiempresa = multiempresaResponse.data;
+    } catch (error) {
+      results.multiempresa = { valid: false, reason: error.message };
     }
 
-    // 3. AUDITORIA DA OPERAÇÃO AUTORIZADA
-    await base44.functions.invoke('auditHelper', {
+    // 3. Decidir resultado final
+    const valid = results.rbac.valid && results.multiempresa.valid;
+
+    // 4. Auditar validação
+    await base44.asServiceRole.entities.AuditLog.create({
       usuario: user.full_name || user.email,
       usuario_id: user.id,
       empresa_id: data?.empresa_id || null,
-      acao: operation,
-      modulo: module || 'Sistema',
+      acao: valid ? 'Validação' : 'Bloqueio',
+      modulo: module || entityName,
       entidade: entityName,
-      registro_id: recordId,
-      descricao: `${operation} autorizado em ${entityName}`,
-      dados_novos: data,
-      origem: 'EntityOperationGuard'
+      registro_id: entityId || null,
+      descricao: valid 
+        ? `Validação aprovada: ${operation} ${entityName}`
+        : `Bloqueio: ${results.rbac.valid ? results.multiempresa.reason : results.rbac.reason}`,
+      dados_novos: { operation, results },
+      data_hora: new Date().toISOString(),
+      sucesso: valid
     });
 
-    return Response.json({ 
-      allowed: true,
-      message: 'Operação autorizada'
-    });
+    if (!valid) {
+      return Response.json({ 
+        valid: false,
+        reason: results.rbac.valid ? results.multiempresa.reason : results.rbac.reason,
+        details: results
+      }, { status: 403 });
+    }
+
+    return Response.json({ valid: true, results });
 
   } catch (error) {
     return Response.json({ 
-      allowed: false, 
+      valid: false, 
       reason: error.message 
     }, { status: 500 });
   }

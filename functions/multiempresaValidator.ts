@@ -1,137 +1,102 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 /**
- * VALIDADOR MULTIEMPRESA - BACKEND ENFORCEMENT
- * Garante isolamento real de dados por empresa/grupo
- * Valida que operações respeitam contexto multiempresa
+ * MULTIEMPRESA VALIDATOR - VALIDAÇÃO DE ISOLAMENTO MULTIEMPRESA
+ * Valida que todas as operações respeitam o isolamento de dados por empresa/grupo
+ * ETAPA 1: Enforcement completo de Multiempresa
  */
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const { 
-      operation, 
-      entityName, 
-      data, 
-      filter, 
-      recordId 
-    } = await req.json();
+    const { operation, entityName, data, entityId, userId } = await req.json();
 
     const user = await base44.auth.me();
+
     if (!user) {
       return Response.json({ 
         valid: false, 
-        reason: 'Não autenticado' 
+        reason: 'Usuário não autenticado' 
       }, { status: 401 });
     }
 
-    // Buscar empresa ativa do usuário (do localStorage/contexto)
-    const empresaAtivaId = data?.empresa_id || filter?.empresa_id;
-    const groupId = data?.group_id || filter?.group_id;
+    // Buscar contexto do usuário
+    const empresaAtual = data?.empresa_id;
+    const grupoAtual = data?.group_id;
 
-    // REGRA 1: Dados operacionais DEVEM ter empresa_id ou group_id
-    const entidadesOperacionais = [
-      'Produto', 'Cliente', 'Pedido', 'NotaFiscal', 'Entrega', 
-      'ContaPagar', 'ContaReceber', 'MovimentacaoEstoque', 
-      'OrdemCompra', 'OrdemProducao', 'Fornecedor', 'Transportadora',
-      'Oportunidade', 'Interacao', 'Campanha', 'Comissao',
-      'SolicitacaoCompra', 'Romaneio', 'Rota', 'ConversaOmnicanal'
-    ];
+    // Validações por operação
+    if (operation === 'create') {
+      // CREATE: Deve ter empresa_id OU group_id
+      if (!empresaAtual && !grupoAtual) {
+        await base44.asServiceRole.entities.AuditLog.create({
+          usuario: user.full_name || user.email,
+          usuario_id: user.id,
+          acao: 'Bloqueio',
+          modulo: 'Multiempresa',
+          entidade: entityName,
+          descricao: `Bloqueio Multiempresa: tentativa de criar ${entityName} sem empresa_id/group_id`,
+          dados_novos: data,
+          data_hora: new Date().toISOString(),
+          sucesso: false
+        });
 
-    if (entidadesOperacionais.includes(entityName)) {
-      if (operation === 'create' && !empresaAtivaId && !groupId) {
         return Response.json({ 
           valid: false, 
-          reason: `${entityName} deve ter empresa_id ou group_id definido` 
-        }, { status: 400 });
+          reason: 'Criação sem empresa_id ou group_id não permitida' 
+        }, { status: 403 });
       }
 
-      if (operation === 'update' && recordId) {
-        // Verificar se o registro pertence à empresa do usuário
-        const record = await base44.asServiceRole.entities[entityName].get(recordId);
-        if (!record) {
-          return Response.json({ 
-            valid: false, 
-            reason: 'Registro não encontrado' 
-          }, { status: 404 });
-        }
-
-        // Validar ownership
-        const recordEmpresaId = record.empresa_id || record.empresa_dona_id;
-        const recordGroupId = record.group_id;
-
-        if (empresaAtivaId && recordEmpresaId !== empresaAtivaId) {
-          return Response.json({ 
-            valid: false, 
-            reason: 'Acesso negado: registro pertence a outra empresa' 
-          }, { status: 403 });
-        }
-      }
-
-      if (operation === 'filter' || operation === 'list') {
-        // Garantir que filtro tenha empresa_id ou group_id
-        if (!filter?.empresa_id && !filter?.group_id) {
-          return Response.json({ 
-            valid: false, 
-            reason: 'Filtro deve incluir empresa_id ou group_id' 
-          }, { status: 400 });
-        }
-      }
+      return Response.json({ valid: true });
     }
 
-    // REGRA 2: Configurações DEVEM ser isoladas por empresa
-    const entidadesConfiguracao = [
-      'ConfigFiscalEmpresa', 'ConfiguracaoGatewayPagamento', 
-      'ConfiguracaoProducao', 'ParametroPortalCliente',
-      'ConfiguracaoNFe', 'ConfiguracaoBoletos', 'ConfiguracaoWhatsApp',
-      'ParametroOrigemPedido', 'ParametroRecebimentoNFe',
-      'ParametroRoteirizacao', 'ParametroConciliacaoBancaria',
-      'ParametroCaixaDiario', 'ContaBancariaEmpresa'
-    ];
+    if (operation === 'update' || operation === 'delete') {
+      // UPDATE/DELETE: Verificar se o registro pertence à empresa/grupo do usuário
+      if (!entityId) {
+        return Response.json({ valid: false, reason: 'ID da entidade não fornecido' }, { status: 400 });
+      }
 
-    if (entidadesConfiguracao.includes(entityName)) {
-      if ((operation === 'create' || operation === 'update') && !empresaAtivaId && !groupId) {
+      const registro = await base44.asServiceRole.entities[entityName].get(entityId);
+
+      if (!registro) {
+        return Response.json({ valid: false, reason: 'Registro não encontrado' }, { status: 404 });
+      }
+
+      // Admin pode tudo
+      if (user.role === 'admin') {
+        return Response.json({ valid: true, reason: 'Administrador' });
+      }
+
+      // Verificar se pertence ao contexto do usuário
+      const userEmpresaId = empresaAtual || user.empresa_id;
+      const userGroupId = grupoAtual || user.group_id;
+
+      const pertenceEmpresa = registro.empresa_id === userEmpresaId;
+      const pertenceGrupo = registro.group_id === userGroupId;
+      const estaCompartilhado = registro.empresas_compartilhadas_ids?.includes(userEmpresaId);
+
+      if (!pertenceEmpresa && !pertenceGrupo && !estaCompartilhado) {
+        await base44.asServiceRole.entities.AuditLog.create({
+          usuario: user.full_name || user.email,
+          usuario_id: user.id,
+          empresa_id: userEmpresaId,
+          acao: 'Bloqueio',
+          modulo: 'Multiempresa',
+          entidade: entityName,
+          registro_id: entityId,
+          descricao: `Bloqueio Multiempresa: tentativa de ${operation} ${entityName} de outra empresa`,
+          dados_anteriores: registro,
+          data_hora: new Date().toISOString(),
+          sucesso: false
+        });
+
         return Response.json({ 
           valid: false, 
-          reason: `Configuração ${entityName} deve ter empresa_id ou group_id` 
-        }, { status: 400 });
+          reason: 'Acesso negado: registro pertence a outra empresa' 
+        }, { status: 403 });
       }
+
+      return Response.json({ valid: true });
     }
-
-    // REGRA 3: Validar compartilhamento em multiempresa
-    if (data?.empresas_compartilhadas_ids && data.empresas_compartilhadas_ids.length > 0) {
-      // Verificar se todas as empresas compartilhadas pertencem ao mesmo grupo
-      const empresasCompartilhadas = await Promise.all(
-        data.empresas_compartilhadas_ids.map(id => 
-          base44.asServiceRole.entities.Empresa.get(id).catch(() => null)
-        )
-      );
-
-      const grupoAtual = groupId;
-      const todasDoMesmoGrupo = empresasCompartilhadas.every(
-        emp => emp && emp.group_id === grupoAtual
-      );
-
-      if (!todasDoMesmoGrupo) {
-        return Response.json({ 
-          valid: false, 
-          reason: 'Compartilhamento apenas entre empresas do mesmo grupo' 
-        }, { status: 400 });
-      }
-    }
-
-    // Auditoria da validação
-    await base44.asServiceRole.entities.AuditLog.create({
-      usuario: user.full_name || user.email,
-      usuario_id: user.id,
-      empresa_id: empresaAtivaId,
-      acao: 'Validação',
-      modulo: 'Sistema',
-      entidade: 'MultiempresaValidator',
-      descricao: `Validação ${operation} em ${entityName}`,
-      dados_novos: { operation, entityName, empresaAtivaId, groupId },
-      data_hora: new Date().toISOString()
-    });
 
     return Response.json({ valid: true });
 

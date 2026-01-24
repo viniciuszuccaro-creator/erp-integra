@@ -1,17 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 
 /**
- * AUDIT HELPER - AUDITORIA COMPLETA E CENTRALIZADA
- * Registra todas as ações do sistema: UI, automações, IA, chatbot
- * Backend universal para auditoria
+ * AUDIT HELPER - HELPER CENTRALIZADO DE AUDITORIA
+ * Função auxiliar para criar logs de auditoria de forma padronizada
+ * ETAPA 1: Auditoria universal
  */
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const payload = await req.json();
-    
-    const {
+    const { 
       usuario,
       usuario_id,
       empresa_id,
@@ -23,62 +21,35 @@ Deno.serve(async (req) => {
       descricao,
       dados_anteriores,
       dados_novos,
-      origem,
-      metadata
-    } = payload;
+      ip_address,
+      user_agent,
+      sucesso = true,
+      duracao_ms
+    } = await req.json();
 
-    // Criar registro de auditoria
-    const auditRecord = {
+    // Criar log de auditoria
+    const log = await base44.asServiceRole.entities.AuditLog.create({
       usuario: usuario || 'Sistema',
       usuario_id: usuario_id || null,
       empresa_id: empresa_id || null,
       empresa_nome: empresa_nome || null,
-      acao: acao || 'Ação',
-      modulo: modulo || 'Sistema',
-      entidade: entidade || 'Genérica',
+      acao,
+      modulo,
+      entidade,
       registro_id: registro_id || null,
-      descricao: descricao || `${acao} em ${entidade}`,
+      descricao,
       dados_anteriores: dados_anteriores || null,
       dados_novos: dados_novos || null,
+      ip_address: ip_address || null,
+      user_agent: user_agent || null,
       data_hora: new Date().toISOString(),
-      sucesso: true
-    };
-
-    // Adicionar metadata customizada
-    if (origem) {
-      auditRecord.descricao = `[${origem}] ${auditRecord.descricao}`;
-    }
-
-    if (metadata) {
-      auditRecord.dados_novos = {
-        ...(auditRecord.dados_novos || {}),
-        _metadata: metadata
-      };
-    }
-
-    await base44.asServiceRole.entities.AuditLog.create(auditRecord);
-
-    return Response.json({ 
-      success: true, 
-      audit_id: auditRecord.id 
+      sucesso,
+      duracao_ms: duracao_ms || null
     });
 
-  } catch (error) {
-    // Mesmo em caso de erro, tentar registrar
-    try {
-      const base44 = createClientFromRequest(req);
-      await base44.asServiceRole.entities.AuditLog.create({
-        usuario: 'Sistema',
-        acao: 'Erro',
-        modulo: 'Auditoria',
-        entidade: 'AuditHelper',
-        descricao: `Erro ao auditar: ${error.message}`,
-        dados_novos: { error: error.message, stack: error.stack },
-        data_hora: new Date().toISOString(),
-        sucesso: false
-      });
-    } catch {}
+    return Response.json({ success: true, log_id: log.id });
 
+  } catch (error) {
     return Response.json({ 
       success: false, 
       error: error.message 
