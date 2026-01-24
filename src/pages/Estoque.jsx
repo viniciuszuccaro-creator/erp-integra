@@ -30,44 +30,32 @@ export default function Estoque() {
 
   // Query removida - VisualizadorUniversalEntidade busca os dados
 
-  // ✅ V22.0 CORREÇÃO FINAL: Contagens otimizadas via backend
+  // ✅ Contagens diretas simplificadas - sem backend
   const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: loadingContagens } = useQuery({
     queryKey: ['produtos-contagens-dashboard', empresaAtual?.id],
     queryFn: async () => {
-      try {
-        const filtroBase = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+      const filtroBase = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
 
-        const totalProdutosResponse = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: filtroBase });
-        const totalProdutos = totalProdutosResponse.data?.count || 0;
+      const [todos, revenda, producao] = await Promise.all([
+        base44.entities.Produto.filter(filtroBase, undefined, 200),
+        base44.entities.Produto.filter({ ...filtroBase, tipo_item: 'Revenda' }, undefined, 200),
+        base44.entities.Produto.filter({ ...filtroBase, tipo_item: 'Matéria-Prima Produção' }, undefined, 200)
+      ]);
 
-        const produtosRevendaResponse = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtroBase, tipo_item: { '$ne': 'Matéria-Prima Produção' } } });
-        const produtosRevenda = produtosRevendaResponse.data?.count || 0;
+      const estoqueBaixo = todos.filter(p => 
+        p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
+      ).length;
 
-        const produtosProducaoResponse = await base44.functions.invoke('countEntities', { entityName: 'Produto', filter: { ...filtroBase, tipo_item: 'Matéria-Prima Produção' } });
-        const produtosProducao = produtosProducaoResponse.data?.count || 0;
-
-        const todosProdutosParaEstoqueBaixo = await base44.entities.Produto.filter(filtroBase, '-created_date', 5000);
-        const produtosEstoqueBaixo = todosProdutosParaEstoqueBaixo.filter(p => {
-          const disponivel = (p.estoque_disponivel ?? ((p.estoque_atual || 0) - (p.estoque_reservado || 0)));
-          return p.status === 'Ativo' && (Math.max(0, disponivel) <= (p.estoque_minimo || 0));
-        }).length;
-
-        return {
-          total: totalProdutos,
-          revenda: produtosRevenda,
-          producao: produtosProducao,
-          estoqueBaixo: produtosEstoqueBaixo
-        };
-      } catch (err) {
-        console.error('Erro ao contar produtos para dashboard:', err);
-        return { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 };
-      }
+      return {
+        total: todos.length,
+        revenda: revenda.length,
+        producao: producao.length,
+        estoqueBaixo
+      };
     },
-    staleTime: 60000,
-    gcTime: 120000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    retry: 2
+    staleTime: 30000,
+    refetchOnWindowFocus: true,
+    retry: 1
   });
 
   const { data: movimentacoes = [] } = useQuery({
@@ -170,17 +158,8 @@ export default function Estoque() {
       width: 1500,
       height: 850,
       props: { 
-        produtos: produtosFiltrados,
-        isLoading: loadingProdutos,
-        currentPage: currentPageProdutos,
-        totalItems: totalProdutos,
-        itemsPerPage: itemsPerPageProdutos,
-        onPageChange: setCurrentPageProdutos,
-        onItemsPerPageChange: setItemsPerPageProdutos,
-        searchTerm,
-        onSearchChange: setSearchTerm,
-        selectedCategoria,
-        onCategoriaChange: setSelectedCategoria
+        contagensTotais,
+        isLoadingContagens: loadingContagens
       }
     },
     {
@@ -283,12 +262,12 @@ export default function Estoque() {
         <HeaderEstoqueCompacto />
         
         <KPIsEstoque
-          produtosAtivos={contagensTotais.total || totalProdutos}
-          produtosBaixoEstoque={contagensTotais.estoqueBaixo || 0}
+          produtosAtivos={contagensTotais.total}
+          produtosBaixoEstoque={contagensTotais.estoqueBaixo}
           totalReservado={totalReservado}
           estoqueDisponivel={estoqueDisponivel}
-          produtosRevenda={contagensTotais.revenda || 0}
-          produtosProducao={contagensTotais.producao || 0}
+          produtosRevenda={contagensTotais.revenda}
+          produtosProducao={contagensTotais.producao}
         />
 
         {estaNoGrupo && (
