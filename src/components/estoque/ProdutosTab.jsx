@@ -397,15 +397,21 @@ export default function ProdutosTab({
       <Card className="border-0 shadow-md flex-shrink-0">
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <SearchInput
-              value={searchTerm || ''}
-              onChange={(val) => {
-                onSearchChange && onSearchChange(val);
-                onPageChange && onPageChange(1);
-              }}
-              placeholder="Buscar por código, descrição, grupo, marca, setor, tipo, fornecedor, NCM..."
-              className="flex-1"
-            />
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="Buscar por código, descrição, grupo, marca, setor, tipo, fornecedor, NCM..."
+                value={searchTerm || ''}
+                onChange={(e) => {
+                  onSearchChange && onSearchChange(e.target.value);
+                  onPageChange && onPageChange(1);
+                }}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-10"
+              />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <Package className="w-4 h-4 text-slate-400" />
+              </div>
+            </div>
             <Select value={selectedCategoria} onValueChange={(val) => {
               onCategoriaChange && onCategoriaChange(val);
               onPageChange && onPageChange(1);

@@ -77,8 +77,18 @@ const OPCOES_ORDENACAO = {
   Produto: [
     { value: 'descricao', label: 'Descrição (A-Z)', sortFn: (a, b) => (a.descricao || '').localeCompare(b.descricao || '') },
     { value: 'descricao_desc', label: 'Descrição (Z-A)', sortFn: (a, b) => (b.descricao || '').localeCompare(a.descricao || '') },
-    { value: 'codigo', label: 'Código (A-Z)', sortFn: (a, b) => (a.codigo || '').localeCompare(b.codigo || '') },
-    { value: 'codigo_desc', label: 'Código (Z-A)', sortFn: (a, b) => (b.codigo || '').localeCompare(a.codigo || '') },
+    { value: 'codigo', label: 'Código (Crescente)', sortFn: (a, b) => {
+      const aNum = parseFloat(a.codigo) || 0;
+      const bNum = parseFloat(b.codigo) || 0;
+      if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+      return (a.codigo || '').localeCompare(b.codigo || '', 'pt-BR', { numeric: true });
+    }},
+    { value: 'codigo_desc', label: 'Código (Decrescente)', sortFn: (a, b) => {
+      const aNum = parseFloat(a.codigo) || 0;
+      const bNum = parseFloat(b.codigo) || 0;
+      if (!isNaN(aNum) && !isNaN(bNum)) return bNum - aNum;
+      return (b.codigo || '').localeCompare(a.codigo || '', 'pt-BR', { numeric: true });
+    }},
     { value: 'tipo', label: 'Tipo (A-Z)', sortFn: (a, b) => (a.tipo_item || '').localeCompare(b.tipo_item || '') },
     { value: 'tipo_desc', label: 'Tipo (Z-A)', sortFn: (a, b) => (b.tipo_item || '').localeCompare(a.tipo_item || '') },
     { value: 'setor', label: 'Setor de Atividade (A-Z)', sortFn: (a, b) => (a.setor_atividade_nome || '').localeCompare(b.setor_atividade_nome || '') },
@@ -86,6 +96,7 @@ const OPCOES_ORDENACAO = {
     { value: 'grupo', label: 'Categoria/Grupo (A-Z)', sortFn: (a, b) => (a.grupo_produto_nome || a.grupo || '').localeCompare(b.grupo_produto_nome || b.grupo || '') },
     { value: 'grupo_desc', label: 'Categoria/Grupo (Z-A)', sortFn: (a, b) => (b.grupo_produto_nome || b.grupo || '').localeCompare(a.grupo_produto_nome || a.grupo || '') },
     { value: 'marca', label: 'Marca (A-Z)', sortFn: (a, b) => (a.marca_nome || '').localeCompare(b.marca_nome || '') },
+    { value: 'marca_desc', label: 'Marca (Z-A)', sortFn: (a, b) => (b.marca_nome || '').localeCompare(a.marca_nome || '') },
     { value: 'status', label: 'Status (A-Z)', sortFn: (a, b) => (a.status || '').localeCompare(b.status || '') },
     { value: 'status_desc', label: 'Status (Z-A)', sortFn: (a, b) => (b.status || '').localeCompare(a.status || '') },
     { value: 'mais_vendidos', label: 'Mais Vendidos', sortFn: (a, b) => (b.quantidade_vendida_12meses || 0) - (a.quantidade_vendida_12meses || 0) },
@@ -170,15 +181,15 @@ const ALIAS_QUERY_KEYS = {
 // ✅ Mapeamento de colunas clicáveis para ordenação por entidade
 const COLUNAS_ORDENACAO = {
   Produto: [
-    { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '' },
+    { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '', isNumeric: true },
     { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' },
     { campo: 'tipo_item', label: 'Tipo', getValue: (item) => item.tipo_item || '' },
-    { campo: 'setor_atividade_nome', label: 'Setor de Atividade', getValue: (item) => item.setor_atividade_nome || '' },
-    { campo: 'grupo_produto_nome', label: 'Categoria/Grupo', getValue: (item) => item.grupo_produto_nome || item.grupo || '' },
+    { campo: 'setor_atividade_nome', label: 'Setor', getValue: (item) => item.setor_atividade_nome || '' },
+    { campo: 'grupo_produto_nome', label: 'Categoria', getValue: (item) => item.grupo_produto_nome || item.grupo || '' },
     { campo: 'marca_nome', label: 'Marca', getValue: (item) => item.marca_nome || '' },
     { campo: 'status', label: 'Status', getValue: (item) => item.status || '' },
     { campo: 'estoque_atual', label: 'Estoque', getValue: (item) => item.estoque_atual || 0, isNumeric: true },
-    { campo: 'preco_venda', label: 'Preço Venda', getValue: (item) => item.preco_venda || 0, isNumeric: true }
+    { campo: 'preco_venda', label: 'Preço', getValue: (item) => item.preco_venda || 0, isNumeric: true }
   ],
   Cliente: [
     { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
@@ -273,12 +284,16 @@ export default function VisualizadorUniversalEntidade({
       'setor_desc': '-setor_atividade_nome',
       'grupo': 'grupo_produto_nome',
       'grupo_desc': '-grupo_produto_nome',
+      'marca': 'marca_nome',
+      'marca_desc': '-marca_nome',
       'status': 'status',
       'status_desc': '-status',
       'preco': '-preco_venda',
       'preco_menor': 'preco_venda',
       'estoque_alto': '-estoque_atual',
-      'estoque_baixo': 'estoque_disponivel'
+      'estoque_baixo': 'estoque_disponivel',
+      'mais_vendidos': '-quantidade_vendida_12meses',
+      'menos_vendidos': 'quantidade_vendida_12meses'
     };
     
     return sortMap[ordenacao] || '-created_date';
@@ -386,10 +401,11 @@ export default function VisualizadorUniversalEntidade({
       setColunaOrdenacao(campo);
       setDirecaoOrdenacao('asc');
     }
+    setOrdenacao(''); // Limpa ordenação do menu
     setCurrentPage(1); // ✅ Resetar para primeira página ao ordenar
   };
 
-  // ✅ Busca universal em todos os campos (SOMENTE busca - ordenação no backend)
+  // ✅ Busca universal em todos os campos + ordenação numérica para códigos
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = dadosFiltrados;
     
@@ -399,6 +415,11 @@ export default function VisualizadorUniversalEntidade({
       resultado = resultado.filter(item => {
         return Object.values(item).some(valor => {
           if (valor === null || valor === undefined) return false;
+          if (typeof valor === 'object') {
+            return Object.values(valor).some(subValor => 
+              subValor ? String(subValor).toLowerCase().includes(termoBusca) : false
+            );
+          }
           return String(valor).toLowerCase().includes(termoBusca);
         });
       });
@@ -718,57 +739,49 @@ onClose: invalidateAllRelated,
             </div>
           </div>
 
-          {/* Barra de Busca, Ordenação e Filtros - CORREÇÃO: onChange com e.target.value */}
+          {/* Barra de Busca, Ordenação e Filtros - CORREÇÃO: input nativo para garantir funcionamento */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none z-10" />
-              <InputClean
+              <input
+                type="text"
                 placeholder="🔍 Busca universal em todos os campos..."
                 value={busca}
                 onChange={(e) => {
                   setBusca(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-10"
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm pl-10"
               />
             </div>
             
-            {/* ✅ ORDENAÇÃO POR MENU (quando não estiver usando ordenação por coluna) */}
-            {!colunaOrdenacao && (
-              <Select value={ordenacao} onValueChange={(val) => {
-                setOrdenacao(val);
-                setCurrentPage(1); // ✅ Resetar para primeira página ao ordenar
-              }}>
-                <SelectTrigger className="w-full sm:w-64">
-                  <div className="flex items-center gap-2">
-                    <ArrowUpDown className="w-4 h-4" />
-                    <SelectValue placeholder="Organizar por..." />
-                  </div>
-                </SelectTrigger>
-                <SelectContent position="popper" sideOffset={5}>
-                  {opcoesOrdenacao.map(opcao => (
-                    <SelectItem key={opcao.value} value={opcao.value}>
-                      {opcao.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            {/* ✅ ORDENAÇÃO POR MENU */}
+            <Select value={ordenacao || 'recent'} onValueChange={(val) => {
+              setOrdenacao(val);
+              setColunaOrdenacao(null); // Limpa ordenação por coluna
+              setCurrentPage(1); // ✅ Resetar para primeira página ao ordenar
+            }}>
+              <SelectTrigger className="w-full sm:w-64">
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="w-4 h-4" />
+                  <SelectValue placeholder="Organizar por..." />
+                </div>
+              </SelectTrigger>
+              <SelectContent position="popper" sideOffset={5}>
+                {opcoesOrdenacao.map(opcao => (
+                  <SelectItem key={opcao.value} value={opcao.value}>
+                    {opcao.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            {/* ✅ Botão para limpar ordenação por coluna */}
+            {/* ✅ Indicador de ordenação ativa */}
             {colunaOrdenacao && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setColunaOrdenacao(null);
-                  setDirecaoOrdenacao('asc');
-                }}
-                className="whitespace-nowrap"
-              >
-                <ArrowUpDown className="w-4 h-4 mr-2" />
-                Limpar Ordenação
-              </Button>
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 px-3 py-2">
+                Ordenado por: {colunasOrdenacao.find(c => c.campo === colunaOrdenacao)?.label || colunaOrdenacao} 
+                {direcaoOrdenacao === 'asc' ? ' ↑' : ' ↓'}
+              </Badge>
             )}
 
             <div className="flex items-center gap-1 border rounded-lg p-1 bg-white">
