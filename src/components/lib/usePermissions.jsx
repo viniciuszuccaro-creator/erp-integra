@@ -115,6 +115,22 @@ export default function usePermissions() {
     return hasPermission(module, section, 'exportar');
   };
 
+  const canCancel = (module, section = null) => {
+    return hasPermission(module, section, 'cancelar');
+  };
+
+  const canView = (module, section = null) => {
+    return hasPermission(module, section, 'visualizar') || hasPermission(module, section, 'ver');
+  };
+
+  const hasAnyPermission = (module, section = null) => {
+    if (!user) return false;
+    if (user.role === "admin") return true;
+    const perms = perfilAcesso?.permissoes;
+    if (!perms || !perms[module]) return false;
+    return true;
+  };
+
   return {
     hasPermission,
     hasGranularPermission,
@@ -126,6 +142,9 @@ export default function usePermissions() {
     canCreate,
     canEdit,
     canExport,
+    canCancel,
+    canView,
+    hasAnyPermission,
     isLoading: loadingUser || loadingPerfil,
     user,
     perfilAcesso

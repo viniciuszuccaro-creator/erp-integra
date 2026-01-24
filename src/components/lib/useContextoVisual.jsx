@@ -212,14 +212,32 @@ export function useContextoVisual() {
   };
 
   // Create helpers that always stamp context
-  const createInContext = (entityName, dados, campo = 'empresa_id') => {
+  const createInContext = async (entityName, dados, campo = 'empresa_id') => {
     const stamped = carimbarContexto(dados, campo);
     if (!stamped.group_id && !stamped[campo]) {
       throw new Error('Contexto multiempresa obrigatório: defina grupo ou empresa');
     }
+
+    // Validação backend antes da criação
+    try {
+      const validation = await base44.functions.invoke('multiempresaValidator', {
+        operation: 'create',
+        entityName,
+        data: stamped
+      });
+
+      if (!validation.data?.valid) {
+        throw new Error(validation.data?.reason || 'Validação multiempresa falhou');
+      }
+    } catch (err) {
+      console.error('Validação multiempresa falhou:', err);
+      throw err;
+    }
+
     return base44.entities[entityName].create(stamped);
   };
-  const bulkCreateInContext = (entityName, lista, campo = 'empresa_id') => {
+
+  const bulkCreateInContext = async (entityName, lista, campo = 'empresa_id') => {
     const stampedList = lista.map(item => {
       const s = carimbarContexto(item, campo);
       if (!s.group_id && !s[campo]) {
@@ -227,15 +245,34 @@ export function useContextoVisual() {
       }
       return s;
     });
+
+    // Validar primeiro item como amostra
+    if (stampedList.length > 0) {
+      try {
+        const validation = await base44.functions.invoke('multiempresaValidator', {
+          operation: 'create',
+          entityName,
+          data: stampedList[0]
+        });
+
+        if (!validation.data?.valid) {
+          throw new Error(validation.data?.reason || 'Validação multiempresa falhou');
+        }
+      } catch (err) {
+        console.error('Validação multiempresa falhou:', err);
+        throw err;
+      }
+    }
+
     return base44.entities[entityName].bulkCreate(stampedList);
   };
+
   const filterInContext = (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
     const filtro = { ...criterios, ...getFiltroContexto(campo) };
-      if (!filtro.group_id && !filtro[campo]) {
-        throw new Error('Filtro sem contexto multiempresa');
-      }
-      // Segurança: remove campos sensíveis em listagens públicas (ex.: Produto)
-      return base44.entities[entityName].filter(filtro, order, limit);
+    if (!filtro.group_id && !filtro[campo]) {
+      throw new Error('Filtro sem contexto multiempresa');
+    }
+    return base44.entities[entityName].filter(filtro, order, limit);
   };
 
   return {

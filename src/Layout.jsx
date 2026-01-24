@@ -58,6 +58,7 @@ import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import "@/components/lib/networkGuard";
 import BootstrapGuard from "@/components/lib/BootstrapGuard";
 import GlobalNetworkErrorHandler from "@/components/lib/GlobalNetworkErrorHandler";
+import MultiempresaEnforcer from "@/components/lib/MultiempresaEnforcer";
 
 const navigationItems = [
         { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -79,6 +80,7 @@ const navigationItems = [
   { title: "Configurações do Sistema", url: createPageUrl("ConfiguracoesSistema"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
+  { title: "🛡️ Governança ETAPA 1", url: createPageUrl("GovernancaETAPA1"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "Auditoria de UI", url: createPageUrl("AuditoriaUI"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "⚡ Estabilização do Sistema", url: createPageUrl("EstabilizacaoSistema"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🎨 Padronização UI/UX", url: createPageUrl("PadronizacaoUI"), icon: Shield, group: "sistema", adminOnly: true },
@@ -586,8 +588,10 @@ export default function Layout({ children, currentPageName }) {
     <UserProvider>
       <WindowProvider>
         <ZIndexGuard>
-          <GlobalNetworkErrorHandler />
-          <LayoutContent children={children} currentPageName={currentPageName} />
+          <MultiempresaEnforcer>
+            <GlobalNetworkErrorHandler />
+            <LayoutContent children={children} currentPageName={currentPageName} />
+          </MultiempresaEnforcer>
         </ZIndexGuard>
       </WindowProvider>
     </UserProvider>
