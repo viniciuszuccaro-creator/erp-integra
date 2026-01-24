@@ -18,6 +18,8 @@ import CertificadoOficialETAPA1 from '@/components/governanca/CertificadoOficial
 import GuiaUsoETAPA1 from '@/components/governanca/GuiaUsoETAPA1';
 import ChecklistImplementacaoETAPA1 from '@/components/governanca/ChecklistImplementacaoETAPA1';
 import MetricasConformidadeETAPA1 from '@/components/governanca/MetricasConformidadeETAPA1';
+import ProvaFinalETAPA1 from '@/components/governanca/ProvaFinalETAPA1';
+import SeloETAPA1_100 from '@/components/governanca/SeloETAPA1_100';
 import AdminOnlyZone from '@/components/security/AdminOnlyZone';
 
 /**
@@ -84,6 +86,7 @@ export default function GovernancaETAPA1() {
 
             <TabsContent value="conformidade" className="mt-6">
               <div className="space-y-6">
+                <ProvaFinalETAPA1 />
                 <CertificadoOficialETAPA1 />
                 <MetricasConformidadeETAPA1 />
                 <MonitoramentoETAPA1 />
