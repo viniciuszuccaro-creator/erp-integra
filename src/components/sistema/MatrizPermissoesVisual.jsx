@@ -52,14 +52,16 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
   const [perfilDetalhesOpen, setPerfilDetalhesOpen] = useState(false);
   const [perfilSelecionado, setPerfilSelecionado] = useState(null);
 
-  const perfisAtivos = perfis.filter(p => p.ativo !== false);
-  const modulosFiltrados = Object.entries(estruturaSistema).filter(([id, mod]) =>
-    !busca || mod.nome.toLowerCase().includes(busca.toLowerCase())
+  const perfisAtivos = Array.isArray(perfis) ? perfis.filter(p => p.ativo !== false) : [];
+  const estruturaValida = estruturaSistema && typeof estruturaSistema === 'object' ? estruturaSistema : {};
+  const modulosFiltrados = Object.entries(estruturaValida).filter(([id, mod]) =>
+    !busca || (mod?.nome && mod.nome.toLowerCase().includes(busca.toLowerCase()))
   );
 
   const calcularNivelAcesso = (perfil, moduloId, modulo) => {
-    const perms = perfil.permissoes?.[moduloId] || {};
-    const totalSecoes = Object.keys(modulo.secoes).length;
+    const perms = perfil?.permissoes?.[moduloId] || {};
+    const totalSecoes = modulo?.secoes ? Object.keys(modulo.secoes).length : 0;
+    if (totalSecoes === 0) return { nivel: "nenhum", label: "Sem Acesso", cor: "slate" };
     const secoesComAcesso = Object.values(perms).filter(arr => arr?.length > 0).length;
     
     if (secoesComAcesso === 0) return { nivel: "nenhum", label: "Sem Acesso", cor: "slate" };
@@ -120,19 +122,20 @@ export default function MatrizPermissoesVisual({ perfis = [], estruturaSistema }
               </thead>
               <tbody>
                 {modulosFiltrados.map(([moduloId, modulo]) => {
-                  const Icone = MODULOS_ICONES[moduloId] || LayoutDashboard;
-                  
-                  return (
-                    <tr key={moduloId} className="hover:bg-slate-50">
-                      <td className="border p-3">
-                        <div className="flex items-center gap-2">
-                          <Icone className="w-5 h-5 text-blue-600" />
-                          <span className="font-medium">{modulo.nome}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {Object.keys(modulo.secoes).length} seções
-                        </p>
-                      </td>
+                 const Icone = MODULOS_ICONES[moduloId] || LayoutDashboard;
+                 const totalSecoes = modulo?.secoes ? Object.keys(modulo.secoes).length : 0;
+
+                 return (
+                   <tr key={moduloId} className="hover:bg-slate-50">
+                     <td className="border p-3">
+                       <div className="flex items-center gap-2">
+                         <Icone className="w-5 h-5 text-blue-600" />
+                         <span className="font-medium">{modulo?.nome || moduloId}</span>
+                       </div>
+                       <p className="text-xs text-slate-500 mt-1">
+                         {totalSecoes} seções
+                       </p>
+                     </td>
                       {perfisAtivos.map(perfil => {
                         const { nivel, label, cor } = calcularNivelAcesso(perfil, moduloId, modulo);
                         
