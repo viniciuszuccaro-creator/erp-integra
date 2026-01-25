@@ -7,6 +7,9 @@ import { CheckCircle2, Truck, MapPin, Camera, RotateCcw, Smartphone } from 'luci
 import PainelRoteirizacao from '@/components/logistica/PainelRoteirizacao';
 import DashboardEntregasGestor from '@/components/logistica/DashboardEntregasGestor';
 import MonitorEntregasRealtime from '@/components/logistica/MonitorEntregasRealtime';
+import IntegracaoETAPA3 from '@/components/governanca/IntegracaoETAPA3';
+import ChecklistETAPA3 from '@/components/governanca/ChecklistETAPA3';
+import StatusFinalETAPA3_100 from '@/components/governanca/StatusFinalETAPA3_100';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
@@ -187,17 +190,19 @@ export default function ETAPA3Dashboard() {
         </Card>
       </div>
 
-      {/* Demo Funcional */}
+      {/* Demo Funcional Expandido */}
       <Card>
         <CardHeader>
           <CardTitle>🎯 Demonstração Funcional</CardTitle>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="roteirizacao" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="roteirizacao">Roteirização</TabsTrigger>
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="realtime">Real-time</TabsTrigger>
+              <TabsTrigger value="integracoes">Integrações</TabsTrigger>
+              <TabsTrigger value="checklist">Checklist</TabsTrigger>
             </TabsList>
 
             <TabsContent value="roteirizacao" className="mt-4">
@@ -211,9 +216,20 @@ export default function ETAPA3Dashboard() {
             <TabsContent value="realtime" className="mt-4">
               <MonitorEntregasRealtime />
             </TabsContent>
+
+            <TabsContent value="integracoes" className="mt-4">
+              <IntegracaoETAPA3 />
+            </TabsContent>
+
+            <TabsContent value="checklist" className="mt-4">
+              <ChecklistETAPA3 />
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Status Final Completo */}
+      <StatusFinalETAPA3_100 />
 
       {/* Certificação ETAPA 3 */}
       <Card className="border-2 border-green-500 bg-green-50">

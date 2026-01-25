@@ -8,6 +8,9 @@ import { Truck, MapPin, CheckCircle2, Navigation, Camera, AlertCircle } from 'lu
 import { toast } from 'sonner';
 import CapturaPODMobile from '@/components/logistica/CapturaPODMobile';
 import { useUser } from '@/components/lib/UserContext';
+import ListaEntregasMotorista from '@/components/logistica/ListaEntregasMotorista';
+import FluxoEntregaCompleto from '@/components/logistica/FluxoEntregaCompleto';
+import LogisticaReversaForm from '@/components/logistica/LogisticaReversaForm';
 
 /**
  * ETAPA 3: App do Motorista (Mobile-First)
@@ -18,6 +21,8 @@ export default function AppMotorista() {
   const { user } = useUser();
   const [entregaSelecionada, setEntregaSelecionada] = useState(null);
   const [modoPOD, setModoPOD] = useState(false);
+  const [modoFluxo, setModoFluxo] = useState(false);
+  const [modoReversa, setModoReversa] = useState(false);
   const queryClient = useQueryClient();
 
   // Buscar entregas do motorista
@@ -100,6 +105,32 @@ export default function AppMotorista() {
     );
   }
 
+  if (modoFluxo && entregaSelecionada) {
+    return (
+      <FluxoEntregaCompleto
+        entrega={entregaSelecionada}
+        onFechar={() => {
+          setModoFluxo(false);
+          setEntregaSelecionada(null);
+          queryClient.invalidateQueries(['entregas']);
+        }}
+      />
+    );
+  }
+
+  if (modoReversa && entregaSelecionada) {
+    return (
+      <LogisticaReversaForm
+        entrega={entregaSelecionada}
+        onConcluir={() => {
+          setModoReversa(false);
+          setEntregaSelecionada(null);
+          queryClient.invalidateQueries(['entregas']);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 p-4 pb-20">
       {/* Header */}
@@ -113,8 +144,22 @@ export default function AppMotorista() {
         </p>
       </div>
 
-      {/* Lista de Entregas */}
-      <div className="space-y-3">
+      {/* ETAPA 3: Lista Otimizada */}
+      <ListaEntregasMotorista
+        onVerDetalhes={(entrega) => {
+          setEntregaSelecionada(entrega);
+          setModoFluxo(true);
+        }}
+        onIniciar={(entrega) => {
+          atualizarStatusMutation.mutate({
+            entrega_id: entrega.id,
+            novo_status: 'Saiu para Entrega'
+          });
+        }}
+      />
+
+      {/* Lista Original (Backup) */}
+      <div className="space-y-3 hidden">
         {isLoading && (
           <Card>
             <CardContent className="py-8 text-center text-slate-500">
