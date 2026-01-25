@@ -63,6 +63,9 @@ export default function NotasFiscaisTab({ notasFiscais: notasFiscaisProp, pedido
     queryFn: () => base44.entities.Empresa.list(),
     staleTime: 60000,
   });
+  
+  const isLoading = !notasFiscaisProp && !notasFiscais.length;
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [tipoFilter, setTipoFilter] = useState("todas");
@@ -244,6 +247,14 @@ export default function NotasFiscaisTab({ notasFiscais: notasFiscaisProp, pedido
 
   const totalAutorizada = notasFiscais.filter(n => n.status === "Autorizada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
   const totalCancelada = notasFiscais.filter(n => n.status === "Cancelada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
