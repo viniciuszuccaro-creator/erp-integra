@@ -42,10 +42,19 @@ export function useContextoVisual() {
       setEmpresaAtualId(storedEmpresaId);
     } else if (empresaContexto) {
       setEmpresaAtualId(empresaContexto.id);
+    } else if (empresas.length > 0 && !empresaAtualId) {
+      // Auto-selecionar primeira empresa ativa se nenhuma estiver selecionada
+      const primeiraAtiva = empresas.find(e => e.status === 'Ativa') || empresas[0];
+      if (primeiraAtiva) {
+        setEmpresaAtualId(primeiraAtiva.id);
+        try {
+          localStorage.setItem('empresa_atual_id', primeiraAtiva.id);
+        } catch {}
+      }
     }
-  }, [empresaContexto]);
+  }, [empresaContexto, empresas, empresaAtualId]);
 
-  const empresaAtual = (contexto === 'grupo') ? null : (empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || null);
+  const empresaAtual = (contexto === 'grupo') ? null : (empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || empresas.find(e => e.status === 'Ativa') || empresas[0] || null);
   const empresasDoGrupo = empresas.filter(empresa => empresa.group_id === grupoAtual?.id);
   const estaNoGrupo = contexto === 'grupo';
 
