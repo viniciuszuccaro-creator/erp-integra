@@ -35,8 +35,9 @@ import { useWindow } from "@/components/lib/useWindow";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import TabWrapper from '../lib/TabWrapper';
 
-export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
+export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null, windowMode = false }) {
   const { empresaAtual } = useContextoVisual();
 
   const { data: pedidos = pedidosProp || [] } = useQueryWithRateLimit(
@@ -124,7 +125,8 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
   }
 
   return (
-    <div className="space-y-6">
+    <TabWrapper requireEmpresa={false}>
+    <div className={`space-y-6 ${windowMode ? 'w-full h-full p-4' : ''}`}>
       {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Alert className="border-orange-300 bg-orange-50">
@@ -531,5 +533,6 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
         </CardContent>
       </Card>
     </div>
+    </TabWrapper>
   );
 }

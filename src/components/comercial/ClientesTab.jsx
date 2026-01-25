@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,8 +13,9 @@ import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import VisualizadorUniversalEntidade from '../cadastros/VisualizadorUniversalEntidade';
 import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
+import TabWrapper from '../lib/TabWrapper';
 
-export default function ClientesTab({ clientes: clientesProp }) {
+export default function ClientesTab({ clientes: clientesProp, windowMode = false }) {
   const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
@@ -55,7 +55,8 @@ export default function ClientesTab({ clientes: clientesProp }) {
   }
 
   return (
-    <div className="space-y-6">
+    <TabWrapper requireEmpresa={false}>
+    <div className={`space-y-6 ${windowMode ? 'w-full h-full p-4' : ''}`}>
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Clientes</h2>
         <Button 
@@ -195,5 +196,6 @@ export default function ClientesTab({ clientes: clientesProp }) {
         </CardContent>
       </Card>
     </div>
+    </TabWrapper>
   );
 }

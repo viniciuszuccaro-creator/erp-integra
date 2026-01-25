@@ -16,6 +16,7 @@ import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMass
 import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosProducao";
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import TabWrapper from "@/components/lib/TabWrapper";
 
 export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
@@ -82,7 +83,8 @@ export default function ProdutosTab(props) {
   }, [queryClient]);
 
   return (
-    <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
+    <TabWrapper requireEmpresa={false}>
+    <div className="w-full h-full flex flex-col space-y-4 overflow-auto p-4">
       <div className="w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4">
@@ -272,5 +274,6 @@ export default function ProdutosTab(props) {
         windowMode={props.windowMode}
       />
     </div>
+    </TabWrapper>
   );
 }
