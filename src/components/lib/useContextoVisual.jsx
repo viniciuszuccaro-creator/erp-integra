@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "./useQueryWithRateLimit";
 import { useUser } from "./UserContext";
@@ -81,7 +81,7 @@ export function useContextoVisual() {
     }
   }, [empresaContexto, empresas, loadingEmpresas, loadingContexto, contexto, grupoAtual]);
 
-  const empresaAtual = React.useMemo(() => {
+  const empresaAtual = useMemo(() => {
     if (contexto === 'grupo') return null;
     return empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || empresas.find(e => e.status === 'Ativa') || empresas[0] || null;
   }, [contexto, empresaAtualId, empresas, empresaContexto]);
