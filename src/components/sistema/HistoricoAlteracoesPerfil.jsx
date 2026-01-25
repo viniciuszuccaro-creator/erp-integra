@@ -19,11 +19,17 @@ export default function HistoricoAlteracoesPerfil({ perfilId }) {
   const { data: historico = [] } = useQuery({
     queryKey: ['auditoria-perfil', perfilId],
     queryFn: async () => {
-      const logs = await base44.entities.AuditLog.filter({
-        entity_type: 'PerfilAcesso',
-        entity_id: perfilId
-      }, '-created_date', 50);
-      return logs;
+      if (!perfilId) return [];
+      try {
+        const logs = await base44.entities.AuditLog.filter({
+          entidade: 'PerfilAcesso',
+          registro_id: perfilId
+        }, '-created_date', 50);
+        return logs;
+      } catch (error) {
+        console.error('Erro ao buscar histórico:', error);
+        return [];
+      }
     },
     enabled: !!perfilId
   });
