@@ -27,7 +27,8 @@ import SolicitacaoCompraForm from "./SolicitacaoCompraForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
-export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false }) {
+export default function SolicitacoesCompraTab({ solicitacoes: solicitacoesProp, windowMode = false }) {
+  const solicitacoes = solicitacoesProp || [];
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const { openWindow } = useWindow();

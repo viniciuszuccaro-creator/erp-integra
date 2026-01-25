@@ -18,7 +18,8 @@ import KPIsPagar from "./contas-pagar/KPIsPagar";
 import FiltrosPagar from "./contas-pagar/FiltrosPagar";
 import TabelaPagar from "./contas-pagar/TabelaPagar";
 
-export default function ContasPagarTab({ contas, windowMode = false }) {
+export default function ContasPagarTab({ contas: contasProp, windowMode = false }) {
+  const contas = contasProp || [];
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
