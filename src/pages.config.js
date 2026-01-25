@@ -17,6 +17,7 @@ import Documentacao from './pages/Documentacao';
 import ETAPA2Dashboard from './pages/ETAPA2Dashboard';
 import ETAPA3Conclusao from './pages/ETAPA3Conclusao';
 import ETAPA3Dashboard from './pages/ETAPA3Dashboard';
+import ETAPA4Dashboard from './pages/ETAPA4Dashboard';
 import Empresas from './pages/Empresas';
 import EstabilizacaoSistema from './pages/EstabilizacaoSistema';
 import Estoque from './pages/Estoque';
@@ -35,7 +36,6 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
-import ETAPA4Dashboard from './pages/ETAPA4Dashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -59,6 +59,7 @@ export const PAGES = {
     "ETAPA2Dashboard": ETAPA2Dashboard,
     "ETAPA3Conclusao": ETAPA3Conclusao,
     "ETAPA3Dashboard": ETAPA3Dashboard,
+    "ETAPA4Dashboard": ETAPA4Dashboard,
     "Empresas": Empresas,
     "EstabilizacaoSistema": EstabilizacaoSistema,
     "Estoque": Estoque,
@@ -77,7 +78,6 @@ export const PAGES = {
     "RH": RH,
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
-    "ETAPA4Dashboard": ETAPA4Dashboard,
 }
 
 export const pagesConfig = {

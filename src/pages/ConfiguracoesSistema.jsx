@@ -4,9 +4,8 @@ import ChecklistFinalV21_6 from "@/components/sistema/CHECKLIST_FINAL_V21_6";
 import Sistema100CompletoFinal from "@/components/sistema/SISTEMA_100_COMPLETO_FINAL";
 import ValidacaoFinalTotalV21_6 from "@/components/sistema/VALIDACAO_FINAL_TOTAL_V21_6";
 import MasterDashboardV21_6 from "@/components/sistema/MASTER_DASHBOARD_V21_6";
-import { Shield, FileText, Settings, Wrench } from "lucide-react";
+import { Shield, Settings, Wrench } from "lucide-react";
 
-import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import ControleEstoqueCompleto from "@/components/estoque/ControleEstoqueCompleto";
 
 import DiagnosticoBackend from "@/components/sistema/DiagnosticoBackend";
@@ -64,10 +63,6 @@ export default function ConfiguracoesSistema() {
 
 
           
-          <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <FileText className="w-4 h-4 mr-2" />
-            Auditoria
-          </TabsTrigger>
           <TabsTrigger value="estoque-avancado" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             <Settings className="w-4 h-4 mr-2" />
             Estoque Avançado
@@ -95,10 +90,6 @@ export default function ConfiguracoesSistema() {
 
 
         
-
-        <TabsContent value="auditoria">
-          <LogsAuditoria />
-        </TabsContent>
 
         <TabsContent value="estoque-avancado">
           <ControleEstoqueCompleto empresaId={empresaAtual?.id} />
