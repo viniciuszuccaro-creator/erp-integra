@@ -39,15 +39,26 @@ export function useContextoVisual() {
   const [filtroEmpresa, setFiltroEmpresa] = useState('todas');
 
   useEffect(() => {
+    // Sempre marcar como ready depois de carregar dados
+    if (loadingEmpresas || loadingContexto) {
+      setContextoReady(false);
+      return;
+    }
+
     const storedEmpresaId = localStorage.getItem('empresa_atual_id');
     if (storedEmpresaId) {
       setEmpresaAtualId(storedEmpresaId);
       setContextoReady(true);
-    } else if (empresaContexto) {
+      return;
+    }
+    
+    if (empresaContexto) {
       setEmpresaAtualId(empresaContexto.id);
       setContextoReady(true);
-    } else if (empresas.length > 0 && !empresaAtualId && !loadingEmpresas) {
-      // Auto-selecionar primeira empresa ativa se nenhuma estiver selecionada
+      return;
+    }
+    
+    if (empresas.length > 0) {
       const primeiraAtiva = empresas.find(e => e.status === 'Ativa') || empresas[0];
       if (primeiraAtiva) {
         setEmpresaAtualId(primeiraAtiva.id);
@@ -55,13 +66,25 @@ export function useContextoVisual() {
           localStorage.setItem('empresa_atual_id', primeiraAtiva.id);
         } catch {}
         setContextoReady(true);
+        return;
       }
-    } else if (contexto === 'grupo' && grupoAtual) {
+    }
+    
+    if (contexto === 'grupo' && grupoAtual) {
+      setContextoReady(true);
+      return;
+    }
+
+    // Se chegou aqui mas dados estão carregados, marca como ready mesmo assim
+    if (!loadingEmpresas && !loadingContexto) {
       setContextoReady(true);
     }
-  }, [empresaContexto, empresas, empresaAtualId, loadingEmpresas, contexto, grupoAtual]);
+  }, [empresaContexto, empresas, loadingEmpresas, loadingContexto, contexto, grupoAtual]);
 
-  const empresaAtual = (contexto === 'grupo') ? null : (empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || empresas.find(e => e.status === 'Ativa') || empresas[0] || null);
+  const empresaAtual = React.useMemo(() => {
+    if (contexto === 'grupo') return null;
+    return empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || empresas.find(e => e.status === 'Ativa') || empresas[0] || null;
+  }, [contexto, empresaAtualId, empresas, empresaContexto]);
   const empresasDoGrupo = empresas.filter(empresa => empresa.group_id === grupoAtual?.id);
   const estaNoGrupo = contexto === 'grupo';
 
@@ -319,7 +342,8 @@ export function useContextoVisual() {
     empresasDoGrupo,
     estaNoGrupo: contexto === 'grupo',
     grupoAtual,
-    isLoading: loadingUser || loadingEmpresas || loadingContexto || !contextoReady,
+    contextoReady,
+    isLoading: !contextoReady,
     filtrarPorContexto,
     getFiltroContexto,
     carimbarContexto,
