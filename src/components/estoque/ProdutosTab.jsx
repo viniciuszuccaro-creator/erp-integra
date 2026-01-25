@@ -283,3 +283,11 @@ function ProdutosTabContent(props) {
     </div>
   );
 }
+
+export default function ProdutosTab(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ProdutosTabContent {...props} />
+    </Suspense>
+  );
+}
