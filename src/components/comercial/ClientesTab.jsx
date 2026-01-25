@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,16 @@ import { useWindow } from "@/components/lib/useWindow";
 import VisualizadorUniversalEntidade from '../cadastros/VisualizadorUniversalEntidade';
 import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
 
-export default function ClientesTab({ clientes: clientesProp }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function ClientesTabContent({ clientes: clientesProp }) {
   const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
