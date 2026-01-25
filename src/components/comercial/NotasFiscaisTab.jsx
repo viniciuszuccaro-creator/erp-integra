@@ -92,7 +92,6 @@ export default function NotasFiscaisTab({ notasFiscais: notasFiscaisProp, pedido
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
   const [formData, setFormData] = useState({

@@ -44,7 +44,6 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes: requisicoesPro
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
-  const { empresaAtual, contexto } = useContextoVisual();
   const { canCreate } = usePermissions();
   const [formData, setFormData] = useState({
     numero_requisicao: `REQ-ALM-${Date.now()}`,
@@ -65,8 +64,8 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes: requisicoesPro
       // Criar requisição como MovimentacaoEstoque
       for (const item of data.itens) {
         await base44.entities.MovimentacaoEstoque.create({
-          empresa_id: empresaAtual?.id,
-          group_id: contexto?.group_id,
+          empresa_id: data.empresa_id,
+          group_id: data.group_id,
           produto_id: item.produto_id,
           produto_descricao: item.produto_descricao,
           tipo_movimento: "saida",

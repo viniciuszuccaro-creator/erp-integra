@@ -56,7 +56,6 @@ export default function RecebimentoTab({ recebimentos: recebimentosProp, ordensC
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingRecebimento, setViewingRecebimento] = useState(null);
   const { openWindow } = useWindow();
-  const { empresaAtual } = useContextoVisual();
   const { canCreate } = usePermissions();
   const [formData, setFormData] = useState({
     numero_recebimento: `REC-${Date.now()}`,
