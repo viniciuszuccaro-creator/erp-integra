@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { Building2, Users, ShoppingCart, FileText, Upload, Package } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
@@ -21,84 +21,54 @@ export default function Compras() {
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
-        return await base44.entities.Fornecedor.filter(filtro, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar fornecedores:', err);
-        return [];
-      }
+  const { data: fornecedores = [] } = useQueryWithRateLimit(
+    ['fornecedores', empresaAtual?.id],
+    async () => {
+      const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
+      return await base44.entities.Fornecedor.filter(filtro, '-created_date', 100);
     },
-    staleTime: 30000,
-    retry: 2
-  });
+    { initialData: [] }
+  );
 
-  const { data: totalFornecedores = 0 } = useQuery({
-    queryKey: ['fornecedores-count-compras', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Fornecedor',
-          filter: filtro
-        });
-        return response.data?.count || fornecedores.length;
-      } catch {
-        return fornecedores.length;
-      }
+  const { data: totalFornecedores = 0 } = useQueryWithRateLimit(
+    ['fornecedores-count-compras', empresaAtual?.id],
+    async () => {
+      const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
+      const response = await base44.functions.invoke('countEntities', {
+        entityName: 'Fornecedor',
+        filter: filtro
+      });
+      return response.data?.count || 0;
     },
-    staleTime: 60000,
-    retry: 1
-  });
+    { initialData: 0 }
+  );
 
-  const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordensCompra', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.OrdemCompra.filter(filtro, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar ordens de compra:', err);
-        return [];
-      }
+  const { data: ordensCompra = [] } = useQueryWithRateLimit(
+    ['ordensCompra', empresaAtual?.id],
+    async () => {
+      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+      return await base44.entities.OrdemCompra.filter(filtro, '-created_date', 100);
     },
-    staleTime: 30000,
-    retry: 2
-  });
+    { initialData: [] }
+  );
 
-  const { data: solicitacoes = [] } = useQuery({
-    queryKey: ['solicitacoes-compra', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 100);
-      } catch (err) {
-        console.error('Erro ao buscar solicitações:', err);
-        return [];
-      }
+  const { data: solicitacoes = [] } = useQueryWithRateLimit(
+    ['solicitacoes-compra', empresaAtual?.id],
+    async () => {
+      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+      return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 100);
     },
-    staleTime: 30000,
-    retry: 1
-  });
+    { initialData: [] }
+  );
 
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: async () => {
-      try {
-        return await base44.entities.Empresa.list();
-      } catch (err) {
-        console.error('Erro ao buscar empresas:', err);
-        return [];
-      }
+  const { data: empresas = [] } = useQueryWithRateLimit(
+    ['empresas'],
+    async () => {
+      return await base44.entities.Empresa.list();
     },
-    staleTime: 60000,
-    retry: 1
-  });
+    { initialData: [] }
+  );
 
-  // Dados já vêm filtrados do servidor
   const fornecedoresFiltrados = fornecedores;
   const ordensCompraFiltradas = ordensCompra;
   const solicitacoesFiltradas = solicitacoes;

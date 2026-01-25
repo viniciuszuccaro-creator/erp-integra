@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { FileText, Settings, Book, BarChart3, Upload, Sparkles } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
@@ -22,22 +22,15 @@ export default function FiscalPage() {
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notasFiscais', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_faturamento_id: empresaAtual.id } : {};
-        return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar notas fiscais:', err);
-        return [];
-      }
+  const { data: notasFiscais = [] } = useQueryWithRateLimit(
+    ['notasFiscais', empresaAtual?.id],
+    async () => {
+      const filtro = empresaAtual?.id ? { empresa_faturamento_id: empresaAtual.id } : {};
+      return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 100);
     },
-    staleTime: 30000,
-    retry: 2
-  });
+    { initialData: [] }
+  );
 
-  // Dados já vêm filtrados do servidor
   const notasFiltradasContexto = notasFiscais;
 
   const statusCounts = {

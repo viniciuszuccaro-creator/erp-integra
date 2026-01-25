@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { Users, Clock, Calendar, Activity, Trophy, FileText, UserCircle } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
@@ -21,68 +21,44 @@ export default function RH() {
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
-        return await base44.entities.Colaborador.filter(filtro, '-created_date', 100);
-      } catch (err) {
-        console.error('Erro ao buscar colaboradores:', err);
-        return [];
-      }
+  const { data: colaboradores = [] } = useQueryWithRateLimit(
+    ['colaboradores', empresaAtual?.id],
+    async () => {
+      const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
+      return await base44.entities.Colaborador.filter(filtro, '-created_date', 100);
     },
-    staleTime: 30000,
-    retry: 2
-  });
+    { initialData: [] }
+  );
 
-  const { data: totalColaboradores = 0 } = useQuery({
-    queryKey: ['colaboradores-count-rh', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Colaborador',
-          filter: filtro
-        });
-        return response.data?.count || colaboradores.length;
-      } catch {
-        return colaboradores.length;
-      }
+  const { data: totalColaboradores = 0 } = useQueryWithRateLimit(
+    ['colaboradores-count-rh', empresaAtual?.id],
+    async () => {
+      const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
+      const response = await base44.functions.invoke('countEntities', {
+        entityName: 'Colaborador',
+        filter: filtro
+      });
+      return response.data?.count || 0;
     },
-    staleTime: 60000,
-    retry: 1
-  });
+    { initialData: 0 }
+  );
 
-  const { data: pontos = [] } = useQuery({
-    queryKey: ['pontos', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        return await base44.entities.Ponto.list('-data', 100);
-      } catch (err) {
-        console.error('Erro ao buscar pontos:', err);
-        return [];
-      }
+  const { data: pontos = [] } = useQueryWithRateLimit(
+    ['pontos', empresaAtual?.id],
+    async () => {
+      return await base44.entities.Ponto.list('-data', 100);
     },
-    staleTime: 30000,
-    retry: 1
-  });
+    { initialData: [] }
+  );
 
-  const { data: ferias = [] } = useQuery({
-    queryKey: ['ferias', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        return await base44.entities.Ferias.list('-created_date', 50);
-      } catch (err) {
-        console.error('Erro ao buscar férias:', err);
-        return [];
-      }
+  const { data: ferias = [] } = useQueryWithRateLimit(
+    ['ferias', empresaAtual?.id],
+    async () => {
+      return await base44.entities.Ferias.list('-created_date', 50);
     },
-    staleTime: 30000,
-    retry: 1
-  });
+    { initialData: [] }
+  );
 
-  // Dados já vêm filtrados do servidor
   const colaboradoresFiltrados = colaboradores;
   const colaboradoresAtivos = colaboradoresFiltrados.filter(c => c.status === "Ativo").length;
   const feriasAprovadas = ferias.filter(f => f.status === "Aprovada").length;
