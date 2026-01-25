@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, Factory, ShoppingCart, Plus, Upload, Package } from "lucide-react";
+import { AlertTriangle, Factory, ShoppingCart, Plus, Upload, Package, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 import usePermissions from "@/components/lib/usePermissions";
@@ -36,7 +36,7 @@ export default function ProdutosTab(props) {
     return { total, revenda, producao, estoqueBaixo };
   };
 
-  const { data: todosProdutos = [], refetch: refetchProdutos } = useQuery({
+  const { data: todosProdutos = [], refetch: refetchProdutos, isLoading: isLoadingProdutos } = useQuery({
     queryKey: ['produtos-todos-contagem', empresaAtual?.id],
     queryFn: async () => {
       let todos = [];
@@ -45,15 +45,24 @@ export default function ProdutosTab(props) {
       let hasMore = true;
       
       while (hasMore) {
-        const batch = await base44.entities.Produto.list(undefined, batchSize, skip);
-        if (!batch || batch.length === 0) {
-          hasMore = false;
-        } else {
-          todos = [...todos, ...batch];
-          if (batch.length < batchSize) {
+        try {
+          const batch = await base44.entities.Produto.list(undefined, batchSize, skip);
+          if (!batch || batch.length === 0) {
             hasMore = false;
           } else {
-            skip += batchSize;
+            todos = [...todos, ...batch];
+            if (batch.length < batchSize) {
+              hasMore = false;
+            } else {
+              skip += batchSize;
+            }
+          }
+        } catch (error) {
+          if (error?.status === 429) {
+            // Rate limit - retorna o que foi carregado
+            hasMore = false;
+          } else {
+            throw error;
           }
         }
       }
@@ -62,12 +71,15 @@ export default function ProdutosTab(props) {
     },
     initialData: [],
     enabled: true,
-    staleTime: Infinity,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    retry: (failureCount, error) => error?.status === 429 ? failureCount < 1 : false,
+    retryDelay: 1000,
     refetchOnWindowFocus: false
   });
 
   const contagensTotais = useMemo(() => calcularContagensLocal(todosProdutos), [todosProdutos]);
-  const isLoadingContagens = !todosProdutos || todosProdutos.length === 0;
+  const isLoadingContagens = isLoadingProdutos && todosProdutos.length === 0;
 
   React.useEffect(() => {
     const unsubscribe = base44.entities.Produto.subscribe(() => {
