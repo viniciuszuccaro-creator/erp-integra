@@ -29,13 +29,7 @@ const LoadingFallback = () => (
 );
 
 function ContasPagarTabContent({ contas: contasProp, windowMode = false }) {
-  const contas = contasProp || [];
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { openWindow } = useWindow();
-  const { formasPagamento } = useFormasPagamento();
-  const { user: authUser } = useUser();
-
+  // TODOS OS HOOKS PRIMEIRO
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [dialogBaixaOpen, setDialogBaixaOpen] = useState(false);
@@ -50,6 +44,12 @@ function ContasPagarTabContent({ contas: contasProp, windowMode = false }) {
     desconto: 0,
     observacoes: ""
   });
+  const contas = contasProp || [];
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
+  const { formasPagamento } = useFormasPagamento();
+  const { user: authUser } = useUser();
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],

@@ -24,6 +24,9 @@ const LoadingFallback = () => (
 );
 
 function ClientesTabContent({ clientes: clientesProp }) {
+  // TODOS OS HOOKS PRIMEIRO
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("todos");
   const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
@@ -35,8 +38,6 @@ function ClientesTabContent({ clientes: clientesProp }) {
     },
     { initialData: clientesProp || [] }
   );
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("todos");
 
   const filteredClientes = clientes.filter(c => {
     const matchSearch = c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||

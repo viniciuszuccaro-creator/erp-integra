@@ -27,10 +27,11 @@ const LoadingFallback = () => (
 );
 
 function ProdutosTabContent(props) {
+  // TODOS OS HOOKS PRIMEIRO
+  const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
   const { empresaAtual } = useContextoVisual();
-  const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
