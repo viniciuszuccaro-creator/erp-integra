@@ -206,6 +206,16 @@ export default function RecebimentoTab({ recebimentos: recebimentosProp, ordensC
       r.itens_recebidos?.some(i => i?.produto_descricao?.toLowerCase().includes(searchLower));
   });
 
+  const isLoading = !recebimentosProp && !recebimentos.length;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between">

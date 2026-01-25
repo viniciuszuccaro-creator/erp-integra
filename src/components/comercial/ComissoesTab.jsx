@@ -34,6 +34,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
 export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
+  const isLoading = !comissoes || comissoes.length === 0;
   const [searchTerm, setSearchTerm] = useState("");
   const [visualizandoComissao, setVisualizandoComissao] = useState(null);
   const [statusFilter, setStatusFilter] = useState("todas");
@@ -178,6 +179,14 @@ export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
     'Paga': 'bg-blue-100 text-blue-700',
     'Cancelada': 'bg-red-100 text-red-700'
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

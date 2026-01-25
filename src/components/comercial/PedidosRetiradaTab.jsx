@@ -58,6 +58,8 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
     queryFn: () => base44.auth.me(),
   });
 
+  const isLoading = !pedidos || pedidos.length === 0;
+
   // Filtrar pedidos para retirada (tipo_frete = Retirada, status = Aprovado ou posterior)
   const pedidosParaRetirada = useMemo(() => {
     return pedidos.filter(p => 
@@ -185,6 +187,14 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   };
 
   const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className={containerClass}>

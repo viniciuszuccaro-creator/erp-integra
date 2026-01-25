@@ -41,6 +41,7 @@ export default function SolicitacoesTab({ solicitacoes: solicitacoesProp, produt
   const { openWindow } = useWindow();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const isLoading = !solicitacoesProp && !solicitacoes.length;
 
   const queryClient = useQueryClient();
 
@@ -118,6 +119,14 @@ export default function SolicitacoesTab({ solicitacoes: solicitacoesProp, produt
     'Alta': 'bg-orange-100 text-orange-700',
     'Urgente': 'bg-red-100 text-red-700'
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
