@@ -36,3 +36,11 @@ function DistribuicaoFormasPagamentoContent({ porForma }) {
     </Card>
   );
 }
+
+export default function DistribuicaoFormasPagamento(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <DistribuicaoFormasPagamentoContent {...props} />
+    </Suspense>
+  );
+}
