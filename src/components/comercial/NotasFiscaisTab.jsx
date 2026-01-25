@@ -38,22 +38,24 @@ import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
 export default function NotasFiscaisTab({ notasFiscais: notasFiscaisProp, pedidos: pedidosProp, clientes: clientesProp, onCreateNFe }) {
   const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
 
-  const { data: notasFiscais = [] } = useQuery({
+  const { data: notasFiscais = notasFiscaisProp || [] } = useQuery({
     queryKey: ['notasfiscais', empresaAtual?.id],
     queryFn: async () => {
       if (!empresaAtual?.id) return notasFiscaisProp || [];
       return await base44.entities.NotaFiscal.filter({ empresa_faturamento_id: empresaAtual.id }, '-created_date', 1000);
     },
+    enabled: true,
     initialData: notasFiscaisProp || [],
     staleTime: 30000,
   });
 
-  const { data: pedidos = [] } = useQuery({
+  const { data: pedidos = pedidosProp || [] } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id],
     queryFn: async () => {
       if (!empresaAtual?.id) return pedidosProp || [];
       return await base44.entities.Pedido.filter({ empresa_id: empresaAtual.id }, undefined, 1000);
     },
+    enabled: true,
     initialData: pedidosProp || [],
     staleTime: 30000,
   });

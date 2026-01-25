@@ -21,7 +21,8 @@ import KPIsReceber from "./contas-receber/KPIsReceber";
 import FiltrosReceber from "./contas-receber/FiltrosReceber";
 import TabelaReceber from "./contas-receber/TabelaReceber";
 
-export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
+export default function ContasReceberTab({ contas: contasProp, empresas = [], windowMode = false }) {
+  const contas = contasProp || [];
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { openWindow } = useWindow();

@@ -82,7 +82,7 @@ export default function PedidosEntregaTab({ windowMode = false, pedidos: pedidos
       return await base44.entities.Pedido.list('-created_date', 1000);
     },
     initialData: pedidosProp || [],
-    enabled: !!empresaAtual?.id || pedidosProp?.length > 0,
+    enabled: true,
     staleTime: 30000,
   });
 
@@ -92,7 +92,7 @@ export default function PedidosEntregaTab({ windowMode = false, pedidos: pedidos
       if (!empresaAtual?.id) return [];
       return await base44.entities.Entrega.filter({ empresa_id: empresaAtual.id }, '-created_date', 1000);
     },
-    enabled: !!empresaAtual?.id,
+    enabled: true,
     staleTime: 30000,
   });
 

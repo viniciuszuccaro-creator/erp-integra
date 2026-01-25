@@ -33,12 +33,14 @@ import DetalhesComissao from "./DetalhesComissao";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
-export default function ComissoesTab({ comissoes, pedidos, empresas = [] }) {
-  const isLoading = !comissoes || comissoes.length === 0;
+export default function ComissoesTab({ comissoes: comissoesProp, pedidos: pedidosProp, empresas = [] }) {
+  const isLoading = false;
   const [searchTerm, setSearchTerm] = useState("");
   const [visualizandoComissao, setVisualizandoComissao] = useState(null);
   const [statusFilter, setStatusFilter] = useState("todas");
   const { openWindow } = useWindow();
+  const comissoes = comissoesProp || [];
+  const pedidos = pedidosProp || [];
   const [formData, setFormData] = useState({
     vendedor: "",
     vendedor_id: "",
