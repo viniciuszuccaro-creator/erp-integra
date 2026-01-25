@@ -15,7 +15,8 @@ import VisualizadorUniversalEntidade from '../cadastros/VisualizadorUniversalEnt
 import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
 
 export default function ClientesTab({ clientes: clientesProp }) {
-  const { empresasDoGrupo } = useContextoVisual();
+  const { estaNoGrupo, empresasDoGrupo } = useContextoVisual();
+  const { openWindow } = useWindow();
 
   const { data: clientes = clientesProp || [] } = useQuery({
     queryKey: ['clientes'],
@@ -26,9 +27,6 @@ export default function ClientesTab({ clientes: clientesProp }) {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
-
-  const { estaNoGrupo, empresasDoGrupo } = useContextoVisual();
-  const { openWindow } = useWindow();
 
   const filteredClientes = clientes.filter(c => {
     const matchSearch = c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
