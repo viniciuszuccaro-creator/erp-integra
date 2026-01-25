@@ -8,6 +8,18 @@ import { AnimatePresence } from 'framer-motion';
  * Renderiza todas as janelas abertas
  */
 
+const WindowContent = ({ window, injectedProps, closeWindow }) => {
+  const Component = window.component;
+  
+  return (
+    <Component
+      {...injectedProps}
+      windowId={window.id}
+      closeSelf={() => closeWindow(window.id)}
+    />
+  );
+};
+
 export default function WindowRenderer() {
   const { windows, closeWindow } = useWindowManager();
 
@@ -18,14 +30,9 @@ export default function WindowRenderer() {
         
         const Component = window.component;
         
-        // Validar se Component é válido
         if (!Component) {
-          console.error('WindowRenderer: Componente inválido', window);
           return null;
         }
-
-        // Verificar se é um componente lazy
-        const isLazy = Component._payload && Component._init;
 
         const injectedProps = { ...window.props };
         if (typeof injectedProps.onSubmit === 'function') {
@@ -60,19 +67,11 @@ export default function WindowRenderer() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             }>
-              {isLazy ? (
-                <Component
-                  {...injectedProps}
-                  windowId={window.id}
-                  closeSelf={() => closeWindow(window.id)}
-                />
-              ) : (
-                <Component
-                  {...injectedProps}
-                  windowId={window.id}
-                  closeSelf={() => closeWindow(window.id)}
-                />
-              )}
+              <WindowContent 
+                window={window}
+                injectedProps={injectedProps}
+                closeWindow={closeWindow}
+              />
             </Suspense>
           </WindowModal>
         );
