@@ -44,12 +44,7 @@ function CartoesACompensar() {
     },
   });
 
-  // EARLY RETURN APÓS TODOS OS HOOKS
-  if (!ctx?.contextoReady || isLoading) {
-    return <LoadingFallback />;
-  }
-
-  // CÁLCULOS APÓS EARLY RETURN
+  // CÁLCULOS APÓS HOOKS
   const cartoesFiltrados = filtroStatus === "todos" 
     ? cartoes 
     : cartoes.filter(c => c.status_compensacao === filtroStatus);
@@ -61,6 +56,11 @@ function CartoesACompensar() {
   const totalCompensado = cartoes
     .filter(c => c.status_compensacao === "Compensado")
     .reduce((acc, c) => acc + (c.valor_liquido || 0), 0);
+
+  // EARLY RETURN APÓS TODOS OS HOOKS E CÁLCULOS
+  if (!ctx?.contextoReady || isLoading) {
+    return <LoadingFallback />;
+  }
 
   return (
     <div className="space-y-6">
