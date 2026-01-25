@@ -35,7 +35,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-[600px]">
@@ -47,7 +47,12 @@ const LoadingFallback = () => (
 );
 
 function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
-  const { empresaAtual } = useContextoVisual();
+  const ctx = useContextoVisual();
+  const { empresaAtual } = ctx || {};
+  
+  if (!ctx?.contextoReady) {
+    return <LoadingFallback />;
+  }
 
   const { data: pedidos = pedidosProp || [] } = useQueryWithRateLimit(
     ['pedidos', empresaAtual?.id],
@@ -545,9 +550,5 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
 }
 
 export default function PedidosTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <PedidosTabContent {...props} />
-    </Suspense>
-  );
+  return <PedidosTabContent {...props} />;
 }
