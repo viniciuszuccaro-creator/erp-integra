@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useWindowManager } from './WindowManager';
 import WindowModal from './WindowModal';
 import { AnimatePresence } from 'framer-motion';
@@ -55,11 +55,13 @@ export default function WindowRenderer() {
               
               try {
                 return (
-                  <Component
-                    {...injectedProps}
-                    windowId={window.id}
-                    closeSelf={() => closeWindow(window.id)}
-                  />
+                  <Suspense fallback={<div className="p-6 text-slate-500">Carregando...</div>}>
+                    <Component
+                      {...injectedProps}
+                      windowId={window.id}
+                      closeSelf={() => closeWindow(window.id)}
+                    />
+                  </Suspense>
                 );
               } catch (error) {
                 console.error('Erro ao renderizar janela:', error);
