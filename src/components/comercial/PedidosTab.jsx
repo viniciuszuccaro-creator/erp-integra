@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,8 +33,41 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
+export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
+  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
+
+  const { data: pedidos = [], isLoading: loadingPedidos } = useQuery({
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.Pedido.filter(filtro, '-created_date', 1000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    initialData: pedidosProp || [],
+    staleTime: 30000,
+  });
+
+  const { data: clientes = [] } = useQuery({
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.Cliente.filter(filtro, '-created_date', 1000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    initialData: clientesProp || [],
+    staleTime: 30000,
+  });
+
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
+    initialData: empresasProp || [],
+    staleTime: 60000,
+  });
+
+  const isLoading = loadingPedidos || loadingContexto;
   // V21.6: Multi-empresa
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");

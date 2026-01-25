@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,7 +14,19 @@ import { useWindow } from "@/components/lib/useWindow";
 import VisualizadorUniversalEntidade from '../cadastros/VisualizadorUniversalEntidade';
 import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
 
-export default function ClientesTab({ clientes }) {
+export default function ClientesTab({ clientes: clientesProp }) {
+  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
+
+  const { data: clientes = [], isLoading } = useQuery({
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.Cliente.filter(filtro, '-created_date', 1000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    initialData: clientesProp || [],
+    staleTime: 30000,
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
 
