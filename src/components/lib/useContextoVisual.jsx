@@ -5,6 +5,7 @@ import { useUser } from "./UserContext";
 import useContextoGrupoEmpresa from "./useContextoGrupoEmpresa";
 
 export function useContextoVisual() {
+  // TODOS OS HOOKS PRIMEIRO - SEMPRE NA MESMA ORDEM
   const { user, isLoading: loadingUser } = useUser();
   const [contexto, setContexto] = useState(() => {
     try {
@@ -14,6 +15,8 @@ export function useContextoVisual() {
     }
   });
   const [contextoReady, setContextoReady] = useState(false);
+  const [empresaAtualId, setEmpresaAtualId] = useState(null);
+  const [filtroEmpresa, setFiltroEmpresa] = useState('todas');
 
   const {
     grupoAtual,
@@ -24,19 +27,16 @@ export function useContextoVisual() {
     isLoading: loadingContexto
   } = useContextoGrupoEmpresa();
 
-  // Sincroniza o contexto local com o contexto real (grupo/empresa)
-  useEffect(() => {
-    setContexto(estaNoGrupoContexto ? 'grupo' : 'empresa');
-  }, [estaNoGrupoContexto]);
-
   const { data: empresas = [], isLoading: loadingEmpresas } = useQueryWithRateLimit(
     ['empresas'],
     () => base44.entities.Empresa.list(),
     { initialData: [] }
   );
 
-  const [empresaAtualId, setEmpresaAtualId] = useState(null);
-  const [filtroEmpresa, setFiltroEmpresa] = useState('todas');
+  // useEffect APÓS hooks
+  useEffect(() => {
+    setContexto(estaNoGrupoContexto ? 'grupo' : 'empresa');
+  }, [estaNoGrupoContexto]);
 
   useEffect(() => {
     // Sempre marcar como ready depois de carregar dados
