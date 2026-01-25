@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
@@ -9,14 +9,14 @@ import KPIsFinanceiros from './caixa-central/KPIsFinanceiros';
 import DistribuicaoFormasPagamento from './caixa-central/DistribuicaoFormasPagamento.jsx';
 import CaixaModulosGrid from './caixa-central/CaixaModulosGrid';
 
-const MovimentosDiarios = React.lazy(() => import('./caixa-central/MovimentosDiarios'));
-const OrdensLiquidacaoPendentes = React.lazy(() => import('./caixa-central/OrdensLiquidacaoPendentes'));
-const LiquidarReceberPagar = React.lazy(() => import('./caixa-central/LiquidarReceberPagar'));
-const HistoricoLiquidacoes = React.lazy(() => import('./caixa-central/HistoricoLiquidacoes'));
-const ExtratoBancarioResumo = React.lazy(() => import('./caixa-central/ExtratoBancarioResumo'));
-const VisaoGeralPendencias = React.lazy(() => import('./caixa-central/VisaoGeralPendencias'));
-const CartoesACompensar = React.lazy(() => import('./CartoesACompensar'));
-const ConciliacaoBancariaTab = React.lazy(() => import('./ConciliacaoBancariaTab'));
+const MovimentosDiarios = lazy(() => import('./caixa-central/MovimentosDiarios'));
+const OrdensLiquidacaoPendentes = lazy(() => import('./caixa-central/OrdensLiquidacaoPendentes'));
+const LiquidarReceberPagar = lazy(() => import('./caixa-central/LiquidarReceberPagar'));
+const HistoricoLiquidacoes = lazy(() => import('./caixa-central/HistoricoLiquidacoes'));
+const ExtratoBancarioResumo = lazy(() => import('./caixa-central/ExtratoBancarioResumo'));
+const VisaoGeralPendencias = lazy(() => import('./caixa-central/VisaoGeralPendencias'));
+const CartoesACompensar = lazy(() => import('./CartoesACompensar'));
+const ConciliacaoBancariaTab = lazy(() => import('./ConciliacaoBancariaTab'));
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-[600px]">
