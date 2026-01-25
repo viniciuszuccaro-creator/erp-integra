@@ -36,9 +36,9 @@ export default function ProdutosTab(props) {
     return { total, revenda, producao, estoqueBaixo };
   };
 
-  const { data: todosProdutos = [], refetch: refetchProdutos, isLoading: isLoadingProdutos } = useQuery({
-    queryKey: ['produtos-todos-contagem', empresaAtual?.id],
-    queryFn: async () => {
+  const { data: todosProdutos = [], refetch: refetchProdutos, isLoading: isLoadingProdutos } = useQueryWithRateLimit(
+    ['produtos-todos-contagem', empresaAtual?.id],
+    async () => {
       let todos = [];
       let skip = 0;
       const batchSize = 500;
@@ -59,24 +59,16 @@ export default function ProdutosTab(props) {
           }
         } catch (error) {
           if (error?.status === 429) {
-            // Rate limit - retorna o que foi carregado
             hasMore = false;
           } else {
             throw error;
           }
         }
       }
-      
       return todos;
     },
-    initialData: [],
-    enabled: true,
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-    retry: (failureCount, error) => error?.status === 429 ? failureCount < 1 : false,
-    retryDelay: 1000,
-    refetchOnWindowFocus: false
-  });
+    { initialData: [] }
+  );
 
   const contagensTotais = useMemo(() => calcularContagensLocal(todosProdutos), [todosProdutos]);
   const isLoadingContagens = isLoadingProdutos && todosProdutos.length === 0;
