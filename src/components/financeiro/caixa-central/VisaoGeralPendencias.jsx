@@ -11,7 +11,7 @@ const LoadingFallback = () => (
   </div>
 );
 
-function VisaoGeralPendenciasContent({ contasReceber, contasPagar, onSelectItem }) {
+function VisaoGeralPendenciasContent({ contasReceber = [], contasPagar = [], onSelectItem = () => {} }) {
   return (
     <div className="space-y-3">
       <Card>

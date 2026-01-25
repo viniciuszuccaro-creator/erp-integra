@@ -20,6 +20,8 @@ const LoadingFallback = () => (
 
 function CartoesACompensar() {
   const queryClient = useQueryClient();
+  
+  const { data: cartoes = [], isLoading } = useQuery({
   const [filtroStatus, setFiltroStatus] = useState("todos");
 
   const { data: cartoes = [], isLoading } = useQuery({

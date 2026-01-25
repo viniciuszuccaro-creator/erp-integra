@@ -23,9 +23,14 @@ const LoadingFallback = () => (
 );
 
 function OrdensLiquidacaoPendentesContent() {
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  const ctx = useContextoVisual();
+  const { filterInContext, empresaAtual } = ctx || {};
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  if (!ctx || !empresaAtual) {
+    return <LoadingFallback />;
+  }
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);
   const [ordemSelecionada, setOrdemSelecionada] = useState(null);
   const [formaPagamentoLiquidacao, setFormaPagamentoLiquidacao] = useState("");
