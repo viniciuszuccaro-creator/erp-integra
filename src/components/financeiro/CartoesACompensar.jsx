@@ -200,10 +200,10 @@ function CartoesACompensar() {
   );
 }
 
-export default function CartoesACompencarWrapper() {
+export default function CartoesACompensar(props) {
   return (
     <Suspense fallback={<LoadingFallback />}>
-      <CartoesACompensar />
+      <CartoesACompensar {...props} />
     </Suspense>
   );
 }
