@@ -47,6 +47,7 @@ export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, pro
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
   const { canCreate } = usePermissions();
+  const isLoading = !movimentacoesProp && !movimentacoes.length;
   const [novaMovimentacao, setNovaMovimentacao] = useState({
     tipo_movimentacao: "",
     produto_id: "",
@@ -187,6 +188,14 @@ export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, pro
     'Inventário': 'bg-purple-100 text-purple-700',
     'Devolução': 'bg-orange-100 text-orange-700'
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
