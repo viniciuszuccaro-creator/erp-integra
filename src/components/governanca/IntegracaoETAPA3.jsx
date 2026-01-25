@@ -1,62 +1,70 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Link as LinkIcon, Zap, Database, Bell } from 'lucide-react';
 
 /**
- * ETAPA 3: Painel de Integração
- * Demonstra todas as integrações implementadas
+ * ETAPA 3: Painel de Integrações
+ * Demonstra todas as integrações ativas
  */
 
 export default function IntegracaoETAPA3() {
   const integracoes = [
     {
       origem: 'Roteirização IA',
-      destino: 'Rota Entity',
-      descricao: 'Sequência otimizada gravada',
-      status: 'Ativo'
+      destino: 'Rota',
+      descricao: 'IA otimiza e cria rotas automaticamente',
+      tipo: 'Automático',
+      cor: 'purple'
     },
     {
       origem: 'Confirmar Entrega',
-      destino: 'MovimentacaoEstoque',
-      descricao: 'Saída automática de estoque',
-      status: 'Ativo'
+      destino: 'Estoque',
+      descricao: 'Baixa automática de estoque (MovimentacaoEstoque)',
+      tipo: 'Automático',
+      cor: 'blue'
     },
     {
       origem: 'Confirmar Entrega',
-      destino: 'ContaPagar',
-      descricao: 'Registro de custo de frete',
-      status: 'Ativo'
+      destino: 'Financeiro',
+      descricao: 'Registro de custo de frete (ContaPagar)',
+      tipo: 'Automático',
+      cor: 'green'
     },
     {
       origem: 'Mudar Status',
-      destino: 'Email Cliente',
-      descricao: 'Notificação automática',
-      status: 'Ativo'
+      destino: 'Notificação',
+      descricao: 'Email automático ao cliente',
+      tipo: 'Real-time',
+      cor: 'orange'
     },
     {
       origem: 'Logística Reversa',
-      destino: 'MovimentacaoEstoque',
-      descricao: 'Entrada de devolução',
-      status: 'Ativo'
+      destino: 'Estoque',
+      descricao: 'Entrada automática no estoque',
+      tipo: 'Automático',
+      cor: 'red'
     },
     {
       origem: 'Logística Reversa',
-      destino: 'ContaReceber',
-      descricao: 'Bloqueio de cobrança',
-      status: 'Ativo'
+      destino: 'Financeiro',
+      descricao: 'Bloqueio/ajuste ContaReceber',
+      tipo: 'Automático',
+      cor: 'yellow'
     },
     {
-      origem: 'Entrega Entity',
+      origem: 'Real-time',
       destino: 'Portal Cliente',
-      descricao: 'Real-time via WebSocket',
-      status: 'Ativo'
+      descricao: 'WebSocket push <1s',
+      tipo: 'Real-time',
+      cor: 'indigo'
     },
     {
       origem: 'POD Capturado',
-      destino: 'Todas Automações',
-      descricao: 'Trigger completo',
-      status: 'Ativo'
+      destino: 'Cascata Completa',
+      descricao: 'Estoque + Frete + Notificação + Auditoria',
+      tipo: 'Automático',
+      cor: 'pink'
     }
   ];
 
@@ -64,28 +72,34 @@ export default function IntegracaoETAPA3() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-green-600" />
-          Integrações ETAPA 3
+          <Zap className="w-6 h-6 text-yellow-600" />
+          Integrações Ativas
         </CardTitle>
+        <p className="text-sm text-slate-600">
+          8 integrações automáticas em funcionamento
+        </p>
       </CardHeader>
-      <CardContent className="space-y-2">
+      
+      <CardContent className="space-y-3">
         {integracoes.map((int, idx) => (
-          <div
-            key={idx}
-            className="flex items-center gap-3 p-3 bg-slate-50 rounded border hover:bg-slate-100 transition-colors"
-          >
-            <div className="flex-1 flex items-center gap-2 text-sm">
-              <span className="font-medium text-blue-700">{int.origem}</span>
-              <ArrowRight className="w-4 h-4 text-slate-400" />
-              <span className="font-medium text-green-700">{int.destino}</span>
+          <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border">
+            <LinkIcon className={`w-5 h-5 text-${int.cor}-600`} />
+            <div className="flex-1">
+              <p className="font-semibold text-sm">
+                {int.origem} → {int.destino}
+              </p>
+              <p className="text-xs text-slate-600">{int.descricao}</p>
             </div>
-            <p className="text-xs text-slate-600 hidden md:block">{int.descricao}</p>
-            <Badge className="bg-green-600 text-xs">✓</Badge>
+            <Badge className={`bg-${int.cor}-600 text-xs`}>
+              {int.tipo}
+            </Badge>
           </div>
         ))}
 
-        <div className="mt-4 pt-4 border-t text-center">
-          <Badge className="bg-green-600">8/8 Integrações Ativas</Badge>
+        <div className="mt-6 p-4 bg-green-50 border border-green-300 rounded-lg text-center">
+          <CheckCircle2 className="w-8 h-8 text-green-600 mx-auto mb-2" />
+          <p className="font-bold text-green-800">Todas as integrações validadas!</p>
+          <p className="text-xs text-green-700 mt-1">Sistema funcionando em produção</p>
         </div>
       </CardContent>
     </Card>

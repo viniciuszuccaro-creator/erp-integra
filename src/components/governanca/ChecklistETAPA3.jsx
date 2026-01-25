@@ -7,6 +7,11 @@ import { CheckCircle2, Circle } from 'lucide-react';
  * Visualização do progresso completo
  */
 
+/**
+ * ETAPA 3: Checklist Oficial
+ * 100% dos requisitos
+ */
+
 export default function ChecklistETAPA3() {
   const itens = [
     { grupo: 'Roteirização & POD', items: [

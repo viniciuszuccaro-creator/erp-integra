@@ -13,8 +13,9 @@ import { useUser } from '@/components/lib/UserContext';
  * Para atrasos, avarias, problemas
  */
 
-export default function RegistroOcorrenciaLogistica({ entrega, onConcluir }) {
+export default function RegistroOcorrenciaLogistica({ entrega, pedido, onClose }) {
   const { user } = useUser();
+  const onConcluir = onClose;
   const [tipo, setTipo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [foto, setFoto] = useState(null);

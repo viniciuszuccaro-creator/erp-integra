@@ -1,182 +1,141 @@
-import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell, Send, MessageCircle, Mail, Check } from "lucide-react";
-import { toast } from "sonner";
+import React, { useState } from 'react';
+import { base44 } from '@/api/base44Client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Bell, Send, Loader2, Mail, MessageCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { useUser } from '@/components/lib/UserContext';
 
 /**
- * 🔔 NOTIFICADOR AUTOMÁTICO DE ENTREGAS V21.5
- * Envia notificações ao cliente sobre status de entrega
+ * ETAPA 3: Notificador Automático de Entrega
+ * Envia notificações ao cliente
  */
-export default function NotificadorAutomaticoEntrega({ pedido, entrega, onClose, windowMode = false }) {
-  const [canal, setCanal] = useState("WhatsApp");
-  const [mensagemCustom, setMensagemCustom] = useState("");
-  const queryClient = useQueryClient();
 
-  const mensagensPadrao = {
-    "Pronto para Retirada": `🎉 Olá ${pedido.cliente_nome}!\n\nSeu pedido #${pedido.numero_pedido} está PRONTO PARA RETIRADA!\n\n📍 Endereço: [Sua loja]\n🕐 Horário: Segunda a Sexta, 8h às 18h\n\nAguardamos você! 😊`,
-    
-    "Em Expedição": `📦 Olá ${pedido.cliente_nome}!\n\nSeu pedido #${pedido.numero_pedido} está sendo SEPARADO para entrega.\n\n🚚 Previsão de entrega: ${pedido.data_prevista_entrega ? new Date(pedido.data_prevista_entrega).toLocaleDateString('pt-BR') : 'em breve'}\n\nEm breve você receberá!`,
-    
-    "Saiu para Entrega": `🚚 Olá ${pedido.cliente_nome}!\n\nSeu pedido #${pedido.numero_pedido} SAIU PARA ENTREGA!\n\n📍 Endereço: ${pedido.endereco_entrega_principal?.logradouro}, ${pedido.endereco_entrega_principal?.numero}\n🕐 Previsão: Hoje\n\nNosso motorista está a caminho! 🎯`,
-    
-    "Entregue": `✅ Olá ${pedido.cliente_nome}!\n\nSeu pedido #${pedido.numero_pedido} foi ENTREGUE com sucesso!\n\n🎉 Obrigado pela preferência!\n⭐ Avalie nosso serviço: [link]`
+export default function NotificadorAutomaticoEntrega({ pedido, entrega, onClose }) {
+  const { user } = useUser();
+  const [canal, setCanal] = useState('email');
+  const [mensagemPersonalizada, setMensagemPersonalizada] = useState('');
+  const [enviando, setEnviando] = useState(false);
+
+  const enviar = async () => {
+    setEnviando(true);
+    try {
+      // Invocar backend
+      await base44.functions.invoke('notificarStatusEntrega', {
+        entrega_id: entrega?.id || null,
+        pedido_id: pedido.id,
+        novo_status: pedido.status,
+        mensagem_adicional: mensagemPersonalizada,
+        canal
+      });
+
+      toast.success('✅ Notificação enviada!');
+      onClose?.();
+    } catch (err) {
+      toast.error(`Erro: ${err.message}`);
+    } finally {
+      setEnviando(false);
+    }
   };
 
-  const mensagemFinal = mensagemCustom || mensagensPadrao[pedido.status] || 
-    `Atualização do pedido #${pedido.numero_pedido}: Status alterado para ${pedido.status}`;
-
-  const enviarNotificacaoMutation = useMutation({
-    mutationFn: async () => {
-      // Registrar notificação no histórico da entrega
-      if (entrega) {
-        const notificacoesAtuais = entrega.notificacoes_enviadas || [];
-        await base44.entities.Entrega.update(entrega.id, {
-          notificacoes_enviadas: [
-            ...notificacoesAtuais,
-            {
-              tipo: pedido.status,
-              canal: canal,
-              destinatario: pedido.cliente_nome,
-              data_envio: new Date().toISOString(),
-              status_envio: "Enviado",
-              mensagem: mensagemFinal
-            }
-          ]
-        });
-      }
-
-      // Enviar email (integração Core)
-      if (canal === "E-mail" && pedido.cliente_email) {
-        await base44.integrations.Core.SendEmail({
-          to: pedido.cliente_email,
-          subject: `Atualização do Pedido #${pedido.numero_pedido}`,
-          body: mensagemFinal
-        });
-      }
-
-      // WhatsApp e SMS: placeholder para integração futura
-      return { success: true };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['entregas'] });
-      toast.success(`✅ Notificação enviada via ${canal}!`);
-      if (onClose) onClose();
-    }
-  });
-
-  const contatosCliente = pedido.contatos_cliente || [];
-  const whatsappPrincipal = contatosCliente.find(c => c.tipo === 'WhatsApp' && c.principal)?.valor;
-  const emailPrincipal = pedido.cliente_email;
-
-  const containerClass = windowMode ? "w-full h-full flex flex-col" : "";
-
   return (
-    <Card className={`border-0 shadow-xl ${containerClass}`}>
-      <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+    <Card className="w-full">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bell className="w-5 h-5" />
-          🔔 Notificar Cliente
+          <Bell className="w-5 h-5 text-blue-600" />
+          Notificar Cliente
         </CardTitle>
-        <p className="text-sm opacity-90">Pedido #{pedido.numero_pedido} - {pedido.cliente_nome}</p>
+        <p className="text-sm text-slate-600">
+          Pedido: {pedido.numero_pedido} • Cliente: {pedido.cliente_nome}
+        </p>
       </CardHeader>
-      <CardContent className="p-6 space-y-4">
-        {/* Seletor de Canal */}
+      
+      <CardContent className="space-y-4">
+        {/* Status Atual */}
+        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-sm font-medium text-blue-800 mb-1">Status Atual:</p>
+          <Badge className="bg-blue-600">{pedido.status}</Badge>
+        </div>
+
+        {/* Canal */}
         <div>
-          <Label>Canal de Comunicação</Label>
-          <Select value={canal} onValueChange={setCanal}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="WhatsApp">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="w-4 h-4 text-green-600" />
-                  WhatsApp
-                  {whatsappPrincipal && (
-                    <Badge variant="outline" className="ml-2 text-xs">
-                      {whatsappPrincipal}
-                    </Badge>
-                  )}
-                </div>
-              </SelectItem>
-              <SelectItem value="E-mail">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-blue-600" />
-                  E-mail
-                  {emailPrincipal && (
-                    <Badge variant="outline" className="ml-2 text-xs">
-                      {emailPrincipal}
-                    </Badge>
-                  )}
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <label className="block text-sm font-medium mb-2">Canal de Notificação</label>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setCanal('email')}
+              variant={canal === 'email' ? 'default' : 'outline'}
+              className="flex-1"
+            >
+              <Mail className="w-4 h-4 mr-1" />
+              Email
+            </Button>
+            <Button
+              onClick={() => setCanal('whatsapp')}
+              variant={canal === 'whatsapp' ? 'default' : 'outline'}
+              className="flex-1"
+            >
+              <MessageCircle className="w-4 h-4 mr-1" />
+              WhatsApp
+            </Button>
+          </div>
         </div>
 
         {/* Mensagem */}
         <div>
-          <Label>Mensagem (personalize ou use a padrão)</Label>
+          <label className="block text-sm font-medium mb-2">Mensagem Adicional (opcional)</label>
           <Textarea
-            value={mensagemCustom}
-            onChange={(e) => setMensagemCustom(e.target.value)}
-            placeholder={mensagemFinal}
-            rows={8}
-            className="font-mono text-sm"
+            value={mensagemPersonalizada}
+            onChange={(e) => setMensagemPersonalizada(e.target.value)}
+            placeholder="Adicione informações extras para o cliente..."
+            rows={3}
           />
-          <p className="text-xs text-slate-500 mt-1">
-            💡 Dica: Deixe em branco para usar a mensagem padrão automática
+        </div>
+
+        {/* Preview */}
+        <div className="p-3 bg-slate-50 rounded border">
+          <p className="text-xs text-slate-600 mb-2">Preview da mensagem:</p>
+          <p className="text-sm">
+            Olá <strong>{pedido.cliente_nome}</strong>,<br />
+            Seu pedido <strong>{pedido.numero_pedido}</strong> está com status: <strong>{pedido.status}</strong>.
+            {mensagemPersonalizada && (
+              <>
+                <br /><br />
+                {mensagemPersonalizada}
+              </>
+            )}
           </p>
         </div>
 
-        {/* Preview da Mensagem */}
-        <Card className="bg-slate-50 border-slate-200">
-          <CardContent className="p-4">
-            <p className="text-xs text-slate-600 mb-2 font-semibold">📱 Preview:</p>
-            <p className="text-sm whitespace-pre-wrap">{mensagemFinal}</p>
-          </CardContent>
-        </Card>
-
         {/* Ações */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex gap-2">
+          <Button
+            onClick={onClose}
+            variant="outline"
+            className="flex-1"
+            disabled={enviando}
+          >
             Cancelar
           </Button>
           <Button
-            onClick={() => enviarNotificacaoMutation.mutate()}
-            disabled={enviarNotificacaoMutation.isPending}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            onClick={enviar}
+            disabled={enviando}
+            className="flex-1 bg-blue-600 hover:bg-blue-700"
           >
-            <Send className="w-4 h-4 mr-2" />
-            {enviarNotificacaoMutation.isPending ? 'Enviando...' : `Enviar via ${canal}`}
+            {enviando ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4 mr-2" />
+                Enviar Notificação
+              </>
+            )}
           </Button>
         </div>
-
-        {/* Histórico de Notificações */}
-        {entrega?.notificacoes_enviadas?.length > 0 && (
-          <div className="pt-4 border-t">
-            <p className="text-sm font-semibold mb-2">📜 Histórico de Notificações</p>
-            <div className="space-y-2">
-              {entrega.notificacoes_enviadas.slice(-3).reverse().map((notif, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-sm p-2 bg-green-50 rounded">
-                  <Check className="w-4 h-4 text-green-600" />
-                  <span className="font-medium">{notif.tipo}</span>
-                  <Badge variant="outline">{notif.canal}</Badge>
-                  <span className="text-xs text-slate-500">
-                    {new Date(notif.data_envio).toLocaleString('pt-BR')}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

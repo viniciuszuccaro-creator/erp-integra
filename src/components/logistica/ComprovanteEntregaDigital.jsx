@@ -9,8 +9,8 @@ import { CheckCircle2, Camera, FileText, MapPin, User, Download } from 'lucide-r
  * Visualização completa do POD
  */
 
-export default function ComprovanteEntregaDigital({ entrega }) {
-  const pod = entrega.comprovante_entrega;
+export default function ComprovanteEntregaDigital({ entrega, pedido, onSuccess }) {
+  const pod = entrega?.comprovante_entrega;
 
   if (!pod || !pod.data_hora_recebimento) {
     return (
