@@ -55,7 +55,9 @@ const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem"));
-
+import { useUser } from "@/components/lib/UserContext";
+import WidgetEntregasHoje from "@/components/logistica/WidgetEntregasHoje";
+import ResumoExecutivoETAPA3 from "@/components/governanca/ResumoExecutivoETAPA3";
 
 export default function Dashboard() {
   const navigate = useNavigate();
