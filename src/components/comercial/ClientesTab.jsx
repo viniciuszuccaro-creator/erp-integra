@@ -37,8 +37,6 @@ export default function ClientesTab({ clientes: clientesProp }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
 
-  const isLoading = !clientesProp && !clientes.length;
-
   const filteredClientes = clientes.filter(c => {
     const matchSearch = c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                        c.razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
