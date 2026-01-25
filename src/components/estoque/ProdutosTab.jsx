@@ -60,7 +60,8 @@ export default function ProdutosTab(props) {
       
       return todos;
     },
-    enabled: !!empresaAtual?.id,
+    initialData: [],
+    enabled: true,
     staleTime: Infinity,
     refetchOnWindowFocus: false
   });

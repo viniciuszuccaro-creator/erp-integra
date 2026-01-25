@@ -21,7 +21,6 @@ export default function ClientesTab({ clientes: clientesProp }) {
   const { data: clientes = clientesProp || [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
     queryFn: async () => {
-      if (!empresaAtual?.id) return clientesProp || [];
       return await base44.entities.Cliente.list('-created_date', 1000);
     },
     initialData: clientesProp || [],

@@ -41,7 +41,6 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
   const { data: pedidos = pedidosProp || [] } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id],
     queryFn: async () => {
-      if (!empresaAtual?.id) return pedidosProp || [];
       return await base44.entities.Pedido.list('-created_date', 1000);
     },
     initialData: pedidosProp || [],
@@ -52,7 +51,6 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
   const { data: clientes = clientesProp || [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
     queryFn: async () => {
-      if (!empresaAtual?.id) return clientesProp || [];
       return await base44.entities.Cliente.list('-created_date', 1000);
     },
     initialData: clientesProp || [],

@@ -24,23 +24,21 @@ export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, pro
   const { data: movimentacoes = movimentacoesProp || [] } = useQuery({
     queryKey: ['movimentacoes', empresaAtual?.id],
     queryFn: async () => {
-      if (!empresaAtual?.id) return movimentacoesProp || [];
       return await base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 1000);
     },
     initialData: movimentacoesProp || [],
     staleTime: 30000,
-    enabled: !!empresaAtual?.id || movimentacoesProp?.length > 0
+    enabled: true
   });
 
   const { data: produtos = produtosProp || [] } = useQuery({
     queryKey: ['produtos', empresaAtual?.id],
     queryFn: async () => {
-      if (!empresaAtual?.id) return produtosProp || [];
       return await base44.entities.Produto.list(undefined, 5000);
     },
     initialData: produtosProp || [],
     staleTime: 30000,
-    enabled: !!empresaAtual?.id || produtosProp?.length > 0
+    enabled: true
   });
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
