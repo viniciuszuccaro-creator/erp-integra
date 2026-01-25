@@ -53,6 +53,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * - Integração com Expedição
  */
 export default function PedidosEntregaTab({ windowMode = false, pedidos: pedidosProp = [] }) {
+  const { empresaAtual } = useContextoVisual();
   const [busca, setBusca] = useState("");
   const [regiaoFiltro, setRegiaoFiltro] = useState("todas");
   const [statusFiltro, setStatusFiltro] = useState("todos");
@@ -75,10 +76,13 @@ export default function PedidosEntregaTab({ windowMode = false, pedidos: pedidos
   };
 
   const { data: pedidos = pedidosProp || [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: async () => await base44.entities.Pedido.list('-created_date', 1000),
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      if (!empresaAtual?.id) return pedidosProp || [];
+      return await base44.entities.Pedido.list('-created_date', 1000);
+    },
     initialData: pedidosProp || [],
-    enabled: false,
+    enabled: !!empresaAtual?.id || pedidosProp?.length > 0,
     staleTime: 30000,
   });
 
