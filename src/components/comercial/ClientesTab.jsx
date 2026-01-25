@@ -4,7 +4,7 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UserCircle, Building2, ExternalLink, Users } from "lucide-react";
+import { UserCircle, Building2, ExternalLink, Users, Loader2 } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import SearchInput from "@/components/ui/SearchInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,14 +18,21 @@ export default function ClientesTab({ clientes: clientesProp }) {
   const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: clientes = clientesProp || [] } = useQuery({
+  const { data: clientes = clientesProp || [], isLoading } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
     queryFn: async () => {
       return await base44.entities.Cliente.list('-created_date', 1000);
     },
     initialData: clientesProp || [],
-    staleTime: 30000,
-    enabled: true
+    staleTime: 10 * 60 * 1000, // 10min cache agressivo
+    gcTime: 15 * 60 * 1000, // 15min garbage collection
+    retry: (failureCount, error) => {
+      if (error?.status === 429) return failureCount < 2; // Máx 2 tentativas em rate limit
+      return false;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 5000),
+    enabled: true,
+    refetchOnWindowFocus: false
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
@@ -47,10 +54,11 @@ export default function ClientesTab({ clientes: clientesProp }) {
     return empresa?.nome_fantasia || empresa?.razao_social || '-';
   };
 
-  if (isLoading) {
+  if (isLoading && !clientesProp?.length) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
+        <p className="text-slate-600">Carregando clientes...</p>
       </div>
     );
   }
