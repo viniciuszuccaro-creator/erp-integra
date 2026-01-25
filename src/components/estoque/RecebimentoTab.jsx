@@ -27,7 +27,25 @@ const LoadingFallback = () => (
 );
 
 function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: ordensCompraProp, produtos: produtosProp }) {
+  // TODOS OS HOOKS PRIMEIRO
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [viewingRecebimento, setViewingRecebimento] = useState(null);
+  const [formData, setFormData] = useState({
+    numero_recebimento: `REC-${Date.now()}`,
+    ordem_compra_id: "",
+    fornecedor: "",
+    data_recebimento: new Date().toISOString().split('T')[0],
+    numero_nf: "",
+    itens: [{ produto_id: "", produto_descricao: "", quantidade_pedida: 0, quantidade_recebida: 0, status_item: "Conforme" }],
+    responsavel_recebimento: "",
+    observacoes: "",
+    status: "Pendente"
+  });
   const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
+  const { openWindow } = useWindow();
+  const { canCreate } = usePermissions();
+  const queryClient = useQueryClient();
 
   const { data: recebimentos = recebimentosProp || [] } = useQuery({
     queryKey: ['movimentacoes-recebimento', empresaAtual?.id],
@@ -58,44 +76,6 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
     },
     initialData: produtosProp || [],
     staleTime: 30000,
-  });
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [viewingRecebimento, setViewingRecebimento] = useState(null);
-  const { openWindow } = useWindow();
-  const { canCreate } = usePermissions();
-  const [formData, setFormData] = useState({
-    numero_recebimento: `REC-${Date.now()}`,
-    ordem_compra_id: "",
-    fornecedor: "",
-    data_recebimento: new Date().toISOString().split('T')[0],
-    numero_nf: "",
-    itens: [{ produto_id: "", produto_descricao: "", quantidade_pedida: 0, quantidade_recebida: 0, status_item: "Conforme" }],
-    responsavel_recebimento: "",
-    observacoes: "",
-    status: "Pendente"
-  });
-
-  const queryClient = useQueryClient();
-
-  const statusColors = {
-    'Pendente': 'bg-yellow-100 text-yellow-700',
-    'Conferido': 'bg-blue-100 text-blue-700',
-    'Aprovado': 'bg-green-100 text-green-700',
-    'Divergente': 'bg-red-100 text-red-700'
-  };
-
-  const filteredRecebimentos = recebimentos.filter(r => {
-    const searchLower = searchTerm.toLowerCase();
-    return r.numero_recebimento?.toLowerCase().includes(searchLower) ||
-      r.documento?.toLowerCase().includes(searchLower) ||
-      r.fornecedor?.toLowerCase().includes(searchLower) ||
-      r.numero_nf?.includes(searchLower) ||
-      r.responsavel_recebimento?.toLowerCase().includes(searchLower) ||
-      r.responsavel?.toLowerCase().includes(searchLower) ||
-      r.status?.toLowerCase().includes(searchLower) ||
-      r.observacoes?.toLowerCase().includes(searchLower) ||
-      r.itens_recebidos?.some(i => i?.produto_descricao?.toLowerCase().includes(searchLower));
   });
 
   const createMutation = useMutation({
@@ -238,6 +218,7 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
 
   return (
     <div className="space-y-6">
+      {/* CONTEÚDO DO COMPONENTE */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
