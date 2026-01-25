@@ -16,7 +16,7 @@ const StatusControleAcesso = React.lazy(() => import("@/components/sistema/Statu
 const GlobalAuditLog = React.lazy(() => import("@/components/sistema/GlobalAuditLog"));
 const IAGovernancaCompliance = React.lazy(() => import("@/components/ia/IAGovernancaCompliance"));
 
-import { Shield, KeyRound, Users2, Activity, Brain } from "lucide-react";
+import { Shield, KeyRound, Users2, Activity, Brain, Search } from "lucide-react";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 
 export default function Acessos() {
