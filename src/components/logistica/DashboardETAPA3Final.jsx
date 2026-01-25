@@ -21,6 +21,10 @@ import ProvaFinalETAPA3 from '@/components/governanca/ProvaFinalETAPA3';
 import DashboardLogisticaInteligente from './DashboardLogisticaInteligente';
 import PainelMetricasRealtime from './PainelMetricasRealtime';
 import MonitorEntregasRealtime from './MonitorEntregasRealtime';
+import WidgetResumoRotas from './WidgetResumoRotas';
+import WidgetStatusAutomacao from './WidgetStatusAutomacao';
+import IntegracaoAutomaticaWidget from './IntegracaoAutomaticaWidget';
+import SealETAPA3 from '@/components/governanca/SealETAPA3';
 
 /**
  * ETAPA 3: Dashboard Final Unificado
@@ -76,13 +80,21 @@ export default function DashboardETAPA3Final() {
   return (
     <div className="w-full h-full space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
       {/* Header Executivo */}
-      <div className="text-center py-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-2xl text-white">
-        <Award className="w-16 h-16 mx-auto mb-4" />
+      <div className="text-center py-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-2xl text-white relative overflow-hidden">
+        <div className="absolute top-0 right-0 opacity-10">
+          <SealETAPA3 size="lg" />
+        </div>
+        <Award className="w-16 h-16 mx-auto mb-4 animate-bounce" />
         <h1 className="text-4xl font-bold mb-2">ETAPA 3 — CERTIFICADA</h1>
         <p className="text-xl opacity-90">Logística Inteligente • Apps Dedicados • IA Real</p>
-        <Badge className="bg-white text-green-600 text-lg px-6 py-2 mt-4">
-          ✅ 100% COMPLETO
-        </Badge>
+        <div className="flex items-center justify-center gap-3 mt-4">
+          <Badge className="bg-white text-green-600 text-lg px-6 py-2">
+            ✅ 100% COMPLETO
+          </Badge>
+          <Badge className="bg-yellow-400 text-yellow-900 text-lg px-6 py-2">
+            🏆 CERTIFICADO
+          </Badge>
+        </div>
       </div>
 
       {/* Conquistas */}
@@ -142,6 +154,11 @@ export default function DashboardETAPA3Final() {
         </TabsContent>
 
         <TabsContent value="realtime" className="mt-4 space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <WidgetResumoRotas />
+            <WidgetStatusAutomacao />
+            <IntegracaoAutomaticaWidget entrega={{}} />
+          </div>
           <PainelMetricasRealtime />
           <MonitorEntregasRealtime />
           <DashboardLogisticaInteligente />
@@ -162,8 +179,12 @@ export default function DashboardETAPA3Final() {
             ERP Zuccaro V22.0 • 25/01/2026
           </div>
           <p className="text-sm text-slate-600 mt-4">
-            55+ componentes • 4 backends • 8 integrações • 2 apps • IA real
+            68 componentes • 4 backends • 8 integrações • 2 apps • IA real • 3 hooks • 3 helpers
           </p>
+          
+          <div className="mt-4 pt-4 border-t">
+            <SealETAPA3 size="lg" />
+          </div>
         </CardContent>
       </Card>
     </div>
