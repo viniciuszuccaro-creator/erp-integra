@@ -38,40 +38,47 @@ export default function ValidadorETAPA3Final() {
       testes.push({ teste: 'Backend: automacaoEntregaCompleta', status: 'testando' });
       setResultados([...testes]);
       try {
-        await base44.functions.invoke('automacaoEntregaCompleta', { entrega_id: 'test' });
+        const res = await base44.functions.invoke('automacaoEntregaCompleta', { entrega_id: 'test' });
         testes[1].status = 'ok';
       } catch (err) {
-        // Função existe se retornar erro de "Object not found" ou "não encontrada"
-        const existeErro = err.message?.includes?.('Object not found') || 
-                          err.message?.includes?.('não encontrada') || 
-                          err.message?.includes?.('Entrega');
+        // Função existe se retornar erro de "Object not found" (erro esperado para ID inválido)
+        const msgErro = err?.response?.data?.error || err?.message || String(err);
+        const existeErro = msgErro?.includes?.('Object not found') || 
+                          msgErro?.includes?.('não encontrada') || 
+                          msgErro?.includes?.('Invalid id');
         testes[1].status = existeErro ? 'ok' : 'erro';
       }
+      setResultados([...testes]);
 
       // 3. Testar logística reversa
       testes.push({ teste: 'Backend: processarLogisticaReversa', status: 'testando' });
       setResultados([...testes]);
       try {
-        await base44.functions.invoke('processarLogisticaReversa', { entrega_id: 'test', motivo: 'Teste' });
+        const res = await base44.functions.invoke('processarLogisticaReversa', { entrega_id: 'test', motivo: 'Teste' });
         testes[2].status = 'ok';
       } catch (err) {
-        const existeErro = err.message?.includes?.('Object not found') || 
-                          err.message?.includes?.('não encontrada') || 
-                          err.message?.includes?.('Unauthorized');
+        const msgErro = err?.response?.data?.error || err?.message || String(err);
+        const existeErro = msgErro?.includes?.('Object not found') || 
+                          msgErro?.includes?.('não encontrada') || 
+                          msgErro?.includes?.('Invalid id');
         testes[2].status = existeErro ? 'ok' : 'erro';
       }
+      setResultados([...testes]);
 
       // 4. Testar notificações
       testes.push({ teste: 'Backend: notificarStatusEntrega', status: 'testando' });
       setResultados([...testes]);
       try {
-        await base44.functions.invoke('notificarStatusEntrega', { entrega_id: 'test', novo_status: 'Teste' });
+        const res = await base44.functions.invoke('notificarStatusEntrega', { entrega_id: 'test', novo_status: 'Teste' });
         testes[3].status = 'ok';
       } catch (err) {
-        const existeErro = err.message?.includes?.('Object not found') || 
-                          err.message?.includes?.('não encontrada');
+        const msgErro = err?.response?.data?.error || err?.message || String(err);
+        const existeErro = msgErro?.includes?.('Object not found') || 
+                          msgErro?.includes?.('não encontrada') || 
+                          msgErro?.includes?.('Invalid id');
         testes[3].status = existeErro ? 'ok' : 'erro';
       }
+      setResultados([...testes]);
 
       // 5. Testar entidades
       testes.push({ teste: 'Entidade: Entrega', status: 'testando' });
