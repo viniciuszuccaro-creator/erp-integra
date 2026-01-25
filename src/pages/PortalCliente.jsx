@@ -13,13 +13,14 @@ const ChatVendedor = React.lazy(() => import("@/components/portal/ChatVendedor")
 const ChamadosCliente = React.lazy(() => import("@/components/portal/ChamadosCliente"));
 const UploadProjetos = React.lazy(() => import("@/components/portal/UploadProjetos"));
 const AprovacaoComAssinatura = React.lazy(() => import("@/components/portal/AprovacaoComAssinatura"));
-const PedidosCliente = React.lazy(() => import("@/components/portal/PedidosCliente"));
+const PedidosCliente = React.lazy(() => import("@/components/portal/PedidosClienteAprimorado"));
+const FinanceiroCliente = React.lazy(() => import("@/components/portal/FinanceiroClienteAprimorado"));
 const DocumentosCliente = React.lazy(() => import("@/components/portal/DocumentosCliente"));
 const SolicitarOrcamento = React.lazy(() => import("@/components/portal/SolicitarOrcamento"));
 const MinhasOportunidades = React.lazy(() => import("@/components/portal/MinhasOportunidades"));
 const ChatbotPortal = React.lazy(() => import("@/components/portal/ChatbotPortal"));
 const ChatbotWidgetAvancado = React.lazy(() => import("@/components/chatbot/ChatbotWidgetAvancado"));
-const RastreamentoRealtime = React.lazy(() => import("@/components/portal/RastreamentoRealtime"));
+const RastreamentoRealtime = React.lazy(() => import("@/components/portal/RastreamentoRealtimeAprimorado"));
 const NotificacoesPortal = React.lazy(() => import("@/components/portal/NotificacoesPortal"));
 const AnalyticsPortalCliente = React.lazy(() => import("@/components/portal/AnalyticsPortalCliente"));
 const StatusWidgetPortal = React.lazy(() => import("@/components/portal/StatusWidgetPortal"));
@@ -407,9 +408,13 @@ export default function PortalCliente() {
                 <Truck className="w-4 h-4" />
                 <span className="hidden sm:inline">Rastreamento</span>
               </TabsTrigger>
+              <TabsTrigger value="financeiro" className="flex items-center gap-2 whitespace-nowrap">
+                <DollarSign className="w-4 h-4" />
+                <span className="hidden sm:inline">Financeiro</span>
+              </TabsTrigger>
               <TabsTrigger value="documentos-novos" className="flex items-center gap-2 whitespace-nowrap">
                 <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">Docs & Boletos</span>
+                <span className="hidden sm:inline">Documentos</span>
               </TabsTrigger>
               <TabsTrigger value="solicitar-orcamento" className="flex items-center gap-2 whitespace-nowrap">
                 <Send className="w-4 h-4" />
@@ -472,6 +477,13 @@ export default function PortalCliente() {
           <TabsContent value="meus-pedidos">
             <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
               <PedidosCliente />
+            </Suspense>
+          </TabsContent>
+
+          {/* ETAPA 3: Financeiro Aprimorado */}
+          <TabsContent value="financeiro">
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <FinanceiroCliente />
             </Suspense>
           </TabsContent>
 
