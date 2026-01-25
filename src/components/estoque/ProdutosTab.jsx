@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { base44 } from "@/api/base44Client";
+import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

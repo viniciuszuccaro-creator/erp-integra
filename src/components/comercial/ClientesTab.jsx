@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { base44 } from "@/api/base44Client";
+import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
