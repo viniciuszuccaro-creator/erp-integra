@@ -28,6 +28,7 @@ const LoadingFallback = () => (
 );
 
 function CaixaCentralLiquidacaoContent({ windowMode = false }) {
+  // TODOS OS HOOKS PRIMEIRO
   const { filterInContext } = useContextoVisual();
   const { openWindow } = useWindow();
 
@@ -41,6 +42,7 @@ function CaixaCentralLiquidacaoContent({ windowMode = false }) {
     queryFn: () => filterInContext('ContaPagar', { status: 'Pendente' }, '-data_vencimento', 50),
   });
 
+  // CÁLCULOS APÓS TODOS OS HOOKS
   const totalReceber = contasReceber.reduce((sum, c) => sum + (c.valor || 0), 0);
   const totalPagar = contasPagar.reduce((sum, c) => sum + (c.valor || 0), 0);
   const saldoLiquido = totalReceber - totalPagar;
