@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,16 +25,25 @@ import { base44 } from '@/api/base44Client';
 import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
 import ProtectedSection from '@/components/security/ProtectedSection';
 
-// Componentes das Etapas
-const WizardEtapa1Cliente = React.lazy(() => import('./wizard/WizardEtapa1Cliente'));
-const ItensRevendaTab = React.lazy(() => import('./ItensRevendaTab'));
-const ArmadoPadraoTab = React.lazy(() => import('./ArmadoPadraoTab'));
-const CorteDobraIATab = React.lazy(() => import('./CorteDobraIATab'));
-const HistoricoClienteTab = React.lazy(() => import('./HistoricoClienteTab')); // NOVO V21.1
-const LogisticaEntregaTab = React.lazy(() => import('./LogisticaEntregaTab'));
-const FechamentoFinanceiroTab = React.lazy(() => import('./FechamentoFinanceiroTab'));
-const ArquivosProjetosTab = React.lazy(() => import('./ArquivosProjetosTab'));
-const AuditoriaAprovacaoTab = React.lazy(() => import('./AuditoriaAprovacaoTab'));
+// Componentes das Etapas com Suspense
+const WizardEtapa1Cliente = lazy(() => import('./wizard/WizardEtapa1Cliente'));
+const ItensRevendaTab = lazy(() => import('./ItensRevendaTab'));
+const ArmadoPadraoTab = lazy(() => import('./ArmadoPadraoTab'));
+const CorteDobraIATab = lazy(() => import('./CorteDobraIATab'));
+const HistoricoClienteTab = lazy(() => import('./HistoricoClienteTab'));
+const LogisticaEntregaTab = lazy(() => import('./LogisticaEntregaTab'));
+const FechamentoFinanceiroTab = lazy(() => import('./FechamentoFinanceiroTab'));
+const ArquivosProjetosTab = lazy(() => import('./ArquivosProjetosTab'));
+const AuditoriaAprovacaoTab = lazy(() => import('./AuditoriaAprovacaoTab'));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center h-full">
+    <div className="flex flex-col items-center gap-2">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <p className="text-slate-600 text-sm">Carregando componente...</p>
+    </div>
+  </div>
+);
 import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
 
 /**
@@ -464,7 +473,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
         <div className="flex-1 overflow-hidden">
           {/* ABA 1: IDENTIFICAÇÃO */}
           <TabsContent value="identificacao" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
+            <Suspense fallback={<LoadingFallback />}>
               <WizardEtapa1Cliente
                 formData={formData}
                 setFormData={setFormData}
@@ -477,7 +486,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 2: ITENS DE REVENDA */}
           <TabsContent value="revenda" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
+            <Suspense fallback={<LoadingFallback />}>
               <ItensRevendaTab
                 formData={formData}
                 setFormData={setFormData}
@@ -488,7 +497,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 3: ARMADO PADRÃO */}
           <TabsContent value="armado" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
+            <Suspense fallback={<LoadingFallback />}>
               <ArmadoPadraoTab
                 formData={formData}
                 setFormData={setFormData}
@@ -500,7 +509,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 4: CORTE E DOBRA (IA) */}
           <TabsContent value="corte" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
+            <Suspense fallback={<LoadingFallback />}>
               <CorteDobraIATab
                 formData={formData}
                 setFormData={setFormData}
@@ -512,7 +521,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* V21.1.2-R1: ABA 5 - HISTÓRICO DO CLIENTE (EXPANDIDA) */}
           <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
+            <Suspense fallback={<LoadingFallback />}>
               <HistoricoClienteTab
                 formData={formData}
                 setFormData={setFormData}
@@ -527,7 +536,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 6: LOGÍSTICA */}
           <TabsContent value="logistica" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
+            <Suspense fallback={<LoadingFallback />}>
               <LogisticaEntregaTab
                 formData={formData}
                 setFormData={setFormData}
@@ -540,7 +549,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
           {/* ABA 7: FINANCEIRO (protegida) */}
           <TabsContent value="financeiro" className="h-full overflow-y-auto p-6 m-0">
             <ProtectedSection module="Comercial" section={"Pedido.Financeiro"} action="visualizar" fallback={<div className="text-sm text-slate-500">Acesso restrito ao financeiro.</div>}>
-              <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
+              <Suspense fallback={<LoadingFallback />}>
                 <FechamentoFinanceiroTab
                   formData={formData}
                   setFormData={setFormData}
@@ -552,7 +561,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 8: ARQUIVOS */}
           <TabsContent value="arquivos" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
+            <Suspense fallback={<LoadingFallback />}>
               <ArquivosProjetosTab
                 formData={formData}
                 setFormData={setFormData}
@@ -562,7 +571,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* V21.1.2-R1: ABA 9 - AUDITORIA (ALTURA CORRIGIDA) */}
           <TabsContent value="auditoria" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
+            <Suspense fallback={<LoadingFallback />}>
               <AuditoriaAprovacaoTab
                 formData={formData}
                 pedido={pedido}
