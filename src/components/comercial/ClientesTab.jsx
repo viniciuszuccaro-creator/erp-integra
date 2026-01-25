@@ -205,3 +205,11 @@ function ClientesTabContent({ clientes: clientesProp }) {
     </div>
   );
 }
+
+export default function ClientesTab(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ClientesTabContent {...props} />
+    </Suspense>
+  );
+}
