@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, DollarSign, Loader2 } from 'lucide-react';
+import useContextoVisual from '@/components/lib/useContextoVisual';
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-[300px]">

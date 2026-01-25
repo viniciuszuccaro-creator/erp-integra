@@ -28,12 +28,10 @@ function CartoesACompensar() {
     return <LoadingFallback />;
   }
 
-  const { data: cartoes = [], isLoading } = useQuery({
+  const { data: cartoes = [] } = useQuery({
     queryKey: ["movimento-cartao"],
     queryFn: () => base44.entities.MovimentoCartao.list(),
   });
-
-  if (isLoading) return <LoadingFallback />;
 
   const conciliarMutation = useMutation({
     mutationFn: async ({ id }) => {
