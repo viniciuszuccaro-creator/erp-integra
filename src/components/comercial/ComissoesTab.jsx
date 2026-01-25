@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,8 +32,18 @@ import { ProtectedAction } from "@/components/ProtectedAction";
 import DetalhesComissao from "./DetalhesComissao";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
+import { Loader2 } from "lucide-react";
 
-export default function ComissoesTab({ comissoes: comissoesProp, pedidos: pedidosProp, empresas = [] }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function ComissoesTabContent({ comissoes: comissoesProp, pedidos: pedidosProp, empresas = [] }) {
   const isLoading = false;
   const [searchTerm, setSearchTerm] = useState("");
   const [visualizandoComissao, setVisualizandoComissao] = useState(null);
@@ -470,5 +480,13 @@ export default function ComissoesTab({ comissoes: comissoesProp, pedidos: pedido
 
       {/* Dialog de Visualização REMOVIDO - Agora usa Window */}
     </div>
+  );
+}
+
+export default function ComissoesTab(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ComissoesTabContent {...props} />
+    </Suspense>
   );
 }
