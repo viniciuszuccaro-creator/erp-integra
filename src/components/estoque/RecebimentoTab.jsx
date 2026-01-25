@@ -20,12 +20,13 @@ import { toast } from "sonner";
 export default function RecebimentoTab({ recebimentos: recebimentosProp, ordensCompra: ordensCompraProp, produtos: produtosProp }) {
   const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
 
-  const { data: recebimentos = [] } = useQuery({
+  const { data: recebimentos = recebimentosProp || [] } = useQuery({
     queryKey: ['movimentacoes-recebimento', empresaAtual?.id],
     queryFn: async () => {
       if (!empresaAtual?.id) return recebimentosProp || [];
       return await base44.entities.MovimentacaoEstoque.filter({ empresa_id: empresaAtual.id, tipo_movimentacao: 'Entrada' }, '-data_movimentacao', 500);
     },
+    enabled: true,
     initialData: recebimentosProp || [],
     staleTime: 30000,
   });

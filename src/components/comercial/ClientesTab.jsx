@@ -26,7 +26,7 @@ export default function ClientesTab({ clientes: clientesProp }) {
     },
     initialData: clientesProp || [],
     staleTime: 30000,
-    enabled: !!empresaAtual?.id || clientesProp?.length > 0
+    enabled: true
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");

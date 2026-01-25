@@ -19,12 +19,13 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function SolicitacoesTab({ solicitacoes: solicitacoesProp, produtos: produtosProp }) {
   const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
 
-  const { data: solicitacoes = [] } = useQuery({
+  const { data: solicitacoes = solicitacoesProp || [] } = useQuery({
     queryKey: ['solicitacoes', empresaAtual?.id],
     queryFn: async () => {
       if (!empresaAtual?.id) return solicitacoesProp || [];
       return await base44.entities.SolicitacaoCompra.filter({ empresa_id: empresaAtual.id }, '-data_solicitacao', 500);
     },
+    enabled: true,
     initialData: solicitacoesProp || [],
     staleTime: 30000,
   });

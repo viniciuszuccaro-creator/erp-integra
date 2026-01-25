@@ -46,7 +46,7 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
     },
     initialData: pedidosProp || [],
     staleTime: 30000,
-    enabled: !!empresaAtual?.id || pedidosProp?.length > 0
+    enabled: true
   });
 
   const { data: clientes = clientesProp || [] } = useQuery({
@@ -57,7 +57,7 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
     },
     initialData: clientesProp || [],
     staleTime: 30000,
-    enabled: !!empresaAtual?.id || clientesProp?.length > 0
+    enabled: true
   });
 
   const { data: empresas = empresasProp || [] } = useQuery({
