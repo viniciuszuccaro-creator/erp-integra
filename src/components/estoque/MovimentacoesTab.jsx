@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
+import { Plus, Search, ArrowUp, ArrowDown, RefreshCw, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,24 +21,32 @@ import { useUser } from "@/components/lib/UserContext";
 export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, produtos: produtosProp }) {
   const { empresaAtual } = useContextoVisual();
 
-  const { data: movimentacoes = movimentacoesProp || [] } = useQuery({
+  const { data: movimentacoes = movimentacoesProp || [], isLoadingMov } = useQuery({
     queryKey: ['movimentacoes', empresaAtual?.id],
     queryFn: async () => {
       return await base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 1000);
     },
     initialData: movimentacoesProp || [],
-    staleTime: 30000,
-    enabled: true
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    retry: (failureCount, error) => error?.status === 429 ? failureCount < 2 : false,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 5000),
+    enabled: true,
+    refetchOnWindowFocus: false
   });
 
-  const { data: produtos = produtosProp || [] } = useQuery({
+  const { data: produtos = produtosProp || [], isLoadingProd } = useQuery({
     queryKey: ['produtos', empresaAtual?.id],
     queryFn: async () => {
       return await base44.entities.Produto.list(undefined, 5000);
     },
     initialData: produtosProp || [],
-    staleTime: 30000,
-    enabled: true
+    staleTime: 10 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    retry: (failureCount, error) => error?.status === 429 ? failureCount < 2 : false,
+    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 5000),
+    enabled: true,
+    refetchOnWindowFocus: false
   });
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
@@ -187,10 +195,11 @@ export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, pro
     'Devolução': 'bg-orange-100 text-orange-700'
   };
 
-  if (isLoading) {
+  if ((isLoadingMov || isLoadingProd) && !movimentacoesProp?.length) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-2" />
+        <p className="text-slate-600">Carregando movimentações...</p>
       </div>
     );
   }
