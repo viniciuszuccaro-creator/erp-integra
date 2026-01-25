@@ -792,10 +792,11 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
-          {/* ETAPA 1: Widget Governança */}
+          {/* ETAPA 1 + ETAPA 3: Widgets Governança */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <StatusFinalEtapa1_100 />
-            <div className="lg:col-span-2">
+            <WidgetETAPA3Completa />
+            <div className="lg:col-span-1">
               <ResumoExecutivoEtapa1 />
             </div>
           </div>
