@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,7 +17,16 @@ import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosP
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 
-export default function ProdutosTab(props) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function ProdutosTabContent(props) {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
   const { empresaAtual } = useContextoVisual();
