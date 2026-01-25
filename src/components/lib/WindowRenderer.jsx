@@ -11,6 +11,10 @@ import { AnimatePresence } from 'framer-motion';
 const WindowContent = ({ window, injectedProps, closeWindow }) => {
   const Component = window.component;
   
+  if (!Component || typeof Component !== 'function') {
+    return null;
+  }
+  
   return (
     <Component
       {...injectedProps}
