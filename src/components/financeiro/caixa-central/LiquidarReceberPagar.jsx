@@ -35,10 +35,6 @@ function LiquidarReceberPagarContent() {
   const { filterInContext, empresaAtual, carimbarContexto, contextoReady } = ctx || {};
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  if (!contextoReady || !empresaAtual) {
-    return <LoadingFallback />;
-  }
   const [abaAtiva, setAbaAtiva] = useState("receber");
   const [titulosSelecionadosReceber, setTitulosSelecionadosReceber] = useState([]);
   const [titulosSelecionadosPagar, setTitulosSelecionadosPagar] = useState([]);
@@ -56,6 +52,10 @@ function LiquidarReceberPagarContent() {
       status: { $in: ['Pendente', 'Aprovado'] }
     }, '-data_vencimento'),
   });
+
+  if (!contextoReady || !empresaAtual) {
+    return <LoadingFallback />;
+  }
 
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async ({ titulos, tipo }) => {
