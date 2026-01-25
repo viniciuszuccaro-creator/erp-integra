@@ -23,14 +23,15 @@ const LoadingFallback = () => (
 );
 
 function OrdensLiquidacaoPendentesContent() {
-  const ctx = useContextoVisual();
-  const { filterInContext, empresaAtual, contextoReady } = ctx || {};
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  // TODOS OS HOOKS PRIMEIRO
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);
   const [ordemSelecionada, setOrdemSelecionada] = useState(null);
   const [formaPagamentoLiquidacao, setFormaPagamentoLiquidacao] = useState("");
   const [observacoesLiquidacao, setObservacoesLiquidacao] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const ctx = useContextoVisual();
+  const { filterInContext, empresaAtual, contextoReady } = ctx || {};
 
   const { data: ordensLiquidacao = [], isLoading } = useQuery({
     queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
@@ -98,11 +99,12 @@ function OrdensLiquidacaoPendentesContent() {
     }
   });
 
-  const ordensPendentes = ordensLiquidacao.filter(o => o.status === "Pendente");
-
+  // EARLY RETURN APÓS TODOS OS HOOKS
   if (!contextoReady || !empresaAtual || isLoading) {
     return <LoadingFallback />;
   }
+
+  const ordensPendentes = ordensLiquidacao.filter(o => o.status === "Pendente");
 
   const handleLiquidar = (ordem) => {
     setOrdemSelecionada(ordem);
