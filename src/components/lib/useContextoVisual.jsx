@@ -13,13 +13,15 @@ export function useContextoVisual() {
       return 'empresa';
     }
   });
+  const [contextoReady, setContextoReady] = useState(false);
 
   const {
     grupoAtual,
     empresaAtual: empresaContexto,
     empresasDoGrupo: empresasDoGrupoContexto,
     estaNoGrupo: estaNoGrupoContexto,
-    estaEmEmpresa
+    estaEmEmpresa,
+    isLoading: loadingContexto
   } = useContextoGrupoEmpresa();
 
   // Sincroniza o contexto local com o contexto real (grupo/empresa)
@@ -40,9 +42,11 @@ export function useContextoVisual() {
     const storedEmpresaId = localStorage.getItem('empresa_atual_id');
     if (storedEmpresaId) {
       setEmpresaAtualId(storedEmpresaId);
+      setContextoReady(true);
     } else if (empresaContexto) {
       setEmpresaAtualId(empresaContexto.id);
-    } else if (empresas.length > 0 && !empresaAtualId) {
+      setContextoReady(true);
+    } else if (empresas.length > 0 && !empresaAtualId && !loadingEmpresas) {
       // Auto-selecionar primeira empresa ativa se nenhuma estiver selecionada
       const primeiraAtiva = empresas.find(e => e.status === 'Ativa') || empresas[0];
       if (primeiraAtiva) {
@@ -50,9 +54,12 @@ export function useContextoVisual() {
         try {
           localStorage.setItem('empresa_atual_id', primeiraAtiva.id);
         } catch {}
+        setContextoReady(true);
       }
+    } else if (contexto === 'grupo' && grupoAtual) {
+      setContextoReady(true);
     }
-  }, [empresaContexto, empresas, empresaAtualId]);
+  }, [empresaContexto, empresas, empresaAtualId, loadingEmpresas, contexto, grupoAtual]);
 
   const empresaAtual = (contexto === 'grupo') ? null : (empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || empresas.find(e => e.status === 'Ativa') || empresas[0] || null);
   const empresasDoGrupo = empresas.filter(empresa => empresa.group_id === grupoAtual?.id);
@@ -203,20 +210,30 @@ export function useContextoVisual() {
   // Helpers: multiempresa stamping and server-side filter
   const getFiltroContexto = (campo = 'empresa_id', incluirGrupo = true) => {
     const filtro = {};
-    if (incluirGrupo && grupoAtual?.id) filtro.group_id = grupoAtual.id;
-    if (contexto === 'grupo') {
+
+    // Contexto grupo: usar group_id
+    if (contexto === 'grupo' && grupoAtual?.id) {
+      if (incluirGrupo) filtro.group_id = grupoAtual.id;
       if (filtroEmpresa !== 'todas') filtro[campo] = filtroEmpresa;
-    } else if (empresaAtual?.id) {
-      filtro[campo] = empresaAtual.id;
-    } else {
-      // Fallback seguro: se não tem empresa selecionada, usar primeira empresa disponível
-      const primeiraEmpresa = empresas.find(e => e.status === 'Ativa') || empresas[0];
-      if (primeiraEmpresa) {
-        filtro[campo] = primeiraEmpresa.id;
-      } else {
-        console.warn('⚠️ CONTEXTO MULTIEMPRESA INVÁLIDO - Nenhuma empresa/grupo selecionado');
-      }
+      return filtro;
     }
+
+    // Contexto empresa: usar empresa_id
+    if (empresaAtual?.id) {
+      filtro[campo] = empresaAtual.id;
+      if (incluirGrupo && empresaAtual.group_id) filtro.group_id = empresaAtual.group_id;
+      return filtro;
+    }
+
+    // Fallback: buscar empresa disponível
+    const primeiraEmpresa = empresas.find(e => e.status === 'Ativa') || empresas[0];
+    if (primeiraEmpresa) {
+      filtro[campo] = primeiraEmpresa.id;
+      if (incluirGrupo && primeiraEmpresa.group_id) filtro.group_id = primeiraEmpresa.group_id;
+      return filtro;
+    }
+
+    console.error('❌ ERRO CRÍTICO: Nenhuma empresa disponível no contexto');
     return filtro;
   };
 
@@ -302,7 +319,7 @@ export function useContextoVisual() {
     empresasDoGrupo,
     estaNoGrupo: contexto === 'grupo',
     grupoAtual,
-    isLoading: loadingUser || loadingEmpresas,
+    isLoading: loadingUser || loadingEmpresas || loadingContexto || !contextoReady,
     filtrarPorContexto,
     getFiltroContexto,
     carimbarContexto,
