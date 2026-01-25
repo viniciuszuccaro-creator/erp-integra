@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Users, Clock, Calendar, Activity, Trophy, FileText, UserCircle } from "lucide-react";
+import { Users, Clock, Calendar, Activity, Trophy, FileText, UserCircle, Loader2 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
@@ -15,6 +15,15 @@ const GameficacaoProducao = React.lazy(() => import("@/components/rh/Gameficacao
 const MonitoramentoRHInteligente = React.lazy(() => import("@/components/rh/MonitoramentoRHInteligente"));
 const PontoEletronicoBiometrico = React.lazy(() => import("@/components/rh/PontoEletronicoBiometrico"));
 const DashboardRHRealtime = React.lazy(() => import("../components/rh/DashboardRHRealtime"));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
 
 export default function RH() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -152,21 +161,22 @@ export default function RH() {
   ];
 
   const handleModuleClick = (module) => {
-    React.startTransition(() => {
-      openWindow(
-        module.component,
-        { 
-          ...(module.props || {}),
-          windowMode: true 
-        },
-        {
-          title: module.windowTitle,
-          width: module.width,
-          height: module.height,
-          uniqueKey: `rh-${module.title.toLowerCase().replace(/\s/g, '-')}`
-        }
-      );
-    });
+    const WrappedComponent = () => (
+      <Suspense fallback={<LoadingFallback />}>
+        <module.component {...(module.props || {})} windowMode={true} />
+      </Suspense>
+    );
+    
+    openWindow(
+      WrappedComponent,
+      { ...(module.props || {}), windowMode: true },
+      {
+        title: module.windowTitle,
+        width: module.width,
+        height: module.height,
+        uniqueKey: `rh-${module.title.toLowerCase().replace(/\s/g, '-')}`
+      }
+    );
   };
 
   return (

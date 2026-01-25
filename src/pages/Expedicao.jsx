@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Truck, Package, FileText, Route, Activity, BarChart3, Settings, Map, MessageCircle, Camera, Scan, Building2 } from "lucide-react";
+import { Truck, Package, FileText, Route, Activity, BarChart3, Settings, Map, MessageCircle, Camera, Scan, Building2, Loader2 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -33,6 +33,15 @@ const ConfiguracaoExpedicao = React.lazy(() => import("../components/expedicao/C
 const MapaRoteirizacaoIA = React.lazy(() => import("../components/logistica/MapaRoteirizacaoIA"));
 const RoteirizacaoMapa = React.lazy(() => import("../components/expedicao/RoteirizacaoMapa"));
 const ComprovanteDigital = React.lazy(() => import("../components/expedicao/ComprovanteDigital"));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
 
 export default function Expedicao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -254,8 +263,14 @@ export default function Expedicao() {
   ];
 
   const handleModuleClick = (module) => {
+    const WrappedComponent = () => (
+      <Suspense fallback={<LoadingFallback />}>
+        <module.component {...(module.props || {})} windowMode={true} />
+      </Suspense>
+    );
+    
     openWindow(
-      module.component,
+      WrappedComponent,
       { ...(module.props || {}), windowMode: true },
       {
         title: module.windowTitle,

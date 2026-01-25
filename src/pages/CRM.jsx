@@ -1,8 +1,7 @@
-
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users } from "lucide-react";
+import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users, Loader2 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
@@ -16,6 +15,15 @@ const FunilComercialInteligente = React.lazy(() => import("@/components/crm/Funi
 const FunilVendasAvancado = React.lazy(() => import("@/components/crm/FunilVendasAvancado"));
 const IALeadsPriorizacao = React.lazy(() => import("../components/crm/IALeadsPriorizacao"));
 const IAChurnDetection = React.lazy(() => import("../components/crm/IAChurnDetection"));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
 
 export default function CRMPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -209,21 +217,22 @@ export default function CRMPage() {
   ];
 
   const handleModuleClick = (module) => {
-    React.startTransition(() => {
-      openWindow(
-        module.component,
-        { 
-          ...(module.props || {}),
-          windowMode: true 
-        },
-        {
-          title: module.windowTitle,
-          width: module.width,
-          height: module.height,
-          uniqueKey: `crm-${module.title.toLowerCase().replace(/\s/g, '-')}`
-        }
-      );
-    });
+    const WrappedComponent = () => (
+      <Suspense fallback={<LoadingFallback />}>
+        <module.component {...(module.props || {})} windowMode={true} />
+      </Suspense>
+    );
+    
+    openWindow(
+      WrappedComponent,
+      { ...(module.props || {}), windowMode: true },
+      {
+        title: module.windowTitle,
+        width: module.width,
+        height: module.height,
+        uniqueKey: `crm-${module.title.toLowerCase().replace(/\s/g, '-')}`
+      }
+    );
   };
 
   return (
