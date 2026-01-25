@@ -48,7 +48,18 @@ const LoadingFallback = () => (
 
 function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
   const ctx = useContextoVisual();
-  const { empresaAtual } = ctx || {};
+  
+  if (!ctx?.contextoReady) {
+    return <LoadingFallback />;
+  }
+
+  const { empresaAtual } = ctx;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todos");
+  const [selectedPedidos, setSelectedPedidos] = useState([]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { openWindow, closeWindow } = useWindow();
 
   const { data: pedidos = pedidosProp || [] } = useQueryWithRateLimit(
     ['pedidos', empresaAtual?.id],
@@ -69,15 +80,6 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
   );
 
   const isLoading = !pedidosProp && !pedidos.length;
-  // V21.6: Multi-empresa
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("todos");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { openWindow, closeWindow } = useWindow();
-
-  // Seleção em massa + exportação
-  const [selectedPedidos, setSelectedPedidos] = useState([]);
   const togglePedido = (id) => setSelectedPedidos(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleAllPedidos = (checked, lista) => setSelectedPedidos(checked ? lista.map(p => p.id) : []);
   const exportarPedidosCSV = (lista) => {
@@ -125,10 +127,6 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
   const pedidosPendentesAprovacao = pedidos.filter(p => p.status_aprovacao === "pendente");
   const pedidosAprovados = pedidos.filter(p => p.status_aprovacao === "aprovado");
   const pedidosNegados = pedidos.filter(p => p.status_aprovacao === "negado");
-
-  if (!ctx?.contextoReady) {
-    return <LoadingFallback />;
-  }
 
   if (isLoading) {
     return <LoadingFallback />;
@@ -546,5 +544,9 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
 }
 
 export default function PedidosTab(props) {
-  return <PedidosTabContent {...props} />;
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PedidosTabContent {...props} />
+    </Suspense>
+  );
 }
