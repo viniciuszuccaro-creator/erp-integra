@@ -44,6 +44,8 @@ export default function ContasPagarTab({ contas: contasProp, windowMode = false 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
     queryFn: () => base44.entities.Empresa.list(),
+    initialData: [],
+    enabled: true
   });
 
   const enviarParaCaixaMutation = useMutation({

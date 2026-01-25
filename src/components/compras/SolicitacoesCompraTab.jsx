@@ -73,6 +73,8 @@ export default function SolicitacoesCompraTab({ solicitacoes: solicitacoesProp, 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list(),
+    initialData: [],
+    enabled: true
   });
 
   const { data: user } = useQuery({

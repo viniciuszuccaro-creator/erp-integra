@@ -63,7 +63,8 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
     queryFn: () => base44.entities.Empresa.list(),
     initialData: empresasProp || [],
     staleTime: 60000,
-    enabled: true
+    enabled: true,
+    retry: false
   });
 
   const isLoading = !pedidosProp && !pedidos.length;
