@@ -286,6 +286,7 @@ export default function AppMotorista() {
           </Card>
         )}
       </div>
-    </div>
+      </div>
+    </ControleAcessoLogistica>
   );
 }

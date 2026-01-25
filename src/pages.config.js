@@ -1,5 +1,6 @@
 import Acessos from './pages/Acessos';
 import Agenda from './pages/Agenda';
+import AppMotorista from './pages/AppMotorista';
 import AuditoriaUI from './pages/AuditoriaUI';
 import CRM from './pages/CRM';
 import Cadastros from './pages/Cadastros';
@@ -14,6 +15,7 @@ import DashboardCorporativo from './pages/DashboardCorporativo';
 import DemoMultitarefas from './pages/DemoMultitarefas';
 import Documentacao from './pages/Documentacao';
 import ETAPA2Dashboard from './pages/ETAPA2Dashboard';
+import ETAPA3Dashboard from './pages/ETAPA3Dashboard';
 import Empresas from './pages/Empresas';
 import EstabilizacaoSistema from './pages/EstabilizacaoSistema';
 import Estoque from './pages/Estoque';
@@ -32,14 +34,13 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
-import AppMotorista from './pages/AppMotorista';
-import ETAPA3Dashboard from './pages/ETAPA3Dashboard';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Acessos": Acessos,
     "Agenda": Agenda,
+    "AppMotorista": AppMotorista,
     "AuditoriaUI": AuditoriaUI,
     "CRM": CRM,
     "Cadastros": Cadastros,
@@ -54,6 +55,7 @@ export const PAGES = {
     "DemoMultitarefas": DemoMultitarefas,
     "Documentacao": Documentacao,
     "ETAPA2Dashboard": ETAPA2Dashboard,
+    "ETAPA3Dashboard": ETAPA3Dashboard,
     "Empresas": Empresas,
     "EstabilizacaoSistema": EstabilizacaoSistema,
     "Estoque": Estoque,
@@ -72,8 +74,6 @@ export const PAGES = {
     "RH": RH,
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
-    "AppMotorista": AppMotorista,
-    "ETAPA3Dashboard": ETAPA3Dashboard,
 }
 
 export const pagesConfig = {

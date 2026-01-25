@@ -10,6 +10,8 @@ import MonitorEntregasRealtime from '@/components/logistica/MonitorEntregasRealt
 import IntegracaoETAPA3 from '@/components/governanca/IntegracaoETAPA3';
 import ChecklistETAPA3 from '@/components/governanca/ChecklistETAPA3';
 import StatusFinalETAPA3_100 from '@/components/governanca/StatusFinalETAPA3_100';
+import ValidadorETAPA3Final from '@/components/governanca/ValidadorETAPA3Final';
+import DashboardLogisticaInteligente from '@/components/logistica/DashboardLogisticaInteligente';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
@@ -190,6 +192,9 @@ export default function ETAPA3Dashboard() {
         </Card>
       </div>
 
+      {/* Métricas Inteligentes */}
+      <DashboardLogisticaInteligente />
+
       {/* Demo Funcional Expandido */}
       <Card>
         <CardHeader>
@@ -197,12 +202,13 @@ export default function ETAPA3Dashboard() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="roteirizacao" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="roteirizacao">Roteirização</TabsTrigger>
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="realtime">Real-time</TabsTrigger>
               <TabsTrigger value="integracoes">Integrações</TabsTrigger>
               <TabsTrigger value="checklist">Checklist</TabsTrigger>
+              <TabsTrigger value="validador">Validador</TabsTrigger>
             </TabsList>
 
             <TabsContent value="roteirizacao" className="mt-4">
@@ -223,6 +229,10 @@ export default function ETAPA3Dashboard() {
 
             <TabsContent value="checklist" className="mt-4">
               <ChecklistETAPA3 />
+            </TabsContent>
+
+            <TabsContent value="validador" className="mt-4">
+              <ValidadorETAPA3Final />
             </TabsContent>
           </Tabs>
         </CardContent>
