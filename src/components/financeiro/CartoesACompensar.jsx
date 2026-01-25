@@ -1,4 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
+import { Loader2 } from "lucide-react";
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[300px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, CheckCircle, AlertCircle, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
-export default function CartoesACompensar() {
+function CartoesACompensar() {
   const queryClient = useQueryClient();
   const [filtroStatus, setFiltroStatus] = useState("todos");
 
@@ -187,5 +197,13 @@ export default function CartoesACompensar() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function CartoesACompencarWrapper() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <CartoesACompensar />
+    </Suspense>
   );
 }

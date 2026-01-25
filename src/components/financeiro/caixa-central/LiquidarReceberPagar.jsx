@@ -280,10 +280,12 @@ function LiquidarReceberPagarContent() {
   );
 }
 
-export default function LiquidarReceberPagar() {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <LiquidarReceberPagarContent />
-    </Suspense>
-  );
-}
+export default LiquidarReceberPagar;
+
+LiquidarReceberPagar.wrapper = function() {
+   return (
+     <Suspense fallback={<LoadingFallback />}>
+       <LiquidarReceberPagar />
+     </Suspense>
+   );
+ }

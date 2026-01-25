@@ -307,10 +307,12 @@ function OrdensLiquidacaoPendentesContent() {
   );
 }
 
-export default function OrdensLiquidacaoPendentes() {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <OrdensLiquidacaoPendentesContent />
-    </Suspense>
-  );
-}
+export default OrdensLiquidacaoPendentes;
+
+OrdensLiquidacaoPendentes.wrapper = function() {
+   return (
+     <Suspense fallback={<LoadingFallback />}>
+       <OrdensLiquidacaoPendentes />
+     </Suspense>
+   );
+ }
