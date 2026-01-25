@@ -64,10 +64,9 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes = 
     toast.success('Etapa removida');
   };
 
+  // CÁLCULOS APÓS HOOKS
   const etapas = formData.etapas_entrega || [];
   const totalItensAlocados = etapas.reduce((sum, e) => sum + (e.quantidade_total_itens || 0), 0);
-  
-  // Combine all raw items to get total count for comparison with alocated items
   const totalItens = 
     (formData.itens_revenda?.length || 0) +
     (formData.itens_armado_padrao?.length || 0) +

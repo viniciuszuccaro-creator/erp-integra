@@ -26,10 +26,10 @@ import {
  * ✅ Botão para adicionar produto novamente ao pedido
  */
 export default function HistoricoClienteTab({ formData, setFormData, onAdicionarItemAoPedido }) {
+  // TODOS OS HOOKS PRIMEIRO
   const [produtosFrequentes, setProdutosFrequentes] = useState([]);
   const [analisando, setAnalisando] = useState(false);
 
-  // Buscar pedidos anteriores do cliente
   const { data: pedidosAnteriores = [] } = useQuery({
     queryKey: ['pedidos-cliente', formData.cliente_id],
     queryFn: () => formData.cliente_id 
@@ -127,16 +127,7 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
     setAnalisando(false);
   }, [pedidosAnteriores]);
 
-  // Calcular estatísticas
-  const totalPedidos = pedidosAnteriores.length;
-  const valorTotalHistorico = pedidosAnteriores.reduce((sum, p) => sum + (p.valor_total || 0), 0);
-  const ticketMedio = totalPedidos > 0 ? valorTotalHistorico / totalPedidos : 0;
-  const pedidosEntregues = pedidosAnteriores.filter(p => p.status === 'Entregue').length;
-  const taxaEntrega = totalPedidos > 0 ? (pedidosEntregues / totalPedidos) * 100 : 0;
-
-  const contasPagas = contasReceber.filter(c => c.status === 'Recebido').length;
-  const contasAtrasadas = contasReceber.filter(c => c.status === 'Atrasado').length;
-
+  // EARLY RETURN APÓS HOOKS
   if (!formData.cliente_id) {
     return (
       <div className="text-center py-12 text-slate-500">
@@ -145,6 +136,16 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
       </div>
     );
   }
+
+  // CÁLCULOS APÓS EARLY RETURN
+  const totalPedidos = pedidosAnteriores.length;
+  const valorTotalHistorico = pedidosAnteriores.reduce((sum, p) => sum + (p.valor_total || 0), 0);
+  const ticketMedio = totalPedidos > 0 ? valorTotalHistorico / totalPedidos : 0;
+  const pedidosEntregues = pedidosAnteriores.filter(p => p.status === 'Entregue').length;
+  const taxaEntrega = totalPedidos > 0 ? (pedidosEntregues / totalPedidos) * 100 : 0;
+
+  const contasPagas = contasReceber.filter(c => c.status === 'Recebido').length;
+  const contasAtrasadas = contasReceber.filter(c => c.status === 'Atrasado').length;
 
   return (
     <div className="space-y-6">

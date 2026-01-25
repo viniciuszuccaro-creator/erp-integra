@@ -17,6 +17,7 @@ import VisualizadorPeca from './VisualizadorPeca';
  * AGORA COM: etapa_obra_id + Consolidação + Visualizador Restaurado
  */
 export default function CorteDobraIATab({ formData, setFormData, empresaId, onNext }) {
+  // TODOS OS HOOKS PRIMEIRO
   const [posicaoSelecionada, setPosicaoSelecionada] = useState(null);
   const [editando, setEditando] = useState(null);
   const [processandoIA, setProcessandoIA] = useState(false);
