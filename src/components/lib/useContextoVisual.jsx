@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import useQueryWithRateLimit from "./useQueryWithRateLimit";
 import { useUser } from "./UserContext";
 import useContextoGrupoEmpresa from "./useContextoGrupoEmpresa";
 
@@ -29,11 +29,11 @@ export function useContextoVisual() {
     setContexto(estaNoGrupoContexto ? 'grupo' : 'empresa');
   }, [estaNoGrupoContexto]);
 
-  const { data: empresas = [], isLoading: loadingEmpresas } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
-    staleTime: 300000,
-  });
+  const { data: empresas = [], isLoading: loadingEmpresas } = useQueryWithRateLimit(
+    ['empresas'],
+    () => base44.entities.Empresa.list(),
+    { initialData: [] }
+  );
 
   const [empresaAtualId, setEmpresaAtualId] = useState(null);
   const [filtroEmpresa, setFiltroEmpresa] = useState('todas');
@@ -66,23 +66,23 @@ export function useContextoVisual() {
   const estaNoGrupo = contexto === 'grupo';
 
   useEffect(() => {
-            try {
-              localStorage.setItem('contexto_atual', contexto);
-            } catch (e) {
-              console.warn('Erro ao salvar contexto:', e);
-            }
-          }, [contexto]);
+    try {
+      localStorage.setItem('contexto_atual', contexto);
+    } catch (e) {
+      console.warn('Erro ao salvar contexto:', e);
+    }
+  }, [contexto]);
 
-          // Persistir o grupo atual para headers multi-tenant
-          useEffect(() => {
-            try {
-              if (grupoAtual?.id) {
-                localStorage.setItem('group_atual_id', grupoAtual.id);
-              }
-            } catch (e) {
-              console.warn('Erro ao salvar grupo:', e);
-            }
-          }, [grupoAtual?.id]);
+  // Persistir o grupo atual para headers multi-tenant
+  useEffect(() => {
+    try {
+      if (grupoAtual?.id) {
+        localStorage.setItem('group_atual_id', grupoAtual.id);
+      }
+    } catch (e) {
+      console.warn('Erro ao salvar grupo:', e);
+    }
+  }, [grupoAtual?.id]);
 
   const adaptarMenuPorContexto = (menuItems) => {
     if (!user) return menuItems;

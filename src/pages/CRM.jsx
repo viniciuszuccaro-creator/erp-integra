@@ -1,6 +1,7 @@
+
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery } from "@tanstack/react-query";
+import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
@@ -21,9 +22,9 @@ export default function CRMPage() {
   const { filtrarPorContexto, filterInContext, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: oportunidades = [] } = useQuery({
-    queryKey: ['oportunidades', empresaAtual?.id],
-    queryFn: async () => {
+  const { data: oportunidades = [] } = useQueryWithRateLimit(
+    ['oportunidades', empresaAtual?.id],
+    async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await base44.entities.Oportunidade.filter(filtro, '-created_date', 100);
@@ -32,13 +33,12 @@ export default function CRMPage() {
         return [];
       }
     },
-    staleTime: 30000,
-    retry: 2
-  });
+    { initialData: [] }
+  );
 
-  const { data: interacoes = [] } = useQuery({
-    queryKey: ['interacoes', empresaAtual?.id],
-    queryFn: async () => {
+  const { data: interacoes = [] } = useQueryWithRateLimit(
+    ['interacoes', empresaAtual?.id],
+    async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await base44.entities.Interacao.filter(filtro, '-created_date', 100);
@@ -47,13 +47,12 @@ export default function CRMPage() {
         return [];
       }
     },
-    staleTime: 30000,
-    retry: 1
-  });
+    { initialData: [] }
+  );
 
-  const { data: campanhas = [] } = useQuery({
-    queryKey: ['campanhas', empresaAtual?.id],
-    queryFn: async () => {
+  const { data: campanhas = [] } = useQueryWithRateLimit(
+    ['campanhas', empresaAtual?.id],
+    async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
         return await base44.entities.Campanha.filter(filtro, '-created_date', 50);
@@ -62,13 +61,12 @@ export default function CRMPage() {
         return [];
       }
     },
-    staleTime: 30000,
-    retry: 1
-  });
+    { initialData: [] }
+  );
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
-    queryFn: async () => {
+  const { data: clientes = [] } = useQueryWithRateLimit(
+    ['clientes', empresaAtual?.id],
+    async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
@@ -77,27 +75,25 @@ export default function CRMPage() {
         return [];
       }
     },
-    staleTime: 30000,
-    retry: 1
-  });
+    { initialData: [] }
+  );
 
-  const { data: totalClientes = 0 } = useQuery({
-    queryKey: ['clientes-count-crm', empresaAtual?.id],
-    queryFn: async () => {
+  const { data: totalClientes = 0 } = useQueryWithRateLimit(
+    ['clientes-count-crm', empresaAtual?.id],
+    async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
           filter: filtro
         });
-        return response.data?.count || clientes.length;
+        return response.data?.count || 0;
       } catch {
-        return clientes.length;
+        return 0; // Changed from clientes.length to 0 as per outline
       }
     },
-    staleTime: 60000,
-    retry: 1
-  });
+    { initialData: 0 }
+  );
 
   // Dados já vêm filtrados do servidor
   const oportunidadesFiltradas = oportunidades;
