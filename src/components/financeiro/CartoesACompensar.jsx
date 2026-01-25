@@ -1,6 +1,14 @@
 import React, { useState, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CreditCard, CheckCircle, AlertCircle, DollarSign } from "lucide-react";
+import { toast } from "sonner";
+
 const LoadingFallback = () => (
   <div className="flex items-center justify-center min-h-[300px]">
     <div className="flex flex-col items-center gap-2">
@@ -9,13 +17,6 @@ const LoadingFallback = () => (
     </div>
   </div>
 );
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { base44 } from "@/api/base44Client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { CreditCard, CheckCircle, AlertCircle, DollarSign } from "lucide-react";
-import { toast } from "sonner";
 
 function CartoesACompensar() {
   const queryClient = useQueryClient();
@@ -200,10 +201,12 @@ function CartoesACompensar() {
   );
 }
 
-export default function CartoesACompensar(props) {
+function CartoesACompencarWrapper(props) {
   return (
     <Suspense fallback={<LoadingFallback />}>
       <CartoesACompensar {...props} />
     </Suspense>
   );
 }
+
+export default CartoesACompencarWrapper;
