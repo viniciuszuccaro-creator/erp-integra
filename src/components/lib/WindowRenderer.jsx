@@ -24,50 +24,45 @@ export default function WindowRenderer() {
           return null;
         }
 
+        const injectedProps = { ...window.props };
+        if (typeof injectedProps.onSubmit === 'function') {
+          const originalOnSubmit = injectedProps.onSubmit;
+          injectedProps.onSubmit = (...args) => {
+            const result = originalOnSubmit(...args);
+            if (result && typeof result.then === 'function') {
+              result.finally(() => closeWindow(window.id));
+            } else {
+              closeWindow(window.id);
+            }
+            return result;
+          };
+        }
+        if (typeof injectedProps.onSuccess === 'function') {
+          const originalOnSuccess = injectedProps.onSuccess;
+          injectedProps.onSuccess = (...args) => {
+            const result = originalOnSuccess(...args);
+            if (result && typeof result.then === 'function') {
+              result.finally(() => closeWindow(window.id));
+            } else {
+              closeWindow(window.id);
+            }
+            return result;
+          };
+        }
+
         return (
           <WindowModal key={window.id} window={window}>
-            {(() => {
-              const injectedProps = { ...window.props };
-              if (typeof injectedProps.onSubmit === 'function') {
-                const originalOnSubmit = injectedProps.onSubmit;
-                injectedProps.onSubmit = (...args) => {
-                  const result = originalOnSubmit(...args);
-                  if (result && typeof result.then === 'function') {
-                    result.finally(() => closeWindow(window.id));
-                  } else {
-                    closeWindow(window.id);
-                  }
-                  return result;
-                };
-              }
-              if (typeof injectedProps.onSuccess === 'function') {
-                const originalOnSuccess = injectedProps.onSuccess;
-                injectedProps.onSuccess = (...args) => {
-                  const result = originalOnSuccess(...args);
-                  if (result && typeof result.then === 'function') {
-                    result.finally(() => closeWindow(window.id));
-                  } else {
-                    closeWindow(window.id);
-                  }
-                  return result;
-                };
-              }
-              
-              try {
-                return (
-                  <Suspense fallback={<div className="p-6 text-slate-500">Carregando...</div>}>
-                    <Component
-                      {...injectedProps}
-                      windowId={window.id}
-                      closeSelf={() => closeWindow(window.id)}
-                    />
-                  </Suspense>
-                );
-              } catch (error) {
-                console.error('Erro ao renderizar janela:', error);
-                return <div className="p-6 text-red-600">Erro ao carregar componente</div>;
-              }
-            })()}
+            <Suspense fallback={
+              <div className="flex items-center justify-center p-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            }>
+              <Component
+                {...injectedProps}
+                windowId={window.id}
+                closeSelf={() => closeWindow(window.id)}
+              />
+            </Suspense>
           </WindowModal>
         );
       })}
