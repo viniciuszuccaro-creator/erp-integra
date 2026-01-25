@@ -19,20 +19,28 @@ import { toast } from "sonner";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, produtos: produtosProp }) {
+  const { empresaAtual } = useContextoVisual();
+
   const { data: movimentacoes = movimentacoesProp || [] } = useQuery({
-    queryKey: ['movimentacoes'],
-    queryFn: async () => await base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 1000),
+    queryKey: ['movimentacoes', empresaAtual?.id],
+    queryFn: async () => {
+      if (!empresaAtual?.id) return movimentacoesProp || [];
+      return await base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 1000);
+    },
     initialData: movimentacoesProp || [],
     staleTime: 30000,
-    enabled: false
+    enabled: !!empresaAtual?.id || movimentacoesProp?.length > 0
   });
 
   const { data: produtos = produtosProp || [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: async () => await base44.entities.Produto.list(undefined, 5000),
+    queryKey: ['produtos', empresaAtual?.id],
+    queryFn: async () => {
+      if (!empresaAtual?.id) return produtosProp || [];
+      return await base44.entities.Produto.list(undefined, 5000);
+    },
     initialData: produtosProp || [],
     staleTime: 30000,
-    enabled: false
+    enabled: !!empresaAtual?.id || produtosProp?.length > 0
   });
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
