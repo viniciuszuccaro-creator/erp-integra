@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, PackageCheck, Search, Eye } from "lucide-react";
+import { Plus, PackageCheck, Search, Eye, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,7 +17,16 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
-export default function RecebimentoTab({ recebimentos: recebimentosProp, ordensCompra: ordensCompraProp, produtos: produtosProp }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: ordensCompraProp, produtos: produtosProp }) {
   const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
 
   const { data: recebimentos = recebimentosProp || [] } = useQuery({
@@ -483,5 +492,13 @@ export default function RecebimentoTab({ recebimentos: recebimentosProp, ordensC
         )}
       </Card>
     </div>
+  );
+}
+
+export default function RecebimentoTab(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <RecebimentoTabContent {...props} />
+    </Suspense>
   );
 }

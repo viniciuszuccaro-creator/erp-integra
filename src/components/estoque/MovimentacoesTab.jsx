@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
@@ -19,7 +19,16 @@ import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 import { useUser } from "@/components/lib/UserContext";
 
-export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, produtos: produtosProp }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: produtosProp }) {
   const { empresaAtual } = useContextoVisual();
 
   const { data: movimentacoes = movimentacoesProp || [], isLoadingMov } = useQueryWithRateLimit(
@@ -399,5 +408,13 @@ export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, pro
         )}
       </Card>
     </div>
+  );
+}
+
+export default function MovimentacoesTab(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <MovimentacoesTabContent {...props} />
+    </Suspense>
   );
 }

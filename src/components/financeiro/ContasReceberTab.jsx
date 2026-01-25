@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
 import GerarCobrancaModal from "./GerarCobrancaModal";
 import SimularPagamentoModal from "./SimularPagamentoModal";
@@ -21,7 +22,16 @@ import KPIsReceber from "./contas-receber/KPIsReceber";
 import FiltrosReceber from "./contas-receber/FiltrosReceber";
 import TabelaReceber from "./contas-receber/TabelaReceber";
 
-export default function ContasReceberTab({ contas: contasProp, empresas = [], windowMode = false }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function ContasReceberTabContent({ contas: contasProp, empresas = [], windowMode = false }) {
   const contas = contasProp || [];
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -421,4 +431,12 @@ export default function ContasReceberTab({ contas: contasProp, empresas = [], wi
   }
 
   return content;
+}
+
+export default function ContasReceberTab(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ContasReceberTabContent {...props} />
+    </Suspense>
+  );
 }

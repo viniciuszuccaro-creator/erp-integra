@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2 } from 'lucide-react';
+import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
@@ -18,7 +18,16 @@ const VisaoGeralPendencias = React.lazy(() => import('./caixa-central/VisaoGeral
 const CartoesACompensar = React.lazy(() => import('./CartoesACompensar'));
 const ConciliacaoBancariaTab = React.lazy(() => import('./ConciliacaoBancariaTab'));
 
-export default function CaixaCentralLiquidacao({ windowMode = false }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function CaixaCentralLiquidacaoContent({ windowMode = false }) {
   const { filterInContext } = useContextoVisual();
   const { openWindow } = useWindow();
 
@@ -152,5 +161,13 @@ export default function CaixaCentralLiquidacao({ windowMode = false }) {
         onModuleClick={handleModuleClick}
       />
     </div>
+  );
+}
+
+export default function CaixaCentralLiquidacao(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <CaixaCentralLiquidacaoContent {...props} />
+    </Suspense>
   );
 }

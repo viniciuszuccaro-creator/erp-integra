@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
+import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,8 @@ import {
   Clock,
   XCircle,
   Printer,
-  Download
+  Download,
+  Loader2
 } from "lucide-react";
 import { ImprimirPedido } from "@/components/lib/impressao";
 import { useToast } from "@/components/ui/use-toast";
@@ -36,7 +38,16 @@ import CentralAprovacoesManager from "./CentralAprovacoesManager";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
   const { empresaAtual } = useContextoVisual();
 
   const { data: pedidos = pedidosProp || [] } = useQueryWithRateLimit(
@@ -531,5 +542,13 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function PedidosTab(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PedidosTabContent {...props} />
+    </Suspense>
   );
 }
