@@ -46,7 +46,6 @@ export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, pro
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
-  const { empresaAtual } = useContextoVisual();
   const { canCreate } = usePermissions();
   const [novaMovimentacao, setNovaMovimentacao] = useState({
     tipo_movimentacao: "",
