@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { FileText, Settings, Book, BarChart3, Upload, Sparkles } from "lucide-react";
+import { FileText, Settings, Book, BarChart3, Upload, Sparkles, Loader2 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
@@ -16,6 +16,15 @@ const RelatorioDRE = React.lazy(() => import("../components/fiscal/RelatorioDRE"
 const MotorFiscalInteligente = React.lazy(() => import("@/components/fiscal/MotorFiscalInteligente"));
 const ExportacaoSPED = React.lazy(() => import("../components/fiscal/ExportacaoSPED"));
 const ImportarXMLNFe = React.lazy(() => import('../components/fiscal/ImportarXMLNFe'));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
 
 export default function FiscalPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -129,21 +138,22 @@ export default function FiscalPage() {
   ];
 
   const handleModuleClick = (module) => {
-    React.startTransition(() => {
-      openWindow(
-        module.component,
-        { 
-          ...(module.props || {}),
-          windowMode: true 
-        },
-        {
-          title: module.windowTitle,
-          width: module.width,
-          height: module.height,
-          uniqueKey: `fiscal-${module.title.toLowerCase().replace(/\s/g, '-')}`
-        }
-      );
-    });
+    const WrappedComponent = () => (
+      <Suspense fallback={<LoadingFallback />}>
+        <module.component {...(module.props || {})} windowMode={true} />
+      </Suspense>
+    );
+    
+    openWindow(
+      WrappedComponent,
+      { ...(module.props || {}), windowMode: true },
+      {
+        title: module.windowTitle,
+        width: module.width,
+        height: module.height,
+        uniqueKey: `fiscal-${module.title.toLowerCase().replace(/\s/g, '-')}`
+      }
+    );
   };
 
   return (

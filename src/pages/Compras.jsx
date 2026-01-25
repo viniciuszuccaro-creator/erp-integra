@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Building2, Users, ShoppingCart, FileText, Upload, Package } from "lucide-react";
+import { Building2, Users, ShoppingCart, FileText, Upload, Package, Loader2 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
@@ -15,6 +15,15 @@ const OrdensCompraTab = React.lazy(() => import("../components/compras/OrdensCom
 const SolicitacoesCompraTab = React.lazy(() => import("../components/compras/SolicitacoesCompraTab"));
 const CotacoesTab = React.lazy(() => import("../components/compras/CotacoesTab"));
 const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/ImportacaoNFeRecebimento"));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
 
 export default function Compras() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -146,21 +155,22 @@ export default function Compras() {
   ];
 
   const handleModuleClick = (module) => {
-    React.startTransition(() => {
-      openWindow(
-        module.component,
-        { 
-          ...(module.props || {}),
-          windowMode: true 
-        },
-        {
-          title: module.windowTitle,
-          width: module.width,
-          height: module.height,
-          uniqueKey: `compras-${module.title.toLowerCase().replace(/\s/g, '-')}`
-        }
-      );
-    });
+    const WrappedComponent = () => (
+      <Suspense fallback={<LoadingFallback />}>
+        <module.component {...(module.props || {})} windowMode={true} />
+      </Suspense>
+    );
+    
+    openWindow(
+      WrappedComponent,
+      { ...(module.props || {}), windowMode: true },
+      {
+        title: module.windowTitle,
+        width: module.width,
+        height: module.height,
+        uniqueKey: `compras-${module.title.toLowerCase().replace(/\s/g, '-')}`
+      }
+    );
   };
 
   return (

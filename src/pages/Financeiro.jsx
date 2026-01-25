@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Wallet, Zap } from "lucide-react";
+import { Wallet, Zap, Loader2 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -24,6 +24,15 @@ const RateioMultiempresa = React.lazy(() => import("../components/financeiro/Rat
 const AlertasFinanceirosEmpresa = React.lazy(() => import("../components/financeiro/AlertasFinanceirosEmpresa"));
 const RelatorioFinanceiro = React.lazy(() => import("../components/financeiro/RelatorioFinanceiro"));
 const DashboardFormasPagamento = React.lazy(() => import("../components/financeiro/DashboardFormasPagamento"));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
 
 export default function Financeiro() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -308,22 +317,22 @@ export default function Financeiro() {
   const allModules = [...modules, ...grupoModules];
 
   const handleModuleClick = (module) => {
-    React.startTransition(() => {
-      openWindow(
-        module.component,
-        { 
-          ...(module.props || {}),
-          empresaAtual,
-          windowMode: true 
-        },
-        {
-          title: module.windowTitle,
-          width: module.width,
-          height: module.height,
-          uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}`
-        }
-      );
-    });
+    const WrappedComponent = () => (
+      <Suspense fallback={<LoadingFallback />}>
+        <module.component {...(module.props || {})} empresaAtual={empresaAtual} windowMode={true} />
+      </Suspense>
+    );
+    
+    openWindow(
+      WrappedComponent,
+      { ...(module.props || {}), empresaAtual, windowMode: true },
+      {
+        title: module.windowTitle,
+        width: module.width,
+        height: module.height,
+        uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}`
+      }
+    );
   };
 
   return (
