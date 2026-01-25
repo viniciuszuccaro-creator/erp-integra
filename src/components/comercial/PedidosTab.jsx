@@ -36,20 +36,28 @@ import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
+  const { empresaAtual } = useContextoVisual();
+
   const { data: pedidos = pedidosProp || [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: async () => await base44.entities.Pedido.list('-created_date', 1000),
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      if (!empresaAtual?.id) return pedidosProp || [];
+      return await base44.entities.Pedido.list('-created_date', 1000);
+    },
     initialData: pedidosProp || [],
     staleTime: 30000,
-    enabled: false
+    enabled: !!empresaAtual?.id || pedidosProp?.length > 0
   });
 
   const { data: clientes = clientesProp || [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: async () => await base44.entities.Cliente.list('-created_date', 1000),
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
+      if (!empresaAtual?.id) return clientesProp || [];
+      return await base44.entities.Cliente.list('-created_date', 1000);
+    },
     initialData: clientesProp || [],
     staleTime: 30000,
-    enabled: false
+    enabled: !!empresaAtual?.id || clientesProp?.length > 0
   });
 
   const { data: empresas = empresasProp || [] } = useQuery({
@@ -57,7 +65,7 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
     queryFn: () => base44.entities.Empresa.list(),
     initialData: empresasProp || [],
     staleTime: 60000,
-    enabled: false
+    enabled: true
   });
 
   const isLoading = false;
