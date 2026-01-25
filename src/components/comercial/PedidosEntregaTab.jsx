@@ -52,8 +52,8 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * - Upload/visualização de canhoto e fotos
  * - Integração com Expedição
  */
-export default function PedidosEntregaTab({ windowMode = false }) {
-  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
+export default function PedidosEntregaTab({ windowMode = false, pedidos: pedidosProp = [] }) {
+  const { empresaAtual } = useContextoVisual();
   const [busca, setBusca] = useState("");
   const [regiaoFiltro, setRegiaoFiltro] = useState("todas");
   const [statusFiltro, setStatusFiltro] = useState("todos");
@@ -75,12 +75,13 @@ export default function PedidosEntregaTab({ windowMode = false }) {
     podeRegistrarOcorrencia: hasPermission('Expedição', null, 'editar')
   };
 
-  const { data: pedidos = [] } = useQuery({
+  const { data: pedidos = pedidosProp } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id],
     queryFn: async () => {
-      if (!empresaAtual?.id) return [];
+      if (!empresaAtual?.id) return pedidosProp;
       return await base44.entities.Pedido.filter({ empresa_id: empresaAtual.id }, '-created_date', 1000);
     },
+    initialData: pedidosProp,
     enabled: !!empresaAtual?.id,
     staleTime: 30000,
   });
