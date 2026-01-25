@@ -464,7 +464,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
         <div className="flex-1 overflow-hidden">
           {/* ABA 1: IDENTIFICAÇÃO */}
           <TabsContent value="identificacao" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
               <WizardEtapa1Cliente
                 formData={formData}
                 setFormData={setFormData}
@@ -477,7 +477,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 2: ITENS DE REVENDA */}
           <TabsContent value="revenda" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
               <ItensRevendaTab
                 formData={formData}
                 setFormData={setFormData}
@@ -488,7 +488,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 3: ARMADO PADRÃO */}
           <TabsContent value="armado" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
               <ArmadoPadraoTab
                 formData={formData}
                 setFormData={setFormData}
@@ -500,7 +500,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 4: CORTE E DOBRA (IA) */}
           <TabsContent value="corte" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
               <CorteDobraIATab
                 formData={formData}
                 setFormData={setFormData}
@@ -512,7 +512,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* V21.1.2-R1: ABA 5 - HISTÓRICO DO CLIENTE (EXPANDIDA) */}
           <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
               <HistoricoClienteTab
                 formData={formData}
                 setFormData={setFormData}
@@ -527,7 +527,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 6: LOGÍSTICA */}
           <TabsContent value="logistica" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
               <LogisticaEntregaTab
                 formData={formData}
                 setFormData={setFormData}
@@ -540,7 +540,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
           {/* ABA 7: FINANCEIRO (protegida) */}
           <TabsContent value="financeiro" className="h-full overflow-y-auto p-6 m-0">
             <ProtectedSection module="Comercial" section={"Pedido.Financeiro"} action="visualizar" fallback={<div className="text-sm text-slate-500">Acesso restrito ao financeiro.</div>}>
-              <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+              <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
                 <FechamentoFinanceiroTab
                   formData={formData}
                   setFormData={setFormData}
@@ -552,7 +552,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 8: ARQUIVOS */}
           <TabsContent value="arquivos" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
               <ArquivosProjetosTab
                 formData={formData}
                 setFormData={setFormData}
@@ -562,7 +562,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* V21.1.2-R1: ABA 9 - AUDITORIA (ALTURA CORRIGIDA) */}
           <TabsContent value="auditoria" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
+            <Suspense fallback={<div className='flex items-center justify-center h-full'><div className='flex flex-col items-center gap-2'><Loader2 className='w-8 h-8 animate-spin text-blue-600' /><p className='text-slate-600'>Carregando...</p></div></div>}>
               <AuditoriaAprovacaoTab
                 formData={formData}
                 pedido={pedido}
