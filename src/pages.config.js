@@ -34,6 +34,7 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
+import ETAPA3Conclusao from './pages/ETAPA3Conclusao';
 import __Layout from './Layout.jsx';
 
 
@@ -74,6 +75,7 @@ export const PAGES = {
     "RH": RH,
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
+    "ETAPA3Conclusao": ETAPA3Conclusao,
 }
 
 export const pagesConfig = {

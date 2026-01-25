@@ -24,7 +24,10 @@ import DashboardConformidade from '@/components/governanca/DashboardConformidade
 import CertificadoOficialETAPA3 from '@/components/governanca/CertificadoOficialETAPA3';
 import ConquistasETAPA3 from '@/components/governanca/ConquistasETAPA3';
 import SeloAprovacaoETAPA3 from '@/components/governanca/SeloAprovacaoETAPA3';
+import ETAPA3_MASTER_ABSOLUTO_FINAL from '@/components/governanca/ETAPA3_MASTER_ABSOLUTO_FINAL';
 import DashboardLogisticaInteligente from './DashboardLogisticaInteligente';
+import { useNavigate } from 'react-router-dom';
+import { createPageUrl } from '@/utils';
 import PainelMetricasRealtime from './PainelMetricasRealtime';
 import MonitorEntregasRealtime from './MonitorEntregasRealtime';
 import WidgetResumoRotas from './WidgetResumoRotas';
@@ -138,8 +141,9 @@ export default function DashboardETAPA3Final() {
       </div>
 
       {/* Tabs de Validação */}
-      <Tabs defaultValue="certificado" className="w-full">
-        <TabsList className="grid w-full grid-cols-9 bg-white shadow-sm text-xs md:text-sm">
+      <Tabs defaultValue="encerramento" className="w-full">
+        <TabsList className="grid w-full grid-cols-10 bg-white shadow-sm text-xs md:text-sm">
+          <TabsTrigger value="encerramento">🎉 ENCERRAMENTO</TabsTrigger>
           <TabsTrigger value="certificado">🏆 Certificado</TabsTrigger>
           <TabsTrigger value="conquistas">⭐ Conquistas</TabsTrigger>
           <TabsTrigger value="validacao">Validação</TabsTrigger>
