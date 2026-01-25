@@ -31,6 +31,8 @@ export default function ClientesTab({ clientes: clientesProp }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
 
+  const isLoading = !clientesProp && !clientes.length;
+
   const filteredClientes = clientes.filter(c => {
     const matchSearch = c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                        c.razao_social?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,6 +47,14 @@ export default function ClientesTab({ clientes: clientesProp }) {
     const empresa = empresasDoGrupo.find(e => e.id === empresaId);
     return empresa?.nome_fantasia || empresa?.razao_social || '-';
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
