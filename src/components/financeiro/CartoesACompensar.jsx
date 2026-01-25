@@ -24,13 +24,10 @@ function CartoesACompensar() {
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const ctx = useContextoVisual();
 
-  if (!ctx?.contextoReady) {
-    return <LoadingFallback />;
-  }
-
-  const { data: cartoes = [] } = useQuery({
+  const { data: cartoes = [], isLoading } = useQuery({
     queryKey: ["movimento-cartao"],
     queryFn: () => base44.entities.MovimentoCartao.list(),
+    enabled: !!ctx?.contextoReady
   });
 
   const conciliarMutation = useMutation({
@@ -58,7 +55,9 @@ function CartoesACompensar() {
     .filter(c => c.status_compensacao === "Compensado")
     .reduce((acc, c) => acc + (c.valor_liquido || 0), 0);
 
-
+  if (!ctx?.contextoReady || isLoading) {
+    return <LoadingFallback />;
+  }
 
   return (
     <div className="space-y-6">

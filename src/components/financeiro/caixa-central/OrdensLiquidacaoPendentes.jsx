@@ -27,10 +27,6 @@ function OrdensLiquidacaoPendentesContent() {
   const { filterInContext, empresaAtual, contextoReady } = ctx || {};
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  if (!contextoReady || !empresaAtual) {
-    return <LoadingFallback />;
-  }
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);
   const [ordemSelecionada, setOrdemSelecionada] = useState(null);
   const [formaPagamentoLiquidacao, setFormaPagamentoLiquidacao] = useState("");
@@ -104,14 +100,8 @@ function OrdensLiquidacaoPendentesContent() {
 
   const ordensPendentes = ordensLiquidacao.filter(o => o.status === "Pendente");
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-12 text-center text-slate-500">
-          Carregando ordens...
-        </CardContent>
-      </Card>
-    );
+  if (!contextoReady || !empresaAtual || isLoading) {
+    return <LoadingFallback />;
   }
 
   const handleLiquidar = (ordem) => {
