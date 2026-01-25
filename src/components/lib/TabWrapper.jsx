@@ -8,28 +8,25 @@ import { Button } from '@/components/ui/button';
  * Previne tela branca quando contexto está carregando
  */
 export default function TabWrapper({ children, requireEmpresa = true }) {
-  const { empresaAtual, isLoading, grupoAtual } = useContextoVisual();
+  const { empresaAtual, contextoReady, grupoAtual } = useContextoVisual();
 
   // Enquanto carrega contexto
-  if (isLoading) {
+  if (!contextoReady) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center py-12">
+      <div className="w-full min-h-[400px] flex flex-col items-center justify-center py-12">
         <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-3" />
-        <p className="text-slate-600 font-medium">Carregando contexto...</p>
+        <p className="text-slate-600 font-medium">Carregando...</p>
       </div>
     );
   }
 
-  // Se requer empresa mas não tem
+  // Se requer empresa mas não tem (mesmo após carregar)
   if (requireEmpresa && !empresaAtual && !grupoAtual) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center py-12">
+      <div className="w-full min-h-[400px] flex flex-col items-center justify-center py-12">
         <AlertCircle className="w-12 h-12 text-orange-500 mb-3" />
-        <p className="text-slate-900 font-semibold mb-2">Nenhuma empresa selecionada</p>
-        <p className="text-slate-600 text-sm mb-4">Selecione uma empresa para continuar</p>
-        <Button onClick={() => window.location.reload()} variant="outline">
-          Recarregar Página
-        </Button>
+        <p className="text-slate-900 font-semibold mb-2">Sem empresa selecionada</p>
+        <p className="text-slate-600 text-sm">Retorne ao menu e selecione uma empresa</p>
       </div>
     );
   }
