@@ -254,18 +254,16 @@ export default function Expedicao() {
   ];
 
   const handleModuleClick = (module) => {
-    React.startTransition(() => {
-      openWindow(
-        module.component,
-        { ...(module.props || {}), windowMode: true },
-        {
-          title: module.windowTitle,
-          width: module.width,
-          height: module.height,
-          uniqueKey: `expedicao-${module.title.toLowerCase().replace(/\s/g, '-')}`
-        }
-      );
-    });
+    openWindow(
+      module.component,
+      { ...(module.props || {}), windowMode: true },
+      {
+        title: module.windowTitle,
+        width: module.width,
+        height: module.height,
+        uniqueKey: `expedicao-${module.title.toLowerCase().replace(/\s/g, '-')}`
+      }
+    );
   };
 
   return (
