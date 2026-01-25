@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import useQueryWithRateLimit from '@/components/lib/useQueryWithRateLimit';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -182,9 +183,9 @@ export default function VisualizadorUniversalEntidade({
     };
   }, [getFiltroContexto, buscaBackend, nomeEntidade]);
 
-  const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, buscaBackend, currentPage, itemsPerPage],
-    queryFn: async () => {
+  const { data: dados = [], isLoading, isFetching, refetch, error } = useQueryWithRateLimit(
+    [...queryKey, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, buscaBackend, currentPage, itemsPerPage],
+    async () => {
       const filtro = buildFilterWithSearch();
       const skip = (currentPage - 1) * itemsPerPage;
       const sortString = getBackendSortString();
@@ -198,14 +199,12 @@ export default function VisualizadorUniversalEntidade({
       
       return result || [];
     },
-    staleTime: Infinity,
-    refetchOnWindowFocus: false,
-    refetchInterval: false
-  });
+    { initialData: [] }
+  );
 
-  const { data: totalItemsCount = 0 } = useQuery({
-    queryKey: [...queryKey, 'total-count', empresaAtual?.id, buscaBackend],
-    queryFn: async () => {
+  const { data: totalItemsCount = 0 } = useQueryWithRateLimit(
+    [...queryKey, 'total-count', empresaAtual?.id, buscaBackend],
+    async () => {
       const filtro = buildFilterWithSearch();
       try {
         const response = await base44.functions.invoke('countEntities', {
@@ -217,9 +216,8 @@ export default function VisualizadorUniversalEntidade({
         return 0;
       }
     },
-    staleTime: Infinity,
-    refetchOnWindowFocus: false
-  });
+    { initialData: 0 }
+  );
 
   const aliasKeys = ALIAS_QUERY_KEYS[nomeEntidade] || [];
   
