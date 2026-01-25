@@ -18,6 +18,12 @@ export default function WindowRenderer() {
         
         const Component = window.component;
         
+        // Validar se Component é válido
+        if (!Component || typeof Component !== 'function') {
+          console.error('WindowRenderer: Componente inválido', window);
+          return null;
+        }
+
         return (
           <WindowModal key={window.id} window={window}>
             {(() => {
@@ -46,13 +52,19 @@ export default function WindowRenderer() {
                   return result;
                 };
               }
-              return (
-                <Component
-                  {...injectedProps}
-                  windowId={window.id}
-                  closeSelf={() => closeWindow(window.id)}
-                />
-              );
+              
+              try {
+                return (
+                  <Component
+                    {...injectedProps}
+                    windowId={window.id}
+                    closeSelf={() => closeWindow(window.id)}
+                  />
+                );
+              } catch (error) {
+                console.error('Erro ao renderizar janela:', error);
+                return <div className="p-6 text-red-600">Erro ao carregar componente</div>;
+              }
             })()}
           </WindowModal>
         );
