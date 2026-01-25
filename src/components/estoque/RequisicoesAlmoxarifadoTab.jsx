@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,30 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
-export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
+export default function RequisicoesAlmoxarifadoTab({ requisicoes: requisicoesProp, produtos: produtosProp }) {
+  const { getFiltroContexto, empresaAtual, contexto, isLoading: loadingContexto } = useContextoVisual();
+
+  const { data: requisicoes = [] } = useQuery({
+    queryKey: ['requisicoes-almox', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = { ...getFiltroContexto('empresa_id', true), tipo_movimento: 'saida', origem_movimento: 'requisicao' };
+      return await base44.entities.MovimentacaoEstoque.filter(filtro, '-data_movimentacao', 500);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    initialData: requisicoesProp || [],
+    staleTime: 30000,
+  });
+
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.Produto.filter(filtro, undefined, 2000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    initialData: produtosProp || [],
+    staleTime: 30000,
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();

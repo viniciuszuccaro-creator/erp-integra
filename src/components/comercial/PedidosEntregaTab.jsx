@@ -42,6 +42,7 @@ import IntegracaoRomaneio from "../logistica/IntegracaoRomaneio";
 import PainelMetricasRealtime from "../logistica/PainelMetricasRealtime";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
@@ -52,6 +53,7 @@ import usePermissions from "@/components/lib/usePermissions";
  * - Integração com Expedição
  */
 export default function PedidosEntregaTab({ windowMode = false }) {
+  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
   const [busca, setBusca] = useState("");
   const [regiaoFiltro, setRegiaoFiltro] = useState("todas");
   const [statusFiltro, setStatusFiltro] = useState("todos");
@@ -74,13 +76,23 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   };
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.Pedido.filter(filtro, '-created_date', 1000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    staleTime: 30000,
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas'],
-    queryFn: () => base44.entities.Entrega.list('-created_date'),
+    queryKey: ['entregas', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.Entrega.filter(filtro, '-created_date', 1000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    staleTime: 30000,
   });
 
   const { data: regioes = [] } = useQuery({

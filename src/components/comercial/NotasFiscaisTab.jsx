@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea"; // Added Textarea
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -29,13 +29,42 @@ import {
   Printer
 } from "lucide-react";
 import GerarNFeModal from "./GerarNFeModal";
-import useContextoVisual from "@/components/lib/useContextoVisual";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { mockCancelarNFe } from "@/components/integracoes/MockIntegracoes";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
 
-export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
+export default function NotasFiscaisTab({ notasFiscais: notasFiscaisProp, pedidos: pedidosProp, clientes: clientesProp, onCreateNFe }) {
+  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
+
+  const { data: notasFiscais = [] } = useQuery({
+    queryKey: ['notasfiscais', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_faturamento_id', true);
+      return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 1000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_faturamento_id', true).group_id),
+    initialData: notasFiscaisProp || [],
+    staleTime: 30000,
+  });
+
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.Pedido.filter(filtro, undefined, 1000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    initialData: pedidosProp || [],
+    staleTime: 30000,
+  });
+
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
+    staleTime: 60000,
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [tipoFilter, setTipoFilter] = useState("todas");

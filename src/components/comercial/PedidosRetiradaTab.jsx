@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * 📦 PEDIDOS PARA RETIRADA V21.5
@@ -31,6 +32,7 @@ import { Textarea } from "@/components/ui/textarea";
  * - Baixa automática de estoque na retirada
  */
 export default function PedidosRetiradaTab({ windowMode = false }) {
+  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [detalhesOpen, setDetalhesOpen] = useState(false);
@@ -42,8 +44,13 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
   const queryClient = useQueryClient();
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.Pedido.filter(filtro, '-created_date', 1000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    staleTime: 30000,
   });
 
   const { data: user } = useQuery({

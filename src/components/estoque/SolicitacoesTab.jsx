@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { useWindow } from "@/components/lib/useWindow";
 import SolicitacaoCompraForm from "@/components/compras/SolicitacaoCompraForm";
 import { useToast } from "@/components/ui/use-toast";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-export default function SolicitacoesTab({ solicitacoes, produtos }) {
+export default function SolicitacoesTab({ solicitacoes: solicitacoesProp, produtos: produtosProp }) {
+  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
+
+  const { data: solicitacoes = [] } = useQuery({
+    queryKey: ['solicitacoes', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 500);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    initialData: solicitacoesProp || [],
+    staleTime: 30000,
+  });
+
+  const { data: produtos = [] } = useQuery({
+    queryKey: ['produtos', empresaAtual?.id],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
+      return await base44.entities.Produto.filter(filtro, undefined, 2000);
+    },
+    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    initialData: produtosProp || [],
+    staleTime: 30000,
+  });
   const { openWindow } = useWindow();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
