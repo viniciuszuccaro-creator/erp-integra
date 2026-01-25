@@ -36,38 +36,31 @@ import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
-  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
-
-  const { data: pedidos = [], isLoading: loadingPedidos } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Pedido.filter(filtro, '-created_date', 1000);
-    },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+  const { data: pedidos = pedidosProp || [] } = useQuery({
+    queryKey: ['pedidos'],
+    queryFn: async () => await base44.entities.Pedido.list('-created_date', 1000),
     initialData: pedidosProp || [],
     staleTime: 30000,
+    enabled: false
   });
 
-  const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
-    queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Cliente.filter(filtro, '-created_date', 1000);
-    },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+  const { data: clientes = clientesProp || [] } = useQuery({
+    queryKey: ['clientes'],
+    queryFn: async () => await base44.entities.Cliente.list('-created_date', 1000),
     initialData: clientesProp || [],
     staleTime: 30000,
+    enabled: false
   });
 
-  const { data: empresas = [] } = useQuery({
+  const { data: empresas = empresasProp || [] } = useQuery({
     queryKey: ['empresas'],
     queryFn: () => base44.entities.Empresa.list(),
     initialData: empresasProp || [],
     staleTime: 60000,
+    enabled: false
   });
 
-  const isLoading = loadingPedidos || loadingContexto;
+  const isLoading = false;
   // V21.6: Multi-empresa
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");

@@ -15,17 +15,14 @@ import VisualizadorUniversalEntidade from '../cadastros/VisualizadorUniversalEnt
 import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
 
 export default function ClientesTab({ clientes: clientesProp }) {
-  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
+  const { empresasDoGrupo } = useContextoVisual();
 
-  const { data: clientes = [], isLoading } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
-    queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Cliente.filter(filtro, '-created_date', 1000);
-    },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+  const { data: clientes = clientesProp || [] } = useQuery({
+    queryKey: ['clientes'],
+    queryFn: async () => await base44.entities.Cliente.list('-created_date', 1000),
     initialData: clientesProp || [],
     staleTime: 30000,
+    enabled: false
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");

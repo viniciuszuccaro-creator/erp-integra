@@ -19,28 +19,20 @@ import { toast } from "sonner";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, produtos: produtosProp }) {
-  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
-
-  const { data: movimentacoes = [], isLoading: loadingMov } = useQuery({
-    queryKey: ['movimentacoes', empresaAtual?.id],
-    queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.MovimentacaoEstoque.filter(filtro, '-data_movimentacao', 1000);
-    },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+  const { data: movimentacoes = movimentacoesProp || [] } = useQuery({
+    queryKey: ['movimentacoes'],
+    queryFn: async () => await base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 1000),
     initialData: movimentacoesProp || [],
     staleTime: 30000,
+    enabled: false
   });
 
-  const { data: produtos = [], isLoading: loadingProd } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
-    queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Produto.filter(filtro, undefined, 5000);
-    },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+  const { data: produtos = produtosProp || [] } = useQuery({
+    queryKey: ['produtos'],
+    queryFn: async () => await base44.entities.Produto.list(undefined, 5000),
     initialData: produtosProp || [],
     staleTime: 30000,
+    enabled: false
   });
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
