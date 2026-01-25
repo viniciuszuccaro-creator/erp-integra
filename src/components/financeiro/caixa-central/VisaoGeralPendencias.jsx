@@ -1,8 +1,17 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, DollarSign } from 'lucide-react';
+import { TrendingUp, DollarSign, Loader2 } from 'lucide-react';
 
-export default function VisaoGeralPendencias({ contasReceber, contasPagar, onSelectItem }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[300px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function VisaoGeralPendenciasContent({ contasReceber, contasPagar, onSelectItem }) {
   return (
     <div className="space-y-3">
       <Card>
@@ -75,5 +84,13 @@ export default function VisaoGeralPendencias({ contasReceber, contasPagar, onSel
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function VisaoGeralPendencias(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <VisaoGeralPendenciasContent {...props} />
+    </Suspense>
   );
 }
