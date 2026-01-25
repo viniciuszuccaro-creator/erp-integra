@@ -41,7 +41,7 @@ import RegistroOcorrenciaLogistica from "../logistica/RegistroOcorrenciaLogistic
 import IntegracaoRomaneio from "../logistica/IntegracaoRomaneio";
 import PainelMetricasRealtime from "../logistica/PainelMetricasRealtime";
 import { useWindow } from "@/components/lib/useWindow";
-import { usePermissoesLogistica } from "../logistica/ControleAcessoLogistica";
+import usePermissions from "@/components/lib/usePermissions";
 
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
@@ -64,7 +64,14 @@ export default function PedidosEntregaTab({ windowMode = false }) {
 
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
-  const permissoes = usePermissoesLogistica();
+  const { hasPermission } = usePermissions();
+  
+  // Permissões logística
+  const permissoes = {
+    podeCriarRomaneio: hasPermission('Expedição', null, 'criar'),
+    podeConfirmarEntrega: hasPermission('Expedição', null, 'editar'),
+    podeRegistrarOcorrencia: hasPermission('Expedição', null, 'editar')
+  };
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
