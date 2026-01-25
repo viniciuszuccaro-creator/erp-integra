@@ -241,14 +241,19 @@ export function useContextoVisual() {
       return filtro;
     }
 
-    // Contexto empresa: usar empresa_id
+    // Contexto empresa: sempre retornar empresa_id
     if (empresaAtual?.id) {
       filtro[campo] = empresaAtual.id;
       if (incluirGrupo && empresaAtual.group_id) filtro.group_id = empresaAtual.group_id;
       return filtro;
     }
 
-    // Fallback: buscar empresa disponível
+    // Se não tem empresa mas está pronto, retorna vazio (vai filtrar nada = mostra vazio)
+    if (contextoReady && !empresaAtual) {
+      return filtro;
+    }
+
+    // Fallback durante carregamento
     const primeiraEmpresa = empresas.find(e => e.status === 'Ativa') || empresas[0];
     if (primeiraEmpresa) {
       filtro[campo] = primeiraEmpresa.id;
@@ -256,7 +261,6 @@ export function useContextoVisual() {
       return filtro;
     }
 
-    console.error('❌ ERRO CRÍTICO: Nenhuma empresa disponível no contexto');
     return filtro;
   };
 
