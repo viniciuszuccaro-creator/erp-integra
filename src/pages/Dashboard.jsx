@@ -58,6 +58,7 @@ const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/Widge
 import { useUser } from "@/components/lib/UserContext";
 import WidgetEntregasHoje from "@/components/logistica/WidgetEntregasHoje";
 import ResumoExecutivoETAPA3 from "@/components/governanca/ResumoExecutivoETAPA3";
+const WidgetETAPA3Completa = React.lazy(() => import("@/components/governanca/WidgetETAPA3Completa"));
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -795,7 +796,9 @@ export default function Dashboard() {
           {/* ETAPA 1 + ETAPA 3: Widgets Governança */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <StatusFinalEtapa1_100 />
-            <WidgetETAPA3Completa />
+            <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+              <WidgetETAPA3Completa />
+            </Suspense>
             <div className="lg:col-span-1">
               <ResumoExecutivoEtapa1 />
             </div>
