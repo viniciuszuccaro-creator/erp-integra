@@ -67,7 +67,7 @@ const navigationItems = [
         { title: "Agenda e Calendário", url: createPageUrl("Agenda"), icon: Calendar, group: "principal" },
         { title: "CRM - Relacionamento", url: createPageUrl("CRM"), icon: Users, group: "principal" },
         { title: "📊 ETAPA 2 Dashboard", url: createPageUrl("ETAPA2Dashboard"), icon: Trophy, group: "principal" },
-        { title: "🚚 ETAPA 3 Dashboard ✅", url: createPageUrl("ETAPA3Dashboard"), icon: Truck, group: "principal" },
+        { title: "🏆 ETAPA 3 Dashboard [CERTIFICADA]", url: createPageUrl("ETAPA3Dashboard"), icon: Truck, group: "principal" },
   { title: "Cadastros Gerais", url: createPageUrl("Cadastros"), icon: Users, group: "cadastros" },
   { title: "Comercial e Vendas", url: createPageUrl("Comercial"), icon: ShoppingCart, group: "operacional" },
   { title: "Estoque e Almoxarifado", url: createPageUrl("Estoque"), icon: Box, group: "operacional" },
