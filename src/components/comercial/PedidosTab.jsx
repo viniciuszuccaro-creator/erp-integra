@@ -68,7 +68,7 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
     enabled: true
   });
 
-  const isLoading = false;
+  const isLoading = !pedidosProp && !pedidos.length;
   // V21.6: Multi-empresa
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -125,6 +125,14 @@ export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesPro
   const pedidosPendentesAprovacao = pedidos.filter(p => p.status_aprovacao === "pendente");
   const pedidosAprovados = pedidos.filter(p => p.status_aprovacao === "aprovado");
   const pedidosNegados = pedidos.filter(p => p.status_aprovacao === "negado");
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
