@@ -487,6 +487,13 @@ export default function PortalCliente() {
             </Suspense>
           </TabsContent>
 
+          {/* ETAPA 3: Rastreamento Real-time */}
+          <TabsContent value="rastreamento">
+            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
+              <RastreamentoRealtime />
+            </Suspense>
+          </TabsContent>
+
           {/* Nova Aba: Documentos (Componente Novo) */}
           <TabsContent value="documentos-novos">
             <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
@@ -505,13 +512,6 @@ export default function PortalCliente() {
           <TabsContent value="minhas-oportunidades">
             <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
               <MinhasOportunidades />
-            </Suspense>
-          </TabsContent>
-
-          {/* Rastreamento em Tempo Real - Componente Dedicado */}
-          <TabsContent value="rastreamento">
-            <Suspense fallback={<div className="h-64 rounded-md bg-white shadow animate-pulse" />}> 
-              <RastreamentoRealtime />
             </Suspense>
           </TabsContent>
 
