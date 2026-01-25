@@ -47,28 +47,23 @@ const LoadingFallback = () => (
 );
 
 function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
-  const ctx = useContextoVisual();
-  
-  if (!ctx?.contextoReady) {
-    return <LoadingFallback />;
-  }
-
-  const { empresaAtual } = ctx;
+  // TODOS OS HOOKS PRIMEIRO - ORDEM CONSISTENTE
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [selectedPedidos, setSelectedPedidos] = useState([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow, closeWindow } = useWindow();
+  const ctx = useContextoVisual();
 
   const { data: pedidos = pedidosProp || [] } = useQueryWithRateLimit(
-    ['pedidos', empresaAtual?.id],
+    ['pedidos', ctx?.empresaAtual?.id],
     async () => await base44.entities.Pedido.list('-created_date', 1000),
     { initialData: pedidosProp || [] }
   );
 
   const { data: clientes = clientesProp || [] } = useQueryWithRateLimit(
-    ['clientes', empresaAtual?.id],
+    ['clientes', ctx?.empresaAtual?.id],
     async () => await base44.entities.Cliente.list('-created_date', 1000),
     { initialData: clientesProp || [] }
   );
@@ -79,6 +74,20 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
     { initialData: empresasProp || [] }
   );
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Pedido.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      toast({ title: "✅ Pedido excluído!" });
+    },
+  });
+
+  // EARLY RETURN APÓS TODOS OS HOOKS
+  if (!ctx?.contextoReady) {
+    return <LoadingFallback />;
+  }
+
+  const { empresaAtual } = ctx;
   const isLoading = !pedidosProp && !pedidos.length;
   const togglePedido = (id) => setSelectedPedidos(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleAllPedidos = (checked, lista) => setSelectedPedidos(checked ? lista.map(p => p.id) : []);
@@ -96,14 +105,6 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
     a.click();
     URL.revokeObjectURL(url);
   };
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Pedido.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      toast({ title: "✅ Pedido excluído!" });
-    },
-  });
 
   const filteredPedidos = pedidos.filter(p => {
     const matchStatus = statusFilter === "todos" || p.status === statusFilter;
