@@ -6,7 +6,7 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import { useWindow } from '@/components/lib/useWindow';
 import CaixaCentralHeader from './caixa-central/CaixaCentralHeader';
 import KPIsFinanceiros from './caixa-central/KPIsFinanceiros';
-import DistribuicaoFormasPagamento from './caixa-central/DistribuicaoFormasPagamento';
+import DistribuicaoFormasPagamento from './caixa-central/DistribuicaoFormasPagamento.jsx';
 import CaixaModulosGrid from './caixa-central/CaixaModulosGrid';
 
 const MovimentosDiarios = React.lazy(() => import('./caixa-central/MovimentosDiarios'));
