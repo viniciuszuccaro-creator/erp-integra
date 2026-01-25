@@ -20,6 +20,7 @@ import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUn
 export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
+  const { empresaAtual } = useContextoVisual();
   const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -36,7 +37,7 @@ export default function ProdutosTab(props) {
   };
 
   const { data: todosProdutos = [], refetch: refetchProdutos } = useQuery({
-    queryKey: ['produtos-todos-contagem'],
+    queryKey: ['produtos-todos-contagem', empresaAtual?.id],
     queryFn: async () => {
       let todos = [];
       let skip = 0;
@@ -59,7 +60,7 @@ export default function ProdutosTab(props) {
       
       return todos;
     },
-    enabled: true,
+    enabled: !!empresaAtual?.id,
     staleTime: Infinity,
     refetchOnWindowFocus: false
   });
