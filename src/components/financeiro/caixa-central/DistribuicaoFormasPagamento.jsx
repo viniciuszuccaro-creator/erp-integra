@@ -1,7 +1,17 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
-export default function DistribuicaoFormasPagamento({ porForma }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[200px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function DistribuicaoFormasPagamentoContent({ porForma }) {
   return (
     <Card>
       <CardHeader className="py-2">

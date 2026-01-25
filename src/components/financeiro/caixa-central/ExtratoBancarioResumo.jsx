@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,20 @@ import {
   TrendingDown, 
   Calendar,
   Download,
-  Filter
+  Filter,
+  Loader2
 } from 'lucide-react';
 
-export default function ExtratoBancarioResumo() {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[300px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function ExtratoBancarioResumoContent() {
   const { filterInContext, empresaAtual } = useContextoVisual();
   const [dataInicio, setDataInicio] = useState(new Date(new Date().setDate(1)).toISOString().split('T')[0]);
   const [dataFim, setDataFim] = useState(new Date().toISOString().split('T')[0]);
@@ -238,5 +248,13 @@ export default function ExtratoBancarioResumo() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ExtratoBancarioResumo() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <ExtratoBancarioResumoContent />
+    </Suspense>
   );
 }

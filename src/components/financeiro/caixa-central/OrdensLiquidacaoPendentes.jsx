@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import { useToast } from '@/components/ui/use-toast';
-import { Clock, TrendingUp, TrendingDown, CheckCircle2, XCircle, Wallet } from 'lucide-react';
+import { Clock, TrendingUp, TrendingDown, CheckCircle2, XCircle, Wallet, Loader2 } from 'lucide-react';
 
-export default function OrdensLiquidacaoPendentes() {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[300px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function OrdensLiquidacaoPendentesContent() {
   const { filterInContext, empresaAtual } = useContextoVisual();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -295,5 +304,13 @@ export default function OrdensLiquidacaoPendentes() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+export default function OrdensLiquidacaoPendentes() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <OrdensLiquidacaoPendentesContent />
+    </Suspense>
   );
 }
