@@ -208,6 +208,14 @@ export function useContextoVisual() {
       if (filtroEmpresa !== 'todas') filtro[campo] = filtroEmpresa;
     } else if (empresaAtual?.id) {
       filtro[campo] = empresaAtual.id;
+    } else {
+      // Fallback seguro: se não tem empresa selecionada, usar primeira empresa disponível
+      const primeiraEmpresa = empresas.find(e => e.status === 'Ativa') || empresas[0];
+      if (primeiraEmpresa) {
+        filtro[campo] = primeiraEmpresa.id;
+      } else {
+        console.warn('⚠️ CONTEXTO MULTIEMPRESA INVÁLIDO - Nenhuma empresa/grupo selecionado');
+      }
     }
     return filtro;
   };
