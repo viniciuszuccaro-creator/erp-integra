@@ -18,12 +18,15 @@ import IntegracaoETAPA3 from '@/components/governanca/IntegracaoETAPA3';
 import ChecklistETAPA3 from '@/components/governanca/ChecklistETAPA3';
 import ResumoExecutivoETAPA3 from '@/components/governanca/ResumoExecutivoETAPA3';
 import ProvaFinalETAPA3 from '@/components/governanca/ProvaFinalETAPA3';
+import ValidacaoVisualETAPA3 from '@/components/governanca/ValidacaoVisualETAPA3';
+import MatrizCompletude_ETAPA3 from '@/components/governanca/MatrizCompletude_ETAPA3';
 import DashboardLogisticaInteligente from './DashboardLogisticaInteligente';
 import PainelMetricasRealtime from './PainelMetricasRealtime';
 import MonitorEntregasRealtime from './MonitorEntregasRealtime';
 import WidgetResumoRotas from './WidgetResumoRotas';
 import WidgetStatusAutomacao from './WidgetStatusAutomacao';
 import IntegracaoAutomaticaWidget from './IntegracaoAutomaticaWidget';
+import BannerETAPA3Completa from './BannerETAPA3Completa';
 import SealETAPA3 from '@/components/governanca/SealETAPA3';
 
 /**
@@ -79,8 +82,11 @@ export default function DashboardETAPA3Final() {
 
   return (
     <div className="w-full h-full space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
+      {/* Banner de Completude */}
+      <BannerETAPA3Completa variant="full" />
+
       {/* Header Executivo */}
-      <div className="text-center py-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-2xl text-white relative overflow-hidden">
+      <div className="hidden text-center py-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-2xl text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 opacity-10">
           <SealETAPA3 size="lg" />
         </div>
@@ -123,15 +129,21 @@ export default function DashboardETAPA3Final() {
       </div>
 
       {/* Tabs de Validação */}
-      <Tabs defaultValue="status" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-white shadow-sm">
-          <TabsTrigger value="status">Status 100%</TabsTrigger>
+      <Tabs defaultValue="validacao" className="w-full">
+        <TabsList className="grid w-full grid-cols-7 bg-white shadow-sm">
+          <TabsTrigger value="validacao">✅ Validação</TabsTrigger>
+          <TabsTrigger value="status">Status</TabsTrigger>
           <TabsTrigger value="integracoes">Integrações</TabsTrigger>
           <TabsTrigger value="checklist">Checklist</TabsTrigger>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
-          <TabsTrigger value="prova">Prova Final</TabsTrigger>
+          <TabsTrigger value="prova">Prova</TabsTrigger>
           <TabsTrigger value="realtime">Real-time</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="validacao" className="mt-4 space-y-4">
+          <ValidacaoVisualETAPA3 />
+          <MatrizCompletude_ETAPA3 />
+        </TabsContent>
 
         <TabsContent value="status" className="mt-4">
           <StatusFinalETAPA3_100 />
