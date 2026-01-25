@@ -36,7 +36,16 @@ import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
 
-export default function NotasFiscaisTab({ notasFiscais: notasFiscaisProp, pedidos: pedidosProp, clientes: clientesProp, onCreateNFe }) {
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
+function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedidosProp, clientes: clientesProp, onCreateNFe }) {
   const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
 
   const { data: notasFiscais = notasFiscaisProp || [] } = useQuery({
@@ -665,5 +674,13 @@ export default function NotasFiscaisTab({ notasFiscais: notasFiscaisProp, pedido
         </Dialog>
       )}
     </div>
+  );
+}
+
+export default function NotasFiscaisTab(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <NotasFiscaisTabContent {...props} />
+    </Suspense>
   );
 }

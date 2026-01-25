@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +44,15 @@ import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
  * Gestão de pedidos aprovados que precisam ser entregues
@@ -52,7 +61,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * - Upload/visualização de canhoto e fotos
  * - Integração com Expedição
  */
-export default function PedidosEntregaTab({ windowMode = false, pedidos: pedidosProp = [] }) {
+function PedidosEntregaTabContent({ windowMode = false, pedidos: pedidosProp = [] }) {
   const { empresaAtual } = useContextoVisual();
   const [busca, setBusca] = useState("");
   const [regiaoFiltro, setRegiaoFiltro] = useState("todas");

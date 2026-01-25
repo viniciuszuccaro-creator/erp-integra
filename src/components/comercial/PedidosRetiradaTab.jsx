@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import {
   Calendar,
   AlertCircle,
   Bell,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -24,6 +25,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
+
 /**
  * 📦 PEDIDOS PARA RETIRADA V21.5
  * Gestão de pedidos que o cliente irá retirar
@@ -31,7 +41,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * - Confirmação de retirada com assinatura
  * - Baixa automática de estoque na retirada
  */
-export default function PedidosRetiradaTab({ windowMode = false }) {
+function PedidosRetiradaTabContent({ windowMode = false }) {
   const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("todos");
@@ -454,5 +464,13 @@ export default function PedidosRetiradaTab({ windowMode = false }) {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function PedidosRetiradaTab(props) {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <PedidosRetiradaTabContent {...props} />
+    </Suspense>
   );
 }
