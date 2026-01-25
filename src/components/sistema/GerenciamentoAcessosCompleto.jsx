@@ -2332,17 +2332,17 @@ Forneça recomendações práticas de segurança.`,
       />
 
       {/* Modal Histórico */}
-      {historicoOpen && perfilHistorico && (
+      {historicoOpen && perfilHistorico?.id && (
         <Dialog open={historicoOpen} onOpenChange={setHistoricoOpen}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <History className="w-5 h-5 text-blue-600" />
-                Histórico: {perfilHistorico?.nome_perfil}
+                Histórico: {perfilHistorico.nome_perfil}
               </DialogTitle>
             </DialogHeader>
             <div className="flex-1 overflow-auto">
-              <HistoricoAlteracoesPerfil perfilId={perfilHistorico?.id} />
+              <HistoricoAlteracoesPerfil perfilId={perfilHistorico.id} />
             </div>
           </DialogContent>
         </Dialog>
