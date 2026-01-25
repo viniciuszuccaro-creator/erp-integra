@@ -16,10 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
  * AGORA COM: Emissão de NF-e por Etapa + Barra de Progresso
  */
 export default function FechamentoFinanceiroTab({ formData, setFormData, onNext }) {
+  // TODOS OS HOOKS PRIMEIRO
   const [modalNFeOpen, setModalNFeOpen] = useState(false);
-  
   const { formasPagamento, obterConfiguracao } = useFormasPagamento({ empresa_id: formData?.empresa_id });
 
+  // CÁLCULOS APÓS HOOKS
   const valorProdutos = formData?.valor_produtos || 0;
   const descontoPercentual = formData?.desconto_geral_pedido_percentual || 0;
   const descontoValor = (valorProdutos * descontoPercentual) / 100;

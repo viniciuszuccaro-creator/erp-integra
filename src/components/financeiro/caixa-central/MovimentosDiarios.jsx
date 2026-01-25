@@ -17,9 +17,10 @@ import {
 } from 'lucide-react';
 
 export default function MovimentosDiarios() {
-  const { filterInContext, empresaAtual } = useContextoVisual();
+  // TODOS OS HOOKS PRIMEIRO
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().split('T')[0]);
   const [abaOperador, setAbaOperador] = useState("todos");
+  const { filterInContext, empresaAtual } = useContextoVisual();
 
   const { data: movimentosCaixa = [], isLoading } = useQuery({
     queryKey: ['movimentos-caixa', dataFiltro, empresaAtual?.id],

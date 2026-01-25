@@ -18,9 +18,11 @@ import CriarEtapaEntregaModal from './CriarEtapaEntregaModal';
  * V21.1 - Novo gerenciamento de Etapas de Entrega
  */
 export default function LogisticaEntregaTab({ formData, setFormData, clientes = [], onNext }) {
-  const { isAdmin, canApprove } = usePermissions(); // Keep usePermissions if other parts might need it, even if podeGerenciarEtapas is removed.
+  // TODOS OS HOOKS PRIMEIRO
   const [modalEtapaOpen, setModalEtapaOpen] = useState(false);
+  const { isAdmin, canApprove } = usePermissions();
 
+  // CÁLCULOS APÓS HOOKS
   const clienteSelecionado = clientes?.find(c => c.id === formData?.cliente_id) || null;
 
   // Regra 30kg: Frete grátis

@@ -27,14 +27,11 @@ const LoadingFallback = () => (
 );
 
 function ExtratoBancarioResumoContent() {
-  const ctx = useContextoVisual();
-  const { filterInContext, empresaAtual, contextoReady } = ctx || {};
-
-  if (!contextoReady || !empresaAtual) {
-    return <LoadingFallback />;
-  }
+  // TODOS OS HOOKS PRIMEIRO
   const [dataInicio, setDataInicio] = useState(new Date(new Date().setDate(1)).toISOString().split('T')[0]);
   const [dataFim, setDataFim] = useState(new Date().toISOString().split('T')[0]);
+  const ctx = useContextoVisual();
+  const { filterInContext, empresaAtual, contextoReady } = ctx || {};
 
   const { data: extratos = [], isLoading } = useQuery({
     queryKey: ['extrato-bancario', dataInicio, dataFim, empresaAtual?.id],
@@ -47,6 +44,22 @@ function ExtratoBancarioResumoContent() {
     enabled: !!empresaAtual?.id
   });
 
+  // EARLY RETURN APÓS TODOS OS HOOKS
+  if (!contextoReady || !empresaAtual) {
+    return <LoadingFallback />;
+  }
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center text-slate-500">
+          Carregando extrato bancário...
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // CÁLCULOS APÓS EARLY RETURNS
   const totalEntradas = extratos.filter(e => e.tipo_lancamento === 'Crédito').reduce((sum, e) => sum + (e.valor || 0), 0);
   const totalSaidas = extratos.filter(e => e.tipo_lancamento === 'Débito').reduce((sum, e) => sum + (e.valor || 0), 0);
   const saldoPeriodo = totalEntradas - totalSaidas;
@@ -60,16 +73,6 @@ function ExtratoBancarioResumoContent() {
     else porConta[conta].debitos += (ext.valor || 0);
     porConta[conta].saldo = porConta[conta].creditos - porConta[conta].debitos;
   });
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-12 text-center text-slate-500">
-          Carregando extrato bancário...
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-4">
