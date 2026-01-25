@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,22 +19,14 @@ export default function ClientesTab({ clientes: clientesProp }) {
   const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: clientes = clientesProp || [], isLoading } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
-    queryFn: async () => {
-      return await base44.entities.Cliente.list('-created_date', 1000);
+  const { data: clientes = clientesProp || [], isLoading } = useQueryWithRateLimit(
+    ['clientes-tab', empresaAtual?.id],
+    async () => {
+      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+      return await base44.entities.Cliente.filter(filtro, '-created_date', 1000);
     },
-    initialData: clientesProp || [],
-    staleTime: 10 * 60 * 1000, // 10min cache agressivo
-    gcTime: 15 * 60 * 1000, // 15min garbage collection
-    retry: (failureCount, error) => {
-      if (error?.status === 429) return failureCount < 2; // Máx 2 tentativas em rate limit
-      return false;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 5000),
-    enabled: true,
-    refetchOnWindowFocus: false
-  });
+    { initialData: clientesProp || [] }
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
 
