@@ -97,24 +97,6 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
     staleTime: 60000,
   });
 
-  const cancelarNFeMutation = useMutation({
-    const headers = ['numero','serie','tipo','cliente_fornecedor','empresa_id','data_emissao','valor_total','status'];
-    const csv = [
-      headers.join(','),
-      ...lista.map(n => headers.map(h => JSON.stringify(n[h] ?? '')).join(','))
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `notas_fiscais_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-  const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
-  const isLoading = !notasFiscaisProp && !notasFiscais.length;
-
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.NotaFiscal.create(data),
     onSuccess: () => {
@@ -135,6 +117,8 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
       toast({ title: "✅ Nota Fiscal atualizada!" });
     },
   });
+
+  const cancelarNFeMutation = useMutation({
     mutationFn: async ({ nfe, motivo }) => {
       // Mock: Cancelamento simulado
       const resultado = await mockCancelarNFe({
@@ -188,6 +172,25 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
       toast({ title: "✅ NF-e Cancelada (Simulação)" });
     }
   });
+
+  const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
+  const isLoading = !notasFiscaisProp && !notasFiscais.length;
+
+  const exportarNotasCSV = (lista) => {
+    const headers = ['numero','serie','tipo','cliente_fornecedor','empresa_id','data_emissao','valor_total','status'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(n => headers.map(h => JSON.stringify(n[h] ?? '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `notas_fiscais_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
