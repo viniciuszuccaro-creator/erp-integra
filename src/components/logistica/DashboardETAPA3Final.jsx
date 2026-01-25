@@ -17,6 +17,7 @@ import StatusFinalETAPA3_100 from '@/components/governanca/StatusFinalETAPA3_100
 import IntegracaoETAPA3 from '@/components/governanca/IntegracaoETAPA3';
 import ChecklistETAPA3 from '@/components/governanca/ChecklistETAPA3';
 import ResumoExecutivoETAPA3 from '@/components/governanca/ResumoExecutivoETAPA3';
+import ProvaFinalETAPA3 from '@/components/governanca/ProvaFinalETAPA3';
 import DashboardLogisticaInteligente from './DashboardLogisticaInteligente';
 import PainelMetricasRealtime from './PainelMetricasRealtime';
 import MonitorEntregasRealtime from './MonitorEntregasRealtime';
@@ -111,11 +112,12 @@ export default function DashboardETAPA3Final() {
 
       {/* Tabs de Validação */}
       <Tabs defaultValue="status" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-white shadow-sm">
+        <TabsList className="grid w-full grid-cols-6 bg-white shadow-sm">
           <TabsTrigger value="status">Status 100%</TabsTrigger>
           <TabsTrigger value="integracoes">Integrações</TabsTrigger>
           <TabsTrigger value="checklist">Checklist</TabsTrigger>
           <TabsTrigger value="resumo">Resumo</TabsTrigger>
+          <TabsTrigger value="prova">Prova Final</TabsTrigger>
           <TabsTrigger value="realtime">Real-time</TabsTrigger>
         </TabsList>
 
@@ -133,6 +135,10 @@ export default function DashboardETAPA3Final() {
 
         <TabsContent value="resumo" className="mt-4">
           <ResumoExecutivoETAPA3 />
+        </TabsContent>
+
+        <TabsContent value="prova" className="mt-4">
+          <ProvaFinalETAPA3 />
         </TabsContent>
 
         <TabsContent value="realtime" className="mt-4 space-y-4">
