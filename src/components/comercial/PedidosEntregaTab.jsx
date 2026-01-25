@@ -101,6 +101,8 @@ export default function PedidosEntregaTab({ windowMode = false, pedidos: pedidos
     queryFn: () => base44.entities.RegiaoAtendimento.list(),
   });
 
+  const isLoading = !pedidosProp && !pedidos.length;
+
   // Filtrar pedidos para entrega (tipo_frete = CIF ou FOB, status = Aprovado ou posterior)
   const pedidosParaEntrega = useMemo(() => {
     return pedidos.filter(p => 
@@ -164,6 +166,14 @@ export default function PedidosEntregaTab({ windowMode = false, pedidos: pedidos
   };
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className={containerClass}>
