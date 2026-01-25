@@ -24,11 +24,11 @@ const LoadingFallback = () => (
 
 function OrdensLiquidacaoPendentesContent() {
   const ctx = useContextoVisual();
-  const { filterInContext, empresaAtual } = ctx || {};
+  const { filterInContext, empresaAtual, contextoReady } = ctx || {};
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  if (!ctx || !empresaAtual) {
+  if (!contextoReady || !empresaAtual) {
     return <LoadingFallback />;
   }
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);

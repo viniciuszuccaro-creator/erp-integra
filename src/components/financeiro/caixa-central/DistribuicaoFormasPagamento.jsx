@@ -11,7 +11,10 @@ const LoadingFallback = () => (
   </div>
 );
 
-function DistribuicaoFormasPagamentoContent({ porForma }) {
+function DistribuicaoFormasPagamentoContent({ porForma = {} }) {
+  if (!porForma || Object.keys(porForma).length === 0) {
+    return <LoadingFallback />;
+  }
   return (
     <Card>
       <CardHeader className="py-2">

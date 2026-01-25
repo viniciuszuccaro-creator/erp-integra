@@ -32,11 +32,11 @@ const LoadingFallback = () => (
 
 function LiquidarReceberPagarContent() {
   const ctx = useContextoVisual();
-  const { filterInContext, empresaAtual, carimbarContexto } = ctx || {};
+  const { filterInContext, empresaAtual, carimbarContexto, contextoReady } = ctx || {};
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  if (!ctx || !empresaAtual) {
+  if (!contextoReady || !empresaAtual) {
     return <LoadingFallback />;
   }
   const [abaAtiva, setAbaAtiva] = useState("receber");

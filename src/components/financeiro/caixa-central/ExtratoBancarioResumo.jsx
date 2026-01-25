@@ -28,9 +28,9 @@ const LoadingFallback = () => (
 
 function ExtratoBancarioResumoContent() {
   const ctx = useContextoVisual();
-  const { filterInContext, empresaAtual } = ctx || {};
+  const { filterInContext, empresaAtual, contextoReady } = ctx || {};
 
-  if (!ctx || !empresaAtual) {
+  if (!contextoReady || !empresaAtual) {
     return <LoadingFallback />;
   }
   const [dataInicio, setDataInicio] = useState(new Date(new Date().setDate(1)).toISOString().split('T')[0]);

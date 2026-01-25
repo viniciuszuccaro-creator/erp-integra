@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -21,11 +22,18 @@ const LoadingFallback = () => (
 function CartoesACompensar() {
   const queryClient = useQueryClient();
   const [filtroStatus, setFiltroStatus] = useState("todos");
+  const ctx = useContextoVisual();
+
+  if (!ctx?.contextoReady) {
+    return <LoadingFallback />;
+  }
 
   const { data: cartoes = [], isLoading } = useQuery({
     queryKey: ["movimento-cartao"],
     queryFn: () => base44.entities.MovimentoCartao.list(),
   });
+
+  if (isLoading) return <LoadingFallback />;
 
   const conciliarMutation = useMutation({
     mutationFn: async ({ id }) => {
@@ -52,7 +60,7 @@ function CartoesACompensar() {
     .filter(c => c.status_compensacao === "Compensado")
     .reduce((acc, c) => acc + (c.valor_liquido || 0), 0);
 
-  if (isLoading) return <div className="p-6">Carregando cartões...</div>;
+
 
   return (
     <div className="space-y-6">

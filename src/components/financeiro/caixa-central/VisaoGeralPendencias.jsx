@@ -12,6 +12,9 @@ const LoadingFallback = () => (
 );
 
 function VisaoGeralPendenciasContent({ contasReceber = [], contasPagar = [], onSelectItem = () => {} }) {
+  const ctx = useContextoVisual();
+  if (!ctx?.contextoReady) return <LoadingFallback />;
+  
   return (
     <div className="space-y-3">
       <Card>
