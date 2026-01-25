@@ -3,6 +3,7 @@ import { useUser } from '@/components/lib/UserContext';
 import usePermissions from '@/components/lib/usePermissions';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Shield, AlertTriangle } from 'lucide-react';
+import { base44 } from '@/api/base44Client';
 
 /**
  * ETAPA 3: Controle de Acesso Logística
