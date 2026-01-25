@@ -46,7 +46,28 @@ const LoadingFallback = () => (
 );
 
 function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedidosProp, clientes: clientesProp, onCreateNFe }) {
+  // TODOS OS HOOKS PRIMEIRO
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todas");
+  const [tipoFilter, setTipoFilter] = useState("todas");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedNF, setSelectedNF] = useState(null);
+  const [viewingDetails, setViewingDetails] = useState(null);
+  const [selectedNotas, setSelectedNotas] = useState([]);
+  const [formData, setFormData] = useState({
+    tipo: "NF-e (Saída)",
+    cliente_fornecedor: "",
+    numero: "",
+    serie: "1",
+    data_emissao: new Date().toISOString().split('T')[0],
+    valor_produtos: 0,
+    valor_total: 0,
+    observacoes: ""
+  });
   const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
 
   const { data: notasFiscais = notasFiscaisProp || [] } = useQuery({
     queryKey: ['notasfiscais', empresaAtual?.id],
@@ -75,20 +96,8 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
     queryFn: () => base44.entities.Empresa.list(),
     staleTime: 60000,
   });
-  
-  const isLoading = !notasFiscaisProp && !notasFiscais.length;
-  
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("todas");
-  const [tipoFilter, setTipoFilter] = useState("todas");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedNF, setSelectedNF] = useState(null);
-  const [viewingDetails, setViewingDetails] = useState(null);
-  // Seleção em massa + exportação
-  const [selectedNotas, setSelectedNotas] = useState([]);
-  const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
-  const exportarNotasCSV = (lista) => {
+
+  const cancelarNFeMutation = useMutation({
     const headers = ['numero','serie','tipo','cliente_fornecedor','empresa_id','data_emissao','valor_total','status'];
     const csv = [
       headers.join(','),
@@ -102,21 +111,9 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
     a.click();
     URL.revokeObjectURL(url);
   };
-
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { hasPermission } = usePermissions();
-
-  const [formData, setFormData] = useState({
-    tipo: "NF-e (Saída)",
-    cliente_fornecedor: "",
-    numero: "",
-    serie: "1",
-    data_emissao: new Date().toISOString().split('T')[0],
-    valor_produtos: 0,
-    valor_total: 0,
-    observacoes: ""
-  });
+  const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
+  const isLoading = !notasFiscaisProp && !notasFiscais.length;
 
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.NotaFiscal.create(data),
@@ -138,8 +135,6 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
       toast({ title: "✅ Nota Fiscal atualizada!" });
     },
   });
-
-  const cancelarNFeMutation = useMutation({
     mutationFn: async ({ nfe, motivo }) => {
       // Mock: Cancelamento simulado
       const resultado = await mockCancelarNFe({

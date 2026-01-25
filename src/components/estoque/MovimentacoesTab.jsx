@@ -29,7 +29,36 @@ const LoadingFallback = () => (
 );
 
 function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: produtosProp }) {
+  // TODOS OS HOOKS PRIMEIRO
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    numero_recebimento: `REC-${Date.now()}`,
+    ordem_compra_id: "",
+    fornecedor: "",
+    data_recebimento: new Date().toISOString().split('T')[0],
+    numero_nf: "",
+    itens: [{ produto_id: "", produto_descricao: "", quantidade_pedida: 0, quantidade_recebida: 0, status_item: "Conforme" }],
+    responsavel_recebimento: "",
+    observacoes: "",
+    status: "Pendente"
+  });
+  const [novaMovimentacao, setNovaMovimentacao] = useState({
+    tipo_movimentacao: "",
+    produto_id: "",
+    produto_nome: "",
+    quantidade: "",
+    unidade_medida: "",
+    data_movimentacao: new Date().toISOString().split('T')[0],
+    documento_referencia: "",
+    observacoes: "",
+    responsavel: ""
+  });
   const { empresaAtual } = useContextoVisual();
+  const { user: authUser } = useUser();
+  const { openWindow } = useWindow();
+  const { canCreate } = usePermissions();
+  const queryClient = useQueryClient();
 
   const { data: movimentacoes = movimentacoesProp || [], isLoadingMov } = useQueryWithRateLimit(
     ['movimentacoes', empresaAtual?.id],
@@ -42,25 +71,6 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
     async () => await base44.entities.Produto.list(undefined, 5000),
     { initialData: produtosProp || [] }
   );
-  const { user: authUser } = useUser();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { openWindow } = useWindow();
-  const { canCreate } = usePermissions();
-  const isLoading = !movimentacoesProp && !movimentacoes.length;
-  const [novaMovimentacao, setNovaMovimentacao] = useState({
-    tipo_movimentacao: "",
-    produto_id: "",
-    produto_nome: "",
-    quantidade: "",
-    unidade_medida: "",
-    data_movimentacao: new Date().toISOString().split('T')[0],
-    documento_referencia: "",
-    observacoes: "",
-    responsavel: ""
-  });
-
-  const queryClient = useQueryClient();
 
   const resetForm = () => {
     setNovaMovimentacao({

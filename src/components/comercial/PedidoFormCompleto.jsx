@@ -56,12 +56,16 @@ import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
  * REGRA-MÃE: NUNCA APAGAR - APENAS ACRESCENTAR
  */
 function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowMode = false, contexto = 'erp', criacaoManual = true }) {
+  // TODOS OS HOOKS PRIMEIRO
   const [activeTab, setActiveTab] = useState('identificacao');
-  const [salvando, setSalvando] = useState(false); // V21.5: Anti-duplicação
-  
-  // V21.6 FINAL: Hook de detecção AUTOMÁTICA OBRIGATÓRIA
+  const [salvando, setSalvando] = useState(false);
   const { origemPedido, bloquearEdicao } = useOrigemPedido();
-  
+  const [validacoes, setValidacoes] = useState({
+    identificacao: false,
+    itens: false,
+    logistica: false,
+    financeiro: false
+  });
   const [formData, setFormData] = useState(() => ({
     tipo: 'Pedido',
     tipo_pedido: 'Misto',
@@ -95,20 +99,13 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     ...(pedido || {})
   }));
   
-  // V21.6 FINAL: SEMPRE aplicar origem detectada automaticamente
+  // useEffect APÓS HOOKS
   useEffect(() => {
     if (origemPedido) {
       setFormData(prev => ({ ...prev, origem_pedido: origemPedido }));
       console.log('🎯 Origem automática aplicada:', origemPedido, '| Bloqueado:', bloquearEdicao);
     }
   }, [origemPedido, bloquearEdicao]);
-
-  const [validacoes, setValidacoes] = useState({
-    identificacao: false,
-    itens: false,
-    logistica: false,
-    financeiro: false
-  });
 
   // Calcular progresso
   useEffect(() => {
