@@ -54,15 +54,7 @@ export default function MovimentosDiarios() {
     enabled: !!empresaAtual?.id
   });
 
-  const operadoresUnicos = [...new Set(movimentosCaixa.map(m => m.usuario_operador_nome).filter(Boolean))];
-  const movimentosFiltrados = abaOperador === "todos" 
-    ? movimentosCaixa 
-    : movimentosCaixa.filter(m => m.usuario_operador_nome === abaOperador);
-
-  const totalEntradas = movimentosFiltrados.filter(m => m.tipo === 'entrada').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
-  const totalSaidas = movimentosFiltrados.filter(m => m.tipo === 'saida').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
-  const saldoCaixa = totalEntradas - totalSaidas;
-
+  // EARLY RETURN APÓS HOOKS
   if (isLoading) {
     return (
       <Card>
@@ -72,6 +64,16 @@ export default function MovimentosDiarios() {
       </Card>
     );
   }
+
+  // CÁLCULOS APÓS EARLY RETURN
+  const operadoresUnicos = [...new Set(movimentosCaixa.map(m => m.usuario_operador_nome).filter(Boolean))];
+  const movimentosFiltrados = abaOperador === "todos" 
+    ? movimentosCaixa 
+    : movimentosCaixa.filter(m => m.usuario_operador_nome === abaOperador);
+
+  const totalEntradas = movimentosFiltrados.filter(m => m.tipo === 'entrada').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
+  const totalSaidas = movimentosFiltrados.filter(m => m.tipo === 'saida').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
+  const saldoCaixa = totalEntradas - totalSaidas;
 
   return (
     <div className="space-y-4">

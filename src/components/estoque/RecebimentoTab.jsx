@@ -78,6 +78,26 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
 
   const queryClient = useQueryClient();
 
+  const statusColors = {
+    'Pendente': 'bg-yellow-100 text-yellow-700',
+    'Conferido': 'bg-blue-100 text-blue-700',
+    'Aprovado': 'bg-green-100 text-green-700',
+    'Divergente': 'bg-red-100 text-red-700'
+  };
+
+  const filteredRecebimentos = recebimentos.filter(r => {
+    const searchLower = searchTerm.toLowerCase();
+    return r.numero_recebimento?.toLowerCase().includes(searchLower) ||
+      r.documento?.toLowerCase().includes(searchLower) ||
+      r.fornecedor?.toLowerCase().includes(searchLower) ||
+      r.numero_nf?.includes(searchLower) ||
+      r.responsavel_recebimento?.toLowerCase().includes(searchLower) ||
+      r.responsavel?.toLowerCase().includes(searchLower) ||
+      r.status?.toLowerCase().includes(searchLower) ||
+      r.observacoes?.toLowerCase().includes(searchLower) ||
+      r.itens_recebidos?.some(i => i?.produto_descricao?.toLowerCase().includes(searchLower));
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data) => {
       // Criar recebimento
@@ -215,16 +235,6 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
       r.observacoes?.toLowerCase().includes(searchLower) ||
       r.itens_recebidos?.some(i => i?.produto_descricao?.toLowerCase().includes(searchLower));
   });
-
-  const isLoading = !recebimentosProp && !recebimentos.length;
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
