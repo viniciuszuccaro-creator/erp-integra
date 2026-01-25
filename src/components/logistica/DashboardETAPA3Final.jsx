@@ -25,6 +25,7 @@ import CertificadoOficialETAPA3 from '@/components/governanca/CertificadoOficial
 import ConquistasETAPA3 from '@/components/governanca/ConquistasETAPA3';
 import SeloAprovacaoETAPA3 from '@/components/governanca/SeloAprovacaoETAPA3';
 import ETAPA3_MASTER_ABSOLUTO_FINAL from '@/components/governanca/ETAPA3_MASTER_ABSOLUTO_FINAL';
+import ProvaAbsolutaETAPA3 from '@/components/governanca/ProvaAbsolutaETAPA3';
 import DashboardLogisticaInteligente from './DashboardLogisticaInteligente';
 import { useNavigate } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -156,6 +157,7 @@ export default function DashboardETAPA3Final() {
         </TabsList>
 
         <TabsContent value="validacao" className="mt-4 space-y-4">
+          <ProvaAbsolutaETAPA3 />
           <ValidacaoVisualETAPA3 />
           <MatrizCompletude_ETAPA3 />
         </TabsContent>
@@ -225,7 +227,7 @@ export default function DashboardETAPA3Final() {
             ERP Zuccaro V22.0 • 25/01/2026
           </div>
           <p className="text-sm text-slate-600 mt-4">
-            78 arquivos • 4 backends • 8 integrações • 2 apps • IA real • 3 hooks • 3 helpers • 14 requisitos • 5 certificações
+            91 arquivos (58 componentes + 4 backends + 3 hooks + 3 helpers + 13 docs + 10 governança) • 14 requisitos • 5 certificações
           </p>
           
           <div className="mt-4 pt-4 border-t flex items-center justify-center gap-4">
