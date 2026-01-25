@@ -49,10 +49,6 @@ const LoadingFallback = () => (
 function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
   const ctx = useContextoVisual();
   const { empresaAtual } = ctx || {};
-  
-  if (!ctx?.contextoReady) {
-    return <LoadingFallback />;
-  }
 
   const { data: pedidos = pedidosProp || [] } = useQueryWithRateLimit(
     ['pedidos', empresaAtual?.id],
@@ -130,12 +126,12 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
   const pedidosAprovados = pedidos.filter(p => p.status_aprovacao === "aprovado");
   const pedidosNegados = pedidos.filter(p => p.status_aprovacao === "negado");
 
+  if (!ctx?.contextoReady) {
+    return <LoadingFallback />;
+  }
+
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-      </div>
-    );
+    return <LoadingFallback />;
   }
 
   return (
