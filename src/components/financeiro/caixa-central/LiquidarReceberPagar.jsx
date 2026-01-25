@@ -31,13 +31,14 @@ const LoadingFallback = () => (
 );
 
 function LiquidarReceberPagarContent() {
-  const ctx = useContextoVisual();
-  const { filterInContext, empresaAtual, carimbarContexto, contextoReady } = ctx || {};
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  // TODOS OS HOOKS PRIMEIRO
   const [abaAtiva, setAbaAtiva] = useState("receber");
   const [titulosSelecionadosReceber, setTitulosSelecionadosReceber] = useState([]);
   const [titulosSelecionadosPagar, setTitulosSelecionadosPagar] = useState([]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const ctx = useContextoVisual();
+  const { filterInContext, empresaAtual, carimbarContexto, contextoReady } = ctx || {};
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber-liquidacao', empresaAtual?.id],
@@ -52,10 +53,6 @@ function LiquidarReceberPagarContent() {
       status: { $in: ['Pendente', 'Aprovado'] }
     }, '-data_vencimento'),
   });
-
-  if (!contextoReady || !empresaAtual) {
-    return <LoadingFallback />;
-  }
 
   const enviarParaCaixaMutation = useMutation({
     mutationFn: async ({ titulos, tipo }) => {
@@ -86,6 +83,11 @@ function LiquidarReceberPagarContent() {
       setTitulosSelecionadosPagar([]);
     }
   });
+
+  // EARLY RETURN APÓS TODOS OS HOOKS
+  if (!contextoReady || !empresaAtual) {
+    return <LoadingFallback />;
+  }
 
   return (
     <div className="space-y-4">

@@ -13,8 +13,10 @@ const LoadingFallback = () => (
 );
 
 function VisaoGeralPendenciasContent({ contasReceber = [], contasPagar = [], onSelectItem = () => {} }) {
+  // TODOS OS HOOKS PRIMEIRO
   const ctx = useContextoVisual();
-  
+
+  // EARLY RETURN APÓS HOOKS
   if (!ctx?.contextoReady) {
     return <LoadingFallback />;
   }
