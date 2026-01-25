@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,34 +39,23 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 export default function PedidosTab({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
   const { empresaAtual } = useContextoVisual();
 
-  const { data: pedidos = pedidosProp || [] } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: async () => {
-      return await base44.entities.Pedido.list('-created_date', 1000);
-    },
-    initialData: pedidosProp || [],
-    staleTime: 30000,
-    enabled: true
-  });
+  const { data: pedidos = pedidosProp || [] } = useQueryWithRateLimit(
+    ['pedidos', empresaAtual?.id],
+    async () => await base44.entities.Pedido.list('-created_date', 1000),
+    { initialData: pedidosProp || [] }
+  );
 
-  const { data: clientes = clientesProp || [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
-    queryFn: async () => {
-      return await base44.entities.Cliente.list('-created_date', 1000);
-    },
-    initialData: clientesProp || [],
-    staleTime: 30000,
-    enabled: true
-  });
+  const { data: clientes = clientesProp || [] } = useQueryWithRateLimit(
+    ['clientes', empresaAtual?.id],
+    async () => await base44.entities.Cliente.list('-created_date', 1000),
+    { initialData: clientesProp || [] }
+  );
 
-  const { data: empresas = empresasProp || [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
-    initialData: empresasProp || [],
-    staleTime: 60000,
-    enabled: true,
-    retry: false
-  });
+  const { data: empresas = empresasProp || [] } = useQueryWithRateLimit(
+    ['empresas'],
+    () => base44.entities.Empresa.list(),
+    { initialData: empresasProp || [] }
+  );
 
   const isLoading = !pedidosProp && !pedidos.length;
   // V21.6: Multi-empresa

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,33 +22,17 @@ import { useUser } from "@/components/lib/UserContext";
 export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, produtos: produtosProp }) {
   const { empresaAtual } = useContextoVisual();
 
-  const { data: movimentacoes = movimentacoesProp || [], isLoadingMov } = useQuery({
-    queryKey: ['movimentacoes', empresaAtual?.id],
-    queryFn: async () => {
-      return await base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 1000);
-    },
-    initialData: movimentacoesProp || [],
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-    retry: (failureCount, error) => error?.status === 429 ? failureCount < 2 : false,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 5000),
-    enabled: true,
-    refetchOnWindowFocus: false
-  });
+  const { data: movimentacoes = movimentacoesProp || [], isLoadingMov } = useQueryWithRateLimit(
+    ['movimentacoes', empresaAtual?.id],
+    async () => await base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 1000),
+    { initialData: movimentacoesProp || [] }
+  );
 
-  const { data: produtos = produtosProp || [], isLoadingProd } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
-    queryFn: async () => {
-      return await base44.entities.Produto.list(undefined, 5000);
-    },
-    initialData: produtosProp || [],
-    staleTime: 10 * 60 * 1000,
-    gcTime: 15 * 60 * 1000,
-    retry: (failureCount, error) => error?.status === 429 ? failureCount < 2 : false,
-    retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 5000),
-    enabled: true,
-    refetchOnWindowFocus: false
-  });
+  const { data: produtos = produtosProp || [], isLoadingProd } = useQueryWithRateLimit(
+    ['produtos', empresaAtual?.id],
+    async () => await base44.entities.Produto.list(undefined, 5000),
+    { initialData: produtosProp || [] }
+  );
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
