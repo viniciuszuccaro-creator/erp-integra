@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQueryClient } from "@tanstack/react-query";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Users, ShoppingCart, FileText, TrendingUp, ShieldCheck, Truck, Package, AlertCircle } from "lucide-react";
+import { Users, ShoppingCart, FileText, TrendingUp, ShieldCheck, Truck, Package, AlertCircle, Loader2 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -14,6 +14,15 @@ import { Badge } from "@/components/ui/badge";
 import HeaderComercialCompacto from "@/components/comercial/comercial-launchpad/HeaderComercialCompacto";
 import KPIsComercial from "@/components/comercial/comercial-launchpad/KPIsComercial";
 import ModulosGridComercial from "@/components/comercial/comercial-launchpad/ModulosGridComercial";
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
 
 const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
 const PedidosTab = React.lazy(() => import("../components/comercial/PedidosTab"));
@@ -267,8 +276,14 @@ export default function Comercial() {
   ];
 
   const handleModuleClick = (module) => {
+    const WrappedComponent = () => (
+      <Suspense fallback={<LoadingFallback />}>
+        <module.component {...(module.props || {})} windowMode={true} />
+      </Suspense>
+    );
+    
     openWindow(
-      module.component,
+      WrappedComponent,
       { ...(module.props || {}), windowMode: true },
       {
         title: module.windowTitle,

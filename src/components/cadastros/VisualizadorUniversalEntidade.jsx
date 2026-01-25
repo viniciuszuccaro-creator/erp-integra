@@ -30,7 +30,6 @@ import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from "@/components/ui/use-toast";
-import TabWrapper from '../lib/TabWrapper';
 
 const OPCOES_ORDENACAO = {
   Cliente: [
@@ -387,7 +386,6 @@ export default function VisualizadorUniversalEntidade({
   ) : <>{children}</>;
 
   return (
-    <TabWrapper requireEmpresa={false}>
     <Wrapper>
       <Card className={windowMode ? 'h-full flex flex-col' : ''}>
         <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-purple-50">
@@ -692,6 +690,5 @@ export default function VisualizadorUniversalEntidade({
         </CardContent>
       </Card>
     </Wrapper>
-    </TabWrapper>
   );
 }

@@ -1,7 +1,7 @@
 import React, { Suspense, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Box, TrendingUp, PackageCheck, PackageMinus, PackageOpen, Clock, BarChart3, Sparkles, ArrowLeftRight } from "lucide-react";
+import { Box, TrendingUp, PackageCheck, PackageMinus, PackageOpen, Clock, BarChart3, Sparkles, ArrowLeftRight, Loader2 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -20,6 +20,15 @@ const RequisicoesAlmoxarifadoTab = React.lazy(() => import("../components/estoqu
 const ControleLotesValidade = React.lazy(() => import("../components/estoque/ControleLotesValidade"));
 const RelatoriosEstoque = React.lazy(() => import("../components/estoque/RelatoriosEstoque"));
 const IAReposicao = React.lazy(() => import("../components/estoque/IAReposicao"));
+
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[600px]">
+    <div className="flex flex-col items-center gap-2">
+      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <p className="text-slate-600 text-sm">Carregando...</p>
+    </div>
+  </div>
+);
 
 export default function Estoque() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -232,8 +241,14 @@ export default function Estoque() {
   ];
 
   const handleModuleClick = (module) => {
+    const WrappedComponent = () => (
+      <Suspense fallback={<LoadingFallback />}>
+        <module.component {...(module.props || {})} windowMode={true} />
+      </Suspense>
+    );
+    
     openWindow(
-      module.component,
+      WrappedComponent,
       { ...(module.props || {}), windowMode: true },
       {
         title: module.windowTitle,

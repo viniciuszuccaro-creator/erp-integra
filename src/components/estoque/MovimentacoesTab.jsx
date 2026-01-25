@@ -18,9 +18,8 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 import { useUser } from "@/components/lib/UserContext";
-import TabWrapper from '../lib/TabWrapper';
 
-export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, produtos: produtosProp, windowMode = false }) {
+export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, produtos: produtosProp }) {
   const { empresaAtual } = useContextoVisual();
 
   const { data: movimentacoes = movimentacoesProp || [], isLoadingMov } = useQueryWithRateLimit(
@@ -191,8 +190,7 @@ export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, pro
   }
 
   return (
-    <TabWrapper requireEmpresa={false}>
-    <div className={`space-y-6 ${windowMode ? 'w-full h-full p-4' : ''}`}>
+    <div className="space-y-6">
       <div className="flex justify-between items-center mb-4">
         <div className="relative flex-1 max-w-md mr-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -401,6 +399,5 @@ export default function MovimentacoesTab({ movimentacoes: movimentacoesProp, pro
         )}
       </Card>
     </div>
-    </TabWrapper>
   );
 }

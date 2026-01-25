@@ -13,9 +13,8 @@ import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import VisualizadorUniversalEntidade from '../cadastros/VisualizadorUniversalEntidade';
 import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
-import TabWrapper from '../lib/TabWrapper';
 
-export default function ClientesTab({ clientes: clientesProp, windowMode = false }) {
+export default function ClientesTab({ clientes: clientesProp }) {
   const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
@@ -55,8 +54,7 @@ export default function ClientesTab({ clientes: clientesProp, windowMode = false
   }
 
   return (
-    <TabWrapper requireEmpresa={false}>
-    <div className={`space-y-6 ${windowMode ? 'w-full h-full p-4' : ''}`}>
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Clientes</h2>
         <Button 
@@ -196,6 +194,5 @@ export default function ClientesTab({ clientes: clientesProp, windowMode = false
         </CardContent>
       </Card>
     </div>
-    </TabWrapper>
   );
 }
