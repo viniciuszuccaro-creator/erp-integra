@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Truck, MapPin, CheckCircle2, Navigation, Camera, AlertCircle } from 'lucide-react';
+import { Truck, CheckCircle2, Navigation, Camera, AlertCircle, Menu } from 'lucide-react';
 import { toast } from 'sonner';
 import CapturaPODMobile from '@/components/logistica/CapturaPODMobile';
 import { useUser } from '@/components/lib/UserContext';
 import ListaEntregasMotorista from '@/components/logistica/ListaEntregasMotorista';
 import FluxoEntregaCompleto from '@/components/logistica/FluxoEntregaCompleto';
 import LogisticaReversaForm from '@/components/logistica/LogisticaReversaForm';
+import WidgetProximaEntrega from '@/components/logistica/WidgetProximaEntrega';
+import PainelMetricasRealtime from '@/components/logistica/PainelMetricasRealtime';
+import ControleAcessoLogistica from '@/components/logistica/ControleAcessoLogistica';
 
 /**
  * ETAPA 3: App do Motorista (Mobile-First)
@@ -132,160 +135,52 @@ export default function AppMotorista() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 p-4 pb-20">
-      {/* Header */}
-      <div className="text-white mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Truck className="w-7 h-7" />
-          Minhas Entregas
-        </h1>
-        <p className="text-blue-100 text-sm">
-          Olá, {user?.full_name || 'Motorista'}
-        </p>
-      </div>
-
-      {/* ETAPA 3: Lista Otimizada */}
-      <ListaEntregasMotorista
-        onVerDetalhes={(entrega) => {
-          setEntregaSelecionada(entrega);
-          setModoFluxo(true);
-        }}
-        onIniciar={(entrega) => {
-          atualizarStatusMutation.mutate({
-            entrega_id: entrega.id,
-            novo_status: 'Saiu para Entrega'
-          });
-        }}
-      />
-
-      {/* Lista Original (Backup) */}
-      <div className="space-y-3 hidden">
-        {isLoading && (
-          <Card>
-            <CardContent className="py-8 text-center text-slate-500">
-              Carregando...
-            </CardContent>
-          </Card>
-        )}
-
-        {entregas.map(entrega => (
-          <Card key={entrega.id} className="shadow-lg">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="font-bold text-lg">{entrega.cliente_nome}</p>
-                  <p className="text-sm text-slate-600">
-                    {entrega.endereco_entrega_completo?.logradouro}, {entrega.endereco_entrega_completo?.numero}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {entrega.endereco_entrega_completo?.cidade}/{entrega.endereco_entrega_completo?.estado}
-                  </p>
-                </div>
-                <Badge className={
-                  entrega.prioridade === 'Urgente' ? 'bg-red-600' :
-                  entrega.prioridade === 'Alta' ? 'bg-orange-600' : 'bg-blue-600'
-                }>
-                  {entrega.prioridade}
-                </Badge>
+    <ControleAcessoLogistica motoristasOnly={true}>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
+        {/* ETAPA 3: Header Aprimorado */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                <Truck className="w-7 h-7 text-white" />
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Informações */}
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-slate-600">Previsão:</span>
-                  <p className="font-medium">
-                    {entrega.data_previsao ? new Date(entrega.data_previsao).toLocaleDateString('pt-BR') : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-slate-600">Volumes:</span>
-                  <p className="font-medium">{entrega.volumes || 1}</p>
-                </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">App Motorista V3.0</h1>
+                <p className="text-blue-200 text-sm">ETAPA 3 • Real-time</p>
               </div>
+            </div>
+            <Badge className="bg-green-500 text-white text-base px-3 py-1">
+              {entregas.length}
+            </Badge>
+          </div>
 
-              {/* Status Atual */}
-              <div className="bg-slate-50 p-2 rounded">
-                <Badge className="bg-blue-600">{entrega.status}</Badge>
-              </div>
+          {/* ETAPA 3: Métricas Real-time */}
+          <PainelMetricasRealtime />
+        </div>
 
-              {/* Ações */}
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  onClick={() => navegarGPS(entrega)}
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                >
-                  <Navigation className="w-4 h-4 mr-1" />
-                  Navegar
-                </Button>
-                <Button
-                  onClick={() => {
-                    setEntregaSelecionada(entrega);
-                    setModoPOD(true);
-                  }}
-                  size="sm"
-                  className="w-full bg-green-600 hover:bg-green-700"
-                >
-                  <Camera className="w-4 h-4 mr-1" />
-                  Entregar
-                </Button>
-              </div>
+        {/* ETAPA 3: Próxima Entrega Destacada */}
+        <div className="mb-4">
+          <WidgetProximaEntrega
+            onVerDetalhes={(entrega) => {
+              setEntregaSelecionada(entrega);
+              setModoFluxo(true);
+            }}
+          />
+        </div>
 
-              {/* Botões de Status */}
-              <div className="flex gap-2">
-                {entrega.status === 'Pronto para Expedir' && (
-                  <Button
-                    onClick={() => atualizarStatusMutation.mutate({
-                      entrega_id: entrega.id,
-                      novo_status: 'Saiu para Entrega'
-                    })}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    Iniciar Entrega
-                  </Button>
-                )}
-                {['Saiu para Entrega', 'Em Trânsito'].includes(entrega.status) && (
-                  <Button
-                    onClick={() => atualizarStatusMutation.mutate({
-                      entrega_id: entrega.id,
-                      novo_status: 'Entrega Frustrada'
-                    })}
-                    variant="destructive"
-                    size="sm"
-                    className="flex-1"
-                  >
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    Frustrada
-                  </Button>
-                )}
-              </div>
-
-              {/* Contato */}
-              {entrega.contato_entrega?.telefone && (
-                <a
-                  href={`tel:${entrega.contato_entrega.telefone}`}
-                  className="block text-center text-sm text-blue-600 underline"
-                >
-                  📞 {entrega.contato_entrega.telefone}
-                </a>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-
-        {entregas.length === 0 && !isLoading && (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-3" />
-              <p className="text-slate-600">Nenhuma entrega pendente!</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+        {/* ETAPA 3: Lista Otimizada */}
+        <ListaEntregasMotorista
+          onVerDetalhes={(entrega) => {
+            setEntregaSelecionada(entrega);
+            setModoFluxo(true);
+          }}
+          onIniciar={(entrega) => {
+            atualizarStatusMutation.mutate({
+              entrega_id: entrega.id,
+              novo_status: 'Saiu para Entrega'
+            });
+          }}
+        />
       </div>
     </ControleAcessoLogistica>
   );
