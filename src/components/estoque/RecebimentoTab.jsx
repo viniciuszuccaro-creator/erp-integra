@@ -23,10 +23,9 @@ export default function RecebimentoTab({ recebimentos: recebimentosProp, ordensC
   const { data: recebimentos = [] } = useQuery({
     queryKey: ['movimentacoes-recebimento', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = { ...getFiltroContexto('empresa_id', true), tipo_movimentacao: 'Entrada' };
-      return await base44.entities.MovimentacaoEstoque.filter(filtro, '-data_movimentacao', 500);
+      if (!empresaAtual?.id) return recebimentosProp || [];
+      return await base44.entities.MovimentacaoEstoque.filter({ empresa_id: empresaAtual.id, tipo_movimentacao: 'Entrada' }, '-data_movimentacao', 500);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
     initialData: recebimentosProp || [],
     staleTime: 30000,
   });
@@ -34,10 +33,9 @@ export default function RecebimentoTab({ recebimentos: recebimentosProp, ordensC
   const { data: ordensCompra = [] } = useQuery({
     queryKey: ['ordens-compra', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.OrdemCompra.filter(filtro, undefined, 500);
+      if (!empresaAtual?.id) return ordensCompraProp || [];
+      return await base44.entities.OrdemCompra.filter({ empresa_id: empresaAtual.id }, undefined, 500);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
     initialData: ordensCompraProp || [],
     staleTime: 30000,
   });
@@ -45,10 +43,9 @@ export default function RecebimentoTab({ recebimentos: recebimentosProp, ordensC
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Produto.filter(filtro, undefined, 2000);
+      if (!empresaAtual?.id) return produtosProp || [];
+      return await base44.entities.Produto.filter({ empresa_id: empresaAtual.id }, undefined, 2000);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
     initialData: produtosProp || [],
     staleTime: 30000,
   });

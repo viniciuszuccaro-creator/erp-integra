@@ -22,10 +22,9 @@ export default function SolicitacoesTab({ solicitacoes: solicitacoesProp, produt
   const { data: solicitacoes = [] } = useQuery({
     queryKey: ['solicitacoes', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 500);
+      if (!empresaAtual?.id) return solicitacoesProp || [];
+      return await base44.entities.SolicitacaoCompra.filter({ empresa_id: empresaAtual.id }, '-data_solicitacao', 500);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
     initialData: solicitacoesProp || [],
     staleTime: 30000,
   });
@@ -33,10 +32,9 @@ export default function SolicitacoesTab({ solicitacoes: solicitacoesProp, produt
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Produto.filter(filtro, undefined, 2000);
+      if (!empresaAtual?.id) return produtosProp || [];
+      return await base44.entities.Produto.filter({ empresa_id: empresaAtual.id }, undefined, 2000);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
     initialData: produtosProp || [],
     staleTime: 30000,
   });

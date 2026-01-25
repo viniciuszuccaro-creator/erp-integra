@@ -23,10 +23,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes: requisicoesPro
   const { data: requisicoes = [] } = useQuery({
     queryKey: ['requisicoes-almox', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = { ...getFiltroContexto('empresa_id', true), tipo_movimento: 'saida', origem_movimento: 'requisicao' };
-      return await base44.entities.MovimentacaoEstoque.filter(filtro, '-data_movimentacao', 500);
+      if (!empresaAtual?.id) return requisicoesProp || [];
+      return await base44.entities.MovimentacaoEstoque.filter({ empresa_id: empresaAtual.id, tipo_movimento: 'saida', origem_movimento: 'requisicao' }, '-data_movimentacao', 500);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
     initialData: requisicoesProp || [],
     staleTime: 30000,
   });
@@ -34,10 +33,9 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes: requisicoesPro
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Produto.filter(filtro, undefined, 2000);
+      if (!empresaAtual?.id) return produtosProp || [];
+      return await base44.entities.Produto.filter({ empresa_id: empresaAtual.id }, undefined, 2000);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
     initialData: produtosProp || [],
     staleTime: 30000,
   });

@@ -41,10 +41,9 @@ export default function NotasFiscaisTab({ notasFiscais: notasFiscaisProp, pedido
   const { data: notasFiscais = [] } = useQuery({
     queryKey: ['notasfiscais', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_faturamento_id', true);
-      return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 1000);
+      if (!empresaAtual?.id) return notasFiscaisProp || [];
+      return await base44.entities.NotaFiscal.filter({ empresa_faturamento_id: empresaAtual.id }, '-created_date', 1000);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_faturamento_id', true).group_id),
     initialData: notasFiscaisProp || [],
     staleTime: 30000,
   });
@@ -52,10 +51,9 @@ export default function NotasFiscaisTab({ notasFiscais: notasFiscaisProp, pedido
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Pedido.filter(filtro, undefined, 1000);
+      if (!empresaAtual?.id) return pedidosProp || [];
+      return await base44.entities.Pedido.filter({ empresa_id: empresaAtual.id }, undefined, 1000);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
     initialData: pedidosProp || [],
     staleTime: 30000,
   });

@@ -78,20 +78,20 @@ export default function PedidosEntregaTab({ windowMode = false }) {
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Pedido.filter(filtro, '-created_date', 1000);
+      if (!empresaAtual?.id) return [];
+      return await base44.entities.Pedido.filter({ empresa_id: empresaAtual.id }, '-created_date', 1000);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    enabled: !!empresaAtual?.id,
     staleTime: 30000,
   });
 
   const { data: entregas = [] } = useQuery({
     queryKey: ['entregas', empresaAtual?.id],
     queryFn: async () => {
-      const filtro = getFiltroContexto('empresa_id', true);
-      return await base44.entities.Entrega.filter(filtro, '-created_date', 1000);
+      if (!empresaAtual?.id) return [];
+      return await base44.entities.Entrega.filter({ empresa_id: empresaAtual.id }, '-created_date', 1000);
     },
-    enabled: !loadingContexto && (!!empresaAtual?.id || !!getFiltroContexto('empresa_id', true).group_id),
+    enabled: !!empresaAtual?.id,
     staleTime: 30000,
   });
 
