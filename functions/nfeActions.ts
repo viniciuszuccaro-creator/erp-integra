@@ -27,6 +27,13 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { action = 'emitir', nfe, empresaId, nfeId, justificativa, correcao } = body || {};
 
+    const { user, perfil } = await getUserAndPerfil(base44);
+    const denied = await assertPermission(base44, { user, perfil }, 'Fiscal', 'NF-e', action);
+    if (denied) return denied;
+
+    const ctxErr = assertContextPresence({ empresa_id: empresaId }, true);
+    if (ctxErr) return ctxErr;
+
     // Carrega config fiscal com service role
     const cfgs = await base44.asServiceRole.entities.ConfigFiscalEmpresa.filter({ empresa_id: empresaId });
     const config = cfgs?.[0] || null;
