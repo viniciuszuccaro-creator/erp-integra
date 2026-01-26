@@ -783,7 +783,7 @@ export default function Cadastros() {
   };
 
   return (
-    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="w-full h-full flex flex-col p-6 lg:p-8 space-y-6 overflow-auto">
       {/* GERENCIADOR DE JANELAS ABERTAS */}
       <GerenciadorJanelas />
 

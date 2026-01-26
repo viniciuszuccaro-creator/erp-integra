@@ -102,7 +102,7 @@ export default function Acessos() {
   }
 
   return (
-    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="w-full h-full flex flex-col p-6 lg:p-8 space-y-6 overflow-auto">
       {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
@@ -123,7 +123,7 @@ export default function Acessos() {
 
       {/* Painel redimensionável (sidebar de status à esquerda, conteúdo à direita) */}
       <ErrorBoundary>
-        <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-13rem)] min-h-[480px] max-h-[calc(100vh-14rem)]">
+        <ResizablePanelGroup direction="horizontal" className="w-full flex-1 min-h-[480px]">
         <ResizablePanel defaultSize={28} minSize={20} maxSize={40} className="h-full">
           <div className="h-full flex flex-col gap-4">
             <Card className="h-full border-0 shadow-md">
