@@ -73,6 +73,7 @@ Deno.serve(async (req) => {
         const r = await fetch(`https://api.enotas.com.br/v2/empresas/${integracao.empresa_id_provedor}/nfes/${nfeId}/cancelamento`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Basic ${btoa(integracao.api_key + ':')}` }, body: JSON.stringify({ motivo: justificativa || 'Cancelado pelo sistema' }) });
         if (!r.ok) throw new Error(await r.text());
         const j = await r.json();
+        await audit(base44, user, { acao: 'Cancelamento', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Cancelamento NF-e', dados_novos: { justificativa } });
         return Response.json({ sucesso: true, protocolo: j.protocolo });
       }
       if (action === 'carta') {
