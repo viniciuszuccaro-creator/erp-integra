@@ -13,6 +13,8 @@ import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguran
 
 export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
+  const params = new URLSearchParams(window.location.search);
+  const initialTab = params.get('tab') || 'config';
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
@@ -24,7 +26,7 @@ export default function AdministracaoSistema() {
       </header>
 
       <div className="flex-1 overflow-auto p-4 md:p-6">
-        <Tabs defaultValue="config" className="w-full">
+        <Tabs defaultValue={initialTab} className="w-full">
           <TabsList className="flex flex-wrap gap-2">
             <TabsTrigger value="config" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Configurações</div>

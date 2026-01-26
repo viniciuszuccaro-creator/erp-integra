@@ -26,6 +26,10 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
+import ConfiguracoesSistema from './pages/ConfiguracoesSistema';
+import Acessos from './pages/Acessos';
+import GerenciamentoAcessosCompleto from './pages/GerenciamentoAcessosCompleto';
+import AuditoriaUI from './pages/AuditoriaUI';
 import __Layout from './Layout.jsx';
 
 
@@ -58,6 +62,10 @@ export const PAGES = {
     "RH": RH,
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
+    "ConfiguracoesSistema": ConfiguracoesSistema,
+    "Acessos": Acessos,
+    "GerenciamentoAcessosCompleto": GerenciamentoAcessosCompleto,
+    "AuditoriaUI": AuditoriaUI,
 }
 
 export const pagesConfig = {
