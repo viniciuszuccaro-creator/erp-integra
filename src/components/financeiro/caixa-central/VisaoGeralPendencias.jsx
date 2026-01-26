@@ -22,9 +22,9 @@ function VisaoGeralPendenciasContent({ contasReceber = [], contasPagar = [], onS
   }
   
   return (
-    <div className="space-y-3">
-      <Card>
-        <CardHeader>
+    <div className="w-full h-full flex flex-col space-y-3 overflow-auto">
+      <Card className="w-full flex-shrink-0">
+        <CardHeader className="flex-shrink-0">
           <CardTitle className="text-base flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-green-600" />
             Contas a Receber Pendentes
@@ -58,15 +58,15 @@ function VisaoGeralPendenciasContent({ contasReceber = [], contasPagar = [], onS
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
+      <Card className="w-full flex-shrink-0">
+        <CardHeader className="flex-shrink-0">
           <CardTitle className="text-base flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-red-600" />
             Contas a Pagar Pendentes
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-h-60 overflow-auto">
+        <CardContent className="w-full">
+          <div className="space-y-2 max-h-60 overflow-auto w-full">
             {contasPagar.slice(0, 10).map((conta) => (
               <div 
                 key={conta.id} 

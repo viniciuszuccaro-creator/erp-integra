@@ -132,15 +132,15 @@ function OrdensLiquidacaoPendentesContent() {
 
   return (
     <>
-      <Card className="border-0 shadow-md">
-        <CardHeader className="bg-orange-50 border-b">
+      <Card className="border-0 shadow-md w-full flex flex-col">
+        <CardHeader className="bg-orange-50 border-b flex-shrink-0">
           <CardTitle className="text-orange-900 flex items-center gap-2">
             <Clock className="w-5 h-5" />
             Ordens Pendentes de Liquidação ({ordensPendentes.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="max-h-[500px] overflow-auto">
+        <CardContent className="p-0 w-full flex-1 overflow-hidden">
+          <div className="max-h-[500px] overflow-auto w-full">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
