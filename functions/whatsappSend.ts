@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
+import { getUserAndPerfil, assertPermission, assertContextPresence, audit } from './_lib/guard.js';
 
 Deno.serve(async (req) => {
   try {
@@ -10,9 +10,13 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const { action = 'sendText', numero, mensagem, empresaId, arquivoUrl, legenda } = payload || {};
 
-    const { user, perfil } = await getUserAndPerfil(base44);
-    const denied = await assertPermission(base44, { user, perfil }, 'Integrações', 'WhatsApp', action === 'status' ? 'visualizar' : 'criar');
-    if (denied) return denied;
+    const ctxPresenceErr = assertContextPresence({ empresa_id: empresaId, group_id: null }, true);
+    if (ctxPresenceErr) return ctxPresenceErr;
+
+    const ctx = await getUserAndPerfil(base44);
+    const permDenied = await assertPermission(base44, ctx, 'Integrações', 'WhatsApp', action === 'status' ? 'visualizar' : 'criar');
+    if (permDenied) return permDenied;
+    const currentUser = ctx.user;
 
     // Busca configuração como service role (não expõe segredos no frontend)
     const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Integracoes', chave: `whatsapp_${empresaId}` });
@@ -41,7 +45,7 @@ Deno.serve(async (req) => {
       const r = await fetch(`${apiUrl}/message/sendMedia/${instanceName}`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: apiKey }, body: JSON.stringify(body) });
       if (!r.ok) return Response.json({ error: await r.text() }, { status: 502 });
       const res = await r.json();
-      await audit(base44, user, { acao: 'Criação', modulo: 'Integrações', entidade: 'WhatsApp', descricao: `Midia enviada`, dados_novos: { numero: body.number, action } });
+      await audit(base44, currentUser, { acao: 'Criação', modulo: 'Integrações', entidade: 'WhatsApp', descricao: `Midia enviada`, dados_novos: { numero: body.number, action } });
       return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
     }
 
@@ -53,7 +57,7 @@ Deno.serve(async (req) => {
 
     // log simples
     await base44.asServiceRole.entities.Notificacao.create({ titulo: '📱 WhatsApp Enviado', mensagem: `Para ${body.number}`, tipo: 'info', categoria: 'Sistema', prioridade: 'Baixa' });
-    await audit(base44, user, { acao: 'Criação', modulo: 'Integrações', entidade: 'WhatsApp', descricao: `Texto enviado`, dados_novos: { numero: body.number, action } });
+    await audit(base44, currentUser, { acao: 'Criação', modulo: 'Integrações', entidade: 'WhatsApp', descricao: `Texto enviado`, dados_novos: { numero: body.number, action } });
 
     return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
   } catch (err) {
