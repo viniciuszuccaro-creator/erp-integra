@@ -42,6 +42,9 @@ export default function SearchInputIsolado({ value, onChange, placeholder = "Bus
     };
   }, []);
 
+  // foco inicial
+  useEffect(() => { if (inputRef.current) inputRef.current.focus(); }, []);
+
   // preserva foco durante rerender
   useEffect(() => {
     if (wasFocusedRef.current && inputRef.current) {
@@ -60,6 +63,7 @@ export default function SearchInputIsolado({ value, onChange, placeholder = "Bus
         onChange={handleChange}
         onFocus={() => (wasFocusedRef.current = true)}
         onBlur={() => (wasFocusedRef.current = false)}
+        autoFocus
         autoComplete="off"
         spellCheck={false}
         className="flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 pl-10"

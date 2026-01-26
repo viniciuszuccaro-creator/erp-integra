@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { useWindowManager } from './WindowManager';
 import WindowModal from './WindowModal';
+import ErrorBoundary from '@/components/lib/ErrorBoundary';
 import { AnimatePresence } from 'framer-motion';
 
 /**
@@ -71,11 +72,13 @@ export default function WindowRenderer() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
             }>
-              <WindowContent 
-                window={window}
-                injectedProps={injectedProps}
-                closeWindow={closeWindow}
-              />
+              <ErrorBoundary>
+                <WindowContent 
+                  window={window}
+                  injectedProps={injectedProps}
+                  closeWindow={closeWindow}
+                />
+              </ErrorBoundary>
             </Suspense>
           </WindowModal>
         );
