@@ -78,7 +78,7 @@ const navigationItems = [
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
   { title: "Configurações do Sistema", url: createPageUrl("AdministracaoSistema"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
-  { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
+  { title: "🔒 Segurança e Governança", url: createPageUrl("AdministracaoSistema"), icon: Shield, group: "sistema", adminOnly: true }
   { title: "Auditoria de UI", url: createPageUrl("AuditoriaUI"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "⚡ Estabilização do Sistema", url: createPageUrl("EstabilizacaoSistema"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🎨 Padronização UI/UX", url: createPageUrl("PadronizacaoUI"), icon: Shield, group: "sistema", adminOnly: true },
