@@ -12,6 +12,8 @@ export function useQueryWithRateLimit(
   const { initialData = [] } = options;
   const queryClient = useQueryClient();
 
+  const autoEnabled = !queryKey.some((v) => v === undefined || v === null);
+
   return useQuery({
     queryKey,
     queryFn: async () => {
