@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission, assertContextPresence, audit } from './_lib/guard.js';
 
 async function emitirENotas(nfe, integracao, config) {
   const apiKey = integracao.api_key;
