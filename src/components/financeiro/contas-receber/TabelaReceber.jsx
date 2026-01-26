@@ -28,11 +28,11 @@ export default function TabelaReceber({
   const obterConfigEmpresa = (empresaId) => configsCobranca.find(c => c.empresa_id === empresaId);
 
   return (
-    <Card className="border-0 shadow-md flex-1 overflow-hidden flex flex-col">
-      <CardHeader className="bg-slate-50 border-b py-2 px-3 min-h-[50px] max-h-[50px]">
+    <Card className="border-0 shadow-md flex-1 overflow-hidden flex flex-col w-full">
+      <CardHeader className="bg-slate-50 border-b py-2 px-3 min-h-[50px] max-h-[50px] flex-shrink-0">
         <CardTitle className="text-sm">Títulos a Receber</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 flex-1 overflow-auto">
+      <CardContent className="p-0 flex-1 overflow-auto w-full">
         <Table>
           <TableHeader className="sticky top-0 bg-slate-50 z-10">
             <TableRow>
