@@ -17,9 +17,9 @@ export function useQueryWithRateLimit(
       try {
         return await queryFn();
       } catch (error) {
-        // Em 429, retorna cached data para evitar tela branca
-        if (error?.status === 429) {
-          console.warn('⚠️ Rate limit: usando cache', queryKey);
+        // Em 429 ou falha de rede, retorna cached data para evitar tela branca
+        if (error?.status === 429 || String(error?.message || '').toLowerCase().includes('network')) {
+          console.warn('⚠️ Degradação controlada (cache):', queryKey, error?.status || error?.message);
           return initialData;
         }
         throw error;
