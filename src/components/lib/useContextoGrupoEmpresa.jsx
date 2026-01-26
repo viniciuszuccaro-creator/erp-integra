@@ -146,6 +146,28 @@ export function useContextoGrupoEmpresa() {
       }
     } catch (error) {
       console.error("Erro ao carregar contexto:", error);
+      // Fallback offline/rate-limit: não bloquear a UI
+      try {
+        const ctx = (() => { try { return localStorage.getItem('contexto_atual'); } catch { return 'empresa'; } })() || 'empresa';
+        setContexto(ctx);
+        setUser({ id: 'offline', full_name: 'Offline', role: 'user' });
+        if (ctx === 'grupo') {
+          const gid = (() => { try { return localStorage.getItem('group_atual_id'); } catch { return null; } })();
+          if (gid) {
+            const grupos = await base44.entities.GrupoEmpresarial.filter({ id: gid });
+            if (grupos[0]) setGrupoAtual(grupos[0]);
+          }
+        } else {
+          const eid = (() => { try { return localStorage.getItem('empresa_atual_id'); } catch { return null; } })();
+          if (eid) {
+            const empresas = await base44.entities.Empresa.filter({ id: eid });
+            if (empresas[0]) setEmpresaAtual(empresas[0]);
+          }
+        }
+      } catch (_) {
+        // último recurso: manter user não-nulo para não travar telas
+        setUser({ id: 'fallback' });
+      }
     }
   };
 

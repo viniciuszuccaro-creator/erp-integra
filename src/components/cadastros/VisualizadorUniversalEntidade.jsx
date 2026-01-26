@@ -108,6 +108,8 @@ export default function VisualizadorUniversalEntidade({
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
+  const scrollRef = useRef(null);
+  const lastScrollTopRef = useRef(0);
   
   const { openWindow, closeWindow } = useWindow();
   const { empresaAtual } = useContextoVisual();
@@ -238,13 +240,33 @@ export default function VisualizadorUniversalEntidade({
 
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
-    
+
     if (filtroAdicional && typeof filtroAdicional === 'function') {
       resultado = resultado.filter(filtroAdicional);
     }
-    
+
+    // Ordenação cliente para garantir numérica quando necessário
+    if (colunaOrdenacao) {
+      const colunaCfg = colunasOrdenacao.find(c => c.campo === colunaOrdenacao);
+      const getVal = colunaCfg?.getValue || ((i) => i[colunaOrdenacao]);
+      const isNum = colunaCfg?.isNumeric;
+      resultado.sort((a, b) => {
+        const va = getVal(a);
+        const vb = getVal(b);
+        if (isNum) {
+          const na = Number(String(va).replace(/[^0-9.-]/g, '')) || 0;
+          const nb = Number(String(vb).replace(/[^0-9.-]/g, '')) || 0;
+          return (na - nb) * (direcaoOrdenacao === 'asc' ? 1 : -1);
+        }
+        return String(va ?? '').localeCompare(String(vb ?? ''), 'pt-BR', { numeric: true }) * (direcaoOrdenacao === 'asc' ? 1 : -1);
+      });
+    } else if (ordenacao && (ordenacao.includes('codigo'))) {
+      const isDesc = ordenacao.endsWith('_desc');
+      resultado.sort((a, b) => ((Number(a.codigo || 0) - Number(b.codigo || 0)) * (isDesc ? -1 : 1)));
+    }
+
     return resultado;
-  }, [dados, filtroAdicional]);
+  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, ordenacao, colunasOrdenacao]);
 
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   
@@ -334,6 +356,7 @@ export default function VisualizadorUniversalEntidade({
         }
       };
 
+      if (scrollRef.current) lastScrollTopRef.current = scrollRef.current.scrollTop;
       winId = openWindow(
         componenteEdicao,
         finalProps,
@@ -345,6 +368,7 @@ export default function VisualizadorUniversalEntidade({
           uniqueKey: `edit-${nomeEntidade}-${item?.id || 'new'}`
         }
       );
+      setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTop = lastScrollTopRef.current; }, 0);
     }
   };
 
@@ -352,6 +376,7 @@ export default function VisualizadorUniversalEntidade({
     if (componenteVisualizacao) {
       let winId;
       const closeSelf = () => closeWindow(winId);
+      if (scrollRef.current) lastScrollTopRef.current = scrollRef.current.scrollTop;
       winId = openWindow(
         componenteVisualizacao,
         { [nomeEntidade.toLowerCase()]: item, id: item.id, closeWindow: closeSelf },
@@ -363,6 +388,7 @@ export default function VisualizadorUniversalEntidade({
           uniqueKey: `view-${nomeEntidade}-${item.id}`
         }
       );
+      setTimeout(() => { if (scrollRef.current) scrollRef.current.scrollTop = lastScrollTopRef.current; }, 0);
     }
   };
 
@@ -485,7 +511,7 @@ export default function VisualizadorUniversalEntidade({
           </div>
         </CardHeader>
 
-        <CardContent className="p-6 w-full flex-1 overflow-auto">
+        <CardContent ref={scrollRef} onScroll={(e) => { lastScrollTopRef.current = e.currentTarget.scrollTop; }} className="p-6 w-full flex-1 overflow-auto">
           {isLoading ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
