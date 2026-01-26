@@ -67,21 +67,31 @@ Deno.serve(async (req) => {
       // Baixa final de estoque (saída genérica quando aplicável)
       try {
         await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
-        const qtyKg = Number(data?.peso_total_kg || 0);
-        const mov = await base44.asServiceRole.entities.MovimentacaoEstoque.create({
-          origem_movimento: 'pedido',
-          tipo_movimento: 'saida',
-          produto_descricao: `Baixa por Entrega do Pedido ${data?.numero_pedido || ''}`.trim(),
-          quantidade: qtyKg > 0 ? qtyKg : 1,
-          unidade_medida: qtyKg > 0 ? 'KG' : 'UN',
-          empresa_id: data?.empresa_id || null,
-          group_id: data?.group_id || null,
-          data_movimentacao: new Date().toISOString(),
-          motivo: `Entrega ${data?.id} confirmada`,
-          responsavel: user?.full_name || user?.email,
-          responsavel_id: user?.id
-        });
-        results.movimentos_estoque.push(mov?.id);
+        // evita duplicidade: se já houver movimento para esta entrega, não recriar
+        let jaExiste = false;
+        try {
+          const existentes = await base44.asServiceRole.entities.MovimentacaoEstoque.filter({ origem_documento_id: data.id }, '-created_date', 1);
+          jaExiste = Array.isArray(existentes) && existentes.length > 0;
+        } catch {}
+        if (!jaExiste) {
+          const qtyKg = Number(data?.peso_total_kg || 0);
+          const mov = await base44.asServiceRole.entities.MovimentacaoEstoque.create({
+            origem_movimento: 'pedido',
+            origem_documento_id: data.id,
+            documento: data?.numero_pedido || undefined,
+            tipo_movimento: 'saida',
+            produto_descricao: `Baixa por Entrega do Pedido ${data?.numero_pedido || ''}`.trim(),
+            quantidade: qtyKg > 0 ? qtyKg : 1,
+            unidade_medida: qtyKg > 0 ? 'KG' : 'UN',
+            empresa_id: data?.empresa_id || null,
+            group_id: data?.group_id || null,
+            data_movimentacao: new Date().toISOString(),
+            motivo: `Entrega ${data?.id} confirmada`,
+            responsavel: user?.full_name || user?.email,
+            responsavel_id: user?.id
+          });
+          results.movimentos_estoque.push(mov?.id);
+        }
       } catch (e) {
         await audit(base44, user, { acao: 'Erro', modulo: 'Estoque', entidade: 'MovimentacaoEstoque', descricao: `Falha baixa por entrega: ${e.message}` });
       }
@@ -91,32 +101,50 @@ Deno.serve(async (req) => {
 
     // 2) Logística reversa -> entrada em estoque
     if (data.status === 'Devolvido' || data?.logistica_reversa?.ativada) {
-      const permEst = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
-      if (!permEst) {
+      // Estoque: entrada por devolução
+      try {
+        await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
         const qty = Number(data?.logistica_reversa?.quantidade_devolvida || 0);
         const val = Number(data?.logistica_reversa?.valor_devolvido || 0);
         if (qty > 0) {
-          try {
-            const mov = await base44.asServiceRole.entities.MovimentacaoEstoque.create({
-              origem_movimento: 'devolucao',
-              tipo_movimento: 'entrada',
-              produto_id: data?.logistica_reversa?.produto_id || null,
-              produto_descricao: data?.logistica_reversa?.motivo || 'Logística Reversa',
-              quantidade: qty,
-              unidade_medida: 'UN',
-              empresa_id: data?.empresa_id || null,
-              group_id: data?.group_id || null,
-              data_movimentacao: new Date().toISOString(),
-              motivo: `Logística Reversa da Entrega ${data?.id}`,
-              valor_total: val,
-              responsavel: user?.full_name || user?.email,
-              responsavel_id: user?.id
+          const mov = await base44.asServiceRole.entities.MovimentacaoEstoque.create({
+            origem_movimento: 'devolucao',
+            origem_documento_id: data.id,
+            tipo_movimento: 'entrada',
+            produto_id: data?.logistica_reversa?.produto_id || null,
+            produto_descricao: data?.logistica_reversa?.motivo || 'Logística Reversa',
+            quantidade: qty,
+            unidade_medida: 'UN',
+            empresa_id: data?.empresa_id || null,
+            group_id: data?.group_id || null,
+            data_movimentacao: new Date().toISOString(),
+            motivo: `Logística Reversa da Entrega ${data?.id}`,
+            valor_total: val,
+            responsavel: user?.full_name || user?.email,
+            responsavel_id: user?.id
+          });
+          results.movimentos_estoque.push(mov?.id);
+        }
+      } catch (e) {
+        await audit(base44, user, { acao: 'Erro', modulo: 'Estoque', entidade: 'MovimentacaoEstoque', descricao: `Falha entrada reversa: ${e.message}` });
+      }
+
+      // Financeiro: cancelar cobranças pendentes do pedido (se houver)
+      try {
+        if (data?.pedido_id) {
+          const titulos = await base44.asServiceRole.entities.ContaReceber.filter({ pedido_id: data.pedido_id, status: 'Pendente' });
+          for (const t of (titulos || [])) {
+            await base44.asServiceRole.entities.ContaReceber.update(t.id, {
+              status: 'Cancelado',
+              observacoes: `Cancelado por logística reversa da entrega ${data.id}`
             });
-            results.movimentos_estoque.push(mov?.id);
-          } catch (e) {
-            await audit(base44, user, { acao: 'Erro', modulo: 'Estoque', entidade: 'MovimentacaoEstoque', descricao: `Falha entrada reversa: ${e.message}` });
+          }
+          if ((titulos || []).length) {
+            await audit(base44, user, { acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaReceber', descricao: `Cancelados ${(titulos||[]).length} títulos pendentes do pedido por devolução` });
           }
         }
+      } catch (e) {
+        await audit(base44, user, { acao: 'Erro', modulo: 'Financeiro', entidade: 'ContaReceber', descricao: `Falha ao cancelar CR por devolução: ${e.message}` });
       }
 
       await audit(base44, user, { acao: 'Edição', modulo: 'Expedição', entidade: 'Entrega', registro_id: data.id, descricao: 'Logística Reversa processada' });
