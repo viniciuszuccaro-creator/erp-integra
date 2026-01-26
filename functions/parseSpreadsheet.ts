@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
     const ws = wb.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
 
+    await audit(base44, user, { acao: 'Visualização', modulo: 'Sistema', entidade: 'Importacao', descricao: `Planilha lida (${sheetName})`, dados_novos: { fileUrl, linhas: rows.length } });
     return Response.json({ rows });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
