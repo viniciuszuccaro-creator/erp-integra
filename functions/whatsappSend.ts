@@ -41,6 +41,7 @@ Deno.serve(async (req) => {
       const r = await fetch(`${apiUrl}/message/sendMedia/${instanceName}`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: apiKey }, body: JSON.stringify(body) });
       if (!r.ok) return Response.json({ error: await r.text() }, { status: 502 });
       const res = await r.json();
+      await audit(base44, user, { acao: 'Criação', modulo: 'Integrações', entidade: 'WhatsApp', descricao: `Midia enviada`, dados_novos: { numero: body.number, action } });
       return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
     }
 
