@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 /**
  * Hook que envolve useQuery com tratamento automático de rate limit (429)
@@ -10,6 +10,7 @@ export function useQueryWithRateLimit(
   options = {}
 ) {
   const { initialData = [] } = options;
+  const queryClient = useQueryClient();
 
   return useQuery({
     queryKey,
@@ -19,8 +20,9 @@ export function useQueryWithRateLimit(
       } catch (error) {
         // Em 429 ou falha de rede, retorna cached data para evitar tela branca
         if (error?.status === 429 || String(error?.message || '').toLowerCase().includes('network')) {
-          console.warn('⚠️ Degradação controlada (cache):', queryKey, error?.status || error?.message);
-          return initialData;
+          const cached = queryClient.getQueryData(queryKey);
+          console.warn('⚠️ Degradação controlada (cache):', queryKey, error?.status || error?.message, '→ usando', cached ? 'cache' : 'initialData');
+          return cached ?? initialData;
         }
         throw error;
       }
@@ -33,7 +35,7 @@ export function useQueryWithRateLimit(
     },
     retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
     initialData,
-    placeholderData: initialData,
+    placeholderData: (prev) => prev ?? initialData,
     refetchOnWindowFocus: false,
     enabled: options.enabled !== false
   });

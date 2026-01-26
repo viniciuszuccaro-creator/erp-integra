@@ -318,9 +318,11 @@ export default function Financeiro() {
 
   const handleModuleClick = (module) => {
     const WrappedComponent = () => (
-      <Suspense fallback={<LoadingFallback />}>
-        <module.component {...(module.props || {})} empresaAtual={empresaAtual} windowMode={true} />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <module.component {...(module.props || {})} empresaAtual={empresaAtual} windowMode={true} />
+        </Suspense>
+      </ErrorBoundary>
     );
     
     openWindow(

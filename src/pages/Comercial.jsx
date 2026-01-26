@@ -277,9 +277,11 @@ export default function Comercial() {
 
   const handleModuleClick = (module) => {
     const WrappedComponent = () => (
-      <Suspense fallback={<LoadingFallback />}>
-        <module.component {...(module.props || {})} windowMode={true} />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <module.component {...(module.props || {})} windowMode={true} />
+        </Suspense>
+      </ErrorBoundary>
     );
     
     openWindow(
