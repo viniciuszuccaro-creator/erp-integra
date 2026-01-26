@@ -30,8 +30,8 @@ function VisaoGeralPendenciasContent({ contasReceber = [], contasPagar = [], onS
             Contas a Receber Pendentes
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2 max-h-60 overflow-auto">
+        <CardContent className="w-full">
+          <div className="space-y-2 max-h-60 overflow-auto w-full">
             {contasReceber.slice(0, 10).map((conta) => (
               <div 
                 key={conta.id} 

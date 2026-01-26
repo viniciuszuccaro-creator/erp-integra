@@ -76,9 +76,9 @@ export default function MovimentosDiarios() {
   const saldoCaixa = totalEntradas - totalSaidas;
 
   return (
-    <div className="space-y-4">
+    <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
       {/* Header com Filtro de Data */}
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md w-full flex-shrink-0">
         <CardHeader className="bg-slate-50 border-b py-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
@@ -105,11 +105,11 @@ export default function MovimentosDiarios() {
       </Card>
 
       {/* Tabs por Operador */}
-      <Card className="border-0 shadow-md">
-        <CardHeader className="bg-slate-50 border-b py-2">
+      <Card className="border-0 shadow-md w-full flex-1 flex flex-col overflow-hidden">
+        <CardHeader className="bg-slate-50 border-b py-2 flex-shrink-0">
           <CardTitle className="text-base">Movimentos por Operador PDV</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 w-full flex-1 overflow-hidden">
           <Tabs value={abaOperador} onValueChange={setAbaOperador}>
             <TabsList className="w-full justify-start border-b rounded-none bg-slate-50">
               <TabsTrigger value="todos">
@@ -154,8 +154,8 @@ export default function MovimentosDiarios() {
                 </div>
               </div>
 
-              <div className="max-h-96 overflow-auto">
-                <Table>
+              <div className="max-h-96 overflow-auto w-full">
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow className="bg-slate-50">
                       <TableHead>Hora</TableHead>
