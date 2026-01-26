@@ -5,6 +5,7 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission } from './_lib/guard';
 
 export default async function ConsultarCNPJ({ cnpj }) {
   console.log('🚀 [Backend] ConsultarCNPJ iniciado:', cnpj);
@@ -151,6 +152,10 @@ export default async function ConsultarCNPJ({ cnpj }) {
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const ctx = await getUserAndPerfil(base44);
+    const permErr = await assertPermission(base44, ctx, 'Cadastros', 'Cliente', 'visualizar');
+    if (permErr) return permErr;
 
     const companyIdHeader = req.headers.get('x-company-id');
     if (!companyIdHeader) {

@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission } from './_lib/guard';
 
 /**
  * FUNÇÃO BACKEND: Contagem Eficiente de Entidades
@@ -20,6 +21,13 @@ Deno.serve(async (req) => {
     }
 
     const { entityName, filter = {} } = await req.json();
+
+    const ctx = await getUserAndPerfil(base44);
+    const permErr = await assertPermission(base44, ctx, 'Sistema', 'Relatórios', 'visualizar');
+    if (permErr) return permErr;
+    if (!filter?.group_id && !filter?.empresa_id) {
+      return Response.json({ error: 'Filtro sem contexto multiempresa (group_id ou empresa_id obrigatório)' }, { status: 400 });
+    }
 
     if (!entityName) {
       return Response.json({ error: 'entityName é obrigatório' }, { status: 400 });

@@ -4,6 +4,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (user?.role !== 'admin') { return Response.json({ error: 'Forbidden' }, { status: 403 }); }
 
     const receber = await base44.asServiceRole.entities.ContaReceber.filter({}, '-updated_date', 500);
     const pagar = await base44.asServiceRole.entities.ContaPagar.filter({}, '-updated_date', 500);

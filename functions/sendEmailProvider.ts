@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission, assertContextPresence, audit } from './_lib/guard';
 
 Deno.serve(async (req) => {
   try {
@@ -8,6 +9,12 @@ Deno.serve(async (req) => {
 
     const payload = await req.json().catch(() => ({}));
     const { empresaId, destinatario, destinatario_nome, assunto, mensagem, tipo_conteudo = 'html', anexos = [], action = 'send' } = payload || {};
+
+    const ctx = await getUserAndPerfil(base44);
+    const permErr = await assertPermission(base44, ctx, 'Integrações', 'Email', 'criar');
+    if (permErr) return permErr;
+    const ctxErr = assertContextPresence({ empresa_id: empresaId, group_id: null }, true);
+    if (ctxErr) return ctxErr;
 
     // Busca configuração de Email
     const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Email', chave: `email_${empresaId}` });
@@ -20,6 +27,7 @@ Deno.serve(async (req) => {
     // Se não configurado, usa integração segura do Core
     if (!emailCfg || emailCfg.ativo === false) {
       await base44.asServiceRole.integrations.Core.SendEmail({ to: destinatario, subject: assunto, body: mensagem });
+      await audit(base44, user, { acao: 'Criação', modulo: 'Integrações', entidade: 'Email', descricao: `E-mail enviado via Core para ${destinatario}` , dados_novos: { empresaId, destinatario, assunto } });
       return Response.json({ sucesso: true, modo: 'core', status: 'enviado' });
     }
 
@@ -36,11 +44,13 @@ Deno.serve(async (req) => {
       }
       const r = await fetch('https://api.sendgrid.com/v3/mail/send', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${emailCfg.api_key}` }, body: JSON.stringify(payloadSG) });
       if (!r.ok) return Response.json({ error: await r.text() }, { status: 502 });
+      await audit(base44, user, { acao: 'Criação', modulo: 'Integrações', entidade: 'Email', descricao: `E-mail enviado via SendGrid para ${destinatario}` , dados_novos: { empresaId, destinatario, assunto } });
       return Response.json({ sucesso: true, modo: 'real', status: 'enviado' });
     }
 
     // Fallback padrão (ou provedores não implementados): usa Core
     await base44.asServiceRole.integrations.Core.SendEmail({ to: destinatario, subject: assunto, body: mensagem });
+    await audit(base44, user, { acao: 'Criação', modulo: 'Integrações', entidade: 'Email', descricao: `E-mail enviado (fallback Core) para ${destinatario}` , dados_novos: { empresaId, destinatario, assunto } });
     return Response.json({ sucesso: true, modo: 'core', status: 'enviado' });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });

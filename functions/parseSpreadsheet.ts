@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import XLSX from 'npm:xlsx@0.18.5';
+import { getUserAndPerfil, assertPermission } from './_lib/guard';
 
 Deno.serve(async (req) => {
   try {
@@ -11,6 +12,10 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const fileUrl = body?.file_url;
+
+    const ctx = await getUserAndPerfil(base44);
+    const permErr = await assertPermission(base44, ctx, 'Sistema', 'Importacao', 'visualizar');
+    if (permErr) return permErr;
     if (!fileUrl) {
       return Response.json({ error: 'file_url is required' }, { status: 400 });
     }

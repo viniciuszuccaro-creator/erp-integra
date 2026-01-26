@@ -1,9 +1,12 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { audit } from './_lib/guard';
 
 // Consolidação Multiempresas: agrega KPIs por group_id (Pedidos, Receber, Pagar) e registra snapshot no AuditLog
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (user?.role !== 'admin') { return Response.json({ error: 'Forbidden' }, { status: 403 }); }
 
     const pedidos = await base44.asServiceRole.entities.Pedido.filter({}, '-updated_date', 500);
     const receber = await base44.asServiceRole.entities.ContaReceber.filter({}, '-updated_date', 500);
