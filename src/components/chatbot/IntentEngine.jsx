@@ -100,8 +100,8 @@ const IntentEngine = {
    */
   async detectarIntent(mensagem, clienteId, contexto = {}) {
     const mensagemLower = mensagem.toLowerCase().trim();
-    
-    // Detectar intent baseado em palavras-chave
+
+    // Detectar intent baseado em palavras-chave (estático)
     let intentDetectado = 'desconhecido';
     let confianca = 0;
     let melhorMatch = null;
@@ -110,15 +110,46 @@ const IntentEngine = {
       const matches = config.palavras_chave.filter(palavra => 
         mensagemLower.includes(palavra.toLowerCase())
       );
-      
       if (matches.length > 0) {
         const score = (matches.length / config.palavras_chave.length) * 100;
         if (score > confianca || (score === confianca && config.prioridade < (melhorMatch?.prioridade || 999))) {
-          confianca = Math.min(score * 1.5, 95); // Boost de confiança
+          confianca = Math.min(score * 1.5, 95);
           intentDetectado = intent;
           melhorMatch = config;
         }
       }
+    }
+
+    // Detecção dinâmica via entidade ChatbotIntent (multiempresa)
+    try {
+      const filtro = { ativo: true };
+      if (contexto?.empresaId) filtro.empresa_id = contexto.empresaId;
+      const intentsDinamicas = await base44.entities.ChatbotIntent.filter(filtro, '-updated_date', 50);
+      for (const dyn of intentsDinamicas || []) {
+        const palavras = Array.isArray(dyn.palavras_chave) ? dyn.palavras_chave : String(dyn.palavras_chave || '').split(',');
+        const matchesDyn = palavras.filter(p => p && mensagemLower.includes(String(p).trim().toLowerCase()));
+        if (matchesDyn.length > 0) {
+          const scoreDyn = Math.min((matchesDyn.length / Math.max(palavras.length, 1)) * 100, 95);
+          const prioridadeDyn = typeof dyn.prioridade === 'number' ? dyn.prioridade : 3;
+          if (scoreDyn > confianca || (scoreDyn === confianca && prioridadeDyn < (melhorMatch?.prioridade || 999))) {
+            confianca = Math.round(scoreDyn);
+            intentDetectado = dyn.intent_key || dyn.nome || 'desconhecido';
+            melhorMatch = { prioridade: prioridadeDyn, requer_humano: !!dyn.requer_humano, acao: dyn.acao };
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Se confiança baixa, usar IA como fallback para melhorar detecção
+    if (confianca < 50) {
+      try {
+        const byIA = await this.analisarComIA(mensagem, contexto);
+        if (byIA?.intent && typeof byIA?.confianca === 'number' && (byIA.confianca > confianca)) {
+          intentDetectado = byIA.intent;
+          confianca = Math.round(byIA.confianca);
+          melhorMatch = { prioridade: 3, requer_humano: !!byIA.necessita_atendente };
+        }
+      } catch (_) {}
     }
 
     // Analisar sentimento

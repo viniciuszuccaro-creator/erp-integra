@@ -295,6 +295,20 @@ export default function ChatbotWidgetAvancado({
         resolvido: !necessitaTransferencia
       });
 
+      // Auditoria de interação (AuditLog)
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: dadosCliente?.nome || 'Cliente',
+          acao: 'Criação',
+          modulo: 'Chatbot',
+          entidade: 'Conversa',
+          descricao: `Intent: ${resultado.intent} (confiança ${resultado.confianca}%) • Canal: ${canal}`,
+          empresa_id: empresaAtual?.id,
+          dados_novos: { intent: resultado.intent, confianca: resultado.confianca, sentimento: resultado.sentimento, acoes: resultado.acoes_sugeridas },
+          data_hora: new Date().toISOString()
+        });
+      } catch (_) {}
+
       return {
         ...resultado,
         acao: acaoResultado,
