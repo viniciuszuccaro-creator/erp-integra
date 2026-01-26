@@ -337,7 +337,7 @@ export default function Financeiro() {
 
   return (
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
         <HeaderFinanceiroCompacto 
           estaNoGrupo={estaNoGrupo}
           empresaAtual={empresaAtual}
