@@ -53,6 +53,7 @@ Deno.serve(async (req) => {
 
     // log simples
     await base44.asServiceRole.entities.Notificacao.create({ titulo: '📱 WhatsApp Enviado', mensagem: `Para ${body.number}`, tipo: 'info', categoria: 'Sistema', prioridade: 'Baixa' });
+    await audit(base44, user, { acao: 'Criação', modulo: 'Integrações', entidade: 'WhatsApp', descricao: `Texto enviado`, dados_novos: { numero: body.number, action } });
 
     return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
   } catch (err) {
