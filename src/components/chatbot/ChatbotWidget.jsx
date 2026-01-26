@@ -9,6 +9,7 @@ import { MessageCircle, Send, X, Bot, User, Paperclip, Smile, Phone, AlertCircle
 import { motion, AnimatePresence } from 'framer-motion';
 
 import IntentEngine from './IntentEngine';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 /**
  * V21.5 - Widget de Chatbot OMNICANAL COMPLETO
@@ -47,6 +48,7 @@ export default function ChatbotWidget({
   const [conversaAtiva, setConversaAtiva] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const { empresaAtual } = useContextoVisual();
 
   // Buscar configuração do canal
   const { data: configCanal } = useQuery({
@@ -178,7 +180,8 @@ export default function ChatbotWidget({
         canal,
         sessaoId,
         conversaId,
-        temAnexo: !!arquivo
+        temAnexo: !!arquivo,
+        empresaId: empresaAtual?.id
       });
 
       // 4. Verificar se precisa transferir para humano
@@ -192,7 +195,8 @@ export default function ChatbotWidget({
         acaoResultado = await IntentEngine.executarAcao(
           resultado.intent,
           resultado.entidades_detectadas,
-          clienteId
+          clienteId,
+          { empresaId: empresaAtual?.id }
         );
       }
 
