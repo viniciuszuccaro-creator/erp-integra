@@ -27,7 +27,7 @@ export default function LaunchpadCard({
     <Card 
       onClick={onClick}
       className={`
-        min-w-[280px] min-h-[140px] 
+        w-full min-h-[140px] 
         cursor-pointer 
         border-0 
         bg-gradient-to-br ${colorClasses[color]} 
@@ -36,12 +36,13 @@ export default function LaunchpadCard({
         hover:shadow-xl
         relative
         overflow-hidden
+        flex-shrink-0
       `}
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12" />
       
-      <CardContent className="p-5 relative z-10 flex flex-col h-full justify-between min-h-[140px]">
+      <CardContent className="p-5 relative z-10 flex flex-col h-full justify-between min-h-[140px] w-full">
         <div className="flex items-start justify-between mb-3">
           <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
             <Icon className="w-6 h-6 text-white" />
