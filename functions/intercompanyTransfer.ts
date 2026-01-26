@@ -14,6 +14,15 @@ Deno.serve(async (req) => {
     const valor = Number(body?.valor || 0); const descricao = body?.descricao || 'Transferência interempresas';
     if (!fromId || !toId || !valor || valor <= 0) return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
 
+    const { user, perfil } = await getUserAndPerfil(base44);
+    const denied = await assertPermission(base44, { user, perfil }, 'Financeiro', 'Intercompany', 'criar');
+    if (denied) return denied;
+
+    const ctxErrFrom = assertContextPresence({ empresa_id: fromId }, true);
+    if (ctxErrFrom) return ctxErrFrom;
+    const ctxErrTo = assertContextPresence({ empresa_id: toId }, true);
+    if (ctxErrTo) return ctxErrTo;
+
     const dataHoje = new Date().toISOString().slice(0,10);
 
     const pagar = await base44.asServiceRole.entities.ContaPagar.create({
