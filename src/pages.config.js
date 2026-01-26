@@ -1,4 +1,5 @@
 import Acessos from './pages/Acessos';
+import AdministracaoSistema from './pages/AdministracaoSistema';
 import Agenda from './pages/Agenda';
 import AuditoriaUI from './pages/AuditoriaUI';
 import CRM from './pages/CRM';
@@ -29,12 +30,12 @@ import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
 import Seguranca from './pages/Seguranca';
-import AdministracaoSistema from './pages/AdministracaoSistema';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Acessos": Acessos,
+    "AdministracaoSistema": AdministracaoSistema,
     "Agenda": Agenda,
     "AuditoriaUI": AuditoriaUI,
     "CRM": CRM,
@@ -65,7 +66,6 @@ export const PAGES = {
     "RH": RH,
     "Relatorios": Relatorios,
     "Seguranca": Seguranca,
-    "AdministracaoSistema": AdministracaoSistema,
 }
 
 export const pagesConfig = {
