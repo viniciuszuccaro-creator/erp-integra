@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
     if (integracao.provedor === 'eNotas') {
       if (action === 'emitir') {
         const res = await emitirENotas(nfe, integracao, config);
+        await audit(base44, user, { acao: 'Criação', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfe?.id || null, descricao: `NF-e ${action}`, dados_novos: { res } });
         return Response.json({ ...res, modo: 'real' });
       }
       if (action === 'status') {
