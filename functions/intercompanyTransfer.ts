@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission, assertContextPresence, audit } from './_lib/guard.js';
 
 // Transação Interempresas: cria ContaPagar (origem) e ContaReceber (destino) vinculadas
 // Payload: { from_empresa_id, to_empresa_id, valor, descricao }
