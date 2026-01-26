@@ -1,34 +1,24 @@
-import React, { Suspense, lazy } from 'react';
-import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2, Loader2 } from 'lucide-react';
+import React, { Suspense } from 'react';
+import { Wallet, Calendar, List, Clock, FileText, TrendingUp, CreditCard, Building2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import { useWindow } from '@/components/lib/useWindow';
 import CaixaCentralHeader from './caixa-central/CaixaCentralHeader';
 import KPIsFinanceiros from './caixa-central/KPIsFinanceiros';
-import DistribuicaoFormasPagamento from './caixa-central/DistribuicaoFormasPagamento.jsx';
+import DistribuicaoFormasPagamento from './caixa-central/DistribuicaoFormasPagamento';
 import CaixaModulosGrid from './caixa-central/CaixaModulosGrid';
 
-const MovimentosDiarios = lazy(() => import('./caixa-central/MovimentosDiarios'));
-const OrdensLiquidacaoPendentes = lazy(() => import('./caixa-central/OrdensLiquidacaoPendentes'));
-const LiquidarReceberPagar = lazy(() => import('./caixa-central/LiquidarReceberPagar'));
-const HistoricoLiquidacoes = lazy(() => import('./caixa-central/HistoricoLiquidacoes'));
-const ExtratoBancarioResumo = lazy(() => import('./caixa-central/ExtratoBancarioResumo'));
-const VisaoGeralPendencias = lazy(() => import('./caixa-central/VisaoGeralPendencias'));
-const CartoesACompensar = lazy(() => import('./CartoesACompensar'));
-const ConciliacaoBancariaTab = lazy(() => import('./ConciliacaoBancariaTab'));
+const MovimentosDiarios = React.lazy(() => import('./caixa-central/MovimentosDiarios'));
+const OrdensLiquidacaoPendentes = React.lazy(() => import('./caixa-central/OrdensLiquidacaoPendentes'));
+const LiquidarReceberPagar = React.lazy(() => import('./caixa-central/LiquidarReceberPagar'));
+const HistoricoLiquidacoes = React.lazy(() => import('./caixa-central/HistoricoLiquidacoes'));
+const ExtratoBancarioResumo = React.lazy(() => import('./caixa-central/ExtratoBancarioResumo'));
+const VisaoGeralPendencias = React.lazy(() => import('./caixa-central/VisaoGeralPendencias'));
+const CartoesACompensar = React.lazy(() => import('./CartoesACompensar'));
+const ConciliacaoBancariaTab = React.lazy(() => import('./ConciliacaoBancariaTab'));
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function CaixaCentralLiquidacaoContent({ windowMode = false }) {
-  // TODOS OS HOOKS PRIMEIRO
+export default function CaixaCentralLiquidacao({ windowMode = false }) {
   const { filterInContext } = useContextoVisual();
   const { openWindow } = useWindow();
 
@@ -42,7 +32,6 @@ function CaixaCentralLiquidacaoContent({ windowMode = false }) {
     queryFn: () => filterInContext('ContaPagar', { status: 'Pendente' }, '-data_vencimento', 50),
   });
 
-  // CÁLCULOS APÓS TODOS OS HOOKS
   const totalReceber = contasReceber.reduce((sum, c) => sum + (c.valor || 0), 0);
   const totalPagar = contasPagar.reduce((sum, c) => sum + (c.valor || 0), 0);
   const saldoLiquido = totalReceber - totalPagar;
@@ -163,13 +152,5 @@ function CaixaCentralLiquidacaoContent({ windowMode = false }) {
         onModuleClick={handleModuleClick}
       />
     </div>
-  );
-}
-
-export default function CaixaCentralLiquidacao(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <CaixaCentralLiquidacaoContent {...props} />
-    </Suspense>
   );
 }

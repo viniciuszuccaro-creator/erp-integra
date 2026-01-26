@@ -4,9 +4,9 @@ import LaunchpadCard from '../../financeiro/LaunchpadCard';
 
 export default function ModulosGridEstoque({ modules, onModuleClick }) {
   return (
-    <Card className="border-0 shadow-sm flex-1 w-full overflow-hidden flex flex-col">
-      <CardContent className="p-2 w-full flex-1 overflow-auto">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 w-full">
+    <Card className="border-0 shadow-sm flex-1">
+      <CardContent className="p-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {modules.map((module, idx) => (
             <LaunchpadCard
               key={idx}

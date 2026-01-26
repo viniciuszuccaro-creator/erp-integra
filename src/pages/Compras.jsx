@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Building2, Users, ShoppingCart, FileText, Upload, Package, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Building2, Users, ShoppingCart, FileText, Upload, Package } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
@@ -16,68 +16,89 @@ const SolicitacoesCompraTab = React.lazy(() => import("../components/compras/Sol
 const CotacoesTab = React.lazy(() => import("../components/compras/CotacoesTab"));
 const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/ImportacaoNFeRecebimento"));
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
 export default function Compras() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: fornecedores = [] } = useQueryWithRateLimit(
-    ['fornecedores', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
-      return await base44.entities.Fornecedor.filter(filtro, '-created_date', 100);
+  const { data: fornecedores = [] } = useQuery({
+    queryKey: ['fornecedores', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
+        return await base44.entities.Fornecedor.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar fornecedores:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
-  const { data: totalFornecedores = 0 } = useQueryWithRateLimit(
-    ['fornecedores-count-compras', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
-      const response = await base44.functions.invoke('countEntities', {
-        entityName: 'Fornecedor',
-        filter: filtro
-      });
-      return response.data?.count || 0;
+  const { data: totalFornecedores = 0 } = useQuery({
+    queryKey: ['fornecedores-count-compras', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Fornecedor',
+          filter: filtro
+        });
+        return response.data?.count || fornecedores.length;
+      } catch {
+        return fornecedores.length;
+      }
     },
-    { initialData: 0 }
-  );
+    staleTime: 60000,
+    retry: 1
+  });
 
-  const { data: ordensCompra = [] } = useQueryWithRateLimit(
-    ['ordensCompra', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.OrdemCompra.filter(filtro, '-created_date', 100);
+  const { data: ordensCompra = [] } = useQuery({
+    queryKey: ['ordensCompra', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.OrdemCompra.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar ordens de compra:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
-  const { data: solicitacoes = [] } = useQueryWithRateLimit(
-    ['solicitacoes-compra', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 100);
+  const { data: solicitacoes = [] } = useQuery({
+    queryKey: ['solicitacoes-compra', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 100);
+      } catch (err) {
+        console.error('Erro ao buscar solicitações:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: empresas = [] } = useQueryWithRateLimit(
-    ['empresas'],
-    async () => {
-      return await base44.entities.Empresa.list();
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Empresa.list();
+      } catch (err) {
+        console.error('Erro ao buscar empresas:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 60000,
+    retry: 1
+  });
 
+  // Dados já vêm filtrados do servidor
   const fornecedoresFiltrados = fornecedores;
   const ordensCompraFiltradas = ordensCompra;
   const solicitacoesFiltradas = solicitacoes;
@@ -155,22 +176,21 @@ export default function Compras() {
   ];
 
   const handleModuleClick = (module) => {
-    const WrappedComponent = () => (
-      <Suspense fallback={<LoadingFallback />}>
-        <module.component {...(module.props || {})} windowMode={true} />
-      </Suspense>
-    );
-    
-    openWindow(
-      WrappedComponent,
-      { ...(module.props || {}), windowMode: true },
-      {
-        title: module.windowTitle,
-        width: module.width,
-        height: module.height,
-        uniqueKey: `compras-${module.title.toLowerCase().replace(/\s/g, '-')}`
-      }
-    );
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { 
+          ...(module.props || {}),
+          windowMode: true 
+        },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `compras-${module.title.toLowerCase().replace(/\s/g, '-')}`
+        }
+      );
+    });
   };
 
   return (

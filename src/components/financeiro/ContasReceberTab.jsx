@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
 import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
 import GerarCobrancaModal from "./GerarCobrancaModal";
 import SimularPagamentoModal from "./SimularPagamentoModal";
@@ -22,17 +21,13 @@ import KPIsReceber from "./contas-receber/KPIsReceber";
 import FiltrosReceber from "./contas-receber/FiltrosReceber";
 import TabelaReceber from "./contas-receber/TabelaReceber";
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
+export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { openWindow } = useWindow();
+  const { formasPagamento } = useFormasPagamento();
+  const { user: authUser } = useUser();
 
-function ContasReceberTabContent({ contas: contasProp, empresas = [], windowMode = false }) {
-  // TODOS OS HOOKS PRIMEIRO
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [gerarCobrancaDialogOpen, setGerarCobrancaDialogOpen] = useState(false);
@@ -53,12 +48,6 @@ function ContasReceberTabContent({ contas: contasProp, empresas = [], windowMode
     desconto: 0,
     observacoes: ""
   });
-  const contas = contasProp || [];
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const { openWindow } = useWindow();
-  const { formasPagamento } = useFormasPagamento();
-  const { user: authUser } = useUser();
 
   const { data: empresasQuery = [] } = useQuery({
     queryKey: ['empresas'],
@@ -259,7 +248,7 @@ function ContasReceberTabContent({ contas: contasProp, empresas = [], windowMode
   };
 
   const content = (
-    <div className="w-full h-full flex flex-col space-y-2 overflow-auto p-2">
+    <div className="space-y-1.5">
       <HeaderReceberCompacto />
       <KPIsReceber totais={totais} />
       <FiltrosReceber
@@ -426,13 +415,9 @@ function ContasReceberTabContent({ contas: contasProp, empresas = [], windowMode
     </div>
   );
 
-  return content;
-}
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-green-50 overflow-auto p-1.5">{content}</div>;
+  }
 
-export default function ContasReceberTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <ContasReceberTabContent {...props} />
-    </Suspense>
-  );
+  return content;
 }

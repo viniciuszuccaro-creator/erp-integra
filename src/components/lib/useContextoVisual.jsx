@@ -1,11 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import useQueryWithRateLimit from "./useQueryWithRateLimit";
 import { useUser } from "./UserContext";
 import useContextoGrupoEmpresa from "./useContextoGrupoEmpresa";
 
 export function useContextoVisual() {
-  // TODOS OS HOOKS PRIMEIRO - SEMPRE NA MESMA ORDEM
   const { user, isLoading: loadingUser } = useUser();
   const [contexto, setContexto] = useState(() => {
     try {
@@ -14,98 +13,60 @@ export function useContextoVisual() {
       return 'empresa';
     }
   });
-  const [contextoReady, setContextoReady] = useState(false);
-  const [empresaAtualId, setEmpresaAtualId] = useState(null);
-  const [filtroEmpresa, setFiltroEmpresa] = useState('todas');
 
   const {
     grupoAtual,
     empresaAtual: empresaContexto,
     empresasDoGrupo: empresasDoGrupoContexto,
     estaNoGrupo: estaNoGrupoContexto,
-    estaEmEmpresa,
-    isLoading: loadingContexto
+    estaEmEmpresa
   } = useContextoGrupoEmpresa();
 
-  const { data: empresas = [], isLoading: loadingEmpresas } = useQueryWithRateLimit(
-    ['empresas'],
-    () => base44.entities.Empresa.list(),
-    { initialData: [] }
-  );
-
-  // useEffect APÓS hooks
+  // Sincroniza o contexto local com o contexto real (grupo/empresa)
   useEffect(() => {
     setContexto(estaNoGrupoContexto ? 'grupo' : 'empresa');
   }, [estaNoGrupoContexto]);
 
-  useEffect(() => {
-    // Sempre marcar como ready depois de carregar dados
-    if (loadingEmpresas || loadingContexto) {
-      setContextoReady(false);
-      return;
-    }
+  const { data: empresas = [], isLoading: loadingEmpresas } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: () => base44.entities.Empresa.list(),
+    staleTime: 300000,
+  });
 
+  const [empresaAtualId, setEmpresaAtualId] = useState(null);
+  const [filtroEmpresa, setFiltroEmpresa] = useState('todas');
+
+  useEffect(() => {
     const storedEmpresaId = localStorage.getItem('empresa_atual_id');
     if (storedEmpresaId) {
       setEmpresaAtualId(storedEmpresaId);
-      setContextoReady(true);
-      return;
-    }
-    
-    if (empresaContexto) {
+    } else if (empresaContexto) {
       setEmpresaAtualId(empresaContexto.id);
-      setContextoReady(true);
-      return;
     }
-    
-    if (empresas.length > 0) {
-      const primeiraAtiva = empresas.find(e => e.status === 'Ativa') || empresas[0];
-      if (primeiraAtiva) {
-        setEmpresaAtualId(primeiraAtiva.id);
-        try {
-          localStorage.setItem('empresa_atual_id', primeiraAtiva.id);
-        } catch {}
-        setContextoReady(true);
-        return;
-      }
-    }
-    
-    if (contexto === 'grupo' && grupoAtual) {
-      setContextoReady(true);
-      return;
-    }
+  }, [empresaContexto]);
 
-    // Se chegou aqui mas dados estão carregados, marca como ready mesmo assim
-    if (!loadingEmpresas && !loadingContexto) {
-      setContextoReady(true);
-    }
-  }, [empresaContexto, empresas, loadingEmpresas, loadingContexto, contexto, grupoAtual]);
-
-  const empresaAtual = useMemo(() => {
-    if (contexto === 'grupo') return null;
-    return empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || empresas.find(e => e.status === 'Ativa') || empresas[0] || null;
-  }, [contexto, empresaAtualId, empresas, empresaContexto]);
+  const empresaAtual = (contexto === 'grupo') ? null : (empresas.find(empresa => empresa.id === empresaAtualId) || empresaContexto || null);
   const empresasDoGrupo = empresas.filter(empresa => empresa.group_id === grupoAtual?.id);
   const estaNoGrupo = contexto === 'grupo';
 
   useEffect(() => {
-    try {
-      localStorage.setItem('contexto_atual', contexto);
-    } catch (e) {
-      console.warn('Erro ao salvar contexto:', e);
-    }
-  }, [contexto]);
+            try {
+              localStorage.setItem('contexto_atual', contexto);
+            } catch (e) {
+              console.warn('Erro ao salvar contexto:', e);
+            }
+          }, [contexto]);
 
-  // Persistir o grupo atual para headers multi-tenant
-  useEffect(() => {
-    try {
-      if (grupoAtual?.id) {
-        localStorage.setItem('group_atual_id', grupoAtual.id);
-      }
-    } catch (e) {
-      console.warn('Erro ao salvar grupo:', e);
-    }
-  }, [grupoAtual?.id]);
+          // Persistir o grupo atual para headers multi-tenant
+          useEffect(() => {
+            try {
+              if (grupoAtual?.id) {
+                localStorage.setItem('group_atual_id', grupoAtual.id);
+              }
+            } catch (e) {
+              console.warn('Erro ao salvar grupo:', e);
+            }
+          }, [grupoAtual?.id]);
 
   const adaptarMenuPorContexto = (menuItems) => {
     if (!user) return menuItems;
@@ -233,34 +194,12 @@ export function useContextoVisual() {
   // Helpers: multiempresa stamping and server-side filter
   const getFiltroContexto = (campo = 'empresa_id', incluirGrupo = true) => {
     const filtro = {};
-
-    // Contexto grupo: usar group_id
-    if (contexto === 'grupo' && grupoAtual?.id) {
-      if (incluirGrupo) filtro.group_id = grupoAtual.id;
+    if (incluirGrupo && grupoAtual?.id) filtro.group_id = grupoAtual.id;
+    if (contexto === 'grupo') {
       if (filtroEmpresa !== 'todas') filtro[campo] = filtroEmpresa;
-      return filtro;
-    }
-
-    // Contexto empresa: sempre retornar empresa_id
-    if (empresaAtual?.id) {
+    } else if (empresaAtual?.id) {
       filtro[campo] = empresaAtual.id;
-      if (incluirGrupo && empresaAtual.group_id) filtro.group_id = empresaAtual.group_id;
-      return filtro;
     }
-
-    // Se não tem empresa mas está pronto, retorna vazio (vai filtrar nada = mostra vazio)
-    if (contextoReady && !empresaAtual) {
-      return filtro;
-    }
-
-    // Fallback durante carregamento
-    const primeiraEmpresa = empresas.find(e => e.status === 'Ativa') || empresas[0];
-    if (primeiraEmpresa) {
-      filtro[campo] = primeiraEmpresa.id;
-      if (incluirGrupo && primeiraEmpresa.group_id) filtro.group_id = primeiraEmpresa.group_id;
-      return filtro;
-    }
-
     return filtro;
   };
 
@@ -273,34 +212,14 @@ export function useContextoVisual() {
   };
 
   // Create helpers that always stamp context
-  const createInContext = async (entityName, dados, campo = 'empresa_id') => {
+  const createInContext = (entityName, dados, campo = 'empresa_id') => {
     const stamped = carimbarContexto(dados, campo);
     if (!stamped.group_id && !stamped[campo]) {
       throw new Error('Contexto multiempresa obrigatório: defina grupo ou empresa');
     }
-
-    // ETAPA 1: Validação completa (RBAC + Multiempresa) no backend
-    try {
-      const validation = await base44.functions.invoke('entityOperationGuard', {
-        operation: 'create',
-        entityName,
-        data: stamped,
-        module: entityName,
-        action: 'criar'
-      });
-
-      if (!validation.data?.valid) {
-        throw new Error(validation.data?.reason || 'Validação falhou');
-      }
-    } catch (err) {
-      console.error('Validação backend falhou:', err);
-      throw err;
-    }
-
     return base44.entities[entityName].create(stamped);
   };
-
-  const bulkCreateInContext = async (entityName, lista, campo = 'empresa_id') => {
+  const bulkCreateInContext = (entityName, lista, campo = 'empresa_id') => {
     const stampedList = lista.map(item => {
       const s = carimbarContexto(item, campo);
       if (!s.group_id && !s[campo]) {
@@ -308,36 +227,15 @@ export function useContextoVisual() {
       }
       return s;
     });
-
-    // ETAPA 1: Validar primeiro item com guard completo
-    if (stampedList.length > 0) {
-      try {
-        const validation = await base44.functions.invoke('entityOperationGuard', {
-          operation: 'create',
-          entityName,
-          data: stampedList[0],
-          module: entityName,
-          action: 'criar'
-        });
-
-        if (!validation.data?.valid) {
-          throw new Error(validation.data?.reason || 'Validação falhou');
-        }
-      } catch (err) {
-        console.error('Validação backend falhou:', err);
-        throw err;
-      }
-    }
-
     return base44.entities[entityName].bulkCreate(stampedList);
   };
-
   const filterInContext = (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
     const filtro = { ...criterios, ...getFiltroContexto(campo) };
-    if (!filtro.group_id && !filtro[campo]) {
-      throw new Error('Filtro sem contexto multiempresa');
-    }
-    return base44.entities[entityName].filter(filtro, order, limit);
+      if (!filtro.group_id && !filtro[campo]) {
+        throw new Error('Filtro sem contexto multiempresa');
+      }
+      // Segurança: remove campos sensíveis em listagens públicas (ex.: Produto)
+      return base44.entities[entityName].filter(filtro, order, limit);
   };
 
   return {
@@ -346,8 +244,7 @@ export function useContextoVisual() {
     empresasDoGrupo,
     estaNoGrupo: contexto === 'grupo',
     grupoAtual,
-    contextoReady,
-    isLoading: !contextoReady,
+    isLoading: loadingUser || loadingEmpresas,
     filtrarPorContexto,
     getFiltroContexto,
     carimbarContexto,

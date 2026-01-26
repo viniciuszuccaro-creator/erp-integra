@@ -3,7 +3,6 @@ import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useContextoGrupoEmpresa() {
-  // TODOS OS HOOKS PRIMEIRO - MESMA ORDEM SEMPRE
   const [user, setUser] = useState(null);
   const [contexto, setContexto] = useState(() => {
     try {
@@ -16,95 +15,6 @@ export function useContextoGrupoEmpresa() {
   const [empresaAtual, setEmpresaAtual] = useState(null);
   const queryClient = useQueryClient();
 
-  const trocarParaGrupo = useMutation({
-    mutationFn: async (grupoId) => {
-      const temAcesso = user?.role === 'admin' || 
-        user?.grupos_vinculados?.some(v => v.grupo_id === grupoId && v.ativo);
-      if (!temAcesso) {
-        throw new Error("Você não tem acesso a este grupo. Configure os vínculos em Cadastros > Acesso.");
-      }
-      await base44.auth.updateMe({
-        contexto_atual: 'grupo',
-        grupo_atual_id: grupoId
-      });
-      const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
-      const grupo = grupos[0];
-      await base44.entities.AuditLog.create({
-        usuario: user.full_name,
-        usuario_id: user.id,
-        acao: 'Troca de Contexto',
-        modulo: 'Sistema',
-        descricao: `Mudou para contexto de GRUPO: ${grupo?.nome_do_grupo || grupoId}`,
-        grupo_id: grupoId,
-        data_hora: new Date().toISOString()
-      });
-      return grupo;
-    },
-    onSuccess: (grupo) => {
-      setContexto('grupo');
-      setGrupoAtual(grupo);
-      setEmpresaAtual(null);
-      try { localStorage.setItem('contexto_atual', 'grupo'); } catch {}
-      try { if (grupo?.id) localStorage.setItem('group_atual_id', grupo.id); } catch {}
-      queryClient.invalidateQueries();
-    },
-    onError: (error) => {
-      console.error("Erro ao trocar grupo:", error);
-      alert(error.message);
-    }
-  });
-
-  const trocarParaEmpresa = useMutation({
-    mutationFn: async (empresaId) => {
-      const temAcesso = user?.role === 'admin' || 
-        user?.empresas_vinculadas?.some(v => v.empresa_id === empresaId && v.ativo);
-      if (!temAcesso) {
-        throw new Error("Você não tem acesso a esta empresa. Configure os vínculos em Cadastros > Acesso.");
-      }
-      await base44.auth.updateMe({
-        contexto_atual: 'empresa',
-        empresa_atual_id: empresaId
-      });
-      const empresas = await base44.entities.Empresa.filter({ id: empresaId });
-      const empresa = empresas[0];
-      await base44.entities.AuditLog.create({
-        usuario: user.full_name,
-        usuario_id: user.id,
-        acao: 'Troca de Contexto',
-        modulo: 'Sistema',
-        descricao: `Mudou para contexto de EMPRESA: ${empresa?.nome_fantasia || empresa?.razao_social || empresaId}`,
-        empresa_id: empresaId,
-        data_hora: new Date().toISOString()
-      });
-      return empresa;
-    },
-    onSuccess: (empresa) => {
-      setContexto('empresa');
-      setEmpresaAtual(empresa);
-      setGrupoAtual(null);
-      try { localStorage.setItem('contexto_atual', 'empresa'); } catch {}
-      try { if (empresa?.id) localStorage.setItem('empresa_atual_id', empresa.id); } catch {}
-      queryClient.invalidateQueries();
-    },
-    onError: (error) => {
-      console.error("Erro ao trocar empresa:", error);
-      alert(error.message);
-    }
-  });
-
-  const { data: empresasDoGrupo = [] } = useQuery({
-    queryKey: ['empresas-grupo', grupoAtual?.id],
-    queryFn: async () => {
-      if (!grupoAtual?.id) return [];
-      return await base44.entities.Empresa.filter({
-        grupo_id: grupoAtual.id,
-        status: 'Ativa'
-      });
-    },
-    enabled: !!grupoAtual && contexto === 'grupo',
-  });
-
-  // useEffect APÓS TODOS OS HOOKS
   useEffect(() => {
     carregarContextoInicial();
   }, []);
@@ -146,32 +56,112 @@ export function useContextoGrupoEmpresa() {
       }
     } catch (error) {
       console.error("Erro ao carregar contexto:", error);
-      // Fallback offline/rate-limit: não bloquear a UI
-      try {
-        const ctx = (() => { try { return localStorage.getItem('contexto_atual'); } catch { return 'empresa'; } })() || 'empresa';
-        setContexto(ctx);
-        setUser({ id: 'offline', full_name: 'Offline', role: 'user' });
-        if (ctx === 'grupo') {
-          const gid = (() => { try { return localStorage.getItem('group_atual_id'); } catch { return null; } })();
-          if (gid) {
-            const grupos = await base44.entities.GrupoEmpresarial.filter({ id: gid });
-            if (grupos[0]) setGrupoAtual(grupos[0]);
-          }
-        } else {
-          const eid = (() => { try { return localStorage.getItem('empresa_atual_id'); } catch { return null; } })();
-          if (eid) {
-            const empresas = await base44.entities.Empresa.filter({ id: eid });
-            if (empresas[0]) setEmpresaAtual(empresas[0]);
-          }
-        }
-      } catch (_) {
-        // último recurso: manter user não-nulo para não travar telas
-        setUser({ id: 'fallback' });
-      }
     }
   };
 
+  const trocarParaGrupo = useMutation({
+    mutationFn: async (grupoId) => {
+      // V21.7 FIX: Verificar se usuário tem acesso ao grupo
+      const temAcesso = user?.role === 'admin' || 
+        user?.grupos_vinculados?.some(v => v.grupo_id === grupoId && v.ativo);
 
+      if (!temAcesso) {
+        throw new Error("Você não tem acesso a este grupo. Configure os vínculos em Cadastros > Acesso.");
+      }
+
+      await base44.auth.updateMe({
+        contexto_atual: 'grupo',
+        grupo_atual_id: grupoId
+      });
+
+      const grupos = await base44.entities.GrupoEmpresarial.filter({ id: grupoId });
+      const grupo = grupos[0];
+      
+      await base44.entities.AuditLog.create({
+        usuario: user.full_name,
+        usuario_id: user.id,
+        acao: 'Troca de Contexto',
+        modulo: 'Sistema',
+        descricao: `Mudou para contexto de GRUPO: ${grupo?.nome_do_grupo || grupoId}`,
+        grupo_id: grupoId,
+        data_hora: new Date().toISOString()
+      });
+
+      return grupo;
+    },
+    onSuccess: (grupo) => {
+      setContexto('grupo');
+      setGrupoAtual(grupo);
+      setEmpresaAtual(null);
+      try { localStorage.setItem('contexto_atual', 'grupo'); } catch {}
+      try { if (grupo?.id) localStorage.setItem('group_atual_id', grupo.id); } catch {}
+      queryClient.invalidateQueries();
+      // Evitar reload completo; atualizar queries e deixar GuardRails liberar
+    },
+    onError: (error) => {
+      // V21.7: Mostrar erro amigável
+      console.error("Erro ao trocar grupo:", error);
+      alert(error.message);
+    }
+  });
+
+  const trocarParaEmpresa = useMutation({
+    mutationFn: async (empresaId) => {
+      // V21.7 FIX: Verificar se usuário tem acesso à empresa
+      const temAcesso = user?.role === 'admin' || 
+        user?.empresas_vinculadas?.some(v => v.empresa_id === empresaId && v.ativo);
+
+      if (!temAcesso) {
+        throw new Error("Você não tem acesso a esta empresa. Configure os vínculos em Cadastros > Acesso.");
+      }
+
+      await base44.auth.updateMe({
+        contexto_atual: 'empresa',
+        empresa_atual_id: empresaId
+      });
+
+      const empresas = await base44.entities.Empresa.filter({ id: empresaId });
+      const empresa = empresas[0];
+      
+      await base44.entities.AuditLog.create({
+        usuario: user.full_name,
+        usuario_id: user.id,
+        acao: 'Troca de Contexto',
+        modulo: 'Sistema',
+        descricao: `Mudou para contexto de EMPRESA: ${empresa?.nome_fantasia || empresa?.razao_social || empresaId}`,
+        empresa_id: empresaId,
+        data_hora: new Date().toISOString()
+      });
+
+      return empresa;
+    },
+    onSuccess: (empresa) => {
+      setContexto('empresa');
+      setEmpresaAtual(empresa);
+      setGrupoAtual(null);
+      try { localStorage.setItem('contexto_atual', 'empresa'); } catch {}
+      try { if (empresa?.id) localStorage.setItem('empresa_atual_id', empresa.id); } catch {}
+      queryClient.invalidateQueries();
+      // Sem reload completo
+    },
+    onError: (error) => {
+      // V21.7: Mostrar erro amigável
+      console.error("Erro ao trocar empresa:", error);
+      alert(error.message);
+    }
+  });
+
+  const { data: empresasDoGrupo = [] } = useQuery({
+    queryKey: ['empresas-grupo', grupoAtual?.id],
+    queryFn: async () => {
+      if (!grupoAtual?.id) return [];
+      return await base44.entities.Empresa.filter({
+        grupo_id: grupoAtual.id,
+        status: 'Ativa'
+      });
+    },
+    enabled: !!grupoAtual && contexto === 'grupo',
+  });
 
   const obterPoliticaPadrao = async (tipoDocumento) => {
     if (!grupoAtual) return null;

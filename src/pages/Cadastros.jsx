@@ -52,7 +52,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SearchInputIsolado from "@/components/ui/SearchInputIsolado";
+import SearchInput from "@/components/ui/SearchInput";
 import CadastroClienteCompleto from "../components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "../components/cadastros/CadastroFornecedorCompleto";
 import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
@@ -203,7 +203,7 @@ export default function Cadastros() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { hasPermission, isAdmin } = usePermissions();
+  const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
 
 
@@ -680,14 +680,7 @@ export default function Cadastros() {
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios'],
-    queryFn: async () => {
-      try {
-        return await base44.entities.User.list('-created_date', 9999);
-      } catch {
-        return [];
-      }
-    },
-    enabled: typeof isAdmin === 'function' ? isAdmin() : !!isAdmin
+    queryFn: () => base44.entities.User.list('-created_date', 9999),
   });
 
   const { data: perfisAcesso = [] } = useQuery({
@@ -790,7 +783,7 @@ export default function Cadastros() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col p-6 lg:p-8 space-y-6 overflow-auto">
+    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       {/* GERENCIADOR DE JANELAS ABERTAS */}
       <GerenciadorJanelas />
 
@@ -901,7 +894,7 @@ export default function Cadastros() {
           </div>
 
           {/* ✅ V22.0 ETAPA 5 e 6: BUSCA UNIVERSAL LIMPA */}
-          <SearchInputIsolado
+          <SearchInput
             placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
             value={searchTerm}
             onChange={(val) => setSearchTerm(val)}

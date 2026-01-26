@@ -12,10 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { 
   User, CreditCard, MapPin, FileText, Paperclip, History,
   Plus, Trash2, AlertTriangle, CheckCircle, Upload, Download,
-  MapPinned, Clock, Phone, Mail, ShieldAlert, Calendar, Brain
+  MapPinned, Clock, Phone, Mail, ShieldAlert, Calendar
 } from "lucide-react";
-import ValidadorFiscalIA from "@/components/ia/ValidadorFiscalIA";
-import WidgetPrevisaoChurn from "@/components/ia/WidgetPrevisaoChurn";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -342,7 +340,7 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-7 mb-6">
+        <TabsList className="grid w-full grid-cols-6 mb-6">
           <TabsTrigger value="principal">
             <User className="w-4 h-4 mr-2" />
             Principal
@@ -358,10 +356,6 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
           <TabsTrigger value="fiscal">
             <FileText className="w-4 h-4 mr-2" />
             Fiscal
-          </TabsTrigger>
-          <TabsTrigger value="ia">
-            <Brain className="w-4 h-4 mr-2" />
-            IA
           </TabsTrigger>
           <TabsTrigger value="documentos">
             <Paperclip className="w-4 h-4 mr-2" />
@@ -1000,45 +994,7 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
           )}
         </TabsContent>
 
-        {/* ABA 4: IA */}
-        <TabsContent value="ia" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ValidadorFiscalIA 
-              cnpj={formData.cnpj}
-              cpf={formData.cpf}
-              entidade_id={cliente?.id}
-              tipo_entidade="Cliente"
-              onValidado={(dados) => {
-                setFormData(prev => ({
-                  ...prev,
-                  status_fiscal_receita: dados.status_fiscal_receita,
-                  cnae_principal: dados.cnae_principal,
-                  ramo_atividade: dados.ramo_atividade,
-                  porte_empresa: dados.porte_empresa,
-                  risco_cadastro_ia: dados.risco_cadastro_ia,
-                  status_validacao_kyc: dados.status_validacao_kyc
-                }));
-                toast({ title: '✅ Dados fiscais atualizados!' });
-              }}
-            />
-
-            {cliente?.id && (
-              <WidgetPrevisaoChurn 
-                cliente_id={cliente.id}
-                risco_atual={formData.risco_churn}
-                onAtualizado={(analise) => {
-                  setFormData(prev => ({
-                    ...prev,
-                    risco_churn: analise.risco_churn,
-                    score_saude_cliente: analise.score_saude
-                  }));
-                }}
-              />
-            )}
-          </div>
-        </TabsContent>
-
-        {/* ABA 5: FISCAL */}
+        {/* ABA 4: FISCAL */}
         <TabsContent value="fiscal" className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>

@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
@@ -16,23 +16,14 @@ const FunilVendasAvancado = React.lazy(() => import("@/components/crm/FunilVenda
 const IALeadsPriorizacao = React.lazy(() => import("../components/crm/IALeadsPriorizacao"));
 const IAChurnDetection = React.lazy(() => import("../components/crm/IAChurnDetection"));
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
 export default function CRMPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto, filterInContext, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: oportunidades = [] } = useQueryWithRateLimit(
-    ['oportunidades', empresaAtual?.id],
-    async () => {
+  const { data: oportunidades = [] } = useQuery({
+    queryKey: ['oportunidades', empresaAtual?.id],
+    queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await base44.entities.Oportunidade.filter(filtro, '-created_date', 100);
@@ -41,12 +32,13 @@ export default function CRMPage() {
         return [];
       }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
-  const { data: interacoes = [] } = useQueryWithRateLimit(
-    ['interacoes', empresaAtual?.id],
-    async () => {
+  const { data: interacoes = [] } = useQuery({
+    queryKey: ['interacoes', empresaAtual?.id],
+    queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await base44.entities.Interacao.filter(filtro, '-created_date', 100);
@@ -55,12 +47,13 @@ export default function CRMPage() {
         return [];
       }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: campanhas = [] } = useQueryWithRateLimit(
-    ['campanhas', empresaAtual?.id],
-    async () => {
+  const { data: campanhas = [] } = useQuery({
+    queryKey: ['campanhas', empresaAtual?.id],
+    queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
         return await base44.entities.Campanha.filter(filtro, '-created_date', 50);
@@ -69,12 +62,13 @@ export default function CRMPage() {
         return [];
       }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: clientes = [] } = useQueryWithRateLimit(
-    ['clientes', empresaAtual?.id],
-    async () => {
+  const { data: clientes = [] } = useQuery({
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
@@ -83,25 +77,27 @@ export default function CRMPage() {
         return [];
       }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: totalClientes = 0 } = useQueryWithRateLimit(
-    ['clientes-count-crm', empresaAtual?.id],
-    async () => {
+  const { data: totalClientes = 0 } = useQuery({
+    queryKey: ['clientes-count-crm', empresaAtual?.id],
+    queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
           filter: filtro
         });
-        return response.data?.count || 0;
+        return response.data?.count || clientes.length;
       } catch {
-        return 0; // Changed from clientes.length to 0 as per outline
+        return clientes.length;
       }
     },
-    { initialData: 0 }
-  );
+    staleTime: 60000,
+    retry: 1
+  });
 
   // Dados já vêm filtrados do servidor
   const oportunidadesFiltradas = oportunidades;
@@ -217,22 +213,21 @@ export default function CRMPage() {
   ];
 
   const handleModuleClick = (module) => {
-    const WrappedComponent = () => (
-      <Suspense fallback={<LoadingFallback />}>
-        <module.component {...(module.props || {})} windowMode={true} />
-      </Suspense>
-    );
-    
-    openWindow(
-      WrappedComponent,
-      { ...(module.props || {}), windowMode: true },
-      {
-        title: module.windowTitle,
-        width: module.width,
-        height: module.height,
-        uniqueKey: `crm-${module.title.toLowerCase().replace(/\s/g, '-')}`
-      }
-    );
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { 
+          ...(module.props || {}),
+          windowMode: true 
+        },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `crm-${module.title.toLowerCase().replace(/\s/g, '-')}`
+        }
+      );
+    });
   };
 
   return (

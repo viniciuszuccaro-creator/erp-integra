@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,28 +17,16 @@ import {
   ArrowRight, 
   AlertCircle, 
   Clock, 
-  CheckCircle2,
-  Loader2
+  CheckCircle2 
 } from 'lucide-react';
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[300px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function LiquidarReceberPagarContent() {
-  // TODOS OS HOOKS PRIMEIRO
+export default function LiquidarReceberPagar() {
+  const { filterInContext, empresaAtual, carimbarContexto } = useContextoVisual();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [abaAtiva, setAbaAtiva] = useState("receber");
   const [titulosSelecionadosReceber, setTitulosSelecionadosReceber] = useState([]);
   const [titulosSelecionadosPagar, setTitulosSelecionadosPagar] = useState([]);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const ctx = useContextoVisual();
-  const { filterInContext, empresaAtual, carimbarContexto, contextoReady } = ctx || {};
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber-liquidacao', empresaAtual?.id],
@@ -83,11 +71,6 @@ function LiquidarReceberPagarContent() {
       setTitulosSelecionadosPagar([]);
     }
   });
-
-  // EARLY RETURN APÓS TODOS OS HOOKS
-  if (!contextoReady || !empresaAtual) {
-    return <LoadingFallback />;
-  }
 
   return (
     <div className="space-y-4">
@@ -284,13 +267,5 @@ function LiquidarReceberPagarContent() {
         </TabsContent>
       </Tabs>
     </div>
-  );
-}
-
-export default function LiquidarReceberPagar(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <LiquidarReceberPagarContent {...props} />
-    </Suspense>
   );
 }

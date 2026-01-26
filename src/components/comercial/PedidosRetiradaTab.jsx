@@ -1,4 +1,4 @@
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,6 @@ import {
   Calendar,
   AlertCircle,
   Bell,
-  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -23,16 +22,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
 
 /**
  * 📦 PEDIDOS PARA RETIRADA V21.5
@@ -41,8 +30,7 @@ const LoadingFallback = () => (
  * - Confirmação de retirada com assinatura
  * - Baixa automática de estoque na retirada
  */
-function PedidosRetiradaTabContent({ windowMode = false }) {
-  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
+export default function PedidosRetiradaTab({ windowMode = false }) {
   const [busca, setBusca] = useState("");
   const [statusFiltro, setStatusFiltro] = useState("todos");
   const [detalhesOpen, setDetalhesOpen] = useState(false);
@@ -54,21 +42,14 @@ function PedidosRetiradaTabContent({ windowMode = false }) {
   const queryClient = useQueryClient();
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return [];
-      return await base44.entities.Pedido.filter({ empresa_id: empresaAtual.id }, '-created_date', 1000);
-    },
-    enabled: !!empresaAtual?.id,
-    staleTime: 30000,
+    queryKey: ['pedidos'],
+    queryFn: () => base44.entities.Pedido.list('-created_date'),
   });
 
   const { data: user } = useQuery({
     queryKey: ['currentUser'],
     queryFn: () => base44.auth.me(),
   });
-
-  const isLoading = !pedidos || pedidos.length === 0;
 
   // Filtrar pedidos para retirada (tipo_frete = Retirada, status = Aprovado ou posterior)
   const pedidosParaRetirada = useMemo(() => {
@@ -197,14 +178,6 @@ function PedidosRetiradaTabContent({ windowMode = false }) {
   };
 
   const containerClass = windowMode ? "w-full h-full overflow-auto p-6" : "space-y-6";
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className={containerClass}>
@@ -464,13 +437,5 @@ function PedidosRetiradaTabContent({ windowMode = false }) {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-export default function PedidosRetiradaTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <PedidosRetiradaTabContent {...props} />
-    </Suspense>
   );
 }

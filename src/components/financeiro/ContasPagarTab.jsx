@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
 import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
 import ContaPagarForm from "./ContaPagarForm";
 import { useWindow } from "@/components/lib/useWindow";
@@ -19,17 +18,13 @@ import KPIsPagar from "./contas-pagar/KPIsPagar";
 import FiltrosPagar from "./contas-pagar/FiltrosPagar";
 import TabelaPagar from "./contas-pagar/TabelaPagar";
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-red-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
+export default function ContasPagarTab({ contas, windowMode = false }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { openWindow } = useWindow();
+  const { formasPagamento } = useFormasPagamento();
+  const { user: authUser } = useUser();
 
-function ContasPagarTabContent({ contas: contasProp, windowMode = false }) {
-  // TODOS OS HOOKS PRIMEIRO
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [dialogBaixaOpen, setDialogBaixaOpen] = useState(false);
@@ -44,18 +39,10 @@ function ContasPagarTabContent({ contas: contasProp, windowMode = false }) {
     desconto: 0,
     observacoes: ""
   });
-  const contas = contasProp || [];
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { openWindow } = useWindow();
-  const { formasPagamento } = useFormasPagamento();
-  const { user: authUser } = useUser();
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
     queryFn: () => base44.entities.Empresa.list(),
-    initialData: [],
-    enabled: true
   });
 
   const enviarParaCaixaMutation = useMutation({
@@ -238,7 +225,7 @@ function ContasPagarTabContent({ contas: contasProp, windowMode = false }) {
   };
 
   const content = (
-    <div className="w-full h-full flex flex-col space-y-2 overflow-auto p-2">
+    <div className="space-y-1.5">
       <HeaderPagarCompacto />
       <KPIsPagar totais={totais} />
       <FiltrosPagar
@@ -381,13 +368,9 @@ function ContasPagarTabContent({ contas: contasProp, windowMode = false }) {
     </div>
   );
 
-  return content;
-}
+  if (windowMode) {
+    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-red-50 overflow-auto p-1.5">{content}</div>;
+  }
 
-export default function ContasPagarTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <ContasPagarTabContent {...props} />
-    </Suspense>
-  );
+  return content;
 }

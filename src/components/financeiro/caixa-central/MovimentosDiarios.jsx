@@ -17,10 +17,9 @@ import {
 } from 'lucide-react';
 
 export default function MovimentosDiarios() {
-  // TODOS OS HOOKS PRIMEIRO
+  const { filterInContext, empresaAtual } = useContextoVisual();
   const [dataFiltro, setDataFiltro] = useState(new Date().toISOString().split('T')[0]);
   const [abaOperador, setAbaOperador] = useState("todos");
-  const { filterInContext, empresaAtual } = useContextoVisual();
 
   const { data: movimentosCaixa = [], isLoading } = useQuery({
     queryKey: ['movimentos-caixa', dataFiltro, empresaAtual?.id],
@@ -54,7 +53,15 @@ export default function MovimentosDiarios() {
     enabled: !!empresaAtual?.id
   });
 
-  // EARLY RETURN APÓS HOOKS
+  const operadoresUnicos = [...new Set(movimentosCaixa.map(m => m.usuario_operador_nome).filter(Boolean))];
+  const movimentosFiltrados = abaOperador === "todos" 
+    ? movimentosCaixa 
+    : movimentosCaixa.filter(m => m.usuario_operador_nome === abaOperador);
+
+  const totalEntradas = movimentosFiltrados.filter(m => m.tipo === 'entrada').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
+  const totalSaidas = movimentosFiltrados.filter(m => m.tipo === 'saida').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
+  const saldoCaixa = totalEntradas - totalSaidas;
+
   if (isLoading) {
     return (
       <Card>
@@ -65,20 +72,10 @@ export default function MovimentosDiarios() {
     );
   }
 
-  // CÁLCULOS APÓS EARLY RETURN
-  const operadoresUnicos = [...new Set(movimentosCaixa.map(m => m.usuario_operador_nome).filter(Boolean))];
-  const movimentosFiltrados = abaOperador === "todos" 
-    ? movimentosCaixa 
-    : movimentosCaixa.filter(m => m.usuario_operador_nome === abaOperador);
-
-  const totalEntradas = movimentosFiltrados.filter(m => m.tipo === 'entrada').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
-  const totalSaidas = movimentosFiltrados.filter(m => m.tipo === 'saida').reduce((sum, m) => sum + (m.valor_movimento || 0), 0);
-  const saldoCaixa = totalEntradas - totalSaidas;
-
   return (
-    <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
+    <div className="space-y-4">
       {/* Header com Filtro de Data */}
-      <Card className="border-0 shadow-md w-full flex-shrink-0">
+      <Card className="border-0 shadow-md">
         <CardHeader className="bg-slate-50 border-b py-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
@@ -105,11 +102,11 @@ export default function MovimentosDiarios() {
       </Card>
 
       {/* Tabs por Operador */}
-      <Card className="border-0 shadow-md w-full flex-1 flex flex-col overflow-hidden">
-        <CardHeader className="bg-slate-50 border-b py-2 flex-shrink-0">
+      <Card className="border-0 shadow-md">
+        <CardHeader className="bg-slate-50 border-b py-2">
           <CardTitle className="text-base">Movimentos por Operador PDV</CardTitle>
         </CardHeader>
-        <CardContent className="p-0 w-full flex-1 overflow-hidden">
+        <CardContent className="p-0">
           <Tabs value={abaOperador} onValueChange={setAbaOperador}>
             <TabsList className="w-full justify-start border-b rounded-none bg-slate-50">
               <TabsTrigger value="todos">
@@ -154,8 +151,8 @@ export default function MovimentosDiarios() {
                 </div>
               </div>
 
-              <div className="max-h-96 overflow-auto w-full">
-                <Table className="w-full">
+              <div className="max-h-96 overflow-auto">
+                <Table>
                   <TableHeader>
                     <TableRow className="bg-slate-50">
                       <TableHead>Hora</TableHead>

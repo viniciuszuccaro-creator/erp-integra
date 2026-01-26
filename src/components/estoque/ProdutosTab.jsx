@@ -1,11 +1,11 @@
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, Factory, ShoppingCart, Plus, Upload, Package, Loader2 } from "lucide-react";
+import { AlertTriangle, Factory, ShoppingCart, Plus, Upload, Package } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 import usePermissions from "@/components/lib/usePermissions";
@@ -17,21 +17,11 @@ import DashboardProdutosProducao from "@/components/cadastros/DashboardProdutosP
 import ImportadorProdutosPlanilha from "@/components/estoque/ImportadorProdutosPlanilha";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function ProdutosTabContent(props) {
-  // TODOS OS HOOKS PRIMEIRO
-  const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
+export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
-  const { empresaAtual, contextoReady } = useContextoVisual();
+  const { getFiltroContexto } = useContextoVisual();
+  const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -46,42 +36,37 @@ function ProdutosTabContent(props) {
     return { total, revenda, producao, estoqueBaixo };
   };
 
-  const { data: todosProdutos = [], refetch: refetchProdutos, isLoading: isLoadingProdutos } = useQueryWithRateLimit(
-    ['produtos-todos-contagem', empresaAtual?.id],
-    async () => {
+  const { data: todosProdutos = [], refetch: refetchProdutos } = useQuery({
+    queryKey: ['produtos-todos-contagem'],
+    queryFn: async () => {
+      const filtro = getFiltroContexto('empresa_id', true);
       let todos = [];
       let skip = 0;
       const batchSize = 500;
       let hasMore = true;
       
       while (hasMore) {
-        try {
-          const batch = await base44.entities.Produto.list(undefined, batchSize, skip);
-          if (!batch || batch.length === 0) {
+        const batch = await base44.entities.Produto.filter(filtro, undefined, batchSize, skip);
+        if (!batch || batch.length === 0) {
+          hasMore = false;
+        } else {
+          todos = [...todos, ...batch];
+          if (batch.length < batchSize) {
             hasMore = false;
           } else {
-            todos = [...todos, ...batch];
-            if (batch.length < batchSize) {
-              hasMore = false;
-            } else {
-              skip += batchSize;
-            }
-          }
-        } catch (error) {
-          if (error?.status === 429) {
-            hasMore = false;
-          } else {
-            throw error;
+            skip += batchSize;
           }
         }
       }
+      
       return todos;
     },
-    { initialData: [] }
-  );
+    staleTime: Infinity,
+    refetchOnWindowFocus: false
+  });
 
   const contagensTotais = useMemo(() => calcularContagensLocal(todosProdutos), [todosProdutos]);
-  const isLoadingContagens = isLoadingProdutos && todosProdutos.length === 0;
+  const isLoadingContagens = !todosProdutos || todosProdutos.length === 0;
 
   React.useEffect(() => {
     const unsubscribe = base44.entities.Produto.subscribe(() => {
@@ -91,12 +76,8 @@ function ProdutosTabContent(props) {
     return unsubscribe;
   }, [queryClient]);
 
-   if (!contextoReady) {
-     return <LoadingFallback />;
-   }
-
-   return (
-    <div className="w-full h-full flex flex-col space-y-3 overflow-auto p-2">
+  return (
+    <div className="w-full h-full flex flex-col space-y-4 overflow-auto">
       <div className="w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4">
@@ -286,13 +267,5 @@ function ProdutosTabContent(props) {
         windowMode={props.windowMode}
       />
     </div>
-  );
-}
-
-export default function ProdutosTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <ProdutosTabContent {...props} />
-    </Suspense>
   );
 }

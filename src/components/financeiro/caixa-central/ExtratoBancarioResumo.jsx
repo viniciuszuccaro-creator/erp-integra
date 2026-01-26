@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,25 +13,13 @@ import {
   TrendingDown, 
   Calendar,
   Download,
-  Filter,
-  Loader2
+  Filter
 } from 'lucide-react';
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[300px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function ExtratoBancarioResumoContent() {
-  // TODOS OS HOOKS PRIMEIRO
+export default function ExtratoBancarioResumo() {
+  const { filterInContext, empresaAtual } = useContextoVisual();
   const [dataInicio, setDataInicio] = useState(new Date(new Date().setDate(1)).toISOString().split('T')[0]);
   const [dataFim, setDataFim] = useState(new Date().toISOString().split('T')[0]);
-  const ctx = useContextoVisual();
-  const { filterInContext, empresaAtual, contextoReady } = ctx || {};
 
   const { data: extratos = [], isLoading } = useQuery({
     queryKey: ['extrato-bancario', dataInicio, dataFim, empresaAtual?.id],
@@ -44,22 +32,6 @@ function ExtratoBancarioResumoContent() {
     enabled: !!empresaAtual?.id
   });
 
-  // EARLY RETURN APÓS TODOS OS HOOKS
-  if (!contextoReady || !empresaAtual) {
-    return <LoadingFallback />;
-  }
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardContent className="p-12 text-center text-slate-500">
-          Carregando extrato bancário...
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // CÁLCULOS APÓS EARLY RETURNS
   const totalEntradas = extratos.filter(e => e.tipo_lancamento === 'Crédito').reduce((sum, e) => sum + (e.valor || 0), 0);
   const totalSaidas = extratos.filter(e => e.tipo_lancamento === 'Débito').reduce((sum, e) => sum + (e.valor || 0), 0);
   const saldoPeriodo = totalEntradas - totalSaidas;
@@ -73,6 +45,16 @@ function ExtratoBancarioResumoContent() {
     else porConta[conta].debitos += (ext.valor || 0);
     porConta[conta].saldo = porConta[conta].creditos - porConta[conta].debitos;
   });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center text-slate-500">
+          Carregando extrato bancário...
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -256,13 +238,5 @@ function ExtratoBancarioResumoContent() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-export default function ExtratoBancarioResumo() {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <ExtratoBancarioResumoContent />
-    </Suspense>
   );
 }

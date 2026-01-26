@@ -1,8 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Truck, Package, FileText, Route, Activity, BarChart3, Settings, Map, MessageCircle, Camera, Scan, Building2, Loader2 } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Truck, Package, FileText, Route, Activity, BarChart3, Settings, Map, MessageCircle, Camera, Scan, Building2 } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -34,15 +33,6 @@ const MapaRoteirizacaoIA = React.lazy(() => import("../components/logistica/Mapa
 const RoteirizacaoMapa = React.lazy(() => import("../components/expedicao/RoteirizacaoMapa"));
 const ComprovanteDigital = React.lazy(() => import("../components/expedicao/ComprovanteDigital"));
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
 export default function Expedicao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
@@ -57,63 +47,98 @@ export default function Expedicao() {
   const [comprovanteOpen, setComprovanteOpen] = React.useState(false);
   const [ocorrenciaOpen, setOcorrenciaOpen] = React.useState(false);
 
-  const { data: entregas = [] } = useQueryWithRateLimit(
-    ['entregas', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Entrega.filter(filtro, '-created_date', 100);
+  const { data: entregas = [] } = useQuery({
+    queryKey: ['entregas', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Entrega.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar entregas:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
-  const { data: totalEntregas = 0 } = useQueryWithRateLimit(
-    ['entregas-count', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      const response = await base44.functions.invoke('countEntities', {
-        entityName: 'Entrega',
-        filter: filtro
-      });
-      return response.data?.count || entregas.length;
+  const { data: totalEntregas = 0 } = useQuery({
+    queryKey: ['entregas-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Entrega',
+          filter: filtro
+        });
+        return response.data?.count || entregas.length;
+      } catch {
+        return entregas.length;
+      }
     },
-    { initialData: 0 }
-  );
+    staleTime: 60000,
+    retry: 1
+  });
 
-  const { data: clientes = [] } = useQueryWithRateLimit(
-    ['clientes', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+  const { data: clientes = [] } = useQuery({
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar clientes:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: pedidos = [] } = useQueryWithRateLimit(
-    ['pedidos', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Pedido.filter(filtro, '-created_date', 100);
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Pedido.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: romaneios = [] } = useQueryWithRateLimit(
-    ['romaneios', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Romaneio.filter(filtro, '-created_date', 50);
+  const { data: romaneios = [] } = useQuery({
+    queryKey: ['romaneios', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Romaneio.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar romaneios:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: rotas = [] } = useQueryWithRateLimit(
-    ['rotas', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Rota.filter(filtro, '-created_date', 50);
+  const { data: rotas = [] } = useQuery({
+    queryKey: ['rotas', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Rota.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar rotas:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
   // Dados já vêm filtrados do servidor
   const entregasFiltradas = entregas;
@@ -182,30 +207,10 @@ export default function Expedicao() {
       description: 'Otimização automática',
       icon: Route,
       color: 'purple',
-      component: React.lazy(() => import('@/components/logistica/PainelRoteirizacao')),
-      windowTitle: '🤖 Roteirização IA (ETAPA 3)',
+      component: RoteirizacaoInteligente,
+      windowTitle: '🤖 Roteirização IA',
       width: 1400,
       height: 800,
-    },
-    {
-      title: 'Dashboard Entregas',
-      description: 'Visão gestor realtime',
-      icon: Truck,
-      color: 'green',
-      component: React.lazy(() => import('@/components/logistica/DashboardEntregasGestor')),
-      windowTitle: '📊 Dashboard Entregas (ETAPA 3)',
-      width: 1400,
-      height: 800,
-    },
-    {
-      title: 'Monitor Real-time',
-      description: 'Entregas ao vivo',
-      icon: Activity,
-      color: 'cyan',
-      component: React.lazy(() => import('@/components/logistica/MonitorEntregasRealtime')),
-      windowTitle: '⚡ Monitor Real-time (ETAPA 3)',
-      width: 1200,
-      height: 700,
     },
     {
       title: 'Métricas Realtime',
@@ -263,22 +268,18 @@ export default function Expedicao() {
   ];
 
   const handleModuleClick = (module) => {
-    const WrappedComponent = () => (
-      <Suspense fallback={<LoadingFallback />}>
-        <module.component {...(module.props || {})} windowMode={true} />
-      </Suspense>
-    );
-    
-    openWindow(
-      WrappedComponent,
-      { ...(module.props || {}), windowMode: true },
-      {
-        title: module.windowTitle,
-        width: module.width,
-        height: module.height,
-        uniqueKey: `expedicao-${module.title.toLowerCase().replace(/\s/g, '-')}`
-      }
-    );
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { ...(module.props || {}), windowMode: true },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `expedicao-${module.title.toLowerCase().replace(/\s/g, '-')}`
+        }
+      );
+    });
   };
 
   return (

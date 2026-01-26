@@ -3,9 +3,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
-  Package, Calculator, Globe, TrendingUp, Sparkles
+  Package, Calculator, Globe, TrendingUp
 } from "lucide-react";
-import WidgetSugestaoPrecoIA from "@/components/ia/WidgetSugestaoPrecoIA";
 import ProdutoFormHeader from "./produto/ProdutoFormHeader";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ProdutoForm from "./ProdutoForm";
@@ -78,7 +77,7 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
 
       {/* Abas do Formulário */}
       <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
-        <TabsList className="grid grid-cols-5 w-full bg-slate-100">
+        <TabsList className="grid grid-cols-4 w-full bg-slate-100">
           <TabsTrigger value="dados-gerais" className="flex items-center gap-2">
             <Package className="w-4 h-4" />
             Dados Gerais
@@ -86,10 +85,6 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
           <TabsTrigger value="conversoes" className="flex items-center gap-2">
             <Calculator className="w-4 h-4" />
             Conversões
-          </TabsTrigger>
-          <TabsTrigger value="ia-preco" className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            IA Preço
           </TabsTrigger>
           <TabsTrigger value="ecommerce" className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
@@ -133,26 +128,6 @@ export default function ProdutoFormCompleto({ produto, onSubmit, isSubmitting, o
               />
             </div>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="ia-preco">
-          <div className="p-6">
-            {produto?.id ? (
-              <WidgetSugestaoPrecoIA 
-                produto_id={produto.id}
-                preco_atual={produto.preco_venda}
-                custo_atual={produto.custo_medio || produto.custo_aquisicao}
-                onAplicar={(novoPreco) => {
-                  toast.success(`💡 Preço sugerido: R$ ${novoPreco.toFixed(2)}`);
-                }}
-              />
-            ) : (
-              <Card className="p-8 text-center">
-                <Sparkles className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <p className="text-slate-500">Salve o produto primeiro para usar a IA de precificação</p>
-              </Card>
-            )}
-          </div>
         </TabsContent>
 
         <TabsContent value="ecommerce">

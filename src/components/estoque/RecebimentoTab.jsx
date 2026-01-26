@@ -1,12 +1,12 @@
-import React, { useState, Suspense } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, PackageCheck, Search, Eye, Loader2 } from "lucide-react";
+import { Plus, PackageCheck, Search, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,20 +17,13 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: ordensCompraProp, produtos: produtosProp }) {
-  // TODOS OS HOOKS PRIMEIRO
+export default function RecebimentoTab({ recebimentos, ordensCompra, produtos }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [viewingRecebimento, setViewingRecebimento] = useState(null);
+  const { openWindow } = useWindow();
+  const { empresaAtual } = useContextoVisual();
+  const { canCreate } = usePermissions();
   const [formData, setFormData] = useState({
     numero_recebimento: `REC-${Date.now()}`,
     ordem_compra_id: "",
@@ -42,41 +35,8 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
     observacoes: "",
     status: "Pendente"
   });
-  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
-  const { openWindow } = useWindow();
-  const { canCreate } = usePermissions();
+
   const queryClient = useQueryClient();
-
-  const { data: recebimentos = recebimentosProp || [] } = useQuery({
-    queryKey: ['movimentacoes-recebimento', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return recebimentosProp || [];
-      return await base44.entities.MovimentacaoEstoque.filter({ empresa_id: empresaAtual.id, tipo_movimentacao: 'Entrada' }, '-data_movimentacao', 500);
-    },
-    enabled: true,
-    initialData: recebimentosProp || [],
-    staleTime: 30000,
-  });
-
-  const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordens-compra', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return ordensCompraProp || [];
-      return await base44.entities.OrdemCompra.filter({ empresa_id: empresaAtual.id }, undefined, 500);
-    },
-    initialData: ordensCompraProp || [],
-    staleTime: 30000,
-  });
-
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return produtosProp || [];
-      return await base44.entities.Produto.filter({ empresa_id: empresaAtual.id }, undefined, 2000);
-    },
-    initialData: produtosProp || [],
-    staleTime: 30000,
-  });
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -217,7 +177,7 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
   });
 
   return (
-    <div className="w-full h-full flex flex-col space-y-6 overflow-auto p-2">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -428,8 +388,8 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
         </Dialog>
       </div>
 
-      <Card className="border-0 shadow-md w-full flex-1 overflow-hidden">
-        <div className="overflow-x-auto w-full">
+      <Card className="border-0 shadow-md">
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
@@ -482,13 +442,5 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
         )}
       </Card>
     </div>
-  );
-}
-
-export default function RecebimentoTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <RecebimentoTabContent {...props} />
-    </Suspense>
   );
 }

@@ -58,7 +58,6 @@ import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import "@/components/lib/networkGuard";
 import BootstrapGuard from "@/components/lib/BootstrapGuard";
 import GlobalNetworkErrorHandler from "@/components/lib/GlobalNetworkErrorHandler";
-import MultiempresaEnforcer from "@/components/lib/MultiempresaEnforcer";
 
 const navigationItems = [
         { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -66,10 +65,6 @@ const navigationItems = [
         { title: "Relatórios e Análises", url: createPageUrl("Relatorios"), icon: BarChart3, group: "principal" },
         { title: "Agenda e Calendário", url: createPageUrl("Agenda"), icon: Calendar, group: "principal" },
         { title: "CRM - Relacionamento", url: createPageUrl("CRM"), icon: Users, group: "principal" },
-        { title: "📊 ETAPA 2 Dashboard", url: createPageUrl("ETAPA2Dashboard"), icon: Trophy, group: "principal" },
-        { title: "🏆 ETAPA 3 Dashboard [CERTIFICADA]", url: createPageUrl("ETAPA3Dashboard"), icon: Truck, group: "principal" },
-        { title: "🎉 ETAPA 3 — CONCLUSÃO OFICIAL", url: createPageUrl("ETAPA3Conclusao"), icon: Trophy, group: "principal" },
-        { title: "🧠 ETAPA 4 — Chatbot + IA", url: createPageUrl("ETAPA4Dashboard"), icon: MessageCircle, group: "principal" },
   { title: "Cadastros Gerais", url: createPageUrl("Cadastros"), icon: Users, group: "cadastros" },
   { title: "Comercial e Vendas", url: createPageUrl("Comercial"), icon: ShoppingCart, group: "operacional" },
   { title: "Estoque e Almoxarifado", url: createPageUrl("Estoque"), icon: Box, group: "operacional" },
@@ -77,7 +72,6 @@ const navigationItems = [
   { title: "Expedição e Logística", url: createPageUrl("Expedicao"), icon: Truck, group: "operacional" },
   { title: "Produção e Manufatura", url: createPageUrl("Producao"), icon: Factory, group: "operacional" },
   { title: "📱 Apontamento Mobile", url: createPageUrl("ProducaoMobile"), icon: Factory, group: "operacional" },
-  { title: "🚛 App do Motorista", url: createPageUrl("AppMotorista"), icon: Truck, group: "operacional" },
   { title: "Financeiro e Contábil", url: createPageUrl("Financeiro"), icon: DollarSign, group: "administrativo" },
   { title: "Recursos Humanos", url: createPageUrl("RH"), icon: UserCircle, group: "administrativo" },
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
@@ -85,8 +79,6 @@ const navigationItems = [
   { title: "Configurações do Sistema", url: createPageUrl("ConfiguracoesSistema"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   { title: "🔒 Segurança e Governança", url: createPageUrl("Seguranca"), icon: Shield, group: "sistema", adminOnly: true },
-  { title: "🛡️ Governança ETAPA 1", url: createPageUrl("GovernancaETAPA1"), icon: Shield, group: "sistema", adminOnly: true },
-  { title: "📘 Exemplos RBAC", url: createPageUrl("ExemplosRBAC"), icon: BookOpen, group: "sistema", adminOnly: true },
   { title: "Auditoria de UI", url: createPageUrl("AuditoriaUI"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "⚡ Estabilização do Sistema", url: createPageUrl("EstabilizacaoSistema"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🎨 Padronização UI/UX", url: createPageUrl("PadronizacaoUI"), icon: Shield, group: "sistema", adminOnly: true },
@@ -590,29 +582,12 @@ function LayoutContent({ children, currentPageName }) {
 import GuardRails from "@/components/lib/GuardRails";
 
 export default function Layout({ children, currentPageName }) {
-  // Flag ETAPA1 para testes de integração
-  useEffect(() => {
-    window.__ETAPA1_MULTIEMPRESA_LOADED__ = true;
-    // Marcar elementos para dashboard/layout testes
-    if (document.body) {
-      document.body.setAttribute('data-layout-etapa1', 'true');
-      document.body.setAttribute('data-dashboard-etapa1', 'true');
-    }
-    return () => {
-      window.__ETAPA1_MULTIEMPRESA_LOADED__ = false;
-      document.body?.removeAttribute('data-layout-etapa1');
-      document.body?.removeAttribute('data-dashboard-etapa1');
-    };
-  }, []);
-
   return (
     <UserProvider>
       <WindowProvider>
         <ZIndexGuard>
-          <MultiempresaEnforcer>
-            <GlobalNetworkErrorHandler />
-            <LayoutContent children={children} currentPageName={currentPageName} />
-          </MultiempresaEnforcer>
+          <GlobalNetworkErrorHandler />
+          <LayoutContent children={children} currentPageName={currentPageName} />
         </ZIndexGuard>
       </WindowProvider>
     </UserProvider>

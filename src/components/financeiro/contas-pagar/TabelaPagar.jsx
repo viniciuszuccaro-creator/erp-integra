@@ -20,11 +20,11 @@ export default function TabelaPagar({
   aprovarPending = false
 }) {
   return (
-    <Card className="border-0 shadow-md flex-1 overflow-hidden flex flex-col w-full">
-      <CardHeader className="bg-slate-50 border-b py-2 px-3 min-h-[50px] max-h-[50px] flex-shrink-0">
+    <Card className="border-0 shadow-md flex-1 overflow-hidden flex flex-col">
+      <CardHeader className="bg-slate-50 border-b py-2 px-3 min-h-[50px] max-h-[50px]">
         <CardTitle className="text-sm">Títulos a Pagar</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 flex-1 overflow-auto w-full">
+      <CardContent className="p-0 flex-1 overflow-auto">
         <Table>
           <TableHeader className="sticky top-0 bg-slate-50 z-10">
             <TableRow>

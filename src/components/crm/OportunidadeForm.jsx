@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Save, Target, TrendingUp, Brain } from "lucide-react";
+import { Save, Target, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import WidgetPrioridadeLead from "@/components/ia/WidgetPrioridadeLead";
 
 /**
  * V21.1.2: Oportunidade Form - Adaptado para Window Mode
@@ -202,20 +201,6 @@ export default function OportunidadeForm({ oportunidade, onSubmit, windowMode = 
           </div>
         </CardContent>
       </Card>
-
-      {oportunidade?.id && (
-        <WidgetPrioridadeLead 
-          oportunidade_id={oportunidade.id}
-          onAtualizado={(previsao) => {
-            setFormData({ 
-              ...formData, 
-              probabilidade: previsao.probabilidade,
-              temperatura: previsao.temperatura,
-              score: previsao.score
-            });
-          }}
-        />
-      )}
 
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
         <Button type="submit" className="bg-blue-600 hover:bg-blue-700">

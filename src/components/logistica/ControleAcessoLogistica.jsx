@@ -1,66 +1,62 @@
-import React from 'react';
-import { useUser } from '@/components/lib/UserContext';
-import usePermissions from '@/components/lib/usePermissions';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Shield, AlertTriangle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
 
 /**
- * ETAPA 3: Controle de Acesso Logística
- * Wrapper de segurança para componentes logísticos
+ * 🔒 CONTROLE DE ACESSO LOGÍSTICA V21.5
+ * Hook para verificar permissões de logística
  */
+export function usePermissoesLogistica() {
+  const { data: user } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => base44.auth.me(),
+  });
 
-export default function ControleAcessoLogistica({ 
-  children, 
-  requiredModule = 'Expedição',
-  requiredAction = 'ver',
-  motoristasOnly = false,
-  fallback = null
-}) {
-  const { user } = useUser();
-  const { hasPermission, isAdmin } = usePermissions();
+  const { data: perfil } = useQuery({
+    queryKey: ['perfilAcesso', user?.perfil_acesso_id],
+    queryFn: async () => {
+      if (!user?.perfil_acesso_id) return null;
+      const perfis = await base44.entities.PerfilAcesso.filter({ id: user.perfil_acesso_id });
+      return perfis[0] || null;
+    },
+    enabled: !!user?.perfil_acesso_id,
+  });
 
-  // Verificar se é motorista (via colaborador)
-  const [isMotorista, setIsMotorista] = React.useState(false);
+  const permissoes = perfil?.permissoes?.logistica || {};
 
-  React.useEffect(() => {
-    if (!user?.id || !motoristasOnly) return;
+  return {
+    podeCriarRomaneio: permissoes.criarRomaneio || user?.role === 'admin',
+    podeConfirmarEntrega: permissoes.confirmarEntrega || user?.role === 'admin',
+    podeRegistrarOcorrencia: permissoes.registrarOcorrencia || user?.role === 'admin',
+    podeRoteirizar: permissoes.roteirizar?.includes('editar') || user?.role === 'admin',
+    podeVisualizarRotas: permissoes.roteirizar?.includes('visualizar') || true,
+    isAdmin: user?.role === 'admin',
+    user,
+    perfil
+  };
+}
 
-    base44.entities.Colaborador.filter({
-      vincular_a_usuario_id: user.id,
-      pode_dirigir: true,
-      status: 'Ativo'
-    }).then(result => {
-      setIsMotorista(result?.length > 0);
-    }).catch(() => setIsMotorista(false));
-  }, [user?.id, motoristasOnly]);
+/**
+ * Componente para proteger ações de logística
+ */
+export function ProtegerAcaoLogistica({ acao, children, fallback = null }) {
+  const permissoes = usePermissoesLogistica();
 
-  // Admin sempre passa
-  if (isAdmin()) return <>{children}</>;
+  const mapeamentoAcoes = {
+    'criarRomaneio': permissoes.podeCriarRomaneio,
+    'confirmarEntrega': permissoes.podeConfirmarEntrega,
+    'registrarOcorrencia': permissoes.podeRegistrarOcorrencia,
+    'roteirizar': permissoes.podeRoteirizar,
+    'visualizarRotas': permissoes.podeVisualizarRotas
+  };
 
-  // Verificar permissão do módulo
-  if (!hasPermission(requiredModule, null, requiredAction)) {
-    return fallback || (
-      <Alert className="border-red-300 bg-red-50">
-        <Shield className="w-4 h-4 text-red-600" />
-        <AlertDescription className="text-red-800">
-          Você não tem permissão para acessar esta funcionalidade.
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  const temPermissao = mapeamentoAcoes[acao] !== false;
 
-  // Verificar se é motorista (quando necessário)
-  if (motoristasOnly && !isMotorista) {
-    return fallback || (
-      <Alert className="border-yellow-300 bg-yellow-50">
-        <AlertTriangle className="w-4 h-4 text-yellow-600" />
-        <AlertDescription className="text-yellow-800">
-          Esta funcionalidade é exclusiva para motoristas cadastrados.
-        </AlertDescription>
-      </Alert>
-    );
+  if (!temPermissao) {
+    return fallback;
   }
 
   return <>{children}</>;
 }
+
+export default usePermissoesLogistica;

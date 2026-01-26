@@ -1,4 +1,4 @@
-import React, { useState, Suspense } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,27 +11,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 import { useToast } from '@/components/ui/use-toast';
-import { Clock, TrendingUp, TrendingDown, CheckCircle2, XCircle, Wallet, Loader2 } from 'lucide-react';
+import { Clock, TrendingUp, TrendingDown, CheckCircle2, XCircle, Wallet } from 'lucide-react';
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[300px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function OrdensLiquidacaoPendentesContent() {
-  // TODOS OS HOOKS PRIMEIRO
+export default function OrdensLiquidacaoPendentes() {
+  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [liquidacaoDialogOpen, setLiquidacaoDialogOpen] = useState(false);
   const [ordemSelecionada, setOrdemSelecionada] = useState(null);
   const [formaPagamentoLiquidacao, setFormaPagamentoLiquidacao] = useState("");
   const [observacoesLiquidacao, setObservacoesLiquidacao] = useState("");
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const ctx = useContextoVisual();
-  const { filterInContext, empresaAtual, contextoReady } = ctx || {};
 
   const { data: ordensLiquidacao = [], isLoading } = useQuery({
     queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
@@ -99,12 +88,17 @@ function OrdensLiquidacaoPendentesContent() {
     }
   });
 
-  // EARLY RETURN APÓS TODOS OS HOOKS
-  if (!contextoReady || !empresaAtual || isLoading) {
-    return <LoadingFallback />;
-  }
-
   const ordensPendentes = ordensLiquidacao.filter(o => o.status === "Pendente");
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center text-slate-500">
+          Carregando ordens...
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleLiquidar = (ordem) => {
     setOrdemSelecionada(ordem);
@@ -132,15 +126,15 @@ function OrdensLiquidacaoPendentesContent() {
 
   return (
     <>
-      <Card className="border-0 shadow-md w-full flex flex-col">
-        <CardHeader className="bg-orange-50 border-b flex-shrink-0">
+      <Card className="border-0 shadow-md">
+        <CardHeader className="bg-orange-50 border-b">
           <CardTitle className="text-orange-900 flex items-center gap-2">
             <Clock className="w-5 h-5" />
             Ordens Pendentes de Liquidação ({ordensPendentes.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0 w-full flex-1 overflow-hidden">
-          <div className="max-h-[500px] overflow-auto w-full">
+        <CardContent className="p-0">
+          <div className="max-h-[500px] overflow-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
@@ -301,13 +295,5 @@ function OrdensLiquidacaoPendentesContent() {
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-export default function OrdensLiquidacaoPendentes(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <OrdensLiquidacaoPendentesContent {...props} />
-    </Suspense>
   );
 }

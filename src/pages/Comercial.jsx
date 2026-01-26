@@ -1,8 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQueryClient } from "@tanstack/react-query";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Users, ShoppingCart, FileText, TrendingUp, ShieldCheck, Truck, Package, AlertCircle, Loader2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Users, ShoppingCart, FileText, TrendingUp, ShieldCheck, Truck, Package, AlertCircle } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -14,15 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import HeaderComercialCompacto from "@/components/comercial/comercial-launchpad/HeaderComercialCompacto";
 import KPIsComercial from "@/components/comercial/comercial-launchpad/KPIsComercial";
 import ModulosGridComercial from "@/components/comercial/comercial-launchpad/ModulosGridComercial";
-
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
 
 const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
 const PedidosTab = React.lazy(() => import("../components/comercial/PedidosTab"));
@@ -41,63 +31,109 @@ export default function Comercial() {
   const { user } = useUser();
   const queryClient = useQueryClient();
 
-  const { data: clientes = [] } = useQueryWithRateLimit(
-    ['clientes', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+  const { data: clientes = [] } = useQuery({
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar clientes:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
-  const pedidosQuery = useQueryWithRateLimit(
-    ['pedidos', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Pedido.filter(filtro, '-created_date', 100);
+  const pedidosQuery = useQuery({
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Pedido.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
   const { data: pedidos = [] } = pedidosQuery;
-  const { data: comissoes = [] } = useQueryWithRateLimit(
-    ['comissoes', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Comissao.filter(filtro, '-created_date', 50);
+  const { data: comissoes = [] } = useQuery({
+    queryKey: ['comissoes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Comissao.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar comissões:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: notasFiscais = [] } = useQueryWithRateLimit(
-    ['notasFiscais', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 50);
+  const { data: notasFiscais = [] } = useQuery({
+    queryKey: ['notasFiscais', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar notas fiscais:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: tabelasPreco = [] } = useQueryWithRateLimit(
-    ['tabelas-preco', empresaAtual?.id],
-    async () => await base44.entities.TabelaPreco.list('-updated_date', 50),
-    { initialData: [] }
-  );
-
-  const { data: empresas = [] } = useQueryWithRateLimit(
-    ['empresas'],
-    async () => await base44.entities.Empresa.list(),
-    { initialData: [] }
-  );
-
-  const { data: pedidosExternos = [] } = useQueryWithRateLimit(
-    ['pedidos-externos', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.PedidoExterno.filter(filtro, '-created_date', 30);
+  const { data: tabelasPreco = [] } = useQuery({
+    queryKey: ['tabelas-preco', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        return await base44.entities.TabelaPreco.list('-updated_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar tabelas de preço:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
+
+  const { data: empresas = [] } = useQuery({
+    queryKey: ['empresas'],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Empresa.list();
+      } catch (err) {
+        console.error('Erro ao buscar empresas:', err);
+        return [];
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
+  const { data: pedidosExternos = [] } = useQuery({
+    queryKey: ['pedidos-externos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.PedidoExterno.filter(filtro, '-created_date', 30);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos externos:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
+  });
 
   // Dados já vêm filtrados do servidor
   const clientesFiltrados = clientes;
@@ -276,29 +312,23 @@ export default function Comercial() {
   ];
 
   const handleModuleClick = (module) => {
-    const WrappedComponent = () => (
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <module.component {...(module.props || {})} windowMode={true} />
-        </Suspense>
-      </ErrorBoundary>
-    );
-    
-    openWindow(
-      WrappedComponent,
-      { ...(module.props || {}), windowMode: true },
-      {
-        title: module.windowTitle,
-        width: module.width,
-        height: module.height,
-        uniqueKey: `comercial-${module.title.toLowerCase().replace(/\s/g, '-')}`
-      }
-    );
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { ...(module.props || {}), windowMode: true },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `comercial-${module.title.toLowerCase().replace(/\s/g, '-')}`
+        }
+      );
+    });
   };
 
   return (
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
+      <div className="w-full min-h-screen p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderComercialCompacto />
         
         <KPIsComercial

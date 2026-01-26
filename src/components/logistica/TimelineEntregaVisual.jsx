@@ -1,96 +1,171 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CheckCircle2, Circle, Clock } from 'lucide-react';
+import React from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Clock, Package, Truck, Navigation, MapPin } from "lucide-react";
 
 /**
- * ETAPA 3: Timeline Visual de Entrega
- * Componente simplificado para portal cliente
+ * 📅 TIMELINE VISUAL DE ENTREGA V21.5
+ * Mostra o progresso da entrega em formato de linha do tempo
  */
-
-export default function TimelineEntregaVisual({ entrega }) {
+export default function TimelineEntregaVisual({ pedido, entrega, windowMode = false }) {
   const etapas = [
-    { status: 'Aguardando Separação', label: 'Separação' },
-    { status: 'Pronto para Expedir', label: 'Pronto' },
-    { status: 'Saiu para Entrega', label: 'Saiu' },
-    { status: 'Em Trânsito', label: 'Em Trânsito' },
-    { status: 'Entregue', label: 'Entregue' }
+    {
+      status: 'Aprovado',
+      titulo: 'Pedido Aprovado',
+      descricao: 'Estoque reservado automaticamente',
+      icon: CheckCircle2,
+      cor: 'green',
+      ativo: ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito', 'Entregue'].includes(pedido.status)
+    },
+    {
+      status: 'Pronto para Faturar',
+      titulo: 'Fechado para Entrega',
+      descricao: 'Enviado para logística',
+      icon: Package,
+      cor: 'indigo',
+      ativo: ['Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito', 'Entregue'].includes(pedido.status)
+    },
+    {
+      status: 'Faturado',
+      titulo: 'NF-e Emitida',
+      descricao: 'Nota fiscal gerada',
+      icon: CheckCircle2,
+      cor: 'blue',
+      ativo: ['Faturado', 'Em Expedição', 'Em Trânsito', 'Entregue'].includes(pedido.status)
+    },
+    {
+      status: 'Em Expedição',
+      titulo: 'Em Separação',
+      descricao: 'Produtos sendo preparados',
+      icon: Package,
+      cor: 'orange',
+      ativo: ['Em Expedição', 'Em Trânsito', 'Entregue'].includes(pedido.status)
+    },
+    {
+      status: 'Em Trânsito',
+      titulo: 'Saiu para Entrega',
+      descricao: 'Veículo em rota',
+      icon: Truck,
+      cor: 'purple',
+      ativo: ['Em Trânsito', 'Entregue'].includes(pedido.status)
+    },
+    {
+      status: 'Entregue',
+      titulo: 'Entrega Concluída',
+      descricao: 'Pedido finalizado com sucesso',
+      icon: CheckCircle2,
+      cor: 'green',
+      ativo: pedido.status === 'Entregue'
+    }
   ];
 
-  const statusIndex = {
-    'Aguardando Separação': 0,
-    'Em Separação': 0,
-    'Pronto para Expedir': 1,
-    'Saiu para Entrega': 2,
-    'Em Trânsito': 3,
-    'Entregue': 4,
-    'Cancelado': -1
+  const corPorNome = {
+    'green': 'bg-green-600',
+    'indigo': 'bg-indigo-600',
+    'blue': 'bg-blue-600',
+    'orange': 'bg-orange-600',
+    'purple': 'bg-purple-600'
   };
 
-  const indiceAtual = statusIndex[entrega.status] ?? 0;
-
-  if (entrega.status === 'Cancelado') {
-    return (
-      <Card className="w-full">
-        <CardContent className="py-8 text-center">
-          <Badge className="bg-red-600 text-lg px-6 py-2">
-            ❌ Entrega Cancelada
-          </Badge>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm">Status da Entrega</CardTitle>
+    <Card className="border-0 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+        <CardTitle className="flex items-center gap-2">
+          <Navigation className="w-5 h-5" />
+          📍 Timeline da Entrega
+        </CardTitle>
+        <p className="text-sm opacity-90">Pedido #{pedido.numero_pedido}</p>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {etapas.map((etapa, idx) => {
-            const completo = idx < indiceAtual;
-            const atual = idx === indiceAtual;
-            const pendente = idx > indiceAtual;
+      <CardContent className="p-6">
+        <div className="relative">
+          {/* Linha Vertical */}
+          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200" />
 
-            return (
-              <div key={idx} className="flex items-center gap-3">
-                <div className="flex flex-col items-center">
-                  {completo && <CheckCircle2 className="w-6 h-6 text-green-600" />}
-                  {atual && <Clock className="w-6 h-6 text-blue-600 animate-pulse" />}
-                  {pendente && <Circle className="w-6 h-6 text-slate-300" />}
+          {/* Etapas */}
+          <div className="space-y-6">
+            {etapas.map((etapa, index) => {
+              const Icon = etapa.icon;
+              const ativoClass = etapa.ativo 
+                ? corPorNome[etapa.cor] 
+                : 'bg-slate-300';
+
+              return (
+                <div key={index} className="relative flex gap-4 items-start">
+                  {/* Ícone */}
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${ativoClass} text-white shadow-lg z-10`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+
+                  {/* Conteúdo */}
+                  <div className="flex-1 pt-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className={`font-bold ${etapa.ativo ? 'text-slate-900' : 'text-slate-400'}`}>
+                        {etapa.titulo}
+                      </p>
+                      {etapa.status === pedido.status && (
+                        <Badge className="bg-blue-600 text-white animate-pulse">
+                          Atual
+                        </Badge>
+                      )}
+                    </div>
+                    <p className={`text-sm ${etapa.ativo ? 'text-slate-600' : 'text-slate-400'}`}>
+                      {etapa.descricao}
+                    </p>
+                    
+                    {/* Data/Hora (se disponível) */}
+                    {etapa.ativo && entrega?.historico_status && (
+                      <div className="mt-2">
+                        {entrega.historico_status
+                          .filter(h => h.status === etapa.status)
+                          .map((hist, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-xs text-slate-500">
+                              <Clock className="w-3 h-3" />
+                              {new Date(hist.data_hora).toLocaleString('pt-BR')}
+                              {hist.usuario && ` • ${hist.usuario}`}
+                            </div>
+                          ))
+                        }
+                      </div>
+                    )}
+                  </div>
                 </div>
-
-                <div className="flex-1">
-                  <p className={`font-medium text-sm ${
-                    completo ? 'text-green-700' :
-                    atual ? 'text-blue-700' :
-                    'text-slate-400'
-                  }`}>
-                    {etapa.label}
-                  </p>
-                  {atual && (
-                    <p className="text-xs text-blue-600">Em andamento</p>
-                  )}
-                  {completo && (
-                    <p className="text-xs text-green-600">✓ Concluído</p>
-                  )}
-                </div>
-
-                {atual && (
-                  <Badge className="bg-blue-600 text-xs">Atual</Badge>
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {entrega.data_previsao && (
-          <div className="mt-4 pt-4 border-t">
-            <p className="text-xs text-slate-600 text-center">
-              Previsão: {new Date(entrega.data_previsao).toLocaleDateString('pt-BR')}
-            </p>
-          </div>
+        {/* Informações Adicionais */}
+        {pedido.endereco_entrega_principal && (
+          <Card className="mt-6 bg-slate-50">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-slate-900 mb-1">Endereço de Entrega</p>
+                  <p className="text-sm text-slate-700">
+                    {pedido.endereco_entrega_principal.logradouro}, {pedido.endereco_entrega_principal.numero}
+                    {pedido.endereco_entrega_principal.complemento && ` - ${pedido.endereco_entrega_principal.complemento}`}
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    {pedido.endereco_entrega_principal.bairro} - {pedido.endereco_entrega_principal.cidade}/{pedido.endereco_entrega_principal.estado}
+                  </p>
+                  <p className="text-sm text-slate-500">CEP: {pedido.endereco_entrega_principal.cep}</p>
+                  
+                  {pedido.endereco_entrega_principal.mapa_url && (
+                    <a
+                      href={pedido.endereco_entrega_principal.mapa_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline mt-2"
+                    >
+                      <Navigation className="w-4 h-4" />
+                      Abrir no Google Maps
+                    </a>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
       </CardContent>
     </Card>

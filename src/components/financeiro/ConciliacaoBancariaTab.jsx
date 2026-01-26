@@ -10,12 +10,11 @@ import { Zap, Upload, CheckCircle, AlertTriangle, TrendingUp } from "lucide-reac
 import { toast } from "sonner";
 
 export default function ConciliacaoBancariaTab() {
-  // TODOS OS HOOKS PRIMEIRO
+  const queryClient = useQueryClient();
   const [periodo, setPeriodo] = useState({
     inicio: new Date(new Date().setDate(1)).toISOString().split('T')[0],
     fim: new Date().toISOString().split('T')[0]
   });
-  const queryClient = useQueryClient();
 
   const { data: conciliacoes = [], isLoading } = useQuery({
     queryKey: ["conciliacao-bancaria"],

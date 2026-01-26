@@ -1,37 +1,19 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, DollarSign, Loader2 } from 'lucide-react';
-import useContextoVisual from '@/components/lib/useContextoVisual';
+import { TrendingUp, DollarSign } from 'lucide-react';
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[300px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function VisaoGeralPendenciasContent({ contasReceber = [], contasPagar = [], onSelectItem = () => {} }) {
-  // TODOS OS HOOKS PRIMEIRO
-  const ctx = useContextoVisual();
-
-  // EARLY RETURN APÓS HOOKS
-  if (!ctx?.contextoReady) {
-    return <LoadingFallback />;
-  }
-  
+export default function VisaoGeralPendencias({ contasReceber, contasPagar, onSelectItem }) {
   return (
-    <div className="w-full h-full flex flex-col space-y-3 overflow-auto">
-      <Card className="w-full flex-shrink-0">
-        <CardHeader className="flex-shrink-0">
+    <div className="space-y-3">
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-green-600" />
             Contas a Receber Pendentes
           </CardTitle>
         </CardHeader>
-        <CardContent className="w-full">
-          <div className="space-y-2 max-h-60 overflow-auto w-full">
+        <CardContent>
+          <div className="space-y-2 max-h-60 overflow-auto">
             {contasReceber.slice(0, 10).map((conta) => (
               <div 
                 key={conta.id} 
@@ -58,15 +40,15 @@ function VisaoGeralPendenciasContent({ contasReceber = [], contasPagar = [], onS
         </CardContent>
       </Card>
 
-      <Card className="w-full flex-shrink-0">
-        <CardHeader className="flex-shrink-0">
+      <Card>
+        <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-red-600" />
             Contas a Pagar Pendentes
           </CardTitle>
         </CardHeader>
-        <CardContent className="w-full">
-          <div className="space-y-2 max-h-60 overflow-auto w-full">
+        <CardContent>
+          <div className="space-y-2 max-h-60 overflow-auto">
             {contasPagar.slice(0, 10).map((conta) => (
               <div 
                 key={conta.id} 
@@ -93,13 +75,5 @@ function VisaoGeralPendenciasContent({ contasReceber = [], contasPagar = [], onS
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-export default function VisaoGeralPendencias(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <VisaoGeralPendenciasContent {...props} />
-    </Suspense>
   );
 }

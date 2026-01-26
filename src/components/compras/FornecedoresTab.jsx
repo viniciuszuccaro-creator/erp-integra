@@ -11,13 +11,12 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 
-export default function FornecedoresTab({ fornecedores: fornecedoresProp, windowMode = false }) {
+export default function FornecedoresTab({ fornecedores, windowMode = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
   
   const { estaNoGrupo, empresasDoGrupo } = useContextoVisual();
 
-  const fornecedores = fornecedoresProp || [];
   const filteredFornecedores = fornecedores.filter(f => {
     const matchSearch = f.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                        f.cnpj?.includes(searchTerm);

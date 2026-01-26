@@ -17,7 +17,6 @@ import { toast } from 'sonner';
  * AGORA COM: etapa_obra_id + Consolidação por Etapa
  */
 export default function ArmadoPadraoTab({ formData, setFormData, empresaId, onNext }) {
-  // TODOS OS HOOKS PRIMEIRO
   const [tipoPeca, setTipoPeca] = useState(null);
   const [dadosPeca, setDadosPeca] = useState({});
   const [pecaEditandoIndex, setPecaEditandoIndex] = useState(null);

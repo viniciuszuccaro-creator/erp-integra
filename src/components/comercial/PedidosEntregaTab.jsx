@@ -1,4 +1,4 @@
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,17 +41,7 @@ import RegistroOcorrenciaLogistica from "../logistica/RegistroOcorrenciaLogistic
 import IntegracaoRomaneio from "../logistica/IntegracaoRomaneio";
 import PainelMetricasRealtime from "../logistica/PainelMetricasRealtime";
 import { useWindow } from "@/components/lib/useWindow";
-import usePermissions from "@/components/lib/usePermissions";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
-
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
+import { usePermissoesLogistica } from "../logistica/ControleAcessoLogistica";
 
 /**
  * 🚚 PEDIDOS PARA ENTREGA V21.5
@@ -61,8 +51,7 @@ const LoadingFallback = () => (
  * - Upload/visualização de canhoto e fotos
  * - Integração com Expedição
  */
-function PedidosEntregaTabContent({ windowMode = false, pedidos: pedidosProp = [] }) {
-  const { empresaAtual } = useContextoVisual();
+export default function PedidosEntregaTab({ windowMode = false }) {
   const [busca, setBusca] = useState("");
   const [regiaoFiltro, setRegiaoFiltro] = useState("todas");
   const [statusFiltro, setStatusFiltro] = useState("todos");
@@ -75,42 +64,22 @@ function PedidosEntregaTabContent({ windowMode = false, pedidos: pedidosProp = [
 
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
-  const { hasPermission } = usePermissions();
-  
-  // Permissões logística
-  const permissoes = {
-    podeCriarRomaneio: hasPermission('Expedição', null, 'criar'),
-    podeConfirmarEntrega: hasPermission('Expedição', null, 'editar'),
-    podeRegistrarOcorrencia: hasPermission('Expedição', null, 'editar')
-  };
+  const permissoes = usePermissoesLogistica();
 
-  const { data: pedidos = pedidosProp || [] } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return pedidosProp || [];
-      return await base44.entities.Pedido.list('-created_date', 1000);
-    },
-    initialData: pedidosProp || [],
-    enabled: true,
-    staleTime: 30000,
+  const { data: pedidos = [] } = useQuery({
+    queryKey: ['pedidos'],
+    queryFn: () => base44.entities.Pedido.list('-created_date'),
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return [];
-      return await base44.entities.Entrega.filter({ empresa_id: empresaAtual.id }, '-created_date', 1000);
-    },
-    enabled: true,
-    staleTime: 30000,
+    queryKey: ['entregas'],
+    queryFn: () => base44.entities.Entrega.list('-created_date'),
   });
 
   const { data: regioes = [] } = useQuery({
     queryKey: ['regioes'],
     queryFn: () => base44.entities.RegiaoAtendimento.list(),
   });
-
-  const isLoading = !pedidosProp && !pedidos.length;
 
   // Filtrar pedidos para entrega (tipo_frete = CIF ou FOB, status = Aprovado ou posterior)
   const pedidosParaEntrega = useMemo(() => {
@@ -175,14 +144,6 @@ function PedidosEntregaTabContent({ windowMode = false, pedidos: pedidosProp = [
   };
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className={containerClass}>

@@ -22,9 +22,7 @@ import { toast as sonnerToast } from "sonner";
 import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
 import { useUser } from "@/components/lib/UserContext";
 
-export default function OrdensCompraTab({ ordensCompra: ordensCompraProp, fornecedores: fornecedoresProp, empresas = [], windowMode = false }) {
-  const ordensCompra = ordensCompraProp || [];
-  const fornecedores = fornecedoresProp || [];
+export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);

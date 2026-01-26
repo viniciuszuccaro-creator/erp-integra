@@ -4,31 +4,21 @@ import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Zap, Map, Truck, Navigation, TrendingDown, MapPin, CheckCircle2, Loader2 } from "lucide-react";
+import { Zap, Map, Truck, Navigation, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
-import SeletorMotoristaEntrega from "@/components/logistica/SeletorMotoristaEntrega";
 
 export default function RoteirizacaoInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
   const [dataRota, setDataRota] = useState(new Date().toISOString().split('T')[0]);
-  const [entregasSelecionadas, setEntregasSelecionadas] = useState([]);
-  const [pontoPartida, setPontoPartida] = useState('Depósito Central');
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ["entregas", "pendentes"],
-    queryFn: () => base44.entities.Entrega.filter({
-      status: { $in: ['Aguardando Separação', 'Pronto para Expedir'] }
-    }, '-data_previsao', 100),
+    queryKey: ["entregas"],
+    queryFn: () => base44.entities.Entrega.list(),
   });
 
   const { data: motoristas = [] } = useQuery({
-    queryKey: ["colaboradores", "motoristas"],
-    queryFn: () => base44.entities.Colaborador.filter({
-      pode_dirigir: true,
-      status: 'Ativo'
-    }),
+    queryKey: ["motoristas"],
+    queryFn: () => base44.entities.Motorista.list(),
   });
 
   const { data: veiculos = [] } = useQuery({
@@ -37,56 +27,75 @@ export default function RoteirizacaoInteligente({ windowMode = false }) {
   });
 
   const { data: rotas = [] } = useQuery({
-    queryKey: ["rotas"],
-    queryFn: () => base44.entities.Rota.list(),
+    queryKey: ["roteirizacao-inteligente"],
+    queryFn: () => base44.entities.RoteirizacaoInteligente.list(),
   });
 
   const gerarRotaIAMutation = useMutation({
-    mutationFn: async () => {
-      if (entregasSelecionadas.length < 2) {
-        throw new Error('Selecione pelo menos 2 entregas');
-      }
-
+    mutationFn: async ({ entregasIds, motoristaId, veiculoId }) => {
       toast.info("🤖 IA otimizando rota...");
 
-      // ETAPA 3: Usar função backend otimizada
-      const result = await base44.functions.invoke('otimizarRotaIA', {
-        entregas_ids: entregasSelecionadas,
-        ponto_partida: pontoPartida
+      const entregasSelecionadas = entregas.filter(e => entregasIds.includes(e.id));
+      
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt: `Otimize a rota de entrega considerando:
+
+Entregas: ${JSON.stringify(entregasSelecionadas.map(e => ({
+  cliente: e.cliente_nome,
+  endereco: e.endereco_entrega_completo,
+  janela: e.janela_entrega_inicio + ' - ' + e.janela_entrega_fim,
+  peso: e.peso_total_kg,
+  prioridade: e.prioridade
+})))}
+
+Retorne a melhor sequência de entregas, distância total, tempo estimado e custo.`,
+        response_json_schema: {
+          type: "object",
+          properties: {
+            sequencia_otimizada: { type: "array", items: { type: "string" } },
+            distancia_total_km: { type: "number" },
+            tempo_total_minutos: { type: "number" },
+            custo_estimado: { type: "number" },
+            economia_vs_manual: { type: "object" }
+          }
+        }
       });
 
-      const rotaOtimizada = result.data.rota_otimizada;
+      const motorista = motoristas.find(m => m.id === motoristaId);
+      const veiculo = veiculos.find(v => v.id === veiculoId);
 
-      // Criar rota no sistema
-      const novaRota = await base44.entities.Rota.create({
-        numero_rota: `RT-${Date.now()}`,
+      return base44.entities.RoteirizacaoInteligente.create({
         data_rota: dataRota,
-        entregas_ids: rotaOtimizada.sequencia_otimizada,
-        distancia_total_km: rotaOtimizada.distancia_total_km,
-        tempo_estimado_min: rotaOtimizada.tempo_total_min,
-        status: 'Planejada',
-        observacoes: rotaOtimizada.justificativa
+        motorista_id: motoristaId,
+        motorista_nome: motorista?.nome || "",
+        veiculo_id: veiculoId,
+        veiculo_placa: veiculo?.placa || "",
+        entregas_vinculadas: entregasSelecionadas.map((e, idx) => ({
+          entrega_id: e.id,
+          pedido_id: e.pedido_id,
+          cliente_nome: e.cliente_nome,
+          endereco_completo: `${e.endereco_entrega_completo?.logradouro}, ${e.endereco_entrega_completo?.numero}`,
+          latitude: e.endereco_entrega_completo?.latitude,
+          longitude: e.endereco_entrega_completo?.longitude,
+          ordem_sequencia: idx + 1,
+          peso_kg: e.peso_total_kg,
+          prioridade: e.prioridade
+        })),
+        otimizacao_ia: {
+          distancia_total_km: result.distancia_total_km,
+          tempo_total_estimado_minutos: result.tempo_total_minutos,
+          custo_estimado_frete: result.custo_estimado,
+          algoritmo_usado: "IA Base44 LLM",
+          fatores_considerados: ["Distância", "Janela de Entrega", "Trânsito", "Prioridade", "Peso"],
+          economia_vs_rota_manual: result.economia_vs_manual
+        },
+        status: "Planejada"
       });
-
-      // Atualizar entregas com rota_id
-      for (const entrega_id of rotaOtimizada.sequencia_otimizada) {
-        await base44.entities.Entrega.update(entrega_id, { 
-          rota_id: novaRota.id,
-          status: 'Pronto para Expedir'
-        });
-      }
-
-      return { rota: novaRota, otimizacao: rotaOtimizada };
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries(["rotas"]);
-      queryClient.invalidateQueries(["entregas"]);
-      setEntregasSelecionadas([]);
-      toast.success(`✅ Rota criada! ${data.otimizacao.distancia_total_km?.toFixed(1)} km em ${Math.round(data.otimizacao.tempo_total_min)} min`);
+    onSuccess: () => {
+      queryClient.invalidateQueries(["roteirizacao-inteligente"]);
+      toast.success("✅ Rota otimizada gerada com IA!");
     },
-    onError: (err) => {
-      toast.error(`Erro: ${err.message}`);
-    }
   });
 
   const entregasPendentes = entregas.filter(e => 
@@ -95,89 +104,34 @@ export default function RoteirizacaoInteligente({ windowMode = false }) {
 
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "space-y-6";
 
-  const toggleEntrega = (id) => {
-    setEntregasSelecionadas(prev =>
-      prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
-    );
-  };
-
   return (
     <div className={containerClass}>
-      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
-      {/* ETAPA 3: Header Aprimorado */}
+      <div className={windowMode ? "p-6 space-y-6 flex-1" : "space-y-6"}>
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Roteirização Inteligente (ETAPA 3)</h2>
-          <p className="text-sm text-slate-600 mt-1">Otimização de rotas com IA + Google Maps</p>
+          <h2 className="text-2xl font-bold text-slate-900">Roteirização Inteligente</h2>
+          <p className="text-sm text-slate-600 mt-1">Otimização de rotas com IA</p>
         </div>
 
         <Button
-          onClick={() => gerarRotaIAMutation.mutate()}
-          disabled={gerarRotaIAMutation.isPending || entregasSelecionadas.length < 2}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          onClick={() => {
+            if (entregasPendentes.length > 0 && motoristas.length > 0 && veiculos.length > 0) {
+              gerarRotaIAMutation.mutate({
+                entregasIds: entregasPendentes.slice(0, 5).map(e => e.id),
+                motoristaId: motoristas[0].id,
+                veiculoId: veiculos[0].id
+              });
+            } else {
+              toast.error("Cadastre entregas, motoristas e veículos primeiro");
+            }
+          }}
+          disabled={gerarRotaIAMutation.isPending}
+          className="bg-blue-600 hover:bg-blue-700"
         >
-          {gerarRotaIAMutation.isPending ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              Otimizando...
-            </>
-          ) : (
-            <>
-              <Zap className="w-4 h-4 mr-2" />
-              Gerar Rota com IA
-            </>
-          )}
+          <Zap className="w-4 h-4 mr-2" />
+          Gerar Rota com IA
         </Button>
       </div>
-
-      {/* ETAPA 3: Seleção de Entregas */}
-      <Card className="border-2 border-blue-300">
-        <CardHeader>
-          <CardTitle className="text-sm flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-blue-600" />
-              Selecionar Entregas
-            </span>
-            <Badge className="bg-blue-600">{entregasSelecionadas.length} selecionadas</Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Input
-            placeholder="Ponto de partida (ex: Rua ABC, 123 - São Paulo/SP)"
-            value={pontoPartida}
-            onChange={(e) => setPontoPartida(e.target.value)}
-          />
-
-          <div className="max-h-80 overflow-auto space-y-2 border rounded p-3">
-            {entregas.map(entrega => (
-              <div
-                key={entrega.id}
-                className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
-                onClick={() => toggleEntrega(entrega.id)}
-              >
-                <Checkbox checked={entregasSelecionadas.includes(entrega.id)} />
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{entrega.cliente_nome}</p>
-                  <p className="text-xs text-slate-600">
-                    {entrega.endereco_entrega_completo?.cidade}/{entrega.endereco_entrega_completo?.estado}
-                  </p>
-                </div>
-                <Badge className={
-                  entrega.prioridade === 'Urgente' ? 'bg-red-600' :
-                  entrega.prioridade === 'Alta' ? 'bg-orange-600' : 'bg-blue-600'
-                }>
-                  {entrega.prioridade}
-                </Badge>
-              </div>
-            ))}
-            {entregas.length === 0 && (
-              <p className="text-center text-sm text-slate-500 py-4">
-                Nenhuma entrega pendente
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid grid-cols-3 gap-4">
         <Card>

@@ -12,7 +12,7 @@ export default function KPIsEstoque({
   produtosProducao = 0
 }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 min-h-[90px] max-h-[90px] w-full flex-shrink-0">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 min-h-[90px] max-h-[90px]">
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
           <CardTitle className="text-xs font-medium">Total Produtos</CardTitle>

@@ -26,10 +26,10 @@ import {
  * ✅ Botão para adicionar produto novamente ao pedido
  */
 export default function HistoricoClienteTab({ formData, setFormData, onAdicionarItemAoPedido }) {
-  // TODOS OS HOOKS PRIMEIRO
   const [produtosFrequentes, setProdutosFrequentes] = useState([]);
   const [analisando, setAnalisando] = useState(false);
 
+  // Buscar pedidos anteriores do cliente
   const { data: pedidosAnteriores = [] } = useQuery({
     queryKey: ['pedidos-cliente', formData.cliente_id],
     queryFn: () => formData.cliente_id 
@@ -127,17 +127,7 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
     setAnalisando(false);
   }, [pedidosAnteriores]);
 
-  // EARLY RETURN APÓS HOOKS
-  if (!formData.cliente_id) {
-    return (
-      <div className="text-center py-12 text-slate-500">
-        <Clock className="w-16 h-16 mx-auto mb-4 opacity-30" />
-        <p>Selecione um cliente para ver o histórico</p>
-      </div>
-    );
-  }
-
-  // CÁLCULOS APÓS EARLY RETURN
+  // Calcular estatísticas
   const totalPedidos = pedidosAnteriores.length;
   const valorTotalHistorico = pedidosAnteriores.reduce((sum, p) => sum + (p.valor_total || 0), 0);
   const ticketMedio = totalPedidos > 0 ? valorTotalHistorico / totalPedidos : 0;
@@ -146,6 +136,15 @@ export default function HistoricoClienteTab({ formData, setFormData, onAdicionar
 
   const contasPagas = contasReceber.filter(c => c.status === 'Recebido').length;
   const contasAtrasadas = contasReceber.filter(c => c.status === 'Atrasado').length;
+
+  if (!formData.cliente_id) {
+    return (
+      <div className="text-center py-12 text-slate-500">
+        <Clock className="w-16 h-16 mx-auto mb-4 opacity-30" />
+        <p>Selecione um cliente para ver o histórico</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

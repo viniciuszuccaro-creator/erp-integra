@@ -1,7 +1,6 @@
-import React, { useState, Suspense } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +23,7 @@ import {
   Clock,
   XCircle,
   Printer,
-  Download,
-  Loader2
+  Download
 } from "lucide-react";
 import { ImprimirPedido } from "@/components/lib/impressao";
 import { useToast } from "@/components/ui/use-toast";
@@ -35,75 +33,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
-import useContextoVisual from "@/components/lib/useContextoVisual";
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoading: isLoadingProp, empresas: empresasProp, onCreatePedido, onEditPedido, empresaId = null }) {
-  // TODOS OS HOOKS PRIMEIRO - ORDEM CONSISTENTE
+export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
+  // V21.6: Multi-empresa
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
-  const [sortField, setSortField] = useState('created_date');
-  const [sortDir, setSortDir] = useState('desc');
-  const toggleSort = (field) => {
-    setSortField(prev => {
-      if (prev === field) {
-        setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
-        return prev;
-      }
-      setSortDir('asc');
-      return field;
-    });
-  };
-  const [selectedPedidos, setSelectedPedidos] = useState([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow, closeWindow } = useWindow();
-  const ctx = useContextoVisual();
 
-  const { data: pedidos = pedidosProp || [], error: pedidosError } = useQueryWithRateLimit(
-    ['pedidos', ctx?.empresaAtual?.id, sortField, sortDir],
-    async () => {
-      const order = (sortDir === 'desc' ? '-' : '') + (sortField || 'created_date');
-      return await ctx.filterInContext('Pedido', {}, order, 1000, 'empresa_id');
-    },
-    { initialData: pedidosProp || [] }
-  );
-
-  const { data: clientes = clientesProp || [] } = useQueryWithRateLimit(
-    ['clientes', ctx?.empresaAtual?.id],
-    async () => await base44.entities.Cliente.list('-created_date', 1000),
-    { initialData: clientesProp || [] }
-  );
-
-  const { data: empresas = empresasProp || [] } = useQueryWithRateLimit(
-    ['empresas'],
-    () => base44.entities.Empresa.list(),
-    { initialData: empresasProp || [] }
-  );
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Pedido.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      toast({ title: "✅ Pedido excluído!" });
-    },
-  });
-
-  // EARLY RETURN APÓS TODOS OS HOOKS
-  if (!ctx?.contextoReady) {
-    return <LoadingFallback />;
-  }
-
-  const { empresaAtual } = ctx;
-  const isLoading = !pedidosProp && !pedidos.length;
+  // Seleção em massa + exportação
+  const [selectedPedidos, setSelectedPedidos] = useState([]);
   const togglePedido = (id) => setSelectedPedidos(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleAllPedidos = (checked, lista) => setSelectedPedidos(checked ? lista.map(p => p.id) : []);
   const exportarPedidosCSV = (lista) => {
@@ -120,6 +60,14 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Pedido.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      toast({ title: "✅ Pedido excluído!" });
+    },
+  });
 
   const filteredPedidos = pedidos.filter(p => {
     const matchStatus = statusFilter === "todos" || p.status === statusFilter;
@@ -144,22 +92,8 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
   const pedidosAprovados = pedidos.filter(p => p.status_aprovacao === "aprovado");
   const pedidosNegados = pedidos.filter(p => p.status_aprovacao === "negado");
 
-  if (isLoading) {
-    return <LoadingFallback />;
-  }
-
-  if (pedidosError) {
-    return (
-      <div className="w-full h-full flex items-center justify-center p-6">
-        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-4 py-3">
-          Erro ao carregar pedidos.
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full h-full flex flex-col space-y-4 overflow-auto p-2">
+    <div className="space-y-6">
       {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Alert className="border-orange-300 bg-orange-50">
@@ -231,9 +165,9 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
         </Button>
       </div>
 
-      <Card className="border-0 shadow-md w-full">
+      <Card className="border-0 shadow-md">
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
+          <div className="flex flex-col sm:flex-row gap-4">
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
@@ -260,11 +194,11 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md w-full flex-1 overflow-hidden flex flex-col">
-        <CardHeader className="bg-slate-50 border-b flex-shrink-0">
+      <Card className="border-0 shadow-md">
+        <CardHeader className="bg-slate-50 border-b">
           <CardTitle>Lista de Pedidos ({filteredPedidos.length})</CardTitle>
         </CardHeader>
-        <CardContent className="p-0 w-full flex-1 overflow-auto">
+        <CardContent className="p-0">
           {selectedPedidos.length > 0 && (
             <Alert className="m-4 border-blue-300 bg-blue-50">
               <AlertDescription className="flex items-center justify-between">
@@ -282,15 +216,14 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
-                 <TableHead className="w-12"></TableHead>
-                 <TableHead onClick={() => toggleSort('numero_pedido')} className="cursor-pointer select-none hover:bg-slate-100">Nº Pedido {sortField==='numero_pedido' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
-                 <TableHead onClick={() => toggleSort('cliente_nome')} className="cursor-pointer select-none hover:bg-slate-100">Cliente {sortField==='cliente_nome' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
-                 <TableHead onClick={() => toggleSort('data_pedido')} className="cursor-pointer select-none hover:bg-slate-100">Data {sortField==='data_pedido' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
-                 <TableHead>Origem</TableHead>
-                 <TableHead onClick={() => toggleSort('valor_total')} className="cursor-pointer select-none hover:bg-slate-100">Valor {sortField==='valor_total' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
-                 <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:bg-slate-100">Status {sortField==='status' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
-                 <TableHead>Aprovação</TableHead>
-                 <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
+                  <TableHead>Nº Pedido</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Origem</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Aprovação</TableHead>
+                  <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -567,13 +500,5 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-export default function PedidosTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <PedidosTabContent {...props} />
-    </Suspense>
   );
 }

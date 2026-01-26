@@ -1,13 +1,12 @@
-import { useState, Suspense } from "react";
+import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, ArrowUp, ArrowDown, RefreshCw, Loader2 } from "lucide-react";
+import { Plus, Search, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,30 +18,13 @@ import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 import { useUser } from "@/components/lib/UserContext";
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: produtosProp }) {
-  // TODOS OS HOOKS PRIMEIRO
+export default function MovimentacoesTab({ movimentacoes, produtos }) {
+  const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    numero_recebimento: `REC-${Date.now()}`,
-    ordem_compra_id: "",
-    fornecedor: "",
-    data_recebimento: new Date().toISOString().split('T')[0],
-    numero_nf: "",
-    itens: [{ produto_id: "", produto_descricao: "", quantidade_pedida: 0, quantidade_recebida: 0, status_item: "Conforme" }],
-    responsavel_recebimento: "",
-    observacoes: "",
-    status: "Pendente"
-  });
+  const { openWindow } = useWindow();
+  const { empresaAtual } = useContextoVisual();
+  const { canCreate } = usePermissions();
   const [novaMovimentacao, setNovaMovimentacao] = useState({
     tipo_movimentacao: "",
     produto_id: "",
@@ -54,23 +36,34 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
     observacoes: "",
     responsavel: ""
   });
-  const { empresaAtual } = useContextoVisual();
-  const { user: authUser } = useUser();
-  const { openWindow } = useWindow();
-  const { canCreate } = usePermissions();
+
   const queryClient = useQueryClient();
 
-  const { data: movimentacoes = movimentacoesProp || [], isLoadingMov } = useQueryWithRateLimit(
-    ['movimentacoes', empresaAtual?.id],
-    async () => await base44.entities.MovimentacaoEstoque.list('-data_movimentacao', 1000),
-    { initialData: movimentacoesProp || [] }
-  );
+  const resetForm = () => {
+    setNovaMovimentacao({
+      tipo_movimentacao: "",
+      produto_id: "",
+      produto_nome: "",
+      quantidade: "",
+      unidade_medida: "",
+      data_movimentacao: new Date().toISOString().split('T')[0],
+      documento_referencia: "",
+      observacoes: "",
+      responsavel: ""
+    });
+  };
 
-  const { data: produtos = produtosProp || [], isLoadingProd } = useQueryWithRateLimit(
-    ['produtos', empresaAtual?.id],
-    async () => await base44.entities.Produto.list(undefined, 5000),
-    { initialData: produtosProp || [] }
-  );
+  const handleProdutoChange = (produtoId) => {
+    const produto = produtos.find(p => p.id === produtoId);
+    if (produto) {
+      setNovaMovimentacao({
+        ...novaMovimentacao,
+        produto_id: produtoId,
+        produto_nome: produto.descricao,
+        unidade_medida: produto.unidade_medida
+      });
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data) => {
@@ -129,32 +122,6 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
     },
   });
 
-  const resetForm = () => {
-    setNovaMovimentacao({
-      tipo_movimentacao: "",
-      produto_id: "",
-      produto_nome: "",
-      quantidade: "",
-      unidade_medida: "",
-      data_movimentacao: new Date().toISOString().split('T')[0],
-      documento_referencia: "",
-      observacoes: "",
-      responsavel: ""
-    });
-  };
-
-  const handleProdutoChange = (produtoId) => {
-    const produto = produtos.find(p => p.id === produtoId);
-    if (produto) {
-      setNovaMovimentacao({
-        ...novaMovimentacao,
-        produto_id: produtoId,
-        produto_nome: produto.descricao,
-        unidade_medida: produto.unidade_medida
-      });
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const user = await base44.auth.me();
@@ -164,6 +131,24 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
       responsavel: novaMovimentacao.responsavel || user?.full_name || 'Sistema'
     });
   };
+
+  const filteredMovimentacoes = movimentacoes.filter(m => {
+    const searchLower = searchTerm.toLowerCase();
+    return m.produto_nome?.toLowerCase().includes(searchLower) ||
+      m.produto_descricao?.toLowerCase().includes(searchLower) ||
+      m.codigo_produto?.toLowerCase().includes(searchLower) ||
+      m.tipo_movimentacao?.toLowerCase().includes(searchLower) ||
+      m.tipo_movimento?.toLowerCase().includes(searchLower) ||
+      m.origem_movimento?.toLowerCase().includes(searchLower) ||
+      m.documento?.toLowerCase().includes(searchLower) ||
+      m.motivo?.toLowerCase().includes(searchLower) ||
+      m.responsavel?.toLowerCase().includes(searchLower) ||
+      m.centro_custo_nome?.toLowerCase().includes(searchLower) ||
+      m.localizacao_origem?.toLowerCase().includes(searchLower) ||
+      m.localizacao_destino?.toLowerCase().includes(searchLower) ||
+      m.lote?.toLowerCase().includes(searchLower) ||
+      m.observacoes?.toLowerCase().includes(searchLower);
+  });
 
   const tipoIcons = {
     'Entrada': <ArrowDown className="w-4 h-4 text-green-600" />,
@@ -181,18 +166,8 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
     'Devolução': 'bg-orange-100 text-orange-700'
   };
 
-  // EARLY RETURN APÓS TODOS OS HOOKS
-  if ((isLoadingMov || isLoadingProd) && !movimentacoesProp?.length) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-2" />
-        <p className="text-slate-600">Carregando movimentações...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full h-full flex flex-col space-y-6 overflow-auto p-2">
+    <div className="space-y-6">
       <div className="flex justify-between items-center mb-4">
         <div className="relative flex-1 max-w-md mr-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -353,8 +328,8 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
         </Dialog>
       </div>
 
-      <Card className="border-0 shadow-md w-full flex-1 overflow-hidden">
-        <div className="overflow-x-auto w-full">
+      <Card className="border-0 shadow-md">
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
@@ -401,13 +376,5 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
         )}
       </Card>
     </div>
-  );
-}
-
-export default function MovimentacoesTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <MovimentacoesTabContent {...props} />
-    </Suspense>
   );
 }

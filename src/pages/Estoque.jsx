@@ -1,7 +1,7 @@
 import React, { Suspense, useState, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Box, TrendingUp, PackageCheck, PackageMinus, PackageOpen, Clock, BarChart3, Sparkles, ArrowLeftRight, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Box, TrendingUp, PackageCheck, PackageMinus, PackageOpen, Clock, BarChart3, Sparkles, ArrowLeftRight } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -21,15 +21,6 @@ const ControleLotesValidade = React.lazy(() => import("../components/estoque/Con
 const RelatoriosEstoque = React.lazy(() => import("../components/estoque/RelatoriosEstoque"));
 const IAReposicao = React.lazy(() => import("../components/estoque/IAReposicao"));
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
 export default function Estoque() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
@@ -40,9 +31,9 @@ export default function Estoque() {
   // Query removida - VisualizadorUniversalEntidade busca os dados
 
   // ✅ Contagens via backend otimizado - CARREGA TUDO para cálculo correto
-  const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: loadingContagens, refetch: refetchContagens } = useQueryWithRateLimit(
-    ['produtos-contagens-dashboard', empresaAtual?.id],
-    async () => {
+  const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: loadingContagens, refetch: refetchContagens } = useQuery({
+    queryKey: ['produtos-contagens-dashboard', empresaAtual?.id],
+    queryFn: async () => {
       const filtroBase = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
 
       // Buscar TODOS os produtos para contagem correta
@@ -52,23 +43,15 @@ export default function Estoque() {
       let hasMore = true;
       
       while (hasMore) {
-        try {
-          const batch = await base44.entities.Produto.filter(filtroBase, undefined, batchSize, skip);
-          if (!batch || batch.length === 0) {
+        const batch = await base44.entities.Produto.filter(filtroBase, undefined, batchSize, skip);
+        if (!batch || batch.length === 0) {
+          hasMore = false;
+        } else {
+          todosProdutos = [...todosProdutos, ...batch];
+          if (batch.length < batchSize) {
             hasMore = false;
           } else {
-            todosProdutos = [...todosProdutos, ...batch];
-            if (batch.length < batchSize) {
-              hasMore = false;
-            } else {
-              skip += batchSize;
-            }
-          }
-        } catch (error) {
-          if (error?.status === 429) {
-            hasMore = false;
-          } else {
-            throw error;
+            skip += batchSize;
           }
         }
       }
@@ -80,10 +63,14 @@ export default function Estoque() {
         p.status === 'Ativo' && (p.estoque_disponivel || 0) <= (p.estoque_minimo || 0)
       ).length;
 
+      console.log(`✅ CONTAGENS CORRETAS: Total=${total}, Revenda=${revenda}, Produção=${producao}, EstoqueBaixo=${estoqueBaixo}`);
+
       return { total, revenda, producao, estoqueBaixo };
     },
-    { initialData: { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 } }
-  );
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchInterval: false
+  });
 
   // ✅ Real-time update via subscription
   React.useEffect(() => {
@@ -93,41 +80,74 @@ export default function Estoque() {
     return unsubscribe;
   }, [refetchContagens]);
 
-  const { data: movimentacoes = [] } = useQueryWithRateLimit(
-    ['movimentacoes', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.MovimentacaoEstoque.filter(filtro, '-data_movimentacao', 50);
+  const { data: movimentacoes = [] } = useQuery({
+    queryKey: ['movimentacoes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.MovimentacaoEstoque.filter(filtro, '-data_movimentacao', 50);
+      } catch (err) {
+        console.error('Erro ao buscar movimentações:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchOnWindowFocus: false,
+    retry: 1
+  });
 
-  const { data: solicitacoes = [] } = useQueryWithRateLimit(
-    ['solicitacoes', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 50);
+  const { data: solicitacoes = [] } = useQuery({
+    queryKey: ['solicitacoes', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 50);
+      } catch (err) {
+        console.error('Erro ao buscar solicitações:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchOnWindowFocus: false,
+    retry: 1
+  });
 
-  const { data: ordensCompra = [] } = useQueryWithRateLimit(
-    ['ordensCompra', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.OrdemCompra.filter(filtro, '-data_solicitacao', 50);
+  const { data: ordensCompra = [] } = useQuery({
+    queryKey: ['ordensCompra', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.OrdemCompra.filter(filtro, '-data_solicitacao', 50);
+      } catch (err) {
+        console.error('Erro ao buscar ordens:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    gcTime: 60000,
+    refetchOnWindowFocus: false,
+    retry: 1
+  });
 
-  const { data: produtosParaKPIs = [] } = useQueryWithRateLimit(
-    ['produtos-kpis', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Produto.filter(filtro, undefined, 5000);
+  // Buscar produtos simples para KPIs de valor de estoque
+  const { data: produtosParaKPIs = [] } = useQuery({
+    queryKey: ['produtos-kpis', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.Produto.filter(filtro, undefined, 5000);
+      } catch (err) {
+        console.error('Erro ao buscar produtos para KPIs:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 60000,
+    gcTime: 120000,
+    refetchOnWindowFocus: false,
+    retry: 1
+  });
 
   const movimentacoesFiltradas = movimentacoes;
 
@@ -241,27 +261,23 @@ export default function Estoque() {
   ];
 
   const handleModuleClick = (module) => {
-    const WrappedComponent = () => (
-      <Suspense fallback={<LoadingFallback />}>
-        <module.component {...(module.props || {})} windowMode={true} />
-      </Suspense>
-    );
-    
-    openWindow(
-      WrappedComponent,
-      { ...(module.props || {}), windowMode: true },
-      {
-        title: module.windowTitle,
-        width: module.width,
-        height: module.height,
-        uniqueKey: `estoque-${module.title.toLowerCase().replace(/\s/g, '-')}`
-      }
-    );
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { ...(module.props || {}), windowMode: true },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `estoque-${module.title.toLowerCase().replace(/\s/g, '-')}`
+        }
+      );
+    });
   };
 
   return (
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 bg-gradient-to-br from-slate-50 to-indigo-50 overflow-auto">
+      <div className="w-full min-h-screen p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-indigo-50">
         <HeaderEstoqueCompacto />
         
         <KPIsEstoque

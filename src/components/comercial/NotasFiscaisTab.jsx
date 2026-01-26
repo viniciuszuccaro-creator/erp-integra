@@ -1,4 +1,4 @@
-import { useState, Suspense } from "react";
+import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "@/components/ui/textarea"; // Added Textarea
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,34 +26,46 @@ import {
   X,
   XCircle,
   Edit,
-  Printer,
-  Loader2
+  Printer
 } from "lucide-react";
 import GerarNFeModal from "./GerarNFeModal";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 import { mockCancelarNFe } from "@/components/integracoes/MockIntegracoes";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedidosProp, clientes: clientesProp, onCreateNFe }) {
-  // TODOS OS HOOKS PRIMEIRO
+export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [tipoFilter, setTipoFilter] = useState("todas");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedNF, setSelectedNF] = useState(null);
   const [viewingDetails, setViewingDetails] = useState(null);
+  // Seleção em massa + exportação
   const [selectedNotas, setSelectedNotas] = useState([]);
+  const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
+  const exportarNotasCSV = (lista) => {
+    const headers = ['numero','serie','tipo','cliente_fornecedor','empresa_id','data_emissao','valor_total','status'];
+    const csv = [
+      headers.join(','),
+      ...lista.map(n => headers.map(h => JSON.stringify(n[h] ?? '')).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `notas_fiscais_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { empresaAtual } = useContextoVisual();
+  const { hasPermission } = usePermissions();
+
   const [formData, setFormData] = useState({
     tipo: "NF-e (Saída)",
     cliente_fornecedor: "",
@@ -63,38 +75,6 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
     valor_produtos: 0,
     valor_total: 0,
     observacoes: ""
-  });
-  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const { hasPermission } = usePermissions();
-
-  const { data: notasFiscais = notasFiscaisProp || [] } = useQuery({
-    queryKey: ['notasfiscais', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return notasFiscaisProp || [];
-      return await base44.entities.NotaFiscal.filter({ empresa_faturamento_id: empresaAtual.id }, '-created_date', 1000);
-    },
-    enabled: true,
-    initialData: notasFiscaisProp || [],
-    staleTime: 30000,
-  });
-
-  const { data: pedidos = pedidosProp || [] } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return pedidosProp || [];
-      return await base44.entities.Pedido.filter({ empresa_id: empresaAtual.id }, undefined, 1000);
-    },
-    enabled: true,
-    initialData: pedidosProp || [],
-    staleTime: 30000,
-  });
-
-  const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
-    staleTime: 60000,
   });
 
   const createMutation = useMutation({
@@ -173,25 +153,6 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
     }
   });
 
-  const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
-  const isLoading = !notasFiscaisProp && !notasFiscais.length;
-
-  const exportarNotasCSV = (lista) => {
-    const headers = ['numero','serie','tipo','cliente_fornecedor','empresa_id','data_emissao','valor_total','status'];
-    const csv = [
-      headers.join(','),
-      ...lista.map(n => headers.map(h => JSON.stringify(n[h] ?? '')).join(','))
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `notas_fiscais_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (selectedNF) { // Changed from editingNota
@@ -257,14 +218,6 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
 
   const totalAutorizada = notasFiscais.filter(n => n.status === "Autorizada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
   const totalCancelada = notasFiscais.filter(n => n.status === "Cancelada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -672,13 +625,5 @@ function NotasFiscaisTabContent({ notasFiscais: notasFiscaisProp, pedidos: pedid
         </Dialog>
       )}
     </div>
-  );
-}
-
-export default function NotasFiscaisTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <NotasFiscaisTabContent {...props} />
-    </Suspense>
   );
 }

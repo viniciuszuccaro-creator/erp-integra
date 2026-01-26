@@ -1,6 +1,5 @@
 import Acessos from './pages/Acessos';
 import Agenda from './pages/Agenda';
-import AppMotorista from './pages/AppMotorista';
 import AuditoriaUI from './pages/AuditoriaUI';
 import CRM from './pages/CRM';
 import Cadastros from './pages/Cadastros';
@@ -14,19 +13,13 @@ import Dashboard from './pages/Dashboard';
 import DashboardCorporativo from './pages/DashboardCorporativo';
 import DemoMultitarefas from './pages/DemoMultitarefas';
 import Documentacao from './pages/Documentacao';
-import ETAPA2Dashboard from './pages/ETAPA2Dashboard';
-import ETAPA3Conclusao from './pages/ETAPA3Conclusao';
-import ETAPA3Dashboard from './pages/ETAPA3Dashboard';
-import ETAPA4Dashboard from './pages/ETAPA4Dashboard';
 import Empresas from './pages/Empresas';
 import EstabilizacaoSistema from './pages/EstabilizacaoSistema';
 import Estoque from './pages/Estoque';
-import ExemplosRBAC from './pages/ExemplosRBAC';
 import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
 import Fiscal from './pages/Fiscal';
 import GerenciamentoAcessosCompleto from './pages/GerenciamentoAcessosCompleto';
-import GovernancaETAPA1 from './pages/GovernancaETAPA1';
 import Home from './pages/Home';
 import HubAtendimento from './pages/HubAtendimento';
 import PadronizacaoUI from './pages/PadronizacaoUI';
@@ -42,7 +35,6 @@ import __Layout from './Layout.jsx';
 export const PAGES = {
     "Acessos": Acessos,
     "Agenda": Agenda,
-    "AppMotorista": AppMotorista,
     "AuditoriaUI": AuditoriaUI,
     "CRM": CRM,
     "Cadastros": Cadastros,
@@ -56,19 +48,13 @@ export const PAGES = {
     "DashboardCorporativo": DashboardCorporativo,
     "DemoMultitarefas": DemoMultitarefas,
     "Documentacao": Documentacao,
-    "ETAPA2Dashboard": ETAPA2Dashboard,
-    "ETAPA3Conclusao": ETAPA3Conclusao,
-    "ETAPA3Dashboard": ETAPA3Dashboard,
-    "ETAPA4Dashboard": ETAPA4Dashboard,
     "Empresas": Empresas,
     "EstabilizacaoSistema": EstabilizacaoSistema,
     "Estoque": Estoque,
-    "ExemplosRBAC": ExemplosRBAC,
     "Expedicao": Expedicao,
     "Financeiro": Financeiro,
     "Fiscal": Fiscal,
     "GerenciamentoAcessosCompleto": GerenciamentoAcessosCompleto,
-    "GovernancaETAPA1": GovernancaETAPA1,
     "Home": Home,
     "HubAtendimento": HubAtendimento,
     "PadronizacaoUI": PadronizacaoUI,

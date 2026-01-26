@@ -17,11 +17,10 @@ import { converterUnidade, ExibirEquivalenteKG, PreviewConversao } from '@/compo
  * AGORA COM: Conversão PC/MT/KG + IA de Sugestão
  */
 export default function ItensRevendaTab({ formData, setFormData, onNext }) {
-  // TODOS OS HOOKS PRIMEIRO
   const [search, setSearch] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [quantidade, setQuantidade] = useState(1);
-  const [unidadeVenda, setUnidadeVenda] = useState('UN');
+  const [unidadeVenda, setUnidadeVenda] = useState('UN'); // V21.1: Dropdown dinâmico
   const [descontoItem, setDescontoItem] = useState(0);
 
   const { data: produtos = [] } = useQuery({

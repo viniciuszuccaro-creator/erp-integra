@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Check, X, PackageMinus, Search } from "lucide-react";
+import { Plus, Check, X, PackageMinus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,31 +17,11 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 
-export default function RequisicoesAlmoxarifadoTab({ requisicoes: requisicoesProp, produtos: produtosProp }) {
-  const { getFiltroContexto, empresaAtual, contexto, isLoading: loadingContexto } = useContextoVisual();
-
-  const { data: requisicoes = [] } = useQuery({
-    queryKey: ['requisicoes-almox', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return requisicoesProp || [];
-      return await base44.entities.MovimentacaoEstoque.filter({ empresa_id: empresaAtual.id, tipo_movimento: 'saida', origem_movimento: 'requisicao' }, '-data_movimentacao', 500);
-    },
-    initialData: requisicoesProp || [],
-    staleTime: 30000,
-  });
-
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return produtosProp || [];
-      return await base44.entities.Produto.filter({ empresa_id: empresaAtual.id }, undefined, 2000);
-    },
-    initialData: produtosProp || [],
-    staleTime: 30000,
-  });
+export default function RequisicoesAlmoxarifadoTab({ requisicoes, produtos }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
+  const { empresaAtual, contexto } = useContextoVisual();
   const { canCreate } = usePermissions();
   const [formData, setFormData] = useState({
     numero_requisicao: `REQ-ALM-${Date.now()}`,
@@ -62,8 +42,8 @@ export default function RequisicoesAlmoxarifadoTab({ requisicoes: requisicoesPro
       // Criar requisição como MovimentacaoEstoque
       for (const item of data.itens) {
         await base44.entities.MovimentacaoEstoque.create({
-          empresa_id: data.empresa_id,
-          group_id: data.group_id,
+          empresa_id: empresaAtual?.id,
+          group_id: contexto?.group_id,
           produto_id: item.produto_id,
           produto_descricao: item.produto_descricao,
           tipo_movimento: "saida",

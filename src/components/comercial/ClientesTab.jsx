@@ -1,10 +1,8 @@
-import React, { useState, Suspense } from "react";
-import { base44 } from "@/api/base44Client";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UserCircle, Building2, ExternalLink, Users, Loader2 } from "lucide-react";
+import { UserCircle, Building2, ExternalLink, Users } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import SearchInput from "@/components/ui/SearchInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,42 +12,12 @@ import { useWindow } from "@/components/lib/useWindow";
 import VisualizadorUniversalEntidade from '../cadastros/VisualizadorUniversalEntidade';
 import CadastroClienteCompleto from '../cadastros/CadastroClienteCompleto';
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center py-12">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function ClientesTabContent({ clientes: clientesProp }) {
-  // TODOS OS HOOKS PRIMEIRO
+export default function ClientesTab({ clientes }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
-  const [sortField, setSortField] = useState('created_date');
-  const [sortDir, setSortDir] = useState('desc');
-  const toggleSort = (field) => {
-    setSortField(prev => {
-      if (prev === field) {
-        setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
-        return prev;
-      }
-      setSortDir('asc');
-      return field;
-    });
-  };
-  const { estaNoGrupo, empresasDoGrupo, empresaAtual, contextoReady, filterInContext } = useContextoVisual();
-  const { openWindow } = useWindow();
 
-  const { data: clientes = clientesProp || [], isLoading, error } = useQueryWithRateLimit(
-    ['clientes-tab', empresaAtual?.id, sortField, sortDir],
-    async () => {
-      const order = (sortDir === 'desc' ? '-' : '') + (sortField || 'created_date');
-      return await filterInContext('Cliente', {}, order, 1000, 'empresa_id');
-    },
-    { initialData: clientesProp || [] }
-  );
+  const { estaNoGrupo, empresasDoGrupo } = useContextoVisual();
+  const { openWindow } = useWindow();
 
   const filteredClientes = clientes.filter(c => {
     const matchSearch = c.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,36 +34,8 @@ function ClientesTabContent({ clientes: clientesProp }) {
     return empresa?.nome_fantasia || empresa?.razao_social || '-';
   };
 
-  if (!contextoReady) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
-        <p className="text-slate-600">Preparando contexto...</p>
-      </div>
-    );
-  }
-
-  if (isLoading && !clientesProp?.length) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
-        <p className="text-slate-600">Carregando clientes...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-full h-full flex items-center justify-center p-6">
-        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-4 py-3">
-          Erro ao carregar clientes.
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full h-full flex flex-col space-y-4 overflow-auto p-2">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Clientes</h2>
         <Button 
@@ -132,66 +72,47 @@ function ClientesTabContent({ clientes: clientesProp }) {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md w-full">
+      <Card className="border-0 shadow-md">
         <CardContent className="p-6">
-          <div className="flex flex-col lg:flex-row gap-4 w-full items-stretch lg:items-center">
+          <div className="flex flex-col sm:flex-row gap-4">
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
               placeholder="Buscar por nome, razão social, CPF ou CNPJ..."
               className="flex-1"
             />
-            <div className="flex gap-3 w-full lg:w-auto">
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="w-full lg:w-48">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="Ativo">Ativos</SelectItem>
-                  <SelectItem value="Prospect">Prospects</SelectItem>
-                  <SelectItem value="Inativo">Inativos</SelectItem>
-                  <SelectItem value="Bloqueado">Bloqueados</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortField} onValueChange={setSortField}>
-                <SelectTrigger className="w-full lg:w-48">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created_date">Criação</SelectItem>
-                  <SelectItem value="nome">Nome</SelectItem>
-                  <SelectItem value="status">Status</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
-                className="whitespace-nowrap"
-              >
-                {sortDir === 'asc' ? 'ASC' : 'DESC'}
-              </Button>
-            </div>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="Ativo">Ativos</SelectItem>
+                <SelectItem value="Prospect">Prospects</SelectItem>
+                <SelectItem value="Inativo">Inativos</SelectItem>
+                <SelectItem value="Bloqueado">Bloqueados</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md w-full flex-1 overflow-hidden flex flex-col">
-        <CardHeader className="bg-slate-50 border-b flex-shrink-0">
+      <Card className="border-0 shadow-md">
+        <CardHeader className="bg-slate-50 border-b">
           <CardTitle>Lista de Clientes ({filteredClientes.length})</CardTitle>
         </CardHeader>
-        <CardContent className="p-0 w-full flex-1 overflow-auto">
-          <div className="overflow-x-auto w-full h-full">
+        <CardContent>
+          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
-                  <TableHead onClick={() => toggleSort('nome')} className="cursor-pointer select-none">Cliente {sortField==='nome' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
-                  <TableHead onClick={() => toggleSort('cnpj')} className="cursor-pointer select-none">CPF/CNPJ {sortField==='cnpj' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>CPF/CNPJ</TableHead>
                   <TableHead>Contato</TableHead>
-                  <TableHead onClick={() => toggleSort('endereco_principal.cidade')} className="cursor-pointer select-none">Cidade {sortField==='endereco_principal.cidade' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
+                  <TableHead>Cidade</TableHead>
                   {estaNoGrupo && <TableHead>Empresa</TableHead>}
-                  <TableHead onClick={() => toggleSort('condicao_comercial.limite_credito')} className="cursor-pointer select-none">Limite Crédito {sortField==='condicao_comercial.limite_credito' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
-                  <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none">Status {sortField==='status' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
+                  <TableHead>Limite Crédito</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Ação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -254,13 +175,5 @@ function ClientesTabContent({ clientes: clientesProp }) {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-export default function ClientesTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <ClientesTabContent {...props} />
-    </Suspense>
   );
 }

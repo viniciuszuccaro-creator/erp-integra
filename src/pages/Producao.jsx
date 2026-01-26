@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Factory, LayoutGrid, Clock, CheckCircle, AlertTriangle, Settings, BarChart3, Activity, Zap, FileText, Sparkles, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Factory, LayoutGrid, Clock, CheckCircle, AlertTriangle, Settings, BarChart3, Activity, Zap, FileText, Sparkles } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
@@ -20,41 +20,43 @@ const DashboardProducaoRealtime = React.lazy(() => import("../components/produca
 const IADiagnosticoEquipamentos = React.lazy(() => import("../components/producao/IADiagnosticoEquipamentos"));
 const DocumentosProducao = React.lazy(() => import("../components/producao/DocumentosProducao"));
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
 export default function Producao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: ordensProducao = [] } = useQueryWithRateLimit(
-    ['ordens-producao', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.OrdemProducao.filter(filtro, '-created_date', 100);
+  const { data: ordensProducao = [] } = useQuery({
+    queryKey: ['ordens-producao', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.OrdemProducao.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar ordens de produção:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
-  const { data: totalOrdensProducao = 0 } = useQueryWithRateLimit(
-    ['ordens-producao-count', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      const response = await base44.functions.invoke('countEntities', {
-        entityName: 'OrdemProducao',
-        filter: filtro
-      });
-      return response.data?.count || 0;
+  const { data: totalOrdensProducao = 0 } = useQuery({
+    queryKey: ['ordens-producao-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'OrdemProducao',
+          filter: filtro
+        });
+        return response.data?.count || ordensProducao.length;
+      } catch {
+        return ordensProducao.length;
+      }
     },
-    { initialData: 0 }
-  );
+    staleTime: 60000,
+    retry: 1
+  });
 
   const totalOPs = ordensProducao.length;
   const opsLiberadas = ordensProducao.filter(op => op.status === "Liberada").length;
@@ -184,22 +186,21 @@ export default function Producao() {
   ];
 
   const handleModuleClick = (module) => {
-    const WrappedComponent = () => (
-      <Suspense fallback={<LoadingFallback />}>
-        <module.component {...(module.props || {})} windowMode={true} />
-      </Suspense>
-    );
-    
-    openWindow(
-      WrappedComponent,
-      { ...(module.props || {}), windowMode: true },
-      {
-        title: module.windowTitle,
-        width: module.width,
-        height: module.height,
-        uniqueKey: `producao-${module.title.toLowerCase().replace(/\s/g, '-')}`
-      }
-    );
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { 
+          ...(module.props || {}),
+          windowMode: true 
+        },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `producao-${module.title.toLowerCase().replace(/\s/g, '-')}`
+        }
+      );
+    });
   };
 
   return (

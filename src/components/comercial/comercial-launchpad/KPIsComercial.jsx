@@ -4,7 +4,7 @@ import { Users, ShoppingCart, TrendingUp, FileText } from 'lucide-react';
 
 export default function KPIsComercial({ totalClientes, clientesAtivos, totalPedidos, totalVendas, ticketMedio }) {
   return (
-    <div className="grid grid-cols-4 gap-2 min-h-[90px] max-h-[90px] w-full flex-shrink-0">
+    <div className="grid grid-cols-4 gap-2 min-h-[90px] max-h-[90px]">
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
           <CardTitle className="text-xs font-medium">Clientes</CardTitle>

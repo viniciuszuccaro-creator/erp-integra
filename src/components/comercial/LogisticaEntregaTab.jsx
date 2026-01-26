@@ -18,11 +18,9 @@ import CriarEtapaEntregaModal from './CriarEtapaEntregaModal';
  * V21.1 - Novo gerenciamento de Etapas de Entrega
  */
 export default function LogisticaEntregaTab({ formData, setFormData, clientes = [], onNext }) {
-  // TODOS OS HOOKS PRIMEIRO
+  const { isAdmin, canApprove } = usePermissions(); // Keep usePermissions if other parts might need it, even if podeGerenciarEtapas is removed.
   const [modalEtapaOpen, setModalEtapaOpen] = useState(false);
-  const { isAdmin, canApprove } = usePermissions();
 
-  // CÁLCULOS APÓS HOOKS
   const clienteSelecionado = clientes?.find(c => c.id === formData?.cliente_id) || null;
 
   // Regra 30kg: Frete grátis
@@ -64,9 +62,10 @@ export default function LogisticaEntregaTab({ formData, setFormData, clientes = 
     toast.success('Etapa removida');
   };
 
-  // CÁLCULOS APÓS HOOKS
   const etapas = formData.etapas_entrega || [];
   const totalItensAlocados = etapas.reduce((sum, e) => sum + (e.quantidade_total_itens || 0), 0);
+  
+  // Combine all raw items to get total count for comparison with alocated items
   const totalItens = 
     (formData.itens_revenda?.length || 0) +
     (formData.itens_armado_padrao?.length || 0) +

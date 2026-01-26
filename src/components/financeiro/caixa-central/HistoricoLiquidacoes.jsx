@@ -7,7 +7,6 @@ import useContextoVisual from '@/components/lib/useContextoVisual';
 import { CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function HistoricoLiquidacoes() {
-  // TODOS OS HOOKS PRIMEIRO
   const { filterInContext, empresaAtual } = useContextoVisual();
 
   const { data: ordensLiquidacao = [], isLoading } = useQuery({
@@ -16,7 +15,9 @@ export default function HistoricoLiquidacoes() {
     enabled: !!empresaAtual?.id
   });
 
-  // EARLY RETURN APÓS HOOKS
+  const ordensLiquidadas = ordensLiquidacao.filter(o => o.status === "Liquidado");
+  const ordensCanceladas = ordensLiquidacao.filter(o => o.status === "Cancelado");
+
   if (isLoading) {
     return (
       <Card>
@@ -26,10 +27,6 @@ export default function HistoricoLiquidacoes() {
       </Card>
     );
   }
-
-  // CÁLCULOS APÓS EARLY RETURN
-  const ordensLiquidadas = ordensLiquidacao.filter(o => o.status === "Liquidado");
-  const ordensCanceladas = ordensLiquidacao.filter(o => o.status === "Cancelado");
 
   return (
     <Card className="border-0 shadow-md">

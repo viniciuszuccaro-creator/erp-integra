@@ -18,10 +18,10 @@ import HistoricoOrigemCliente from '../HistoricoOrigemCliente';
  * V21.6 - Com detecção automática de origem, bloqueio e IA de sugestão
  */
 export default function WizardEtapa1Cliente({ formData, setFormData, clientes = [], onNext, bloquearOrigemEdicao = false }) {
-  // TODOS OS HOOKS PRIMEIRO
-  const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const { user } = useUser();
-
+  const [clienteSelecionado, setClienteSelecionado] = useState(null);
+  
+  // V21.6: Buscar configurações de origem
   const { data: parametrosOrigem = [] } = useQuery({
     queryKey: ['parametros-origem-pedido'],
     queryFn: () => base44.entities.ParametroOrigemPedido.list(),

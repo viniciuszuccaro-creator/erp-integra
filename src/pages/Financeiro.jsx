@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Wallet, Zap, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Wallet, Zap } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
@@ -25,15 +25,6 @@ const AlertasFinanceirosEmpresa = React.lazy(() => import("../components/finance
 const RelatorioFinanceiro = React.lazy(() => import("../components/financeiro/RelatorioFinanceiro"));
 const DashboardFormasPagamento = React.lazy(() => import("../components/financeiro/DashboardFormasPagamento"));
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
 export default function Financeiro() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
@@ -47,91 +38,145 @@ export default function Financeiro() {
     adicionarColunasContexto
   } = useContextoVisual();
 
-  const { data: contasReceber = [] } = useQueryWithRateLimit(
-    ['contasReceber', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.ContaReceber.filter(filtro, '-data_vencimento', 100);
+  const { data: contasReceber = [] } = useQuery({
+    queryKey: ['contasReceber', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.ContaReceber.filter(filtro, '-data_vencimento', 100);
+      } catch (err) {
+        console.error('Erro ao buscar contas a receber:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
-  const { data: totalContasReceber = 0 } = useQueryWithRateLimit(
-    ['contas-receber-count', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      const response = await base44.functions.invoke('countEntities', {
-        entityName: 'ContaReceber',
-        filter: filtro
-      });
-      return response.data?.count || contasReceber.length;
+  const { data: totalContasReceber = 0 } = useQuery({
+    queryKey: ['contas-receber-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'ContaReceber',
+          filter: filtro
+        });
+        return response.data?.count || contasReceber.length;
+      } catch {
+        return contasReceber.length;
+      }
     },
-    { initialData: 0 }
-  );
+    staleTime: 60000,
+    retry: 1
+  });
 
-  const { data: contasPagar = [] } = useQueryWithRateLimit(
-    ['contasPagar', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.ContaPagar.filter(filtro, '-data_vencimento', 100);
+  const { data: contasPagar = [] } = useQuery({
+    queryKey: ['contasPagar', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.ContaPagar.filter(filtro, '-data_vencimento', 100);
+      } catch (err) {
+        console.error('Erro ao buscar contas a pagar:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
-  const { data: totalContasPagar = 0 } = useQueryWithRateLimit(
-    ['contas-pagar-count', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      const response = await base44.functions.invoke('countEntities', {
-        entityName: 'ContaPagar',
-        filter: filtro
-      });
-      return response.data?.count || contasPagar.length;
+  const { data: totalContasPagar = 0 } = useQuery({
+    queryKey: ['contas-pagar-count', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'ContaPagar',
+          filter: filtro
+        });
+        return response.data?.count || contasPagar.length;
+      } catch {
+        return contasPagar.length;
+      }
     },
-    { initialData: 0 }
-  );
+    staleTime: 60000,
+    retry: 1
+  });
 
-  const { data: rateios = [] } = useQueryWithRateLimit(
-    ['rateios', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.RateioFinanceiro.filter(filtro, '-created_date', 50);
+  const { data: rateios = [] } = useQuery({
+    queryKey: ['rateios', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.RateioFinanceiro.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar rateios:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: extratosBancarios = [] } = useQueryWithRateLimit(
-    ['extratos', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.ExtratoBancario.filter(filtro, '-data_movimento', 100);
+  const { data: extratosBancarios = [] } = useQuery({
+    queryKey: ['extratos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.ExtratoBancario.filter(filtro, '-data_movimento', 100);
+      } catch (err) {
+        console.error('Erro ao buscar extratos:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: configsGateway = [] } = useQueryWithRateLimit(
-    ['configs-gateway', empresaAtual?.id],
-    async () => await base44.entities.ConfiguracaoGatewayPagamento.list(),
-    { initialData: [] }
-  );
-
-  const { data: ordensLiquidacao = [] } = useQueryWithRateLimit(
-    ['caixa-ordens-liquidacao', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.CaixaOrdemLiquidacao.filter(filtro, '-created_date', 50);
+  const { data: configsGateway = [] } = useQuery({
+    queryKey: ['configs-gateway', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        return await base44.entities.ConfiguracaoGatewayPagamento.list();
+      } catch (err) {
+        console.error('Erro ao buscar configs gateway:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 60000,
+    retry: 1
+  });
 
-  const { data: pedidosPendentesAprovacao = [] } = useQueryWithRateLimit(
-    ['pedidos-pendentes-aprovacao', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id, status_aprovacao: "pendente" } : { status_aprovacao: "pendente" };
-      return await base44.entities.Pedido.filter(filtro, '-created_date', 50);
+  const { data: ordensLiquidacao = [] } = useQuery({
+    queryKey: ['caixa-ordens-liquidacao', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        return await base44.entities.CaixaOrdemLiquidacao.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar ordens de liquidação:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
+
+  const { data: pedidosPendentesAprovacao = [] } = useQuery({
+    queryKey: ['pedidos-pendentes-aprovacao', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id, status_aprovacao: "pendente" } : { status_aprovacao: "pendente" };
+        return await base44.entities.Pedido.filter(filtro, '-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos pendentes:', err);
+        return [];
+      }
+    },
+    staleTime: 30000,
+    retry: 1
+  });
 
   // Dados já vêm filtrados do servidor
   const contasReceberFiltradas = contasReceber;
@@ -317,29 +362,27 @@ export default function Financeiro() {
   const allModules = [...modules, ...grupoModules];
 
   const handleModuleClick = (module) => {
-    const WrappedComponent = () => (
-      <ErrorBoundary>
-        <Suspense fallback={<LoadingFallback />}>
-          <module.component {...(module.props || {})} empresaAtual={empresaAtual} windowMode={true} />
-        </Suspense>
-      </ErrorBoundary>
-    );
-    
-    openWindow(
-      WrappedComponent,
-      { ...(module.props || {}), empresaAtual, windowMode: true },
-      {
-        title: module.windowTitle,
-        width: module.width,
-        height: module.height,
-        uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}`
-      }
-    );
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { 
+          ...(module.props || {}),
+          empresaAtual,
+          windowMode: true 
+        },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `financeiro-${module.title.toLowerCase().replace(/\s/g, '-').replace(/•/g, '')}`
+        }
+      );
+    });
   };
 
   return (
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 bg-gradient-to-br from-slate-50 to-blue-50 overflow-auto">
+      <div className="w-full min-h-screen p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderFinanceiroCompacto 
           estaNoGrupo={estaNoGrupo}
           empresaAtual={empresaAtual}

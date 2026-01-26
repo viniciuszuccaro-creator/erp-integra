@@ -1,181 +1,117 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
-import { CreditCard, DollarSign } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CreditCard, DollarSign, Calendar, TrendingDown } from 'lucide-react';
 
 /**
- * REGISTRO PAGAMENTO COMPLETO - Interface de 3 estágios
- * ETAPA 2: Recebido → Compensado → Conciliado
+ * V22.0 ETAPA 4 - Registro Completo de Pagamento
+ * Exibe todos os detalhes de um pagamento/recebimento
  */
-
-export default function RegistroPagamentoCompleto({ contaId, entityName = 'ContaReceber' }) {
-  const [conta, setConta] = React.useState(null);
-  const [etapa, setEtapa] = useState('recebimento');
-  const [dados, setDados] = useState({
-    forma_pagamento: '',
-    data_pagamento: new Date().toISOString().split('T')[0],
-    valor_bruto: 0,
-    taxa: 0,
-    valor_liquido: 0
-  });
-
-  React.useEffect(() => {
-    const carregarConta = async () => {
-      const c = await base44.entities[entityName].get(contaId);
-      setConta(c);
-      setDados(d => ({ ...d, valor_bruto: c.valor }));
-    };
-    carregarConta();
-  }, [contaId, entityName]);
-
-  const handleReceber = async () => {
-    try {
-      const valorLiquido = dados.valor_bruto - (dados.valor_bruto * dados.taxa / 100);
-      await base44.entities[entityName].update(contaId, {
-        status_compensacao: 'Aguardando',
-        data_recebido_caixa: dados.data_pagamento,
-        valor_bruto: dados.valor_bruto,
-        taxa_operadora: dados.taxa,
-        valor_liquido: valorLiquido,
-        forma_pagamento: dados.forma_pagamento
-      });
-      setEtapa('compensacao');
-    } catch (err) {
-      alert('Erro: ' + err.message);
-    }
-  };
-
-  const handleCompensar = async () => {
-    try {
-      await base44.entities[entityName].update(contaId, {
-        status_compensacao: 'Compensado',
-        data_compensado_banco: new Date().toISOString().split('T')[0]
-      });
-      setEtapa('conciliacao');
-    } catch (err) {
-      alert('Erro: ' + err.message);
-    }
-  };
-
-  const handleConciliar = async () => {
-    try {
-      await base44.entities[entityName].update(contaId, {
-        status: 'Recebido',
-        status_compensacao: 'Conciliado',
-        data_pagamento: dados.data_pagamento
-      });
-      alert('Pagamento conciliado com sucesso!');
-    } catch (err) {
-      alert('Erro: ' + err.message);
-    }
-  };
+export default function RegistroPagamentoCompleto({ conta }) {
+  const detalhes = conta.detalhes_pagamento || {};
+  const ehReceber = !!conta.cliente;
 
   return (
-    <div className="space-y-4 p-6 bg-gradient-to-br from-slate-50 to-green-50 rounded-xl">
-      <h2 className="text-xl font-bold text-slate-900">Registro de Pagamento</h2>
+    <Card className="border-2 border-blue-400">
+      <CardHeader className="bg-blue-50 pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <CreditCard className="w-5 h-5 text-blue-600" />
+          Detalhes Completos do {ehReceber ? 'Recebimento' : 'Pagamento'}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 space-y-3">
+        {/* Forma de Pagamento */}
+        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <span className="text-sm text-slate-600">Forma de Pagamento</span>
+          <Badge className="bg-blue-600 text-white">
+            {conta.forma_recebimento || conta.forma_pagamento || 'Não definido'}
+          </Badge>
+        </div>
 
-      {conta && (
-        <Card className="border-2 border-green-300">
-          <CardContent className="pt-6 grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-slate-600">Descrição</span>
-              <p className="font-semibold">{conta.descricao}</p>
-            </div>
-            <div>
-              <span className="text-slate-600">Valor Total</span>
-              <p className="font-bold">R$ {conta.valor?.toFixed(2)}</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Bandeira (se cartão) */}
+        {detalhes.bandeira_cartao && (
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <span className="text-sm text-slate-600">Bandeira do Cartão</span>
+            <span className="font-semibold text-slate-900">{detalhes.bandeira_cartao}</span>
+          </div>
+        )}
 
-      {/* ESTÁGIO 1: Recebimento */}
-      {(etapa === 'recebimento' || etapa === 'compensacao' || etapa === 'conciliacao') && (
-        <Card className={`border-2 ${etapa === 'recebimento' ? 'border-blue-300 bg-blue-50' : 'border-slate-200'}`}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <DollarSign className="w-4 h-4" /> Estágio 1: Recebimento
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <input
-              type="text"
-              placeholder="Forma de pagamento"
-              value={dados.forma_pagamento}
-              onChange={(e) => setDados({...dados, forma_pagamento: e.target.value})}
-              className="w-full p-2 border border-slate-300 rounded"
-              disabled={etapa !== 'recebimento'}
-            />
-            <input
-              type="date"
-              value={dados.data_pagamento}
-              onChange={(e) => setDados({...dados, data_pagamento: e.target.value})}
-              className="w-full p-2 border border-slate-300 rounded"
-              disabled={etapa !== 'recebimento'}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="text-slate-600">Valor Bruto</span>
-                <p className="font-bold">R$ {dados.valor_bruto.toFixed(2)}</p>
+        {/* Autorização (se cartão) */}
+        {detalhes.numero_autorizacao && (
+          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+            <span className="text-sm text-slate-600">Nº Autorização</span>
+            <span className="font-mono text-sm text-slate-900">{detalhes.numero_autorizacao}</span>
+          </div>
+        )}
+
+        {/* Valores */}
+        <div className="border-t pt-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-600">Valor Bruto</span>
+            <span className="font-bold text-slate-900">
+              R$ {(detalhes.valor_bruto || conta.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+          
+          {detalhes.taxa_operadora > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-600 flex items-center gap-1">
+                <TrendingDown className="w-3 h-3" />
+                Taxa Operadora ({detalhes.taxa_operadora}%)
+              </span>
+              <span className="font-bold text-red-600">
+                - R$ {((detalhes.valor_bruto || conta.valor || 0) * detalhes.taxa_operadora / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          )}
+          
+          <div className="flex items-center justify-between pt-2 border-t">
+            <span className="text-sm font-bold text-slate-700">Valor Líquido</span>
+            <span className="text-xl font-bold text-green-600">
+              R$ {(detalhes.valor_liquido || conta.valor_recebido || conta.valor_pago || conta.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </span>
+          </div>
+        </div>
+
+        {/* Estágios */}
+        {detalhes.data_recebido_caixa && (
+          <div className="border-t pt-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-semibold text-slate-700">Estágios de Recebimento</span>
+            </div>
+            
+            <div className="flex items-center justify-between p-2 bg-green-50 rounded">
+              <span className="text-sm text-slate-600">Recebido no Caixa</span>
+              <span className="text-sm font-semibold text-green-600">
+                {new Date(detalhes.data_recebido_caixa).toLocaleDateString('pt-BR')}
+              </span>
+            </div>
+            
+            {detalhes.data_compensado_banco ? (
+              <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                <span className="text-sm text-slate-600">Compensado no Banco</span>
+                <span className="text-sm font-semibold text-blue-600">
+                  {new Date(detalhes.data_compensado_banco).toLocaleDateString('pt-BR')}
+                </span>
               </div>
-              <div>
-                <span className="text-slate-600">Taxa %</span>
-                <input
-                  type="number"
-                  value={dados.taxa}
-                  onChange={(e) => setDados({...dados, taxa: parseFloat(e.target.value)})}
-                  className="w-full p-1 border border-slate-300 rounded text-sm"
-                  disabled={etapa !== 'recebimento'}
-                />
+            ) : (
+              <div className="flex items-center justify-between p-2 bg-orange-50 rounded">
+                <span className="text-sm text-slate-600">Compensação Bancária</span>
+                <Badge className="bg-orange-600 text-white">Aguardando</Badge>
               </div>
-            </div>
-            <div>
-              <span className="text-slate-600">Valor Líquido</span>
-              <p className="font-bold">R$ {(dados.valor_bruto - (dados.valor_bruto * dados.taxa / 100)).toFixed(2)}</p>
-            </div>
-            {etapa === 'recebimento' && (
-              <Button onClick={handleReceber} className="w-full bg-blue-600 hover:bg-blue-700">
-                ✅ Registrar Recebimento
-              </Button>
             )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
 
-      {/* ESTÁGIO 2: Compensação */}
-      {(etapa === 'compensacao' || etapa === 'conciliacao') && (
-        <Card className={`border-2 ${etapa === 'compensacao' ? 'border-yellow-300 bg-yellow-50' : 'border-slate-200'}`}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm">
-              <CreditCard className="w-4 h-4" /> Estágio 2: Compensação
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <p className="text-slate-600">Aguardando compensação no banco...</p>
-            {etapa === 'compensacao' && (
-              <Button onClick={handleCompensar} className="w-full bg-yellow-600 hover:bg-yellow-700">
-                ✅ Marcar como Compensado
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ESTÁGIO 3: Conciliação */}
-      {etapa === 'conciliacao' && (
-        <Card className="border-2 border-green-300 bg-green-50">
-          <CardHeader>
-            <CardTitle className="text-sm">Estágio 3: Conciliação</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <p className="text-green-700 font-semibold">Pagamento compensado! Finalize a conciliação.</p>
-            <Button onClick={handleConciliar} className="w-full bg-green-600 hover:bg-green-700">
-              ✅ Finalizar Conciliação
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        {/* Observações */}
+        {detalhes.observacoes && (
+          <div className="border-t pt-3">
+            <p className="text-xs text-slate-600 mb-1">Observações</p>
+            <p className="text-sm text-slate-700 p-2 bg-slate-50 rounded">{detalhes.observacoes}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

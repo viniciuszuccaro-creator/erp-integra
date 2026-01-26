@@ -59,7 +59,7 @@ export default function InsightsFinanceirosCompacto({
   }
 
   return (
-    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 min-h-[120px] max-h-[120px] w-full flex-shrink-0">
+    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-pink-50 min-h-[120px] max-h-[120px]">
       <CardHeader className="bg-gradient-to-r from-purple-100 to-pink-100 border-b px-2 py-1.5">
         <CardTitle className="text-xs flex items-center gap-1.5 text-purple-900">
           <Zap className="w-3 h-3 flex-shrink-0" />

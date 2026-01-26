@@ -1,34 +1,19 @@
-import React, { useState, Suspense } from "react";
-import { Loader2 } from "lucide-react";
-
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import useContextoVisual from "@/components/lib/useContextoVisual";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CreditCard, CheckCircle, AlertCircle, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[300px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function CartoesACompensar() {
-  // TODOS OS HOOKS PRIMEIRO
-  const [filtroStatus, setFiltroStatus] = useState("todos");
+export default function CartoesACompensar() {
   const queryClient = useQueryClient();
-  const ctx = useContextoVisual();
+  const [filtroStatus, setFiltroStatus] = useState("todos");
 
   const { data: cartoes = [], isLoading } = useQuery({
     queryKey: ["movimento-cartao"],
     queryFn: () => base44.entities.MovimentoCartao.list(),
-    enabled: !!ctx?.contextoReady
   });
 
   const conciliarMutation = useMutation({
@@ -44,7 +29,6 @@ function CartoesACompensar() {
     },
   });
 
-  // CÁLCULOS APÓS HOOKS
   const cartoesFiltrados = filtroStatus === "todos" 
     ? cartoes 
     : cartoes.filter(c => c.status_compensacao === filtroStatus);
@@ -57,10 +41,7 @@ function CartoesACompensar() {
     .filter(c => c.status_compensacao === "Compensado")
     .reduce((acc, c) => acc + (c.valor_liquido || 0), 0);
 
-  // EARLY RETURN APÓS TODOS OS HOOKS E CÁLCULOS
-  if (!ctx?.contextoReady || isLoading) {
-    return <LoadingFallback />;
-  }
+  if (isLoading) return <div className="p-6">Carregando cartões...</div>;
 
   return (
     <div className="space-y-6">
@@ -206,13 +187,5 @@ function CartoesACompensar() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-export default function CartoesACompencarWrapper(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <CartoesACompensar {...props} />
-    </Suspense>
   );
 }

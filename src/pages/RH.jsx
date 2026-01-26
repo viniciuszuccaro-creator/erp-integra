@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import useQueryWithRateLimit from "@/components/lib/useQueryWithRateLimit";
-import { Users, Clock, Calendar, Activity, Trophy, FileText, UserCircle, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Users, Clock, Calendar, Activity, Trophy, FileText, UserCircle } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
@@ -16,58 +16,73 @@ const MonitoramentoRHInteligente = React.lazy(() => import("@/components/rh/Moni
 const PontoEletronicoBiometrico = React.lazy(() => import("@/components/rh/PontoEletronicoBiometrico"));
 const DashboardRHRealtime = React.lazy(() => import("../components/rh/DashboardRHRealtime"));
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
 export default function RH() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: colaboradores = [] } = useQueryWithRateLimit(
-    ['colaboradores', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
-      return await base44.entities.Colaborador.filter(filtro, '-created_date', 100);
+  const { data: colaboradores = [] } = useQuery({
+    queryKey: ['colaboradores', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
+        return await base44.entities.Colaborador.filter(filtro, '-created_date', 100);
+      } catch (err) {
+        console.error('Erro ao buscar colaboradores:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 2
+  });
 
-  const { data: totalColaboradores = 0 } = useQueryWithRateLimit(
-    ['colaboradores-count-rh', empresaAtual?.id],
-    async () => {
-      const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
-      const response = await base44.functions.invoke('countEntities', {
-        entityName: 'Colaborador',
-        filter: filtro
-      });
-      return response.data?.count || 0;
+  const { data: totalColaboradores = 0 } = useQuery({
+    queryKey: ['colaboradores-count-rh', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Colaborador',
+          filter: filtro
+        });
+        return response.data?.count || colaboradores.length;
+      } catch {
+        return colaboradores.length;
+      }
     },
-    { initialData: 0 }
-  );
+    staleTime: 60000,
+    retry: 1
+  });
 
-  const { data: pontos = [] } = useQueryWithRateLimit(
-    ['pontos', empresaAtual?.id],
-    async () => {
-      return await base44.entities.Ponto.list('-data', 100);
+  const { data: pontos = [] } = useQuery({
+    queryKey: ['pontos', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Ponto.list('-data', 100);
+      } catch (err) {
+        console.error('Erro ao buscar pontos:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
-  const { data: ferias = [] } = useQueryWithRateLimit(
-    ['ferias', empresaAtual?.id],
-    async () => {
-      return await base44.entities.Ferias.list('-created_date', 50);
+  const { data: ferias = [] } = useQuery({
+    queryKey: ['ferias', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        return await base44.entities.Ferias.list('-created_date', 50);
+      } catch (err) {
+        console.error('Erro ao buscar férias:', err);
+        return [];
+      }
     },
-    { initialData: [] }
-  );
+    staleTime: 30000,
+    retry: 1
+  });
 
+  // Dados já vêm filtrados do servidor
   const colaboradoresFiltrados = colaboradores;
   const colaboradoresAtivos = colaboradoresFiltrados.filter(c => c.status === "Ativo").length;
   const feriasAprovadas = ferias.filter(f => f.status === "Aprovada").length;
@@ -161,22 +176,21 @@ export default function RH() {
   ];
 
   const handleModuleClick = (module) => {
-    const WrappedComponent = () => (
-      <Suspense fallback={<LoadingFallback />}>
-        <module.component {...(module.props || {})} windowMode={true} />
-      </Suspense>
-    );
-    
-    openWindow(
-      WrappedComponent,
-      { ...(module.props || {}), windowMode: true },
-      {
-        title: module.windowTitle,
-        width: module.width,
-        height: module.height,
-        uniqueKey: `rh-${module.title.toLowerCase().replace(/\s/g, '-')}`
-      }
-    );
+    React.startTransition(() => {
+      openWindow(
+        module.component,
+        { 
+          ...(module.props || {}),
+          windowMode: true 
+        },
+        {
+          title: module.windowTitle,
+          width: module.width,
+          height: module.height,
+          uniqueKey: `rh-${module.title.toLowerCase().replace(/\s/g, '-')}`
+        }
+      );
+    });
   };
 
   return (

@@ -16,42 +16,17 @@ import {
 } from "lucide-react";
 
 export default function HistoricoAlteracoesPerfil({ perfilId }) {
-  const { data: historico = [], isLoading } = useQuery({
+  const { data: historico = [] } = useQuery({
     queryKey: ['auditoria-perfil', perfilId],
     queryFn: async () => {
-      if (!perfilId) return [];
-      try {
-        const logs = await base44.entities.AuditLog.filter({
-          entidade: 'PerfilAcesso',
-          registro_id: perfilId
-        }, '-created_date', 50);
-        return logs || [];
-      } catch (error) {
-        console.error('Erro ao buscar histórico:', error);
-        return [];
-      }
+      const logs = await base44.entities.AuditLog.filter({
+        entity_type: 'PerfilAcesso',
+        entity_id: perfilId
+      }, '-created_date', 50);
+      return logs;
     },
-    enabled: !!perfilId,
-    initialData: []
+    enabled: !!perfilId
   });
-
-  if (!perfilId) {
-    return (
-      <div className="text-center py-12 text-slate-500">
-        <History className="w-12 h-12 mx-auto mb-3 opacity-30" />
-        <p>Perfil não selecionado</p>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="text-center py-12 text-slate-500">
-        <History className="w-12 h-12 mx-auto mb-3 opacity-30 animate-spin" />
-        <p>Carregando histórico...</p>
-      </div>
-    );
-  }
 
   const getIconeAcao = (acao) => {
     switch (acao) {

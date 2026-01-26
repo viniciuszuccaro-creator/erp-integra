@@ -26,8 +26,6 @@ import {
   Activity
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import StatusFinalEtapa1_100 from '@/components/governanca/StatusFinalEtapa1_100';
-import ResumoExecutivoEtapa1 from '@/components/governanca/ResumoExecutivoEtapa1';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -55,10 +53,7 @@ const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem"));
-import { useUser } from "@/components/lib/UserContext";
-import WidgetEntregasHoje from "@/components/logistica/WidgetEntregasHoje";
-import ResumoExecutivoETAPA3 from "@/components/governanca/ResumoExecutivoETAPA3";
-const WidgetETAPA3Completa = React.lazy(() => import("@/components/governanca/WidgetETAPA3Completa"));
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -721,8 +716,8 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-blue-50 overflow-hidden">
-      <div className="w-full flex-1 overflow-auto p-6 space-y-6">
+    <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="flex-1 overflow-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Executivo</h1>
@@ -793,17 +788,6 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
-          {/* ETAPA 1 + ETAPA 3: Widgets Governança */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <StatusFinalEtapa1_100 />
-            <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-              <WidgetETAPA3Completa />
-            </Suspense>
-            <div className="lg:col-span-1">
-              <ResumoExecutivoEtapa1 />
-            </div>
-          </div>
-
           {/* KPIs Principais + Widget Canais */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {statsCards.map((stat, index) => (

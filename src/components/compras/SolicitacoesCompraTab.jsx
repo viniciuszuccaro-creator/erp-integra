@@ -27,8 +27,7 @@ import SolicitacaoCompraForm from "./SolicitacaoCompraForm";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast as sonnerToast } from "sonner";
 
-export default function SolicitacoesCompraTab({ solicitacoes: solicitacoesProp, windowMode = false }) {
-  const solicitacoes = solicitacoesProp || [];
+export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const { openWindow } = useWindow();
@@ -73,8 +72,6 @@ export default function SolicitacoesCompraTab({ solicitacoes: solicitacoesProp, 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list(),
-    initialData: [],
-    enabled: true
   });
 
   const { data: user } = useQuery({

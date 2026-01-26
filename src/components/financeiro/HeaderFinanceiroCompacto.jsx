@@ -11,7 +11,7 @@ export default function HeaderFinanceiroCompacto({
   empresaAtual 
 }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 w-full flex-shrink-0">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
       <div>
         <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-blue-600 flex-shrink-0" />

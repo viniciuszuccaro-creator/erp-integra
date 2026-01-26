@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,25 +25,16 @@ import { base44 } from '@/api/base44Client';
 import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
 import ProtectedSection from '@/components/security/ProtectedSection';
 
-// Componentes das Etapas com Suspense
-const WizardEtapa1Cliente = lazy(() => import('./wizard/WizardEtapa1Cliente'));
-const ItensRevendaTab = lazy(() => import('./ItensRevendaTab'));
-const ArmadoPadraoTab = lazy(() => import('./ArmadoPadraoTab'));
-const CorteDobraIATab = lazy(() => import('./CorteDobraIATab'));
-const HistoricoClienteTab = lazy(() => import('./HistoricoClienteTab'));
-const LogisticaEntregaTab = lazy(() => import('./LogisticaEntregaTab'));
-const FechamentoFinanceiroTab = lazy(() => import('./FechamentoFinanceiroTab'));
-const ArquivosProjetosTab = lazy(() => import('./ArquivosProjetosTab'));
-const AuditoriaAprovacaoTab = lazy(() => import('./AuditoriaAprovacaoTab'));
-
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center h-full">
-    <div className="flex flex-col items-center gap-2">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      <p className="text-slate-600 text-sm">Carregando componente...</p>
-    </div>
-  </div>
-);
+// Componentes das Etapas
+const WizardEtapa1Cliente = React.lazy(() => import('./wizard/WizardEtapa1Cliente'));
+const ItensRevendaTab = React.lazy(() => import('./ItensRevendaTab'));
+const ArmadoPadraoTab = React.lazy(() => import('./ArmadoPadraoTab'));
+const CorteDobraIATab = React.lazy(() => import('./CorteDobraIATab'));
+const HistoricoClienteTab = React.lazy(() => import('./HistoricoClienteTab')); // NOVO V21.1
+const LogisticaEntregaTab = React.lazy(() => import('./LogisticaEntregaTab'));
+const FechamentoFinanceiroTab = React.lazy(() => import('./FechamentoFinanceiroTab'));
+const ArquivosProjetosTab = React.lazy(() => import('./ArquivosProjetosTab'));
+const AuditoriaAprovacaoTab = React.lazy(() => import('./AuditoriaAprovacaoTab'));
 import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
 
 /**
@@ -56,16 +47,12 @@ import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
  * REGRA-MÃE: NUNCA APAGAR - APENAS ACRESCENTAR
  */
 function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowMode = false, contexto = 'erp', criacaoManual = true }) {
-  // TODOS OS HOOKS PRIMEIRO
   const [activeTab, setActiveTab] = useState('identificacao');
-  const [salvando, setSalvando] = useState(false);
+  const [salvando, setSalvando] = useState(false); // V21.5: Anti-duplicação
+  
+  // V21.6 FINAL: Hook de detecção AUTOMÁTICA OBRIGATÓRIA
   const { origemPedido, bloquearEdicao } = useOrigemPedido();
-  const [validacoes, setValidacoes] = useState({
-    identificacao: false,
-    itens: false,
-    logistica: false,
-    financeiro: false
-  });
+  
   const [formData, setFormData] = useState(() => ({
     tipo: 'Pedido',
     tipo_pedido: 'Misto',
@@ -99,13 +86,20 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     ...(pedido || {})
   }));
   
-  // useEffect APÓS HOOKS
+  // V21.6 FINAL: SEMPRE aplicar origem detectada automaticamente
   useEffect(() => {
     if (origemPedido) {
       setFormData(prev => ({ ...prev, origem_pedido: origemPedido }));
       console.log('🎯 Origem automática aplicada:', origemPedido, '| Bloqueado:', bloquearEdicao);
     }
   }, [origemPedido, bloquearEdicao]);
+
+  const [validacoes, setValidacoes] = useState({
+    identificacao: false,
+    itens: false,
+    logistica: false,
+    financeiro: false
+  });
 
   // Calcular progresso
   useEffect(() => {
@@ -470,7 +464,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
         <div className="flex-1 overflow-hidden">
           {/* ABA 1: IDENTIFICAÇÃO */}
           <TabsContent value="identificacao" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <WizardEtapa1Cliente
                 formData={formData}
                 setFormData={setFormData}
@@ -483,7 +477,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 2: ITENS DE REVENDA */}
           <TabsContent value="revenda" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <ItensRevendaTab
                 formData={formData}
                 setFormData={setFormData}
@@ -494,7 +488,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 3: ARMADO PADRÃO */}
           <TabsContent value="armado" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <ArmadoPadraoTab
                 formData={formData}
                 setFormData={setFormData}
@@ -506,7 +500,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 4: CORTE E DOBRA (IA) */}
           <TabsContent value="corte" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <CorteDobraIATab
                 formData={formData}
                 setFormData={setFormData}
@@ -518,7 +512,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* V21.1.2-R1: ABA 5 - HISTÓRICO DO CLIENTE (EXPANDIDA) */}
           <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <HistoricoClienteTab
                 formData={formData}
                 setFormData={setFormData}
@@ -533,7 +527,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 6: LOGÍSTICA */}
           <TabsContent value="logistica" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <LogisticaEntregaTab
                 formData={formData}
                 setFormData={setFormData}
@@ -546,7 +540,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
           {/* ABA 7: FINANCEIRO (protegida) */}
           <TabsContent value="financeiro" className="h-full overflow-y-auto p-6 m-0">
             <ProtectedSection module="Comercial" section={"Pedido.Financeiro"} action="visualizar" fallback={<div className="text-sm text-slate-500">Acesso restrito ao financeiro.</div>}>
-              <Suspense fallback={<LoadingFallback />}>
+              <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
                 <FechamentoFinanceiroTab
                   formData={formData}
                   setFormData={setFormData}
@@ -558,7 +552,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* ABA 8: ARQUIVOS */}
           <TabsContent value="arquivos" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <ArquivosProjetosTab
                 formData={formData}
                 setFormData={setFormData}
@@ -568,7 +562,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
           {/* V21.1.2-R1: ABA 9 - AUDITORIA (ALTURA CORRIGIDA) */}
           <TabsContent value="auditoria" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<LoadingFallback />}>
+            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
               <AuditoriaAprovacaoTab
                 formData={formData}
                 pedido={pedido}

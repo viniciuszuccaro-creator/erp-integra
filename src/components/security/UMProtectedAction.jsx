@@ -1,37 +1,8 @@
-import React from 'react';
-import { useValidatedAction } from '@/components/lib/useValidatedAction';
+import React from "react";
+import ProtectedAction from "@/components/ProtectedAction";
 
-/**
- * UM PROTECTED ACTION - AÇÃO PROTEGIDA UNIVERSAL
- * Wrapper minimalista para ações com validação
- * UM = Universal Modular
- */
-
-export default function UMProtectedAction({ 
-  module, 
-  section, 
-  action,
-  entity,
-  onExecute,
-  children 
-}) {
-  const { executeValidated } = useValidatedAction();
-
-  const handleAction = async (e) => {
-    e?.preventDefault?.();
-    
-    await executeValidated(
-      module,
-      section,
-      action,
-      async () => onExecute(e),
-      { entity }
-    );
-  };
-
-  return (
-    <div onClick={handleAction} className="cursor-pointer">
-      {children}
-    </div>
-  );
+// UMProtectedAction: alias do ProtectedAction para padronização solicitada na Fase 2
+// Mantém mesma API e comportamento (disable/hide + auditoria)
+export default function UMProtectedAction(props) {
+  return <ProtectedAction {...props} />;
 }

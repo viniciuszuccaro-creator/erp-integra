@@ -13,7 +13,7 @@ export default function MetricasSecundariasLaunchpad({
   totalPendentesAprovacao
 }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 w-full flex-shrink-0">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
       <Card className="border-0 shadow-sm bg-blue-50 border-blue-200 min-h-[75px] max-h-[75px] transition-shadow hover:shadow-md">
         <CardContent className="p-2 flex items-center justify-between h-full">
           <div className="min-w-0 flex-1">

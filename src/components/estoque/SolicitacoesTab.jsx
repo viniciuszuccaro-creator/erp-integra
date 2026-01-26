@@ -1,12 +1,12 @@
-import React, { useState, Suspense } from "react";
+import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -14,44 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useWindow } from "@/components/lib/useWindow";
 import SolicitacaoCompraForm from "@/components/compras/SolicitacaoCompraForm";
 import { useToast } from "@/components/ui/use-toast";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-[600px]">
-    <div className="flex flex-col items-center gap-2">
-      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-      <p className="text-slate-600 text-sm">Carregando...</p>
-    </div>
-  </div>
-);
-
-function SolicitacoesTabContent({ solicitacoes: solicitacoesProp, produtos: produtosProp }) {
-  const { getFiltroContexto, empresaAtual, isLoading: loadingContexto } = useContextoVisual();
-
-  const { data: solicitacoes = solicitacoesProp || [] } = useQuery({
-    queryKey: ['solicitacoes', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return solicitacoesProp || [];
-      return await base44.entities.SolicitacaoCompra.filter({ empresa_id: empresaAtual.id }, '-data_solicitacao', 500);
-    },
-    enabled: true,
-    initialData: solicitacoesProp || [],
-    staleTime: 30000,
-  });
-
-  const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
-    queryFn: async () => {
-      if (!empresaAtual?.id) return produtosProp || [];
-      return await base44.entities.Produto.filter({ empresa_id: empresaAtual.id }, undefined, 2000);
-    },
-    initialData: produtosProp || [],
-    staleTime: 30000,
-  });
+export default function SolicitacoesTab({ solicitacoes, produtos }) {
   const { openWindow } = useWindow();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const isLoading = !solicitacoesProp && !solicitacoes.length;
 
   const queryClient = useQueryClient();
 
@@ -129,14 +96,6 @@ function SolicitacoesTabContent({ solicitacoes: solicitacoesProp, produtos: prod
     'Alta': 'bg-orange-100 text-orange-700',
     'Urgente': 'bg-red-100 text-red-700'
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -250,13 +209,5 @@ function SolicitacoesTabContent({ solicitacoes: solicitacoesProp, produtos: prod
         )}
       </Card>
     </div>
-  );
-}
-
-export default function SolicitacoesTab(props) {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <SolicitacoesTabContent {...props} />
-    </Suspense>
   );
 }

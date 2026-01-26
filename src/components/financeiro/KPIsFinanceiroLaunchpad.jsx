@@ -10,7 +10,7 @@ export default function KPIsFinanceiroLaunchpad({
   contasPagarVencidas 
 }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 w-full flex-shrink-0">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
       <Card className="border-0 shadow-sm min-h-[90px] max-h-[90px] transition-shadow hover:shadow-md">
         <CardHeader className="flex flex-row items-center justify-between pb-1 px-2 pt-2">
           <CardTitle className="text-xs font-medium text-slate-600 truncate">A Receber</CardTitle>
