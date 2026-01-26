@@ -22,8 +22,20 @@ export default function usePermissions() {
     const perms = perfilAcesso?.permissoes;
     if (!perms) return false;
 
-    // normaliza alias
-    const desired = action === 'ver' ? 'visualizar' : action;
+    // normaliza alias (sinônimos → ação canônica)
+    const normalize = (a) => {
+      const map = {
+        ver: 'visualizar', view: 'visualizar', read: 'visualizar',
+        delete: 'excluir', remove: 'excluir', destroy: 'excluir',
+        cancel: 'cancelar', cancelar: 'cancelar',
+        create: 'criar', add: 'criar',
+        update: 'editar', edit: 'editar',
+        approve: 'aprovar', approvar: 'aprovar',
+        export: 'exportar', exportar: 'exportar'
+      };
+      return map[a] || a;
+    };
+    const desired = normalize(action);
 
     const modNode = perms[module];
     if (!modNode) return false;
