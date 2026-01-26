@@ -234,6 +234,7 @@ export default function ChatbotWidget({
         sessao_id: sessaoId,
         canal,
         cliente_id: clienteId,
+        empresa_id: empresaAtual?.id,
         mensagem_usuario: mensagem,
         intent_detectado: resultado.intent,
         confianca_intent: resultado.confianca,
@@ -244,6 +245,20 @@ export default function ChatbotWidget({
         data_hora: new Date().toISOString(),
         resolvido: !resultado.necessita_atendente
       });
+
+      // Auditoria da conversa
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: 'Cliente',
+          acao: 'Criação',
+          modulo: 'Chatbot',
+          entidade: 'Conversa',
+          descricao: `Intent: ${resultado.intent} (confiança ${resultado.confianca}%) • Canal: ${canal}`,
+          empresa_id: empresaAtual?.id,
+          dados_novos: { intent: resultado.intent, confianca: resultado.confianca, sentimento: resultado.sentimento },
+          data_hora: new Date().toISOString()
+        });
+      } catch (_) {}
 
       return {
         ...resultado,
