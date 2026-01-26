@@ -31,6 +31,24 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Regras específicas de negócio
+    if ((entity === 'ContaPagar' || entity === 'ContaReceber') && (op === 'create' || op === 'update')) {
+      const payload = data || {};
+      if (!payload.centro_custo_id || !payload.plano_contas_id) {
+        return Response.json({ error: 'centro_custo_id e plano_contas_id são obrigatórios' }, { status: 400 });
+      }
+    }
+
+    if (op === 'delete' && (entity === 'ContaPagar' || entity === 'ContaReceber')) {
+      const registro = await base44.asServiceRole.entities[entity].get(id);
+      const bloqueado = entity === 'ContaPagar'
+        ? (registro?.status === 'Pago' || registro?.status_pagamento === 'Pago')
+        : (registro?.status === 'Recebido');
+      if (bloqueado) {
+        return Response.json({ error: 'Exclusão proibida para títulos pagos/recebidos. Use cancelamento com justificativa.' }, { status: 400 });
+      }
+    }
+
     const api = base44.asServiceRole.entities[entity];
     let result = null;
     if (op === 'create') result = await api.create(data);
