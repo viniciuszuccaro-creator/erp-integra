@@ -18,6 +18,8 @@ Deno.serve(async (req) => {
     // Permissões
     const permCom = await assertPermission(base44, ctx, 'Comercial', 'Comissao', 'criar');
     if (permCom) return permCom;
+    const permEst = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
+    if (permEst) return permEst;
 
     const percPadrao = 5; // % padrão caso não exista regra
     // Tenta localizar pedido relacionado
@@ -49,12 +51,49 @@ Deno.serve(async (req) => {
 
     const created = await base44.asServiceRole.entities.Comissao.create(comPayload);
 
+    // Gera movimentações de saída por itens da NF
+    const itens = Array.isArray(data?.itens) ? data.itens : [];
+    const movimentosSaida = [];
+    for (const it of itens) {
+      const pid = it?.produto_id;
+      const qtd = Number(it?.quantidade || 0);
+      if (!pid || qtd <= 0) continue;
+      const [produto] = await base44.asServiceRole.entities.Produto.filter({ id: pid });
+      if (produto) {
+        // reduz reservado quando existir
+        const novoReservado = Math.max(0, Number(produto.estoque_reservado || 0) - qtd);
+        await base44.asServiceRole.entities.Produto.update(produto.id, { estoque_reservado: novoReservado });
+      }
+      const mov = await base44.asServiceRole.entities.MovimentacaoEstoque.create({
+        origem_movimento: 'nfe',
+        tipo_movimento: 'saida',
+        produto_id: pid,
+        produto_descricao: produto?.descricao || it?.descricao,
+        quantidade: qtd,
+        unidade_medida: it?.unidade || produto?.unidade_estoque || 'UN',
+        empresa_id: data?.empresa_origem_id || data?.empresa_faturamento_id || pedido?.empresa_id || null,
+        group_id: data?.group_id || pedido?.group_id || null,
+        data_movimentacao: new Date().toISOString(),
+        motivo: `Saída NF ${data?.numero || data?.id}`,
+        valor_total: Number(it?.valor_total || 0),
+        responsavel: user?.full_name || user?.email,
+        responsavel_id: user?.id
+      });
+      movimentosSaida.push(mov?.id);
+    }
+
     await audit(base44, user, {
       acao: 'Criação', modulo: 'Comercial', entidade: 'Comissao', registro_id: created?.id,
       descricao: 'Comissão gerada automaticamente na autorização da NF', dados_novos: comPayload
     });
 
-    return Response.json({ ok: true, comissao_id: created?.id });
+    await audit(base44, user, {
+      acao: 'Criação', modulo: 'Estoque', entidade: 'MovimentacaoEstoque', registro_id: null,
+      descricao: `Saídas geradas pela NF ${data?.numero || data?.id}`,
+      dados_novos: { movimentosSaida }
+    });
+
+    return Response.json({ ok: true, comissao_id: created?.id, movimentos_saida: movimentosSaida });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
   }
