@@ -267,7 +267,9 @@ export function useContextoVisual() {
     adaptarMenuPorContexto,
     obterSugestoesNavegacao,
     filtroEmpresa,
-    setFiltroEmpresa
+    setFiltroEmpresa,
+    updateInContext,
+    deleteInContext
   };
 }
 
