@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission, assertContextPresence } from './_lib/guard.js';
 
 Deno.serve(async (req) => {
   try {
@@ -24,9 +25,12 @@ Deno.serve(async (req) => {
         perfil_aprovador_necessario
       } = payload;
 
-      if (!group_id && !empresa_id) {
-        return Response.json({ error: 'Contexto multiempresa obrigatório' }, { status: 400 });
-      }
+      // RBAC + contexto obrigatório
+      const ctx = await getUserAndPerfil(base44);
+      const denied = await assertPermission(base44, ctx, 'Comercial', 'Aprovacoes', 'criar');
+      if (denied) return denied;
+      const ctxErr = assertContextPresence({ empresa_id, group_id }, true);
+      if (ctxErr) return ctxErr;
 
       const record = await base44.entities.SolicitacaoAprovacao.create({
         group_id: group_id || null,
@@ -62,8 +66,15 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'approve' || action === 'reject') {
-      const { solicitacao_id, comentarios_aprovacao } = payload;
+      const { solicitacao_id, comentarios_aprovacao, group_id, empresa_id } = payload;
       if (!solicitacao_id) return Response.json({ error: 'solicitacao_id é obrigatório' }, { status: 400 });
+
+      // RBAC + contexto
+      const ctx = await getUserAndPerfil(base44);
+      const denied = await assertPermission(base44, ctx, 'Comercial', 'Aprovacoes', 'aprovar');
+      if (denied) return denied;
+      const ctxErr = assertContextPresence({ empresa_id, group_id }, false);
+      if (ctxErr) return ctxErr;
 
       // Verifica quem pode aprovar: admin ou possuir permissão via perfil (Comercial -> [aprovar])
       let can = user.role === 'admin';
@@ -119,10 +130,21 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'list') {
-      const { status, tipo_solicitacao } = payload;
+      const { status, tipo_solicitacao, group_id, empresa_id } = payload;
+
+      // RBAC mínimo: visualizar em Comercial > Aprovacoes
+      const ctx = await getUserAndPerfil(base44);
+      const denied = await assertPermission(base44, ctx, 'Comercial', 'Aprovacoes', 'visualizar');
+      if (denied) return denied;
+      const ctxErr = assertContextPresence({ empresa_id, group_id }, true);
+      if (ctxErr) return ctxErr;
+
       const filtro = {};
       if (status) filtro.status = status;
       if (tipo_solicitacao) filtro.tipo_solicitacao = tipo_solicitacao;
+      if (group_id) filtro.group_id = group_id;
+      if (empresa_id) filtro.empresa_id = empresa_id;
+
       const items = await base44.entities.SolicitacaoAprovacao.filter(filtro, '-created_date', 50);
       return Response.json(items);
     }

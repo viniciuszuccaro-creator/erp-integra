@@ -25,14 +25,20 @@ export default function usePermissions() {
     // normaliza alias (sinônimos → ação canônica)
     const normalize = (a) => {
       const map = {
-        ver: 'visualizar', view: 'visualizar', read: 'visualizar',
-        delete: 'excluir', remove: 'excluir', destroy: 'excluir',
+        // visualizar
+        ver: 'visualizar', view: 'visualizar', read: 'visualizar', listar: 'visualizar', status: 'visualizar',
+        // excluir
+        delete: 'excluir', remove: 'excluir', destroy: 'excluir', apagar: 'excluir',
+        // cancelar
         cancel: 'cancelar', cancelar: 'cancelar',
-        create: 'criar', add: 'criar',
-        update: 'editar', edit: 'editar',
-        approve: 'aprovar', approvar: 'aprovar',
-        export: 'exportar', exportar: 'exportar',
-        status: 'visualizar'
+        // criar
+        create: 'criar', add: 'criar', emitir: 'criar', enviar: 'criar',
+        // editar
+        update: 'editar', edit: 'editar', carta: 'editar', corrigir: 'editar',
+        // aprovar
+        approve: 'aprovar', aprovar: 'aprovar', approvar: 'aprovar',
+        // exportar
+        export: 'exportar', exportar: 'exportar'
       };
       return map[a] || a;
     };
