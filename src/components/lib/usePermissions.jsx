@@ -115,6 +115,10 @@ export default function usePermissions() {
     return hasPermission(module, section, 'excluir');
   };
 
+  const canCancel = (module, section = null) => {
+    return hasPermission(module, section, 'cancelar');
+  };
+
   const canCreate = (module, section = null) => {
     return hasPermission(module, section, 'criar');
   };
