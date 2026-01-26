@@ -2,10 +2,10 @@ import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import usePermissions from "@/components/lib/usePermissions";
-import DashboardSeguranca from "@/components/sistema/DashboardSeguranca";
-import MonitorAcessoRealtime from "@/components/sistema/MonitorAcessoRealtime";
-import PainelGovernanca from "@/components/governanca/PainelGovernanca";
-import IAGovernancaCompliance from "@/components/ia/IAGovernancaCompliance";
+import SegurancaDashboard from "@/components/administracao-sistema/seguranca-governanca/SegurancaDashboard";
+import MonitorAcessoRealtimeSection from "@/components/administracao-sistema/seguranca-governanca/MonitorAcessoRealtimeSection";
+import PainelGovernancaSection from "@/components/administracao-sistema/seguranca-governanca/PainelGovernancaSection";
+import IAGovernancaComplianceSection from "@/components/administracao-sistema/seguranca-governanca/IAGovernancaComplianceSection";
 
 export default function SegurancaGovernancaIndex() {
   const { isAdmin } = usePermissions();
@@ -24,11 +24,7 @@ export default function SegurancaGovernancaIndex() {
         <TabsContent value="seguranca" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <DashboardSeguranca
-                estatisticas={{ cobertura: 0, totalUsuarios: 0, conflitosTotal: 0 }}
-                usuarios={[]}
-                auditoriaAcessos={[]}
-              />
+              <SegurancaDashboard />
             </CardContent>
           </Card>
         </TabsContent>
@@ -36,7 +32,7 @@ export default function SegurancaGovernancaIndex() {
         <TabsContent value="acesso" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <MonitorAcessoRealtime />
+              <MonitorAcessoRealtimeSection />
             </CardContent>
           </Card>
         </TabsContent>
@@ -44,7 +40,7 @@ export default function SegurancaGovernancaIndex() {
         <TabsContent value="governanca" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <PainelGovernanca />
+              <PainelGovernancaSection />
             </CardContent>
           </Card>
         </TabsContent>
@@ -52,7 +48,7 @@ export default function SegurancaGovernancaIndex() {
         <TabsContent value="compliance" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <IAGovernancaCompliance />
+              <IAGovernancaComplianceSection />
             </CardContent>
           </Card>
         </TabsContent>
