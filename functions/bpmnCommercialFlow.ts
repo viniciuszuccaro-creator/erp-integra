@@ -17,6 +17,33 @@ Deno.serve(async (req) => {
     }
 
     // Rotas por entidade
+    // Oportunidade -> OrcamentoCliente
+    if (event.entity_name === 'Oportunidade' && event.type === 'update') {
+      const permErr0 = await assertPermission(base44, ctx, 'Comercial', 'OrcamentoCliente', 'criar');
+      if (permErr0) return permErr0;
+      if (!data) return Response.json({ ok: true, skipped: true, reason: 'Sem dados da oportunidade' });
+      const etapa = String(data.etapa || '').toLowerCase();
+      if (!['proposta','negociação','negociacao'].includes(etapa)) {
+        // somente quando entrar em proposta/negociação
+      } else {
+        // evita duplicidade por oportunidade
+        const jaOrc = await base44.asServiceRole.entities.OrcamentoCliente.filter({ origem_externa_id: data.id }, undefined, 1);
+        if (!jaOrc?.length) {
+          const orc = await base44.asServiceRole.entities.OrcamentoCliente.create({
+            origem_externa_id: data.id,
+            group_id: data.group_id || null,
+            empresa_id: data.empresa_id || null,
+            cliente_id: data.cliente_id || null,
+            cliente_nome: data.cliente_nome || data.cliente || '',
+            descricao: data.titulo || 'Orçamento gerado da oportunidade',
+            status: 'Pendente',
+            valor_total: Number(data.valor_estimado || 0)
+          });
+          await audit(base44, ctx.user, { acao: 'Criação', modulo: 'Comercial', entidade: 'OrcamentoCliente', registro_id: orc.id, descricao: `Orçado a partir da oportunidade ${data.id}` });
+        }
+      }
+    }
+
     if (event.entity_name === 'OrcamentoCliente' && event.type === 'update') {
       // Permissão Comercial para criar Pedido
       const permErr = await assertPermission(base44, ctx, 'Comercial', 'Pedido', 'criar');
