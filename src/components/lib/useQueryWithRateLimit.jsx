@@ -39,7 +39,7 @@ export function useQueryWithRateLimit(
     initialData,
     placeholderData: (prev) => prev ?? initialData,
     refetchOnWindowFocus: false,
-    enabled: options.enabled !== false
+    enabled: options.enabled !== false && autoEnabled
   });
 }
 
