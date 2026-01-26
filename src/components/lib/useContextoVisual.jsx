@@ -229,6 +229,16 @@ export function useContextoVisual() {
     });
     return base44.entities[entityName].bulkCreate(stampedList);
   };
+  const updateInContext = (entityName, id, dados, campo = 'empresa_id') => {
+    const stamped = carimbarContexto(dados, campo);
+    if (!stamped.group_id && !stamped[campo]) {
+      throw new Error('Contexto multiempresa obrigatório: defina grupo ou empresa');
+    }
+    return base44.entities[entityName].update(id, stamped);
+  };
+  const deleteInContext = (entityName, id) => {
+    return base44.entities[entityName].delete(id);
+  };
   const filterInContext = (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
     const filtro = { ...criterios, ...getFiltroContexto(campo) };
       if (!filtro.group_id && !filtro[campo]) {
