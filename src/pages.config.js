@@ -23,7 +23,6 @@ import Producao from './pages/Producao';
 import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
-import Seguranca from './pages/Seguranca';
 import __Layout from './Layout.jsx';
 
 
@@ -53,7 +52,6 @@ export const PAGES = {
     "ProducaoMobile": ProducaoMobile,
     "RH": RH,
     "Relatorios": Relatorios,
-    "Seguranca": Seguranca,
 }
 
 export const pagesConfig = {
