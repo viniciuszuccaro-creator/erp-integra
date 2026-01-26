@@ -31,7 +31,8 @@ export default function usePermissions() {
         create: 'criar', add: 'criar',
         update: 'editar', edit: 'editar',
         approve: 'aprovar', approvar: 'aprovar',
-        export: 'exportar', exportar: 'exportar'
+        export: 'exportar', exportar: 'exportar',
+        status: 'visualizar'
       };
       return map[a] || a;
     };
