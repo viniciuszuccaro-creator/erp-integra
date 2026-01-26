@@ -9,7 +9,7 @@ import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada"
 
 export default function GestaoAcessosIndex() {
   const { hasPermission, isAdmin } = usePermissions();
-  const podeVer = isAdmin || hasPermission('Sistema', 'Controle de Acesso', 'ver');
+  const podeVer = isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'ver');
 
   if (!podeVer) {
     return (
