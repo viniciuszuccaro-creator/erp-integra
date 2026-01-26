@@ -80,8 +80,8 @@ const navigationItems = [
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   
   
-  { title: "⚡ Estabilização do Sistema", url: createPageUrl("EstabilizacaoSistema"), icon: Shield, group: "sistema", adminOnly: true },
-  { title: "🎨 Padronização UI/UX", url: createPageUrl("PadronizacaoUI"), icon: Shield, group: "sistema", adminOnly: true },
+  
+  
   { title: "💬 Hub de Atendimento", url: createPageUrl("HubAtendimento"), icon: MessageCircle, group: "principal" },
   { title: "🌐 Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico", public: true },
 

@@ -12,14 +12,12 @@ import DashboardCorporativo from './pages/DashboardCorporativo';
 import DemoMultitarefas from './pages/DemoMultitarefas';
 import Documentacao from './pages/Documentacao';
 import Empresas from './pages/Empresas';
-import EstabilizacaoSistema from './pages/EstabilizacaoSistema';
 import Estoque from './pages/Estoque';
 import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
 import Fiscal from './pages/Fiscal';
 import Home from './pages/Home';
 import HubAtendimento from './pages/HubAtendimento';
-import PadronizacaoUI from './pages/PadronizacaoUI';
 import PortalCliente from './pages/PortalCliente';
 import Producao from './pages/Producao';
 import ProducaoMobile from './pages/ProducaoMobile';
@@ -44,14 +42,12 @@ export const PAGES = {
     "DemoMultitarefas": DemoMultitarefas,
     "Documentacao": Documentacao,
     "Empresas": Empresas,
-    "EstabilizacaoSistema": EstabilizacaoSistema,
     "Estoque": Estoque,
     "Expedicao": Expedicao,
     "Financeiro": Financeiro,
     "Fiscal": Fiscal,
     "Home": Home,
     "HubAtendimento": HubAtendimento,
-    "PadronizacaoUI": PadronizacaoUI,
     "PortalCliente": PortalCliente,
     "Producao": Producao,
     "ProducaoMobile": ProducaoMobile,
