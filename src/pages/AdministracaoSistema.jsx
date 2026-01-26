@@ -6,6 +6,10 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Settings, Users, Shield, FileText } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
+import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
+import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
+import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
+import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
 
 export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
@@ -39,78 +43,27 @@ export default function AdministracaoSistema() {
           </TabsList>
 
           <TabsContent value="config" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <Card className="h-full">
-                <CardContent className="p-5 flex flex-col gap-3">
-                  <div className="flex items-center gap-2 text-slate-700 font-semibold">
-                    <Settings className="w-4 h-4"/> Configurações Gerais
-                  </div>
-                  <p className="text-sm text-slate-600">Acessar a página atual de configurações enquanto migramos por fases.</p>
-                  <div className="mt-auto">
-                    <Link to={createPageUrl("ConfiguracoesSistema")}>
-                      <Button variant="outline">Abrir página atual de Configurações</Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="w-full h-full">
+              <ConfiguracoesGeraisIndex />
             </div>
           </TabsContent>
 
           <TabsContent value="acessos" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="p-5 flex flex-col gap-3">
-                  <div className="flex items-center gap-2 text-slate-700 font-semibold">
-                    <Users className="w-4 h-4"/> Gestão de Acessos
-                  </div>
-                  <p className="text-sm text-slate-600">Abra os módulos existentes enquanto consolidamos nesta seção.</p>
-                  <div className="mt-auto flex gap-2 flex-wrap">
-                    <Link to={createPageUrl("GerenciamentoAcessosCompleto")}>
-                      <Button variant="outline">Gerenciamento Completo</Button>
-                    </Link>
-                    <Link to={createPageUrl("Acessos")}>
-                      <Button variant="outline">Acessos</Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="w-full h-full">
+              <GestaoAcessosIndex />
             </div>
           </TabsContent>
 
           <TabsContent value="auditoria" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="p-5 flex flex-col gap-3">
-                  <div className="flex items-center gap-2 text-slate-700 font-semibold">
-                    <FileText className="w-4 h-4"/> Auditoria e Logs
-                  </div>
-                  <p className="text-sm text-slate-600">Visualize a UI atual de auditoria.</p>
-                  <div className="mt-auto">
-                    <Link to={createPageUrl("AuditoriaUI")}>
-                      <Button variant="outline">Abrir Auditoria</Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="w-full h-full">
+              <AuditoriaLogsIndex />
             </div>
           </TabsContent>
 
           {isAdmin && (
             <TabsContent value="seguranca" className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <Card>
-                  <CardContent className="p-5 flex flex-col gap-3">
-                    <div className="flex items-center gap-2 text-slate-700 font-semibold">
-                      <Shield className="w-4 h-4"/> Segurança e Governança
-                    </div>
-                    <p className="text-sm text-slate-600">Acesse o módulo existente de Segurança.</p>
-                    <div className="mt-auto">
-                      <Link to={createPageUrl("Seguranca")}>
-                        <Button variant="outline">Abrir Segurança</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
+              <div className="w-full h-full">
+                <SegurancaGovernancaIndex />
               </div>
             </TabsContent>
           )}
