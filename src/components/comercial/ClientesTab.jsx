@@ -166,13 +166,13 @@ function ClientesTabContent({ clientes: clientesProp }) {
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>CPF/CNPJ</TableHead>
+                  <TableHead onClick={() => toggleSort('nome')} className="cursor-pointer select-none">Cliente {sortField==='nome' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
+                  <TableHead onClick={() => toggleSort('cnpj')} className="cursor-pointer select-none">CPF/CNPJ {sortField==='cnpj' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
                   <TableHead>Contato</TableHead>
-                  <TableHead>Cidade</TableHead>
+                  <TableHead onClick={() => toggleSort('endereco_principal.cidade')} className="cursor-pointer select-none">Cidade {sortField==='endereco_principal.cidade' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
                   {estaNoGrupo && <TableHead>Empresa</TableHead>}
-                  <TableHead>Limite Crédito</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead onClick={() => toggleSort('condicao_comercial.limite_credito')} className="cursor-pointer select-none">Limite Crédito {sortField==='condicao_comercial.limite_credito' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
+                  <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none">Status {sortField==='status' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
                   <TableHead>Ação</TableHead>
                 </TableRow>
               </TableHeader>
