@@ -31,7 +31,7 @@ function ProdutosTabContent(props) {
   const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, contextoReady } = useContextoVisual();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -91,7 +91,11 @@ function ProdutosTabContent(props) {
     return unsubscribe;
   }, [queryClient]);
 
-  return (
+   if (!contextoReady) {
+     return <LoadingFallback />;
+   }
+
+   return (
     <div className="w-full h-full flex flex-col space-y-3 overflow-auto p-2">
       <div className="w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">

@@ -27,14 +27,26 @@ function ClientesTabContent({ clientes: clientesProp }) {
   // TODOS OS HOOKS PRIMEIRO
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("todos");
-  const { estaNoGrupo, empresasDoGrupo, empresaAtual } = useContextoVisual();
+  const [sortField, setSortField] = useState('created_date');
+  const [sortDir, setSortDir] = useState('desc');
+  const toggleSort = (field) => {
+    setSortField(prev => {
+      if (prev === field) {
+        setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+        return prev;
+      }
+      setSortDir('asc');
+      return field;
+    });
+  };
+  const { estaNoGrupo, empresasDoGrupo, empresaAtual, contextoReady, filterInContext } = useContextoVisual();
   const { openWindow } = useWindow();
 
-  const { data: clientes = clientesProp || [], isLoading } = useQueryWithRateLimit(
-    ['clientes-tab', empresaAtual?.id],
+  const { data: clientes = clientesProp || [], isLoading, error } = useQueryWithRateLimit(
+    ['clientes-tab', empresaAtual?.id, sortField, sortDir],
     async () => {
-      const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-      return await base44.entities.Cliente.filter(filtro, '-created_date', 1000);
+      const order = (sortDir === 'desc' ? '-' : '') + (sortField || 'created_date');
+      return await filterInContext('Cliente', {}, order, 1000, 'empresa_id');
     },
     { initialData: clientesProp || [] }
   );
@@ -54,11 +66,30 @@ function ClientesTabContent({ clientes: clientesProp }) {
     return empresa?.nome_fantasia || empresa?.razao_social || '-';
   };
 
+  if (!contextoReady) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
+        <p className="text-slate-600">Preparando contexto...</p>
+      </div>
+    );
+  }
+
   if (isLoading && !clientesProp?.length) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
         <p className="text-slate-600">Carregando clientes...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full h-full flex items-center justify-center p-6">
+        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+          Erro ao carregar clientes.
+        </div>
       </div>
     );
   }

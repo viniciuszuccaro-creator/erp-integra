@@ -50,15 +50,30 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
   // TODOS OS HOOKS PRIMEIRO - ORDEM CONSISTENTE
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [sortField, setSortField] = useState('created_date');
+  const [sortDir, setSortDir] = useState('desc');
+  const toggleSort = (field) => {
+    setSortField(prev => {
+      if (prev === field) {
+        setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+        return prev;
+      }
+      setSortDir('asc');
+      return field;
+    });
+  };
   const [selectedPedidos, setSelectedPedidos] = useState([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow, closeWindow } = useWindow();
   const ctx = useContextoVisual();
 
-  const { data: pedidos = pedidosProp || [] } = useQueryWithRateLimit(
-    ['pedidos', ctx?.empresaAtual?.id],
-    async () => await base44.entities.Pedido.list('-created_date', 1000),
+  const { data: pedidos = pedidosProp || [], error: pedidosError } = useQueryWithRateLimit(
+    ['pedidos', ctx?.empresaAtual?.id, sortField, sortDir],
+    async () => {
+      const order = (sortDir === 'desc' ? '-' : '') + (sortField || 'created_date');
+      return await ctx.filterInContext('Pedido', {}, order, 1000, 'empresa_id');
+    },
     { initialData: pedidosProp || [] }
   );
 
@@ -131,6 +146,16 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
 
   if (isLoading) {
     return <LoadingFallback />;
+  }
+
+  if (pedidosError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center p-6">
+        <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-md px-4 py-3">
+          Erro ao carregar pedidos.
+        </div>
+      </div>
+    );
   }
 
   return (
