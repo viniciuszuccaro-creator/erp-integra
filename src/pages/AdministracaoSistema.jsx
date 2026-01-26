@@ -15,6 +15,8 @@ export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
   const params = new URLSearchParams(window.location.search);
   const initialTab = params.get('tab') || 'config';
+  const params = new URLSearchParams(window.location.search);
+  const initialTab = params.get('tab') || 'config';
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
