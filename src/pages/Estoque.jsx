@@ -171,6 +171,17 @@ export default function Estoque() {
 
   const modules = [
     {
+      title: 'Inventário',
+      description: 'Contagem e ajustes',
+      icon: Box,
+      color: 'slate',
+      component: React.lazy(() => import('../components/estoque/InventarioForm')),
+      windowTitle: '📋 Inventário',
+      width: 1200,
+      height: 800,
+      props: {}
+    },
+    {
       title: 'Produtos',
       description: 'Cadastro e estoque',
       icon: Box,
