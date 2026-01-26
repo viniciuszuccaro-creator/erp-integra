@@ -73,66 +73,6 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
   );
 
   const createMutation = useMutation({
-    setNovaMovimentacao({
-      tipo_movimentacao: "",
-      produto_id: "",
-      produto_nome: "",
-      quantidade: "",
-      unidade_medida: "",
-      data_movimentacao: new Date().toISOString().split('T')[0],
-      documento_referencia: "",
-      observacoes: "",
-      responsavel: ""
-    });
-  };
-
-  const handleProdutoChange = (produtoId) => {
-    const produto = produtos.find(p => p.id === produtoId);
-    if (produto) {
-      setNovaMovimentacao({
-        ...novaMovimentacao,
-        produto_id: produtoId,
-        produto_nome: produto.descricao,
-        unidade_medida: produto.unidade_medida
-      });
-    }
-  };
-
-  const tipoIcons = {
-    'Entrada': <ArrowDown className="w-4 h-4 text-green-600" />,
-    'Saída': <ArrowUp className="w-4 h-4 text-red-600" />,
-    'Ajuste': <RefreshCw className="w-4 h-4 text-blue-600" />,
-    'Inventário': <RefreshCw className="w-4 h-4 text-purple-600" />,
-    'Devolução': <ArrowDown className="w-4 h-4 text-orange-600" />
-  };
-
-  const tipoColors = {
-    'Entrada': 'bg-green-100 text-green-700',
-    'Saída': 'bg-red-100 text-red-700',
-    'Ajuste': 'bg-blue-100 text-blue-700',
-    'Inventário': 'bg-purple-100 text-purple-700',
-    'Devolução': 'bg-orange-100 text-orange-700'
-  };
-
-  const filteredMovimentacoes = movimentacoes.filter(m => {
-    const searchLower = searchTerm.toLowerCase();
-    return m.produto_nome?.toLowerCase().includes(searchLower) ||
-      m.produto_descricao?.toLowerCase().includes(searchLower) ||
-      m.codigo_produto?.toLowerCase().includes(searchLower) ||
-      m.tipo_movimentacao?.toLowerCase().includes(searchLower) ||
-      m.tipo_movimento?.toLowerCase().includes(searchLower) ||
-      m.origem_movimento?.toLowerCase().includes(searchLower) ||
-      m.documento?.toLowerCase().includes(searchLower) ||
-      m.motivo?.toLowerCase().includes(searchLower) ||
-      m.responsavel?.toLowerCase().includes(searchLower) ||
-      m.centro_custo_nome?.toLowerCase().includes(searchLower) ||
-      m.localizacao_origem?.toLowerCase().includes(searchLower) ||
-      m.localizacao_destino?.toLowerCase().includes(searchLower) ||
-      m.lote?.toLowerCase().includes(searchLower) ||
-      m.observacoes?.toLowerCase().includes(searchLower);
-  });
-
-  const createMutation = useMutation({
     mutationFn: async (data) => {
       const movimentacaoData = {
         tipo_movimentacao: data.tipo_movimentacao,
@@ -225,16 +165,6 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
     });
   };
 
-  // EARLY RETURN APÓS TODOS OS HOOKS
-  if ((isLoadingMov || isLoadingProd) && !movimentacoesProp?.length) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-2" />
-        <p className="text-slate-600">Carregando movimentações...</p>
-      </div>
-    );
-  }
-
   const tipoIcons = {
     'Entrada': <ArrowDown className="w-4 h-4 text-green-600" />,
     'Saída': <ArrowUp className="w-4 h-4 text-red-600" />,
@@ -251,26 +181,18 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
     'Devolução': 'bg-orange-100 text-orange-700'
   };
 
-  const filteredMovimentacoes = movimentacoes.filter(m => {
-    const searchLower = searchTerm.toLowerCase();
-    return m.produto_nome?.toLowerCase().includes(searchLower) ||
-      m.produto_descricao?.toLowerCase().includes(searchLower) ||
-      m.codigo_produto?.toLowerCase().includes(searchLower) ||
-      m.tipo_movimentacao?.toLowerCase().includes(searchLower) ||
-      m.tipo_movimento?.toLowerCase().includes(searchLower) ||
-      m.origem_movimento?.toLowerCase().includes(searchLower) ||
-      m.documento?.toLowerCase().includes(searchLower) ||
-      m.motivo?.toLowerCase().includes(searchLower) ||
-      m.responsavel?.toLowerCase().includes(searchLower) ||
-      m.centro_custo_nome?.toLowerCase().includes(searchLower) ||
-      m.localizacao_origem?.toLowerCase().includes(searchLower) ||
-      m.localizacao_destino?.toLowerCase().includes(searchLower) ||
-      m.lote?.toLowerCase().includes(searchLower) ||
-      m.observacoes?.toLowerCase().includes(searchLower);
-  });
+  // EARLY RETURN APÓS TODOS OS HOOKS
+  if ((isLoadingMov || isLoadingProd) && !movimentacoesProp?.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mb-2" />
+        <p className="text-slate-600">Carregando movimentações...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full flex flex-col space-y-6 overflow-auto p-2">
       <div className="flex justify-between items-center mb-4">
         <div className="relative flex-1 max-w-md mr-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -431,8 +353,8 @@ function MovimentacoesTabContent({ movimentacoes: movimentacoesProp, produtos: p
         </Dialog>
       </div>
 
-      <Card className="border-0 shadow-md">
-        <div className="overflow-x-auto">
+      <Card className="border-0 shadow-md w-full flex-1 overflow-hidden">
+        <div className="overflow-x-auto w-full">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">

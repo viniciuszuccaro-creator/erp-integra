@@ -217,8 +217,7 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
   });
 
   return (
-    <div className="space-y-6">
-      {/* CONTEÚDO DO COMPONENTE */}
+    <div className="w-full h-full flex flex-col space-y-6 overflow-auto p-2">
       <div className="flex flex-col sm:flex-row gap-4 justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -429,8 +428,8 @@ function RecebimentoTabContent({ recebimentos: recebimentosProp, ordensCompra: o
         </Dialog>
       </div>
 
-      <Card className="border-0 shadow-md">
-        <div className="overflow-x-auto">
+      <Card className="border-0 shadow-md w-full flex-1 overflow-hidden">
+        <div className="overflow-x-auto w-full">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
