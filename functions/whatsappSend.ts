@@ -10,6 +10,10 @@ Deno.serve(async (req) => {
     const payload = await req.json().catch(() => ({}));
     const { action = 'sendText', numero, mensagem, empresaId, arquivoUrl, legenda } = payload || {};
 
+    const { user, perfil } = await getUserAndPerfil(base44);
+    const denied = await assertPermission(base44, { user, perfil }, 'Integrações', 'WhatsApp', action === 'status' ? 'visualizar' : 'criar');
+    if (denied) return denied;
+
     // Busca configuração como service role (não expõe segredos no frontend)
     const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Integracoes', chave: `whatsapp_${empresaId}` });
     const config = cfgs?.[0]?.integracao_whatsapp || null;
