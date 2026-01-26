@@ -283,12 +283,12 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
               <TableHeader>
                 <TableRow className="bg-slate-50">
                  <TableHead className="w-12"></TableHead>
-                 <TableHead className="cursor-pointer hover:bg-slate-100">Nº Pedido</TableHead>
-                 <TableHead className="cursor-pointer hover:bg-slate-100">Cliente</TableHead>
-                 <TableHead className="cursor-pointer hover:bg-slate-100">Data</TableHead>
+                 <TableHead onClick={() => toggleSort('numero_pedido')} className="cursor-pointer select-none hover:bg-slate-100">Nº Pedido {sortField==='numero_pedido' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
+                 <TableHead onClick={() => toggleSort('cliente_nome')} className="cursor-pointer select-none hover:bg-slate-100">Cliente {sortField==='cliente_nome' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
+                 <TableHead onClick={() => toggleSort('data_pedido')} className="cursor-pointer select-none hover:bg-slate-100">Data {sortField==='data_pedido' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
                  <TableHead>Origem</TableHead>
-                 <TableHead className="cursor-pointer hover:bg-slate-100">Valor</TableHead>
-                 <TableHead>Status</TableHead>
+                 <TableHead onClick={() => toggleSort('valor_total')} className="cursor-pointer select-none hover:bg-slate-100">Valor {sortField==='valor_total' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
+                 <TableHead onClick={() => toggleSort('status')} className="cursor-pointer select-none hover:bg-slate-100">Status {sortField==='status' ? (sortDir==='asc' ? '▲' : '▼') : ''}</TableHead>
                  <TableHead>Aprovação</TableHead>
                  <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
                 </TableRow>
