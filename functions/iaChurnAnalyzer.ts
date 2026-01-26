@@ -5,6 +5,9 @@ import { getUserAndPerfil, assertPermission } from './_lib/guard';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const ctx = await getUserAndPerfil(base44);
+    const permErr = await assertPermission(base44, ctx, 'CRM', 'Oportunidade', 'visualizar');
+    if (permErr) return permErr;
     const oportunidades = await base44.asServiceRole.entities.Oportunidade.filter({}, '-updated_date', 500);
 
     const flagged = [];
