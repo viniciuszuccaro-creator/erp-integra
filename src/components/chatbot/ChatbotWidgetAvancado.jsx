@@ -240,7 +240,8 @@ export default function ChatbotWidgetAvancado({
         acaoResultado = await IntentEngine.executarAcao(
           resultado.intent,
           resultado.entidades_detectadas,
-          clienteId
+          clienteId,
+          { empresaId: empresaAtual?.id, dadosCliente }
         );
       }
 

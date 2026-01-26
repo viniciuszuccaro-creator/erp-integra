@@ -31,6 +31,16 @@ const IntentEngine = {
       prioridade: 2,
       acao: 'buscar_boletos'
     },
+    'emitir_boleto': {
+      palavras_chave: ['emitir boleto', 'gerar boleto', 'boleto novo', 'cobrança', 'fatura'],
+      prioridade: 2,
+      acao: 'gerar_boleto'
+    },
+    'criar_pedido': {
+      palavras_chave: ['fazer pedido', 'criar pedido', 'novo pedido', 'comprar'],
+      prioridade: 2,
+      acao: 'criar_pedido'
+    },
     'orcamento': {
       palavras_chave: ['orçamento', 'cotação', 'preço', 'quanto custa', 'valor'],
       prioridade: 2,
@@ -290,7 +300,7 @@ const IntentEngine = {
   /**
    * Executar ação automática
    */
-  async executarAcao(intent, entidades, clienteId) {
+  async executarAcao(intent, entidades, clienteId, contexto = {}) {
     try {
       switch (intent) {
         case 'consultar_pedido': {
@@ -368,6 +378,112 @@ const IntentEngine = {
             tipo: 'lista_boletos',
             mensagem: `💳 Seus boletos em aberto:\n\n${listaBoletos}\n\nDeseja a 2ª via de algum boleto?`,
             dados: boletos
+          };
+        }
+        
+        case 'criar_pedido': {
+          if (!clienteId) {
+            return { tipo: 'erro', mensagem: 'Para criar o pedido, preciso identificar você (cliente). Informe seu CPF/CNPJ ou faça login.' };
+          }
+          const hoje = new Date();
+          const dataIso = hoje.toISOString().slice(0,10);
+          let clienteNome = 'Cliente';
+          try {
+            const c = await base44.entities.Cliente.filter({ id: clienteId });
+            if (c?.[0]?.nome) clienteNome = c[0].nome;
+          } catch {}
+
+          const numero = `WEB-${Date.now()}`;
+          const valor = Number(entidades?.valor || 0);
+          const pedido = await base44.entities.Pedido.create({
+            numero_pedido: numero,
+            tipo: 'Pedido',
+            origem_pedido: 'Chatbot',
+            data_pedido: dataIso,
+            cliente_id: clienteId,
+            cliente_nome: clienteNome,
+            valor_total: isNaN(valor) ? 0 : valor,
+            empresa_id: contexto?.empresaId || undefined,
+            pode_ver_no_portal: true,
+            prioridade: 'Normal',
+            status: 'Rascunho'
+          });
+
+          try {
+            await base44.entities.AuditLog.create({
+              usuario: 'Chatbot',
+              acao: 'Criação',
+              modulo: 'Comercial',
+              entidade: 'Pedido',
+              registro_id: pedido.id,
+              descricao: `Pedido criado via chatbot (${numero})`,
+              data_hora: new Date().toISOString(),
+            });
+          } catch {}
+
+          return {
+            tipo: 'pedido_criado',
+            mensagem: `🧾 Pedido ${numero} criado em rascunho para ${clienteNome}. ${valor>0?`Valor informado: R$ ${valor.toLocaleString('pt-BR')}. `:''}Deseja adicionar itens ou finalizar?`,
+            dados: pedido
+          };
+        }
+
+        case 'emitir_boleto':
+        case 'gerar_boleto': {
+          if (!clienteId) {
+            return { tipo: 'erro', mensagem: 'Para emitir boleto, preciso identificar você (cliente).' };
+          }
+          const valor = Number(entidades?.valor || 0);
+          if (!valor || isNaN(valor) || valor <= 0) {
+            return { tipo: 'erro', mensagem: 'Informe o valor do boleto (ex: R$ 350,00).'};
+          }
+
+          // Buscar configurações mínimas (centro de custo e plano de contas)
+          let centroId, planoId;
+          try {
+            const centros = await base44.entities.CentroCusto.filter({ empresa_id: contexto?.empresaId, status: 'Ativo' }, '-updated_date', 1);
+            centroId = centros?.[0]?.id;
+          } catch {}
+          try {
+            const planos = await base44.entities.PlanoDeContas ? await base44.entities.PlanoDeContas.list() : [];
+            planoId = planos?.[0]?.id;
+          } catch {}
+
+          if (!centroId || !planoId) {
+            return { tipo: 'erro', mensagem: 'Não consegui emitir boleto: configure Centro de Custo e Plano de Contas padrão para a empresa.' };
+          }
+
+          const venc = new Date(Date.now() + 3*24*60*60*1000).toISOString().slice(0,10);
+          const cr = await base44.entities.ContaReceber.create({
+            descricao: 'Boleto gerado via Chatbot',
+            cliente_id: clienteId,
+            valor: valor,
+            data_vencimento: venc,
+            centro_custo_id: centroId,
+            plano_contas_id: planoId,
+            forma_cobranca: 'Boleto',
+            status_cobranca: 'gerada_simulada',
+            url_boleto_pdf: null,
+            empresa_id: contexto?.empresaId || undefined,
+            canal_origem: 'Chatbot'
+          });
+
+          try {
+            await base44.entities.AuditLog.create({
+              usuario: 'Chatbot',
+              acao: 'Criação',
+              modulo: 'Financeiro',
+              entidade: 'ContaReceber',
+              registro_id: cr.id,
+              descricao: `Boleto (simulado) gerado via chatbot no valor de R$ ${valor.toLocaleString('pt-BR')}`,
+              data_hora: new Date().toISOString(),
+            });
+          } catch {}
+
+          return {
+            tipo: 'boleto_gerado',
+            mensagem: `💳 Boleto criado com vencimento em ${new Date(venc).toLocaleDateString('pt-BR')}. Em breve você receberá o link para pagamento.`,
+            dados: cr
           };
         }
         
