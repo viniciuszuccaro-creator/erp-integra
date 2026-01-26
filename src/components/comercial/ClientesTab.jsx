@@ -134,25 +134,44 @@ function ClientesTabContent({ clientes: clientesProp }) {
 
       <Card className="border-0 shadow-md w-full">
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4 w-full">
+          <div className="flex flex-col lg:flex-row gap-4 w-full items-stretch lg:items-center">
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
               placeholder="Buscar por nome, razão social, CPF ou CNPJ..."
               className="flex-1"
             />
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="Ativo">Ativos</SelectItem>
-                <SelectItem value="Prospect">Prospects</SelectItem>
-                <SelectItem value="Inativo">Inativos</SelectItem>
-                <SelectItem value="Bloqueado">Bloqueados</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-3 w-full lg:w-auto">
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-full lg:w-48">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos</SelectItem>
+                  <SelectItem value="Ativo">Ativos</SelectItem>
+                  <SelectItem value="Prospect">Prospects</SelectItem>
+                  <SelectItem value="Inativo">Inativos</SelectItem>
+                  <SelectItem value="Bloqueado">Bloqueados</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortField} onValueChange={setSortField}>
+                <SelectTrigger className="w-full lg:w-48">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="created_date">Criação</SelectItem>
+                  <SelectItem value="nome">Nome</SelectItem>
+                  <SelectItem value="status">Status</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+                className="whitespace-nowrap"
+              >
+                {sortDir === 'asc' ? 'ASC' : 'DESC'}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
