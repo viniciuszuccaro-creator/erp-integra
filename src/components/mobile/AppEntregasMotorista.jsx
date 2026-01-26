@@ -41,7 +41,33 @@ export default function AppEntregasMotorista() {
   const [assinaturaBase64, setAssinaturaBase64] = useState(null);
   const [nomeRecebedor, setNomeRecebedor] = useState('');
   const [documentoRecebedor, setDocumentoRecebedor] = useState('');
+  // Logística reversa (UI)
+  const [reversaAtiva, setReversaAtiva] = useState(false);
+  const [reversaMotivo, setReversaMotivo] = useState('Recusa Total');
+  const [reversaQtd, setReversaQtd] = useState(0);
+  const [reversaValor, setReversaValor] = useState(0);
   const queryClient = useQueryClient();
+
+  // Captura de assinatura no canvas
+  React.useEffect(() => {
+    const canvas = document.getElementById('assinatura-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let drawing = false; let lastX = 0; let lastY = 0;
+    const start = (x, y) => { drawing = true; lastX = x; lastY = y; };
+    const move = (x, y) => { if (!drawing) return; ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); lastX = x; lastY = y; };
+    const end = () => { drawing = false; try { setAssinaturaBase64(canvas.toDataURL('image/png')); } catch {} };
+    const getPos = (e) => { if (e.touches?.[0]) { const rect = canvas.getBoundingClientRect(); return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top }; } const rect = canvas.getBoundingClientRect(); return { x: e.offsetX ?? 0, y: e.offsetY ?? 0 }; };
+    const mdown = (e) => { const p = getPos(e); start(p.x, p.y); };
+    const mmove = (e) => { const p = getPos(e); move(p.x, p.y); e.preventDefault(); };
+    const mup = () => end();
+    canvas.addEventListener('mousedown', mdown); canvas.addEventListener('mousemove', mmove); canvas.addEventListener('mouseup', mup);
+    canvas.addEventListener('touchstart', mdown, { passive: false }); canvas.addEventListener('touchmove', mmove, { passive: false }); canvas.addEventListener('touchend', mup);
+    return () => {
+      canvas.removeEventListener('mousedown', mdown); canvas.removeEventListener('mousemove', mmove); canvas.removeEventListener('mouseup', mup);
+      canvas.removeEventListener('touchstart', mdown); canvas.removeEventListener('touchmove', mmove); canvas.removeEventListener('touchend', mup);
+    };
+  }, []);
 
   // Buscar entregas do motorista
   const { data: minhasEntregas = [], refetch } = useQuery({
@@ -163,18 +189,22 @@ export default function AppEntregasMotorista() {
       toast.error('Informe o nome de quem recebeu');
       return;
     }
-
     if (!fotoComprovante) {
       toast.error('Tire uma foto do comprovante');
       return;
     }
+    let assinatura = assinaturaBase64;
+    try {
+      const canvas = document.getElementById('assinatura-canvas');
+      if (canvas) assinatura = canvas.toDataURL('image/png');
+    } catch {}
 
     await base44.entities.Entrega.update(entregaAtual.id, {
       status: 'Entregue',
       data_entrega: new Date().toISOString(),
       comprovante_entrega: {
         foto_comprovante: fotoComprovante,
-        assinatura_digital: assinaturaBase64,
+        assinatura_digital: assinatura,
         nome_recebedor: nomeRecebedor,
         documento_recebedor: documentoRecebedor,
         data_hora_recebimento: new Date().toISOString(),
@@ -198,7 +228,6 @@ export default function AppEntregasMotorista() {
     setAssinaturaBase64(null);
     setNomeRecebedor('');
     setDocumentoRecebedor('');
-    
     refetch();
     toast.success('✅ Entrega confirmada com sucesso!');
   };
@@ -487,37 +516,63 @@ export default function AppEntregasMotorista() {
             ⚠️ Entrega Frustrada?
           </summary>
           <div className="p-4 pt-0 space-y-2">
+            <Button variant="outline" className="w-full justify-start" onClick={() => registrarOcorrencia('Cliente Ausente')}>Cliente Ausente</Button>
+            <Button variant="outline" className="w-full justify-start" onClick={() => registrarOcorrencia('Endereço Incorreto')}>Endereço Incorreto</Button>
+            <Button variant="outline" className="w-full justify-start" onClick={() => registrarOcorrencia('Recusa de Recebimento')}>Recusa de Recebimento</Button>
+          </div>
+        </details>
+
+        <details className="bg-white rounded-lg border">
+          <summary className="p-4 cursor-pointer font-medium text-sm">
+            🔁 Logística Reversa
+          </summary>
+          <div className="p-4 pt-0 space-y-3">
+            <label className="text-xs text-slate-600">Motivo</label>
+            <select className="w-full border rounded p-2" value={reversaMotivo} onChange={(e)=>setReversaMotivo(e.target.value)}>
+              <option>Recusa Total</option>
+              <option>Recusa Parcial</option>
+              <option>Avaria</option>
+              <option>Troca</option>
+              <option>Outro</option>
+            </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-slate-600">Quantidade Devolvida</label>
+                <input type="number" className="w-full border rounded p-2" value={reversaQtd} onChange={(e)=>setReversaQtd(parseFloat(e.target.value)||0)} />
+              </div>
+              <div>
+                <label className="text-xs text-slate-600">Valor Devolvido (R$)</label>
+                <input type="number" step="0.01" className="w-full border rounded p-2" value={reversaValor} onChange={(e)=>setReversaValor(parseFloat(e.target.value)||0)} />
+              </div>
+            </div>
             <Button
               variant="outline"
-              className="w-full justify-start"
-              onClick={() => registrarOcorrencia('Cliente Ausente')}
+              className="w-full border-red-300 text-red-700"
+              onClick={async ()=>{
+                await base44.entities.Entrega.update(entregaAtual.id, {
+                  status: 'Devolvido',
+                  logistica_reversa: {
+                    ativada: true,
+                    motivo: reversaMotivo,
+                    quantidade_devolvida: reversaQtd,
+                    valor_devolvido: reversaValor
+                  },
+                  historico_status: [
+                    ...(entregaAtual.historico_status || []),
+                    { status: 'Devolvido', data_hora: new Date().toISOString(), usuario: user.full_name, observacao: reversaMotivo }
+                  ]
+                });
+                setEntregaAtual(null);
+                refetch();
+                toast.success('🔁 Logística reversa registrada');
+              }}
             >
-              Cliente Ausente
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => registrarOcorrencia('Endereço Incorreto')}
-            >
-              Endereço Incorreto
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => registrarOcorrencia('Recusa de Recebimento')}
-            >
-              Recusa de Recebimento
+              Registrar Reversa
             </Button>
           </div>
         </details>
 
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => setEntregaAtual(null)}
-        >
-          Voltar para Lista
-        </Button>
+        <Button variant="outline" className="w-full" onClick={() => setEntregaAtual(null)}>Voltar para Lista</Button>
       </div>
     </div>
   );
