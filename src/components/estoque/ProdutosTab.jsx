@@ -92,7 +92,7 @@ function ProdutosTabContent(props) {
   }, [queryClient]);
 
   return (
-    <div className="w-full h-full flex flex-col space-y-4 overflow-auto p-2">
+    <div className="w-full h-full flex flex-col space-y-3 overflow-auto p-2">
       <div className="w-full flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4">

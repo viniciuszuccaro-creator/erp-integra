@@ -259,7 +259,7 @@ function ContasReceberTabContent({ contas: contasProp, empresas = [], windowMode
   };
 
   const content = (
-    <div className="w-full h-full flex flex-col space-y-1.5 overflow-auto">
+    <div className="w-full h-full flex flex-col space-y-2 overflow-auto p-2">
       <HeaderReceberCompacto />
       <KPIsReceber totais={totais} />
       <FiltrosReceber
@@ -425,10 +425,6 @@ function ContasReceberTabContent({ contas: contasProp, empresas = [], windowMode
       {simularPagamentoDialogOpen && <SimularPagamentoModal isOpen={simularPagamentoDialogOpen} onClose={() => { setSimularPagamentoDialogOpen(false); setContaParaSimulacao(null); }} contaReceber={contaParaSimulacao} />}
     </div>
   );
-
-  if (windowMode) {
-    return <div className="w-full h-full flex flex-col bg-gradient-to-br from-slate-50 to-green-50 overflow-auto p-1.5">{content}</div>;
-  }
 
   return content;
 }

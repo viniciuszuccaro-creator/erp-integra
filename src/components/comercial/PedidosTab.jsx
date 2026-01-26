@@ -134,7 +134,7 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
   }
 
   return (
-    <div className="w-full h-full flex flex-col space-y-6 overflow-auto p-2">
+    <div className="w-full h-full flex flex-col space-y-4 overflow-auto p-2">
       {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Alert className="border-orange-300 bg-orange-50">
@@ -235,11 +235,11 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md w-full">
-        <CardHeader className="bg-slate-50 border-b">
+      <Card className="border-0 shadow-md w-full flex-1 overflow-hidden flex flex-col">
+        <CardHeader className="bg-slate-50 border-b flex-shrink-0">
           <CardTitle>Lista de Pedidos ({filteredPedidos.length})</CardTitle>
         </CardHeader>
-        <CardContent className="p-0 w-full overflow-hidden">
+        <CardContent className="p-0 w-full flex-1 overflow-auto">
           {selectedPedidos.length > 0 && (
             <Alert className="m-4 border-blue-300 bg-blue-50">
               <AlertDescription className="flex items-center justify-between">

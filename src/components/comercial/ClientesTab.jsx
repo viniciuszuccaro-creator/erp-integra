@@ -64,7 +64,7 @@ function ClientesTabContent({ clientes: clientesProp }) {
   }
 
   return (
-    <div className="w-full h-full flex flex-col space-y-6 overflow-auto p-2">
+    <div className="w-full h-full flex flex-col space-y-4 overflow-auto p-2">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Clientes</h2>
         <Button 
@@ -126,12 +126,12 @@ function ClientesTabContent({ clientes: clientesProp }) {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md w-full">
-        <CardHeader className="bg-slate-50 border-b">
+      <Card className="border-0 shadow-md w-full flex-1 overflow-hidden flex flex-col">
+        <CardHeader className="bg-slate-50 border-b flex-shrink-0">
           <CardTitle>Lista de Clientes ({filteredClientes.length})</CardTitle>
         </CardHeader>
-        <CardContent className="p-0 w-full overflow-hidden">
-          <div className="overflow-x-auto w-full">
+        <CardContent className="p-0 w-full flex-1 overflow-auto">
+          <div className="overflow-x-auto w-full h-full">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
