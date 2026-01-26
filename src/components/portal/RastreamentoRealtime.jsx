@@ -56,7 +56,19 @@ export default function RastreamentoRealtime() {
     const autoRefresh = setInterval(() => {
       refetch();
     }, 30000);
-    return () => clearInterval(autoRefresh);
+
+    // Inscrição em tempo real nas atualizações de Entrega
+    let unsubscribe = null;
+    try {
+      unsubscribe = base44.entities.Entrega.subscribe(() => {
+        refetch();
+      });
+    } catch {}
+
+    return () => {
+      clearInterval(autoRefresh);
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, [refetch]);
 
   return (

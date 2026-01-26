@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Zap, Map, Truck, Navigation, TrendingDown } from "lucide-react";
 import { toast } from "sonner";
+import TesteGoogleMaps from "@/components/integracoes/TesteGoogleMaps";
 
 export default function RoteirizacaoInteligente({ windowMode = false }) {
   const queryClient = useQueryClient();
@@ -173,12 +174,19 @@ Retorne a melhor sequência de entregas, distância total, tempo estimado e cust
         </Card>
       </div>
 
+      <details className="bg-white rounded-lg border">
+       <summary className="p-4 cursor-pointer font-medium text-sm">🗺️ Simular Geocodificação e Rota (Google Maps - Teste)</summary>
+       <div className="p-4">
+         <TesteGoogleMaps windowMode />
+       </div>
+      </details>
+
       <Card>
-        <CardHeader>
-          <CardTitle>Rotas Geradas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
+       <CardHeader>
+         <CardTitle>Rotas Geradas</CardTitle>
+       </CardHeader>
+       <CardContent>
+         <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-slate-50">
                 <tr>
