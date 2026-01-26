@@ -52,7 +52,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SearchInput from "@/components/ui/SearchInput";
+import SearchInputIsolado from "@/components/ui/SearchInputIsolado";
 import CadastroClienteCompleto from "../components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "../components/cadastros/CadastroFornecedorCompleto";
 import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
@@ -203,7 +203,7 @@ export default function Cadastros() {
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const { hasPermission } = usePermissions();
+  const { hasPermission, isAdmin } = usePermissions();
   const { openWindow } = useWindow();
 
 
@@ -680,7 +680,14 @@ export default function Cadastros() {
 
   const { data: usuarios = [] } = useQuery({
     queryKey: ['usuarios'],
-    queryFn: () => base44.entities.User.list('-created_date', 9999),
+    queryFn: async () => {
+      try {
+        return await base44.entities.User.list('-created_date', 9999);
+      } catch {
+        return [];
+      }
+    },
+    enabled: typeof isAdmin === 'function' ? isAdmin() : !!isAdmin
   });
 
   const { data: perfisAcesso = [] } = useQuery({
@@ -894,7 +901,7 @@ export default function Cadastros() {
           </div>
 
           {/* ✅ V22.0 ETAPA 5 e 6: BUSCA UNIVERSAL LIMPA */}
-          <SearchInput
+          <SearchInputIsolado
             placeholder="🔍 Busca Universal - Digite para filtrar em todos os 6 blocos simultaneamente..."
             value={searchTerm}
             onChange={(val) => setSearchTerm(val)}
