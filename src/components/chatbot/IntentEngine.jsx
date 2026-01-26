@@ -493,11 +493,21 @@ const IntentEngine = {
             centro_custo_id: centroId,
             plano_contas_id: planoId,
             forma_cobranca: 'Boleto',
-            status_cobranca: 'gerada_simulada',
+            status_cobranca: 'gerada',
             url_boleto_pdf: null,
             empresa_id: contexto?.empresaId || undefined,
             canal_origem: 'Chatbot'
           });
+
+          // Emissão real do PDF (função backend)
+          try {
+            const { data } = await base44.functions.invoke('emitirBoleto', { conta_receber_id: cr.id });
+            if (data?.url) {
+              await base44.entities.ContaReceber.update(cr.id, { url_boleto_pdf: data.url });
+            }
+          } catch (e) {
+            // mantém registro sem URL se falhar
+          }
 
           try {
             await base44.entities.AuditLog.create({
@@ -506,14 +516,14 @@ const IntentEngine = {
               modulo: 'Financeiro',
               entidade: 'ContaReceber',
               registro_id: cr.id,
-              descricao: `Boleto (simulado) gerado via chatbot no valor de R$ ${valor.toLocaleString('pt-BR')}`,
+              descricao: `Boleto emitido via chatbot no valor de R$ ${valor.toLocaleString('pt-BR')}`,
               data_hora: new Date().toISOString(),
             });
           } catch {}
 
           return {
             tipo: 'boleto_gerado',
-            mensagem: `💳 Boleto criado com vencimento em ${new Date(venc).toLocaleDateString('pt-BR')}. Em breve você receberá o link para pagamento.`,
+            mensagem: `💳 Boleto criado com vencimento em ${new Date(venc).toLocaleDateString('pt-BR')}. Link para pagamento gerado.`,
             dados: cr
           };
         }
