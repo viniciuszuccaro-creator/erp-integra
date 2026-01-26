@@ -23,6 +23,12 @@ Deno.serve(async (req) => {
     if (op !== 'read') {
       const ctxErr = assertContextPresence(data || {}, true);
       if (ctxErr) return ctxErr;
+    } else {
+      // Para leitura sem id, filtros devem conter contexto
+      if (!id) {
+        const hasCtx = (filtros && (filtros.group_id || filtros.empresa_id));
+        if (!hasCtx) return Response.json({ error: 'Filtro sem contexto multiempresa' }, { status: 400 });
+      }
     }
 
     const api = base44.asServiceRole.entities[entity];
