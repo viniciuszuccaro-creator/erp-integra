@@ -33,6 +33,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
     numero_parcela: '',
     centro_custo: '',
     centro_custo_id: '',
+    plano_contas_id: '',
     projeto_obra: '',
     categoria: 'Fornecedores',
     ordem_compra_id: '',
@@ -63,6 +64,11 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
     queryFn: () => base44.entities.CentroCusto.list(),
   });
 
+  const { data: planosContas = [] } = useQuery({
+    queryKey: ['planosContas'],
+    queryFn: () => base44.entities.PlanoDeContas.list(),
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -73,6 +79,14 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
 
     if (!formData.empresa_id) {
       toast.error('Selecione a empresa');
+      return;
+    }
+    if (!formData.centro_custo_id) {
+      toast.error('Centro de custo é obrigatório');
+      return;
+    }
+    if (!formData.plano_contas_id) {
+      toast.error('Plano de contas é obrigatório');
       return;
     }
 
@@ -307,7 +321,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
           </div>
 
           <div>
-            <Label>Centro de Custo</Label>
+            <Label>Centro de Custo *</Label>
             <Select
               value={formData.centro_custo_id}
               onValueChange={(v) => {
@@ -326,6 +340,25 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
                 {centrosCusto.map(cc => (
                   <SelectItem key={cc.id} value={cc.id}>
                     {cc.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Plano de Contas *</Label>
+            <Select
+              value={formData.plano_contas_id}
+              onValueChange={(v) => setFormData({ ...formData, plano_contas_id: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {planosContas.map(pc => (
+                  <SelectItem key={pc.id} value={pc.id}>
+                    {pc.codigo || pc.id} - {pc.descricao || pc.nome}
                   </SelectItem>
                 ))}
               </SelectContent>
