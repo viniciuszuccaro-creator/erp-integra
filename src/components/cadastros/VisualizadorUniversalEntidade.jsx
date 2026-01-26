@@ -387,7 +387,7 @@ export default function VisualizadorUniversalEntidade({
 
   return (
     <Wrapper>
-      <Card className={windowMode ? 'h-full flex flex-col' : ''}>
+      <Card className={windowMode ? 'h-full flex flex-col w-full overflow-hidden' : 'w-full'}>
         <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -485,7 +485,7 @@ export default function VisualizadorUniversalEntidade({
           </div>
         </CardHeader>
 
-        <CardContent className={`p-6 ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
+        <CardContent className={`p-6 w-full ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
           {isLoading ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
@@ -510,8 +510,8 @@ export default function VisualizadorUniversalEntidade({
           ) : (
             <>
               {visualizacao === 'table' && (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full border-collapse min-w-full">
                     <thead>
                       <tr className="bg-slate-50 border-b-2 border-slate-200">
                         <th className="p-3 text-left">
