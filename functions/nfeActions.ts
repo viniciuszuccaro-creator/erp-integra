@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
       }
       if (action === 'status') {
         const res = await statusENotas(nfeId, integracao);
+        await audit(base44, user, { acao: 'Visualização', modulo: 'Fiscal', entidade: 'NotaFiscal', registro_id: nfeId, descricao: 'Consulta status NF-e' });
         return Response.json(res);
       }
       if (action === 'cancelar') {
