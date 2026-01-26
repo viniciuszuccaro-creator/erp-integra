@@ -1,0 +1,41 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, backendHasPermission, assertContextPresence, audit } from './_lib/guard.js';
+
+// entityGuard: valida RBAC e multiempresa para operações CRUD genéricas de entidades sensíveis
+// Payload: { entity, op: 'create'|'update'|'delete'|'read', data?, id?, filtros? , module, section }
+// Use este endpoint em formulários críticos via SDK em vez de chamar entities.* diretamente
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const { user, perfil } = await getUserAndPerfil(base44);
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json().catch(() => ({}));
+    const { entity, op = 'read', data = null, id = null, filtros = {}, module: moduleName, section } = body || {};
+    if (!entity || !op) return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+
+    // RBAC
+    const allowed = backendHasPermission(perfil, moduleName || entity, section || null, op, user.role);
+    if (!allowed) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+    // Multiempresa: exige empresa_id/group_id para create/update/delete
+    if (op !== 'read') {
+      const ctxErr = assertContextPresence(data || {}, true);
+      if (ctxErr) return ctxErr;
+    }
+
+    const api = base44.asServiceRole.entities[entity];
+    let result = null;
+    if (op === 'create') result = await api.create(data);
+    else if (op === 'update') result = await api.update(id, data);
+    else if (op === 'delete') result = await api.delete(id);
+    else if (op === 'read') result = id ? await api.get(id) : await api.filter(filtros);
+
+    await audit(base44, user, { acao: op === 'read' ? 'Visualização' : op === 'delete' ? 'Exclusão' : op === 'update' ? 'Edição' : 'Criação', modulo: moduleName || entity, entidade: entity, registro_id: id || (result?.id ?? null), descricao: `entityGuard ${op} ${entity}`, dados_novos: op !== 'read' ? (data || null) : null });
+
+    return Response.json({ ok: true, data: result });
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 });
+  }
+});
