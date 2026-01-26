@@ -19,11 +19,11 @@ import {
   ShieldAlert
 } from "lucide-react";
 
-export default function DashboardSeguranca({ 
-  estatisticas, 
-  perfis = [], 
+export default function DashboardSeguranca({
+  estatisticas = { cobertura: 0, totalUsuarios: 0, conflitosTotal: 0 },
+  perfis = [],
   usuarios = [],
-  auditoriaAcessos = [] 
+  auditoriaAcessos = []
 }) {
   // Últimas atividades
   const ultimasAtividades = auditoriaAcessos.slice(0, 10);
