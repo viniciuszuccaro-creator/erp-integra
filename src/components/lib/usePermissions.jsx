@@ -142,6 +142,7 @@ export default function usePermissions() {
     canCreate,
     canEdit,
     canExport,
+    canCancel,
     isLoading: loadingUser || loadingPerfil,
     user,
     perfilAcesso
