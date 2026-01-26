@@ -24,7 +24,11 @@ export default function SegurancaGovernancaIndex() {
         <TabsContent value="seguranca" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <DashboardSeguranca />
+              <DashboardSeguranca
+                estatisticas={{ cobertura: 0, totalUsuarios: 0, conflitosTotal: 0 }}
+                usuarios={[]}
+                auditoriaAcessos={[]}
+              />
             </CardContent>
           </Card>
         </TabsContent>
