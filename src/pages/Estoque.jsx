@@ -261,7 +261,7 @@ export default function Estoque() {
 
   return (
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-indigo-50">
+      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 bg-gradient-to-br from-slate-50 to-indigo-50 overflow-auto">
         <HeaderEstoqueCompacto />
         
         <KPIsEstoque
