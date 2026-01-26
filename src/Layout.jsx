@@ -76,10 +76,10 @@ const navigationItems = [
   { title: "Recursos Humanos", url: createPageUrl("RH"), icon: UserCircle, group: "administrativo" },
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
-  { title: "Configurações do Sistema", url: createPageUrl("AdministracaoSistema?tab=config"), icon: Settings, group: "sistema" },
+  { title: "Administração do Sistema", url: createPageUrl("AdministracaoSistema?tab=config"), icon: Settings, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
-  { title: "🔒 Segurança e Governança", url: createPageUrl("AdministracaoSistema?tab=seguranca"), icon: Shield, group: "sistema", adminOnly: true },
-  { title: "Auditoria de UI", url: createPageUrl("AdministracaoSistema?tab=auditoria"), icon: Shield, group: "sistema", adminOnly: true },
+  
+  
   { title: "⚡ Estabilização do Sistema", url: createPageUrl("EstabilizacaoSistema"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "🎨 Padronização UI/UX", url: createPageUrl("PadronizacaoUI"), icon: Shield, group: "sistema", adminOnly: true },
   { title: "💬 Hub de Atendimento", url: createPageUrl("HubAtendimento"), icon: MessageCircle, group: "principal" },

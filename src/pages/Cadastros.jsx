@@ -59,8 +59,8 @@ import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormComp
 import ProdutoFormV22_Completo from "../components/cadastros/ProdutoFormV22_Completo";
 import BotoesImportacaoProduto from "../components/cadastros/BotoesImportacaoProduto";
 import SetorAtividadeForm from "../components/cadastros/SetorAtividadeForm";
-import GlobalAuditLog from "../components/sistema/GlobalAuditLog";
-import CentralPerfisAcesso from "../components/sistema/CentralPerfisAcesso";
+
+
 import usePermissions from "../components/lib/usePermissions";
 import TransportadoraForm from "../components/cadastros/TransportadoraForm";
 import { useWindow } from "../components/lib/useWindow";
@@ -789,18 +789,10 @@ export default function Cadastros() {
 
       {/* TABS: CADASTROS vs GERENCIAMENTO */}
       <Tabs value={abaGerenciamento} onValueChange={handleAbaChange}>
-        <TabsList className="grid w-full grid-cols-3 bg-slate-100">
+        <TabsList className="grid w-full grid-cols-1 bg-slate-100">
           <TabsTrigger value="cadastros">
             <Database className="w-4 h-4 mr-2" />
             Cadastros
-          </TabsTrigger>
-          <TabsTrigger value="acesso">
-            <Shield className="w-4 h-4 mr-2" />
-            Acesso
-          </TabsTrigger>
-          <TabsTrigger value="auditoria">
-            <Zap className="w-4 h-4 mr-2" />
-            Auditoria
           </TabsTrigger>
         </TabsList>
 
@@ -5046,15 +5038,7 @@ export default function Cadastros() {
           </Card>
         </TabsContent>
 
-        {/* ABA: CONTROLE DE ACESSO - V21.7 MELHORADO */}
-        <TabsContent value="acesso" className="mt-6">
-          <Suspense fallback={<div>Carregando...</div>}><CentralPerfisAcesso /></Suspense>
-        </TabsContent>
 
-        {/* ABA: AUDIT LOG */}
-        <TabsContent value="auditoria" className="mt-6">
-          <Suspense fallback={<div>Carregando...</div>}><GlobalAuditLog limite={50} mostrarFiltros={true} /></Suspense>
-        </TabsContent>
       </Tabs>
 
       {/* ==================== FASE 1 DEFINITIVO-100% ==================== */}
