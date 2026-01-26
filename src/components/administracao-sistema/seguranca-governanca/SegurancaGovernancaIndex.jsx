@@ -9,7 +9,7 @@ import IAGovernancaCompliance from "@/components/ia/IAGovernancaCompliance";
 
 export default function SegurancaGovernancaIndex() {
   const { isAdmin } = usePermissions();
-  if (!isAdmin) return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;
+  if (!isAdmin()) return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;
 
   return (
     <div className="w-full h-full flex flex-col">

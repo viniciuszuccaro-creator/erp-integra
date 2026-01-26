@@ -37,7 +37,7 @@ export default function AdministracaoSistema() {
             <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> Auditoria</div>
             </TabsTrigger>
-            {isAdmin && (
+            {isAdmin() && (
               <TabsTrigger value="seguranca" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                 <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> Segurança</div>
               </TabsTrigger>
@@ -62,7 +62,7 @@ export default function AdministracaoSistema() {
             </div>
           </TabsContent>
 
-          {isAdmin && (
+          {isAdmin() && (
             <TabsContent value="seguranca" className="mt-4">
               <div className="w-full h-full">
                 <SegurancaGovernancaIndex />
