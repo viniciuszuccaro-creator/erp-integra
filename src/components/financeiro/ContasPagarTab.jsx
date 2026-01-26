@@ -238,7 +238,7 @@ function ContasPagarTabContent({ contas: contasProp, windowMode = false }) {
   };
 
   const content = (
-    <div className="space-y-1.5">
+    <div className="w-full h-full flex flex-col space-y-1.5 overflow-auto">
       <HeaderPagarCompacto />
       <KPIsPagar totais={totais} />
       <FiltrosPagar

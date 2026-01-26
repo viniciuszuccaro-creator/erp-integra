@@ -64,7 +64,7 @@ function ClientesTabContent({ clientes: clientesProp }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full flex flex-col space-y-6 overflow-auto p-2">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Clientes</h2>
         <Button 
@@ -101,9 +101,9 @@ function ClientesTabContent({ clientes: clientesProp }) {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md w-full">
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
@@ -126,12 +126,12 @@ function ClientesTabContent({ clientes: clientesProp }) {
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md w-full">
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle>Lista de Clientes ({filteredClientes.length})</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
+        <CardContent className="p-0 w-full overflow-hidden">
+          <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">

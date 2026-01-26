@@ -134,7 +134,7 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full h-full flex flex-col space-y-6 overflow-auto p-2">
       {/* ETAPA 4: ALERTA DE APROVAÇÕES PENDENTES */}
       {pedidosPendentesAprovacao.length > 0 && (
         <Alert className="border-orange-300 bg-orange-50">
@@ -206,9 +206,9 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
         </Button>
       </div>
 
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md w-full">
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
             <SearchInput
               value={searchTerm}
               onChange={setSearchTerm}
@@ -235,11 +235,11 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
         </CardContent>
       </Card>
 
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md w-full">
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle>Lista de Pedidos ({filteredPedidos.length})</CardTitle>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 w-full overflow-hidden">
           {selectedPedidos.length > 0 && (
             <Alert className="m-4 border-blue-300 bg-blue-50">
               <AlertDescription className="flex items-center justify-between">
@@ -257,14 +257,15 @@ function PedidosTabContent({ pedidos: pedidosProp, clientes: clientesProp, isLoa
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
-                  <TableHead>Nº Pedido</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Origem</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Aprovação</TableHead>
-                  <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
+                 <TableHead className="w-12"></TableHead>
+                 <TableHead className="cursor-pointer hover:bg-slate-100">Nº Pedido</TableHead>
+                 <TableHead className="cursor-pointer hover:bg-slate-100">Cliente</TableHead>
+                 <TableHead className="cursor-pointer hover:bg-slate-100">Data</TableHead>
+                 <TableHead>Origem</TableHead>
+                 <TableHead className="cursor-pointer hover:bg-slate-100">Valor</TableHead>
+                 <TableHead>Status</TableHead>
+                 <TableHead>Aprovação</TableHead>
+                 <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
