@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission } from './_lib/guard';
 
 // Sinalização de churn no CRM: analisa Oportunidades e gera alerts no AuditLog
 Deno.serve(async (req) => {
