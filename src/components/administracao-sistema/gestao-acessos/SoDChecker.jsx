@@ -20,7 +20,12 @@ export default function SoDChecker() {
   const executarAnalise = async () => {
     setLoading(true); setErro(null);
     try {
-      const { data } = await base44.functions.invoke('sodValidator', { scope: 'global' });
+      const { data } = await base44.functions.invoke('sodValidator', { 
+        scope: estaNoGrupo ? 'grupo' : 'empresa',
+        group_id: estaNoGrupo ? (empresaAtual?.group_id || empresaAtual?.id) : undefined,
+        empresa_id: !estaNoGrupo ? empresaAtual?.id : undefined,
+        requested_by: user?.id,
+      });
       setResultado(data);
     } catch (e) {
       setErro(e?.message || 'Falha ao executar análise');
