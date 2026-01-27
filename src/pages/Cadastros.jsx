@@ -948,7 +948,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         {clientesFiltrados.slice(0, 10).map(cliente => (
                         <div key={cliente.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
                           <div className="flex-1">
@@ -1029,7 +1029,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         {fornecedoresFiltrados.slice(0, 10).map(fornecedor => (
                         <div key={fornecedor.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
                           <div className="flex-1">
@@ -1110,7 +1110,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         {transportadorasFiltradas.slice(0, 10).map(transp => (
                         <div key={transp.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -1191,7 +1191,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         {colaboradoresFiltrados.slice(0, 10).map(colab => (
                         <div key={colab.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -1284,7 +1284,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                       {representantes.map(rep => {
                         const clientesIndicados = clientes.filter(c => c.indicador_id === rep.id).length;
                         return (
@@ -1382,7 +1382,7 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                    <CardContent className="p-4 max-h-80 overflow-y-auto overscroll-contain">
                       {contatosB2B.map(contato => (
                         <div key={contato.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -1457,7 +1457,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                       {segmentosCliente.map(seg => (
                         <div key={seg.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -1534,7 +1534,7 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                    <CardContent className="p-4 max-h-80 overflow-y-auto overscroll-contain">
                       {regioesAtendimento.map(regiao => (
                         <div key={regiao.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -1627,7 +1627,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                       {produtosFiltrados.slice(0, 10).map(produto => (
                         <div key={produto.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
                           <div className="flex-1">
@@ -1715,7 +1715,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         {setoresAtividade.map(setor => (
                         <div key={setor.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -1793,7 +1793,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         {gruposProduto.map(grupo => (
                         <div key={grupo.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -1869,7 +1869,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         {marcas.map(marca => (
                         <div key={marca.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -1942,7 +1942,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {tabelasPreco.map(tabela => (
                           <div key={tabela.id} className="p-3 border rounded hover:bg-slate-50 transition-colors">
@@ -2030,7 +2030,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         {servicos.map(servico => (
                         <div key={servico.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -2101,7 +2101,7 @@ export default function Cadastros() {
                       </div>
                     </CardHeader>
                     <CardContent className="p-4">
-                      <div className="max-h-80 overflow-y-auto">
+                      <div className="max-h-80 overflow-y-auto overscroll-contain">
                         {kits.map(kit => (
                           <div key={kit.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                             <div className="flex-1">

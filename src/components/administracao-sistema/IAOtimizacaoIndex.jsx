@@ -56,9 +56,11 @@ export default function IAOtimizacaoIndex({ initialTab }) {
                 <ContextoConfigBanner />
                 <HerancaConfigNotice />
               </div>
-              <IAPanel />
+              <div className="col-span-full xl:col-span-1">
+                <IAPanel />
+              </div>
 
-              <Card>
+              <Card className="col-span-full xl:col-span-1">
                 <CardHeader className="bg-purple-50 border-b">
                   <CardTitle className="text-base flex items-center gap-2"><Brain className="w-5 h-5 text-purple-600" /> Configurações por Módulo</CardTitle>
                 </CardHeader>
@@ -92,10 +94,20 @@ export default function IAOtimizacaoIndex({ initialTab }) {
         <TabsContent value="otimizacao" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <div className="text-center py-10 text-slate-500">
-                <Zap className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                <p>Nenhuma otimização ativa no momento.</p>
-                <p className="text-sm">Dica: habilite recursos como PriceBrain e ChurnDetection nos módulos e configure modelos na aba “IA e Modelos”.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="text-center py-10 text-slate-500 border rounded-lg">
+                  <Zap className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                  <p className="font-medium">Nenhuma otimização ativa no momento</p>
+                  <p className="text-sm mt-1">Ative PriceBrain e ChurnDetection nos módulos e defina modelos na aba “IA e Modelos”.</p>
+                </div>
+                <div className="p-4 border rounded-lg bg-slate-50">
+                  <p className="text-sm text-slate-700 font-medium">Como começar</p>
+                  <ul className="mt-2 list-disc list-inside text-sm text-slate-600 space-y-1">
+                    <li>Acesse IA e Modelos e selecione o modelo base</li>
+                    <li>Habilite otimizações por módulo conforme a necessidade</li>
+                    <li>Monitore resultados na Auditoria e Logs</li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
           </Card>

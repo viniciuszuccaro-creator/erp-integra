@@ -78,8 +78,10 @@ export default function IntegracoesIndex({ initialTab }) {
                 <ContextoConfigBanner />
                 <HerancaConfigNotice />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="w-full mb-4">
                 <IntegracoesPanel />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
               <ProtectedSection module="Sistema" section={["Configurações","Integrações","NFe"]} action="visualizar">
                 <Button onClick={() => openWindow(VisualizadorUniversalEntidade, { nomeEntidade: 'ConfiguracaoNFe', tituloDisplay: 'Configurações NF-e', icone: FileText, componenteEdicao: ConfiguracaoNFeForm, windowMode: true }, { title: 'Configurações NF-e', width: 1000, height: 700 })} className="w-full">
