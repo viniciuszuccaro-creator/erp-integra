@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Settings, Users, Shield, FileText, Activity, Sparkles } from "lucide-react";
+import { Settings, Users, Shield, FileText, Sparkles } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
 import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
@@ -104,13 +104,6 @@ export default function AdministracaoSistema() {
           </TabsContent>
 
 
-          <TabsContent value="monitoramento" className="mt-4">
-            <ProtectedSection module="Sistema" section={["Configurações","Monitoramento"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito.</div>}>
-              <div className="w-full h-full">
-                <MonitoramentoManutencaoIndex initialTab="monitoramento" />
-              </div>
-            </ProtectedSection>
-          </TabsContent>
 
 
 
