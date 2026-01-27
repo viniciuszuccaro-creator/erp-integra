@@ -3081,11 +3081,8 @@ export default function Cadastros() {
                     LeadScoring • RouteOptimizer • QualityPredictor • StockRecommender • e mais 20 IAs rodando 24/7
                   </AlertDescription>
                 </Alert>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
 
-          {/* FOOTER - PRINCÍPIOS DA FASE 0 */}
+                {/* FOOTER - PRINCÍPIOS DA FASE 0 */}
           <Card className="border-2 border-slate-300 bg-gradient-to-r from-slate-50 to-slate-100">
             <CardContent className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
