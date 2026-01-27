@@ -28,6 +28,7 @@ Deno.serve(async (req) => {
         properties: {
           score: { type: 'number' },
           temperatura: { type: 'string' },
+          proxima_acao: { type: 'string' }
         },
       },
     });
