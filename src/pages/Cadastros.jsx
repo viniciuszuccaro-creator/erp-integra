@@ -2950,11 +2950,11 @@ export default function Cadastros() {
             </CardContent>
           </Card>
         </TabsContent>
-        </Tabs>
+      </Tabs>
 
-        {/* ==================== FASE 1 DEFINITIVO-100% ==================== */}
-        {/* TODOS OS FORMULÁRIOS AGORA ABREM EM JANELAS REDIMENSIONÁVEIS */}
-        {/* ZERO DIALOGS - TUDO É WINDOW MODE */}
-        </div>
-        );
-        }
+      {/* ==================== FASE 1 DEFINITIVO-100% ==================== */}
+      {/* TODOS OS FORMULÁRIOS AGORA ABREM EM JANELAS REDIMENSIONÁVEIS */}
+      {/* ZERO DIALOGS - TUDO É WINDOW MODE */}
+    </div>
+  );
+}
