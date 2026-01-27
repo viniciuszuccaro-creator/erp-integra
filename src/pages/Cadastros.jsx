@@ -2168,36 +2168,38 @@ export default function Cadastros() {
                             </Button>
                           </div>
                         </CardHeader>
-                        <CardContent className="p-4 max-h-60 overflow-y-auto">
-                          {configsIntegracao.map(config => (
-                            <div key={config.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                              <div className="flex-1">
-                                <p className="font-semibold text-sm">{config.marketplace}</p>
-                                <Badge className={config.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                                  {config.ativo ? 'Ativa' : 'Inativa'}
-                                </Badge>
+                        <CardContent className="p-4">
+                          <div className="max-h-60 overflow-y-auto">
+                            {configsIntegracao.map(config => (
+                              <div key={config.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                                <div className="flex-1">
+                                  <p className="font-semibold text-sm">{config.marketplace}</p>
+                                  <Badge className={config.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                                    {config.ativo ? 'Ativa' : 'Inativa'}
+                                  </Badge>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
+                                    configuracaoIntegracaoMarketplace: config,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
+                                  }, {
+                                    title: `🔗 Editar: ${config.marketplace}`,
+                                    width: 1100,
+                                    height: 750,
+                                    uniqueKey: `edit-ConfiguracaoIntegracaoMarketplace-${config.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
+                                  })}
+                                  disabled={!hasPermission('cadastros', 'editar')}
+                                >
+                                  <Edit className="w-3 h-3 text-purple-600" />
+                                </Button>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openWindow(ConfiguracaoIntegracaoForm, {
-                                  configuracaoIntegracaoMarketplace: config,
-                                  windowMode: true,
-                                  onSubmit: handleSubmitGenerico('ConfiguracaoIntegracaoMarketplace', 'configs-integracao-marketplace')
-                                }, {
-                                  title: `🔗 Editar: ${config.marketplace}`,
-                                  width: 1100,
-                                  height: 750,
-                                  uniqueKey: `edit-ConfiguracaoIntegracaoMarketplace-${config.id}-${Date.now()}`,
-                                  zIndex: 999999,
-                                  bringToFront: true
-                                })}
-                                disabled={!hasPermission('cadastros', 'editar')}
-                              >
-                                <Edit className="w-3 h-3 text-purple-600" />
-                              </Button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </CardContent>
                       </Card>
 
