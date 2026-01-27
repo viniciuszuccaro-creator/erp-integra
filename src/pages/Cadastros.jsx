@@ -2099,7 +2099,31 @@ export default function Cadastros() {
                     <CardContent className="p-4">
                       <div className="max-h-80 overflow-y-auto">
                         {kits.map(kit => (
-                    ...
+                          <div key={kit.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                            <div className="flex-1">
+                              <p className="font-semibold text-sm">{kit.nome_kit || kit.nome || 'Kit'}</p>
+                              {kit.descricao && <p className="text-xs text-slate-500">{kit.descricao}</p>}
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openWindow(KitProdutoForm, {
+                                kitProduto: kit,
+                                windowMode: true,
+                                onSubmit: handleSubmitGenerico('KitProduto', 'kits-produto')
+                              }, {
+                                title: `📦 Editar: ${kit.nome_kit || kit.nome || 'Kit'}`,
+                                width: 900,
+                                height: 650,
+                                uniqueKey: `edit-KitProduto-${kit.id}-${Date.now()}`,
+                                zIndex: 999999,
+                                bringToFront: true
+                              })}
+                              disabled={!hasPermission('cadastros', 'editar')}
+                            >
+                              <Edit className="w-4 h-4 text-purple-600" />
+                            </Button>
+                          </div>
                         ))}
                       </div>
                     </CardContent>
