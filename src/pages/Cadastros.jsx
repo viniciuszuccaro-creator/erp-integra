@@ -1283,7 +1283,8 @@ export default function Cadastros() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
                       {representantes.map(rep => {
                         const clientesIndicados = clientes.filter(c => c.indicador_id === rep.id).length;
                         return (
@@ -1337,6 +1338,7 @@ export default function Cadastros() {
                       {representantes.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum representante cadastrado</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -1454,7 +1456,8 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
                       {segmentosCliente.map(seg => (
                         <div key={seg.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
@@ -1485,6 +1488,7 @@ export default function Cadastros() {
                       {segmentosCliente.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum segmento cadastrado</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 

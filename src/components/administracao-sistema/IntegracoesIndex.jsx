@@ -73,12 +73,13 @@ export default function IntegracoesIndex({ initialTab }) {
 
         <TabsContent value="gerenciamento" className="mt-4">
           <Card className="w-full">
-            <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="col-span-full">
+            <CardContent className="p-4">
+              <div className="w-full mb-3 space-y-2">
                 <ContextoConfigBanner />
                 <HerancaConfigNotice />
               </div>
-              <IntegracoesPanel />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <IntegracoesPanel />
 
               <ProtectedSection module="Sistema" section={["Configurações","Integrações","NFe"]} action="visualizar">
                 <Button onClick={() => openWindow(VisualizadorUniversalEntidade, { nomeEntidade: 'ConfiguracaoNFe', tituloDisplay: 'Configurações NF-e', icone: FileText, componenteEdicao: ConfiguracaoNFeForm, windowMode: true }, { title: 'Configurações NF-e', width: 1000, height: 700 })} className="w-full">
@@ -116,6 +117,7 @@ export default function IntegracoesIndex({ initialTab }) {
                 </Button>
               </ProtectedSection>
 
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

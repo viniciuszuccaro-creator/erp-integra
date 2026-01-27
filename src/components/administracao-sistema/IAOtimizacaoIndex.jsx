@@ -51,7 +51,7 @@ export default function IAOtimizacaoIndex({ initialTab }) {
 
         <TabsContent value="ia" className="mt-4">
           <Card className="w-full">
-            <CardContent className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <CardContent className="p-4 grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
               <div className="col-span-full space-y-2">
                 <ContextoConfigBanner />
                 <HerancaConfigNotice />
@@ -94,8 +94,8 @@ export default function IAOtimizacaoIndex({ initialTab }) {
             <CardContent className="p-4">
               <div className="text-center py-10 text-slate-500">
                 <Zap className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                <p>Nenhuma configuração de otimização cadastrada ainda.</p>
-                <p className="text-sm">Utilize os módulos de IA para configurar otimizações.</p>
+                <p>Nenhuma otimização ativa no momento.</p>
+                <p className="text-sm">Dica: habilite recursos como PriceBrain e ChurnDetection nos módulos e configure modelos na aba “IA e Modelos”.</p>
               </div>
             </CardContent>
           </Card>
