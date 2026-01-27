@@ -20,12 +20,10 @@ export default function SegurancaGovernancaIndex() {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <Tabs defaultValue="seguranca" className="w-full h-full">
+      <Tabs defaultValue="politicas" className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
-          <TabsTrigger value="seguranca">Segurança</TabsTrigger>
-          <TabsTrigger value="monitoramento">Monitoramento</TabsTrigger>
-          <TabsTrigger value="backup">Backup</TabsTrigger>
-          <TabsTrigger value="governanca">Governança</TabsTrigger>
+          <TabsTrigger value="politicas">Políticas</TabsTrigger>
+          <TabsTrigger value="manutencao">Monitoramento & Manutenção</TabsTrigger>
           <TabsTrigger value="compliance">Compliance IA</TabsTrigger>
         </TabsList>
 
