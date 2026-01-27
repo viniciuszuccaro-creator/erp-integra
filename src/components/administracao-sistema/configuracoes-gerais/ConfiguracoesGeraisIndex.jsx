@@ -6,6 +6,7 @@ import ConfiguracaoBackup from "@/components/sistema/ConfiguracaoBackup";
 import ConfiguracaoMonitoramento from "@/components/sistema/ConfiguracaoMonitoramento";
 import ConfiguracaoSeguranca from "@/components/sistema/ConfiguracaoSeguranca";
 import usePermissions from "@/components/lib/usePermissions";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import IntegracoesPanel from "@/components/administracao-sistema/configuracoes-gerais/IntegracoesPanel";
 import FiscalPanel from "@/components/administracao-sistema/configuracoes-gerais/FiscalPanel";
