@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { base44 } from "@/api/base44Client";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 
 export default function SoDChecker() {
