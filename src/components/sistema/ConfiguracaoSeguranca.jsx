@@ -91,14 +91,15 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
 
   const salvarMutation = useMutation({
     mutationFn: async (data) => {
+      const stamped = { ...data, empresa_id: empresaId || null, group_id: grupoId || null };
       if (config?.id) {
-        return await base44.entities.ConfiguracaoSeguranca.update(config.id, data);
+        return await base44.entities.ConfiguracaoSeguranca.update(config.id, stamped);
       } else {
-        return await base44.entities.ConfiguracaoSeguranca.create(data);
+        return await base44.entities.ConfigurancaSeguranca?.create
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['config-seguranca'] });
+      queryClient.invalidateQueries({ queryKey: ['config-seguranca', empresaId || grupoId] });
       toast.success('✅ Configuração salva com sucesso!');
     },
     onError: (error) => {

@@ -16,11 +16,11 @@ import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-export default function ConfiguracoesGeraisIndex() {
+export default function ConfiguracoesGeraisIndex({ initialTab }) {
   const { hasPermission } = usePermissions();
   const { user } = useUser();
-  const { empresaAtual } = useContextoVisual();
-  const [tab, setTab] = React.useState('global');
+  const { empresaAtual, grupoAtual } = useContextoVisual();
+  const [tab, setTab] = React.useState(initialTab || 'global');
   const handleTabChange = (next) => {
     setTab(next);
     try {
@@ -37,6 +37,9 @@ export default function ConfiguracoesGeraisIndex() {
       });
     } catch {}
   };
+  React.useEffect(() => {
+    if (initialTab) setTab(initialTab);
+  }, [initialTab]);
   return (
     <div className="w-full h-full flex flex-col">
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
@@ -96,7 +99,7 @@ export default function ConfiguracoesGeraisIndex() {
           <Card className="w-full">
             <CardContent className="p-4">
               <ProtectedSection module="Sistema" section={["Configurações","Backup"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Backup.</div>}>
-                <ConfiguracaoBackup />
+                <ConfiguracaoBackup empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
               </ProtectedSection>
             </CardContent>
           </Card>
@@ -106,7 +109,7 @@ export default function ConfiguracoesGeraisIndex() {
           <Card className="w-full">
             <CardContent className="p-4">
               <ProtectedSection module="Sistema" section={["Configurações","Monitoramento"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Monitoramento.</div>}>
-                <ConfiguracaoMonitoramento />
+                <ConfiguracaoMonitoramento empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
               </ProtectedSection>
             </CardContent>
           </Card>
@@ -116,7 +119,7 @@ export default function ConfiguracoesGeraisIndex() {
           <Card className="w-full">
             <CardContent className="p-4">
               <ProtectedSection module="Sistema" section={["Configurações","Segurança"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Segurança.</div>}>
-                <ConfiguracaoSeguranca />
+                <ConfiguracaoSeguranca empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
               </ProtectedSection>
             </CardContent>
           </Card>

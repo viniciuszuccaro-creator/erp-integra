@@ -81,14 +81,15 @@ export default function ConfiguracaoMonitoramento({ empresaId, grupoId }) {
 
   const salvarMutation = useMutation({
     mutationFn: async (data) => {
+      const stamped = { ...data, empresa_id: empresaId || null, group_id: grupoId || null };
       if (config?.id) {
-        return await base44.entities.ConfiguracaoMonitoramento.update(config.id, data);
+        return await base44.entities.ConfiguracaoMonitoramento.update(config.id, stamped);
       } else {
-        return await base44.entities.ConfiguracaoMonitoramento.create(data);
+        return await base44.entities.ConfiguracaoMonitoramento.create(stamped);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['config-monitoramento'] });
+      queryClient.invalidateQueries({ queryKey: ['config-monitoramento', empresaId || grupoId] });
       toast.success('✅ Configuração salva!');
     },
     onError: (error) => {

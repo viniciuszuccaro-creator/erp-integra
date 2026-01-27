@@ -73,14 +73,15 @@ export default function ConfiguracaoBackup({ empresaId, grupoId }) {
 
   const salvarMutation = useMutation({
     mutationFn: async (data) => {
+      const stamped = { ...data, empresa_id: empresaId || null, group_id: grupoId || null };
       if (config?.id) {
-        return await base44.entities.ConfiguracaoBackup.update(config.id, data);
+        return await base44.entities.ConfiguracaoBackup.update(config.id, stamped);
       } else {
-        return await base44.entities.ConfiguracaoBackup.create(data);
+        return await base44.entities.ConfiguracaoBackup.create(stamped);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['config-backup'] });
+      queryClient.invalidateQueries({ queryKey: ['config-backup', empresaId || grupoId] });
       toast.success('✅ Configuração salva com sucesso!');
     },
     onError: (error) => {
