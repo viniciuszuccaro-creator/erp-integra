@@ -89,8 +89,11 @@ export default function IAOtimizacaoIndex({ initialTab }) {
         <TabsContent value="otimizacao" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              {/* Espaço para componentes de otimização (preço, churn, leads) já existentes no projeto */}
-              <p className="text-sm text-slate-600">Parâmetros e automações de otimização centralizados aqui.</p>
+              <div className="text-center py-10 text-slate-500">
+                <Zap className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                <p>Nenhuma configuração de otimização cadastrada ainda.</p>
+                <p className="text-sm">Utilize os módulos de IA para configurar otimizações.</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
