@@ -306,6 +306,22 @@ export default function CentralPerfisAcesso() {
       const foiCriacao = perfilAberto?.novo;
       toast.success(foiCriacao ? "✅ Perfil criado com sucesso!" : "✅ Perfil atualizado com sucesso!");
       
+      // auditoria de segurança (mudança de permissão)
+      try {
+        base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: empresaAtual?.id || null,
+          empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+          acao: foiCriacao ? 'Criação' : 'Edição',
+          modulo: 'Controle de Acesso',
+          entidade: 'PerfilAcesso',
+          registro_id: result?.id || perfilAberto?.id,
+          descricao: (foiCriacao ? 'Criação' : 'Atualização') + ` do perfil "${result?.nome_perfil || formPerfil.nome_perfil}"`,
+          dados_novos: result || formPerfil,
+        });
+      } catch {}
+      
       // Aguardar 300ms para garantir que query foi invalidada
       setTimeout(() => {
         setPerfilAberto(null);
