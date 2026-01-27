@@ -68,7 +68,11 @@ export default function GestaoAcessosIndex() {
         <TabsContent value="matriz" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <MatrizPermissoesVisual />
+              <div className="text-center py-10 text-slate-500">
+                <Shield className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                <p>O componente `MatrizPermissoesVisual` precisa ser implementado ou alimentado com dados.</p>
+                <p className="text-sm">Verifique a implementação interna ou a fonte de dados.</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
