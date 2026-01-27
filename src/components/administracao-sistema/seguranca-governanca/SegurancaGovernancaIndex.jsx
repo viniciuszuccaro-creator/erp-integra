@@ -7,7 +7,6 @@ import SegurancaDashboard from "@/components/administracao-sistema/seguranca-gov
 import IAGovernancaComplianceSection from "@/components/administracao-sistema/seguranca-governanca/IAGovernancaComplianceSection";
 import MonitoramentoManutencaoIndex from "@/components/administracao-sistema/MonitoramentoManutencaoIndex";
 import ConfiguracaoSeguranca from "@/components/sistema/ConfiguracaoSeguranca";
-import ProtectedSection from "@/components/security/ProtectedSection";
 
 
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
