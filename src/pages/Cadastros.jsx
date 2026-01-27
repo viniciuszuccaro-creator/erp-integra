@@ -1710,8 +1710,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {setoresAtividade.map(setor => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {setoresAtividade.map(setor => (
                         <div key={setor.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">
@@ -1743,6 +1744,7 @@ export default function Cadastros() {
                       {setoresAtividade.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum setor cadastrado</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -1786,8 +1788,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {gruposProduto.map(grupo => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {gruposProduto.map(grupo => (
                         <div key={grupo.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{grupo.nome_grupo}</p>
@@ -1817,6 +1820,7 @@ export default function Cadastros() {
                       {gruposProduto.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum grupo cadastrado</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -1860,8 +1864,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {marcas.map(marca => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {marcas.map(marca => (
                         <div key={marca.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{marca.nome_marca}</p>
@@ -1891,6 +1896,7 @@ export default function Cadastros() {
                       {marcas.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhuma marca cadastrada</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -1931,8 +1937,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {tabelasPreco.map(tabela => (
                           <div key={tabela.id} className="p-3 border rounded hover:bg-slate-50 transition-colors">
                             <div className="flex items-center justify-between mb-2">
@@ -1974,6 +1981,7 @@ export default function Cadastros() {
                       {tabelasPreco.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhuma tabela de preço cadastrada</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -2017,8 +2025,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {servicos.map(servico => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {servicos.map(servico => (
                         <div key={servico.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{servico.nome}</p>
@@ -2048,6 +2057,7 @@ export default function Cadastros() {
                       {servicos.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum serviço cadastrado</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -2086,8 +2096,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {kits.map(kit => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {kits.map(kit => (
                         <div key={kit.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{kit.nome_kit}</p>
@@ -2151,8 +2162,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {unidadesMedida.map(un => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {unidadesMedida.map(un => (
                         <div key={un.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{un.sigla} - {un.nome}</p>
@@ -2216,8 +2228,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {catalogoWeb.map(cat => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {catalogoWeb.map(cat => (
                         <div key={cat.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{cat.nome_catalogo}</p>
@@ -2303,8 +2316,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {bancos.map(banco => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {bancos.map(banco => (
                         <div key={banco.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{banco.nome_banco}</p>
@@ -2633,8 +2647,9 @@ export default function Cadastros() {
 
                   {/* OPERADORES DE CAIXA - LISTA */}
                   <Card className="border-emerald-200">
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {operadoresCaixa.map(op => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {operadoresCaixa.map(op => (
                         <div key={op.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{op.usuario_nome}</p>
@@ -2680,6 +2695,7 @@ export default function Cadastros() {
                           Nenhum operador cadastrado
                         </p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -2723,8 +2739,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {centrosCusto.map(centro => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {centrosCusto.map(centro => (
                         <div key={centro.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{centro.codigo} - {centro.descricao}</p>
@@ -2785,8 +2802,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {planoContas.map(conta => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {planoContas.map(conta => (
                         <div key={conta.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{conta.codigo} - {conta.nome}</p>
@@ -2846,8 +2864,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {centrosResultado.map(cr => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {centrosResultado.map(cr => (
                         <div key={cr.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{cr.codigo} - {cr.nome}</p>
@@ -2907,8 +2926,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {tiposDespesa.map(td => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {tiposDespesa.map(td => (
                         <div key={td.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{td.nome}</p>
@@ -2968,8 +2988,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {moedasIndices.map(m => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {moedasIndices.map(m => (
                         <div key={m.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{m.codigo} - {m.nome}</p>
@@ -3029,8 +3050,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {condicoesComerciais.map(cc => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {condicoesComerciais.map(cc => (
                         <div key={cc.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{cc.nome}</p>
@@ -3099,8 +3121,8 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      <div className="space-y-2">
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto space-y-2">
                         {tabelasFiscais.map(tabela => (
                           <div key={tabela.id} className="p-3 border rounded hover:bg-slate-50">
                             <div className="flex items-center justify-between mb-2">
@@ -3202,8 +3224,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {veiculos.map(veiculo => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {veiculos.map(veiculo => (
                         <div key={veiculo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{veiculo.placa}</p>
@@ -3272,8 +3295,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {motoristas.map(motorista => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {motoristas.map(motorista => (
                         <div key={motorista.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{motorista.nome}</p>
@@ -3342,8 +3366,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {tiposFrete.map(tipo => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {tiposFrete.map(tipo => (
                         <div key={tipo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm flex-1">{tipo.nome}</p>
                           <Button
@@ -3409,8 +3434,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {locaisEstoque.map(local => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {locaisEstoque.map(local => (
                         <div key={local.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{local.nome}</p>
@@ -3471,8 +3497,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {rotasPadrao.map(rota => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {rotasPadrao.map(rota => (
                         <div key={rota.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{rota.nome_rota}</p>
@@ -3532,8 +3559,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {modelosDocumento.map(md => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {modelosDocumento.map(md => (
                         <div key={md.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{md.nome_modelo}</p>
@@ -3757,8 +3785,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {departamentos.map(dept => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {departamentos.map(dept => (
                         <div key={dept.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm flex-1">{dept.nome}</p>
                           <Button
@@ -3824,8 +3853,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {cargos.map(cargo => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {cargos.map(cargo => (
                         <div key={cargo.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm flex-1">{cargo.nome}</p>
                           <Button
@@ -3892,8 +3922,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-60 overflow-y-auto">
-                      {turnos.map(turno => (
+                    <CardContent className="p-4">
+                      <div className="max-h-60 overflow-y-auto">
+                        {turnos.map(turno => (
                         <div key={turno.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
                           <p className="font-semibold text-sm flex-1">{turno.nome}</p>
                           <Button
