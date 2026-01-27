@@ -2321,7 +2321,8 @@ export default function Cadastros() {
                         ...
                         ))}
                         </div>
-                        </CardContent>
+                          </div>
+                    </CardContent>
                   </Card>
 
                   {/* MODELOS DOCUMENTO */}
