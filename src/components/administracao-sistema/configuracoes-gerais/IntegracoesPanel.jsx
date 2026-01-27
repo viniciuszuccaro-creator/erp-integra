@@ -2,6 +2,8 @@ import React from "react";
 import CentralIntegracoes from "@/components/integracoes/CentralIntegracoes";
 import StatusIntegracoes from "@/components/integracoes/StatusIntegracoes";
 
+import ProtectedSection from "@/components/security/ProtectedSection";
+
 export default function IntegracoesPanel() {
   return (
     <div className="w-full h-full grid grid-cols-1 lg:grid-cols-2 gap-4">
