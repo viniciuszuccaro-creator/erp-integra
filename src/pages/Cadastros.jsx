@@ -2901,6 +2901,313 @@ export default function Cadastros() {
                     </div>
                   </AccordionContent>
                 </AccordionItem>
+
+                {/* BLOCO 3: FINANCEIRO */}
+                <AccordionItem value="bloco3" className="border-2 border-green-200 rounded-lg overflow-hidden shadow-md">
+                  <AccordionTrigger className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 hover:from-green-100 hover:to-green-200">
+                    <div className="flex items-center gap-3 flex-1">
+                      <DollarSign className="w-6 h-6 text-green-600" />
+                      <div className="text-left">
+                        <p className="font-bold text-lg text-green-900">3️⃣ Financeiro</p>
+                        <p className="text-xs text-green-700">Bancos • Formas de Pagamento • Plano de Contas</p>
+                      </div>
+                      <Badge className="ml-auto bg-green-600 text-white">{totalBloco3}</Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-6 bg-white">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {/* FORMAS DE PAGAMENTO - (Principal que o usuário reportou) */}
+                      <Card className="border-emerald-200">
+                        <CardHeader className="bg-emerald-50 border-b border-emerald-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle 
+                              className="text-base flex items-center gap-2 cursor-pointer hover:text-emerald-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'FormaPagamento',
+                                  tituloDisplay: 'Formas de Pagamento',
+                                  icone: CreditCard,
+                                  camposPrincipais: ['nome', 'tipo', 'ativo'],
+                                  componenteEdicao: FormaPagamentoFormCompleto,
+                                  windowMode: true
+                                },
+                                { title: '💳 Formas de Pagamento', width: 1200, height: 700 }
+                              )}
+                            >
+                              <CreditCard className="w-5 h-5 text-emerald-600" />
+                              Formas de Pagamento ({formasPagamento.length})
+                            </CardTitle>
+                            <Button
+                              size="sm"
+                              onClick={() => openWindow(FormaPagamentoFormCompleto, { windowMode: true }, {
+                                title: '💳 Nova Forma de Pagamento',
+                                width: 1000,
+                                height: 650
+                              })}
+                              className="bg-emerald-600 hover:bg-emerald-700"
+                              disabled={!hasPermission('financeiro', 'criar')}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />
+                              Nova
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <div className="max-h-80 overflow-y-auto overscroll-contain">
+                            {formasPagamento.slice(0, 10).map(fp => (
+                              <div key={fp.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
+                                <div className="flex-1">
+                                  <p className="font-semibold text-sm">{fp.nome}</p>
+                                  <div className="flex gap-2 mt-1 flex-wrap">
+                                    {fp.tipo && <Badge variant="outline" className="text-xs">{fp.tipo}</Badge>}
+                                    <Badge className={fp.ativo ? 'bg-green-100 text-green-700 text-xs' : 'bg-gray-100 text-gray-700 text-xs'}>
+                                      {fp.ativo ? 'Ativa' : 'Inativa'}
+                                    </Badge>
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(FormaPagamentoFormCompleto, { formaPagamento: fp, windowMode: true }, {
+                                    title: `💳 Editar: ${fp.nome}`,
+                                    width: 1000,
+                                    height: 650,
+                                    uniqueKey: `edit-FormaPagamento-${fp.id}-${Date.now()}`
+                                  })}
+                                  disabled={!hasPermission('financeiro', 'editar')}
+                                >
+                                  <Edit className="w-4 h-4 text-emerald-600" />
+                                </Button>
+                              </div>
+                            ))}
+                            {formasPagamento.length === 0 && (
+                              <p className="text-center text-slate-500 py-8 text-sm">Nenhuma forma de pagamento cadastrada</p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* BANCOS */}
+                      <Card className="border-sky-200">
+                        <CardHeader className="bg-sky-50 border-b border-sky-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle 
+                              className="text-base flex items-center gap-2 cursor-pointer hover:text-sky-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'Banco',
+                                  tituloDisplay: 'Bancos',
+                                  icone: Landmark,
+                                  camposPrincipais: ['nome', 'codigo_banco'],
+                                  componenteEdicao: BancoForm,
+                                  windowMode: true
+                                },
+                                { title: '🏦 Bancos', width: 1000, height: 650 }
+                              )}
+                            >
+                              <Landmark className="w-5 h-5 text-sky-600" />
+                              Bancos ({bancos.length})
+                            </CardTitle>
+                            <Button
+                              size="sm"
+                              onClick={() => openWindow(BancoForm, { windowMode: true }, { title: '🏦 Novo Banco', width: 800, height: 500 })}
+                              className="bg-sky-600 hover:bg-sky-700"
+                              disabled={!hasPermission('financeiro', 'criar')}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />Novo
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <div className="max-h-80 overflow-y-auto overscroll-contain">
+                            {bancos.slice(0, 10).map(b => (
+                              <div key={b.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm">{b.nome || b.codigo_banco}</p>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(BancoForm, { banco: b, windowMode: true }, { title: `🏦 Editar: ${b.nome || b.codigo_banco}`, width: 800, height: 500, uniqueKey: `edit-Banco-${b.id}-${Date.now()}` })}
+                                  disabled={!hasPermission('financeiro', 'editar')}
+                                >
+                                  <Edit className="w-4 h-4 text-sky-600" />
+                                </Button>
+                              </div>
+                            ))}
+                            {bancos.length === 0 && (
+                              <p className="text-center text-slate-500 py-8 text-sm">Nenhum banco cadastrado</p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* PLANO DE CONTAS */}
+                      <Card className="border-amber-200">
+                        <CardHeader className="bg-amber-50 border-b border-amber-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle 
+                              className="text-base flex items-center gap-2 cursor-pointer hover:text-amber-700 transition-colors"
+                              onClick={() => openWindow(
+                                VisualizadorUniversalEntidade,
+                                {
+                                  nomeEntidade: 'PlanoDeContas',
+                                  tituloDisplay: 'Plano de Contas',
+                                  icone: FileText,
+                                  camposPrincipais: ['codigo', 'descricao', 'tipo'],
+                                  componenteEdicao: PlanoContasForm,
+                                  windowMode: true
+                                },
+                                { title: '📑 Plano de Contas', width: 1200, height: 700 }
+                              )}
+                            >
+                              <FileText className="w-5 h-5 text-amber-600" />
+                              Plano de Contas ({planoContas.length})
+                            </CardTitle>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <div className="max-h-80 overflow-y-auto overscroll-contain">
+                            {planoContas.slice(0, 10).map(pc => (
+                              <div key={pc.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm">{pc.codigo} • {pc.descricao}</p>
+                                <Badge variant="outline" className="text-xs">{pc.tipo}</Badge>
+                              </div>
+                            ))}
+                            {planoContas.length === 0 && (
+                              <p className="text-center text-slate-500 py-8 text-sm">Nenhuma conta cadastrada</p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* BLOCO 4: LOGÍSTICA */}
+                <AccordionItem value="bloco4" className="border-2 border-orange-200 rounded-lg overflow-hidden shadow-md">
+                  <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 hover:from-orange-100 hover:to-orange-200">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Truck className="w-6 h-6 text-orange-600" />
+                      <div className="text-left">
+                        <p className="font-bold text-lg text-orange-900">4️⃣ Logística</p>
+                        <p className="text-xs text-orange-700">Veículos • Motoristas • Tipos de Frete • Locais de Estoque</p>
+                      </div>
+                      <Badge className="ml-auto bg-orange-600 text-white">{totalBloco4}</Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-6 bg-white">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {/* VEÍCULOS (exemplo rápido) */}
+                      <Card className="border-orange-200">
+                        <CardHeader className="bg-orange-50 border-b border-orange-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <Truck className="w-5 h-5 text-orange-600" />
+                              Veículos ({veiculos.length})
+                            </CardTitle>
+                            <Button
+                              size="sm"
+                              onClick={() => openWindow(VeiculoForm, { windowMode: true }, { title: '🚚 Novo Veículo', width: 900, height: 600 })}
+                              className="bg-orange-600 hover:bg-orange-700"
+                              disabled={!hasPermission('cadastros', 'criar')}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />Novo
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <div className="max-h-80 overflow-y-auto overscroll-contain">
+                            {veiculos.slice(0, 10).map(v => (
+                              <div key={v.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm">{v.placa || v.modelo || 'Veículo'}</p>
+                                <Button variant="ghost" size="sm" onClick={() => openWindow(VeiculoForm, { veiculo: v, windowMode: true }, { title: '🚚 Editar Veículo', width: 900, height: 600, uniqueKey: `edit-Veiculo-${v.id}-${Date.now()}` })} disabled={!hasPermission('cadastros', 'editar')}>
+                                  <Edit className="w-4 h-4 text-orange-600" />
+                                </Button>
+                              </div>
+                            ))}
+                            {veiculos.length === 0 && (<p className="text-center text-slate-500 py-8 text-sm">Nenhum veículo cadastrado</p>)}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* BLOCO 5: ORGANIZACIONAL */}
+                <AccordionItem value="bloco5" className="border-2 border-indigo-200 rounded-lg overflow-hidden shadow-md">
+                  <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-indigo-100 px-6 py-4 hover:from-indigo-100 hover:to-indigo-200">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Building2 className="w-6 h-6 text-indigo-600" />
+                      <div className="text-left">
+                        <p className="font-bold text-lg text-indigo-900">5️⃣ Organizacional</p>
+                        <p className="text-xs text-indigo-700">Empresas • Grupos • Departamentos</p>
+                      </div>
+                      <Badge className="ml-auto bg-indigo-600 text-white">{totalBloco5}</Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-6 bg-white">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                      {/* EMPRESAS (exemplo rápido) */}
+                      <Card className="border-indigo-200">
+                        <CardHeader className="bg-indigo-50 border-b border-indigo-200 pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="text-base flex items-center gap-2">
+                              <Building2 className="w-5 h-5 text-indigo-600" />
+                              Empresas ({empresas.length})
+                            </CardTitle>
+                            <Button
+                              size="sm"
+                              onClick={() => openWindow(EmpresaForm, { windowMode: true }, { title: '🏢 Nova Empresa', width: 1100, height: 700 })}
+                              className="bg-indigo-600 hover:bg-indigo-700"
+                              disabled={!hasPermission('cadastros', 'criar')}
+                            >
+                              <Plus className="w-4 h-4 mr-1" />Nova
+                            </Button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                          <div className="max-h-80 overflow-y-auto overscroll-contain">
+                            {empresas.slice(0, 10).map(e => (
+                              <div key={e.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
+                                <p className="font-semibold text-sm">{e.nome_fantasia || e.razao_social}</p>
+                                <Button variant="ghost" size="sm" onClick={() => openWindow(EmpresaForm, { empresa: e, windowMode: true }, { title: `🏢 Editar: ${e.nome_fantasia || e.razao_social}`, width: 1100, height: 700, uniqueKey: `edit-Empresa-${e.id}-${Date.now()}` })} disabled={!hasPermission('cadastros', 'editar')}>
+                                  <Edit className="w-4 h-4 text-indigo-600" />
+                                </Button>
+                              </div>
+                            ))}
+                            {empresas.length === 0 && (<p className="text-center text-slate-500 py-8 text-sm">Nenhuma empresa cadastrada</p>)}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* BLOCO 6: INTEGRAÇÕES & IA */}
+                <AccordionItem value="bloco6" className="border-2 border-cyan-200 rounded-lg overflow-hidden shadow-md">
+                  <AccordionTrigger className="bg-gradient-to-r from-cyan-50 to-cyan-100 px-6 py-4 hover:from-cyan-100 hover:to-cyan-200">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Cpu className="w-6 h-6 text-cyan-600" />
+                      <div className="text-left">
+                        <p className="font-bold text-lg text-cyan-900">6️⃣ Integrações & IA</p>
+                        <p className="text-xs text-cyan-700">APIs • Webhooks • Chatbot • Jobs IA</p>
+                      </div>
+                      <Badge className="ml-auto bg-cyan-600 text-white">{totalBloco6}</Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="p-6 bg-white">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                      <Card className="p-3"><CardTitle className="text-sm flex items-center gap-2"><Link2 className="w-4 h-4 text-blue-600" />APIs Externas</CardTitle><CardContent className="p-0 pt-2 text-sm text-slate-600">{apisExternas.length} itens</CardContent></Card>
+                      <Card className="p-3"><CardTitle className="text-sm flex items-center gap-2"><Link2 className="w-4 h-4 text-indigo-600" />Webhooks</CardTitle><CardContent className="p-0 pt-2 text-sm text-slate-600">{webhooks.length} itens</CardContent></Card>
+                      <Card className="p-3"><CardTitle className="text-sm flex items-center gap-2"><MessageCircle className="w-4 h-4 text-purple-600" />Intents</CardTitle><CardContent className="p-0 pt-2 text-sm text-slate-600">{chatbotIntents.length} itens</CardContent></Card>
+                      <Card className="p-3"><CardTitle className="text-sm flex items-center gap-2"><MessageCircle className="w-4 h-4 text-green-600" />Canais</CardTitle><CardContent className="p-0 pt-2 text-sm text-slate-600">{chatbotCanais.length} itens</CardContent></Card>
+                      <Card className="p-3"><CardTitle className="text-sm flex items-center gap-2"><Clock className="w-4 h-4 text-amber-600" />Jobs IA</CardTitle><CardContent className="p-0 pt-2 text-sm text-slate-600">{jobsAgendados.length} itens</CardContent></Card>
+                      <Card className="p-3"><CardTitle className="text-sm flex items-center gap-2"><Bell className="w-4 h-4 text-cyan-600" />Eventos Notificação</CardTitle><CardContent className="p-0 pt-2 text-sm text-slate-600">{eventosNotificacao.length} itens</CardContent></Card>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
               </Accordion>
 
 
