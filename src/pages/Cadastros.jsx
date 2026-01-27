@@ -2234,33 +2234,35 @@ export default function Cadastros() {
                             </Button>
                           </div>
                         </CardHeader>
-                        <CardContent className="p-4 max-h-60 overflow-y-auto">
-                          {webhooks.map(wh => (
-                            <div key={wh.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                              <div className="flex-1">
-                                <p className="font-semibold text-sm">{wh.nome_webhook}</p>
+                        <CardContent className="p-4">
+                          <div className="max-h-60 overflow-y-auto">
+                            {webhooks.map(wh => (
+                              <div key={wh.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                                <div className="flex-1">
+                                  <p className="font-semibold text-sm">{wh.nome_webhook}</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(WebhookForm, {
+                                    webhook: wh,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('Webhook', 'webhooks')
+                                  }, {
+                                    title: `🔗 Editar: ${wh.nome_webhook}`,
+                                    width: 900,
+                                    height: 600,
+                                    uniqueKey: `edit-Webhook-${wh.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
+                                  })}
+                                  disabled={!hasPermission('cadastros', 'editar')}
+                                >
+                                  <Edit className="w-3 h-3 text-indigo-600" />
+                                </Button>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openWindow(WebhookForm, {
-                                  webhook: wh,
-                                  windowMode: true,
-                                  onSubmit: handleSubmitGenerico('Webhook', 'webhooks')
-                                }, {
-                                  title: `🔗 Editar: ${wh.nome_webhook}`,
-                                  width: 900,
-                                  height: 600,
-                                  uniqueKey: `edit-Webhook-${wh.id}-${Date.now()}`,
-                                  zIndex: 999999,
-                                  bringToFront: true
-                                })}
-                                disabled={!hasPermission('cadastros', 'editar')}
-                              >
-                                <Edit className="w-3 h-3 text-indigo-600" />
-                              </Button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </CardContent>
                       </Card>
 
