@@ -4,18 +4,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Settings, Users, Shield, FileText } from "lucide-react";
+import { Settings, Users, Shield, FileText, Activity, Sparkles } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
 import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
 import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
 import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
+import AdminMonitManut from "@/components/administracao-sistema/AdminMonitManut.jsx";
 import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
   const params = new URLSearchParams(window.location.search);
-  const initialTab = params.get('tab') || 'config';
+  const initialTab = params.get('tab') || 'gerais';
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
@@ -29,26 +30,43 @@ export default function AdministracaoSistema() {
       <div className="flex-1 overflow-auto p-4 md:p-6">
         <Tabs defaultValue={initialTab} className="w-full h-full">
           <TabsList className="flex flex-wrap gap-2">
-            <TabsTrigger value="config" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-              <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Configurações</div>
+            <TabsTrigger value="gerais" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Gerais</div>
+            </TabsTrigger>
+            <TabsTrigger value="integracoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Integrações</div>
             </TabsTrigger>
             <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-              <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Acessos</div>
+              <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Gestão de Acessos</div>
+            </TabsTrigger>
+            {isAdmin() && (
+              <TabsTrigger value="seguranca" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> Segurança & Governança</div>
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> IA & Otimização</div>
+            </TabsTrigger>
+            <TabsTrigger value="monitor" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <div className="flex items-center gap-2"><Activity className="w-4 h-4"/> Monitoramento & Manutenção</div>
             </TabsTrigger>
             <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> Auditoria</div>
             </TabsTrigger>
-            {isAdmin() && (
-              <TabsTrigger value="seguranca" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> Segurança</div>
-              </TabsTrigger>
-            )}
           </TabsList>
 
-          <TabsContent value="config" className="mt-4">
+          <TabsContent value="gerais" className="mt-4">
             <ProtectedSection module="Sistema" section={["Configurações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Configurações.</div>}>
               <div className="w-full h-full">
-                <ConfiguracoesGeraisIndex />
+                <ConfiguracoesGeraisIndex initialTab="global" />
+              </div>
+            </ProtectedSection>
+          </TabsContent>
+
+          <TabsContent value="integracoes" className="mt-4">
+            <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Integrações.</div>}>
+              <div className="w-full h-full">
+                <ConfiguracoesGeraisIndex initialTab="integracoes" />
               </div>
             </ProtectedSection>
           </TabsContent>
@@ -78,6 +96,21 @@ export default function AdministracaoSistema() {
               </ProtectedSection>
             </TabsContent>
           )}
+          <TabsContent value="ia" className="mt-4">
+            <ProtectedSection module="Sistema" section={["Configurações","IA"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à IA.</div>}>
+              <div className="w-full h-full">
+                <ConfiguracoesGeraisIndex initialTab="ia" />
+              </div>
+            </ProtectedSection>
+          </TabsContent>
+
+          <TabsContent value="monitor" className="mt-4">
+            <ProtectedSection module="Sistema" section={["Configurações","Monitoramento"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito.</div>}>
+              <div className="w-full h-full">
+                <AdminMonitManut />
+              </div>
+            </ProtectedSection>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

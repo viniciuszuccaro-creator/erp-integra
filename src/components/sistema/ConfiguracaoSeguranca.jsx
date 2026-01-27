@@ -95,7 +95,7 @@ export default function ConfiguracaoSeguranca({ empresaId, grupoId }) {
       if (config?.id) {
         return await base44.entities.ConfiguracaoSeguranca.update(config.id, stamped);
       } else {
-        return await base44.entities.ConfigurancaSeguranca?.create
+        return await base44.entities.ConfiguracaoSeguranca.create(stamped);
       }
     },
     onSuccess: () => {
