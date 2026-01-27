@@ -2360,33 +2360,35 @@ export default function Cadastros() {
                             </Button>
                           </div>
                         </CardHeader>
-                        <CardContent className="p-4 max-h-60 overflow-y-auto">
-                          {chatbotCanais.map(canal => (
-                            <div key={canal.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
-                              <div className="flex-1">
-                                <p className="font-semibold text-sm">{canal.nome_canal}</p>
+                        <CardContent className="p-4">
+                          <div className="max-h-60 overflow-y-auto">
+                            {chatbotCanais.map(canal => (
+                              <div key={canal.id} className="flex items-center justify-between p-2 border-b hover:bg-slate-50">
+                                <div className="flex-1">
+                                  <p className="font-semibold text-sm">{canal.nome_canal}</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => openWindow(ChatbotCanalForm, {
+                                    chatbotCanal: canal,
+                                    windowMode: true,
+                                    onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbotCanais')
+                                  }, {
+                                    title: `📱 Editar: ${canal.nome_canal}`,
+                                    width: 800,
+                                    height: 550,
+                                    uniqueKey: `edit-ChatbotCanal-${canal.id}-${Date.now()}`,
+                                    zIndex: 999999,
+                                    bringToFront: true
+                                  })}
+                                  disabled={!hasPermission('cadastros', 'editar')}
+                                >
+                                  <Edit className="w-3 h-3 text-green-600" />
+                                </Button>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openWindow(ChatbotCanalForm, {
-                                  chatbotCanal: canal,
-                                  windowMode: true,
-                                  onSubmit: handleSubmitGenerico('ChatbotCanal', 'chatbotCanais')
-                                }, {
-                                  title: `📱 Editar: ${canal.nome_canal}`,
-                                  width: 800,
-                                  height: 550,
-                                  uniqueKey: `edit-ChatbotCanal-${canal.id}-${Date.now()}`,
-                                  zIndex: 999999,
-                                  bringToFront: true
-                                })}
-                                disabled={!hasPermission('cadastros', 'editar')}
-                              >
-                                <Edit className="w-3 h-3 text-green-600" />
-                              </Button>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </CardContent>
                       </Card>
 
