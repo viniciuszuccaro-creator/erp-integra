@@ -53,6 +53,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchInput from "@/components/ui/SearchInput";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import CadastroClienteCompleto from "../components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "../components/cadastros/CadastroFornecedorCompleto";
 import TabelaPrecoFormCompleto from "../components/cadastros/TabelaPrecoFormCompleto";
@@ -945,8 +947,9 @@ export default function Cadastros() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {clientesFiltrados.slice(0, 10).map(cliente => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {clientesFiltrados.slice(0, 10).map(cliente => (
                         <div key={cliente.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{cliente.nome || cliente.razao_social}</p>
@@ -982,6 +985,7 @@ export default function Cadastros() {
                       {clientesFiltrados.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum cliente encontrado</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -1024,8 +1028,9 @@ export default function Cadastros() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {fornecedoresFiltrados.slice(0, 10).map(fornecedor => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {fornecedoresFiltrados.slice(0, 10).map(fornecedor => (
                         <div key={fornecedor.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50 transition-colors">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{fornecedor.nome}</p>
@@ -1060,6 +1065,7 @@ export default function Cadastros() {
                       {fornecedoresFiltrados.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum fornecedor encontrado</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -1103,8 +1109,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {transportadorasFiltradas.slice(0, 10).map(transp => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {transportadorasFiltradas.slice(0, 10).map(transp => (
                         <div key={transp.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{transp.razao_social || transp.nome_fantasia}</p>
@@ -1139,6 +1146,7 @@ export default function Cadastros() {
                       {transportadorasFiltradas.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhuma transportadora encontrada</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -1182,8 +1190,9 @@ export default function Cadastros() {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 max-h-80 overflow-y-auto">
-                      {colaboradoresFiltrados.slice(0, 10).map(colab => (
+                    <CardContent className="p-4">
+                      <div className="max-h-80 overflow-y-auto">
+                        {colaboradoresFiltrados.slice(0, 10).map(colab => (
                         <div key={colab.id} className="flex items-center justify-between p-3 border-b hover:bg-slate-50">
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{colab.nome_completo}</p>
@@ -1218,6 +1227,7 @@ export default function Cadastros() {
                       {colaboradoresFiltrados.length === 0 && (
                         <p className="text-center text-slate-500 py-8 text-sm">Nenhum colaborador encontrado</p>
                       )}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -4883,11 +4893,10 @@ export default function Cadastros() {
                           <p className="text-sm text-slate-600 mt-1">Preferências e parâmetros do sistema</p>
                         </CardHeader>
                         <CardContent className="p-4">
-                          <Button
-                            onClick={() => openWindow(ConfigGlobal, { windowMode: true }, { title: 'Configurações Globais', width: 1000, height: 700 })}
-                            className="bg-slate-800 hover:bg-slate-900"
-                          >
-                            Abrir Configurações Globais
+                          <Button asChild className="bg-slate-800 hover:bg-slate-900">
+                            <Link to={createPageUrl('AdministracaoSistema') + '?tab=ia'}>
+                              Abrir Configurações Globais
+                            </Link>
                           </Button>
                         </CardContent>
                       </Card>

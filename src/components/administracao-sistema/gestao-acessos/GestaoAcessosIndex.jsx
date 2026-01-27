@@ -11,6 +11,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { useQuery } from "@tanstack/react-query";
 import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
 import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
+import { Shield } from "lucide-react";
 
 export default function GestaoAcessosIndex() {
   const { hasPermission, isAdmin } = usePermissions();

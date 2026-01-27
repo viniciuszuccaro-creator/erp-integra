@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import AuditTrailPanel from "@/components/auditoria/AuditTrailPanel";
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import GlobalAuditLog from "@/components/sistema/GlobalAuditLog";
+import { FileText } from "lucide-react";
 
 export default function AuditoriaLogsIndex() {
   return (

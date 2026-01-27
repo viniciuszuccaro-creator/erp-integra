@@ -6,6 +6,7 @@ import IAPanel from "@/components/administracao-sistema/configuracoes-gerais/IAP
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
 import { Brain, Zap, Settings } from "lucide-react";
+import IAGovernancaComplianceSection from "@/components/administracao-sistema/seguranca-governanca/IAGovernancaComplianceSection";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -51,8 +52,10 @@ export default function IAOtimizacaoIndex({ initialTab }) {
         <TabsContent value="ia" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <ContextoConfigBanner />
-              <HerancaConfigNotice />
+              <div className="col-span-full space-y-2">
+                <ContextoConfigBanner />
+                <HerancaConfigNotice />
+              </div>
               <IAPanel />
 
               <Card>

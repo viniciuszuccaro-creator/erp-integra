@@ -25,6 +25,7 @@ import { FileText, DollarSign, MessageCircle, Truck, Globe, ShoppingCart, Link2,
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { useWindow } from "@/components/lib/useWindow";
 import { useQuery } from "@tanstack/react-query";
+import SincronizacaoMarketplacesAtiva from "@/components/integracoes/SincronizacaoMarketplacesAtiva";
 
 export default function IntegracoesIndex({ initialTab }) {
   const { empresaAtual } = useContextoVisual();
