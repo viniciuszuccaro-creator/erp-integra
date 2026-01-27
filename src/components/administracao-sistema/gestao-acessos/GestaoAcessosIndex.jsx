@@ -55,7 +55,7 @@ export default function GestaoAcessosIndex() {
         <TabsContent value="relatorios" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <RelatorioPermissoes perfis={[]} usuarios={[]} empresas={[]} />
+              <RelatorioPermissoes perfis={perfis} usuarios={usuarios} empresas={empresas} />
             </CardContent>
           </Card>
         </TabsContent>
