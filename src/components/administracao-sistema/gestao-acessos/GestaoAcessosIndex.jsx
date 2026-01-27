@@ -5,6 +5,8 @@ import usePermissions from "@/components/lib/usePermissions";
 import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
 import MatrizPermissoesVisual from "@/components/sistema/MatrizPermissoesVisual";
 import RelatorioPermissoes from "@/components/sistema/RelatorioPermissoes";
+import { base44 } from "@/api/base44Client";
+import { useQuery } from "@tanstack/react-query";
 import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
 import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
 
