@@ -2895,7 +2895,9 @@ export default function Cadastros() {
                         </Card>
                       </div>
                     </div>
-                  </TabsContent>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
 
                   {/* ABA: STATUS INTEGRAÇÕES */}
                   <TabsContent value="status">
