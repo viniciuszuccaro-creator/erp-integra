@@ -11,6 +11,7 @@ import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acesso
 import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
 import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
 import AdminMonitManut from "@/components/administracao-sistema/AdminMonitManut.jsx";
+import AdminMonitManut from "@/components/administracao-sistema/AdminMonitManut.jsx";
 import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function AdministracaoSistema() {
@@ -71,6 +72,14 @@ export default function AdministracaoSistema() {
             </ProtectedSection>
           </TabsContent>
 
+          <TabsContent value="integracoes" className="mt-4">
+            <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Integrações.</div>}>
+              <div className="w-full h-full">
+                <ConfiguracoesGeraisIndex initialTab="integracoes" />
+              </div>
+            </ProtectedSection>
+          </TabsContent>
+
           <TabsContent value="acessos" className="mt-4">
             <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
               <div className="w-full h-full">
@@ -96,6 +105,21 @@ export default function AdministracaoSistema() {
               </ProtectedSection>
             </TabsContent>
           )}
+          <TabsContent value="ia" className="mt-4">
+            <ProtectedSection module="Sistema" section={["Configurações","IA"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à IA.</div>}>
+              <div className="w-full h-full">
+                <ConfiguracoesGeraisIndex initialTab="ia" />
+              </div>
+            </ProtectedSection>
+          </TabsContent>
+
+          <TabsContent value="monitor" className="mt-4">
+            <ProtectedSection module="Sistema" section={["Configurações","Monitoramento"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito.</div>}>
+              <div className="w-full h-full">
+                <AdminMonitManut />
+              </div>
+            </ProtectedSection>
+          </TabsContent>
           <TabsContent value="ia" className="mt-4">
             <ProtectedSection module="Sistema" section={["Configurações","IA"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à IA.</div>}>
               <div className="w-full h-full">
