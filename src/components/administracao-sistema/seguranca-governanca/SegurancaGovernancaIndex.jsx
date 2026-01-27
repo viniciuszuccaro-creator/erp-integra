@@ -37,6 +37,26 @@ export default function SegurancaGovernancaIndex() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="monitoramento" className="mt-4">
+          <Card className="w-full">
+            <CardContent className="p-4">
+              <ContextoConfigBanner />
+              <HerancaConfigNotice />
+              <ConfiguracaoMonitoramento empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="backup" className="mt-4">
+          <Card className="w-full">
+            <CardContent className="p-4">
+              <ContextoConfigBanner />
+              <HerancaConfigNotice />
+              <ConfiguracaoBackup empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="governanca" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
