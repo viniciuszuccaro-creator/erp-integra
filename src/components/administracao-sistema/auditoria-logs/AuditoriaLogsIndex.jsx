@@ -18,7 +18,11 @@ export default function AuditoriaLogsIndex() {
         <TabsContent value="painel" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <AuditTrailPanel />
+              <div className="text-center py-10 text-slate-500">
+                <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                <p>O painel de auditoria será disponibilizado em breve.</p>
+                <p className="text-sm">Placeholder temporário até a conclusão da implementação.</p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
