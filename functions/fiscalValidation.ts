@@ -1,0 +1,79 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+
+Deno.serve(async (req) => {
+  const start = Date.now();
+  try {
+    const base44 = createClientFromRequest(req);
+
+    // Suporta payload de automação (event + data) ou chamada direta
+    let payload;
+    try { payload = await req.json(); } catch { payload = {}; }
+
+    const event = payload?.event || null;
+    const dataIn = payload?.data || null;
+    const entityName = event?.entity_name || payload?.entity_name;
+    const entityId = event?.entity_id || payload?.entity_id;
+
+    if (!entityName || !entityId || !['Cliente','Fornecedor'].includes(entityName)) {
+      return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+    }
+
+    // Busca registro atual com service role (automação interna)
+    const registro = dataIn || await base44.asServiceRole.entities[entityName].get(entityId);
+
+    const cnpj = registro?.cnpj || null;
+    if (!cnpj) {
+      return Response.json({ success: true, skipped: true, reason: 'Sem CNPJ para validar' });
+    }
+
+    let consulta = null;
+    try {
+      const r = await base44.asServiceRole.functions.invoke('ConsultarCNPJ', { cnpj });
+      consulta = r?.data || null;
+    } catch (err) {
+      // Fallback simples via LLM para sugerir status/regime a partir de descrição
+      try {
+        const llm = await base44.asServiceRole.integrations.Core.InvokeLLM({
+          prompt: `Você é um assistente fiscal. Com base no CNPJ ${cnpj} e nos dados: ${JSON.stringify({ nome: registro?.nome || registro?.razao_social, ramo_atividade: registro?.ramo_atividade })}\nResponda JSON com status_fiscal_receita (Ativa/Inapta/Suspensa/Baixada/Não Verificado), cnae_principal (string), regime_tributario (Simples Nacional/Lucro Presumido/Lucro Real).`,
+          response_json_schema: {
+            type: 'object',
+            properties: {
+              status_fiscal_receita: { type: 'string' },
+              cnae_principal: { type: 'string' },
+              regime_tributario: { type: 'string' },
+            },
+          },
+        });
+        consulta = llm;
+      } catch (_) {}
+    }
+
+    const patch = {};
+    const statusLLM = consulta?.status_fiscal_receita || consulta?.status || consulta?.situacao;
+    if (statusLLM) patch.status_fiscal_receita = statusLLM;
+    if (consulta?.cnae_principal) patch.cnae_principal = String(consulta.cnae_principal);
+    if (consulta?.regime_tributario) patch.regime_tributario = consulta.regime_tributario;
+
+    if (Object.keys(patch).length > 0) {
+      await base44.asServiceRole.entities[entityName].update(entityId, patch);
+    }
+
+    // Auditoria
+    try {
+      await base44.asServiceRole.entities.AuditLog.create({
+        usuario: 'automacao',
+        acao: 'Edição',
+        modulo: 'Fiscal',
+        entidade: entityName,
+        registro_id: entityId,
+        descricao: `Validação fiscal automática (${cnpj})`,
+        dados_novos: patch,
+        duracao_ms: Date.now() - start,
+      });
+    } catch {}
+
+    return Response.json({ success: true, updated: patch });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+});
