@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Download, FileText, Eye, Shield, Users, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function RelatorioPermissoes({ perfis, usuarios, empresas }) {
+export default function RelatorioPermissoes({ perfis = [], usuarios = [], empresas = [] }) {
   const gerarRelatorio = () => {
     const relatorio = {
       data_geracao: new Date().toISOString(),
