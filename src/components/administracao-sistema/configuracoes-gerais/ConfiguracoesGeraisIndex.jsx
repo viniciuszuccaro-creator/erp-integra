@@ -10,6 +10,7 @@ import ContextoConfigBanner from "@/components/administracao-sistema/common/Cont
 import IntegracoesPanel from "@/components/administracao-sistema/configuracoes-gerais/IntegracoesPanel";
 import FiscalPanel from "@/components/administracao-sistema/configuracoes-gerais/FiscalPanel";
 import IAPanel from "@/components/administracao-sistema/configuracoes-gerais/IAPanel";
+import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
 
 export default function ConfiguracoesGeraisIndex() {
   const { hasPermission } = usePermissions();
@@ -30,6 +31,7 @@ export default function ConfiguracoesGeraisIndex() {
           <Card className="w-full">
             <CardContent className="p-4">
               <ContextoConfigBanner />
+              <HerancaConfigNotice />
               <ConfigGlobal />
             </CardContent>
           </Card>
@@ -39,6 +41,7 @@ export default function ConfiguracoesGeraisIndex() {
           <Card className="w-full">
             <CardContent className="p-4">
               <ContextoConfigBanner />
+              <HerancaConfigNotice />
               <IntegracoesPanel />
             </CardContent>
           </Card>
@@ -48,6 +51,7 @@ export default function ConfiguracoesGeraisIndex() {
           <Card className="w-full">
             <CardContent className="p-4">
               <ContextoConfigBanner />
+              <HerancaConfigNotice />
               <FiscalPanel />
             </CardContent>
           </Card>
@@ -57,6 +61,7 @@ export default function ConfiguracoesGeraisIndex() {
           <Card className="w-full">
             <CardContent className="p-4">
               <ContextoConfigBanner />
+              <HerancaConfigNotice />
               <IAPanel />
             </CardContent>
           </Card>
