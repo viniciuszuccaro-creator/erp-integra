@@ -6,6 +6,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
+import SoDResults from "@/components/administracao-sistema/gestao-acessos/SoDResults";
 
 export default function SoDChecker() {
   const { isAdmin, hasPermission } = usePermissions();
@@ -16,6 +17,7 @@ export default function SoDChecker() {
   const [loading, setLoading] = useState(false);
   const [resultado, setResultado] = useState(null);
   const [erro, setErro] = useState(null);
+  const [persistindo, setPersistindo] = useState(false);
 
   const executarAnalise = async () => {
     setLoading(true); setErro(null);
@@ -51,6 +53,49 @@ export default function SoDChecker() {
     return <div className="p-2 text-xs text-slate-500">Sem permissão para analisar SoD.</div>;
   }
 
+  const persistirConflitos = async () => {
+    if (!resultado) return;
+    setPersistindo(true);
+    try {
+      const conflicts = Array.isArray(resultado?.conflicts) ? resultado.conflicts : [];
+      const porPerfil = conflicts.reduce((acc, c) => {
+        const id = c?.perfil_id;
+        if (!id) return acc;
+        acc[id] = acc[id] || [];
+        acc[id].push({
+          tipo_conflito: c?.tipo_conflito,
+          descricao: c?.descricao,
+          severidade: c?.severidade || 'Média',
+          data_deteccao: new Date().toISOString(),
+        });
+        return acc;
+      }, {});
+
+      const ids = Object.keys(porPerfil);
+      for (const perfilId of ids) {
+        await base44.entities.PerfilAcesso.update(perfilId, {
+          conflitos_sod_detectados: porPerfil[perfilId],
+        });
+      }
+
+      try {
+        base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: empresaAtual?.id || null,
+          acao: 'Edição',
+          modulo: 'Sistema',
+          entidade: 'PerfilAcesso',
+          descricao: `Conflitos SoD persistidos para ${ids.length} perfis`,
+          dados_novos: porPerfil,
+          data_hora: new Date().toISOString(),
+        });
+      } catch {}
+    } finally {
+      setPersistindo(false);
+    }
+  };
+
   return (
     <div className="w-full h-full flex flex-col gap-3">
       <ContextoConfigBanner />
@@ -60,9 +105,16 @@ export default function SoDChecker() {
             <h3 className="font-semibold text-slate-800">Análise de Segregação de Funções (SoD)</h3>
             <p className="text-xs text-slate-500">Verifica conflitos de permissões nos perfis de acesso.</p>
           </div>
-          <Button onClick={executarAnalise} disabled={loading} data-action="SoD.analisar">
-            {loading ? 'Analisando…' : 'Executar Análise'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={executarAnalise} disabled={loading} data-action="SoD.analisar">
+              {loading ? 'Analisando…' : 'Executar Análise'}
+            </Button>
+            {resultado && (
+              <Button onClick={persistirConflitos} disabled={persistindo} variant="outline" data-action="SoD.persistir">
+                {persistindo ? 'Salvando…' : 'Persistir Conflitos'}
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -71,14 +123,7 @@ export default function SoDChecker() {
       )}
 
       {resultado && (
-        <Card className="w-full">
-          <CardContent className="p-4">
-            <div className="text-sm font-medium mb-2">Resultado</div>
-            <pre className="text-xs bg-slate-50 border border-slate-200 rounded p-3 max-h-96 overflow-auto">
-{JSON.stringify(resultado, null, 2)}
-            </pre>
-          </CardContent>
-        </Card>
+        <SoDResults resultado={resultado} />
       )}
     </div>
   );
