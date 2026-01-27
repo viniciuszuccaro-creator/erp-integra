@@ -2727,7 +2727,8 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
-                    </CardContent>
+                      </div>
+                      </CardContent>
                   </Card>
 
                   
