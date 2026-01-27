@@ -12,6 +12,7 @@ import HerancaConfigNotice from "@/components/administracao-sistema/common/Heran
 
 export default function SegurancaGovernancaIndex() {
   const { isAdmin } = usePermissions();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   if (!isAdmin()) return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;
 
   return (
@@ -28,7 +29,7 @@ export default function SegurancaGovernancaIndex() {
             <CardContent className="p-4">
               <ContextoConfigBanner />
               <HerancaConfigNotice />
-              <ConfiguracaoSeguranca empresaId={useContextoVisual()?.empresaAtual?.id} grupoId={useContextoVisual()?.grupoAtual?.id} />
+              <ConfiguracaoSeguranca empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
               <SegurancaDashboard />
             </CardContent>
           </Card>
