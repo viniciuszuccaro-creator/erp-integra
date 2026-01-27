@@ -6,6 +6,8 @@ import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
 import MatrizPermissoesVisual from "@/components/sistema/MatrizPermissoesVisual";
 import RelatorioPermissoes from "@/components/sistema/RelatorioPermissoes";
 import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useUser } from "@/components/lib/UserContext";
 import { useQuery } from "@tanstack/react-query";
 import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
 import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
@@ -13,6 +15,25 @@ import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChe
 export default function GestaoAcessosIndex() {
   const { hasPermission, isAdmin } = usePermissions();
   const podeVer = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'visualizar');
+  const { filterInContext, empresaAtual } = useContextoVisual();
+  const { user } = useUser();
+  const [tab, setTab] = React.useState('perfis');
+  const handleTabChange = (next) => {
+    setTab(next);
+    try {
+      base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        empresa_id: empresaAtual?.id || null,
+        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+        acao: 'Visualização',
+        modulo: 'Sistema',
+        entidade: 'Controle de Acesso',
+        descricao: `Aba visualizada: ${next}`,
+        data_hora: new Date().toISOString(),
+      });
+    } catch {}
+  };
 
   if (!podeVer) {
     return (
@@ -21,13 +42,13 @@ export default function GestaoAcessosIndex() {
   }
 
   // Carregar dados para Relatório
-  const { data: perfis = [] } = useQuery({ queryKey: ['perfis-acesso'], queryFn: () => base44.entities.PerfilAcesso.list() });
+  const { data: perfis = [] } = useQuery({ queryKey: ['perfis-acesso', empresaAtual?.id], queryFn: () => filterInContext('PerfilAcesso', {}, '-updated_date', 200) });
   const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: () => base44.entities.User.list() });
-  const { data: empresas = [] } = useQuery({ queryKey: ['empresas'], queryFn: () => base44.entities.Empresa.list() });
+  const { data: empresas = [] } = useQuery({ queryKey: ['empresas', empresaAtual?.id], queryFn: () => filterInContext('Empresa', {}, '-updated_date', 200) });
 
   return (
     <div className="w-full h-full flex flex-col">
-      <Tabs defaultValue="perfis" className="w-full h-full">
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="perfis">Perfis</TabsTrigger>
           <TabsTrigger value="matriz">Matriz</TabsTrigger>

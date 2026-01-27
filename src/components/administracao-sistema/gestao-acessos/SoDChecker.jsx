@@ -27,6 +27,19 @@ export default function SoDChecker() {
         requested_by: user?.id,
       });
       setResultado(data);
+      try {
+        base44.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: empresaAtual?.id || null,
+          acao: 'Visualização',
+          modulo: 'Sistema',
+          entidade: 'SoD',
+          descricao: `Análise SoD executada (${estaNoGrupo ? 'grupo' : 'empresa'})`,
+          dados_novos: data || null,
+          data_hora: new Date().toISOString(),
+        });
+      } catch {}
     } catch (e) {
       setErro(e?.message || 'Falha ao executar análise');
     } finally {
