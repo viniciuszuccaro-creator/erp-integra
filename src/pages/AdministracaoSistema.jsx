@@ -10,6 +10,7 @@ import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configu
 import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
 import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
 import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
+import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
@@ -45,28 +46,36 @@ export default function AdministracaoSistema() {
           </TabsList>
 
           <TabsContent value="config" className="mt-4">
-            <div className="w-full h-full">
-              <ConfiguracoesGeraisIndex />
-            </div>
+            <ProtectedSection module="Sistema" section={["Configurações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Configurações.</div>}>
+              <div className="w-full h-full">
+                <ConfiguracoesGeraisIndex />
+              </div>
+            </ProtectedSection>
           </TabsContent>
 
           <TabsContent value="acessos" className="mt-4">
-            <div className="w-full h-full">
-              <GestaoAcessosIndex />
-            </div>
+            <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
+              <div className="w-full h-full">
+                <GestaoAcessosIndex />
+              </div>
+            </ProtectedSection>
           </TabsContent>
 
           <TabsContent value="auditoria" className="mt-4">
-            <div className="w-full h-full">
-              <AuditoriaLogsIndex />
-            </div>
+            <ProtectedSection module="Sistema" section={["Auditoria"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Auditoria.</div>}>
+              <div className="w-full h-full">
+                <AuditoriaLogsIndex />
+              </div>
+            </ProtectedSection>
           </TabsContent>
 
           {isAdmin() && (
             <TabsContent value="seguranca" className="mt-4">
-              <div className="w-full h-full">
-                <SegurancaGovernancaIndex />
-              </div>
+              <ProtectedSection module="Sistema" section={["Segurança"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Segurança.</div>}>
+                <div className="w-full h-full">
+                  <SegurancaGovernancaIndex />
+                </div>
+              </ProtectedSection>
             </TabsContent>
           )}
         </Tabs>

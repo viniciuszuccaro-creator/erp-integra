@@ -12,6 +12,7 @@ import DashboardCorporativo from './pages/DashboardCorporativo';
 import DemoMultitarefas from './pages/DemoMultitarefas';
 import Documentacao from './pages/Documentacao';
 import Empresas from './pages/Empresas';
+import EntregasMobile from './pages/EntregasMobile';
 import Estoque from './pages/Estoque';
 import Expedicao from './pages/Expedicao';
 import Financeiro from './pages/Financeiro';
@@ -23,7 +24,6 @@ import Producao from './pages/Producao';
 import ProducaoMobile from './pages/ProducaoMobile';
 import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
-import EntregasMobile from './pages/EntregasMobile';
 import __Layout from './Layout.jsx';
 
 
@@ -42,6 +42,7 @@ export const PAGES = {
     "DemoMultitarefas": DemoMultitarefas,
     "Documentacao": Documentacao,
     "Empresas": Empresas,
+    "EntregasMobile": EntregasMobile,
     "Estoque": Estoque,
     "Expedicao": Expedicao,
     "Financeiro": Financeiro,
@@ -53,7 +54,6 @@ export const PAGES = {
     "ProducaoMobile": ProducaoMobile,
     "RH": RH,
     "Relatorios": Relatorios,
-    "EntregasMobile": EntregasMobile,
 }
 
 export const pagesConfig = {
