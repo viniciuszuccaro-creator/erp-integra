@@ -6,6 +6,7 @@ import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
 import MatrizPermissoesVisual from "@/components/sistema/MatrizPermissoesVisual";
 import RelatorioPermissoes from "@/components/sistema/RelatorioPermissoes";
 import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
+import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
 
 export default function GestaoAcessosIndex() {
   const { hasPermission, isAdmin } = usePermissions();
@@ -25,6 +26,7 @@ export default function GestaoAcessosIndex() {
           <TabsTrigger value="matriz">Matriz</TabsTrigger>
           <TabsTrigger value="relatorios">Relatórios</TabsTrigger>
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
+          <TabsTrigger value="sod">SoD</TabsTrigger>
         </TabsList>
 
         <TabsContent value="perfis" className="mt-4">
@@ -55,6 +57,14 @@ export default function GestaoAcessosIndex() {
           <Card className="w-full">
             <CardContent className="p-4">
               <GestaoUsuariosAvancada />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="sod" className="mt-4">
+          <Card className="w-full">
+            <CardContent className="p-4">
+              <SoDChecker />
             </CardContent>
           </Card>
         </TabsContent>
