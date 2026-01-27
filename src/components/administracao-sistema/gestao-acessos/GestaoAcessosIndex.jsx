@@ -20,6 +20,11 @@ export default function GestaoAcessosIndex() {
     );
   }
 
+  // Carregar dados para Relatório
+  const { data: perfis = [] } = useQuery({ queryKey: ['perfis-acesso'], queryFn: () => base44.entities.PerfilAcesso.list() });
+  const { data: usuarios = [] } = useQuery({ queryKey: ['usuarios'], queryFn: () => base44.entities.User.list() });
+  const { data: empresas = [] } = useQuery({ queryKey: ['empresas'], queryFn: () => base44.entities.Empresa.list() });
+
   return (
     <div className="w-full h-full flex flex-col">
       <Tabs defaultValue="perfis" className="w-full h-full">
