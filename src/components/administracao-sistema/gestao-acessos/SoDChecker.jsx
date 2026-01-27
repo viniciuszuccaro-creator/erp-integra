@@ -9,6 +9,8 @@ import ContextoConfigBanner from "@/components/administracao-sistema/common/Cont
 
 export default function SoDChecker() {
   const { isAdmin, hasPermission } = usePermissions();
+  const { user } = useUser();
+  const { empresaAtual, estaNoGrupo } = useContextoVisual();
   const podeExecutar = isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'editar');
 
   const [loading, setLoading] = useState(false);
