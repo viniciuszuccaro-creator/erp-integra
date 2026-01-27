@@ -340,9 +340,18 @@ export default function CentralPerfisAcesso() {
     mutationFn: async (id) => {
       return await base44.entities.PerfilAcesso.delete(id);
     },
-    onSuccess: () => {
+    onSuccess: (_res, idExcluido) => {
       queryClient.invalidateQueries({ queryKey: ['perfis-acesso'] });
       toast.success("🗑️ Perfil excluído!");
+      try {
+        base44.entities.AuditLog.create({
+          acao: 'Exclusão',
+          modulo: 'Controle de Acesso',
+          entidade: 'PerfilAcesso',
+          registro_id: idExcluido,
+          descricao: 'Perfil de acesso excluído',
+        });
+      } catch {}
     },
     onError: (error) => {
       toast.error("❌ Erro: " + error.message);
