@@ -101,8 +101,7 @@ export default function IAOtimizacaoIndex({ initialTab }) {
         <TabsContent value="governanca" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              {/* Conteúdos de governança de IA (auditoria, compliance) já existentes são referenciados nas demais telas */}
-              <p className="text-sm text-slate-600">Governança de IA: políticas, auditoria e conformidade.</p>
+              <IAGovernancaComplianceSection />
             </CardContent>
           </Card>
         </TabsContent>
