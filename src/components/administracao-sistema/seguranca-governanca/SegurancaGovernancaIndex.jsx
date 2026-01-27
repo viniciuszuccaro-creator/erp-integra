@@ -3,11 +3,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import usePermissions from "@/components/lib/usePermissions";
 import SegurancaDashboard from "@/components/administracao-sistema/seguranca-governanca/SegurancaDashboard";
-import PainelGovernancaSection from "@/components/administracao-sistema/seguranca-governanca/PainelGovernancaSection";
+
 import IAGovernancaComplianceSection from "@/components/administracao-sistema/seguranca-governanca/IAGovernancaComplianceSection";
+import MonitoramentoManutencaoIndex from "@/components/administracao-sistema/MonitoramentoManutencaoIndex";
 import ConfiguracaoSeguranca from "@/components/sistema/ConfiguracaoSeguranca";
-import ConfiguracaoBackup from "@/components/sistema/ConfiguracaoBackup";
-import ConfiguracaoMonitoramento from "@/components/sistema/ConfiguracaoMonitoramento";
+
+
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
@@ -28,7 +29,7 @@ export default function SegurancaGovernancaIndex() {
           <TabsTrigger value="compliance">Compliance IA</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="seguranca" className="mt-4">
+        <TabsContent value="politicas" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
               <ContextoConfigBanner />
@@ -39,30 +40,10 @@ export default function SegurancaGovernancaIndex() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="monitoramento" className="mt-4">
+        <TabsContent value="manutencao" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <ContextoConfigBanner />
-              <HerancaConfigNotice />
-              <ConfiguracaoMonitoramento empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="backup" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <ContextoConfigBanner />
-              <HerancaConfigNotice />
-              <ConfiguracaoBackup empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="governanca" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <PainelGovernancaSection />
+              <MonitoramentoManutencaoIndex />
             </CardContent>
           </Card>
         </TabsContent>
