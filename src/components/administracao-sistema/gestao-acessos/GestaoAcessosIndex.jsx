@@ -3,7 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import usePermissions from "@/components/lib/usePermissions";
 import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
-import MatrizPermissoesVisual from "@/components/sistema/MatrizPermissoesVisual";
+// import MatrizPermissoesVisual from "@/components/sistema/MatrizPermissoesVisual";
 import RelatorioPermissoes from "@/components/sistema/RelatorioPermissoes";
 import { base44 } from "@/api/base44Client";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";

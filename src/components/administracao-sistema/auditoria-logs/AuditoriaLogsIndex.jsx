@@ -1,7 +1,7 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import AuditTrailPanel from "@/components/auditoria/AuditTrailPanel";
+// import AuditTrailPanel from "@/components/auditoria/AuditTrailPanel";
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import GlobalAuditLog from "@/components/sistema/GlobalAuditLog";
 import { FileText } from "lucide-react";
