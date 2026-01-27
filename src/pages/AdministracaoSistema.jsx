@@ -11,7 +11,6 @@ import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acesso
 import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
 import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
 import AdminMonitManut from "@/components/administracao-sistema/AdminMonitManut.jsx";
-import AdminMonitManut from "@/components/administracao-sistema/AdminMonitManut.jsx";
 import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function AdministracaoSistema() {
@@ -60,14 +59,6 @@ export default function AdministracaoSistema() {
             <ProtectedSection module="Sistema" section={["Configurações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Configurações.</div>}>
               <div className="w-full h-full">
                 <ConfiguracoesGeraisIndex initialTab="global" />
-              </div>
-            </ProtectedSection>
-          </TabsContent>
-
-          <TabsContent value="integracoes" className="mt-4">
-            <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Integrações.</div>}>
-              <div className="w-full h-full">
-                <ConfiguracoesGeraisIndex initialTab="integracoes" />
               </div>
             </ProtectedSection>
           </TabsContent>
