@@ -80,7 +80,9 @@ export default function ConfiguracoesGeraisIndex() {
         <TabsContent value="monitoramento" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
-              <ConfiguracaoMonitoramento />
+              <ProtectedSection module="Sistema" section={["Configurações","Monitoramento"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Monitoramento.</div>}>
+                <ConfiguracaoMonitoramento />
+              </ProtectedSection>
             </CardContent>
           </Card>
         </TabsContent>
