@@ -2978,7 +2978,7 @@ export default function Cadastros() {
                         <CardContent className="p-4">
                           <Button asChild className="bg-slate-800 hover:bg-slate-900">
                             <Link to={createPageUrl('AdministracaoSistema') + '?tab=ia'}>
-                              Abrir Configurações Globais
+                              Abrir IA & Otimização
                             </Link>
                           </Button>
                         </CardContent>
