@@ -6,6 +6,8 @@ import SegurancaDashboard from "@/components/administracao-sistema/seguranca-gov
 import PainelGovernancaSection from "@/components/administracao-sistema/seguranca-governanca/PainelGovernancaSection";
 import IAGovernancaComplianceSection from "@/components/administracao-sistema/seguranca-governanca/IAGovernancaComplianceSection";
 import ConfiguracaoSeguranca from "@/components/sistema/ConfiguracaoSeguranca";
+import ConfiguracaoBackup from "@/components/sistema/ConfiguracaoBackup";
+import ConfiguracaoMonitoramento from "@/components/sistema/ConfiguracaoMonitoramento";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";

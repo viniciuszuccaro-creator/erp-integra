@@ -12,7 +12,7 @@ import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-log
 import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
 import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
 import IAOtimizacaoIndex from "@/components/administracao-sistema/IAOtimizacaoIndex";
-import MonitoramentoManutencaoIndex from "@/components/administracao-sistema/MonitoramentoManutencaoIndex";
+
 import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function AdministracaoSistema() {
@@ -47,11 +47,9 @@ export default function AdministracaoSistema() {
             <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> IA & Otimização</div>
             </TabsTrigger>
-            <TabsTrigger value="monitoramento" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-              <div className="flex items-center gap-2"><Activity className="w-4 h-4"/> Monitoramento & Manutenção</div>
-            </TabsTrigger>
+
             <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-              <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> Auditoria</div>
+              <div className="flex items-center gap-2"><FileText className="w-4 h-4"/> Auditoria e Logs</div>
             </TabsTrigger>
           </TabsList>
 
