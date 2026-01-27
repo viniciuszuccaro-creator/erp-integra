@@ -88,20 +88,6 @@ export default function AdministracaoSistema() {
               </ProtectedSection>
             </TabsContent>
           )}
-          <TabsContent value="ia" className="mt-4">
-            <ProtectedSection module="Sistema" section={["Configurações","IA"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à IA.</div>}>
-              <div className="w-full h-full">
-                <ConfiguracoesGeraisIndex initialTab="ia" />
-              </div>
-            </ProtectedSection>
-          </TabsContent>
-
-          <TabsContent value="monitor" className="mt-4">
-            <ProtectedSection module="Sistema" section={["Configurações","Monitoramento"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito.</div>}>
-              <div className="w-full h-full">
-                <AdminMonitManut />
-              </div>
-            </ProtectedSection>
 
 
           <TabsContent value="monitor" className="mt-4">
@@ -110,7 +96,9 @@ export default function AdministracaoSistema() {
                 <AdminMonitManut />
               </div>
             </ProtectedSection>
-          </TabsContent>
+
+
+
         </Tabs>
       </div>
     </div>
