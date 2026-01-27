@@ -21,8 +21,13 @@ Deno.serve(async (req) => {
     for (const p of perfis) {
       const texto = `Sugestão IA: revisar permissões com base em ${bloqueios.length} bloqueios recentes e regras SoD. Priorizar módulos de maior incidência.`;
       const novoObs = p.observacoes ? `${p.observacoes}\n${texto}` : texto;
-      await base44.asServiceRole.entities.PerfilAcesso.update(p.id, { observacoes: novoObs });
-      sugestoes[p.id] = { nome: p.nome_perfil, observacao_adicionada: texto };
+      const conflitos = Array.isArray(p.conflitos_sod_detectados) ? p.conflitos_sod_detectados : [];
+      const updated = { observacoes: novoObs };
+      if (conflitos.length > 0) {
+        updated.requer_aprovacao_especial = true;
+      }
+      await base44.asServiceRole.entities.PerfilAcesso.update(p.id, updated);
+      sugestoes[p.id] = { nome: p.nome_perfil, observacao_adicionada: texto, requer_aprovacao_especial: !!updated.requer_aprovacao_especial };
     }
 
     try {
