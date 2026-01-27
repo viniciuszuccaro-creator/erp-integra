@@ -52,6 +52,19 @@ Deno.serve(async (req) => {
     const statusLLM = consulta?.status_fiscal_receita || consulta?.status || consulta?.situacao;
     if (statusLLM) patch.status_fiscal_receita = statusLLM;
     if (consulta?.cnae_principal) patch.cnae_principal = String(consulta.cnae_principal);
+
+    // Sinalização de revisão quando houver divergência
+    if (registro?.status_fiscal_receita && statusLLM && registro.status_fiscal_receita !== statusLLM) {
+      patch.validacao_ia_pre_emissao = {
+        ...(registro?.validacao_ia_pre_emissao || {}),
+        validada: false,
+        conflitos_detectados: [
+          { tipo: 'Status Fiscal Divergente', descricao: `Anterior: ${registro.status_fiscal_receita} → Novo: ${statusLLM}`, severidade: 'Aviso', campo_afetado: 'status_fiscal_receita' }
+        ],
+        bloqueio_emissao: false,
+        data_validacao: new Date().toISOString(),
+      };
+    }
     if (consulta?.regime_tributario) {
       if (entityName === 'Cliente') {
         patch.configuracao_fiscal = {
