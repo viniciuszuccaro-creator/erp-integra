@@ -138,7 +138,7 @@ export default function IntegracoesIndex({ initialTab }) {
           <Card className="w-full"><CardContent className="p-4"><TesteGoogleMaps configuracao={configuracao} /></CardContent></Card>
         </TabsContent>
         <TabsContent value="marketplaces" className="mt-4">
-          <Card className="w-full"><CardContent className="p-4">{/* Gerenciado pelo VisualizadorUniversal + ConfiguracaoIntegracaoForm */}</CardContent></Card>
+          <Card className="w-full"><CardContent className="p-4"><SincronizacaoMarketplacesAtiva /></CardContent></Card>
         </TabsContent>
       </Tabs>
     </div>
