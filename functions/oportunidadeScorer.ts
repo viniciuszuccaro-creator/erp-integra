@@ -37,6 +37,11 @@ Deno.serve(async (req) => {
     if (typeof res?.score === 'number') patch.score = Math.max(0, Math.min(100, Math.round(res.score)));
     if (typeof res?.temperatura === 'string') patch.temperatura = res.temperatura;
 
+    if (res?.proxima_acao) {
+      patch.proxima_acao = res.proxima_acao;
+      patch.data_proxima_acao = patch.data_proxima_acao || new Date().toISOString();
+    }
+
     if (Object.keys(patch).length) {
       await base44.asServiceRole.entities.Oportunidade.update(entityId, patch);
     }
