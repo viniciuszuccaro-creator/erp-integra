@@ -193,7 +193,7 @@ export default function Cadastros() {
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Cadastros_subtab', value); } catch {}
   };
-  const { empresaAtual, filterInContext } = useContextoVisual();
+  const { empresaAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
 
   // Seleções em massa (Clientes, Fornecedores, Produtos)
 
@@ -764,16 +764,13 @@ export default function Cadastros() {
 
   // Generic handlers
   const handleSubmitGenerico = (entityName, queryKey) => async (data) => {
-    if (data?._salvamentoCompleto) {
-      return;
-    }
-
+    if (data?._salvamentoCompleto) return;
     try {
       if (data.id) {
-        await base44.entities[entityName].update(data.id, data);
+        await updateInContext(entityName, data.id, data);
         toast({ title: `✅ ${entityName} atualizado com sucesso!` });
       } else {
-        await base44.entities[entityName].create(data);
+        await createInContext(entityName, data);
         toast({ title: `✅ ${entityName} criado com sucesso!` });
       }
       queryClient.invalidateQueries({ queryKey: [queryKey] });
