@@ -193,7 +193,7 @@ export default function Cadastros() {
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Cadastros_subtab', value); } catch {}
   };
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, filterInContext } = useContextoVisual();
 
   // Seleções em massa (Clientes, Fornecedores, Produtos)
 
@@ -281,7 +281,7 @@ export default function Cadastros() {
     queryKey: ['transportadoras', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.Transportadora.list('-created_date', 100);
+        return await filterInContext('Transportadora', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar transportadoras:', err);
         return [];
