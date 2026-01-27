@@ -12,7 +12,7 @@ import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChe
 
 export default function GestaoAcessosIndex() {
   const { hasPermission, isAdmin } = usePermissions();
-  const podeVer = isAdmin() || hasPermission('Sistema', 'Controle de Acesso', 'ver');
+  const podeVer = isAdmin() || hasPermission('Sistema', ['Controle de Acesso'], 'visualizar');
 
   if (!podeVer) {
     return (
