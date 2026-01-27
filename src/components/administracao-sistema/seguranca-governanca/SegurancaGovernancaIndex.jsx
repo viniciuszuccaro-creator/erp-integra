@@ -22,6 +22,8 @@ export default function SegurancaGovernancaIndex() {
       <Tabs defaultValue="seguranca" className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="seguranca">Segurança</TabsTrigger>
+          <TabsTrigger value="monitoramento">Monitoramento</TabsTrigger>
+          <TabsTrigger value="backup">Backup</TabsTrigger>
           <TabsTrigger value="governanca">Governança</TabsTrigger>
           <TabsTrigger value="compliance">Compliance IA</TabsTrigger>
         </TabsList>
