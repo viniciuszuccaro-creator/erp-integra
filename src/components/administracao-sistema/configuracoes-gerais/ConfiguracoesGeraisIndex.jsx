@@ -45,12 +45,6 @@ export default function ConfiguracoesGeraisIndex({ initialTab }) {
       <Tabs value={tab} onValueChange={handleTabChange} className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="global">Gerais</TabsTrigger>
-          <TabsTrigger value="integracoes">Integrações</TabsTrigger>
-          <TabsTrigger value="fiscal">Fiscal</TabsTrigger>
-          <TabsTrigger value="ia">IA</TabsTrigger>
-          <TabsTrigger value="backup">Backup</TabsTrigger>
-          <TabsTrigger value="monitoramento">Monitoramento</TabsTrigger>
-          <TabsTrigger value="seguranca">Segurança</TabsTrigger>
         </TabsList>
 
         <TabsContent value="global" className="mt-4">
@@ -65,65 +59,7 @@ export default function ConfiguracoesGeraisIndex({ initialTab }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="integracoes" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <ContextoConfigBanner />
-              <HerancaConfigNotice />
-              <IntegracoesPanel />
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="fiscal" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <ContextoConfigBanner />
-              <HerancaConfigNotice />
-              <FiscalPanel />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="ia" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <ContextoConfigBanner />
-              <HerancaConfigNotice />
-              <IAPanel />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="backup" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <ProtectedSection module="Sistema" section={["Configurações","Backup"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Backup.</div>}>
-                <ConfiguracaoBackup empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
-              </ProtectedSection>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="monitoramento" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <ProtectedSection module="Sistema" section={["Configurações","Monitoramento"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Monitoramento.</div>}>
-                <ConfiguracaoMonitoramento empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
-              </ProtectedSection>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="seguranca" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <ProtectedSection module="Sistema" section={["Configurações","Segurança"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para Segurança.</div>}>
-                <ConfiguracaoSeguranca empresaId={empresaAtual?.id} grupoId={grupoAtual?.id} />
-              </ProtectedSection>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );

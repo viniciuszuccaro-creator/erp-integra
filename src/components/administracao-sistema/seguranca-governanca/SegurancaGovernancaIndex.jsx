@@ -3,9 +3,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import usePermissions from "@/components/lib/usePermissions";
 import SegurancaDashboard from "@/components/administracao-sistema/seguranca-governanca/SegurancaDashboard";
-import MonitorAcessoRealtimeSection from "@/components/administracao-sistema/seguranca-governanca/MonitorAcessoRealtimeSection";
 import PainelGovernancaSection from "@/components/administracao-sistema/seguranca-governanca/PainelGovernancaSection";
 import IAGovernancaComplianceSection from "@/components/administracao-sistema/seguranca-governanca/IAGovernancaComplianceSection";
+import ConfiguracaoSeguranca from "@/components/sistema/ConfiguracaoSeguranca";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
+import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
 
 export default function SegurancaGovernancaIndex() {
   const { isAdmin } = usePermissions();
@@ -16,7 +19,6 @@ export default function SegurancaGovernancaIndex() {
       <Tabs defaultValue="seguranca" className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="seguranca">Segurança</TabsTrigger>
-          <TabsTrigger value="acesso">Acesso Realtime</TabsTrigger>
           <TabsTrigger value="governanca">Governança</TabsTrigger>
           <TabsTrigger value="compliance">Compliance IA</TabsTrigger>
         </TabsList>
@@ -24,15 +26,10 @@ export default function SegurancaGovernancaIndex() {
         <TabsContent value="seguranca" className="mt-4">
           <Card className="w-full">
             <CardContent className="p-4">
+              <ContextoConfigBanner />
+              <HerancaConfigNotice />
+              <ConfiguracaoSeguranca empresaId={useContextoVisual()?.empresaAtual?.id} grupoId={useContextoVisual()?.grupoAtual?.id} />
               <SegurancaDashboard />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="acesso" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <MonitorAcessoRealtimeSection />
             </CardContent>
           </Card>
         </TabsContent>

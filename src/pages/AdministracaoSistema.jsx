@@ -10,7 +10,9 @@ import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configu
 import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
 import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-logs/AuditoriaLogsIndex";
 import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
-import AdminMonitManut from "@/components/administracao-sistema/AdminMonitManut.jsx";
+import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
+import IAOtimizacaoIndex from "@/components/administracao-sistema/IAOtimizacaoIndex";
+import MonitoramentoManutencaoIndex from "@/components/administracao-sistema/MonitoramentoManutencaoIndex";
 import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function AdministracaoSistema() {
@@ -34,20 +36,18 @@ export default function AdministracaoSistema() {
               <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Gerais</div>
             </TabsTrigger>
             <TabsTrigger value="integracoes" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-              <div className="flex items-center gap-2"><Settings className="w-4 h-4"/> Integrações</div>
+              <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> Integrações</div>
             </TabsTrigger>
             <TabsTrigger value="acessos" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <div className="flex items-center gap-2"><Users className="w-4 h-4"/> Gestão de Acessos</div>
             </TabsTrigger>
-            {isAdmin() && (
-              <TabsTrigger value="seguranca" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-                <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> Segurança & Governança</div>
-              </TabsTrigger>
-            )}
+            <TabsTrigger value="seguranca" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+              <div className="flex items-center gap-2"><Shield className="w-4 h-4"/> Segurança & Governança</div>
+            </TabsTrigger>
             <TabsTrigger value="ia" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <div className="flex items-center gap-2"><Sparkles className="w-4 h-4"/> IA & Otimização</div>
             </TabsTrigger>
-            <TabsTrigger value="monitor" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+            <TabsTrigger value="monitoramento" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
               <div className="flex items-center gap-2"><Activity className="w-4 h-4"/> Monitoramento & Manutenção</div>
             </TabsTrigger>
             <TabsTrigger value="auditoria" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
@@ -66,7 +66,7 @@ export default function AdministracaoSistema() {
           <TabsContent value="integracoes" className="mt-4">
             <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito às Integrações.</div>}>
               <div className="w-full h-full">
-                <ConfiguracoesGeraisIndex initialTab="integracoes" />
+                <IntegracoesIndex initialTab="gerenciamento" />
               </div>
             </ProtectedSection>
           </TabsContent>
