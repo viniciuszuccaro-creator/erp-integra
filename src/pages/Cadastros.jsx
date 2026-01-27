@@ -2124,6 +2124,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -2190,6 +2191,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -2345,6 +2347,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -2768,6 +2771,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -2830,6 +2834,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -2892,6 +2897,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -2954,6 +2960,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -3016,6 +3023,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -3253,6 +3261,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -3324,6 +3333,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -3392,6 +3402,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -3463,6 +3474,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -3674,10 +3686,11 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                    </div>
                     </CardContent>
-                  </Card>
+                    </Card>
 
-                  {/* GRUPOS EMPRESARIAIS */}
+                    {/* GRUPOS EMPRESARIAIS */}
                   <Card className="border-purple-200">
                     <CardHeader className="bg-purple-50 border-b border-purple-200 pb-3">
                       <div className="flex items-center justify-between">
@@ -3741,12 +3754,13 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                    </div>
                     </CardContent>
-                  </Card>
+                    </Card>
 
-                  
 
-                  {/* DEPARTAMENTOS */}
+
+                    {/* DEPARTAMENTOS */}
                   <Card className="border-green-200">
                     <CardHeader className="bg-green-50 border-b border-green-200 pb-3">
                       <div className="flex items-center justify-between">
@@ -3811,6 +3825,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -3879,6 +3894,7 @@ export default function Cadastros() {
                           </Button>
                         </div>
                       ))}
+                      </div>
                     </CardContent>
                   </Card>
 
