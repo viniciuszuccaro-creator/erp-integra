@@ -2,22 +2,21 @@ import React from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import ConfigGlobal from "@/components/sistema/ConfigGlobal";
-import ConfiguracaoBackup from "@/components/sistema/ConfiguracaoBackup";
-import ConfiguracaoMonitoramento from "@/components/sistema/ConfiguracaoMonitoramento";
-import ConfiguracaoSeguranca from "@/components/sistema/ConfiguracaoSeguranca";
-import usePermissions from "@/components/lib/usePermissions";
+
+
+
+
 import ProtectedSection from "@/components/security/ProtectedSection";
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
-import IntegracoesPanel from "@/components/administracao-sistema/configuracoes-gerais/IntegracoesPanel";
-import FiscalPanel from "@/components/administracao-sistema/configuracoes-gerais/FiscalPanel";
-import IAPanel from "@/components/administracao-sistema/configuracoes-gerais/IAPanel";
+
+
+
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 export default function ConfiguracoesGeraisIndex({ initialTab }) {
-  const { hasPermission } = usePermissions();
   const { user } = useUser();
   const { empresaAtual, grupoAtual } = useContextoVisual();
   const [tab, setTab] = React.useState(initialTab || 'global');
