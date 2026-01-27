@@ -113,7 +113,6 @@ export default function AdministracaoSistema() {
               </div>
             </ProtectedSection>
           </TabsContent>
-          </TabsContent>
 
 
 
