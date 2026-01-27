@@ -52,7 +52,14 @@ Deno.serve(async (req) => {
     const statusLLM = consulta?.status_fiscal_receita || consulta?.status || consulta?.situacao;
     if (statusLLM) patch.status_fiscal_receita = statusLLM;
     if (consulta?.cnae_principal) patch.cnae_principal = String(consulta.cnae_principal);
-    if (consulta?.regime_tributario) patch.regime_tributario = consulta.regime_tributario;
+    if (consulta?.regime_tributario) {
+      if (entityName === 'Cliente') {
+        patch.configuracao_fiscal = {
+          ...(registro?.configuracao_fiscal || {}),
+          regime_tributario: consulta.regime_tributario,
+        };
+      }
+    }
 
     if (Object.keys(patch).length > 0) {
       await base44.asServiceRole.entities[entityName].update(entityId, patch);
