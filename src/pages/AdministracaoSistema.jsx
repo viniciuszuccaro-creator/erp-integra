@@ -96,6 +96,7 @@ export default function AdministracaoSistema() {
                 <AdminMonitManut />
               </div>
             </ProtectedSection>
+          </TabsContent>
 
 
 
