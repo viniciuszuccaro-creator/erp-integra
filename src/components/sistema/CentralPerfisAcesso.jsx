@@ -232,6 +232,9 @@ export default function CentralPerfisAcesso() {
   const [perfilAberto, setPerfilAberto] = useState(null);
   const [usuarioAberto, setUsuarioAberto] = useState(null);
   const [busca, setBusca] = useState("");
+  const [showEmpresas, setShowEmpresas] = useState(true);
+  const [showGrupos, setShowGrupos] = useState(true);
+  const [showAcoes, setShowAcoes] = useState(true);
   const [modulosExpandidos, setModulosExpandidos] = useState([]);
 
   const queryClient = useQueryClient();
@@ -831,6 +834,17 @@ export default function CentralPerfisAcesso() {
         <TabsContent value="usuarios" className="space-y-4">
           <Card>
             <CardContent className="p-0">
+              <div className="flex items-center justify-end gap-4 p-3 border-b bg-white">
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <Checkbox checked={showEmpresas} onCheckedChange={setShowEmpresas} /> Empresas
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <Checkbox checked={showGrupos} onCheckedChange={setShowGrupos} /> Grupos
+                </div>
+                <div className="flex items-center gap-2 text-sm text-slate-700">
+                  <Checkbox checked={showAcoes} onCheckedChange={setShowAcoes} /> Ações
+                </div>
+              </div>
               <div className="overflow-x-auto">
               <Table className="min-w-[900px]">
                 <TableHeader>
@@ -838,9 +852,9 @@ export default function CentralPerfisAcesso() {
                     <TableHead>Usuário</TableHead>
                     <TableHead>E-mail</TableHead>
                     <TableHead>Perfil</TableHead>
-                    <TableHead>Empresas</TableHead>
-                    <TableHead>Grupos</TableHead>
-                    <TableHead>Ações</TableHead>
+                    {showEmpresas && <TableHead>Empresas</TableHead>}
+                    {showGrupos && <TableHead>Grupos</TableHead>}
+                    {showAcoes && <TableHead>Ações</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -898,35 +912,41 @@ export default function CentralPerfisAcesso() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-purple-100 text-purple-700">
-                              {empresasVinculadas.filter(v => v.ativo).length}
+                        {showEmpresas && (
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Badge className="bg-purple-100 text-purple-700">
+                                {empresasVinculadas.filter(v => v.ativo).length}
+                              </Badge>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setUsuarioAberto(usuario)}
+                              >
+                                <Settings className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
+                        {showGrupos && (
+                          <TableCell>
+                            <Badge className="bg-blue-100 text-blue-700">
+                              {gruposVinculados.filter(v => v.ativo).length}
                             </Badge>
+                          </TableCell>
+                        )}
+                        {showAcoes && (
+                          <TableCell>
                             <Button
                               size="sm"
-                              variant="ghost"
+                              variant="outline"
                               onClick={() => setUsuarioAberto(usuario)}
                             >
-                              <Settings className="w-3 h-3" />
+                              <Key className="w-4 h-4 mr-1" />
+                              Configurar
                             </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className="bg-blue-100 text-blue-700">
-                            {gruposVinculados.filter(v => v.ativo).length}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setUsuarioAberto(usuario)}
-                          >
-                            <Key className="w-4 h-4 mr-1" />
-                            Configurar
-                          </Button>
-                        </TableCell>
+                          </TableCell>
+                        )}
                       </TableRow>
                     );
                   })}

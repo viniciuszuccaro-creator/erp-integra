@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, Search, Filter, Eye, Building2 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -46,6 +47,8 @@ export default function LogsAuditoria() {
   const modulos = [...new Set(logs.map(l => l.modulo))].filter(Boolean);
   const acoes = [...new Set(logs.map(l => l.acao))].filter(Boolean);
   const paginatedLogs = logsFiltrados.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const [showDescricao, setShowDescricao] = useState(true);
+  const [showIP, setShowIP] = useState(true);
 
   const obterNomeEmpresa = (empresaId) => {
     const emp = empresas.find(e => e.id === empresaId);
@@ -172,7 +175,17 @@ export default function LogsAuditoria() {
       {/* Tabela de Logs */}
       <Card>
         <CardHeader className="bg-slate-50 border-b">
-          <CardTitle>Registro de Atividades ({logsFiltrados.length})</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Registro de Atividades ({logsFiltrados.length})</CardTitle>
+            <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Checkbox checked={showDescricao} onCheckedChange={setShowDescricao} /> Descrição
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox checked={showIP} onCheckedChange={setShowIP} /> IP
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
@@ -187,7 +200,7 @@ export default function LogsAuditoria() {
                   <TableHead>Entidade</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>IP</TableHead>
+                  {showIP && <TableHead>IP</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -217,6 +230,7 @@ export default function LogsAuditoria() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm">{log.entidade || '-'}</TableCell>
+                    {showDescricao && (
                     <TableCell className="text-sm max-w-xs truncate">
                       <TooltipProvider>
                         <Tooltip>
@@ -227,6 +241,7 @@ export default function LogsAuditoria() {
                         </Tooltip>
                       </TooltipProvider>
                     </TableCell>
+                  )}
                     <TableCell>
                       {log.sucesso ? (
                         <Badge className="bg-green-100 text-green-700">✓</Badge>
@@ -234,7 +249,9 @@ export default function LogsAuditoria() {
                         <Badge className="bg-red-100 text-red-700">✗</Badge>
                       )}
                     </TableCell>
+                    {showIP && (
                     <TableCell className="text-xs text-slate-500">{log.ip_address || '-'}</TableCell>
+                  )}
                   </TableRow>
                 ))}
               </TableBody>
