@@ -933,6 +933,71 @@ export default function Cadastros() {
                 <Bloco2Produtos />
               </AccordionContent>
                 </AccordionItem>
+
+            {/* BLOCO 3: FINANCEIRO */}
+            <AccordionItem value="bloco3" className="border-2 border-green-200 rounded-lg overflow-hidden shadow-md">
+              <AccordionTrigger className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 hover:from-green-100 hover:to-green-200">
+                <div className="flex items-center gap-3 flex-1">
+                  <DollarSign className="w-6 h-6 text-green-600" />
+                  <div className="text-left">
+                    <p className="font-bold text-lg text-green-900">3️⃣ Financeiro & Fiscal</p>
+                  </div>
+                  <Badge className="ml-auto bg-green-600 text-white">{totalBloco3}</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="p-6 bg-white">
+                <Bloco3Financeiro />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* BLOCO 4: LOGÍSTICA, FROTA & ALMOXARIFADO */}
+            <AccordionItem value="bloco4" className="border-2 border-orange-200 rounded-lg overflow-hidden shadow-md">
+              <AccordionTrigger className="bg-gradient-to-r from-orange-50 to-orange-100 px-6 py-4 hover:from-orange-100 hover:to-orange-200">
+                <div className="flex items-center gap-3 flex-1">
+                  <Truck className="w-6 h-6 text-orange-600" />
+                  <div className="text-left">
+                    <p className="font-bold text-lg text-orange-900">4️⃣ Logística, Frota & Almoxarifado</p>
+                  </div>
+                  <Badge className="ml-auto bg-orange-600 text-white">{totalBloco4}</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="p-6 bg-white">
+                <Bloco4Logistica />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* BLOCO 5: ESTRUTURA ORGANIZACIONAL */}
+            <AccordionItem value="bloco5" className="border-2 border-indigo-200 rounded-lg overflow-hidden shadow-md">
+              <AccordionTrigger className="bg-gradient-to-r from-indigo-50 to-indigo-100 px-6 py-4 hover:from-indigo-100 hover:to-indigo-200">
+                <div className="flex items-center gap-3 flex-1">
+                  <Building2 className="w-6 h-6 text-indigo-600" />
+                  <div className="text-left">
+                    <p className="font-bold text-lg text-indigo-900">5️⃣ Estrutura Organizacional</p>
+                  </div>
+                  <Badge className="ml-auto bg-indigo-600 text-white">{totalBloco5}</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="p-6 bg-white">
+                <Bloco5Organizacional />
+              </AccordionContent>
+            </AccordionItem>
+
+            {/* BLOCO 6: TECNOLOGIA, IA & PARÂMETROS */}
+            <AccordionItem value="bloco6" className="border-2 border-cyan-200 rounded-lg overflow-hidden shadow-md">
+              <AccordionTrigger className="bg-gradient-to-r from-cyan-50 to-cyan-100 px-6 py-4 hover:from-cyan-100 hover:to-cyan-200">
+                <div className="flex items-center gap-3 flex-1">
+                  <Cpu className="w-6 h-6 text-cyan-600" />
+                  <div className="text-left">
+                    <p className="font-bold text-lg text-cyan-900">6️⃣ Tecnologia, IA & Parâmetros</p>
+                  </div>
+                  <Badge className="ml-auto bg-cyan-600 text-white">{totalBloco6}</Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="p-6 bg-white">
+                <Bloco6Tecnologia />
+              </AccordionContent>
+            </AccordionItem>
+
               </Accordion>
 
 
