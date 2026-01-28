@@ -131,7 +131,7 @@ import VisualizadorProdutos from '../components/cadastros/VisualizadorProdutos';
 import Bloco1Pessoas from "@/components/cadastros/blocks/Bloco1Pessoas";
 import Bloco2Produtos from "@/components/cadastros/blocks/Bloco2Produtos";
 import Bloco3Financeiro from "@/components/cadastros/blocks/Bloco3Financeiro";
-import Bloco4Logistica from "@/components/cadastros/blocks/Bloco4Logistica";
+import Bloco4Logistica from "@/components/cadastros/blocks/Bloco4Logistica.jsx";
 import Bloco5Organizacional from "@/components/cadastros/blocks/Bloco5Organizacional";
 import Bloco6Tecnologia from "@/components/cadastros/blocks/Bloco6Tecnologia";
 import TesteNFe from "../components/integracoes/TesteNFe";
