@@ -240,7 +240,15 @@ export default function LogsAuditoria() {
               </TableBody>
             </Table>
           </div>
-
+            <div className="p-4">
+              <PaginationControls
+                currentPage={currentPage}
+                totalItems={logsFiltrados.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={(n) => { setItemsPerPage(n); setCurrentPage(1); }}
+              />
+            </div>
           {logsFiltrados.length === 0 && (
             <div className="text-center py-12 text-slate-500">
               <Shield className="w-16 h-16 mx-auto mb-4 opacity-30" />
