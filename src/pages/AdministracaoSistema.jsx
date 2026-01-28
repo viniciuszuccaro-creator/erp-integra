@@ -13,8 +13,13 @@ import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguran
 import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
 import IAOtimizacaoIndex from "@/components/administracao-sistema/IAOtimizacaoIndex";
 import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
+import GestaoUsuariosAvancada from "@/components/sistema/GestaoUsuariosAvancada";
+import CentralPerfisAcesso from "@/components/sistema/CentralPerfisAcesso";
+import SoDChecker from "@/components/administracao-sistema/gestao-acessos/SoDChecker";
+import MonitorAcessoRealtimeSection from "@/components/administracao-sistema/seguranca-governanca/MonitorAcessoRealtimeSection";
+import GerenciadorSessoes from "@/components/sistema/GerenciadorSessoes";
 
-import ProtectedSection from "@/components/security/ProtectedSection";
+ import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function AdministracaoSistema() {
   const { isAdmin } = usePermissions();
@@ -83,8 +88,48 @@ export default function AdministracaoSistema() {
 
           <TabsContent value="acessos" className="mt-4">
             <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
-              <div className="w-full h-full">
-                <GestaoAcessosIndex />
+              <div className="w-full h-full space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  <Card className="col-span-1 xl:col-span-2">
+                    <CardContent className="p-4">
+                      <h2 className="font-semibold mb-3">Gestão de Usuários</h2>
+                      <GestaoUsuariosAvancada />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <h2 className="font-semibold mb-3">Perfis de Acesso</h2>
+                      <CentralPerfisAcesso />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <h2 className="font-semibold mb-3">Verificação SoD (Segregação de Funções)</h2>
+                      <SoDChecker />
+                    </CardContent>
+                  </Card>
+
+                  <Card className="col-span-1 xl:col-span-2">
+                    <CardContent className="p-4">
+                      <h2 className="font-semibold mb-3">Monitoramento de Acesso em Tempo Real</h2>
+                      <MonitorAcessoRealtimeSection />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <h2 className="font-semibold mb-3">Gestão de Sessões</h2>
+                      <GerenciadorSessoes />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="hidden">
+                  {/* Conteúdo legado agregado em um painel secundário, mantendo regras de não remoção */}
+                  <GestaoAcessosIndex />
+                </div>
               </div>
             </ProtectedSection>
           </TabsContent>
