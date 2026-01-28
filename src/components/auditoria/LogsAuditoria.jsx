@@ -198,7 +198,7 @@ export default function LogsAuditoria() {
                   <TableHead>Módulo</TableHead>
                   <TableHead>Ação</TableHead>
                   <TableHead>Entidade</TableHead>
-                  <TableHead>Descrição</TableHead>
+                  {showDescricao && <TableHead>Descrição</TableHead>}
                   <TableHead>Status</TableHead>
                   {showIP && <TableHead>IP</TableHead>}
                 </TableRow>
