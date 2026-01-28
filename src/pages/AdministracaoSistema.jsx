@@ -12,6 +12,7 @@ import AuditoriaLogsIndex from "@/components/administracao-sistema/auditoria-log
 import SegurancaGovernancaIndex from "@/components/administracao-sistema/seguranca-governanca/SegurancaGovernancaIndex";
 import IntegracoesIndex from "@/components/administracao-sistema/IntegracoesIndex";
 import IAOtimizacaoIndex from "@/components/administracao-sistema/IAOtimizacaoIndex";
+import ExternalAppsHub from "@/components/administracao-sistema/ExternalAppsHub";
 
 import ProtectedSection from "@/components/security/ProtectedSection";
 
