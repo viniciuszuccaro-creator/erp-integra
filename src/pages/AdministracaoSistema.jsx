@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Settings, Users, Shield, FileText, Sparkles } from "lucide-react";
+import { Settings, Users, Shield, FileText, Sparkles, Link2 } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 import ConfiguracoesGeraisIndex from "@/components/administracao-sistema/configuracoes-gerais/ConfiguracoesGeraisIndex";
 import GestaoAcessosIndex from "@/components/administracao-sistema/gestao-acessos/GestaoAcessosIndex";
