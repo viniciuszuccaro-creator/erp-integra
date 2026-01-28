@@ -27,6 +27,7 @@ import {
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { createPageUrl } from "@/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 /**
  * 🏆 CENTRAL DE PERFIS DE ACESSO V21.7 - 100% GRANULAR E COMPLETO
@@ -830,7 +831,8 @@ export default function CentralPerfisAcesso() {
         <TabsContent value="usuarios" className="space-y-4">
           <Card>
             <CardContent className="p-0">
-              <Table>
+              <div className="overflow-x-auto">
+              <Table className="min-w-[900px]">
                 <TableHeader>
                   <TableRow className="bg-slate-50">
                     <TableHead>Usuário</TableHead>
@@ -848,8 +850,26 @@ export default function CentralPerfisAcesso() {
 
                     return (
                       <TableRow key={usuario.id}>
-                        <TableCell className="font-medium">{usuario.full_name}</TableCell>
-                        <TableCell className="text-sm text-slate-600">{usuario.email}</TableCell>
+                        <TableCell className="font-medium max-w-[200px] truncate">
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span title={usuario.full_name} className="inline-block max-w-[200px] truncate">{usuario.full_name}</span>
+      </TooltipTrigger>
+      <TooltipContent>{usuario.full_name}</TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+</TableCell>
+                        <TableCell className="text-sm text-slate-600 max-w-[240px] truncate">
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span title={usuario.email} className="inline-block max-w-[240px] truncate">{usuario.email}</span>
+      </TooltipTrigger>
+      <TooltipContent>{usuario.email}</TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+</TableCell>
                         <TableCell>
                           <Select
                             value={usuario.perfil_acesso_id || "sem-perfil"}
@@ -912,6 +932,7 @@ export default function CentralPerfisAcesso() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

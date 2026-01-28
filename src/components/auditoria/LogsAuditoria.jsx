@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Shield, Search, Filter, Eye, Building2 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import PaginationControls from "@/components/ui/PaginationControls";
 
 /**
  * Logs de auditoria completos do sistema
@@ -19,6 +21,8 @@ export default function LogsAuditoria() {
   const [filtroUsuario, setFiltroUsuario] = useState("");
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['audit-logs'],
@@ -41,6 +45,7 @@ export default function LogsAuditoria() {
 
   const modulos = [...new Set(logs.map(l => l.modulo))].filter(Boolean);
   const acoes = [...new Set(logs.map(l => l.acao))].filter(Boolean);
+  const paginatedLogs = logsFiltrados.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const obterNomeEmpresa = (empresaId) => {
     const emp = empresas.find(e => e.id === empresaId);
@@ -186,7 +191,7 @@ export default function LogsAuditoria() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {logsFiltrados.map(log => (
+                {paginatedLogs.map(log => (
                   <TableRow key={log.id} className={!log.sucesso ? 'bg-red-50' : ''}>
                     <TableCell className="text-sm">
                       {new Date(log.data_hora || log.created_date).toLocaleString('pt-BR')}
@@ -212,7 +217,16 @@ export default function LogsAuditoria() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm">{log.entidade || '-'}</TableCell>
-                    <TableCell className="text-sm max-w-xs truncate">{log.descricao}</TableCell>
+                    <TableCell className="text-sm max-w-xs truncate">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span title={log.descricao} className="inline-block max-w-xs truncate">{log.descricao}</span>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-sm">{log.descricao}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableCell>
                     <TableCell>
                       {log.sucesso ? (
                         <Badge className="bg-green-100 text-green-700">✓</Badge>

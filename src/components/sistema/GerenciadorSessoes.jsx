@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
   Monitor, 
   Smartphone, 
@@ -237,7 +238,8 @@ export default function GerenciadorSessoes() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
+            <div className="overflow-x-auto">
+            <Table className="min-w-[900px]">
               <TableHeader>
                 <TableRow className="bg-slate-50">
                   <TableHead>Dispositivo</TableHead>
@@ -274,10 +276,10 @@ export default function GerenciadorSessoes() {
                         <div>
                           <p className="font-mono text-xs">{s.ip_address}</p>
                           {s.ip_localizacao && (
-                            <p className="text-xs text-slate-600 flex items-center gap-1">
+                            <TooltipProvider><Tooltip><TooltipTrigger asChild><p className="text-xs text-slate-600 flex items-center gap-1 max-w-[240px] truncate">
                               <MapPin className="w-3 h-3" />
-                              {s.ip_localizacao}
-                            </p>
+                              <span className="truncate">{s.ip_localizacao}</span>
+                            </p></TooltipTrigger><TooltipContent className="max-w-sm">{s.ip_localizacao}</TooltipContent></Tooltip></TooltipProvider>
                           )}
                         </div>
                       </TableCell>
@@ -329,6 +331,7 @@ export default function GerenciadorSessoes() {
                 })}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       )}
