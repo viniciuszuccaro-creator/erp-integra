@@ -5,6 +5,8 @@ import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { Users, Building2, Truck, User, Award, MessageCircle, TrendingUp, MapPin, Plus } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 import CadastroClienteCompleto from "@/components/cadastros/CadastroClienteCompleto";
 import CadastroFornecedorCompleto from "@/components/cadastros/CadastroFornecedorCompleto";
@@ -54,9 +56,16 @@ export default function Bloco1Pessoas() {
               <CardTitle className="text-base flex items-center gap-2">
                 <Icon className="w-5 h-5 text-slate-600" /> {t}
               </CardTitle>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('cadastros','ver')}>
-                Abrir
-              </Button>
+              <div className="flex items-center gap-2">
+                {k === 'Cliente' && (
+                  <Link to={createPageUrl('PortalCliente')} className="hidden md:block">
+                    <Button size="sm" variant="outline">Portal do Cliente</Button>
+                  </Link>
+                )}
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('cadastros','ver')}>
+                  Abrir
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-4 text-sm text-slate-600">
