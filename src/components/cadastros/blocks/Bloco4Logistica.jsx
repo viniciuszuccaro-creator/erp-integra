@@ -5,6 +5,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { Truck, MapPin, Package, FileText, User, Settings } from "lucide-react";
+import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
 
 import VeiculoForm from "@/components/cadastros/VeiculoForm";
 import MotoristaForm from "@/components/cadastros/MotoristaForm";
@@ -36,9 +37,16 @@ export default function Bloco4Logistica() {
               <CardTitle className="text-base flex items-center gap-2">
                 <Icon className="w-5 h-5 text-slate-600"/> {t}
               </CardTitle>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('expedicao','ver')}>
-                Abrir
-              </Button>
+              <div className="flex items-center gap-2">
+                {k === 'Motorista' && (
+                  <Button variant="outline" size="sm" onClick={() => openWindow(AppEntregasMotorista, {}, { title: 'App Motorista', width: 420, height: 800 })}>
+                    App Motorista
+                  </Button>
+                )}
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('expedicao','ver')}>
+                  Abrir
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-4 text-sm text-slate-600">Gerencie {t} em janelas redimensionáveis.</CardContent>

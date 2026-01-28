@@ -73,9 +73,16 @@ export default function Bloco6Tecnologia() {
                 <CardTitle className="text-base flex items-center gap-2">
                   <Icon className="w-5 h-5 text-slate-600"/> {t}
                 </CardTitle>
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('cadastros','ver')}>
-                  Abrir
-                </Button>
+                <div className="flex items-center gap-2">
+                  {k === 'ChatbotCanal' && (
+                    <Button variant="outline" size="sm" onClick={() => openWindow(ChatbotDashboard, {}, { title: 'Chatbot Dashboard', width: 1200, height: 720 })}>
+                      Ver Dashboard Chatbot
+                    </Button>
+                  )}
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('cadastros','ver')}>
+                    Abrir
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="p-4 text-sm text-slate-600">Gerencie {t} em janelas redimensionáveis.</CardContent>
