@@ -73,6 +73,14 @@ export default function AdministracaoSistema() {
             </ProtectedSection>
           </TabsContent>
 
+          <TabsContent value="apps" className="mt-4">
+            <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito aos Apps Externos.</div>}>
+              <div className="w-full h-full">
+                <ExternalAppsHub />
+              </div>
+            </ProtectedSection>
+          </TabsContent>
+
           <TabsContent value="acessos" className="mt-4">
             <ProtectedSection module="Sistema" section={["Controle de Acesso"]} action="visualizar" fallback={<div className="p-4 text-sm text-slate-500">Acesso restrito à Gestão de Acessos.</div>}>
               <div className="w-full h-full">
