@@ -176,7 +176,7 @@ export default function LogsAuditoria() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
-            <Table>
+            <Table className="min-w-[1100px]">
               <TableHeader className="sticky top-0 bg-slate-50">
                 <TableRow>
                   <TableHead>Data/Hora</TableHead>
