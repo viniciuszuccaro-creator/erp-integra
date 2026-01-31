@@ -9,27 +9,25 @@ import { base44 } from '@/api/base44Client';
  * Verifica configuração do WhatsApp
  */
 async function verificarConfiguracao(empresaId) {
-  const configs = await base44.entities.ConfiguracaoSistema.filter({
-    categoria: 'Integracoes',
-    chave: `whatsapp_${empresaId}`
-  });
+  const chave = `integracoes_${empresaId}`;
+  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes' }, undefined, 1);
   
-  if (!configs || configs.length === 0) {
+  if (!registros || registros.length === 0) {
     return { configurado: false, erro: 'Configuração WhatsApp não encontrada' };
   }
   
-  const config = configs[0];
-  const whatsapp = config.integracao_whatsapp || {};
+  const cfg = registros[0];
+  const whatsapp = cfg.integracao_whatsapp || {};
   
   if (!whatsapp.ativo) {
-    return { configurado: false, erro: 'WhatsApp não está ativo', config };
+    return { configurado: false, erro: 'WhatsApp não está ativo', config: cfg };
   }
   
-  if (!whatsapp.api_key || !whatsapp.instance_name) {
-    return { configurado: false, erro: 'API Key ou Instance não configurados', config };
+  if (!whatsapp.api_key || !whatsapp.instance_id) {
+    return { configurado: false, erro: 'API Key ou Instance não configurados', config: cfg };
   }
   
-  return { configurado: true, config, whatsapp };
+  return { configurado: true, config: cfg, whatsapp };
 }
 
 /**
