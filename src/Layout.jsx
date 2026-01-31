@@ -172,30 +172,32 @@ function LayoutContent({ children, currentPageName }) {
         const msg = e?.message || e?.error?.message || 'Erro de UI';
         const stack = e?.error?.stack || null;
         base44.entities?.AuditLog?.create?.({
-          usuario: user?.full_name || user?.email || 'Usuário',
-          usuario_id: user?.id,
-          acao: 'Visualização',
-          modulo: 'Sistema',
-          entidade: 'UI',
-          descricao: `Erro não tratado: ${msg}`,
-          dados_novos: { stack, source: e?.filename, lineno: e?.lineno, colno: e?.colno },
-          data_hora: new Date().toISOString(),
-        });
+                        usuario: user?.full_name || user?.email || 'Usuário',
+                        usuario_id: user?.id,
+                        acao: 'Visualização',
+                        modulo: 'Sistema',
+                        tipo_auditoria: 'ui',
+                        entidade: 'UI',
+                        descricao: `Erro não tratado: ${msg}`,
+                        dados_novos: { stack, source: e?.filename, lineno: e?.lineno, colno: e?.colno },
+                        data_hora: new Date().toISOString(),
+                      });
       } catch {}
     };
     const onUnhandled = (e) => {
       try {
         const msg = e?.reason?.message || String(e?.reason);
         base44.entities?.AuditLog?.create?.({
-          usuario: user?.full_name || user?.email || 'Usuário',
-          usuario_id: user?.id,
-          acao: 'Visualização',
-          modulo: 'Sistema',
-          entidade: 'UI',
-          descricao: `Promise rejeitada: ${msg}`,
-          dados_novos: { reason: e?.reason },
-          data_hora: new Date().toISOString(),
-        });
+                        usuario: user?.full_name || user?.email || 'Usuário',
+                        usuario_id: user?.id,
+                        acao: 'Visualização',
+                        modulo: 'Sistema',
+                        tipo_auditoria: 'ui',
+                        entidade: 'UI',
+                        descricao: `Promise rejeitada: ${msg}`,
+                        dados_novos: { reason: e?.reason },
+                        data_hora: new Date().toISOString(),
+                      });
       } catch {}
     };
     window.addEventListener('error', onError);
@@ -291,17 +293,18 @@ function LayoutContent({ children, currentPageName }) {
         try {
           // 1) Auditoria universal
           await base44.entities.AuditLog.create({
-            usuario: user?.full_name || user?.email || 'Usuário',
-            usuario_id: user?.id,
-            empresa_id: empresaAtual?.id || null,
-            empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
-            acao: evt.type === 'create' ? 'Criação' : evt.type === 'update' ? 'Edição' : 'Exclusão',
-            modulo: entityToModule[name],
-            entidade: name,
-            registro_id: evt.id,
-            descricao: `${name} ${evt.type}`,
-            dados_novos: evt?.data || null,
-          });
+                            usuario: user?.full_name || user?.email || 'Usuário',
+                            usuario_id: user?.id,
+                            empresa_id: empresaAtual?.id || null,
+                            empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+                            acao: evt.type === 'create' ? 'Criação' : evt.type === 'update' ? 'Edição' : 'Exclusão',
+                            modulo: entityToModule[name],
+                            tipo_auditoria: 'entidade',
+                            entidade: name,
+                            registro_id: evt.id,
+                            descricao: `${name} ${evt.type}`,
+                            dados_novos: evt?.data || null,
+                          });
 
           // 2) Carimbo de responsável + multiempresa no momento da criação, quando fizer sentido
           if (evt.type === 'create') {
@@ -373,15 +376,16 @@ function LayoutContent({ children, currentPageName }) {
       if (!allowed && !sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, '1');
         base44.entities.AuditLog.create({
-          usuario: user?.full_name || user?.email || 'Usuário',
-          usuario_id: user?.id,
-          empresa_id: empresaAtual?.id || null,
-          empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
-          acao: 'Bloqueio',
-          modulo: currentModule,
-          entidade: 'Página',
-          descricao: `Acesso negado ao módulo ${currentModule} (${currentPageName})`,
-        });
+                        usuario: user?.full_name || user?.email || 'Usuário',
+                        usuario_id: user?.id,
+                        empresa_id: empresaAtual?.id || null,
+                        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+                        acao: 'Bloqueio',
+                        modulo: currentModule,
+                        tipo_auditoria: 'seguranca',
+                        entidade: 'Página',
+                        descricao: `Acesso negado ao módulo ${currentModule} (${currentPageName})`,
+                      });
       }
     } catch {}
   }, [currentModule, currentPageName, user?.id, empresaAtual?.id]);
