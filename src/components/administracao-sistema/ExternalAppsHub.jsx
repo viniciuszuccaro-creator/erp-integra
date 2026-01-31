@@ -20,13 +20,8 @@ export default function ExternalAppsHub() {
     { title: "Portal do Cliente", icon: Users, color: "text-sky-600", bg: "from-sky-50 to-sky-100", action: launch(DashboardCliente, {}, { title: "Portal do Cliente" }) },
     { title: "Chatbot Dashboard", icon: MessageCircle, color: "text-purple-600", bg: "from-purple-50 to-purple-100", action: launch(ChatbotDashboard, {}, { title: "Chatbot Dashboard" }) },
     { title: "App Motorista", icon: Truck, color: "text-amber-600", bg: "from-amber-50 to-amber-100", action: launch(AppEntregasMotorista, {}, { title: "Apontamento de Entregas" }) },
-    { title: "Status Integrações", icon: Sparkles, color: "text-emerald-600", bg: "from-emerald-50 to-emerald-100", action: launch(StatusIntegracoes, {}, { title: "Status de Integrações" }) },
-    { title: "Teste NF-e", icon: FileText, color: "text-indigo-600", bg: "from-indigo-50 to-indigo-100", action: launch(TesteNFe, {}, { title: "Teste NF-e" }) },
-    { title: "Teste Boletos/PIX", icon: ShoppingCart, color: "text-green-600", bg: "from-green-50 to-green-100", action: launch(TesteBoletos, {}, { title: "Teste Boletos & PIX" }) },
-    { title: "Config WhatsApp Business", icon: MessageCircle, color: "text-teal-600", bg: "from-teal-50 to-teal-100", action: launch(ConfigWhatsAppBusiness, {}, { title: "Configurar WhatsApp Business" }) },
-    { title: "Teste Transportadoras", icon: Truck, color: "text-orange-600", bg: "from-orange-50 to-orange-100", action: launch(TesteTransportadoras, {}, { title: "Teste de Transportadoras" }) },
-    { title: "Teste Google Maps", icon: MapPinned, color: "text-rose-600", bg: "from-rose-50 to-rose-100", action: launch(TesteGoogleMaps, {}, { title: "Teste Google Maps" }) },
-    { title: "Sincronização Marketplaces", icon: ShoppingCart, color: "text-fuchsia-600", bg: "from-fuchsia-50 to-fuchsia-100", action: launch(SincronizacaoMarketplacesAtiva, {}, { title: "Sincronização de Marketplaces" }) },
+    // Itens de integração foram centralizados em Administração > Integrações
+
   ];
 
   return (
