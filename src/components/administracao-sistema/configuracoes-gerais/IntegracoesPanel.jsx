@@ -6,7 +6,7 @@ import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function IntegracoesPanel() {
   return (
-    <div className="w-full h-full grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="w-full h-full grid grid-cols-1 2xl:grid-cols-2 gap-6 items-start">
       <div className="w-full min-h-[300px]">
         <ProtectedSection module="Sistema" section={["Configurações","Integrações"]} action="visualizar" fallback={<div className="p-3 text-sm text-slate-500">Sem permissão para ver Integrações.</div>}>
           <CentralIntegracoes />

@@ -97,7 +97,7 @@ export default function AdministracaoSistema() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="col-span-1 xl:col-span-2">
                     <CardContent className="p-4">
                       <h2 className="font-semibold mb-3">Perfis de Acesso</h2>
                       <CentralPerfisAcesso />

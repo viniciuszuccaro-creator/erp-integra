@@ -6,6 +6,8 @@ import IAPanel from "@/components/administracao-sistema/configuracoes-gerais/IAP
 import ContextoConfigBanner from "@/components/administracao-sistema/common/ContextoConfigBanner";
 import HerancaConfigNotice from "@/components/administracao-sistema/common/HerancaConfigNotice";
 import { Brain, Zap, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 import IAGovernancaComplianceSection from "@/components/administracao-sistema/seguranca-governanca/IAGovernancaComplianceSection";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
@@ -51,16 +53,16 @@ export default function IAOtimizacaoIndex({ initialTab }) {
 
         <TabsContent value="ia" className="mt-4">
           <Card className="w-full">
-            <CardContent className="p-4 grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
+            <CardContent className="p-4 grid grid-cols-1 2xl:grid-cols-2 gap-6 items-start">
               <div className="col-span-full space-y-2">
                 <ContextoConfigBanner />
                 <HerancaConfigNotice />
               </div>
-              <div className="col-span-full xl:col-span-1">
+              <div className="col-span-full 2xl:col-span-1">
                 <IAPanel />
               </div>
 
-              <Card className="col-span-full xl:col-span-1">
+              <Card className="col-span-full 2xl:col-span-1">
                 <CardHeader className="bg-purple-50 border-b">
                   <CardTitle className="text-base flex items-center gap-2"><Brain className="w-5 h-5 text-purple-600" /> Configurações por Módulo</CardTitle>
                 </CardHeader>
@@ -115,8 +117,13 @@ export default function IAOtimizacaoIndex({ initialTab }) {
 
         <TabsContent value="governanca" className="mt-4">
           <Card className="w-full">
-            <CardContent className="p-4">
-              <IAGovernancaComplianceSection />
+            <CardContent className="p-6">
+              <div className="space-y-2">
+                <p className="text-sm text-slate-700">A Governança de IA foi centralizada em Segurança & Governança.</p>
+                <Link to={createPageUrl('AdministracaoSistema?tab=seguranca')} className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                  Ir para Segurança & Governança
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
