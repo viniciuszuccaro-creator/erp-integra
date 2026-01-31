@@ -30,7 +30,7 @@ import { useToast } from '@/components/ui/use-toast';
  * Mostra status de NF-e, Boletos/PIX e WhatsApp
  */
 // Component helper para botões de configuração
-function IntegrationConfigButtons({ integracao }) {
+function IntegrationConfigButtons({ integracao, empresaId }) {
   const { openWindow } = useWindow();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -38,21 +38,21 @@ function IntegrationConfigButtons({ integracao }) {
   const handleConfigurar = () => {
     const entityMap = {
       'nfe': { 
-        form: ConfiguracaoNFeForm, 
-        entity: 'ConfiguracaoNFe',
-        queryKey: 'configs-nfe',
+        form: ConfiguracaoNFeForm,
+        key: 'integracao_nfe',
+        queryKey: 'configs-integracoes',
         title: '⚙️ Configurar NF-e'
       },
       'boleto': { 
-        form: ConfiguracaoBoletosForm, 
-        entity: 'ConfiguracaoBoletos',
-        queryKey: 'configs-boletos',
+        form: ConfiguracaoBoletosForm,
+        key: 'integracao_boletos',
+        queryKey: 'configs-integracoes',
         title: '⚙️ Configurar Boletos & PIX'
       },
       'whatsapp': { 
-        form: ConfiguracaoWhatsAppForm, 
-        entity: 'ConfiguracaoWhatsApp',
-        queryKey: 'configs-whatsapp',
+        form: ConfiguracaoWhatsAppForm,
+        key: 'integracao_whatsapp',
+        queryKey: 'configs-integracoes',
         title: '⚙️ Configurar WhatsApp Business'
       }
     };
