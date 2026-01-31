@@ -120,7 +120,7 @@ export default function IAOtimizacaoIndex({ initialTab }) {
             <CardContent className="p-6">
               <div className="space-y-2">
                 <p className="text-sm text-slate-700">A Governança de IA foi centralizada em Segurança & Governança.</p>
-                <Link to={createPageUrl('AdministracaoSistema?tab=seguranca')} className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                <Link to={createPageUrl('AdministracaoSistema?tab=seguranca&segTab=compliance')} className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                   Ir para Segurança & Governança
                 </Link>
               </div>

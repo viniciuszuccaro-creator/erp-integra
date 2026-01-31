@@ -16,11 +16,13 @@ import HerancaConfigNotice from "@/components/administracao-sistema/common/Heran
 export default function SegurancaGovernancaIndex() {
   const { isAdmin } = usePermissions();
   const { empresaAtual, grupoAtual } = useContextoVisual();
+  const params = new URLSearchParams(window.location.search);
+  const segTab = params.get('segTab') || 'politicas';
   if (!isAdmin()) return <div className="p-4 text-sm text-slate-500">Acesso restrito.</div>;
 
   return (
     <div className="w-full h-full flex flex-col">
-      <Tabs defaultValue="politicas" className="w-full h-full">
+      <Tabs defaultValue={segTab} className="w-full h-full">
         <TabsList className="flex flex-wrap gap-2">
           <TabsTrigger value="politicas">Políticas</TabsTrigger>
           <TabsTrigger value="manutencao">Monitoramento & Manutenção</TabsTrigger>
