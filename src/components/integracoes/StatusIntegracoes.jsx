@@ -202,7 +202,7 @@ export default function StatusIntegracoes({ empresaId }) {
       verificando: verificandoWhatsApp,
       onVerificar: handleVerificarWhatsApp,
       provedores: ['Evolution API', 'Baileys', 'WPPCONNECT'],
-      provedor_atual: statusWhatsApp?.config?.integracao_whatsapp?.provedor || 'Evolution API'
+      provedor_atual: statusWhatsApp?.whatsapp?.provedor || 'Evolution API'
     }
   ];
 

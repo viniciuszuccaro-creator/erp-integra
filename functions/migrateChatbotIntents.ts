@@ -53,6 +53,9 @@ Deno.serve(async (req) => {
         resposta_template: resposta,
         prioridade,
         ativo,
+        // multiempresa (se existir nos dados antigos)
+        group_id: d.group_id || d.data?.group_id || undefined,
+        empresa_id: d.empresa_id || d.data?.empresa_id || undefined,
       };
 
       if (existentes && existentes.length > 0) {
