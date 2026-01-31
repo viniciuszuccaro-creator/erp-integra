@@ -62,12 +62,15 @@ function IntegrationConfigButtons({ integracao, empresaId }) {
 
     const handleSubmit = async (data) => {
       try {
-        if (data.id) {
-          await base44.entities[cfg.entity].update(data.id, data);
-          toast({ title: `✅ ${cfg.entity} atualizado!` });
+        const chave = `integracoes_${empresaId}`;
+        const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave }, undefined, 1);
+        const payload = { chave, categoria: 'Integracoes', [cfg.key]: data };
+        if (existentes && existentes.length > 0) {
+          await base44.entities.ConfiguracaoSistema.update(existentes[0].id, payload);
+          toast({ title: `✅ Integração atualizada!` });
         } else {
-          await base44.entities[cfg.entity].create(data);
-          toast({ title: `✅ ${cfg.entity} criado!` });
+          await base44.entities.ConfiguracaoSistema.create(payload);
+          toast({ title: `✅ Integração criada!` });
         }
         queryClient.invalidateQueries({ queryKey: [cfg.queryKey] });
       } catch (error) {
