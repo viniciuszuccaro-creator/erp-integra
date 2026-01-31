@@ -36,6 +36,9 @@ async function verificarConfiguracao(empresaId) {
 async function gerarBoletoAsaas(conta, config) {
   const apiKey = config.api_key;
   const urlBase = config.api_url || 'https://www.asaas.com/api/v3';
+  const multaPercent = (config.multa_percentual ?? config.multa_pos_vencimento_percent ?? 0);
+  const jurosPercent = (config.juros_diario_percentual ?? config.juros_ao_dia_percent ?? 0);
+  const descontoPercent = (config.desconto_antecipacao_percentual ?? config.desconto_antecipacao_percent ?? 0);
 
   const payload = {
     customer: conta.cliente_asaas_id || await criarClienteAsaas(conta, config),
