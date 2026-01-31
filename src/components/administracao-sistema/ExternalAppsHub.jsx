@@ -10,13 +10,6 @@ import { MessageCircle, Truck, Users, Sparkles, FileText, ShoppingCart, Globe, C
 import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
 import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
 import DashboardCliente from "@/components/portal/DashboardCliente";
-import StatusIntegracoes from "@/components/integracoes/StatusIntegracoes";
-import TesteNFe from "@/components/integracoes/TesteNFe";
-import TesteBoletos from "@/components/integracoes/TesteBoletos";
-import ConfigWhatsAppBusiness from "@/components/integracoes/ConfigWhatsAppBusiness";
-import TesteTransportadoras from "@/components/integracoes/TesteTransportadoras";
-import TesteGoogleMaps from "@/components/integracoes/TesteGoogleMaps";
-import SincronizacaoMarketplacesAtiva from "@/components/integracoes/SincronizacaoMarketplacesAtiva";
 
 export default function ExternalAppsHub() {
   const { openWindow } = useWindow();
