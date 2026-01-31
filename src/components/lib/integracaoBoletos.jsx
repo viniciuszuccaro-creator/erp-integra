@@ -274,7 +274,7 @@ export async function gerarCobranca(contaReceber, tipo = 'BOLETO') {
         resultado = await gerarPixAsaas(contaReceber, verificacao.integracao);
       }
     } else {
-      throw new Error('Provedor não implementado: ' + verificacao.config.provedor_cobranca);
+      throw new Error('Provedor não implementado: ' + verificacao.integracao.provedor);
     }
 
     // 5. Atualizar log de sucesso
