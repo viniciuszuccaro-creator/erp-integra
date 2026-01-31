@@ -46,12 +46,12 @@ async function gerarBoletoAsaas(conta, config) {
     externalReference: conta.id,
     postalService: false,
     fine: {
-      value: conta.valor * (config.multa_pos_vencimento_percent / 100)
+      value: conta.valor * (multaPercent / 100)
     },
     interest: {
-      value: conta.valor * (config.juros_ao_dia_percent / 100)
+      value: conta.valor * (jurosPercent / 100)
     },
-    discount: conta.valor * (config.desconto_antecipacao_percent / 100)
+    discount: conta.valor * (descontoPercent / 100)
   };
 
   const response = await fetch(`${urlBase}/payments`, {
