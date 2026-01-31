@@ -189,7 +189,7 @@ async function criarClienteAsaas(conta, config) {
  */
 async function consultarStatusPagamento(cobrancaId, empresaId) {
   const verificacao = await verificarConfiguracao(empresaId);
-  
+
   if (!verificacao.configurado) {
     return {
       sucesso: false,
@@ -198,9 +198,9 @@ async function consultarStatusPagamento(cobrancaId, empresaId) {
     };
   }
 
-  const { config } = verificacao;
-  const apiKey = config.api_key;
-  const urlBase = config.api_url || 'https://www.asaas.com/api/v3';
+  const { integracao } = verificacao;
+  const apiKey = integracao.api_key;
+  const urlBase = integracao.api_url || 'https://www.asaas.com/api/v3';
 
   const response = await fetch(`${urlBase}/payments/${cobrancaId}`, {
     headers: { 'access_token': apiKey }
@@ -308,14 +308,14 @@ export async function gerarCobranca(contaReceber, tipo = 'BOLETO') {
  */
 export async function cancelarCobranca(cobrancaId, empresaId) {
   const verificacao = await verificarConfiguracao(empresaId);
-  
+
   if (!verificacao.configurado) {
     return { sucesso: true, modo: 'simulado', mensagem: 'Cancelado localmente' };
   }
 
-  const { config } = verificacao;
-  const apiKey = config.api_key;
-  const urlBase = config.api_url || 'https://www.asaas.com/api/v3';
+  const { integracao } = verificacao;
+  const apiKey = integracao.api_key;
+  const urlBase = integracao.api_url || 'https://www.asaas.com/api/v3';
 
   const response = await fetch(`${urlBase}/payments/${cobrancaId}`, {
     method: 'DELETE',
