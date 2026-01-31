@@ -9,24 +9,25 @@ import { base44 } from '@/api/base44Client';
  * Verifica se a integração está configurada
  */
 async function verificarConfiguracao(empresaId) {
-  const configs = await base44.entities.ConfigFiscalEmpresa.filter({ empresa_id: empresaId });
-  
-  if (!configs || configs.length === 0) {
-    return { configurado: false, erro: 'Configuração fiscal não encontrada' };
+  const chave = `integracoes_${empresaId}`;
+  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes' }, undefined, 1);
+
+  if (!registros || registros.length === 0) {
+    return { configurado: false, erro: 'Configuração de integrações não encontrada' };
   }
-  
-  const config = configs[0];
-  const integracao = config.integracao_nfe || {};
-  
-  if (!integracao.ativa) {
-    return { configurado: false, erro: 'Integração NF-e não está ativa', config };
+
+  const cfg = registros[0];
+  const integracao = cfg.integracao_nfe || {};
+
+  if (!integracao.ativo) {
+    return { configurado: false, erro: 'Integração NF-e não está ativa', config: cfg };
   }
-  
+
   if (!integracao.api_key) {
-    return { configurado: false, erro: 'API Key não configurada', config };
+    return { configurado: false, erro: 'API Key não configurada', config: cfg };
   }
-  
-  return { configurado: true, config, integracao };
+
+  return { configurado: true, config: cfg, integracao };
 }
 
 /**

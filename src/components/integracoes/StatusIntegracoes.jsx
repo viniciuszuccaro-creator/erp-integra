@@ -178,7 +178,7 @@ export default function StatusIntegracoes({ empresaId }) {
       verificando: verificandoNFe,
       onVerificar: handleVerificarNFe,
       provedores: ['eNotas', 'NFe.io', 'Focus NFe'],
-      provedor_atual: statusNFe?.config?.integracao_nfe?.provedor
+      provedor_atual: statusNFe?.integracao?.provedor
     },
     {
       id: 'boleto',
@@ -190,7 +190,7 @@ export default function StatusIntegracoes({ empresaId }) {
       verificando: verificandoBoleto,
       onVerificar: handleVerificarBoleto,
       provedores: ['Asaas', 'Juno', 'Mercado Pago'],
-      provedor_atual: statusBoleto?.config?.provedor_cobranca
+      provedor_atual: statusBoleto?.integracao?.provedor
     },
     {
       id: 'whatsapp',

@@ -9,23 +9,25 @@ import { base44 } from '@/api/base44Client';
  * Verifica configuração do gateway
  */
 async function verificarConfiguracao(empresaId) {
-  const configs = await base44.entities.ConfiguracaoCobrancaEmpresa.filter({ empresa_id: empresaId });
-  
-  if (!configs || configs.length === 0) {
-    return { configurado: false, erro: 'Configuração de cobrança não encontrada' };
+  const chave = `integracoes_${empresaId}`;
+  const registros = await base44.entities.ConfiguracaoSistema.filter({ chave, categoria: 'Integracoes' }, undefined, 1);
+
+  if (!registros || registros.length === 0) {
+    return { configurado: false, erro: 'Configuração de integrações não encontrada' };
   }
-  
-  const config = configs[0];
-  
-  if (!config.ativo) {
-    return { configurado: false, erro: 'Integração não está ativa', config };
+
+  const cfg = registros[0];
+  const integracao = cfg.integracao_boletos || {};
+
+  if (!integracao.ativo) {
+    return { configurado: false, erro: 'Integração não está ativa', config: cfg };
   }
-  
-  if (!config.api_key && !config.api_token) {
-    return { configurado: false, erro: 'API Key não configurada', config };
+
+  if (!integracao.api_key) {
+    return { configurado: false, erro: 'API Key não configurada', config: cfg };
   }
-  
-  return { configurado: true, config };
+
+  return { configurado: true, config: cfg, integracao };
 }
 
 /**
