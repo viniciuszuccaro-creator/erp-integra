@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
-import { MessageCircle, Truck, Users, Sparkles, FileText, ShoppingCart, Globe, Cog, MapPinned, Link2, Zap } from "lucide-react";
+import { MessageCircle, Truck, Users, Zap } from "lucide-react";
 
 // Apps e ferramentas já existentes no projeto
 import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
