@@ -81,6 +81,7 @@ export default function IntegracoesIndex({ initialTab }) {
               <div className="w-full mb-4">
                 <IntegracoesPanel />
               </div>
+              {/* Central de atalhos para configurações de integrações */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
               <ProtectedSection module="Sistema" section={["Configurações","Integrações","NFe"]} action="visualizar">
