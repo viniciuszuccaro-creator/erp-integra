@@ -257,7 +257,7 @@ export async function gerarCobranca(contaReceber, tipo = 'BOLETO') {
     empresa_id: contaReceber.empresa_id,
     conta_receber_id: contaReceber.id,
     tipo_operacao: tipo === 'BOLETO' ? 'gerar_boleto' : 'gerar_pix',
-    provedor: verificacao.config.provedor_cobranca,
+    provedor: verificacao.integracao.provedor,
     data_hora: new Date().toISOString(),
     payload_enviado: { conta: contaReceber, tipo },
     status_operacao: 'pendente'
@@ -267,11 +267,11 @@ export async function gerarCobranca(contaReceber, tipo = 'BOLETO') {
   try {
     let resultado;
     
-    if (verificacao.config.provedor_cobranca === 'Asaas') {
+    if (verificacao.integracao.provedor === 'Asaas') {
       if (tipo === 'BOLETO') {
-        resultado = await gerarBoletoAsaas(contaReceber, verificacao.config);
+        resultado = await gerarBoletoAsaas(contaReceber, verificacao.integracao);
       } else if (tipo === 'PIX') {
-        resultado = await gerarPixAsaas(contaReceber, verificacao.config);
+        resultado = await gerarPixAsaas(contaReceber, verificacao.integracao);
       }
     } else {
       throw new Error('Provedor não implementado: ' + verificacao.config.provedor_cobranca);
