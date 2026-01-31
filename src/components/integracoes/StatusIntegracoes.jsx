@@ -292,7 +292,7 @@ export default function StatusIntegracoes({ empresaId }) {
                 </div>
 
                 {/* Botões */}
-                <IntegrationConfigButtons integracao={integracao} />
+                <IntegrationConfigButtons integracao={integracao} empresaId={empresaId} />
               </CardContent>
             </Card>
           );
