@@ -1,7 +1,5 @@
 import React from "react";
 import ConfigCenter from "@/components/sistema/ConfigCenter";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
 
 import ProtectedSection from "@/components/security/ProtectedSection";
 
