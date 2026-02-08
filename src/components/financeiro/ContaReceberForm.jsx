@@ -83,27 +83,20 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!formData.descricao || !formData.cliente || !formData.valor) {
-      toast.error('Preencha os campos obrigatórios');
-      return;
-    }
 
-    if (!formData.empresa_id) {
-      toast.error('Selecione a empresa');
-      return;
-    }
-    if (!formData.centro_custo_id) {
-      toast.error('Centro de custo é obrigatório');
-      return;
-    }
-    if (!formData.plano_contas_id) {
-      toast.error('Plano de contas é obrigatório');
+    const parsed = schema.safeParse({
+      ...formData,
+      valor: Number(formData.valor) || 0,
+    });
+    if (!parsed.success) {
+      const msg = parsed.error.issues?.[0]?.message || 'Dados inválidos';
+      toast.error(msg);
       return;
     }
 
     onSubmit({
       ...formData,
+      valor: Number(formData.valor) || 0,
       criado_por: authUser?.full_name || authUser?.email,
       criado_por_id: authUser?.id
     });

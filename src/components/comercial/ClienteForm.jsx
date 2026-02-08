@@ -71,14 +71,25 @@ export default function ClienteForm({ cliente, onSubmit, isSubmitting }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
+    const result = clienteSchema.safeParse({
+      nome: (formData.nome || '').trim(),
+      tipo: formData.tipo,
+      cpf_cnpj: formData.cpf_cnpj,
+    });
+    if (!result.success) {
+      alert(result.error.issues?.[0]?.message || 'Dados inválidos');
+      return;
+    }
+
     if (!cpfCnpjValido && formData.cpf_cnpj) {
       alert('CPF/CNPJ inválido. Verifique os dígitos.');
       return;
     }
-    
+
     const dataToSubmit = {
       ...formData,
+      nome: (formData.nome || '').trim(),
       limite_credito: formData.limite_credito ? parseFloat(formData.limite_credito) : 0
     };
     onSubmit(dataToSubmit);
