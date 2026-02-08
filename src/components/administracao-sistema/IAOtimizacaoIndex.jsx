@@ -45,7 +45,6 @@ export default function IAOtimizacaoIndex({ initialTab }) {
         <TabsList className="flex flex-wrap gap-2 h-auto">
           <TabsTrigger value="ia"><Brain className="w-4 h-4 mr-2" /> IA e Modelos</TabsTrigger>
           <TabsTrigger value="otimizacao"><Zap className="w-4 h-4 mr-2" /> Otimização</TabsTrigger>
-          <TabsTrigger value="governanca"><Settings className="w-4 h-4 mr-2" /> Governança IA</TabsTrigger>
         </TabsList>
 
         <TabsContent value="ia" className="mt-4">
@@ -112,18 +111,6 @@ export default function IAOtimizacaoIndex({ initialTab }) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="governanca" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-6">
-              <div className="space-y-2">
-                <p className="text-sm text-slate-700">A Governança de IA foi centralizada em Segurança & Governança.</p>
-                <Link to={createPageUrl('AdministracaoSistema?tab=seguranca&segTab=compliance')} className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                  Ir para Segurança & Governança
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
       </Tabs>
     </div>
   );
