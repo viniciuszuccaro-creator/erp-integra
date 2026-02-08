@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +6,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import ValidadorCPFCNPJ from '../fiscal/ValidadorCPFCNPJ';
 import { formatarTelefone, formatarCEP } from '../lib/validacoes';
+import { z } from "zod";
+
+const clienteSchema = z.object({
+  nome: z.string().min(1, 'Nome é obrigatório'),
+  tipo: z.enum(['Pessoa Física','Pessoa Jurídica']),
+  cpf_cnpj: z.string().optional(),
+});
 
 export default function ClienteForm({ cliente, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState(cliente || {

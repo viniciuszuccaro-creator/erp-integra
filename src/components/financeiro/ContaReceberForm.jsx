@@ -14,10 +14,23 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { z } from "zod";
 
 export default function ContaReceberForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
+  const schema = z.object({
+    descricao: z.string().min(1, 'Descrição é obrigatória'),
+    cliente_id: z.string().min(1, 'Cliente é obrigatório'),
+    valor: z.number().positive('Valor deve ser maior que zero'),
+    empresa_id: z.string().min(1, 'Empresa é obrigatória'),
+    centro_custo_id: z.string().min(1, 'Centro de custo é obrigatório'),
+    plano_contas_id: z.string().min(1, 'Plano de contas é obrigatório'),
+    data_emissao: z.string().min(1, 'Data de emissão é obrigatória'),
+    data_vencimento: z.string().min(1, 'Data de vencimento é obrigatória'),
+  });
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const { user: authUser } = useUser();
+  const { filterInContext } = useContextoVisual();
   const [formData, setFormData] = useState(() => conta || {
     descricao: '',
     cliente: '',
@@ -46,26 +59,26 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryFn: () => filterInContext('Cliente', {}, '-updated_date', 9999),
   });
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryFn: () => filterInContext('Pedido', {}, '-updated_date', 9999),
   });
 
   const { data: empresas = [] } = useQuery({
     queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryFn: () => filterInContext('Empresa', {}, '-updated_date', 9999),
   });
 
   const { data: centrosCusto = [] } = useQuery({
     queryKey: ['centrosCusto'],
-    queryFn: () => base44.entities.CentroCusto.list(),
+    queryFn: () => filterInContext('CentroCusto', {}, '-updated_date', 9999),
   });
   const { data: planosContas = [] } = useQuery({
     queryKey: ['planosContas'],
-    queryFn: () => base44.entities.PlanoDeContas.list(),
+    queryFn: () => filterInContext('PlanoDeContas', {}, '-updated_date', 9999),
   });
 
   const handleSubmit = (e) => {

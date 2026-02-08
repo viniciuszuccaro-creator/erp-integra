@@ -1,5 +1,6 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
+import { base44 } from "@/api/base44Client";
 
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -12,8 +13,19 @@ export default class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    // opcional: enviar para um serviço de logs futuramente
     console.error("ErrorBoundary caught:", error, info);
+    try {
+      base44.entities?.AuditLog?.create?.({
+        usuario: 'UI',
+        acao: 'Visualização',
+        modulo: 'Sistema',
+        tipo_auditoria: 'ui',
+        entidade: 'ErrorBoundary',
+        descricao: String(error?.message || error),
+        dados_novos: { info },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
   }
 
   handleRetry = () => {
