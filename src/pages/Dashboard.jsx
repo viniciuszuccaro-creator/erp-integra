@@ -192,15 +192,7 @@ export default function Dashboard() {
 
   const { data: ordensProducao = [] } = useQuery({
     queryKey: ['ordensProducao', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.OrdemProducao.filter(filtro, '-data_emissao', 9999);
-      } catch (err) {
-        console.error('Erro ao buscar ordens de produção:', err);
-        return [];
-      }
-    },
+    queryFn: () => filterInContext('OrdemProducao', {}, '-data_emissao', 9999),
     refetchInterval,
     staleTime: 30000,
     retry: 1
