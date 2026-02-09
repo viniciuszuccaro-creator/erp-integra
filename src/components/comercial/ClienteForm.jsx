@@ -253,11 +253,12 @@ const setFormData = (updater) => {
 
         <div>
           <Label htmlFor="whatsapp">WhatsApp</Label>
-          <Input
-            id="whatsapp"
-            value={formData.whatsapp}
-            onChange={(e) => setFormData({ ...formData, whatsapp: formatarTelefone(e.target.value) })}
-            placeholder="(00) 00000-0000"
+          <Controller
+            control={control}
+            name="whatsapp"
+            render={({ field }) => (
+              <Input id="whatsapp" {...field} onChange={(e) => field.onChange(formatarTelefone(e.target.value))} placeholder="(00) 00000-0000" />
+            )}
           />
         </div>
 
