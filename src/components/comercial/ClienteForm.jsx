@@ -197,11 +197,15 @@ const setFormData = (updater) => {
 
         <div className="col-span-2">
           <Label htmlFor="nome">Nome / Razão Social *</Label>
-          <Input
-            id="nome"
-            value={formData.nome}
-            onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-            required
+          <Controller
+            control={control}
+            name="nome"
+            render={({ field }) => (
+              <>
+                <Input id="nome" {...field} required />
+                {errors.nome && <p className="text-xs text-red-600 mt-1">{errors.nome.message}</p>}
+              </>
+            )}
           />
         </div>
 
