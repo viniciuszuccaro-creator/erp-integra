@@ -16,10 +16,11 @@ export default function ProtectedSection({
   const { empresaAtual } = useContextoVisual();
   const loggedRef = useRef(false);
 
-  if (isLoading) return null;
-  const allowed = hasPermission(modulo, section, action);
+  // Sempre manter a mesma ordem de hooks entre renders
+  const allowed = !isLoading && hasPermission(modulo, section, action);
 
   useEffect(() => {
+    if (isLoading) return; // não audita durante carregamento
     if (!allowed && !loggedRef.current) {
       loggedRef.current = true;
       try {
@@ -35,8 +36,9 @@ export default function ProtectedSection({
         });
       } catch {}
     }
-  }, [allowed, action, modulo, section, user?.id, empresaAtual?.id]);
+  }, [isLoading, allowed, action, modulo, section, user?.id, empresaAtual?.id]);
 
+  if (isLoading) return null;
   if (!allowed) return fallback;
   return <>{children}</>;
 }
