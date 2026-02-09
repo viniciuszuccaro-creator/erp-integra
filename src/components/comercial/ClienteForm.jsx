@@ -242,11 +242,12 @@ const setFormData = (updater) => {
 
         <div>
           <Label htmlFor="telefone">Telefone</Label>
-          <Input
-            id="telefone"
-            value={formData.telefone}
-            onChange={(e) => setFormData({ ...formData, telefone: formatarTelefone(e.target.value) })}
-            placeholder="(00) 0000-0000"
+          <Controller
+            control={control}
+            name="telefone"
+            render={({ field }) => (
+              <Input id="telefone" {...field} onChange={(e) => field.onChange(formatarTelefone(e.target.value))} placeholder="(00) 0000-0000" />
+            )}
           />
         </div>
 
