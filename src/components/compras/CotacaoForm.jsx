@@ -131,19 +131,20 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                     control={control}
                     name={`itens.${idx}.produto_descricao`}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}<SelectTrigger>
-                      <SelectValue placeholder="Produto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {produtos.map(p => (
-                        <SelectItem key={p.id} value={p.descricao}>
-                          {p.codigo} - {p.descricao}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Produto" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {produtos.map(p => (
+                            <SelectItem key={p.id} value={p.descricao}>
+                              {p.codigo} - {p.descricao}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
                 <div className="col-span-2">
                   <Input
@@ -158,16 +159,19 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                     control={control}
                     name={`itens.${idx}.unidade`}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}<SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="UN">UN</SelectItem>
-                      <SelectItem value="KG">KG</SelectItem>
-                      <SelectItem value="MT">MT</SelectItem>
-                      <SelectItem value="LT">LT</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="UN">UN</SelectItem>
+                          <SelectItem value="KG">KG</SelectItem>
+                          <SelectItem value="MT">MT</SelectItem>
+                          <SelectItem value="LT">LT</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
                 <div className="col-span-2">
                   <Input
