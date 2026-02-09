@@ -561,7 +561,7 @@ function LayoutContent({ children, currentPageName }) {
             <ErrorBoundary>
               <Suspense fallback={<div className="p-6 text-slate-500">Carregando…</div>}>
                 <BootstrapGuard>
-                  <ProtectedSection module={currentModule || 'Sistema'} fallback={<div className="p-10 text-center text-slate-600">Acesso negado a este módulo.</div>}>
+                  <ProtectedSection module={currentModule || 'Sistema'} action="ver" fallback={<div className="p-10 text-center text-slate-600">Acesso negado a este módulo.</div>}>
                     <GuardRails currentPageName={currentPageName}>
                       {children}
                     </GuardRails>
