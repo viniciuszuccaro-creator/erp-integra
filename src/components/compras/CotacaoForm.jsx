@@ -14,6 +14,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import FormErrorSummary from "@/components/common/FormErrorSummary";
 
 /**
  * V21.1.2: Cotação Form - Adaptado para Window Mode
@@ -76,7 +77,8 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
   };
 
   const content = (
-    <form onSubmit={handleSubmit(onValid)} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <form onSubmit={handleSubmit(onValid)} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}>
+      <FormErrorSummary messages={Object.values(errors || {}).map(e => e?.message).filter(Boolean)} />
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">

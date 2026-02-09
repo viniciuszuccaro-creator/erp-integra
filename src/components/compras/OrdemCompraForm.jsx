@@ -13,6 +13,7 @@ import { Save, ShoppingCart, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import FormErrorSummary from "@/components/common/FormErrorSummary";
 
 /**
  * V21.1.2: Ordem Compra Form - Adaptado para Window Mode
@@ -134,7 +135,8 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
   };
 
   const content = (
-    <form onSubmit={rhfHandleSubmit(onValid)} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <form onSubmit={rhfHandleSubmit(onValid)} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}>
+      <FormErrorSummary messages={Object.values(errors || {}).map(e => e?.message).filter(Boolean)} />
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">

@@ -104,7 +104,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
+    <form onSubmit={handleSubmit} className={`space-y-6 w-full h-full ${windowMode ? 'overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
       <Alert className="border-red-300 bg-red-50">
         <AlertDescription className="text-sm text-red-900">
           <strong>💸 Conta a Pagar:</strong> Registre obrigações com fornecedores e controle pagamentos
