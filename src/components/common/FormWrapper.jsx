@@ -1,0 +1,83 @@
+import React from "react";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@/lib/utils";
+import FormErrorSummary from "@/components/common/FormErrorSummary";
+import useContextoVisual from "@/components/lib/useContextoVisual";
+
+/**
+ * FormWrapper
+ * - Padroniza RHF + Zod
+ * - Carimba multiempresa automaticamente (group_id/empresa_id) via useContextoVisual
+ * - Exibe resumo de erros consistente
+ * - Garante layout responsivo: w-full h-full
+ *
+ * Props principais:
+ * - schema?: zod schema (opcional)
+ * - defaultValues?: any
+ * - onSubmit: (dadosCarimbados, methods) => void | Promise<void>
+ * - withContext?: boolean (default true)
+ * - contextFieldName?: string (default 'empresa_id')
+ * - className?: string
+ * - children: ReactNode | (methods) => ReactNode
+ */
+export default function FormWrapper({
+  schema,
+  defaultValues,
+  onSubmit,
+  withContext = true,
+  contextFieldName = 'empresa_id',
+  className = '',
+  mode = 'onChange',
+  reValidateMode = 'onChange',
+  children,
+}) {
+  const { carimbarContexto } = useContextoVisual();
+  const methods = useForm({
+    resolver: schema ? zodResolver(schema) : undefined,
+    defaultValues,
+    mode,
+    reValidateMode,
+  });
+
+  const [errorMessages, setErrorMessages] = React.useState([]);
+
+  const handleValid = async (data) => {
+    const payload = withContext ? carimbarContexto(data, contextFieldName) : data;
+    if (typeof onSubmit === 'function') {
+      await onSubmit(payload, methods);
+    }
+  };
+
+  const handleInvalid = (formErrors) => {
+    try {
+      const flat = Object.values(formErrors || {}).flatMap((e) => {
+        if (!e) return [];
+        const base = e.message ? [e.message] : [];
+        const inner = e.types ? Object.values(e.types) : [];
+        const nested = e.ref ? [] : [];
+        return [...base, ...inner, ...nested].filter(Boolean);
+      });
+      setErrorMessages(flat.length ? flat : ['Verifique os campos destacados.']);
+    } catch (_) {
+      setErrorMessages(['Verifique os campos destacados.']);
+    }
+  };
+
+  return (
+    <FormProvider {...methods}>
+      <form
+        onSubmit={methods.handleSubmit(handleValid, handleInvalid)}
+        className={cn('w-full h-full space-y-4', className)}
+      >
+        <FormErrorSummary messages={errorMessages} />
+        {typeof children === 'function' ? children(methods) : children}
+      </form>
+    </FormProvider>
+  );
+}
+
+// Helper opcional para compor submissões fora do FormWrapper
+export function withContextSubmit(handler, carimbar, fieldName = 'empresa_id') {
+  return (data, methods) => handler(carimbar ? carimbar(data, fieldName) : data, methods);
+}
