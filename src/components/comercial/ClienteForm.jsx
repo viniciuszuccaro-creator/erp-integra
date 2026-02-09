@@ -117,8 +117,6 @@ const setFormData = (updater) => {
   };
 
   const onSubmitForm = (values) => {
-    e.preventDefault();
-
     const result = clienteSchema.safeParse({
       nome: (formData.nome || '').trim(),
       tipo: formData.tipo,
