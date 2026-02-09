@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageSquare } from "lucide-react";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -24,12 +26,14 @@ export default function InteracaoForm({ interacao, onSubmit, windowMode = false 
     observacoes: ""
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const data = {
-      ...formData,
-      duracao: parseFloat(formData.duracao) || null
-    };
+  const schema = z.object({
+    tipo: z.string().min(1, 'Tipo é obrigatório'),
+    titulo: z.string().min(1, 'Título é obrigatório'),
+    cliente_nome: z.string().min(1, 'Cliente é obrigatório'),
+  });
+
+  const handleSubmit = async () => {
+    const data = { ...formData, duracao: parseFloat(formData.duracao) || null };
     onSubmit(data);
   };
 
