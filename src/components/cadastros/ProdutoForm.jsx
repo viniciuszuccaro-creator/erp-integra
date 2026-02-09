@@ -313,7 +313,7 @@ Caso contrário, sugira:
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 w-full h-full">
+    <FormWrapper schema={produtoSchema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-6 w-full h-full">
       {/* V21.1.2: TOGGLE MODO MANUAL */}
       <Alert className="border-blue-300 bg-blue-50">
         <AlertDescription>
