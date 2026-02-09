@@ -162,7 +162,7 @@ export default function InteracaoForm({ interacao, onSubmit, windowMode = false 
           {interacao ? 'Atualizar' : 'Registrar Interação'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {
