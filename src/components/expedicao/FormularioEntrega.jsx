@@ -701,7 +701,7 @@ Retorne no formato JSON.`,
           {isEditing ? '💾 Atualizar' : '🚀 Criar'} Entrega
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {
