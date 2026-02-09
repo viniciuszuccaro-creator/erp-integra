@@ -5,6 +5,7 @@ import { Users, Clock, Calendar, Activity, Trophy, FileText, UserCircle } from "
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
+import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import HeaderRHCompacto from "@/components/rh/rh-launchpad/HeaderRHCompacto";
 import KPIsRH from "@/components/rh/rh-launchpad/KPIsRH";
@@ -20,6 +21,7 @@ export default function RH() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
+  const { user } = useUser();
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', empresaAtual?.id],
@@ -181,7 +183,7 @@ export default function RH() {
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
-        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        usuario: user?.full_name || user?.email || 'Usuário',
         acao: 'Visualização',
         modulo: 'RH',
         tipo_auditoria: 'acesso',

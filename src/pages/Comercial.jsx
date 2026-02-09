@@ -317,7 +317,7 @@ export default function Comercial() {
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
-        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        usuario: user?.full_name || user?.email || 'Usuário',
         acao: 'Visualização',
         modulo: 'Comercial',
         tipo_auditoria: 'acesso',

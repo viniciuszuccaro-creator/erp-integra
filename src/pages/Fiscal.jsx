@@ -5,6 +5,7 @@ import { FileText, Settings, Book, BarChart3, Upload, Sparkles } from "lucide-re
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
+import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import HeaderFiscalCompacto from "@/components/fiscal/fiscal-launchpad/HeaderFiscalCompacto";
 import KPIsFiscal from "@/components/fiscal/fiscal-launchpad/KPIsFiscal";
@@ -21,6 +22,7 @@ export default function FiscalPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
+  const { user } = useUser();
 
   const { data: notasFiscais = [] } = useQuery({
     queryKey: ['notasFiscais', empresaAtual?.id],
@@ -141,7 +143,7 @@ export default function FiscalPage() {
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
-        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        usuario: user?.full_name || user?.email || 'Usuário',
         acao: 'Visualização',
         modulo: 'Fiscal',
         tipo_auditoria: 'acesso',

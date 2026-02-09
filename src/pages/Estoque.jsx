@@ -5,6 +5,7 @@ import { Box, TrendingUp, PackageCheck, PackageMinus, PackageOpen, Clock, BarCha
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
+import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { Button } from "@/components/ui/button";
 import HeaderEstoqueCompacto from "@/components/estoque/estoque-launchpad/HeaderEstoqueCompacto";
@@ -24,6 +25,7 @@ const IAReposicao = React.lazy(() => import("../components/estoque/IAReposicao")
 export default function Estoque() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
+  const { user } = useUser();
   const { estaNoGrupo, empresaAtual, empresasDoGrupo, filtrarPorContexto } = useContextoVisual();
   
   // Estados removidos - VisualizadorUniversalEntidade gerencia tudo internamente
@@ -277,7 +279,7 @@ export default function Estoque() {
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
-        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        usuario: user?.full_name || user?.email || 'Usuário',
         acao: 'Visualização',
         modulo: 'Estoque',
         tipo_auditoria: 'acesso',

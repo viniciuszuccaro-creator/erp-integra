@@ -6,6 +6,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
+import { useUser } from "@/components/lib/UserContext";
 import HeaderComprasCompacto from "@/components/compras/compras-launchpad/HeaderComprasCompacto";
 import KPIsCompras from "@/components/compras/compras-launchpad/KPIsCompras";
 import ModulosGridCompras from "@/components/compras/compras-launchpad/ModulosGridCompras";
@@ -19,6 +20,7 @@ const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/
 export default function Compras() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto, empresaAtual } = useContextoVisual();
+  const { user } = useUser();
   const { openWindow } = useWindow();
 
   const { data: fornecedores = [] } = useQuery({
@@ -181,7 +183,7 @@ export default function Compras() {
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
-        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        usuario: user?.full_name || user?.email || 'Usuário',
         acao: 'Visualização',
         modulo: 'Compras',
         tipo_auditoria: 'acesso',

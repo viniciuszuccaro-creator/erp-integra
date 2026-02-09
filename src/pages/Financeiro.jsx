@@ -5,6 +5,7 @@ import { Wallet, Zap } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
+import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import HeaderFinanceiroCompacto from "@/components/financeiro/HeaderFinanceiroCompacto";
 import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunchpad";
@@ -28,6 +29,7 @@ const DashboardFormasPagamento = React.lazy(() => import("../components/financei
 export default function Financeiro() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
+  const { user } = useUser();
 
   const {
     contexto,
@@ -367,7 +369,7 @@ export default function Financeiro() {
     React.startTransition(() => {
       // Auditoria de abertura de seção
       base44.entities.AuditLog.create({
-        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        usuario: user?.full_name || user?.email || 'Usuário',
         acao: 'Visualização',
         modulo: 'Financeiro',
         tipo_auditoria: 'acesso',
