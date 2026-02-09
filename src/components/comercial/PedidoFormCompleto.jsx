@@ -724,7 +724,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
                   if (salvando) return;
                   setSalvando(true);
                   try {
-                    await onSubmit(formData);
+                    await onSubmit(carimbarContexto(formData, 'empresa_id'));
                     toast.success('✅ Alterações salvas!');
                     onCancel();
                   } catch (error) {
