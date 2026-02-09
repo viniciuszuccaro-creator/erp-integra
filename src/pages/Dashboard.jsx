@@ -52,6 +52,7 @@ const DashboardTempoReal = React.lazy(() => import('../components/dashboard/Dash
 const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/DashboardOperacionalBI"));
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem"));
 
 
@@ -716,6 +717,7 @@ export default function Dashboard() {
   ];
 
   return (
+    <ProtectedSection module="Dashboard" action="visualizar">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex-1 overflow-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -1226,5 +1228,6 @@ export default function Dashboard() {
       </ErrorBoundary>
       </div>
     </div>
+  </ProtectedSection>
   );
 }

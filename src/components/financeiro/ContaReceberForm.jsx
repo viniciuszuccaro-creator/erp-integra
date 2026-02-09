@@ -30,7 +30,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
   });
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const { user: authUser } = useUser();
-  const { filterInContext } = useContextoVisual();
+  const { empresaAtual, filterInContext } = useContextoVisual();
   const [formData, setFormData] = useState(() => conta || {
     descricao: '',
     cliente: '',
@@ -58,26 +58,26 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
   const { formasPagamento } = useFormasPagamento({ empresa_id: formData.empresa_id });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
+    queryKey: ['clientes', empresaAtual?.id],
     queryFn: () => filterInContext('Cliente', {}, '-updated_date', 9999),
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
+    queryKey: ['pedidos', empresaAtual?.id],
     queryFn: () => filterInContext('Pedido', {}, '-updated_date', 9999),
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
+    queryKey: ['empresas', empresaAtual?.id],
     queryFn: () => filterInContext('Empresa', {}, '-updated_date', 9999),
   });
 
   const { data: centrosCusto = [] } = useQuery({
-    queryKey: ['centrosCusto'],
+    queryKey: ['centrosCusto', empresaAtual?.id],
     queryFn: () => filterInContext('CentroCusto', {}, '-updated_date', 9999),
   });
   const { data: planosContas = [] } = useQuery({
-    queryKey: ['planosContas'],
+    queryKey: ['planosContas', empresaAtual?.id],
     queryFn: () => filterInContext('PlanoDeContas', {}, '-updated_date', 9999),
   });
 
