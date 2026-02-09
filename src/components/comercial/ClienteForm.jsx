@@ -264,12 +264,12 @@ const setFormData = (updater) => {
 
         <div>
           <Label htmlFor="cep">CEP</Label>
-          <Input
-            id="cep"
-            value={formData.cep}
-            onChange={(e) => setFormData({ ...formData, cep: formatarCEP(e.target.value) })}
-            placeholder="00000-000"
-            maxLength={9}
+          <Controller
+            control={control}
+            name="cep"
+            render={({ field }) => (
+              <Input id="cep" {...field} onChange={(e) => field.onChange(formatarCEP(e.target.value))} placeholder="00000-000" maxLength={9} />
+            )}
           />
         </div>
 
