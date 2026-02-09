@@ -28,7 +28,7 @@ const MonitoramentoCanaisRealtime = React.lazy(() => import("@/components/comerc
 export default function Comercial() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow, closeWindow } = useWindow();
-  const { filtrarPorContexto, getFiltroContexto, empresaAtual, grupoAtual } = useContextoVisual();
+  const { filtrarPorContexto, getFiltroContexto, createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
   const { user } = useUser();
   const queryClient = useQueryClient();
 
@@ -37,7 +37,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Cliente', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
         return [];
@@ -52,7 +52,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Pedido.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Pedido', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar pedidos:', err);
         return [];
@@ -68,7 +68,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Comissao.filter(filtro, '-created_date', 50);
+        return await filtrarPorContexto('Comissao', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar comissões:', err);
         return [];
@@ -83,7 +83,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 50);
+        return await filtrarPorContexto('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
       } catch (err) {
         console.error('Erro ao buscar notas fiscais:', err);
         return [];
@@ -126,7 +126,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.PedidoExterno.filter(filtro, '-created_date', 30);
+        return await filtrarPorContexto('PedidoExterno', {}, '-created_date', 30);
       } catch (err) {
         console.error('Erro ao buscar pedidos externos:', err);
         return [];
@@ -161,10 +161,8 @@ export default function Comercial() {
           if (pedidoCriado) return;
           pedidoCriado = true;
           try {
-            const created = await base44.entities.Pedido.create({
+            const created = await createInContext('Pedido', {
               ...formData,
-              empresa_id: formData.empresa_id || empresaAtual?.id,
-              group_id: formData.group_id || grupoAtual?.id,
               vendedor: formData.vendedor || user?.full_name,
               vendedor_id: formData.vendedor_id || user?.id
             });
@@ -192,7 +190,7 @@ export default function Comercial() {
           if (atualizacaoEmAndamento) return;
           atualizacaoEmAndamento = true;
           try {
-            await base44.entities.Pedido.update(formData.id, formData);
+            await updateInContext('Pedido', formData.id, formData);
             toast.success("✅ Pedido atualizado!");
             await pedidosQuery.refetch();
             if (windowIdRef) closeWindow(windowIdRef);

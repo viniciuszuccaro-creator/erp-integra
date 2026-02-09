@@ -20,7 +20,7 @@ const DashboardRHRealtime = React.lazy(() => import("../components/rh/DashboardR
 
 export default function RH() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, empresaAtual } = useContextoVisual();
+  const { filtrarPorContexto, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
   const { user } = useUser();
 
@@ -28,8 +28,7 @@ export default function RH() {
     queryKey: ['colaboradores', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
-        return await base44.entities.Colaborador.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Colaborador', {}, '-created_date', 100, 'empresa_alocada_id');
       } catch (err) {
         console.error('Erro ao buscar colaboradores:', err);
         return [];
@@ -43,10 +42,9 @@ export default function RH() {
     queryKey: ['colaboradores-count-rh', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Colaborador',
-          filter: filtro
+          filter: getFiltroContexto('empresa_alocada_id')
         });
         return response.data?.count || colaboradores.length;
       } catch {

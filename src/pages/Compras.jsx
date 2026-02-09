@@ -20,7 +20,7 @@ const ImportacaoNFeRecebimento = React.lazy(() => import("../components/compras/
 
 export default function Compras() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, empresaAtual } = useContextoVisual();
+  const { filtrarPorContexto, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { user } = useUser();
   const { openWindow } = useWindow();
 
@@ -29,7 +29,7 @@ export default function Compras() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
-        return await base44.entities.Fornecedor.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Fornecedor', {}, '-created_date', 100, 'empresa_dona_id');
       } catch (err) {
         console.error('Erro ao buscar fornecedores:', err);
         return [];
@@ -43,10 +43,9 @@ export default function Compras() {
     queryKey: ['fornecedores-count-compras', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Fornecedor',
-          filter: filtro
+          filter: getFiltroContexto('empresa_dona_id')
         });
         return response.data?.count || fornecedores.length;
       } catch {
@@ -62,7 +61,7 @@ export default function Compras() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.OrdemCompra.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('OrdemCompra', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar ordens de compra:', err);
         return [];
@@ -77,7 +76,7 @@ export default function Compras() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 100);
+        return await filtrarPorContexto('SolicitacaoCompra', {}, '-data_solicitacao', 100);
       } catch (err) {
         console.error('Erro ao buscar solicitações:', err);
         return [];

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
 export default function Empresas() {
+  const { filterInContext, createInContext, updateInContext, getFiltroContexto, grupoAtual } = useContextoVisual();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmpresa, setEditingEmpresa] = useState(null);
@@ -60,12 +62,12 @@ export default function Empresas() {
   const queryClient = useQueryClient();
 
   const { data: empresas = [], isLoading } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list('-created_date'),
+    queryKey: ['empresas', grupoAtual?.id],
+    queryFn: () => filterInContext('Empresa', {}, '-created_date', undefined, 'group_id'),
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Empresa.create(data),
+    mutationFn: (data) => createInContext('Empresa', data, 'group_id'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       setIsDialogOpen(false);
@@ -75,7 +77,7 @@ export default function Empresas() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Empresa.update(id, data),
+    mutationFn: ({ id, data }) => updateInContext('Empresa', id, data, 'group_id'),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['empresas'] });
       setIsDialogOpen(false);
