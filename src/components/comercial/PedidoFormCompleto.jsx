@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import { useOrigemPedido } from '@/components/lib/useOrigemPedido';
 import ProtectedSection from '@/components/security/ProtectedSection';
+import useContextoVisual from '@/components/lib/useContextoVisual';
 
 // Componentes das Etapas
 const WizardEtapa1Cliente = React.lazy(() => import('./wizard/WizardEtapa1Cliente'));
