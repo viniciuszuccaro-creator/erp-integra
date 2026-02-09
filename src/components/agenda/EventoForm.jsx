@@ -344,7 +344,7 @@ export default function EventoForm({ evento, onSubmit, windowMode = false }) {
           {evento ? 'Atualizar' : 'Criar'} Evento
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {
