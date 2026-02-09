@@ -7,10 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { base44 } from '@/api/base44Client';
 import InventarioContagem from './InventarioContagem';
+import { z } from 'zod';
+import FormWrapper from '@/components/common/FormWrapper';
 
 export default function InventarioForm({ windowMode = true }) {
   const [inv, setInv] = useState({ descricao: '', data_referencia: new Date().toISOString().slice(0,10), status: 'Aberto', itens: [] });
   const [salvando, setSalvando] = useState(false);
+
+  const schema = z.object({
+    descricao: z.string().min(1, 'Descrição é obrigatória'),
+    data_referencia: z.string().min(4, 'Data é obrigatória'),
+    status: z.string(),
+  });
 
   const salvar = async (status = 'Aberto') => {
     if (salvando) return;
@@ -38,7 +46,8 @@ export default function InventarioForm({ windowMode = true }) {
       <CardHeader className="border-b bg-slate-50">
         <CardTitle>Inventário</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 overflow-auto p-4 space-y-4">
+      <FormWrapper schema={schema} defaultValues={inv} onSubmit={() => salvar(inv.status)} externalData={inv} className="flex-1 overflow-auto p-4 space-y-4">
+        <CardContent className="flex-1 overflow-auto p-4 space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="text-xs text-slate-600">Descrição</label>
@@ -71,6 +80,7 @@ export default function InventarioForm({ windowMode = true }) {
           <Button onClick={aprovar} className="bg-green-600 hover:bg-green-700" disabled={salvando || inv.status==='Concluído'}>Aprovar e Aplicar Ajustes</Button>
         </div>
       </CardContent>
+      </FormWrapper>
     </Card>
   );
 }
