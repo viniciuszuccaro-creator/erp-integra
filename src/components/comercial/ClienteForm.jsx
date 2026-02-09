@@ -135,23 +135,28 @@ const setFormData = (updater) => {
             control={control}
             name="tipo"
             render={({ field }) => (
-              <Select
-                value={field.value}
-                onValueChange={(value) => {
-                  field.onChange(value);
-                  setFormData({ ...formData, tipo: value, cpf_cnpj: "", razao_social: "", nome_fantasia: "", inscricao_estadual: "" });
-                  setCpfCnpjValido(false);
-                  setDadosReceita(null);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Pessoa Física">Pessoa Física</SelectItem>
-              <SelectItem value="Pessoa Jurídica">Pessoa Jurídica</SelectItem>
-            </SelectContent>
-          </Select>
+              <>
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    setFormData({ ...formData, tipo: value, cpf_cnpj: "", razao_social: "", nome_fantasia: "", inscricao_estadual: "" });
+                    setCpfCnpjValido(false);
+                    setDadosReceita(null);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pessoa Física">Pessoa Física</SelectItem>
+                    <SelectItem value="Pessoa Jurídica">Pessoa Jurídica</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.tipo && <p className="text-xs text-red-600 mt-1">{errors.tipo.message}</p>}
+              </>
+            )}
+          />
         </div>
 
         <div className="col-span-2">
