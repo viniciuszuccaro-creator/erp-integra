@@ -68,27 +68,6 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
     queryFn: () => base44.entities.Fornecedor.list(),
   });
 
-  const adicionarItem = () => {
-    setFormData({
-      ...formData,
-      itens: [...formData.itens, { produto_descricao: '', quantidade: 0, unidade: 'UN', observacoes: '' }]
-    });
-  };
-
-  const removerItem = (index) => {
-    setFormData({
-      ...formData,
-      itens: formData.itens.filter((_, i) => i !== index)
-    });
-  };
-
-  const toggleFornecedor = (fornecedorId) => {
-    const selecionados = formData.fornecedores_selecionados.includes(fornecedorId)
-      ? formData.fornecedores_selecionados.filter(id => id !== fornecedorId)
-      : [...formData.fornecedores_selecionados, fornecedorId];
-    
-    setFormData({ ...formData, fornecedores_selecionados: selecionados });
-  };
 
   const onValid = (data) => {
     onSubmit(data);
@@ -182,7 +161,6 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                     name={`itens.${idx}.unidade`}
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                  >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="UN">UN</SelectItem>
@@ -249,8 +227,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
           <div>
             <Label>Observações Gerais</Label>
             <Textarea
-              value={formData.observacoes_gerais}
-              onChange={(e) => setFormData({ ...formData, observacoes_gerais: e.target.value })}
+              {...register('observacoes_gerais')}
               rows={3}
               placeholder="Condições especiais, prazos..."
             />
