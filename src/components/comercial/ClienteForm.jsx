@@ -155,17 +155,22 @@ const setFormData = (updater) => {
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
           <Label htmlFor="tipo">Tipo de Pessoa *</Label>
-          <Select
-            value={formData.tipo}
-            onValueChange={(value) => {
-              setFormData({ ...formData, tipo: value, cpf_cnpj: "", razao_social: "", nome_fantasia: "", inscricao_estadual: "" });
-              setCpfCnpjValido(false);
-              setDadosReceita(null);
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+          <Controller
+            control={control}
+            name="tipo"
+            render={({ field }) => (
+              <Select
+                value={field.value}
+                onValueChange={(value) => {
+                  field.onChange(value);
+                  setFormData({ ...formData, tipo: value, cpf_cnpj: "", razao_social: "", nome_fantasia: "", inscricao_estadual: "" });
+                  setCpfCnpjValido(false);
+                  setDadosReceita(null);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
             <SelectContent>
               <SelectItem value="Pessoa Física">Pessoa Física</SelectItem>
               <SelectItem value="Pessoa Jurídica">Pessoa Jurídica</SelectItem>
