@@ -87,22 +87,26 @@ export default function DashboardCorporativo() {
   const { dataInicio, dataFim } = getDateRange();
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos-dashboard'],
-    queryFn: () => base44.entities.Pedido.list('-created_date'),
+    queryKey: ['pedidos-dashboard', grupoAtual?.id],
+    queryFn: () => estaNoGrupo
+      ? base44.entities.Pedido.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
+      : base44.entities.Pedido.list('-created_date', 9999),
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes-dashboard'],
-    queryFn: () => base44.entities.Cliente.list('-created_date', 100),
+    queryKey: ['clientes-dashboard', grupoAtual?.id],
+    queryFn: () => estaNoGrupo
+      ? base44.entities.Cliente.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
+      : base44.entities.Cliente.list('-created_date', 9999),
   });
 
   const { data: totalClientes = 0 } = useQuery({
-    queryKey: ['clientes-count-corp'],
+    queryKey: ['clientes-count-corp', grupoAtual?.id],
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
-          filter: {}
+          filter: estaNoGrupo ? { group_id: grupoAtual?.id } : {}
         });
         return response.data?.count || clientes.length;
       } catch {
@@ -119,17 +123,19 @@ export default function DashboardCorporativo() {
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos-dashboard'],
-    queryFn: () => base44.entities.Produto.list('-created_date', 100),
+    queryKey: ['produtos-dashboard', grupoAtual?.id],
+    queryFn: () => estaNoGrupo
+      ? base44.entities.Produto.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
+      : base44.entities.Produto.list('-created_date', 9999),
   });
 
   const { data: totalProdutos = 0 } = useQuery({
-    queryKey: ['produtos-count-corp'],
+    queryKey: ['produtos-count-corp', grupoAtual?.id],
     queryFn: async () => {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Produto',
-          filter: {}
+          filter: estaNoGrupo ? { group_id: grupoAtual?.id } : {}
         });
         return response.data?.count || produtos.length;
       } catch {
@@ -141,23 +147,31 @@ export default function DashboardCorporativo() {
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contas-receber-dashboard'],
-    queryFn: () => base44.entities.ContaReceber.list(),
+    queryKey: ['contas-receber-dashboard', grupoAtual?.id],
+    queryFn: () => estaNoGrupo
+      ? base44.entities.ContaReceber.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
+      : base44.entities.ContaReceber.list(),
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contas-pagar-dashboard'],
-    queryFn: () => base44.entities.ContaPagar.list(),
+    queryKey: ['contas-pagar-dashboard', grupoAtual?.id],
+    queryFn: () => estaNoGrupo
+      ? base44.entities.ContaPagar.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
+      : base44.entities.ContaPagar.list(),
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas-dashboard'],
-    queryFn: () => base44.entities.Entrega.list('-created_date', 100),
+    queryKey: ['entregas-dashboard', grupoAtual?.id],
+    queryFn: () => estaNoGrupo
+      ? base44.entities.Entrega.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
+      : base44.entities.Entrega.list('-created_date', 9999),
   });
 
   const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ops-dashboard'],
-    queryFn: () => base44.entities.OrdemProducao.list(),
+    queryKey: ['ops-dashboard', grupoAtual?.id],
+    queryFn: () => estaNoGrupo
+      ? base44.entities.OrdemProducao.filter({ group_id: grupoAtual?.id }, '-created_date', 9999)
+      : base44.entities.OrdemProducao.list(),
   });
 
   // Filtrar por período e empresa
