@@ -58,6 +58,8 @@ import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import "@/components/lib/networkGuard";
 import BootstrapGuard from "@/components/lib/BootstrapGuard";
 import GlobalNetworkErrorHandler from "@/components/lib/GlobalNetworkErrorHandler";
+import GuardRails from "@/components/lib/GuardRails";
+import GlobalContextStamp from "@/components/lib/GlobalContextStamp";
 
 const navigationItems = [
         { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
@@ -335,6 +337,59 @@ function LayoutContent({ children, currentPageName }) {
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
   }, [user?.id, empresaAtual?.id]);
 
+  // Auditoria global de interações (cliques/seletores/tabs)
+  useEffect(() => {
+    if (!user) return;
+    const handlerClick = (e) => {
+      try {
+        const target = e.target.closest('button, a, [role="button"], [data-radix-collection-item]');
+        if (!target) return;
+        const label = target.getAttribute('aria-label') || target.innerText?.trim()?.slice(0, 80) || target.tagName;
+        base44.entities?.AuditLog?.create?.({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: empresaAtual?.id || null,
+          empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+          acao: 'Visualização',
+          modulo: currentModule || 'Sistema',
+          tipo_auditoria: 'ui',
+          entidade: 'Clique',
+          descricao: `Click: ${label}`,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
+    };
+
+    const handlerChange = (e) => {
+      try {
+        const el = e.target;
+        if (!el) return;
+        const tag = el.tagName;
+        if (tag !== 'SELECT' && tag !== 'INPUT' && tag !== 'TEXTAREA') return;
+        const name = el.name || el.id || tag;
+        base44.entities?.AuditLog?.create?.({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: empresaAtual?.id || null,
+          empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+          acao: 'Visualização',
+          modulo: currentModule || 'Sistema',
+          tipo_auditoria: 'ui',
+          entidade: 'Input',
+          descricao: `Change: ${name}`,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
+    };
+
+    document.addEventListener('click', handlerClick, true);
+    document.addEventListener('change', handlerChange, true);
+    return () => {
+      document.removeEventListener('click', handlerClick, true);
+      document.removeEventListener('change', handlerChange, true);
+    };
+  }, [user?.id, empresaAtual?.id, currentModule]);
+
   const isMobilePage = currentPageName === "ProducaoMobile";
 
 
@@ -563,7 +618,7 @@ function LayoutContent({ children, currentPageName }) {
                 <BootstrapGuard>
                   <ProtectedSection module={currentModule || 'Sistema'} action="ver" fallback={<div className="p-10 text-center text-slate-600">Acesso negado a este módulo.</div>}>
                     <GuardRails currentPageName={currentPageName}>
-                      {children}
+                      <div className="w-full h-full">{children}</div>
                     </GuardRails>
                   </ProtectedSection>
                 </BootstrapGuard>
@@ -585,8 +640,6 @@ function LayoutContent({ children, currentPageName }) {
         );
         }
 
-import GuardRails from "@/components/lib/GuardRails";
-import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function Layout({ children, currentPageName }) {
   return (
@@ -594,6 +647,7 @@ export default function Layout({ children, currentPageName }) {
       <WindowProvider>
         <ZIndexGuard>
           <GlobalNetworkErrorHandler />
+          <GlobalContextStamp />
           <LayoutContent children={children} currentPageName={currentPageName} />
         </ZIndexGuard>
       </WindowProvider>
