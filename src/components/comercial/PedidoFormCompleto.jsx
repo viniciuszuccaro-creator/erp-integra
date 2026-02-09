@@ -56,10 +56,10 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
   // V21.6 FINAL: Hook de detecção AUTOMÁTICA OBRIGATÓRIA
   const { origemPedido, bloquearEdicao } = useOrigemPedido();
   
-  const [formData, setFormData] = useState(() => ({
+  const defaultValues = {
     tipo: 'Pedido',
     tipo_pedido: 'Misto',
-    origem_pedido: pedido?.origem_pedido || 'Manual', // Será preenchido pelo hook
+    origem_pedido: pedido?.origem_pedido || 'Manual',
     status: 'Rascunho',
     data_pedido: new Date().toISOString().split('T')[0],
     prioridade: 'Normal',
@@ -82,12 +82,14 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     desconto_geral_pedido_percentual: 0,
     desconto_geral_pedido_valor: 0,
     valor_frete: 0,
-    etapas_entrega: [], // V21.1
-    obra_destino_id: '', // V21.1
-    obra_destino_nome: '', // V21.1
+    etapas_entrega: [],
+    obra_destino_id: '',
+    obra_destino_nome: '',
     observacoes_nfe: '',
     ...(pedido || {})
-  }));
+  };
+
+  const [formData, setFormData] = useState(defaultValues);
   
   // V21.6 FINAL: SEMPRE aplicar origem detectada automaticamente
   useEffect(() => {
