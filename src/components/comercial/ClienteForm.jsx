@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import ValidadorCPFCNPJ from '../fiscal/ValidadorCPFCNPJ';
 import { formatarTelefone, formatarCEP } from '../lib/validacoes';
 import { z } from "zod";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const clienteSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
