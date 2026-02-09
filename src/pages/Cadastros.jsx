@@ -201,7 +201,7 @@ export default function Cadastros() {
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Cadastros_subtab', value); } catch {}
   };
-  const { empresaAtual, filterInContext, createInContext, updateInContext } = useContextoVisual();
+  const { empresaAtual, filterInContext, createInContext, updateInContext, getFiltroContexto } = useContextoVisual();
 
   // Seleções em massa (Clientes, Fornecedores, Produtos)
 
@@ -241,7 +241,7 @@ export default function Cadastros() {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
-          filter: {}
+          filter: getFiltroContexto('empresa_id')
         });
         return response.data?.count || clientes.length;
       } catch {
@@ -274,7 +274,7 @@ export default function Cadastros() {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Fornecedor',
-          filter: {}
+          filter: getFiltroContexto('empresa_dona_id')
         });
         return response.data?.count || fornecedores.length;
       } catch {

@@ -19,7 +19,7 @@ const IAChurnDetection = React.lazy(() => import("../components/crm/IAChurnDetec
 
 export default function CRMPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, filterInContext, empresaAtual } = useContextoVisual();
+  const { filtrarPorContexto, filterInContext, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
 
   const { data: oportunidades = [] } = useQuery({

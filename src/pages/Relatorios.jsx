@@ -66,41 +66,31 @@ export default function Relatorios() {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, filterInContext } = useContextoVisual();
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
-    queryFn: () => empresaAtual?.id 
-      ? base44.entities.Cliente.filter({ empresa_id: empresaAtual.id }, '-created_date', 9999)
-      : base44.entities.Cliente.list(),
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
   });
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: () => empresaAtual?.id 
-      ? base44.entities.Pedido.filter({ empresa_id: empresaAtual.id }, '-data_pedido', 9999)
-      : base44.entities.Pedido.list(),
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido', 9999),
   });
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', empresaAtual?.id],
-    queryFn: () => empresaAtual?.id 
-      ? base44.entities.Produto.filter({ empresa_id: empresaAtual.id }, '-created_date', 9999)
-      : base44.entities.Produto.list(),
+    queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
   });
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber', empresaAtual?.id],
-    queryFn: () => empresaAtual?.id 
-      ? base44.entities.ContaReceber.filter({ empresa_id: empresaAtual.id }, '-data_vencimento', 9999)
-      : base44.entities.ContaReceber.list(),
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
   });
 
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['contasPagar', empresaAtual?.id],
-    queryFn: () => empresaAtual?.id 
-      ? base44.entities.ContaPagar.filter({ empresa_id: empresaAtual.id }, '-data_vencimento', 9999)
-      : base44.entities.ContaPagar.list(),
+    queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 9999),
   });
 
   const filtrarPorPeriodo = (data, campo = 'created_date') => {
