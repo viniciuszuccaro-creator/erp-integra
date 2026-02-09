@@ -26,6 +26,8 @@ const DashboardRepresentantes = React.lazy(() => import("@/components/relatorios
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 
 const AgendamentoRelatorios = React.lazy(() => import("../components/relatorios/AgendamentoRelatorios"));
@@ -160,6 +162,14 @@ export default function Relatorios() {
       description: `Arquivo ${nomeArquivo}.csv baixado com sucesso`
     });
   };
+
+  const scheduleSchema = z.object({
+    frequencia: z.enum(['Diário','Semanal','Mensal']),
+    dia_semana: z.string().optional(),
+    dia_mes: z.string().optional(),
+    hora: z.string().optional(),
+    destinatarios: z.string().min(3, 'Informe ao menos um e-mail')
+  });
 
   const agendarRelatorioMutation = useMutation({
     mutationFn: async (data) => {
@@ -592,7 +602,16 @@ export default function Relatorios() {
           <DialogHeader>
             <DialogTitle>Agendar Envio por E-mail</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleAgendarEmail} className="space-y-4">
+          <FormWrapper
+            schema={scheduleSchema}
+            defaultValues={agendamentoForm}
+            onSubmit={(values) => agendarRelatorioMutation.mutate({
+              ...values,
+              relatorio: selectedReport?.titulo
+            })}
+          >
+            {(methods) => (
+              <div className="space-y-4">
             <div className="p-3 bg-blue-50 rounded border border-blue-200">
               <Mail className="w-5 h-5 text-blue-600 mb-2" />
               <p className="text-sm text-blue-900">
@@ -608,8 +627,8 @@ export default function Relatorios() {
             <div>
               <Label htmlFor="frequencia">Frequência *</Label>
               <Select
-                value={agendamentoForm.frequencia}
-                onValueChange={(value) => setAgendamentoForm({ ...agendamentoForm, frequencia: value })}
+                value={methods.watch('frequencia')}
+                onValueChange={(value) => methods.setValue('frequencia', value as any, { shouldValidate: true })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -622,12 +641,12 @@ export default function Relatorios() {
               </Select>
             </div>
 
-            {agendamentoForm.frequencia === 'Semanal' && (
+            {methods.watch('frequencia') === 'Semanal' && (
               <div>
                 <Label htmlFor="dia_semana">Dia da Semana</Label>
                 <Select
-                  value={agendamentoForm.dia_semana}
-                  onValueChange={(value) => setAgendamentoForm({ ...agendamentoForm, dia_semana: value })}
+                  value={methods.watch('dia_semana')}
+                  onValueChange={(value) => methods.setValue('dia_semana', value as any)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -643,7 +662,7 @@ export default function Relatorios() {
               </div>
             )}
 
-            {agendamentoForm.frequencia === 'Mensal' && (
+            {methods.watch('frequencia') === 'Mensal' && (
               <div>
                 <Label htmlFor="dia_mes">Dia do Mês</Label>
                 <Input
@@ -651,8 +670,7 @@ export default function Relatorios() {
                   type="number"
                   min="1"
                   max="28"
-                  value={agendamentoForm.dia_mes}
-                  onChange={(e) => setAgendamentoForm({ ...agendamentoForm, dia_mes: e.target.value })}
+                  {...methods.register('dia_mes')}
                 />
               </div>
             )}
@@ -662,8 +680,7 @@ export default function Relatorios() {
               <Input
                 id="hora"
                 type="time"
-                value={agendamentoForm.hora}
-                onChange={(e) => setAgendamentoForm({ ...agendamentoForm, hora: e.target.value })}
+                {...methods.register('hora')}
               />
             </div>
 
@@ -671,11 +688,9 @@ export default function Relatorios() {
               <Label htmlFor="destinatarios">Destinatários * (separados por vírgula)</Label>
               <Textarea
                 id="destinatarios"
-                value={agendamentoForm.destinatarios}
-                onChange={(e) => setAgendamentoForm({ ...agendamentoForm, destinatarios: e.target.value })}
+                {...methods.register('destinatarios')}
                 placeholder="email1@exemplo.com, email2@exemplo.com"
                 rows={2}
-                required
               />
             </div>
 
@@ -702,7 +717,9 @@ export default function Relatorios() {
                 {agendarRelatorioMutation.isPending ? 'Agendando...' : 'Agendar'}
               </Button>
             </div>
-          </form>
+          </div>
+          )}
+          </FormWrapper>
         </DialogContent>
       </Dialog>
     </div>

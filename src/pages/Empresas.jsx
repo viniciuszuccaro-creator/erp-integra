@@ -28,6 +28,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { toast } from "sonner";
 
 export default function Empresas() {
@@ -60,6 +62,29 @@ export default function Empresas() {
   });
 
   const queryClient = useQueryClient();
+
+  const empresaSchema = z.object({
+    razao_social: z.string().min(2, 'Informe a razão social'),
+    nome_fantasia: z.string().optional().default(''),
+    cnpj: z.string().min(14, 'CNPJ inválido'),
+    inscricao_estadual: z.string().optional().default(''),
+    regime_tributario: z.string().min(2, 'Selecione o regime'),
+    tipo: z.enum(['Matriz','Filial']).default('Matriz'),
+    endereco: z.object({
+      logradouro: z.string().optional().default(''),
+      numero: z.string().optional().default(''),
+      bairro: z.string().optional().default(''),
+      cidade: z.string().optional().default(''),
+      estado: z.string().optional().default(''),
+      cep: z.string().optional().default('')
+    }).optional().default({}),
+    contato: z.object({
+      telefone: z.string().optional().default(''),
+      email: z.string().email('E-mail inválido').optional().or(z.literal(''))
+    }).optional().default({}),
+    status: z.enum(['Ativa','Inativa','Suspensa']).default('Ativa'),
+    permite_emissao_fiscal: z.boolean().default(true)
+  });
 
   const { data: empresas = [], isLoading } = useQuery({
     queryKey: ['empresas', grupoAtual?.id],
@@ -246,44 +271,38 @@ export default function Empresas() {
             <DialogHeader>
               <DialogTitle>{editingEmpresa ? 'Editar Empresa' : 'Nova Empresa'}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <FormWrapper
+              schema={empresaSchema}
+              defaultValues={editingEmpresa || formData}
+              onSubmit={(values) => {
+                if (editingEmpresa) {
+                  updateMutation.mutate({ id: editingEmpresa.id, data: values });
+                } else {
+                  createMutation.mutate(values);
+                }
+              }}
+            >
+              {(methods) => (
+                <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="razao_social">Razão Social *</Label>
-                  <Input
-                    id="razao_social"
-                    value={formData.razao_social}
-                    onChange={(e) => setFormData({ ...formData, razao_social: e.target.value })}
-                    required
-                  />
+                  <Input id="razao_social" {...methods.register('razao_social')} />
                 </div>
                 <div>
                   <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                  <Input
-                    id="nome_fantasia"
-                    value={formData.nome_fantasia}
-                    onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
-                  />
+                  <Input id="nome_fantasia" {...methods.register('nome_fantasia')} />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="cnpj">CNPJ *</Label>
-                  <Input
-                    id="cnpj"
-                    value={formData.cnpj}
-                    onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
-                    required
-                  />
+                  <Input id="cnpj" {...methods.register('cnpj')} />
                 </div>
                 <div>
                   <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
-                  <Input
-                    id="inscricao_estadual"
-                    value={formData.inscricao_estadual}
-                    onChange={(e) => setFormData({ ...formData, inscricao_estadual: e.target.value })}
-                  />
+                  <Input id="inscricao_estadual" {...methods.register('inscricao_estadual')} />
                 </div>
               </div>
 
@@ -291,11 +310,11 @@ export default function Empresas() {
                 <div>
                   <Label htmlFor="regime_tributario">Regime Tributário</Label>
                   <Select
-                    value={formData.regime_tributario}
-                    onValueChange={(value) => setFormData({ ...formData, regime_tributario: value })}
+                    value={methods.watch('regime_tributario')}
+                    onValueChange={(value) => methods.setValue('regime_tributario', value, { shouldValidate: true })}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Simples Nacional">Simples Nacional</SelectItem>
@@ -308,11 +327,11 @@ export default function Empresas() {
                 <div>
                   <Label htmlFor="tipo">Tipo</Label>
                   <Select
-                    value={formData.tipo}
-                    onValueChange={(value) => setFormData({ ...formData, tipo: value })}
+                    value={methods.watch('tipo')}
+                    onValueChange={(value) => methods.setValue('tipo', value as any, { shouldValidate: true })}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Matriz">Matriz</SelectItem>
@@ -327,57 +346,32 @@ export default function Empresas() {
                 <h3 className="font-semibold mb-3">Endereço</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="cep">CEP</Label>
-                    <Input
-                      id="cep"
-                      value={formData.endereco.cep}
-                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value }})}
-                    />
+                    <Label htmlFor="endereco.cep">CEP</Label>
+                    <Input id="endereco.cep" {...methods.register('endereco.cep')} />
                   </div>
                   <div className="col-span-2">
-                    <Label htmlFor="logradouro">Logradouro</Label>
-                    <Input
-                      id="logradouro"
-                      value={formData.endereco.logradouro}
-                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, logradouro: e.target.value }})}
-                    />
+                    <Label htmlFor="endereco.logradouro">Logradouro</Label>
+                    <Input id="endereco.logradouro" {...methods.register('endereco.logradouro')} />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4 mt-3">
                   <div>
-                    <Label htmlFor="numero">Número</Label>
-                    <Input
-                      id="numero"
-                      value={formData.endereco.numero}
-                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value }})}
-                    />
+                    <Label htmlFor="endereco.numero">Número</Label>
+                    <Input id="endereco.numero" {...methods.register('endereco.numero')} />
                   </div>
                   <div className="col-span-2">
-                    <Label htmlFor="bairro">Bairro</Label>
-                    <Input
-                      id="bairro"
-                      value={formData.endereco.bairro}
-                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value }})}
-                    />
+                    <Label htmlFor="endereco.bairro">Bairro</Label>
+                    <Input id="endereco.bairro" {...methods.register('endereco.bairro')} />
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-4 mt-3">
                   <div className="col-span-2">
-                    <Label htmlFor="cidade">Cidade</Label>
-                    <Input
-                      id="cidade"
-                      value={formData.endereco.cidade}
-                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value }})}
-                    />
+                    <Label htmlFor="endereco.cidade">Cidade</Label>
+                    <Input id="endereco.cidade" {...methods.register('endereco.cidade')} />
                   </div>
                   <div>
-                    <Label htmlFor="estado">UF</Label>
-                    <Input
-                      id="estado"
-                      maxLength={2}
-                      value={formData.endereco.estado}
-                      onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value }})}
-                    />
+                    <Label htmlFor="endereco.estado">UF</Label>
+                    <Input id="endereco.estado" maxLength={2} {...methods.register('endereco.estado')} />
                   </div>
                 </div>
               </div>
@@ -387,21 +381,12 @@ export default function Empresas() {
                 <h3 className="font-semibold mb-3">Contato</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="telefone">Telefone</Label>
-                    <Input
-                      id="telefone"
-                      value={formData.contato.telefone}
-                      onChange={(e) => setFormData({ ...formData, contato: { ...formData.contato, telefone: e.target.value }})}
-                    />
+                    <Label htmlFor="contato.telefone">Telefone</Label>
+                    <Input id="contato.telefone" {...methods.register('contato.telefone')} />
                   </div>
                   <div>
-                    <Label htmlFor="email">E-mail</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.contato.email}
-                      onChange={(e) => setFormData({ ...formData, contato: { ...formData.contato, email: e.target.value }})}
-                    />
+                    <Label htmlFor="contato.email">E-mail</Label>
+                    <Input id="contato.email" type="email" {...methods.register('contato.email')} />
                   </div>
                 </div>
               </div>
@@ -418,7 +403,9 @@ export default function Empresas() {
                   {editingEmpresa ? 'Atualizar' : 'Cadastrar'}
                 </Button>
               </div>
-            </form>
+            </div>
+            )}
+            </FormWrapper>
           </DialogContent>
         </Dialog>
       </div>
