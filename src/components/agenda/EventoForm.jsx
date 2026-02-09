@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Save, Calendar, Video, Bell, Mail, MessageSquare } from "lucide-react";
 
 /**
@@ -48,8 +50,15 @@ export default function EventoForm({ evento, onSubmit, windowMode = false }) {
     queryFn: () => base44.entities.Pedido.list(),
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const schema = z.object({
+    titulo: z.string().min(1, 'Título é obrigatório'),
+    data_inicio: z.string().min(4, 'Data início é obrigatória'),
+    data_fim: z.string().min(4, 'Data fim é obrigatória'),
+  }).refine((d) => !d.data_inicio || !d.data_fim || d.data_fim >= d.data_inicio, {
+    message: 'Data fim deve ser maior ou igual à data início',
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
