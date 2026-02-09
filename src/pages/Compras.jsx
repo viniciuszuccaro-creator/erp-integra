@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Building2, Users, ShoppingCart, FileText, Upload, Package } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import { useUser } from "@/components/lib/UserContext";
@@ -208,6 +209,7 @@ export default function Compras() {
   };
 
   return (
+    <ProtectedSection module="Compras" action="visualizar">
     <ErrorBoundary>
       <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-cyan-50">
         <HeaderComprasCompacto />
@@ -225,5 +227,6 @@ export default function Compras() {
         />
       </div>
     </ErrorBoundary>
+    </ProtectedSection>
   );
 }

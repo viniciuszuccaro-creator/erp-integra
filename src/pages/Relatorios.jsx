@@ -25,6 +25,7 @@ const RelatorioVendasPorRegiao = React.lazy(() => import("@/components/relatorio
 const DashboardRepresentantes = React.lazy(() => import("@/components/relatorios/DashboardRepresentantes"));
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 
 
 const AgendamentoRelatorios = React.lazy(() => import("../components/relatorios/AgendamentoRelatorios"));
@@ -306,6 +307,7 @@ export default function Relatorios() {
   };
 
   return (
+    <ProtectedSection module="Relatórios" action="visualizar">
     <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
       <div>
         <h1 className="text-3xl font-bold text-slate-900 mb-2">Relatórios e Análises</h1>
@@ -704,5 +706,6 @@ export default function Relatorios() {
         </DialogContent>
       </Dialog>
     </div>
+    </ProtectedSection>
   );
 }

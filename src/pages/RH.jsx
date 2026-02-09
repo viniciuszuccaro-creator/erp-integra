@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Users, Clock, Calendar, Activity, Trophy, FileText, UserCircle } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
@@ -208,6 +209,7 @@ export default function RH() {
   };
 
   return (
+    <ProtectedSection module="RH" action="visualizar">
     <ErrorBoundary>
       <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-purple-50">
         <HeaderRHCompacto />
@@ -226,5 +228,6 @@ export default function RH() {
         />
       </div>
     </ErrorBoundary>
+    </ProtectedSection>
   );
 }

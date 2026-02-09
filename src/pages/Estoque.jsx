@@ -7,6 +7,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import { Button } from "@/components/ui/button";
 import HeaderEstoqueCompacto from "@/components/estoque/estoque-launchpad/HeaderEstoqueCompacto";
 import KPIsEstoque from "@/components/estoque/estoque-launchpad/KPIsEstoque";
@@ -301,6 +302,7 @@ export default function Estoque() {
   };
 
   return (
+    <ProtectedSection module="Estoque" action="visualizar">
     <ErrorBoundary>
       <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-indigo-50">
         <HeaderEstoqueCompacto />
@@ -339,5 +341,6 @@ export default function Estoque() {
         />
       </div>
     </ErrorBoundary>
+    </ProtectedSection>
   );
 }

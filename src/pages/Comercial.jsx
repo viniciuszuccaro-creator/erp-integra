@@ -7,6 +7,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import { toast } from "sonner";
 import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
 import { Badge } from "@/components/ui/badge";
@@ -339,6 +340,7 @@ export default function Comercial() {
   };
 
   return (
+    <ProtectedSection module="Comercial" action="visualizar">
     <ErrorBoundary>
       <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderComercialCompacto />
@@ -364,5 +366,6 @@ export default function Comercial() {
         />
       </div>
     </ErrorBoundary>
+    </ProtectedSection>
   );
 }

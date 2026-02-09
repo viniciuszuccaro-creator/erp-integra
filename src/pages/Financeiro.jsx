@@ -7,6 +7,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import HeaderFinanceiroCompacto from "@/components/financeiro/HeaderFinanceiroCompacto";
 import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunchpad";
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
@@ -395,6 +396,7 @@ export default function Financeiro() {
   };
 
   return (
+    <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
       <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderFinanceiroCompacto 
@@ -442,5 +444,6 @@ export default function Financeiro() {
         </div>
       </div>
     </ErrorBoundary>
+    </ProtectedSection>
   );
 }

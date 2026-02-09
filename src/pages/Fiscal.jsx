@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FileText, Settings, Book, BarChart3, Upload, Sparkles } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
@@ -168,6 +169,7 @@ export default function FiscalPage() {
   };
 
   return (
+    <ProtectedSection module="Fiscal" action="visualizar">
     <ErrorBoundary>
       <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderFiscalCompacto />
@@ -186,5 +188,6 @@ export default function FiscalPage() {
         />
       </div>
     </ErrorBoundary>
+    </ProtectedSection>
   );
 }

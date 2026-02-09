@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Factory, LayoutGrid, Clock, CheckCircle, AlertTriangle, Settings, BarChart3, Activity, Zap, FileText, Sparkles } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import HeaderProducaoCompacto from "@/components/producao/producao-launchpad/HeaderProducaoCompacto";
@@ -204,6 +205,7 @@ export default function Producao() {
   };
 
   return (
+    <ProtectedSection module="Produção" action="visualizar">
     <ErrorBoundary>
       <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-orange-50">
         <HeaderProducaoCompacto />
@@ -221,5 +223,6 @@ export default function Producao() {
         />
       </div>
     </ErrorBoundary>
+    </ProtectedSection>
   );
 }

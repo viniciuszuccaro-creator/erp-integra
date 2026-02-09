@@ -7,6 +7,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
+import ProtectedSection from "@/components/security/ProtectedSection";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 import HeaderExpedicaoCompacto from "@/components/expedicao/expedicao-launchpad/HeaderExpedicaoCompacto";
@@ -295,6 +296,7 @@ export default function Expedicao() {
   };
 
   return (
+    <ProtectedSection module="Expedição" action="visualizar">
     <ErrorBoundary>
       <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderExpedicaoCompacto />
@@ -360,5 +362,6 @@ export default function Expedicao() {
         </Suspense>
       )}
     </ErrorBoundary>
+    </ProtectedSection>
   );
 }
