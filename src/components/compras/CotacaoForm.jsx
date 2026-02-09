@@ -171,23 +171,17 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                 <div className="col-span-2">
                   <Input
                     type="number"
-                    value={item.quantidade}
-                    onChange={(e) => {
-                      const novosItens = [...formData.itens];
-                      novosItens[idx].quantidade = parseFloat(e.target.value);
-                      setFormData({ ...formData, itens: novosItens });
-                    }}
                     placeholder="Qtd"
+                    {...register(`itens.${idx}.quantidade`, { valueAsNumber: true })}
                   />
+                  {errors.itens?.[idx]?.quantidade && <p className="text-red-600 text-xs mt-1">{errors.itens[idx].quantidade.message}</p>}
                 </div>
                 <div className="col-span-2">
-                  <Select
-                    value={item.unidade}
-                    onValueChange={(value) => {
-                      const novosItens = [...formData.itens];
-                      novosItens[idx].unidade = value;
-                      setFormData({ ...formData, itens: novosItens });
-                    }}
+                  <Controller
+                    control={control}
+                    name={`itens.${idx}.unidade`}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -197,20 +191,17 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                       <SelectItem value="LT">LT</SelectItem>
                     </SelectContent>
                   </Select>
+                )}
+              />
                 </div>
                 <div className="col-span-2">
                   <Input
-                    value={item.observacoes}
-                    onChange={(e) => {
-                      const novosItens = [...formData.itens];
-                      novosItens[idx].observacoes = e.target.value;
-                      setFormData({ ...formData, itens: novosItens });
-                    }}
                     placeholder="Obs"
+                    {...register(`itens.${idx}.observacoes`)}
                   />
                 </div>
                 <div className="col-span-1 flex items-center justify-center">
-                  {formData.itens.length > 1 && (
+                  {fields.length > 1 && (
                     <Button
                       type="button"
                       variant="ghost"
@@ -235,7 +226,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
               {fornecedores.filter(f => f.status === 'Ativo').map(fornecedor => (
                 <div key={fornecedor.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer">
                   <Checkbox
-                    checked={formData.fornecedores_selecionados.includes(fornecedor.id)}
+                    checked={selecionados.includes(fornecedor.id)}
                     onCheckedChange={() => toggleFornecedor(fornecedor.id)}
                   />
                   <div className="flex-1">
@@ -247,7 +238,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                 </div>
               ))}
             </div>
-            {formData.fornecedores_selecionados.length < 2 && (
+            {selecionados.length < 2 && (
               <p className="text-xs text-orange-600 mt-2 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" />
                 Selecione ao menos 2 fornecedores
@@ -271,7 +262,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
         <Button 
           type="submit" 
           className="bg-cyan-600 hover:bg-cyan-700"
-          disabled={formData.fornecedores_selecionados.length < 2}
+          disabled={selecionados.length < 2}
         >
           <Save className="w-4 h-4 mr-2" />
           Criar e Enviar Cotação
