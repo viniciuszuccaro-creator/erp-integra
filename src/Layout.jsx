@@ -141,8 +141,8 @@ function LayoutContent({ children, currentPageName }) {
                           Fiscal: 'Fiscal',
                           RH: 'RH',
                           Expedicao: 'Expedição',
-                        };
-                        const currentModule = pageToModule[currentPageName];
+                        } as const;
+                        const currentModule = pageToModule[currentPageName as keyof typeof pageToModule];
 
                         useEffect(() => {
     const handleKeyDown = (e) => {
