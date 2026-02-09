@@ -41,6 +41,7 @@ import {
   ResponsiveContainer
 } from "recharts";
 import useContextoGrupoEmpresa from "@/components/lib/useContextoGrupoEmpresa";
+import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function DashboardCorporativo() {
   const { grupoAtual, empresasDoGrupo, estaNoGrupo } = useContextoGrupoEmpresa();
@@ -285,6 +286,7 @@ export default function DashboardCorporativo() {
   }
 
   return (
+    <ProtectedSection module="Dashboard" section={["Corporativo"]} action="visualizar">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex-1 overflow-auto p-6 space-y-6">
         {/* Header com Filtros */}
@@ -793,5 +795,6 @@ export default function DashboardCorporativo() {
         </Tabs>
       </div>
     </div>
+    </ProtectedSection>
   );
 }

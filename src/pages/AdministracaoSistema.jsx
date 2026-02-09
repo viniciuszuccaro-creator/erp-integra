@@ -27,6 +27,7 @@ export default function AdministracaoSistema() {
   const initialTab = params.get('tab') || 'gerais';
 
   return (
+    <ProtectedSection module="Sistema" action="visualizar">
     <div className="w-full h-full flex flex-col overflow-hidden">
       <header className="p-4 md:p-6 border-b bg-white/80 backdrop-blur-sm">
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -167,5 +168,6 @@ export default function AdministracaoSistema() {
         </Tabs>
       </div>
     </div>
+    </ProtectedSection>
   );
 }
