@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import FormErrorSummary from "@/components/common/FormErrorSummary";
 import { DollarSign, Calendar, FileText, Building2, Users, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -29,6 +30,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
     data_vencimento: z.string().min(1, 'Data de vencimento é obrigatória'),
   });
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
+  const [errorMessages, setErrorMessages] = useState([]);
   const { user: authUser } = useUser();
   const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
   const [formData, setFormData] = useState(() => conta || {
@@ -104,6 +106,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
 
   const content = (
     <form onSubmit={handleSubmit} className={`space-y-6 w-full h-full ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
+      <FormErrorSummary messages={errorMessages} />
       <Alert className="border-green-300 bg-green-50">
         <AlertDescription className="text-sm text-green-900">
           <strong>💰 Conta a Receber:</strong> Registre valores a receber de clientes e gere cobranças

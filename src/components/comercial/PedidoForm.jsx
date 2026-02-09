@@ -9,6 +9,7 @@ import { z } from "zod";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import useContextoVisual from "@/components/lib/useContextoVisual";
+import FormErrorSummary from "@/components/common/FormErrorSummary";
 
 // Tipos auxiliares
 const itemSchema = z
@@ -117,6 +118,7 @@ export default function PedidoForm({ clientes = [], onSubmit, isSubmitting }) {
 
   return (
     <form onSubmit={onSubmitForm} className="space-y-6 w-full h-full">
+      <FormErrorSummary messages={Object.values(errors || {}).map(e => e?.message).filter(Boolean)} />
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="numero_pedido">Nº Pedido</Label>

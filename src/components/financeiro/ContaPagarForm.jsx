@@ -12,12 +12,14 @@ import { DollarSign, Calendar, FileText, Building2, Package, Loader2, TrendingDo
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import FormErrorSummary from "@/components/common/FormErrorSummary";
 import { z } from 'zod';
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
+  const [errorMessages, setErrorMessages] = useState([]);
   const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
   const schema = z.object({
     descricao: z.string().min(1, 'Descrição é obrigatória'),
@@ -105,6 +107,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
 
   const content = (
     <form onSubmit={handleSubmit} className={`space-y-6 w-full h-full ${windowMode ? 'overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
+      <FormErrorSummary messages={errorMessages} />
       <Alert className="border-red-300 bg-red-50">
         <AlertDescription className="text-sm text-red-900">
           <strong>💸 Conta a Pagar:</strong> Registre obrigações com fornecedores e controle pagamentos
