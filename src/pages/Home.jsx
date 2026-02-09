@@ -5,7 +5,8 @@ import ProtectedSection from "@/components/security/ProtectedSection";
 export default function Home() {
 
   return (
-    <div>
-    </div>
+    <ProtectedSection module="Home" action="visualizar">
+      <div className="w-full h-full" />
+    </ProtectedSection>
   );
 }
