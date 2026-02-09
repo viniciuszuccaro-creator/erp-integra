@@ -461,7 +461,7 @@ function LayoutContent({ children, currentPageName }) {
     return (
       <>
         {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
-        <div className="min-h-screen">{children}</div>
+        <div className="w-full h-full min-h-screen">{children}</div>
       </>
     );
   }

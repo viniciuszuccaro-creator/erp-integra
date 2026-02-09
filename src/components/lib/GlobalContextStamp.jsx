@@ -28,6 +28,7 @@ export default function GlobalContextStamp() {
         bulkCreate: api.bulkCreate?.bind(api),
         update: api.update?.bind(api),
         filter: api.filter?.bind(api),
+        list: api.list?.bind(api),
       };
       original.set(name, o);
 
@@ -60,6 +61,17 @@ export default function GlobalContextStamp() {
         api.filter = (criterios = {}, order, limit) => {
           const merged = { ...criterios, ...getFiltroContexto?.() };
           return o.filter(merged, order, limit);
+        };
+      }
+
+      // list -> direciona para filter com contexto quando possível
+      if (o.list) {
+        api.list = (order, limit) => {
+          const ctx = getFiltroContexto?.() || {};
+          if (o.filter && ctx && (ctx.group_id || ctx.empresa_id)) {
+            return o.filter(ctx, order, limit);
+          }
+          return o.list(order, limit);
         };
       }
     };
