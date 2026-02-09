@@ -342,14 +342,14 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
           }
 
           // Mantém o pedido aguardando aprovação e salva rascunho
-          await onSubmit({
+          await onSubmit(carimbarContexto({
             ...formData,
             status_aprovacao: 'pendente',
             margem_minima_produto: margemMinima,
             margem_aplicada_vendedor: margemAposDesconto,
             desconto_solicitado_percentual: formData.desconto_geral_pedido_percentual,
             status: 'Aguardando Aprovação'
-          });
+          }, 'empresa_id'));
           return;
         }
       }
