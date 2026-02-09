@@ -63,28 +63,6 @@ const setFormData = (updater) => {
     Object.entries(updater).forEach(([k, v]) => setValue(k, v, { shouldValidate: false }));
   }
 };
-    nome: "",
-    razao_social: "",
-    nome_fantasia: "",
-    tipo: "Pessoa Física",
-    cpf_cnpj: "",
-    inscricao_estadual: "",
-    email: "",
-    telefone: "",
-    whatsapp: "",
-    endereco: "",
-    numero: "",
-    complemento: "",
-    bairro: "",
-    cidade: "",
-    estado: "",
-    cep: "",
-    limite_credito: "",
-    condicao_pagamento: "À Vista",
-    vendedor_responsavel: "",
-    observacoes: "",
-    status: "Prospect"
-  });
 
   const [cpfCnpjValido, setCpfCnpjValido] = useState(false);
   const [dadosReceita, setDadosReceita] = useState(null);
