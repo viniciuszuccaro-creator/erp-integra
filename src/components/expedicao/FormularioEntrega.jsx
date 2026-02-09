@@ -260,7 +260,7 @@ Retorne no formato JSON.`,
   };
 
   const content = (
-    <form onSubmit={handleSubmitForm} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper onSubmit={handleSubmitForm} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       {/* Empresa (se no grupo) */}
       {estaNoGrupo && (
         <div className="p-4 bg-blue-50 border border-blue-200 rounded">
