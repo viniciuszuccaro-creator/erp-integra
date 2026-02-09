@@ -561,9 +561,11 @@ function LayoutContent({ children, currentPageName }) {
             <ErrorBoundary>
               <Suspense fallback={<div className="p-6 text-slate-500">Carregando…</div>}>
                 <BootstrapGuard>
-                  <GuardRails currentPageName={currentPageName}>
-                    {children}
-                  </GuardRails>
+                  <ProtectedSection module={currentModule || 'Sistema'} fallback={<div className="p-10 text-center text-slate-600">Acesso negado a este módulo.</div>}>
+                    <GuardRails currentPageName={currentPageName}>
+                      {children}
+                    </GuardRails>
+                  </ProtectedSection>
                 </BootstrapGuard>
               </Suspense>
             </ErrorBoundary>
@@ -584,6 +586,7 @@ function LayoutContent({ children, currentPageName }) {
         }
 
 import GuardRails from "@/components/lib/GuardRails";
+import ProtectedSection from "@/components/security/ProtectedSection";
 
 export default function Layout({ children, currentPageName }) {
   return (

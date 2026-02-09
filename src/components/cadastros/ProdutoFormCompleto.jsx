@@ -6,7 +6,8 @@ import {
   Package, Calculator, Globe, TrendingUp
 } from "lucide-react";
 import ProdutoFormHeader from "./produto/ProdutoFormHeader";
-import ProtectedSection from "@/components/security/ProtectedSection";
+import ProtectedSection from "@/components/security/ProtectedSection"; // mantido para futuras proteções de abas
+
 import ProdutoForm from "./ProdutoForm";
 import AbaConversoesProduto from "./AbaConversoesProduto";
 import AbaEcommerceProduto from "./AbaEcommerceProduto";

@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { jsPDF } from 'npm:jspdf@4.0.0';
+import { getUserAndPerfil, assertPermission, assertContextPresence, audit } from './_lib/guard.js';
 
 Deno.serve(async (req) => {
   try {
@@ -10,6 +11,9 @@ Deno.serve(async (req) => {
     }
 
     const { conta_receber_id } = await req.json();
+    const { user: me, perfil } = await getUserAndPerfil(base44);
+    const denied = await assertPermission(base44, { user: me, perfil }, 'Financeiro', 'ContaReceber', 'emitir');
+    if (denied) return denied;
     if (!conta_receber_id) {
       return Response.json({ error: 'conta_receber_id é obrigatório' }, { status: 400 });
     }
@@ -21,6 +25,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'ContaReceber não encontrada' }, { status: 404 });
     }
 
+    // Contexto multiempresa obrigatório
+    {
+      const ctxErr = assertContextPresence({ empresa_id: cr.empresa_id }, true);
+      if (ctxErr) return ctxErr;
+    }
     // Gerar PDF simples do boleto (simulado)
     const doc = new jsPDF();
     doc.setFontSize(14);
@@ -62,18 +71,7 @@ Deno.serve(async (req) => {
     });
 
     // Auditoria
-    try {
-      await base44.asServiceRole.entities.AuditLog.create({
-        usuario: user.full_name || user.email || 'Usuário',
-        usuario_id: user.id,
-        acao: 'Criação',
-        modulo: 'Financeiro',
-        entidade: 'ContaReceber',
-        registro_id: conta_receber_id,
-        descricao: 'Boleto PDF emitido e URL assinada gerada (chatbot)',
-        data_hora: new Date().toISOString(),
-      });
-    } catch (_) {}
+    await audit(base44, me, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: conta_receber_id, descricao: 'Boleto PDF emitido e URL assinada gerada' });
 
     return Response.json({ url: signedUrl });
   } catch (error) {

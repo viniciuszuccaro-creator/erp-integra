@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Trash2 } from "lucide-react";
+import { z } from "zod";
 
 export default function PedidoForm({ clientes, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState({
@@ -45,13 +46,33 @@ export default function PedidoForm({ clientes, onSubmit, isSubmitting }) {
     return formData.itens.reduce((sum, item) => sum + (item.valor_total || 0), 0);
   };
 
+  const pedidoSchema = z.object({
+    numero_pedido: z.string().min(3),
+    cliente_id: z.string().min(1, 'Cliente é obrigatório'),
+    cliente_nome: z.string().min(1),
+    data_pedido: z.string().min(8),
+    forma_pagamento: z.string().min(1),
+    itens: z.array(z.object({
+      descricao: z.string().min(1, 'Descrição obrigatória'),
+      quantidade: z.number().positive('Qtd > 0'),
+      valor_unitario: z.number().nonnegative(),
+      valor_total: z.number().nonnegative()
+    })).min(1, 'Inclua pelo menos 1 item')
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ ...formData, valor_total: calculateTotal() });
+    const payload = { ...formData, valor_total: calculateTotal() };
+    const parsed = pedidoSchema.safeParse(payload);
+    if (!parsed.success) {
+      alert(parsed.error.issues.map(i => `• ${i.message}`).join('\n'));
+      return;
+    }
+    onSubmit(payload);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 w-full h-full">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="numero_pedido">Nº Pedido</Label>

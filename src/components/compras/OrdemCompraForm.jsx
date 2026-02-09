@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, ShoppingCart, Plus, Trash2 } from "lucide-react";
+import { z } from "zod";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 /**
@@ -38,14 +40,15 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
     valor_total: 0
   });
 
+  const { empresaAtual, filterInContext } = useContextoVisual();
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
+    queryKey: ['fornecedores', empresaAtual?.id],
+    queryFn: () => filterInContext('Fornecedor', {}, '-updated_date', 9999),
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', empresaAtual?.id],
+    queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
   });
 
   const handleAddItem = () => {
@@ -94,8 +97,27 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
     }
   };
 
+  const ocSchema = z.object({
+    numero_oc: z.string().min(3),
+    fornecedor_id: z.string().min(1, 'Fornecedor é obrigatório'),
+    data_solicitacao: z.string().min(8),
+    itens: z.array(z.object({
+      produto_id: z.string().min(1),
+      descricao: z.string().min(1),
+      quantidade_solicitada: z.number().positive(),
+      unidade: z.string().min(1),
+      valor_unitario: z.number().nonnegative(),
+      valor_total: z.number().nonnegative()
+    })).min(1, 'Inclua ao menos 1 item')
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    const parsed = ocSchema.safeParse(formData);
+    if (!parsed.success) {
+      alert(parsed.error.issues.map(i => `• ${i.message}`).join('\n'));
+      return;
+    }
     onSubmit(formData);
   };
 

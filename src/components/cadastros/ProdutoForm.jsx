@@ -12,6 +12,7 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import ProtectedField from "@/components/security/ProtectedField";
+import { z } from "zod";
 
 /**
  * V21.6 - EVOLUÇÃO DO CADASTRO DE PRODUTOS
@@ -297,24 +298,23 @@ Caso contrário, sugira:
     });
   };
 
+  const produtoSchema = z.object({
+    descricao: z.string().min(3, 'Descrição é obrigatória'),
+    unidades_secundarias: z.array(z.string()).min(1, 'Selecione pelo menos 1 unidade'),
+    eh_bitola: z.boolean().optional().default(false),
+    peso_teorico_kg_m: z.number().optional().transform(v => v ?? 0)
+  }).refine((data) => !data.eh_bitola || (data.peso_teorico_kg_m || 0) > 0, {
+    message: 'Bitolas precisam ter peso teórico preenchido'
+  });
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!formData.descricao) {
-      toast.error('Preencha a descrição do produto');
+    const parsed = produtoSchema.safeParse(formData);
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
+      toast.error('Erros de validação', { description: msg });
       return;
     }
-
-    if (!formData.unidades_secundarias || formData.unidades_secundarias.length === 0) {
-      toast.error('Selecione pelo menos 1 unidade de venda/compra');
-      return;
-    }
-
-    if (formData.eh_bitola && formData.peso_teorico_kg_m === 0) {
-      toast.error('Bitolas precisam ter peso teórico preenchido');
-      return;
-    }
-
     onSubmit(formData);
   };
 
