@@ -63,6 +63,21 @@ export function ProtectedAction({
 
     if (fallback) return fallback;
 
+    if (mode === "disable") {
+      return (
+        <div className="w-full h-full opacity-50 pointer-events-none select-none" aria-disabled="true">
+          {children ? (
+            children
+          ) : (
+            <Button variant="ghost" size="sm" disabled>
+              <Lock className="w-4 h-4 mr-2" />
+              Sem permissão
+            </Button>
+          )}
+        </div>
+      );
+    }
+
     const handleOpen = (e) => {
       if (e && typeof e.preventDefault === 'function') e.preventDefault();
       e?.stopPropagation?.();
