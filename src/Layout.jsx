@@ -132,6 +132,17 @@ function LayoutContent({ children, currentPageName }) {
                         };
 
                         // Mapeamento de página -> módulo (deve estar antes de qualquer useEffect que use currentModule)
+                        const pageToModule = {
+                          CRM: 'CRM',
+                          Comercial: 'Comercial',
+                          Estoque: 'Estoque',
+                          Compras: 'Compras',
+                          Financeiro: 'Financeiro',
+                          Fiscal: 'Fiscal',
+                          RH: 'RH',
+                          Expedicao: 'Expedição',
+                        };
+                        const currentModule = pageToModule[currentPageName];
 
                         useEffect(() => {
     const handleKeyDown = (e) => {
@@ -428,18 +439,6 @@ function LayoutContent({ children, currentPageName }) {
     return hasPermission(mod, null, 'ver');
   });
 
-  const pageToModule = {
-    CRM: 'CRM',
-    Comercial: 'Comercial',
-    Estoque: 'Estoque',
-    Compras: 'Compras',
-    Financeiro: 'Financeiro',
-    Fiscal: 'Fiscal',
-    RH: 'RH',
-    Expedicao: 'Expedição',
-  };
-
-  const currentModule = pageToModule[currentPageName];
   useEffect(() => {
     if (!currentModule) return;
     const key = `audit_block_${currentModule}`;
