@@ -646,7 +646,7 @@ export default function Relatorios() {
                 <Label htmlFor="dia_semana">Dia da Semana</Label>
                 <Select
                   value={methods.watch('dia_semana')}
-                  onValueChange={(value) => methods.setValue('dia_semana', value)
+                  onValueChange={(value) => methods.setValue('dia_semana', value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
