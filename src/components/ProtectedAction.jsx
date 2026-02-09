@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import usePermissions from "@/components/lib/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Lock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 // ProtectedAction v2 - suporta modos: "disable" (padrão) e "hide" + auditoria opcional
 export function ProtectedAction({
@@ -20,6 +21,7 @@ export function ProtectedAction({
   const { hasPermission, isLoading } = usePermissions();
   const { user } = useUser();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
+  const [open, setOpen] = useState(false);
 
   if (isLoading) return null;
 
@@ -61,18 +63,50 @@ export function ProtectedAction({
 
     if (fallback) return fallback;
 
-    // Modo disable: mantém layout estável, desativa interação
+    const handleOpen = (e) => {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      e?.stopPropagation?.();
+      setOpen(true);
+    };
+
     return (
-      <div className="w-full h-full opacity-50 pointer-events-none select-none" aria-disabled="true">
-        {children ? (
-          children
-        ) : (
-          <Button variant="ghost" size="sm" disabled>
-            <Lock className="w-4 h-4 mr-2" />
-            Sem permissão
-          </Button>
-        )}
-      </div>
+      <>
+        <div
+          className="w-full h-full opacity-60 cursor-not-allowed select-none"
+          onClick={handleOpen}
+          role="button"
+          aria-disabled="true"
+          title="Sem permissão"
+        >
+          {children ? (
+            children
+          ) : (
+            <Button variant="ghost" size="sm" onClick={handleOpen}>
+              <Lock className="w-4 h-4 mr-2" />
+              Sem permissão
+            </Button>
+          )}
+        </div>
+
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Permissão negada</DialogTitle>
+              <DialogDescription>
+                Você não possui permissão para executar esta ação.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="text-sm text-slate-600 space-y-1">
+              <p><strong>Módulo:</strong> {module}</p>
+              {section && <p><strong>Seção:</strong> {section}</p>}
+              <p><strong>Ação:</strong> {action}</p>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setOpen(false)}>Entendi</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 

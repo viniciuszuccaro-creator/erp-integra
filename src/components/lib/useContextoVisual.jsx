@@ -192,7 +192,7 @@ export function useContextoVisual() {
   };
 
   // Helpers: multiempresa stamping and server-side filter
-  const getFiltroContexto = (campo = 'empresa_id', incluirGrupo = true) => {
+  const getFiltroContexto = (campo = 'empresa_id', incluirGrupo = false) => {
     const filtro = {};
     if (incluirGrupo && grupoAtual?.id) filtro.group_id = grupoAtual.id;
     if (contexto === 'grupo') {
