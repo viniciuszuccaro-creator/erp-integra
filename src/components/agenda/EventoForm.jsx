@@ -41,14 +41,16 @@ export default function EventoForm({ evento, onSubmit, windowMode = false }) {
     notificar_whatsapp: false
   });
 
+  const { filterInContext } = useContextoVisual();
+
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
   });
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 9999),
   });
 
   const schema = z.object({
