@@ -257,6 +257,16 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
       return;
     }
 
+    // Validação avançada (Etapa 2) + carimbo multiempresa
+    const stamped = carimbarContexto(formData, 'empresa_id');
+    const parsed = pedidoCompletoSchema.safeParse(stamped);
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
+      toast.error('❌ Erros de validação', { description: msg });
+      return;
+    }
+    const empresaId = parsed.data.empresa_id || formData.empresa_id;
+
     setSalvando(true);
 
     try {
