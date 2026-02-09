@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import ProtectedField from "@/components/security/ProtectedField";
 import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.6 - EVOLUÇÃO DO CADASTRO DE PRODUTOS
@@ -307,14 +308,7 @@ Caso contrário, sugira:
     message: 'Bitolas precisam ter peso teórico preenchido'
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const parsed = produtoSchema.safeParse(formData);
-    if (!parsed.success) {
-      const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
-      toast.error('Erros de validação', { description: msg });
-      return;
-    }
+  const handleSubmit = async (_, __) => {
     onSubmit(formData);
   };
 
