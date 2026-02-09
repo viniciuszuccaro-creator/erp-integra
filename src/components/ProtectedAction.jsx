@@ -7,7 +7,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
-// ProtectedAction v2 - suporta modos: "disable" (padrão) e "hide" + auditoria opcional
+// ProtectedAction v2 - suporta modos: "modal" (padrão), "disable" e "hide" + auditoria opcional
 export function ProtectedAction({
   children,
   module,
