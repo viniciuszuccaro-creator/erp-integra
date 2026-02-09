@@ -271,8 +271,20 @@ export default function Estoque() {
     },
   ];
 
-  const handleModuleClick = (module) => {
+  const allowedModules = modules.filter(m => hasPermission('Estoque', (m.sectionKey || m.title), 'ver'));
+
+   const handleModuleClick = (module) => {
     React.startTransition(() => {
+      // Auditoria de abertura de seção
+      base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        acao: 'Visualização',
+        modulo: 'Estoque',
+        tipo_auditoria: 'acesso',
+        entidade: 'Seção',
+        descricao: `Abrir seção: ${module.title}`,
+        data_hora: new Date().toISOString(),
+      });
       openWindow(
         module.component,
         { ...(module.props || {}), windowMode: true },
@@ -320,7 +332,7 @@ export default function Estoque() {
         )}
 
         <ModulosGridEstoque 
-          modules={modules}
+          modules={allowedModules}
           onModuleClick={handleModuleClick}
         />
       </div>

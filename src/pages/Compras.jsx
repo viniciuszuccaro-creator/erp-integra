@@ -175,8 +175,20 @@ export default function Compras() {
     },
   ];
 
-  const handleModuleClick = (module) => {
+  const allowedModules = modules.filter(m => hasPermission('Compras', (m.sectionKey || m.title), 'ver'));
+
+   const handleModuleClick = (module) => {
     React.startTransition(() => {
+      // Auditoria de abertura de seção
+      base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        acao: 'Visualização',
+        modulo: 'Compras',
+        tipo_auditoria: 'acesso',
+        entidade: 'Seção',
+        descricao: `Abrir seção: ${module.title}`,
+        data_hora: new Date().toISOString(),
+      });
       openWindow(
         module.component,
         { 
@@ -206,7 +218,7 @@ export default function Compras() {
         />
 
         <ModulosGridCompras 
-          modules={modules}
+          modules={allowedModules}
           onModuleClick={handleModuleClick}
         />
       </div>

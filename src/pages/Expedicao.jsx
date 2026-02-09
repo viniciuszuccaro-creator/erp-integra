@@ -267,10 +267,22 @@ export default function Expedicao() {
     },
   ];
 
-  const handleModuleClick = (module) => {
+  const allowedModules = modules.filter(m => hasPermission('Expedição', (m.sectionKey || m.title), 'ver'));
+
+   const handleModuleClick = (module) => {
     React.startTransition(() => {
+      // Auditoria de abertura de seção
+      base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        acao: 'Visualização',
+        modulo: 'Expedição',
+        tipo_auditoria: 'acesso',
+        entidade: 'Seção',
+        descricao: `Abrir seção: ${module.title}`,
+        data_hora: new Date().toISOString(),
+      });
       openWindow(
-        module.component,
+         module.component,
         { ...(module.props || {}), windowMode: true },
         {
           title: module.windowTitle,
@@ -297,7 +309,7 @@ export default function Expedicao() {
         )}
 
         <ModulosGridExpedicao 
-          modules={modules}
+          modules={allowedModules}
           onModuleClick={handleModuleClick}
         />
       </div>

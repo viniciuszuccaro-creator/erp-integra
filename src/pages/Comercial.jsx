@@ -311,8 +311,20 @@ export default function Comercial() {
     }
   ];
 
-  const handleModuleClick = (module) => {
+  const allowedModules = modules.filter(m => hasPermission('Comercial', (m.sectionKey || m.title), 'ver'));
+
+   const handleModuleClick = (module) => {
     React.startTransition(() => {
+      // Auditoria de abertura de seção
+      base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        acao: 'Visualização',
+        modulo: 'Comercial',
+        tipo_auditoria: 'acesso',
+        entidade: 'Seção',
+        descricao: `Abrir seção: ${module.title}`,
+        data_hora: new Date().toISOString(),
+      });
       openWindow(
         module.component,
         { ...(module.props || {}), windowMode: true },
@@ -347,7 +359,7 @@ export default function Comercial() {
         )}
 
         <ModulosGridComercial 
-          modules={modules}
+          modules={allowedModules}
           onModuleClick={handleModuleClick}
         />
       </div>

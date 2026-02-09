@@ -361,8 +361,20 @@ export default function Financeiro() {
 
   const allModules = [...modules, ...grupoModules];
 
-  const handleModuleClick = (module) => {
+  const allowedAllModules = allModules.filter(m => hasPermission('Financeiro', (m.sectionKey || m.title), 'ver'));
+
+   const handleModuleClick = (module) => {
     React.startTransition(() => {
+      // Auditoria de abertura de seção
+      base44.entities.AuditLog.create({
+        usuario: (await base44.auth.me())?.full_name || 'Usuário',
+        acao: 'Visualização',
+        modulo: 'Financeiro',
+        tipo_auditoria: 'acesso',
+        entidade: 'Seção',
+        descricao: `Abrir seção: ${module.title}`,
+        data_hora: new Date().toISOString(),
+      });
       openWindow(
         module.component,
         { 
@@ -415,7 +427,7 @@ export default function Financeiro() {
         />
 
         <ModulosGridFinanceiro 
-          modules={allModules}
+          modules={allowedAllModules}
           onModuleClick={handleModuleClick}
         />
 
