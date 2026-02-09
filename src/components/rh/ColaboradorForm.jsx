@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Save, User, Trash2, Power, PowerOff } from "lucide-react";
 
 /**
@@ -38,8 +40,15 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
     aso_validade: ''
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const schema = z.object({
+    nome_completo: z.string().min(3, 'Nome é obrigatório'),
+    cpf: z.string().min(11, 'CPF é obrigatório'),
+    data_admissao: z.string().min(4, 'Data de admissão é obrigatória'),
+    cargo: z.string().min(2, 'Cargo é obrigatório'),
+    departamento: z.string().min(2, 'Departamento é obrigatório'),
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
