@@ -46,7 +46,7 @@ export default function InventarioForm({ windowMode = true }) {
       <CardHeader className="border-b bg-slate-50">
         <CardTitle>Inventário</CardTitle>
       </CardHeader>
-      <FormWrapper schema={schema} defaultValues={inv} onSubmit={() => salvar(inv.status)} externalData={inv} className="flex-1 overflow-auto p-4 space-y-4">
+      <FormWrapper schema={schema} defaultValues={inv} onSubmit={() => salvar('Em Contagem')} externalData={inv} className="flex-1 overflow-auto p-4 space-y-4">
         <CardContent className="flex-1 overflow-auto p-4 space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div>
@@ -76,7 +76,7 @@ export default function InventarioForm({ windowMode = true }) {
         <InventarioContagem itens={inv.itens} onChange={(itens)=>setInv({ ...inv, itens })} />
 
         <div className="flex justify-end gap-2 pt-2 border-t">
-          <Button variant="outline" onClick={()=>salvar('Em Contagem')} disabled={salvando}>Salvar</Button>
+          <Button variant="outline" type="submit" disabled={salvando}>Salvar</Button>
           <Button onClick={aprovar} className="bg-green-600 hover:bg-green-700" disabled={salvando || inv.status==='Concluído'}>Aprovar e Aplicar Ajustes</Button>
         </div>
       </CardContent>

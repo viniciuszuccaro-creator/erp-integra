@@ -25,6 +25,7 @@ import {
   Award,
   Target
 } from "lucide-react";
+import FormWrapper from "@/components/common/FormWrapper";
 import { useToast } from "@/components/ui/use-toast";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 
@@ -186,7 +187,7 @@ export default function RepresentanteFormCompleto({ representante, isOpen, onClo
   const totais = representante?.id ? calcularTotais() : { totalVendas: 0, totalComissao: 0, quantidadePedidos: 0 };
 
   const content = (
-    <>
+    <FormWrapper onSubmit={handleSave} externalData={formData}>
       <div className="border-b pb-4 px-6 pt-6 flex-shrink-0 bg-white sticky top-0 z-10">
         <div className="flex items-start justify-between">
           <div>
@@ -683,7 +684,7 @@ export default function RepresentanteFormCompleto({ representante, isOpen, onClo
           </div>
         </ScrollArea>
       </Tabs>
-    </>
+    </FormWrapper>
   );
 
   if (windowMode) {
