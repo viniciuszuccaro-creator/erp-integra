@@ -195,7 +195,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
           Registrar Movimentação
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {
