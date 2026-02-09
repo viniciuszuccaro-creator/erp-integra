@@ -228,11 +228,15 @@ const setFormData = (updater) => {
 
         <div>
           <Label htmlFor="email">E-mail</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          <Controller
+            control={control}
+            name="email"
+            render={({ field }) => (
+              <>
+                <Input id="email" type="email" {...field} />
+                {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email.message}</p>}
+              </>
+            )}
           />
         </div>
 
