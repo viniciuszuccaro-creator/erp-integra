@@ -60,6 +60,7 @@ import BootstrapGuard from "@/components/lib/BootstrapGuard";
 import GlobalNetworkErrorHandler from "@/components/lib/GlobalNetworkErrorHandler";
 import GuardRails from "@/components/lib/GuardRails";
 import GlobalContextStamp from "@/components/lib/GlobalContextStamp";
+import ProtectedSection from "@/components/security/ProtectedSection";
 
 const navigationItems = [
         { title: "Dashboard", url: createPageUrl("Dashboard"), icon: LayoutDashboard, group: "principal" },
