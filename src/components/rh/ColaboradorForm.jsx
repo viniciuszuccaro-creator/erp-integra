@@ -298,7 +298,7 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
           </Button>
         </div>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {
