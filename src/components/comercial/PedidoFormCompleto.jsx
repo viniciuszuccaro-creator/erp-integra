@@ -56,6 +56,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
   
   // V21.6 FINAL: Hook de detecção AUTOMÁTICA OBRIGATÓRIA
   const { origemPedido, bloquearEdicao } = useOrigemPedido();
+  const { carimbarContexto } = useContextoVisual();
   
   const defaultValues = {
     tipo: 'Pedido',
