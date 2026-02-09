@@ -9,6 +9,7 @@ import { formatarTelefone, formatarCEP } from '../lib/validacoes';
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 const clienteSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
@@ -24,6 +25,7 @@ const clienteSchema = z.object({
 });
 
 export default function ClienteForm({ cliente, onSubmit, isSubmitting }) {
+  const { carimbarContexto } = useContextoVisual();
   const defaultValues = (cliente || {
   nome: "",
   razao_social: "",
@@ -123,7 +125,7 @@ const setFormData = (updater) => {
       nome: (formData.nome || '').trim(),
       limite_credito: formData.limite_credito ? parseFloat(formData.limite_credito) : 0
     };
-    onSubmit(dataToSubmit);
+    onSubmit(carimbarContexto(dataToSubmit, 'empresa_id'));
   };
 
   return (

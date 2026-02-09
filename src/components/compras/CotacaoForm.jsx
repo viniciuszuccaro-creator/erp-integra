@@ -13,11 +13,13 @@ import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2: Cotação Form - Adaptado para Window Mode
  */
 export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
+  const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
   const schema = z.object({
     numero_cotacao: z.string(),
     descricao: z.string().min(3, 'Descrição obrigatória'),
@@ -59,18 +61,18 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
   };
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', empresaAtual?.id],
+    queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
   });
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
+    queryKey: ['fornecedores', empresaAtual?.id],
+    queryFn: () => filterInContext('Fornecedor', {}, '-updated_date', 9999),
   });
 
 
   const onValid = (data) => {
-    onSubmit(data);
+    onSubmit(carimbarContexto(data, 'empresa_id'));
   };
 
   const content = (

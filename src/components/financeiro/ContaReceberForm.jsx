@@ -30,7 +30,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
   });
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const { user: authUser } = useUser();
-  const { empresaAtual, filterInContext } = useContextoVisual();
+  const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
   const [formData, setFormData] = useState(() => conta || {
     descricao: '',
     cliente: '',
@@ -94,16 +94,16 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
       return;
     }
 
-    onSubmit({
+    onSubmit(carimbarContexto({
       ...formData,
       valor: Number(formData.valor) || 0,
       criado_por: authUser?.full_name || authUser?.email,
       criado_por_id: authUser?.id
-    });
+    }, 'empresa_id'));
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
+    <form onSubmit={handleSubmit} className={`space-y-6 w-full h-full ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
       <Alert className="border-green-300 bg-green-50">
         <AlertDescription className="text-sm text-green-900">
           <strong>💰 Conta a Receber:</strong> Registre valores a receber de clientes e gere cobranças

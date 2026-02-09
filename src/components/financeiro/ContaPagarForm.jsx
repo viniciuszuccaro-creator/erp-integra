@@ -12,10 +12,23 @@ import { DollarSign, Calendar, FileText, Building2, Package, Loader2, TrendingDo
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { z } from 'zod';
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
+  const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
+  const schema = z.object({
+    descricao: z.string().min(1, 'Descrição é obrigatória'),
+    fornecedor_id: z.string().min(1, 'Fornecedor é obrigatório'),
+    valor: z.number().positive('Valor deve ser maior que zero'),
+    empresa_id: z.string().min(1, 'Empresa é obrigatória'),
+    centro_custo_id: z.string().min(1, 'Centro de custo é obrigatório'),
+    plano_contas_id: z.string().min(1, 'Plano de contas é obrigatório'),
+    data_emissao: z.string().min(1, 'Data de emissão é obrigatória'),
+    data_vencimento: z.string().min(1, 'Data de vencimento é obrigatória'),
+  });
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const { user: authUser } = useUser();
   const [formData, setFormData] = useState(() => conta || {
@@ -45,56 +58,49 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
   const { formasPagamento } = useFormasPagamento({ empresa_id: formData.empresa_id });
 
   const { data: fornecedores = [] } = useQuery({
-    queryKey: ['fornecedores'],
-    queryFn: () => base44.entities.Fornecedor.list(),
+    queryKey: ['fornecedores', empresaAtual?.id],
+    queryFn: () => filterInContext('Fornecedor', {}, '-updated_date', 9999),
   });
 
   const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordens-compra'],
-    queryFn: () => base44.entities.OrdemCompra.list(),
+    queryKey: ['ordens-compra', empresaAtual?.id],
+    queryFn: () => filterInContext('OrdemCompra', {}, '-updated_date', 9999),
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list(),
+    queryKey: ['empresas', empresaAtual?.id],
+    queryFn: () => filterInContext('Empresa', {}, '-updated_date', 9999),
   });
 
   const { data: centrosCusto = [] } = useQuery({
-    queryKey: ['centrosCusto'],
-    queryFn: () => base44.entities.CentroCusto.list(),
+    queryKey: ['centrosCusto', empresaAtual?.id],
+    queryFn: () => filterInContext('CentroCusto', {}, '-updated_date', 9999),
   });
 
   const { data: planosContas = [] } = useQuery({
-    queryKey: ['planosContas'],
-    queryFn: () => base44.entities.PlanoDeContas.list(),
+    queryKey: ['planosContas', empresaAtual?.id],
+    queryFn: () => filterInContext('PlanoDeContas', {}, '-updated_date', 9999),
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    if (!formData.descricao || !formData.fornecedor || !formData.valor) {
-      toast.error('Preencha os campos obrigatórios');
-      return;
-    }
 
-    if (!formData.empresa_id) {
-      toast.error('Selecione a empresa');
-      return;
-    }
-    if (!formData.centro_custo_id) {
-      toast.error('Centro de custo é obrigatório');
-      return;
-    }
-    if (!formData.plano_contas_id) {
-      toast.error('Plano de contas é obrigatório');
-      return;
-    }
-
-    onSubmit({
+    const parsed = schema.safeParse({
       ...formData,
+      valor: Number(formData.valor) || 0,
+    });
+    if (!parsed.success) {
+      const msg = parsed.error.issues?.[0]?.message || 'Dados inválidos';
+      toast.error(msg);
+      return;
+    }
+
+    onSubmit(carimbarContexto({
+      ...formData,
+      valor: Number(formData.valor) || 0,
       criado_por: authUser?.full_name || authUser?.email,
       criado_por_id: authUser?.id
-    });
+    }, 'empresa_id'));
   };
 
   const content = (

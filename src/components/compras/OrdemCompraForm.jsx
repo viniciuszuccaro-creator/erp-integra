@@ -44,7 +44,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
     valor_total: 0
   });
 
-  const { empresaAtual, filterInContext } = useContextoVisual();
+  const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
 
   // Zod schema (mantido)
 
@@ -130,7 +130,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
   });
 
   const onValid = (data) => {
-    onSubmit(data);
+    onSubmit(carimbarContexto(data, 'empresa_id'));
   };
 
   const content = (
