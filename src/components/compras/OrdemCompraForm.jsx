@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, ShoppingCart, Plus, Trash2 } from "lucide-react";
+import FormWrapper from "@/components/common/FormWrapper";
 import { z } from "zod";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -134,8 +135,10 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
     onSubmit(carimbarContexto(data, 'empresa_id'));
   };
 
+  const unifiedSubmit = React.useCallback(() => rhfHandleSubmit(onValid)(), [rhfHandleSubmit, onValid]);
+
   const content = (
-    <form onSubmit={rhfHandleSubmit(onValid)} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}>
+    <FormWrapper onSubmit={unifiedSubmit} externalData={watch()} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}>
       <FormErrorSummary messages={Object.values(errors || {}).map(e => e?.message).filter(Boolean)} />
       <Card>
         <CardContent className="p-6 space-y-4">
@@ -353,7 +356,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
           {ordemCompra ? 'Atualizar' : 'Criar'} Ordem de Compra
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

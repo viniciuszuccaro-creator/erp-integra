@@ -9,6 +9,7 @@ import { formatarTelefone, formatarCEP } from '../lib/validacoes';
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 const clienteSchema = z.object({
@@ -128,8 +129,10 @@ const setFormData = (updater) => {
     onSubmit(carimbarContexto(dataToSubmit, 'empresa_id'));
   };
 
+  const unifiedSubmit = React.useCallback(() => handleSubmit(onSubmitForm)(), [handleSubmit, onSubmitForm]);
+
   return (
-    <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4 w-full h-full">
+    <FormWrapper onSubmit={unifiedSubmit} externalData={formData} className="space-y-4 w-full h-full">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
           <Label htmlFor="tipo">Tipo de Pessoa *</Label>
@@ -411,6 +414,6 @@ const setFormData = (updater) => {
           {isSubmitting ? 'Salvando...' : 'Salvar'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 }

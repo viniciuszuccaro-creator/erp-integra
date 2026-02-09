@@ -13,6 +13,7 @@ import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
+import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import FormErrorSummary from "@/components/common/FormErrorSummary";
 
@@ -75,9 +76,10 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
   const onValid = (data) => {
     onSubmit(carimbarContexto(data, 'empresa_id'));
   };
+  const unifiedSubmit = React.useCallback(() => handleSubmit(onValid)(), [handleSubmit, onValid]);
 
   const content = (
-    <form onSubmit={handleSubmit(onValid)} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}>
+    <FormWrapper onSubmit={unifiedSubmit} externalData={watch()} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 overflow-auto' : ''}`}>
       <FormErrorSummary messages={Object.values(errors || {}).map(e => e?.message).filter(Boolean)} />
       <Card>
         <CardContent className="p-6 space-y-4">
@@ -250,7 +252,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
           Criar e Enviar Cotação
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {
