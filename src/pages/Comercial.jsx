@@ -328,7 +328,7 @@ export default function Comercial() {
 
   return (
     <ErrorBoundary>
-      <div className="w-full min-h-screen p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderComercialCompacto />
         
         <KPIsComercial
