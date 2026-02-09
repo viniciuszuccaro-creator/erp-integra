@@ -30,6 +30,7 @@ export default function FormWrapper({
   className = '',
   mode = 'onChange',
   reValidateMode = 'onChange',
+  externalData,
   children,
 }) {
   const { carimbarContexto } = useContextoVisual();
@@ -43,7 +44,32 @@ export default function FormWrapper({
   const [errorMessages, setErrorMessages] = React.useState([]);
 
   const handleValid = async (data) => {
+    // Suporte a dados externos (formularios controlados legacy)
+    if (externalData) {
+      const stampedExternal = withContext ? carimbarContexto(externalData, contextFieldName) : externalData;
+      if (schema) {
+        const parsed = schema.safeParse(stampedExternal);
+        if (!parsed.success) {
+          const msgs = parsed.error.issues?.map(i => i.message) || ['Verifique os campos destacados.'];
+          setErrorMessages(msgs);
+          return;
+        }
+      }
+      setErrorMessages([]);
+      if (typeof onSubmit === 'function') await onSubmit(stampedExternal, methods);
+      return;
+    }
+
     const payload = withContext ? carimbarContexto(data, contextFieldName) : data;
+    if (schema) {
+      const parsed = schema.safeParse(payload);
+      if (!parsed.success) {
+        const msgs = parsed.error.issues?.map(i => i.message) || ['Verifique os campos destacados.'];
+        setErrorMessages(msgs);
+        return;
+      }
+    }
+    setErrorMessages([]);
     if (typeof onSubmit === 'function') {
       await onSubmit(payload, methods);
     }
