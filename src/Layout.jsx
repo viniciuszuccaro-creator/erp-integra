@@ -340,6 +340,20 @@ function LayoutContent({ children, currentPageName }) {
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
   }, [user?.id, empresaAtual?.id]);
 
+  // Mapeamento de página -> módulo (deve estar antes de qualquer useEffect que use currentModule)
+  const pageToModule = {
+    CRM: 'CRM',
+    Comercial: 'Comercial',
+    Estoque: 'Estoque',
+    Compras: 'Compras',
+    Financeiro: 'Financeiro',
+    Fiscal: 'Fiscal',
+    RH: 'RH',
+    Expedicao: 'Expedição',
+  };
+
+  const currentModule = pageToModule[currentPageName];
+
   // Auditoria global de interações (cliques/seletores/tabs)
   useEffect(() => {
     if (!user) return;
