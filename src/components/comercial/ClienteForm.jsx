@@ -149,7 +149,7 @@ const setFormData = (updater) => {
   };
 
   return (
-    <form onSubmit={onSubmitInternal} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
           <Label htmlFor="tipo">Tipo de Pessoa *</Label>
