@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { Save, Calendar, Video, Bell, Mail, MessageSquare } from "lucide-react";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2: Evento Form - Adaptado para Window Mode
