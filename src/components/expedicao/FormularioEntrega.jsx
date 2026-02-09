@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin, Phone, Calendar, Mail, Zap, CheckCircle2, AlertCircle } from "lucide-react";
 import BuscaCEP from "../comercial/BuscaCEP";
 import { Card } from "@/components/ui/card";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -211,16 +212,12 @@ Retorne:
     }
   };
 
-  const handleSubmitForm = (e) => {
-    e.preventDefault();
-    // The original onSubmit prop is now handled internally by mutations
-    if (isEditing && formData.id) { // Assuming formData has an 'id' field for existing deliveries
+  const handleSubmitForm = async () => {
+    if (isEditing && formData.id) {
       updateMutation.mutate({ id: formData.id, data: formData });
     } else {
       createMutation.mutate(formData);
     }
-    // If the original onSubmit prop was meant for other side effects, it could be called here
-    // e.g., if (onSubmit) onSubmit(formData);
   };
 
   const isSubmitting = isLoading || createMutation.isPending || updateMutation.isPending;
