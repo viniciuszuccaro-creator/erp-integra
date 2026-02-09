@@ -30,7 +30,7 @@ export default function FiscalPage() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_faturamento_id: empresaAtual.id } : {};
-        return await base44.entities.NotaFiscal.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('NotaFiscal', {}, '-created_date', 100, 'empresa_faturamento_id');
       } catch (err) {
         console.error('Erro ao buscar notas fiscais:', err);
         return [];

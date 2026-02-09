@@ -27,7 +27,7 @@ export default function CRMPage() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Oportunidade.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Oportunidade', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar oportunidades:', err);
         return [];
@@ -42,7 +42,7 @@ export default function CRMPage() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Interacao.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Interacao', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar interações:', err);
         return [];
@@ -57,7 +57,7 @@ export default function CRMPage() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_dona_id: empresaAtual.id } : {};
-        return await base44.entities.Campanha.filter(filtro, '-created_date', 50);
+        return await filtrarPorContexto('Campanha', {}, '-created_date', 50, 'empresa_dona_id');
       } catch (err) {
         console.error('Erro ao buscar campanhas:', err);
         return [];
@@ -72,7 +72,7 @@ export default function CRMPage() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Cliente', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
         return [];
@@ -86,10 +86,9 @@ export default function CRMPage() {
     queryKey: ['clientes-count-crm', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
-          filter: filtro
+          filter: getFiltroContexto('empresa_id')
         });
         return response.data?.count || clientes.length;
       } catch {

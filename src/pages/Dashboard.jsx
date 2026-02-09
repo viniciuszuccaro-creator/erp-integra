@@ -58,7 +58,7 @@ const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/Widge
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { empresaAtual, estaNoGrupo, grupoAtual } = useContextoVisual();
+  const { empresaAtual, estaNoGrupo, grupoAtual, filterInContext, getFiltroContexto } = useContextoVisual();
 
   const [periodo, setPeriodo] = useState(() => {
     try {
@@ -100,15 +100,7 @@ export default function Dashboard() {
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Pedido.filter(filtro, '-created_date', 9999);
-      } catch (err) {
-        console.error('Erro ao buscar pedidos:', err);
-        return [];
-      }
-    },
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 9999),
     refetchInterval,
     staleTime: 30000,
     retry: 2
@@ -116,15 +108,7 @@ export default function Dashboard() {
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.ContaReceber.filter(filtro, '-data_vencimento', 9999);
-      } catch (err) {
-        console.error('Erro ao buscar contas a receber:', err);
-        return [];
-      }
-    },
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
     refetchInterval,
     staleTime: 30000,
     retry: 2
@@ -132,15 +116,7 @@ export default function Dashboard() {
 
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['contasPagar', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.ContaPagar.filter(filtro, '-data_vencimento', 9999);
-      } catch (err) {
-        console.error('Erro ao buscar contas a pagar:', err);
-        return [];
-      }
-    },
+    queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 9999),
     refetchInterval,
     staleTime: 30000,
     retry: 2
@@ -148,15 +124,7 @@ export default function Dashboard() {
 
   const { data: entregas = [] } = useQuery({
     queryKey: ['entregas', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Entrega.filter(filtro, '-created_date', 9999);
-      } catch (err) {
-        console.error('Erro ao buscar entregas:', err);
-        return [];
-      }
-    },
+    queryFn: () => filterInContext('Entrega', {}, '-created_date', 9999),
     refetchInterval,
     staleTime: 30000,
     retry: 1
@@ -164,15 +132,7 @@ export default function Dashboard() {
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_alocada_id: empresaAtual.id } : {};
-        return await base44.entities.Colaborador.filter(filtro, '-created_date', 9999);
-      } catch (err) {
-        console.error('Erro ao buscar colaboradores:', err);
-        return [];
-      }
-    },
+    queryFn: () => filterInContext('Colaborador', {}, '-created_date', 9999, 'empresa_alocada_id'),
     refetchInterval,
     staleTime: 60000,
     retry: 1
@@ -180,15 +140,7 @@ export default function Dashboard() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Produto.filter(filtro, '-created_date', 9999);
-      } catch (err) {
-        console.error('Erro ao buscar produtos:', err);
-        return [];
-      }
-    },
+    queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
     refetchInterval,
     staleTime: 60000,
     retry: 1
@@ -198,7 +150,7 @@ export default function Dashboard() {
     queryKey: ['produtos-count-dash', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const filtro = getFiltroContexto('empresa_id');
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Produto',
           filter: filtro
@@ -214,15 +166,7 @@ export default function Dashboard() {
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Cliente.filter(filtro, '-created_date', 9999);
-      } catch (err) {
-        console.error('Erro ao buscar clientes:', err);
-        return [];
-      }
-    },
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
     refetchInterval,
     staleTime: 60000,
     retry: 1
@@ -232,7 +176,7 @@ export default function Dashboard() {
     queryKey: ['clientes-count', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+        const filtro = getFiltroContexto('empresa_id');
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
           filter: filtro

@@ -53,7 +53,7 @@ export default function Expedicao() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Entrega.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Entrega', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar entregas:', err);
         return [];
@@ -70,7 +70,7 @@ export default function Expedicao() {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Entrega',
-          filter: filtro
+          filter: getFiltroContexto('empresa_id')
         });
         return response.data?.count || entregas.length;
       } catch {
@@ -86,7 +86,7 @@ export default function Expedicao() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Cliente.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Cliente', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
         return [];
@@ -101,7 +101,7 @@ export default function Expedicao() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Pedido.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('Pedido', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar pedidos:', err);
         return [];
@@ -116,7 +116,7 @@ export default function Expedicao() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Romaneio.filter(filtro, '-created_date', 50);
+        return await filtrarPorContexto('Romaneio', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar romaneios:', err);
         return [];
@@ -131,7 +131,7 @@ export default function Expedicao() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Rota.filter(filtro, '-created_date', 50);
+        return await filtrarPorContexto('Rota', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar rotas:', err);
         return [];

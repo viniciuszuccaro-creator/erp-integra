@@ -27,7 +27,7 @@ export default function Estoque() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow } = useWindow();
   const { user } = useUser();
-  const { estaNoGrupo, empresaAtual, empresasDoGrupo, filtrarPorContexto } = useContextoVisual();
+  const { estaNoGrupo, empresaAtual, empresasDoGrupo, filtrarPorContexto, getFiltroContexto } = useContextoVisual();
   
   // Estados removidos - VisualizadorUniversalEntidade gerencia tudo internamente
 
@@ -37,7 +37,7 @@ export default function Estoque() {
   const { data: contagensTotais = { total: 0, revenda: 0, producao: 0, estoqueBaixo: 0 }, isLoading: loadingContagens, refetch: refetchContagens } = useQuery({
     queryKey: ['produtos-contagens-dashboard', empresaAtual?.id],
     queryFn: async () => {
-      const filtroBase = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
+      const filtroBase = getFiltroContexto('empresa_id');
 
       // Buscar TODOS os produtos para contagem correta
       let todosProdutos = [];
@@ -88,7 +88,7 @@ export default function Estoque() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.MovimentacaoEstoque.filter(filtro, '-data_movimentacao', 50);
+        return await filtrarPorContexto('MovimentacaoEstoque', {}, '-data_movimentacao', 50);
       } catch (err) {
         console.error('Erro ao buscar movimentações:', err);
         return [];
@@ -105,7 +105,7 @@ export default function Estoque() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.SolicitacaoCompra.filter(filtro, '-data_solicitacao', 50);
+        return await filtrarPorContexto('SolicitacaoCompra', {}, '-data_solicitacao', 50);
       } catch (err) {
         console.error('Erro ao buscar solicitações:', err);
         return [];
@@ -122,7 +122,7 @@ export default function Estoque() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.OrdemCompra.filter(filtro, '-data_solicitacao', 50);
+        return await filtrarPorContexto('OrdemCompra', {}, '-data_solicitacao', 50);
       } catch (err) {
         console.error('Erro ao buscar ordens:', err);
         return [];
@@ -140,7 +140,7 @@ export default function Estoque() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.Produto.filter(filtro, undefined, 5000);
+        return await filtrarPorContexto('Produto', {}, undefined, 5000);
       } catch (err) {
         console.error('Erro ao buscar produtos para KPIs:', err);
         return [];

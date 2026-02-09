@@ -38,15 +38,15 @@ export default function Financeiro() {
     empresaAtual,
     empresasDoGrupo,
     filtrarPorContexto,
-    adicionarColunasContexto
+    adicionarColunasContexto,
+    getFiltroContexto
   } = useContextoVisual();
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.ContaReceber.filter(filtro, '-data_vencimento', 100);
+        return await filtrarPorContexto('ContaReceber', {}, '-data_vencimento', 100);
       } catch (err) {
         console.error('Erro ao buscar contas a receber:', err);
         return [];
@@ -60,10 +60,9 @@ export default function Financeiro() {
     queryKey: ['contas-receber-count', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'ContaReceber',
-          filter: filtro
+          filter: getFiltroContexto('empresa_id')
         });
         return response.data?.count || contasReceber.length;
       } catch {
@@ -78,8 +77,7 @@ export default function Financeiro() {
     queryKey: ['contasPagar', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.ContaPagar.filter(filtro, '-data_vencimento', 100);
+        return await filtrarPorContexto('ContaPagar', {}, '-data_vencimento', 100);
       } catch (err) {
         console.error('Erro ao buscar contas a pagar:', err);
         return [];
@@ -93,10 +91,9 @@ export default function Financeiro() {
     queryKey: ['contas-pagar-count', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'ContaPagar',
-          filter: filtro
+          filter: getFiltroContexto('empresa_id')
         });
         return response.data?.count || contasPagar.length;
       } catch {
@@ -112,7 +109,7 @@ export default function Financeiro() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.RateioFinanceiro.filter(filtro, '-created_date', 50);
+        return await filtrarPorContexto('RateioFinanceiro', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar rateios:', err);
         return [];
@@ -127,7 +124,7 @@ export default function Financeiro() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.ExtratoBancario.filter(filtro, '-data_movimento', 100);
+        return await filtrarPorContexto('ExtratoBancario', {}, '-data_movimento', 100);
       } catch (err) {
         console.error('Erro ao buscar extratos:', err);
         return [];
@@ -141,7 +138,7 @@ export default function Financeiro() {
     queryKey: ['configs-gateway', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.ConfiguracaoGatewayPagamento.list();
+        return await filtrarPorContexto('ConfiguracaoGatewayPagamento', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar configs gateway:', err);
         return [];
@@ -156,7 +153,7 @@ export default function Financeiro() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.CaixaOrdemLiquidacao.filter(filtro, '-created_date', 50);
+        return await filtrarPorContexto('CaixaOrdemLiquidacao', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar ordens de liquidação:', err);
         return [];
@@ -170,8 +167,7 @@ export default function Financeiro() {
     queryKey: ['pedidos-pendentes-aprovacao', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id, status_aprovacao: "pendente" } : { status_aprovacao: "pendente" };
-        return await base44.entities.Pedido.filter(filtro, '-created_date', 50);
+        return await filtrarPorContexto('Pedido', { status_aprovacao: 'pendente' }, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar pedidos pendentes:', err);
         return [];

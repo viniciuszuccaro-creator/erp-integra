@@ -31,7 +31,7 @@ export default function Producao() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await base44.entities.OrdemProducao.filter(filtro, '-created_date', 100);
+        return await filtrarPorContexto('OrdemProducao', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar ordens de produção:', err);
         return [];
@@ -45,10 +45,9 @@ export default function Producao() {
     queryKey: ['ordens-producao-count', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'OrdemProducao',
-          filter: filtro
+          filter: getFiltroContexto('empresa_id')
         });
         return response.data?.count || ordensProducao.length;
       } catch {
