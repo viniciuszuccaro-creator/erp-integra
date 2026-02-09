@@ -46,6 +46,17 @@ const pedidoSchema = z
   .refine((p) => p.itens.reduce((s, i) => s + (i.valor_total || 0), 0) >= 0, {
     message: "Total do pedido inválido",
     path: ["itens"],
+  })
+  .superRefine((p, ctx) => {
+    if (p.forma_pagamento === 'Parcelado' && (!p.observacoes || p.observacoes.trim().length < 5)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['observacoes'], message: 'Informe as condições do parcelamento nas observações' });
+    }
+    if (p.status === 'Aprovado') {
+      const algumZerado = p.itens.some(i => (i.valor_unitario || 0) <= 0);
+      if (algumZerado) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['itens'], message: 'Itens aprovados devem ter valor unitário > 0' });
+      }
+    }
   });
 
 export default function PedidoForm({ clientes = [], onSubmit, isSubmitting }) {
