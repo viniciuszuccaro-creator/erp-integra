@@ -116,7 +116,7 @@ const setFormData = (updater) => {
     }
   };
 
-  const onSubmitInternal = (e) => {
+  const onSubmitForm = (values) => {
     e.preventDefault();
 
     const result = clienteSchema.safeParse({
