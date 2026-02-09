@@ -132,7 +132,6 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                     name={`itens.${idx}.produto_descricao`}
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
-                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Produto" />
                     </SelectTrigger>
