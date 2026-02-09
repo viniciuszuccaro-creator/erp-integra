@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -13,20 +16,37 @@ import { Save, ShoppingCart } from "lucide-react";
  * V21.1.2: Solicitação Compra Form - Adaptado para Window Mode
  */
 export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(solicitacao || {
-    numero_solicitacao: `SC-${Date.now()}`,
-    data_solicitacao: new Date().toISOString().split('T')[0],
-    solicitante: '',
-    setor: '',
-    produto_id: '',
-    produto_descricao: '',
-    quantidade_solicitada: 1,
-    unidade_medida: 'UN',
-    justificativa: '',
-    prioridade: 'Média',
-    data_necessidade: '',
-    status: 'Pendente',
-    observacoes: ''
+  const scSchema = z.object({
+    numero_solicitacao: z.string(),
+    data_solicitacao: z.string().min(8, 'Data inválida'),
+    produto_id: z.string().min(1, 'Produto é obrigatório'),
+    produto_descricao: z.string().optional(),
+    quantidade_solicitada: z.number().positive('Quantidade deve ser maior que 0'),
+    unidade_medida: z.string().min(1, 'Unidade obrigatória'),
+    justificativa: z.string().min(5, 'Justificativa muito curta'),
+    prioridade: z.enum(['Baixa','Média','Alta','Urgente']).default('Média'),
+    data_necessidade: z.string().optional(),
+    status: z.string().default('Pendente'),
+    observacoes: z.string().optional()
+  });
+
+  const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm({
+    resolver: zodResolver(scSchema),
+    defaultValues: solicitacao || {
+      numero_solicitacao: `SC-${Date.now()}`,
+      data_solicitacao: new Date().toISOString().split('T')[0],
+      solicitante: '',
+      setor: '',
+      produto_id: '',
+      produto_descricao: '',
+      quantidade_solicitada: 1,
+      unidade_medida: 'UN',
+      justificativa: '',
+      prioridade: 'Média',
+      data_necessidade: '',
+      status: 'Pendente',
+      observacoes: ''
+    }
   });
 
   const { data: produtos = [] } = useQuery({
@@ -37,22 +57,18 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   const handleProdutoChange = (produtoId) => {
     const produto = produtos.find(p => p.id === produtoId);
     if (produto) {
-      setFormData({
-        ...formData,
-        produto_id: produtoId,
-        produto_descricao: produto.descricao,
-        unidade_medida: produto.unidade_medida || 'UN'
-      });
+      setValue('produto_id', produtoId, { shouldValidate: true });
+      setValue('produto_descricao', produto?.descricao || '', { shouldValidate: false });
+      setValue('unidade_medida', produto?.unidade_medida || 'UN', { shouldValidate: false });
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
+  const onValid = (data) => {
+    onSubmit(data);
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <form onSubmit={handleSubmit(onValid)} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -64,8 +80,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
             <div>
               <Label>Nº Solicitação</Label>
               <Input
-                value={formData.numero_solicitacao}
-                onChange={(e) => setFormData({ ...formData, numero_solicitacao: e.target.value })}
+                {...register('numero_solicitacao')}
                 readOnly
                 className="bg-slate-50"
               />
@@ -75,30 +90,32 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
               <Label>Data *</Label>
               <Input
                 type="date"
-                value={formData.data_solicitacao}
-                onChange={(e) => setFormData({ ...formData, data_solicitacao: e.target.value })}
-                required
+                {...register('data_solicitacao')}
               />
+              {errors.data_solicitacao && <p className="text-red-600 text-xs mt-1">{errors.data_solicitacao.message}</p>}
             </div>
 
             <div className="col-span-2">
               <Label>Produto *</Label>
-              <Select
-                value={formData.produto_id}
-                onValueChange={handleProdutoChange}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {produtos.filter(p => p.status === 'Ativo').map(p => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.codigo ? `${p.codigo} - ` : ''}{p.descricao}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="produto_id"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={(v) => { field.onChange(v); handleProdutoChange(v); }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {produtos.filter(p => p.status === 'Ativo').map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.codigo ? `${p.codigo} - ` : ''}{p.descricao}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.produto_id && <p className="text-red-600 text-xs mt-1">{errors.produto_id.message}</p>}
             </div>
 
             <div>
@@ -108,58 +125,57 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                   type="number"
                   step="0.01"
                   min="0.01"
-                  value={formData.quantidade_solicitada}
-                  onChange={(e) => setFormData({ ...formData, quantidade_solicitada: parseFloat(e.target.value) || 0 })}
-                  required
+                  {...register('quantidade_solicitada', { valueAsNumber: true })}
                   className="flex-1"
                 />
+                {errors.quantidade_solicitada && <p className="text-red-600 text-xs mt-1">{errors.quantidade_solicitada.message}</p>}
                 <span className="bg-slate-100 px-3 py-2 rounded border text-sm">
-                  {formData.unidade_medida}
+                  {watch('unidade_medida')}
                 </span>
               </div>
             </div>
 
             <div>
               <Label>Prioridade</Label>
-              <Select
-                value={formData.prioridade}
-                onValueChange={(v) => setFormData({ ...formData, prioridade: v })}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Baixa">Baixa</SelectItem>
-                  <SelectItem value="Média">Média</SelectItem>
-                  <SelectItem value="Alta">Alta</SelectItem>
-                  <SelectItem value="Urgente">🔥 Urgente</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="prioridade"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Baixa">Baixa</SelectItem>
+                      <SelectItem value="Média">Média</SelectItem>
+                      <SelectItem value="Alta">Alta</SelectItem>
+                      <SelectItem value="Urgente">🔥 Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             <div className="col-span-2">
               <Label>Data Necessidade</Label>
               <Input
                 type="date"
-                value={formData.data_necessidade}
-                onChange={(e) => setFormData({ ...formData, data_necessidade: e.target.value })}
+                {...register('data_necessidade')}
               />
             </div>
 
             <div className="col-span-2">
               <Label>Justificativa *</Label>
               <Textarea
-                value={formData.justificativa}
-                onChange={(e) => setFormData({ ...formData, justificativa: e.target.value })}
+                {...register('justificativa')}
                 placeholder="Explique o motivo da compra..."
-                required
                 rows={3}
               />
+              {errors.justificativa && <p className="text-red-600 text-xs mt-1">{errors.justificativa.message}</p>}
             </div>
 
             <div className="col-span-2">
               <Label>Observações</Label>
               <Textarea
-                value={formData.observacoes}
-                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                {...register('observacoes')}
                 rows={2}
               />
             </div>
