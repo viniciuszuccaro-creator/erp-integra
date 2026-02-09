@@ -129,9 +129,11 @@ function LayoutContent({ children, currentPageName }) {
                               break;
                           }
                         } catch (_) {}
-                      };
+                        };
 
-  useEffect(() => {
+                        // Mapeamento de página -> módulo (deve estar antes de qualquer useEffect que use currentModule)
+
+                        useEffect(() => {
     const handleKeyDown = (e) => {
       const ctrl = e.ctrlKey || e.metaKey;
 
