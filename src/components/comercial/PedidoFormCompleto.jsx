@@ -1,5 +1,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -145,6 +147,14 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
   };
 
   const [formData, setFormData] = useState(defaultValues);
+
+  // RHF + Zod (Etapa 2)
+  const { handleSubmit: rhfHandleSubmit, reset, formState: { errors } } = useForm({
+    resolver: zodResolver(pedidoCompletoSchema),
+    defaultValues
+  });
+
+  useEffect(() => { reset(formData); }, [formData, reset]);
   
   // V21.6 FINAL: SEMPRE aplicar origem detectada automaticamente
   useEffect(() => {
@@ -819,7 +829,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
             
             {!pedido && (
               <Button
-                onClick={handleSubmit}
+                onClick={rhfHandleSubmit(handleSubmit)}
                 className="bg-blue-600 hover:bg-blue-700"
                 disabled={salvando || !validacoes.identificacao || !validacoes.itens}
               >
@@ -830,7 +840,19 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
           </div>
         </div>
 
-        {/* Validações */}
+        {/* Erros de Validação (RHF/Zod) */}
+        {errors && Object.keys(errors).length > 0 && (
+          <Alert className="mt-4 border-red-300 bg-red-50">
+            <AlertTriangle className="w-4 h-4 text-red-600" />
+            <AlertDescription className="text-sm">
+              {Object.values(errors).map((e, idx) => (
+                <p key={idx}>• {e?.message || 'Verifique os campos do formulário'}</p>
+              ))}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Validações (fluxo atual) */}
         {(!validacoes.identificacao || !validacoes.itens) && (
           <Alert className="mt-4 border-orange-300 bg-orange-50">
             <AlertTriangle className="w-4 h-4 text-orange-600" />
