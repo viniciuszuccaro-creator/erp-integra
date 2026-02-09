@@ -67,7 +67,7 @@ export default function ColaboradorForm({ colaborador, onSubmit, windowMode = fa
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <div className="space-y-4">
         <Card>
           <CardContent className="p-6 space-y-4">
