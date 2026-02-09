@@ -330,12 +330,15 @@ const setFormData = (updater) => {
 
         <div>
           <Label htmlFor="limite_credito">Limite de Crédito</Label>
-          <Input
-            id="limite_credito"
-            type="number"
-            step="0.01"
-            value={formData.limite_credito}
-            onChange={(e) => setFormData({ ...formData, limite_credito: e.target.value })}
+          <Controller
+            control={control}
+            name="limite_credito"
+            render={({ field }) => (
+              <>
+                <Input id="limite_credito" type="number" step="0.01" {...field} />
+                {errors.limite_credito && <p className="text-xs text-red-600 mt-1">{errors.limite_credito.message}</p>}
+              </>
+            )}
           />
         </div>
 
