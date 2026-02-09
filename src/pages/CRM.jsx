@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
+import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -10,6 +11,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import HeaderCRMCompacto from "@/components/crm/crm-launchpad/HeaderCRMCompacto";
 import KPIsCRM from "@/components/crm/crm-launchpad/KPIsCRM";
 import ModulosGridCRM from "@/components/crm/crm-launchpad/ModulosGridCRM";
+import { useUser } from "@/components/lib/UserContext";
 
 const FunilVisual = React.lazy(() => import("../components/crm/FunilVisual"));
 const FunilComercialInteligente = React.lazy(() => import("@/components/crm/FunilComercialInteligente"));
@@ -21,6 +23,7 @@ export default function CRMPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto, filterInContext, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
+  const { user } = useUser();
 
   const { data: oportunidades = [] } = useQuery({
     queryKey: ['oportunidades', empresaAtual?.id],
@@ -214,6 +217,16 @@ export default function CRMPage() {
 
   const handleModuleClick = (module) => {
     React.startTransition(() => {
+      // Auditoria de abertura de seção
+      base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        acao: 'Visualização',
+        modulo: 'CRM',
+        tipo_auditoria: 'acesso',
+        entidade: 'Seção',
+        descricao: `Abrir seção: ${module.title}`,
+        data_hora: new Date().toISOString(),
+      });
       openWindow(
         module.component,
         { 

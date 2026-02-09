@@ -6,6 +6,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import { useWindow } from "@/components/lib/useWindow";
+import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import HeaderProducaoCompacto from "@/components/producao/producao-launchpad/HeaderProducaoCompacto";
 import KPIsProducao from "@/components/producao/producao-launchpad/KPIsProducao";
@@ -25,6 +26,7 @@ export default function Producao() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { filtrarPorContexto, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
+  const { user } = useUser();
 
   const { data: ordensProducao = [] } = useQuery({
     queryKey: ['ordens-producao', empresaAtual?.id],
@@ -187,6 +189,16 @@ export default function Producao() {
 
   const handleModuleClick = (module) => {
     React.startTransition(() => {
+      // Auditoria de abertura de seção
+      base44.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        acao: 'Visualização',
+        modulo: 'Produção',
+        tipo_auditoria: 'acesso',
+        entidade: 'Seção',
+        descricao: `Abrir seção: ${module.title}`,
+        data_hora: new Date().toISOString(),
+      });
       openWindow(
         module.component,
         { 
