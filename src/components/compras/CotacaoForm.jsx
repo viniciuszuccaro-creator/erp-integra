@@ -165,6 +165,8 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                       ))}
                     </SelectContent>
                   </Select>
+                )}
+              />
                 </div>
                 <div className="col-span-2">
                   <Input
