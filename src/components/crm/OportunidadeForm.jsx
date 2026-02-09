@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, Target, TrendingUp } from "lucide-react";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Badge } from "@/components/ui/badge";
 
 /**
@@ -35,13 +37,17 @@ export default function OportunidadeForm({ oportunidade, onSubmit, windowMode = 
     status: 'Aberto'
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const schema = z.object({
+    titulo: z.string().min(1, 'Título é obrigatório'),
+    cliente_nome: z.string().min(1, 'Cliente é obrigatório'),
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -208,7 +214,7 @@ export default function OportunidadeForm({ oportunidade, onSubmit, windowMode = 
           {oportunidade ? 'Atualizar' : 'Criar'} Oportunidade
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

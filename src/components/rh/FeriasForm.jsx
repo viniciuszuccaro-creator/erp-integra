@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Save } from "lucide-react";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -35,8 +37,13 @@ export default function FeriasForm({ ferias, colaboradores = [], onSubmit, windo
     calcularDiasFerias();
   }, [formData.data_inicio, formData.data_fim]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const schema = z.object({
+    colaborador_id: z.string().min(1, 'Colaborador é obrigatório'),
+    data_inicio: z.string().min(4, 'Data início é obrigatória'),
+    data_fim: z.string().min(4, 'Data fim é obrigatória')
+  });
+
+  const handleSubmit = async () => {
     const colaborador = colaboradores.find(c => c.id === formData.colaborador_id);
     const data = {
       ...formData,
@@ -46,7 +53,7 @@ export default function FeriasForm({ ferias, colaboradores = [], onSubmit, windo
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-6">
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -150,7 +157,7 @@ export default function FeriasForm({ ferias, colaboradores = [], onSubmit, windo
           {ferias ? 'Atualizar' : 'Solicitar'} Férias
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

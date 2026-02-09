@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, CreditCard, Trash2, Power, PowerOff } from "lucide-react";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -26,12 +28,12 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting, wind
     intervalo_parcelas_dias: 30
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.descricao || !formData.tipo) {
-      alert('Preencha os campos obrigatórios');
-      return;
-    }
+  const schema = z.object({
+    descricao: z.string().min(1, 'Descrição é obrigatória'),
+    tipo: z.string().min(1, 'Tipo é obrigatório')
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
@@ -50,7 +52,7 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting, wind
   };
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Descrição *</Label>
@@ -180,7 +182,7 @@ export default function FormaPagamentoForm({ forma, onSubmit, isSubmitting, wind
           {forma ? 'Atualizar' : 'Criar Forma de Pagamento'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

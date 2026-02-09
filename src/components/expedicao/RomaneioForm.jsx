@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,6 +134,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
     },
   });
 
+  const unifiedSubmit = React.useCallback(() => gerarRomaneioMutation.mutate(), [gerarRomaneioMutation]);
   const entregasSelecionadas = entregas.filter(e => formData.entregas_selecionadas.includes(e.id));
 
   const content = (
@@ -146,7 +148,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
         </div>
       )}
       
-      <form onSubmit={(e) => { e.preventDefault(); gerarRomaneioMutation.mutate(); }} className={`space-y-6 ${windowMode ? 'flex-1 overflow-auto p-6' : ''}`}>
+      <FormWrapper onSubmit={unifiedSubmit} externalData={{...formData, checklist}} className={`space-y-6 ${windowMode ? 'flex-1 overflow-auto p-6' : ''}`}>
           {/* Dados do Motorista */}
           <Card>
             <CardHeader className="bg-blue-50 border-b">
@@ -372,7 +374,7 @@ export default function RomaneioForm({ isOpen, onClose, empresaId, windowMode = 
               {gerarRomaneioMutation.isPending ? 'Gerando...' : 'Gerar Romaneio'}
             </Button>
           </div>
-        </form>
+        </FormWrapper>
       </div>
     );
 

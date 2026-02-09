@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Save, PackageMinus } from "lucide-react";
 
 /**
@@ -44,13 +46,18 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const schema = z.object({
+    produto_id: z.string().min(1, 'Produto é obrigatório'),
+    quantidade: z.number().positive('Quantidade deve ser > 0'),
+    data_requisicao: z.string().min(4, 'Data é obrigatória'),
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -180,7 +187,7 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
           Registrar Requisição
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

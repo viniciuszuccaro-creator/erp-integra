@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Mail } from "lucide-react";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -24,8 +26,12 @@ export default function CampanhaForm({ campanha, onSubmit, windowMode = false })
     status: "Planejamento"
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const schema = z.object({
+    nome: z.string().min(1, 'Nome é obrigatório'),
+    data_inicio: z.string().min(4, 'Data início obrigatória')
+  });
+
+  const handleSubmit = async () => {
     const data = {
       ...formData,
       orcamento: parseFloat(formData.orcamento) || 0
@@ -34,7 +40,7 @@ export default function CampanhaForm({ campanha, onSubmit, windowMode = false })
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="col-span-2">
           <Label htmlFor="nome_camp">Nome *</Label>
@@ -135,7 +141,7 @@ export default function CampanhaForm({ campanha, onSubmit, windowMode = false })
           {campanha ? 'Atualizar' : 'Criar Campanha'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

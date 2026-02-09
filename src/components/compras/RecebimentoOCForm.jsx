@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Save, Package } from "lucide-react";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2: Recebimento OC - Window Mode
@@ -31,9 +32,10 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
   const onValid = (data) => {
     onSubmit(data);
   };
+  const unifiedSubmit = React.useCallback(() => handleSubmit(onValid)(), [handleSubmit, onValid]);
 
   const content = (
-    <form onSubmit={handleSubmit(onValid)} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper onSubmit={unifiedSubmit} externalData={{empresa_id: ordemCompra?.empresa_id, group_id: ordemCompra?.group_id}} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="p-4 bg-slate-50 rounded-lg space-y-2">
@@ -96,7 +98,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
           Confirmar Recebimento
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

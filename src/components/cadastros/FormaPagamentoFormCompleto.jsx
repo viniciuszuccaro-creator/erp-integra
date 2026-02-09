@@ -13,6 +13,7 @@ import { DollarSign, CreditCard, Settings, Zap, CheckCircle2, Percent, Calendar,
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
+import FormWrapper from "@/components/common/FormWrapper";
 import { toast } from 'sonner';
 
 export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, windowMode = false }) {
@@ -93,9 +94,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
     setFormData({...formData, configuracao_parcelas_cartao: novaConfig});
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+  const handleSubmit = async () => {
     if (!formData.codigo || !formData.descricao) {
       toast.error('Preencha código e descrição');
       return;
@@ -121,7 +120,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
   ];
 
   const content = (
-    <form onSubmit={handleSubmit} className={`${windowMode ? 'h-full overflow-auto p-6' : 'p-6'}`}>
+    <FormWrapper onSubmit={handleSubmit} externalData={formData} className={`${windowMode ? 'h-full overflow-auto p-6' : 'p-6'}`}>
       <Alert className="mb-6 border-blue-300 bg-blue-50">
         <AlertDescription className="text-sm text-blue-900">
           <strong>🏦 Forma de Pagamento:</strong> Configure métodos aceitos em PDV, Pedidos, E-commerce e Portal
@@ -680,7 +679,7 @@ export default function FormaPagamentoFormCompleto({ formaPagamento, onSubmit, w
           {formaPagamento ? 'Atualizar Forma' : 'Criar Forma'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, Zap } from "lucide-react";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -35,13 +37,19 @@ export default function ContratoForm({ contrato, onSubmit, clientes = [], fornec
     gerar_cobranca_automatica: true
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const schema = z.object({
+    numero_contrato: z.string().min(1, 'Número é obrigatório'),
+    tipo: z.string().min(1, 'Tipo é obrigatório'),
+    parte_contratante: z.string().min(1, 'Parte contratante é obrigatória'),
+    data_inicio: z.string().min(4, 'Data início é obrigatória')
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="numero_contrato">Número do Contrato *</Label>
@@ -319,7 +327,7 @@ export default function ContratoForm({ contrato, onSubmit, clientes = [], fornec
           {contrato ? 'Atualizar' : 'Criar Contrato'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

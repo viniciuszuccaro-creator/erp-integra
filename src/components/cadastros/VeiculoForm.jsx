@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Truck } from "lucide-react";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -27,17 +29,17 @@ export default function VeiculoForm({ veiculo, onSubmit, isSubmitting, windowMod
     proprio: true
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.placa || !formData.tipo_veiculo) {
-      alert('Preencha os campos obrigatórios');
-      return;
-    }
+  const schema = z.object({
+    placa: z.string().min(3, 'Placa é obrigatória'),
+    tipo_veiculo: z.string().min(1, 'Tipo é obrigatório')
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Placa *</Label>
@@ -161,7 +163,7 @@ export default function VeiculoForm({ veiculo, onSubmit, isSubmitting, windowMod
           {dadosIniciais ? 'Atualizar Veículo' : 'Cadastrar Veículo'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

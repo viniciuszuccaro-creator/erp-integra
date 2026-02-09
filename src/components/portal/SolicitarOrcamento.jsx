@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { z } from 'zod';
+import FormWrapper from '@/components/common/FormWrapper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -95,14 +97,12 @@ export default function SolicitarOrcamento() {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!formData.titulo || !formData.descricao) {
-      toast.error('Preencha os campos obrigatórios');
-      return;
-    }
+  const schema = z.object({
+    titulo: z.string().min(1, 'Título é obrigatório'),
+    descricao: z.string().min(1, 'Descrição é obrigatória')
+  });
 
+  const handleSubmit = async () => {
     criarOportunidadeMutation.mutate(formData);
   };
 
@@ -132,7 +132,7 @@ export default function SolicitarOrcamento() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="titulo">
               Título do Projeto <span className="text-red-500">*</span>
@@ -252,7 +252,7 @@ export default function SolicitarOrcamento() {
               </div>
             </div>
           </div>
-        </form>
+        </FormWrapper>
       </CardContent>
     </Card>
   );

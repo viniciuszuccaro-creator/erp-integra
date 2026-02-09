@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Loader2, User, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
@@ -32,17 +34,17 @@ export default function UsuarioForm({ usuario, onSubmit, isSubmitting, windowMod
     queryFn: () => base44.entities.Empresa.list(),
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.full_name || !formData.email) {
-      alert('Preencha os campos obrigatórios');
-      return;
-    }
+  const schema = z.object({
+    full_name: z.string().min(1, 'Nome é obrigatório'),
+    email: z.string().email('E-mail inválido')
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <div>
         <Label>Nome Completo *</Label>
         <Input
@@ -113,7 +115,7 @@ export default function UsuarioForm({ usuario, onSubmit, isSubmitting, windowMod
           {usuario ? 'Atualizar' : 'Convidar Usuário'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

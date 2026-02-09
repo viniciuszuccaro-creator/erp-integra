@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Loader2, Building2, AlertTriangle, Upload } from "lucide-react";
 import { toast } from "sonner";
 
@@ -58,17 +60,17 @@ export default function EmpresaForm({ empresa, onSubmit, isSubmitting, windowMod
     }
   }, [formData.certificado_digital?.data_validade]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.razao_social || !formData.cnpj) {
-      alert('Preencha os campos obrigatórios');
-      return;
-    }
+  const schema = z.object({
+    razao_social: z.string().min(1, 'Razão Social é obrigatória'),
+    cnpj: z.string().min(11, 'CNPJ é obrigatório')
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label>Razão Social *</Label>
@@ -173,7 +175,7 @@ export default function EmpresaForm({ empresa, onSubmit, isSubmitting, windowMod
           {empresa ? 'Atualizar' : 'Criar Empresa'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

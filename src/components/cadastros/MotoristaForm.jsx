@@ -8,6 +8,8 @@ import { Loader2, AlertTriangle, Upload, UserCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { format, differenceInDays } from "date-fns";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -37,17 +39,18 @@ export default function MotoristaForm({ motorista, onSubmit, isSubmitting, windo
   const diasVencimento = formData.cnh_validade ? differenceInDays(new Date(formData.cnh_validade), new Date()) : null;
   const alertaVencimento = diasVencimento !== null && diasVencimento < 30 && diasVencimento > 0;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.nome_completo || !formData.cnh_numero || !formData.cnh_categoria) {
-      alert('Preencha os campos obrigatórios');
-      return;
-    }
+  const schema = z.object({
+    nome_completo: z.string().min(1, 'Nome é obrigatório'),
+    cnh_numero: z.string().min(3, 'CNH é obrigatória'),
+    cnh_categoria: z.string().min(1, 'Categoria é obrigatória')
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
       <div>
         <Label>Nome Completo *</Label>
         <Input
@@ -154,7 +157,7 @@ export default function MotoristaForm({ motorista, onSubmit, isSubmitting, windo
           {dadosIniciais ? 'Atualizar' : 'Cadastrar Motorista'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

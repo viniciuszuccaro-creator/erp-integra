@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Mail, MessageCircle, Phone } from "lucide-react";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2 - WINDOW MODE READY
@@ -17,9 +19,13 @@ export default function AgendarFollowUp({ oportunidade, open, onClose, onSalvar,
     mensagem: ""
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
+  const schema = z.object({
+    data: z.string().min(4, 'Data é obrigatória'),
+    tipo: z.string().min(1, 'Tipo é obrigatório'),
+    mensagem: z.string().min(1, 'Mensagem é obrigatória')
+  });
+
+  const handleSubmit = async () => {
     const followUps = [
       ...(oportunidade.follow_ups_agendados || []),
       {
@@ -74,7 +80,7 @@ Posso ajudar em algo? 😊`,
   };
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <FormWrapper schema={schema} defaultValues={followUp} onSubmit={handleSubmit} externalData={followUp} className="space-y-4">
           <div className="p-3 bg-blue-50 rounded border border-blue-200">
             <p className="text-sm text-blue-900">
               <strong>📌 Automação:</strong> O follow-up será enviado automaticamente na data agendada
@@ -179,7 +185,7 @@ Posso ajudar em algo? 😊`,
               Agendar Follow-up
             </Button>
           </div>
-        </form>
+        </FormWrapper>
   );
 
   if (windowMode) {

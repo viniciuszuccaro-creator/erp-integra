@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, Truck, Trash2, Power, PowerOff } from "lucide-react";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 import { useToast } from "@/components/ui/use-toast";
 
 /**
@@ -35,8 +37,12 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
     observacoes: ''
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const schema = z.object({
+    razao_social: z.string().min(1, 'Razão Social é obrigatória'),
+    cnpj: z.string().min(11, 'CNPJ é obrigatório')
+  });
+
+  const handleSubmit = async () => {
     onSubmit(formData);
   };
 
@@ -106,7 +112,7 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -330,7 +336,7 @@ export default function TransportadoraForm({ transportadora, onSubmit, windowMod
           {transportadora ? 'Atualizar' : 'Criar'} Transportadora
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

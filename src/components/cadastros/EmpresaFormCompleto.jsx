@@ -92,7 +92,7 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <FormWrapper onSubmit={handleSubmit} externalData={formData} className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="dados">
@@ -381,6 +381,6 @@ export default function EmpresaFormCompleto({ empresa, onSubmit, isSubmitting })
           {isSubmitting ? 'Salvando...' : (empresa ? 'Salvar Alterações' : 'Criar Empresa')}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 }

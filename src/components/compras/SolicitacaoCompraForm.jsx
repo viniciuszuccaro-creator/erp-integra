@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, ShoppingCart } from "lucide-react";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2: Solicitação Compra Form - Adaptado para Window Mode
@@ -66,9 +67,10 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   const onValid = (data) => {
     onSubmit(data);
   };
+  const unifiedSubmit = React.useCallback(() => handleSubmit(onValid)(), [handleSubmit, onValid]);
 
   const content = (
-    <form onSubmit={handleSubmit(onValid)} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper onSubmit={unifiedSubmit} externalData={watch()} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -189,7 +191,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
           {solicitacao ? 'Atualizar' : 'Criar'} Solicitação
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

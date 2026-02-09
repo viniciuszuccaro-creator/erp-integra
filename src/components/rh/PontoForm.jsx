@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, Clock, AlertCircle } from "lucide-react";
+import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2: Ponto Form - Adaptado para Window Mode
@@ -48,8 +50,12 @@ export default function PontoForm({ ponto, onSubmit, windowMode = false }) {
     return { horas: horasTotais, extras: horasExtras };
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const schema = z.object({
+    colaborador_id: z.string().min(1, 'Colaborador é obrigatório'),
+    data: z.string().min(4, 'Data é obrigatória')
+  });
+
+  const handleSubmit = async () => {
     const { horas, extras } = calcularHoras();
     onSubmit({
       ...formData,
@@ -61,7 +67,7 @@ export default function PontoForm({ ponto, onSubmit, windowMode = false }) {
   const { horas, extras } = calcularHoras();
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -198,7 +204,7 @@ export default function PontoForm({ ponto, onSubmit, windowMode = false }) {
           {ponto ? 'Atualizar' : 'Registrar'} Ponto
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {
