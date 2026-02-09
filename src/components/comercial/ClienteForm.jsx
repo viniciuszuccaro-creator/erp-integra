@@ -24,7 +24,45 @@ const clienteSchema = z.object({
 });
 
 export default function ClienteForm({ cliente, onSubmit, isSubmitting }) {
-  const [formData, setFormData] = useState(cliente || {
+  const defaultValues = (cliente || {
+  nome: "",
+  razao_social: "",
+  nome_fantasia: "",
+  tipo: "Pessoa Física",
+  cpf_cnpj: "",
+  inscricao_estadual: "",
+  email: "",
+  telefone: "",
+  whatsapp: "",
+  endereco: "",
+  numero: "",
+  complemento: "",
+  bairro: "",
+  cidade: "",
+  estado: "",
+  cep: "",
+  limite_credito: "",
+  condicao_pagamento: "À Vista",
+  vendedor_responsavel: "",
+  observacoes: "",
+  status: "Prospect"
+});
+
+const { control, handleSubmit, setValue, watch, formState: { errors, isSubmitting: isFormSubmitting } } = useForm({
+  resolver: zodResolver(clienteSchema),
+  mode: 'onBlur',
+  defaultValues,
+});
+
+const formData = watch();
+const setFormData = (updater) => {
+  if (typeof updater === 'function') {
+    const next = updater(formData);
+    Object.entries(next || {}).forEach(([k, v]) => setValue(k, v, { shouldValidate: false }));
+  } else if (updater && typeof updater === 'object') {
+    Object.entries(updater).forEach(([k, v]) => setValue(k, v, { shouldValidate: false }));
+  }
+};
     nome: "",
     razao_social: "",
     nome_fantasia: "",
