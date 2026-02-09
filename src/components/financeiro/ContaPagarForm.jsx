@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import FormErrorSummary from "@/components/common/FormErrorSummary";
 import { z } from 'zod';
+import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
@@ -84,19 +85,19 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
     queryFn: () => filterInContext('PlanoDeContas', {}, '-updated_date', 9999),
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     const parsed = schema.safeParse({
       ...formData,
       valor: Number(formData.valor) || 0,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues?.[0]?.message || 'Dados inválidos';
+      const issues = parsed.error.issues || [];
+      setErrorMessages(issues.map(i => i.message).filter(Boolean));
+      const msg = issues[0]?.message || 'Dados inválidos';
       toast.error(msg);
       return;
     }
-
+    setErrorMessages([]);
     onSubmit(carimbarContexto({
       ...formData,
       valor: Number(formData.valor) || 0,
@@ -106,7 +107,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 w-full h-full ${windowMode ? 'overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
       <FormErrorSummary messages={errorMessages} />
       <Alert className="border-red-300 bg-red-50">
         <AlertDescription className="text-sm text-red-900">
@@ -455,7 +456,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
           {conta ? 'Atualizar Conta' : 'Criar Conta'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {

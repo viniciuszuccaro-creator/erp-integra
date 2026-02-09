@@ -17,6 +17,7 @@ import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { z } from "zod";
+import FormWrapper from "@/components/common/FormWrapper";
 
 export default function ContaReceberForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
   const schema = z.object({
@@ -83,19 +84,19 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
     queryFn: () => filterInContext('PlanoDeContas', {}, '-updated_date', 9999),
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     const parsed = schema.safeParse({
       ...formData,
       valor: Number(formData.valor) || 0,
     });
     if (!parsed.success) {
-      const msg = parsed.error.issues?.[0]?.message || 'Dados inválidos';
+      const issues = parsed.error.issues || [];
+      setErrorMessages(issues.map(i => i.message).filter(Boolean));
+      const msg = issues[0]?.message || 'Dados inválidos';
       toast.error(msg);
       return;
     }
-
+    setErrorMessages([]);
     onSubmit(carimbarContexto({
       ...formData,
       valor: Number(formData.valor) || 0,
@@ -105,7 +106,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 w-full h-full ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
       <FormErrorSummary messages={errorMessages} />
       <Alert className="border-green-300 bg-green-50">
         <AlertDescription className="text-sm text-green-900">
@@ -453,7 +454,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
           {conta ? 'Atualizar Conta' : 'Criar Conta'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {
