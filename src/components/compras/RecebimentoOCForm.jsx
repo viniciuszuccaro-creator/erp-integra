@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,19 +13,27 @@ import { Save, Package } from "lucide-react";
  * V21.1.2: Recebimento OC - Window Mode
  */
 export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState({
-    data_entrega_real: new Date().toISOString().split('T')[0],
-    nota_fiscal_entrada: '',
-    observacoes: ''
+  const schema = z.object({
+    data_entrega_real: z.string().min(8, 'Data obrigatória'),
+    nota_fiscal_entrada: z.string().optional(),
+    observacoes: z.string().optional(),
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      data_entrega_real: new Date().toISOString().split('T')[0],
+      nota_fiscal_entrada: '',
+      observacoes: ''
+    }
+  });
+
+  const onValid = (data) => {
+    onSubmit(data);
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <form onSubmit={handleSubmit(onValid)} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <div className="p-4 bg-slate-50 rounded-lg space-y-2">
@@ -41,18 +52,16 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
             <Label>Data de Recebimento *</Label>
             <Input
               type="date"
-              value={formData.data_entrega_real}
-              onChange={(e) => setFormData({...formData, data_entrega_real: e.target.value})}
-              required
+              {...register('data_entrega_real')}
               className="mt-1"
             />
+            {errors.data_entrega_real && <p className="text-red-600 text-xs mt-1">{errors.data_entrega_real.message}</p>}
           </div>
 
           <div>
             <Label>Nota Fiscal de Entrada</Label>
             <Input
-              value={formData.nota_fiscal_entrada}
-              onChange={(e) => setFormData({...formData, nota_fiscal_entrada: e.target.value})}
+              {...register('nota_fiscal_entrada')}
               placeholder="Número da NF-e de entrada"
               className="mt-1"
             />
@@ -61,8 +70,7 @@ export default function RecebimentoOCForm({ ordemCompra, onSubmit, windowMode = 
           <div>
             <Label>Observações do Recebimento</Label>
             <Textarea
-              value={formData.observacoes}
-              onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+              {...register('observacoes')}
               rows={4}
               placeholder="Condições da mercadoria, divergências, observações..."
               className="mt-1"

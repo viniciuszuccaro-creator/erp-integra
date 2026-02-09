@@ -9,21 +9,54 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, TrendingUp, Plus, Trash2, Building2, AlertCircle } from "lucide-react";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge } from "@/components/ui/badge";
 
 /**
  * V21.1.2: Cotação Form - Adaptado para Window Mode
  */
 export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(cotacao || {
-    numero_cotacao: `COT-${Date.now()}`,
-    descricao: '',
-    data_criacao: new Date().toISOString().split('T')[0],
-    data_limite_resposta: '',
-    itens: [{ produto_descricao: '', quantidade: 0, unidade: 'UN', observacoes: '' }],
-    fornecedores_selecionados: [],
-    observacoes_gerais: ''
+  const schema = z.object({
+    numero_cotacao: z.string(),
+    descricao: z.string().min(3, 'Descrição obrigatória'),
+    data_criacao: z.string(),
+    data_limite_resposta: z.string().min(8, 'Informe a data limite'),
+    itens: z.array(z.object({
+      produto_descricao: z.string().min(1, 'Selecione o produto'),
+      quantidade: z.number().positive('Quantidade > 0'),
+      unidade: z.string().min(1, 'Unidade'),
+      observacoes: z.string().optional(),
+    })).min(1, 'Inclua ao menos 1 item'),
+    fornecedores_selecionados: z.array(z.string()).min(2, 'Selecione ao menos 2 fornecedores'),
+    observacoes_gerais: z.string().optional(),
   });
+
+  const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: cotacao || {
+      numero_cotacao: `COT-${Date.now()}`,
+      descricao: '',
+      data_criacao: new Date().toISOString().split('T')[0],
+      data_limite_resposta: '',
+      itens: [{ produto_descricao: '', quantidade: 0, unidade: 'UN', observacoes: '' }],
+      fornecedores_selecionados: [],
+      observacoes_gerais: ''
+    }
+  });
+
+  const { fields, append, remove } = useFieldArray({ name: 'itens', control });
+
+  const adicionarItem = () => append({ produto_descricao: '', quantidade: 0, unidade: 'UN', observacoes: '' });
+  const removerItem = (index) => remove(index);
+
+  const selecionados = watch('fornecedores_selecionados') || [];
+  const toggleFornecedor = (fornecedorId) => {
+    const already = selecionados.includes(fornecedorId);
+    const novaLista = already ? selecionados.filter(id => id !== fornecedorId) : [...selecionados, fornecedorId];
+    setValue('fornecedores_selecionados', novaLista, { shouldValidate: true });
+  };
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
@@ -57,13 +90,12 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
     setFormData({ ...formData, fornecedores_selecionados: selecionados });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSubmit(formData);
+  const onValid = (data) => {
+    onSubmit(data);
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <form onSubmit={handleSubmit(onValid)} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -75,7 +107,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
             <div>
               <Label>Nº Cotação</Label>
               <Input
-                value={formData.numero_cotacao}
+                {...register('numero_cotacao')}
                 readOnly
                 className="bg-slate-50"
               />
@@ -85,20 +117,18 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
               <Label>Data Limite Resposta *</Label>
               <Input
                 type="date"
-                value={formData.data_limite_resposta}
-                onChange={(e) => setFormData({ ...formData, data_limite_resposta: e.target.value })}
-                required
+                {...register('data_limite_resposta')}
               />
+              {errors.data_limite_resposta && <p className="text-red-600 text-xs mt-1">{errors.data_limite_resposta.message}</p>}
             </div>
 
             <div className="col-span-2">
               <Label>Descrição da Cotação *</Label>
               <Input
-                value={formData.descricao}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                {...register('descricao')}
                 placeholder="Ex: Cotação de Bitolas - Lote Fevereiro"
-                required
               />
+              {errors.descricao && <p className="text-red-600 text-xs mt-1">{errors.descricao.message}</p>}
             </div>
           </div>
         </CardContent>
@@ -115,16 +145,14 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
           </div>
 
           <div className="space-y-3">
-            {formData.itens.map((item, idx) => (
+            {fields.map((field, idx) => (
               <div key={idx} className="grid grid-cols-12 gap-3 p-3 bg-slate-50 rounded-lg">
                 <div className="col-span-5">
-                  <Select
-                    value={item.produto_descricao}
-                    onValueChange={(value) => {
-                      const novosItens = [...formData.itens];
-                      novosItens[idx].produto_descricao = value;
-                      setFormData({ ...formData, itens: novosItens });
-                    }}
+                  <Controller
+                    control={control}
+                    name={`itens.${idx}.produto_descricao`}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Produto" />
