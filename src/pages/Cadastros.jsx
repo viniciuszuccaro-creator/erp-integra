@@ -321,7 +321,7 @@ export default function Cadastros() {
     queryKey: ['representantes', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.Representante.list('-created_date', 100);
+        return await filterInContext('Representante', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar representantes:', err);
         return [];
@@ -337,7 +337,7 @@ export default function Cadastros() {
     queryKey: ['contatos-b2b', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.ContatoB2B.list('-created_date', 9999);
+        return await filterInContext('ContatoB2B', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar contatos B2B:', err);
         return [];
@@ -388,7 +388,7 @@ export default function Cadastros() {
     queryKey: ['servicos'],
     queryFn: async () => {
       try {
-        return await base44.entities.Servico.list('-created_date', 9999);
+        return await filterInContext('Servico', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar serviços:', err);
         return [];
@@ -404,7 +404,7 @@ export default function Cadastros() {
     queryKey: ['setores-atividade'],
     queryFn: async () => {
       try {
-        return await base44.entities.SetorAtividade.list('-created_date', 9999);
+        return await filterInContext('SetorAtividade', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar setores:', err);
         return [];
@@ -420,7 +420,7 @@ export default function Cadastros() {
     queryKey: ['grupos-produto'],
     queryFn: async () => {
       try {
-        return await base44.entities.GrupoProduto.list('-created_date', 9999);
+        return await filterInContext('GrupoProduto', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar grupos de produto:', err);
         return [];
@@ -436,7 +436,7 @@ export default function Cadastros() {
     queryKey: ['marcas'],
     queryFn: async () => {
       try {
-        return await base44.entities.Marca.list('-created_date', 9999);
+        return await filterInContext('Marca', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar marcas:', err);
         return [];
@@ -452,7 +452,7 @@ export default function Cadastros() {
     queryKey: ['tabelas-preco'],
     queryFn: async () => {
       try {
-        return await base44.entities.TabelaPreco.list('-created_date', 9999);
+        return await filterInContext('TabelaPreco', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar tabelas de preço:', err);
         return [];
@@ -468,7 +468,7 @@ export default function Cadastros() {
     queryKey: ['catalogo-web'],
     queryFn: async () => {
       try {
-        return await base44.entities.CatalogoWeb.list('-created_date', 9999);
+        return await filterInContext('CatalogoWeb', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar catálogo web:', err);
         return [];
@@ -484,7 +484,7 @@ export default function Cadastros() {
     queryKey: ['kits-produto'],
     queryFn: async () => {
       try {
-        return await base44.entities.KitProduto.list('-created_date', 9999);
+        return await filterInContext('KitProduto', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar kits:', err);
         return [];
@@ -499,7 +499,7 @@ export default function Cadastros() {
   // QUERIES - BLOCO 3: FINANCEIRO
   const { data: bancos = [] } = useQuery({
     queryKey: ['bancos'],
-    queryFn: () => base44.entities.Banco.list('-created_date', 9999),
+    queryFn: () => filterInContext('Banco', {}, '-created_date', 9999),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -509,7 +509,7 @@ export default function Cadastros() {
 
   const { data: formasPagamento = [] } = useQuery({
     queryKey: ['formas-pagamento'],
-    queryFn: () => base44.entities.FormaPagamento.list('-created_date', 9999),
+    queryFn: () => filterInContext('FormaPagamento', {}, '-created_date', 9999),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -519,17 +519,17 @@ export default function Cadastros() {
 
   const { data: operadoresCaixa = [] } = useQuery({
     queryKey: ['operadores-caixa'],
-    queryFn: () => base44.entities.OperadorCaixa.list('-created_date', 9999),
+    queryFn: () => filterInContext('OperadorCaixa', {}, '-created_date', 9999),
   });
 
   const { data: planoContas = [] } = useQuery({
     queryKey: ['plano-contas'],
-    queryFn: () => base44.entities.PlanoDeContas.list('-created_date', 9999),
+    queryFn: () => filterInContext('PlanoDeContas', {}, '-created_date', 9999),
   });
 
   const { data: centrosCusto = [] } = useQuery({
     queryKey: ['centrosCusto'],
-    queryFn: () => base44.entities.CentroCusto.list('-created_date', 9999),
+    queryFn: () => filterInContext('CentroCusto', {}, '-created_date', 9999),
     staleTime: 600000,
     gcTime: 900000,
     refetchOnWindowFocus: false,
@@ -539,151 +539,151 @@ export default function Cadastros() {
 
   const { data: centrosResultado = [] } = useQuery({
     queryKey: ['centros-resultado'],
-    queryFn: () => base44.entities.CentroResultado.list('-created_date', 9999),
+    queryFn: () => filterInContext('CentroResultado', {}, '-created_date', 9999),
   });
 
   const { data: tiposDespesa = [] } = useQuery({
     queryKey: ['tipos-despesa'],
-    queryFn: () => base44.entities.TipoDespesa.list('-created_date', 9999),
+    queryFn: () => filterInContext('TipoDespesa', {}, '-created_date', 9999),
   });
 
   const { data: moedasIndices = [] } = useQuery({
     queryKey: ['moedas-indices'],
-    queryFn: () => base44.entities.MoedaIndice.list('-created_date', 9999),
+    queryFn: () => filterInContext('MoedaIndice', {}, '-created_date', 9999),
   });
 
   const { data: condicoesComerciais = [] } = useQuery({
     queryKey: ['condicoes-comerciais'],
-    queryFn: () => base44.entities.CondicaoComercial.list('-created_date', 9999),
+    queryFn: () => filterInContext('CondicaoComercial', {}, '-created_date', 9999),
   });
 
   // FASE 3: Queries adicionais
   const { data: segmentosCliente = [] } = useQuery({
     queryKey: ['segmentos-cliente'],
-    queryFn: () => base44.entities.SegmentoCliente.list('-created_date', 9999),
+    queryFn: () => filterInContext('SegmentoCliente', {}, '-created_date', 9999),
   });
 
   const { data: regioesAtendimento = [] } = useQuery({
     queryKey: ['regioes-atendimento'],
-    queryFn: () => base44.entities.RegiaoAtendimento.list('-created_date', 9999),
+    queryFn: () => filterInContext('RegiaoAtendimento', {}, '-created_date', 9999),
   });
 
   const { data: unidadesMedida = [] } = useQuery({
     queryKey: ['unidades-medida'],
-    queryFn: () => base44.entities.UnidadeMedida.list('-created_date', 9999),
+    queryFn: () => filterInContext('UnidadeMedida', {}, '-created_date', 9999),
   });
 
   const { data: webhooks = [] } = useQuery({
     queryKey: ['webhooks'],
-    queryFn: () => base44.entities.Webhook.list('-created_date', 9999),
+    queryFn: () => filterInContext('Webhook', {}, '-created_date', 9999),
   });
 
   const { data: rotasPadrao = [] } = useQuery({
     queryKey: ['rotas-padrao'],
-    queryFn: () => base44.entities.RotaPadrao.list('-created_date', 9999),
+    queryFn: () => filterInContext('RotaPadrao', {}, '-created_date', 9999),
   });
 
   const { data: modelosDocumento = [] } = useQuery({
     queryKey: ['modelos-documento'],
-    queryFn: () => base44.entities.ModeloDocumento.list('-created_date', 9999),
+    queryFn: () => filterInContext('ModeloDocumento', {}, '-created_date', 9999),
   });
 
   const { data: apisExternas = [] } = useQuery({
     queryKey: ['apis-externas'],
-    queryFn: () => base44.entities.ApiExterna.list('-created_date', 9999),
+    queryFn: () => filterInContext('ApiExterna', {}, '-created_date', 9999),
   });
 
   const { data: jobsAgendados = [] } = useQuery({
     queryKey: ['jobs-agendados'],
-    queryFn: () => base44.entities.JobAgendado.list('-created_date', 9999),
+    queryFn: () => filterInContext('JobAgendado', {}, '-created_date', 9999),
   });
 
   const { data: configsIA = [] } = useQuery({
     queryKey: ['configs-ia'],
-    queryFn: () => base44.entities.IAConfig.list('-created_date', 9999),
+    queryFn: () => filterInContext('IAConfig', {}, '-created_date', 9999),
   });
 
   // PARÂMETROS OPERACIONAIS - FASE 3
   const { data: parametrosPortal = [] } = useQuery({
     queryKey: ['parametros-portal'],
-    queryFn: () => base44.entities.ParametroPortalCliente.list('-created_date', 9999),
+    queryFn: () => filterInContext('ParametroPortalCliente', {}, '-created_date', 9999),
   });
 
   const { data: parametrosOrigemPedido = [] } = useQuery({
     queryKey: ['parametros-origem-pedido'],
-    queryFn: () => base44.entities.ParametroOrigemPedido.list('-created_date', 9999),
+    queryFn: () => filterInContext('ParametroOrigemPedido', {}, '-created_date', 9999),
   });
 
   const { data: parametrosRecebimentoNFe = [] } = useQuery({
     queryKey: ['parametros-recebimento-nfe'],
-    queryFn: () => base44.entities.ParametroRecebimentoNFe.list('-created_date', 9999),
+    queryFn: () => filterInContext('ParametroRecebimentoNFe', {}, '-created_date', 9999),
   });
 
   const { data: parametrosRoteirizacao = [] } = useQuery({
     queryKey: ['parametros-roteirizacao'],
-    queryFn: () => base44.entities.ParametroRoteirizacao.list('-created_date', 9999),
+    queryFn: () => filterInContext('ParametroRoteirizacao', {}, '-created_date', 9999),
   });
 
   const { data: parametrosConciliacao = [] } = useQuery({
     queryKey: ['parametros-conciliacao'],
-    queryFn: () => base44.entities.ParametroConciliacaoBancaria.list('-created_date', 9999),
+    queryFn: () => filterInContext('ParametroConciliacaoBancaria', {}, '-created_date', 9999),
   });
 
   const { data: parametrosCaixa = [] } = useQuery({
     queryKey: ['parametros-caixa'],
-    queryFn: () => base44.entities.ParametroCaixaDiario.list('-created_date', 9999),
+    queryFn: () => filterInContext('ParametroCaixaDiario', {}, '-created_date', 9999),
   });
 
   // QUERIES - BLOCO 4: LOGÍSTICA
   const { data: veiculos = [] } = useQuery({
     queryKey: ['veiculos'],
-    queryFn: () => base44.entities.Veiculo.list('-created_date', 9999),
+    queryFn: () => filterInContext('Veiculo', {}, '-created_date', 9999),
   });
 
   const { data: motoristas = [] } = useQuery({
     queryKey: ['motoristas'],
-    queryFn: () => base44.entities.Motorista.list('-created_date', 9999),
+    queryFn: () => filterInContext('Motorista', {}, '-created_date', 9999),
   });
 
   const { data: tiposFrete = [] } = useQuery({
     queryKey: ['tipos-frete'],
-    queryFn: () => base44.entities.TipoFrete.list('-created_date', 9999),
+    queryFn: () => filterInContext('TipoFrete', {}, '-created_date', 9999),
   });
 
   const { data: chatbotIntents = [] } = useQuery({
     queryKey: ['chatbotIntents'],
-    queryFn: () => base44.entities.ChatbotIntent.list('-created_date', 9999),
+    queryFn: () => filterInContext('ChatbotIntent', {}, '-created_date', 9999),
   });
 
   const { data: chatbotCanais = [] } = useQuery({
     queryKey: ['chatbotCanais'],
-    queryFn: () => base44.entities.ChatbotCanal.list('-created_date', 9999),
+    queryFn: () => filterInContext('ChatbotCanal', {}, '-created_date', 9999),
   });
 
   // QUERIES - BLOCO 5: ORGANIZACIONAL
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
-    queryFn: () => base44.entities.Empresa.list('-created_date', 9999),
+    queryKey: ['empresas', empresaAtual?.id],
+    queryFn: () => filterInContext('Empresa', {}, '-created_date', 9999),
   });
 
   const { data: grupos = [] } = useQuery({
-    queryKey: ['grupos'],
-    queryFn: () => base44.entities.GrupoEmpresarial.list('-created_date', 9999),
+    queryKey: ['grupos', empresaAtual?.id],
+    queryFn: () => filterInContext('GrupoEmpresarial', {}, '-created_date', 9999),
   });
 
   const { data: departamentos = [] } = useQuery({
-    queryKey: ['departamentos'],
-    queryFn: () => base44.entities.Departamento.list('-created_date', 9999),
+    queryKey: ['departamentos', empresaAtual?.id],
+    queryFn: () => filterInContext('Departamento', {}, '-created_date', 9999),
   });
 
   const { data: cargos = [] } = useQuery({
-    queryKey: ['cargos'],
-    queryFn: () => base44.entities.Cargo.list('-created_date', 9999),
+    queryKey: ['cargos', empresaAtual?.id],
+    queryFn: () => filterInContext('Cargo', {}, '-created_date', 9999),
   });
 
   const { data: turnos = [] } = useQuery({
-    queryKey: ['turnos'],
-    queryFn: () => base44.entities.Turno.list('-created_date', 9999),
+    queryKey: ['turnos', empresaAtual?.id],
+    queryFn: () => filterInContext('Turno', {}, '-created_date', 9999),
   });
 
   const { data: usuarios = [] } = useQuery({

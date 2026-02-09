@@ -88,10 +88,10 @@ export default function Compras() {
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
+    queryKey: ['empresas', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.Empresa.list();
+        return await filtrarPorContexto('Empresa', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar empresas:', err);
         return [];

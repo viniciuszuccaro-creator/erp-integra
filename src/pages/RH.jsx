@@ -60,30 +60,30 @@ export default function RH() {
   const { data: pontos = [] } = useQuery({
     queryKey: ['pontos', empresaAtual?.id],
     queryFn: async () => {
-      try {
-        return await base44.entities.Ponto.list('-data', 100);
-      } catch (err) {
-        console.error('Erro ao buscar pontos:', err);
-        return [];
-      }
-    },
-    staleTime: 30000,
-    retry: 1
-  });
+        try {
+          return await filtrarPorContexto('Ponto', {}, '-data', 100);
+        } catch (err) {
+          console.error('Erro ao buscar pontos:', err);
+          return [];
+        }
+      },
+      staleTime: 30000,
+      retry: 1
+    });
 
   const { data: ferias = [] } = useQuery({
     queryKey: ['ferias', empresaAtual?.id],
     queryFn: async () => {
-      try {
-        return await base44.entities.Ferias.list('-created_date', 50);
-      } catch (err) {
-        console.error('Erro ao buscar férias:', err);
-        return [];
-      }
-    },
-    staleTime: 30000,
-    retry: 1
-  });
+        try {
+          return await filtrarPorContexto('Ferias', {}, '-created_date', 50);
+        } catch (err) {
+          console.error('Erro ao buscar férias:', err);
+          return [];
+        }
+      },
+      staleTime: 30000,
+      retry: 1
+    });
 
   // Dados já vêm filtrados do servidor
   const colaboradoresFiltrados = colaboradores;

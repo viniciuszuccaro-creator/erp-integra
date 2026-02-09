@@ -97,7 +97,7 @@ export default function Comercial() {
     queryKey: ['tabelas-preco', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.TabelaPreco.list('-updated_date', 50);
+        return await filtrarPorContexto('TabelaPreco', {}, '-updated_date', 50);
       } catch (err) {
         console.error('Erro ao buscar tabelas de preço:', err);
         return [];
@@ -108,10 +108,10 @@ export default function Comercial() {
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas'],
+    queryKey: ['empresas', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.Empresa.list();
+        return await filtrarPorContexto('Empresa', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar empresas:', err);
         return [];
