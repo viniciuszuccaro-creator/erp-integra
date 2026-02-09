@@ -123,8 +123,16 @@ const setFormData = (updater) => {
       nome: (formData.nome || '').trim(),
       tipo: formData.tipo,
       cpf_cnpj: formData.cpf_cnpj,
+      email: formData.email,
+      telefone: formData.telefone,
+      whatsapp: formData.whatsapp,
+      cep: formData.cep,
+      limite_credito: formData.limite_credito,
+      condicao_pagamento: formData.condicao_pagamento,
+      status: formData.status,
     });
     if (!result.success) {
+      // Exibe primeiro erro no topo e permite inline nos campos
       alert(result.error.issues?.[0]?.message || 'Dados inválidos');
       return;
     }
