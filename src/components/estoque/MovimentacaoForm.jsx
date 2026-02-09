@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import FormWrapper from "@/components/common/FormWrapper";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -59,8 +60,7 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     const payload = {
       ...formData,
       empresa_id: formData.empresa_id || defaultEmpresaId,
