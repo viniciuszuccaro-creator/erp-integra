@@ -83,7 +83,7 @@ function Agenda() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
-  const { filterInContext, carimbarContexto } = useContextoVisual();
+  const { filterInContext, carimbarContexto, empresaAtual } = useContextoVisual();
 
   const [eventoForm, setEventoForm] = useState({
     titulo: "",
@@ -110,8 +110,8 @@ function Agenda() {
   });
 
   const { data: eventos = [] } = useQuery({
-    queryKey: ['eventos'],
-    queryFn: () => base44.entities.Evento.list('-data_inicio'),
+    queryKey: ['eventos', empresaAtual?.id],
+    queryFn: () => filterInContext('Evento', {}, '-data_inicio'),
   });
 
   const { data: user } = useQuery({
@@ -120,13 +120,13 @@ function Agenda() {
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ['clientes', empresaAtual?.id],
+    queryFn: () => filterInContext('Cliente', {}, '-created_date'),
   });
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos'],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryKey: ['pedidos', empresaAtual?.id],
+    queryFn: () => filterInContext('Pedido', {}, '-data_pedido'),
   });
 
   const { data: configuracoes } = useQuery({

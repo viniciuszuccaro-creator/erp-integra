@@ -222,7 +222,7 @@ export default function Cadastros() {
     queryKey: ['clientes', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.Cliente.list('-created_date', 100);
+        return await filterInContext('Cliente', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
         return [];
@@ -256,7 +256,7 @@ export default function Cadastros() {
     queryKey: ['fornecedores', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.Fornecedor.list('-created_date', 100);
+        return await filterInContext('Fornecedor', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar fornecedores:', err);
         return [];
@@ -305,7 +305,7 @@ export default function Cadastros() {
     queryKey: ['colaboradores', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.Colaborador.list('-created_date', 100);
+        return await filterInContext('Colaborador', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar colaboradores:', err);
         return [];
@@ -354,7 +354,7 @@ export default function Cadastros() {
     queryKey: ['produtos', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await base44.entities.Produto.list('-created_date', 100);
+        return await filterInContext('Produto', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar produtos:', err);
         return [];
