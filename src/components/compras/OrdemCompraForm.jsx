@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -16,7 +18,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
  * V21.1.2: Ordem Compra Form - Adaptado para Window Mode
  */
 export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = false }) {
-  const [formData, setFormData] = useState(ordemCompra || {
+  // React Hook Form + Zod
+  const defaultValues = ordemCompra || {
     numero_oc: `OC-${Date.now()}`,
     fornecedor_id: '',
     fornecedor_nome: '',
@@ -29,7 +32,8 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
     observacoes: '',
     status: 'Solicitada',
     itens: []
-  });
+  };
+
 
   const [novoItem, setNovoItem] = useState({
     produto_id: '',
@@ -41,6 +45,9 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
   });
 
   const { empresaAtual, filterInContext } = useContextoVisual();
+
+  // Zod schema (mantido)
+
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores', empresaAtual?.id],
     queryFn: () => filterInContext('Fornecedor', {}, '-updated_date', 9999),
@@ -59,11 +66,11 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
       valor_total: novoItem.quantidade_solicitada * novoItem.valor_unitario
     };
 
-    setFormData({
-      ...formData,
-      itens: [...formData.itens, itemComValorTotal],
-      valor_total: formData.valor_total + itemComValorTotal.valor_total
-    });
+    const current = watch('itens') || [];
+    const updated = [...current, itemComValorTotal];
+    setValue('itens', updated, { shouldValidate: true });
+    const total = updated.reduce((sum, it) => sum + (it.valor_total || 0), 0);
+    setValue('valor_total', total, { shouldValidate: false });
 
     setNovoItem({
       produto_id: '',
@@ -76,12 +83,11 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
   };
 
   const handleRemoveItem = (index) => {
-    const item = formData.itens[index];
-    setFormData({
-      ...formData,
-      itens: formData.itens.filter((_, i) => i !== index),
-      valor_total: formData.valor_total - item.valor_total
-    });
+    const current = watch('itens') || [];
+    const updated = current.filter((_, i) => i !== index);
+    setValue('itens', updated, { shouldValidate: true });
+    const total = updated.reduce((sum, it) => sum + (it.valor_total || 0), 0);
+    setValue('valor_total', total, { shouldValidate: false });
   };
 
   const handleProdutoChange = (produtoId) => {
@@ -100,29 +106,35 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
   const ocSchema = z.object({
     numero_oc: z.string().min(3),
     fornecedor_id: z.string().min(1, 'Fornecedor é obrigatório'),
-    data_solicitacao: z.string().min(8),
+    fornecedor_nome: z.string().optional(),
+    data_solicitacao: z.string().min(8, 'Data inválida'),
+    data_entrega_prevista: z.string().optional(),
+    prazo_entrega_acordado: z.number().nonnegative().default(0),
+    condicao_pagamento: z.string().optional(),
+    forma_pagamento: z.string().optional(),
+    observacoes: z.string().optional(),
+    valor_total: z.number().nonnegative().default(0),
     itens: z.array(z.object({
-      produto_id: z.string().min(1),
-      descricao: z.string().min(1),
-      quantidade_solicitada: z.number().positive(),
-      unidade: z.string().min(1),
-      valor_unitario: z.number().nonnegative(),
-      valor_total: z.number().nonnegative()
+      produto_id: z.string().min(1, 'Produto obrigatório'),
+      descricao: z.string().min(1, 'Descrição obrigatória'),
+      quantidade_solicitada: z.number().positive('Quantidade > 0'),
+      unidade: z.string().min(1, 'Unidade obrigatória'),
+      valor_unitario: z.number().nonnegative('Valor unitário inválido'),
+      valor_total: z.number().nonnegative('Valor total inválido')
     })).min(1, 'Inclua ao menos 1 item')
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const parsed = ocSchema.safeParse(formData);
-    if (!parsed.success) {
-      alert(parsed.error.issues.map(i => `• ${i.message}`).join('\n'));
-      return;
-    }
-    onSubmit(formData);
+  const { register, handleSubmit: rhfHandleSubmit, control, setValue, watch, formState: { errors } } = useForm({
+    resolver: zodResolver(ocSchema),
+    defaultValues,
+  });
+
+  const onValid = (data) => {
+    onSubmit(data);
   };
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <form onSubmit={rhfHandleSubmit(onValid)} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
@@ -134,53 +146,53 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
             <div>
               <Label>Número OC *</Label>
               <Input
-                value={formData.numero_oc}
-                onChange={(e) => setFormData({ ...formData, numero_oc: e.target.value })}
-                required
+                {...register('numero_oc')}
               />
+              {errors.numero_oc && <p className="text-red-600 text-xs mt-1">{errors.numero_oc.message}</p>}
             </div>
 
             <div>
               <Label>Fornecedor *</Label>
-              <Select
-                value={formData.fornecedor_id}
-                onValueChange={(v) => {
-                  const forn = fornecedores.find(f => f.id === v);
-                  setFormData({ 
-                    ...formData, 
-                    fornecedor_id: v,
-                    fornecedor_nome: forn?.nome || ''
-                  });
-                }}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {fornecedores.filter(f => f.status === 'Ativo').map(f => (
-                    <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="fornecedor_id"
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={(v) => {
+                      field.onChange(v);
+                      const forn = fornecedores.find(f => f.id === v);
+                      setValue('fornecedor_nome', forn?.nome || '', { shouldValidate: false });
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fornecedores.filter(f => f.status === 'Ativo').map(f => (
+                        <SelectItem key={f.id} value={f.id}>{f.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.fornecedor_id && <p className="text-red-600 text-xs mt-1">{errors.fornecedor_id.message}</p>}
             </div>
 
             <div>
               <Label>Data Solicitação *</Label>
               <Input
                 type="date"
-                value={formData.data_solicitacao}
-                onChange={(e) => setFormData({ ...formData, data_solicitacao: e.target.value })}
-                required
+                {...register('data_solicitacao')}
               />
+              {errors.data_solicitacao && <p className="text-red-600 text-xs mt-1">{errors.data_solicitacao.message}</p>}
             </div>
 
             <div>
               <Label>Entrega Prevista</Label>
               <Input
                 type="date"
-                value={formData.data_entrega_prevista}
-                onChange={(e) => setFormData({ ...formData, data_entrega_prevista: e.target.value })}
+                {...register('data_entrega_prevista')}
               />
             </div>
 
@@ -188,32 +200,33 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
               <Label>Prazo Entrega (dias)</Label>
               <Input
                 type="number"
-                value={formData.prazo_entrega_acordado}
-                onChange={(e) => setFormData({ ...formData, prazo_entrega_acordado: parseInt(e.target.value) || 0 })}
+                {...register('prazo_entrega_acordado', { valueAsNumber: true })}
               />
             </div>
 
             <div>
               <Label>Condição Pagamento</Label>
-              <Select
-                value={formData.condicao_pagamento}
-                onValueChange={(v) => setFormData({ ...formData, condicao_pagamento: v })}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="À Vista">À Vista</SelectItem>
-                  <SelectItem value="30 dias">30 dias</SelectItem>
-                  <SelectItem value="60 dias">60 dias</SelectItem>
-                  <SelectItem value="90 dias">90 dias</SelectItem>
-                </SelectContent>
-              </Select>
+              <Controller
+                control={control}
+                name="condicao_pagamento"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="À Vista">À Vista</SelectItem>
+                      <SelectItem value="30 dias">30 dias</SelectItem>
+                      <SelectItem value="60 dias">60 dias</SelectItem>
+                      <SelectItem value="90 dias">90 dias</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             <div className="col-span-2">
               <Label>Observações</Label>
               <Textarea
-                value={formData.observacoes}
-                onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
+                {...register('observacoes')}
                 rows={2}
               />
             </div>
@@ -224,6 +237,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg">Itens da OC</h3>
+          {errors.itens && <p className="text-red-600 text-xs mt-1">{errors.itens.message}</p>}
 
           <div className="grid grid-cols-5 gap-3 p-4 bg-slate-50 rounded-lg">
             <div>
@@ -292,7 +306,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
               </TableRow>
             </TableHeader>
             <TableBody>
-              {formData.itens.map((item, index) => (
+              {(watch('itens') || []).map((item, index) => (
                 <TableRow key={index}>
                   <TableCell className="font-medium">{item.descricao}</TableCell>
                   <TableCell>{item.quantidade_solicitada} {item.unidade}</TableCell>
@@ -314,7 +328,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
             </TableBody>
           </Table>
 
-          {formData.itens.length === 0 && (
+          {(watch('itens') || []).length === 0 && (
             <div className="text-center py-8 text-slate-400 text-sm">
               Adicione produtos à ordem de compra
             </div>
@@ -324,7 +338,7 @@ export default function OrdemCompraForm({ ordemCompra, onSubmit, windowMode = fa
             <div className="text-right">
               <p className="text-sm text-blue-700">Valor Total</p>
               <p className="text-2xl font-bold text-blue-900">
-                R$ {formData.valor_total.toFixed(2)}
+                R$ {(watch('valor_total') || 0).toFixed(2)}
               </p>
             </div>
           </div>
