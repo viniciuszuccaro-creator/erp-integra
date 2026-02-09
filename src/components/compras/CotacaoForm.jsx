@@ -131,8 +131,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                     control={control}
                     name={`itens.${idx}.produto_descricao`}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
+                      <Select value={field.value} onValueChange={field.onChange}<SelectTrigger>
                       <SelectValue placeholder="Produto" />
                     </SelectTrigger>
                     <SelectContent>
@@ -159,8 +158,7 @@ export default function CotacaoForm({ cotacao, onSubmit, windowMode = false }) {
                     control={control}
                     name={`itens.${idx}.unidade`}
                     render={({ field }) => (
-                      <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                      <Select value={field.value} onValueChange={field.onChange}<SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="UN">UN</SelectItem>
                       <SelectItem value="KG">KG</SelectItem>
