@@ -328,7 +328,7 @@ export default function Empresas() {
                   <Label htmlFor="tipo">Tipo</Label>
                   <Select
                     value={methods.watch('tipo')}
-                    onValueChange={(value) => methods.setValue('tipo', value as any, { shouldValidate: true })}
+                    onValueChange={(value) => methods.setValue('tipo', value, { shouldValidate: true })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione" />

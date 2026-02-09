@@ -628,7 +628,7 @@ export default function Relatorios() {
               <Label htmlFor="frequencia">Frequência *</Label>
               <Select
                 value={methods.watch('frequencia')}
-                onValueChange={(value) => methods.setValue('frequencia', value as any, { shouldValidate: true })}
+                onValueChange={(value) => methods.setValue('frequencia', value, { shouldValidate: true })}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -646,7 +646,7 @@ export default function Relatorios() {
                 <Label htmlFor="dia_semana">Dia da Semana</Label>
                 <Select
                   value={methods.watch('dia_semana')}
-                  onValueChange={(value) => methods.setValue('dia_semana', value as any)}
+                  onValueChange={(value) => methods.setValue('dia_semana', value)
                 >
                   <SelectTrigger>
                     <SelectValue />
