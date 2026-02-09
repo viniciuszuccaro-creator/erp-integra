@@ -344,23 +344,26 @@ const setFormData = (updater) => {
 
         <div>
           <Label htmlFor="condicao_pagamento">Condição de Pagamento</Label>
-          <Select
-            value={formData.condicao_pagamento}
-            onValueChange={(value) => setFormData({ ...formData, condicao_pagamento: value })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="À Vista">À Vista</SelectItem>
-              <SelectItem value="7 dias">7 dias</SelectItem>
-              <SelectItem value="15 dias">15 dias</SelectItem>
-              <SelectItem value="30 dias">30 dias</SelectItem>
-              <SelectItem value="45 dias">45 dias</SelectItem>
-              <SelectItem value="60 dias">60 dias</SelectItem>
-              <SelectItem value="Parcelado">Parcelado</SelectItem>
-            </SelectContent>
-          </Select>
+          <Controller
+            control={control}
+            name="condicao_pagamento"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="À Vista">À Vista</SelectItem>
+                  <SelectItem value="7 dias">7 dias</SelectItem>
+                  <SelectItem value="15 dias">15 dias</SelectItem>
+                  <SelectItem value="30 dias">30 dias</SelectItem>
+                  <SelectItem value="45 dias">45 dias</SelectItem>
+                  <SelectItem value="60 dias">60 dias</SelectItem>
+                  <SelectItem value="Parcelado">Parcelado</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
 
         <div>
