@@ -1,6 +1,5 @@
 import React, { Suspense } from "react";
 import { base44 } from "@/api/base44Client";
-import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, Target, MessageSquare, Mail, Sparkles, AlertTriangle, BarChart3, Users } from "lucide-react";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
