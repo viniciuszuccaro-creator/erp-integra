@@ -291,7 +291,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
         }
       }
 
-      await onSubmit(formData);
+      await onSubmit(carimbarContexto(formData, 'empresa_id'));
     } finally {
       setSalvando(false);
     }
