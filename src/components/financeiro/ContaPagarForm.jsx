@@ -139,7 +139,6 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
         {/* ABA 1: DADOS GERAIS */}
         <TabsContent value="dados-gerais" className="space-y-4">
           <ContaPagarDadosGerais formData={formData} setFormData={setFormData} fornecedores={fornecedores} empresas={empresas} />
-          <ContaPagarDadosGerais formData={formData} setFormData={setFormData} fornecedores={fornecedores} empresas={empresas} />
         </TabsContent>
 
         {/* ABA 2: FINANCEIRO */}
