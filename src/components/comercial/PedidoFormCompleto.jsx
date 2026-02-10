@@ -45,7 +45,7 @@ const FechamentoFinanceiroTab = React.lazy(() => import('./FechamentoFinanceiroT
 const ArquivosProjetosTab = React.lazy(() => import('./ArquivosProjetosTab'));
 const AuditoriaAprovacaoTab = React.lazy(() => import('./AuditoriaAprovacaoTab'));
 import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
-import PedidoFooterAcoes from './pedido/PedidoFooterAcoes';
+import PedidoFooterAcoes from './pedido/PedidoFooterAcoes.jsx';
 import { pedidoCompletoSchema } from './pedido/pedidoSchema.js';
 import { getDefaultPedidoValues } from './pedido/pedidoDefaults.js';
 
