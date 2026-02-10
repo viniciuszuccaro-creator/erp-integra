@@ -10,7 +10,9 @@ export default function ProtectedSection({
   section,
   action = "visualizar",
   fallback = null,
-  children
+  children,
+  hideInstead = false,
+  disableInstead = false
 }) {
   const { isLoading, hasPermission } = usePermissions();
   const { user } = useUser();
