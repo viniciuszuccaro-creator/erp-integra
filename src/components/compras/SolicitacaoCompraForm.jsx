@@ -13,14 +13,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Save, ShoppingCart } from "lucide-react";
 import FormWrapper from "@/components/common/FormWrapper";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2: Solicitação Compra Form - Adaptado para Window Mode
  */
 export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMode = false }) {
   const { carimbarContexto, filterInContext, empresaAtual } = useContextoVisual();
-  const { carimbarContexto } = useContextoVisual();
+  
   const scSchema = z.object({
     numero_solicitacao: z.string(),
     data_solicitacao: z.string().min(8, 'Data inválida'),
@@ -153,7 +152,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
                       <SelectItem value="Baixa">Baixa</SelectItem>
                       <SelectItem value="Média">Média</SelectItem>
                       <SelectItem value="Alta">Alta</SelectItem>
-                      <SelectItem value="Urgente">🔥 Urgente</SelectItem>
+                      <SelectItem value="Urgente">Urgente</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
