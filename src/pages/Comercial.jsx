@@ -166,7 +166,7 @@ export default function Comercial() {
               vendedor: formData.vendedor || user?.full_name,
               vendedor_id: formData.vendedor_id || user?.id
             });
-            toast.success("✅ Pedido criado!");
+            toast.success("Pedido criado!");
             await pedidosQuery.refetch();
           } catch (error) {
             pedidoCriado = false;
@@ -191,7 +191,7 @@ export default function Comercial() {
           atualizacaoEmAndamento = true;
           try {
             await updateInContext('Pedido', formData.id, formData);
-            toast.success("✅ Pedido atualizado!");
+            toast.success("Pedido atualizado!");
             await pedidosQuery.refetch();
             if (windowIdRef) closeWindow(windowIdRef);
           } catch (error) {
@@ -200,7 +200,7 @@ export default function Comercial() {
           }
         }
       },
-      { title: `📝 Editar: ${pedido.numero_pedido}`, width: 1400, height: 800 }
+      { title: `Editar: ${pedido.numero_pedido}`, width: 1400, height: 800 }
     );
   };
 
@@ -259,7 +259,7 @@ export default function Comercial() {
       icon: TrendingUp,
       color: 'green',
       component: ComissoesTab,
-      windowTitle: '💰 Comissões',
+      windowTitle: 'Comissões',
       width: 1400,
       height: 800,
       props: { comissoes, pedidos, empresas }

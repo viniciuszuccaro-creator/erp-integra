@@ -82,7 +82,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
   useEffect(() => {
     if (origemPedido) {
       setFormData(prev => ({ ...prev, origem_pedido: origemPedido }));
-      console.log('🎯 Origem automática aplicada:', origemPedido, '| Bloqueado:', bloquearEdicao);
+      console.log('Origem automatica aplicada:', origemPedido, '| Bloqueado:', bloquearEdicao);
     }
   }, [origemPedido, bloquearEdicao]);
 
