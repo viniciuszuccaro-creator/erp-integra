@@ -53,7 +53,7 @@ const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
-const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem"));
+const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem")); // kept for backward-compat (not used directly here)
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import StatsSection from "@/components/dashboard/StatsSection";
 import KPIsOperacionaisSection from "@/components/dashboard/KPIsOperacionaisSection";

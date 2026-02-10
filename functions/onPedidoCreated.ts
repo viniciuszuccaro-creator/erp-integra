@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
+import { processReservas } from './_lib/orderReservationUtils.js';
 
 Deno.serve(async (req) => {
   try {
@@ -16,42 +17,7 @@ Deno.serve(async (req) => {
     const perm = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
     if (perm) return perm;
 
-    const itensKeys = ['itens_revenda','itens_armado_padrao','itens_corte_dobra'];
-    const movimentos = [];
-
-    for (const key of itensKeys) {
-      const itens = Array.isArray(data?.[key]) ? data[key] : [];
-      for (const it of itens) {
-        const produtoId = it?.produto_id;
-        const quantidade = Number(it?.quantidade || 0);
-        if (!produtoId || quantidade <= 0) continue;
-
-        const [produto] = await base44.asServiceRole.entities.Produto.filter({ id: produtoId });
-        const podeSomar = produto && (produto.unidade_estoque === it?.unidade || !it?.unidade);
-
-        if (podeSomar) {
-          const novoReservado = Number(produto.estoque_reservado || 0) + quantidade;
-          await base44.asServiceRole.entities.Produto.update(produto.id, { estoque_reservado: novoReservado });
-        }
-
-        const mov = await base44.asServiceRole.entities.MovimentacaoEstoque.create({
-          origem_movimento: 'pedido',
-          tipo_movimento: 'reserva',
-          produto_id: produtoId,
-          produto_descricao: produto?.descricao,
-          quantidade,
-          unidade_medida: it?.unidade || produto?.unidade_estoque || 'UN',
-          empresa_id: data?.empresa_id || null,
-          group_id: data?.group_id || null,
-          data_movimentacao: new Date().toISOString(),
-          motivo: `Reserva para Pedido ${data?.numero_pedido || data?.id}`,
-          valor_total: 0,
-          responsavel: user?.full_name || user?.email,
-          responsavel_id: user?.id
-        });
-        movimentos.push(mov?.id);
-      }
-    }
+    const movimentos = await processReservas(base44, data, user);
 
     await audit(base44, user, {
       acao: 'Criação', modulo: 'Estoque', entidade: 'MovimentacaoEstoque',
