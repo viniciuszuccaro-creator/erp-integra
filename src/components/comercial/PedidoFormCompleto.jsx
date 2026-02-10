@@ -532,7 +532,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
                  );
                }
              }, 150);
-           } catch { setSalvando(false); toast.error('❌ Erro ao salvar pedido'); }
+           } catch (e) { setSalvando(false); toast.error('❌ Erro ao salvar pedido'); }
          }}
          onFecharEnviarEntrega={async () => {
            if (salvando) return;
