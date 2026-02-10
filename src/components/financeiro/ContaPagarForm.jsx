@@ -138,8 +138,12 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
 
         {/* ABA 1: DADOS GERAIS */}
         <TabsContent value="dados-gerais" className="space-y-4">
-          <div>
-            <Label>Descrição *</Label>
+          <ContaPagarDadosGerais
+            formData={formData}
+            setFormData={setFormData}
+            fornecedores={fornecedores}
+            empresas={empresas}
+          /></Label>
             <Input
               value={formData.descricao}
               onChange={(e) => setFormData({...formData, descricao: e.target.value})}
