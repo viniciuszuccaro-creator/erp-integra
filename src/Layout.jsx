@@ -141,6 +141,15 @@ function LayoutContent({ children, currentPageName }) {
                           Fiscal: 'Fiscal',
                           RH: 'RH',
                           Expedicao: 'Expedição',
+                          Producao: 'Produção',
+                          ProducaoMobile: 'Produção',
+                          Dashboard: 'Dashboard',
+                          DashboardCorporativo: 'Dashboard',
+                          Relatorios: 'Relatórios',
+                          Agenda: 'Agenda',
+                          Cadastros: 'Cadastros',
+                          Contratos: 'Contratos',
+                          AdministracaoSistema: 'Sistema',
                         };
                         const currentModule = pageToModule[currentPageName];
 
