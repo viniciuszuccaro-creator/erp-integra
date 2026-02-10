@@ -48,6 +48,14 @@ export default function ProtectedSection({
 
   if (isLoading) return null;
   if (!allowed) {
+    if (hideInstead) return fallback;
+    if (disableInstead) {
+      return (
+        <div className="opacity-50 pointer-events-none w-full h-full">
+          {fallback || children}
+        </div>
+      );
+    }
     return (
       <>
         {fallback}
