@@ -10,11 +10,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Save, PackageCheck, Plus, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import FormWrapper from "@/components/common/FormWrapper";
+import { z } from 'zod';
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 /**
  * V21.1.2: Recebimento Form - Adaptado para Window Mode
  */
 export default function RecebimentoForm({ recebimento, onSubmit, windowMode = false }) {
+  const { carimbarContexto } = useContextoVisual();
+  const schema = z.object({
+    ordem_compra_id: z.string().min(1, 'OC é obrigatória'),
+    data_recebimento: z.string().min(8, 'Data obrigatória'),
+    itens_recebidos: z.array(z.object({
+      produto_id: z.string().optional(),
+      descricao: z.string().optional(),
+      quantidade_solicitada: z.number().nonnegative().optional(),
+      quantidade_recebida: z.number().nonnegative(),
+      unidade: z.string().optional(),
+      divergencia: z.boolean().optional()
+    })).optional()
+  });
   const [formData, setFormData] = useState(recebimento || {
     ordem_compra_id: '',
     numero_oc: '',
@@ -67,7 +82,7 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
   };
 
   const content = (
-    <FormWrapper onSubmit={() => onSubmit(formData)} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={() => onSubmit(carimbarContexto(formData,'empresa_id'))} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">

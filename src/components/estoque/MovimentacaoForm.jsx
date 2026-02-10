@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import FormWrapper from "@/components/common/FormWrapper";
+import { z } from 'zod';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,13 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  */
 export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = false }) {
   const { user: authUser } = useUser();
-  const { getFiltroContexto } = useContextoVisual();
+  const { getFiltroContexto, carimbarContexto } = useContextoVisual();
+  const schema = z.object({
+    tipo_movimento: z.string().min(3, 'Tipo é obrigatório'),
+    produto_id: z.string().min(1, 'Produto é obrigatório'),
+    quantidade: z.number().positive('Quantidade > 0'),
+    data_movimentacao: z.string().min(4, 'Data é obrigatória')
+  });
   const defaultEmpresaId = (getFiltroContexto('empresa_id') || {}).empresa_id || '';
   const [formData, setFormData] = useState(movimentacao || {
     tipo_movimento: '',
@@ -67,11 +74,11 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
       responsavel: formData.responsavel || (authUser?.full_name || authUser?.email),
       responsavel_id: formData.responsavel_id || authUser?.id
     };
-    onSubmit(payload);
+    onSubmit(carimbarContexto(payload, 'empresa_id'));
   };
 
   const content = (
-    <FormWrapper onSubmit={handleSubmit} externalData={formData} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">
