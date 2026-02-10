@@ -1,41 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
+import { computeUpdatesForContaPagar, computeUpdatesForContaReceber } from './_lib/paymentStatusUtils.js';
 
-// Helpers (refatoração Etapa 1)
-function computeUpdatesForContaPagar(action, justificativa, registro) {
-  const updates = {};
-  if (action === 'aprovar') {
-    updates.status_pagamento = 'Aprovado';
-  } else if (action === 'pagar') {
-    updates.status_pagamento = 'Pago';
-    updates.status = 'Pago';
-    updates.data_pagamento = new Date().toISOString().slice(0,10);
-    updates.detalhes_pagamento = {
-      ...(registro?.detalhes_pagamento || {}),
-      status_compensacao: 'Aguardando'
-    };
-  } else if (action === 'cancelar') {
-    updates.status_pagamento = 'Cancelado';
-    updates.motivo_rejeicao = justificativa || 'Cancelado';
-  }
-  return updates;
-}
-
-function computeUpdatesForContaReceber(action, justificativa, registro) {
-  const updates = {};
-  if (action === 'receber') {
-    updates.status = 'Recebido';
-    updates.data_recebimento = new Date().toISOString().slice(0,10);
-    updates.detalhes_pagamento = {
-      ...(registro?.detalhes_pagamento || {}),
-      status_compensacao: 'Aguardando'
-    };
-  } else if (action === 'cancelar') {
-    updates.status = 'Cancelado';
-    updates.motivo_rejeicao = justificativa || 'Cancelado';
-  }
-  return updates;
-}
 
 Deno.serve(async (req) => {
   try {
