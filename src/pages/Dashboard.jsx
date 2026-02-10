@@ -54,6 +54,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
 const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem"));
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import StatsSection from "@/components/dashboard/StatsSection";
+import KPIsOperacionaisSection from "@/components/dashboard/KPIsOperacionaisSection";
+import SecondaryKPIsSection from "@/components/dashboard/SecondaryKPIsSection";
+import ChartsSection from "@/components/dashboard/ChartsSection";
+import TopProdutosStatusPeriodoSection from "@/components/dashboard/TopProdutosStatusPeriodoSection";
+import AdvancedAnalysisSection from "@/components/dashboard/AdvancedAnalysisSection";
+import QuickAccessModulesGrid from "@/components/dashboard/QuickAccessModulesGrid";
+import FinancialSummary from "@/components/dashboard/FinancialSummary";
 
 
 export default function Dashboard() {
@@ -472,6 +481,12 @@ export default function Dashboard() {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+  // Pré-computos para seções avançadas (evita recalcular em cada render de subcomponente)
+  const vendasPorMesData = vendasPorMes();
+  const top5ClientesData = top5Clientes();
+  const statusPedidosDataAll = statusPedidosData();
+  const fluxoCaixaMensalData = fluxoCaixaMensal();
+
   // DRILL-DOWN - Função para navegar ao clicar em KPI
   const handleDrillDown = (rota) => {
     navigate(rota);
@@ -656,46 +671,15 @@ export default function Dashboard() {
     <ProtectedSection module="Dashboard" action="visualizar">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex-1 overflow-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Dashboard Executivo</h1>
-          <p className="text-slate-600">
-            {estaNoGrupo 
-              ? `Visão Consolidada • ${grupoAtual?.nome_do_grupo || 'Grupo'}` 
-              : `${empresaAtual?.nome_fantasia || empresaAtual?.razao_social || 'Empresa'}`
-            }
-          </p>
-        </div>
-        <div className="flex gap-3 items-center">
-          {/* Removed visualizacao toggle buttons */}
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className={autoRefresh ? "bg-green-50 text-green-700" : "bg-slate-100"}>
-              <div className={`w-2 h-2 rounded-full ${autoRefresh ? 'bg-green-500 animate-pulse' : 'bg-slate-400'} mr-2`} />
-              {autoRefresh ? 'Atualização automática (60s)' : 'Atualização manual'}
-            </Badge>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setAutoRefresh(!autoRefresh)}
-            >
-              {autoRefresh ? 'Desativar' : 'Ativar'}
-            </Button>
-          </div>
-          <Select value={periodo} onValueChange={setPeriodo}>
-            <SelectTrigger className="w-40">
-              <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="dia">Hoje</SelectItem>
-              <SelectItem value="semana">Esta Semana</SelectItem>
-              <SelectItem value="mes">Este Mês</SelectItem>
-              <SelectItem value="trimestre">Trimestre</SelectItem>
-              <SelectItem value="ano">Este Ano</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <DashboardHeader
+        empresaAtual={empresaAtual}
+        estaNoGrupo={estaNoGrupo}
+        grupoAtual={grupoAtual}
+        autoRefresh={autoRefresh}
+        setAutoRefresh={setAutoRefresh}
+        periodo={periodo}
+        setPeriodo={setPeriodo}
+      />
 
       <ErrorBoundary>
         <Tabs value={activeTab} onValueChange={handleTabChange}>
@@ -727,421 +711,34 @@ export default function Dashboard() {
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
           {/* KPIs Principais + Widget Canais */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {statsCards.map((stat, index) => (
-              <Card 
-                key={index} 
-                onClick={stat.drillDown}
-                className="hover:shadow-lg transition-all duration-300 border-0 overflow-hidden cursor-pointer group"
-              >
-                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${stat.color} opacity-10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform`} />
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">
-                    {stat.title}
-                  </CardTitle>
-                  <div className={`p-3 rounded-xl ${stat.bgColor}`}>
-                    <stat.icon className={`w-5 h-5 ${stat.textColor}`} />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className={`text-2xl font-bold ${stat.textColor} mb-1`}>{stat.value}</div>
-                  <p className="text-xs text-slate-500">{stat.subtitle}</p>
-                </CardContent>
-              </Card>
-            ))}
-            
-            {/* Widget Canais de Origem */}
-            <div className="md:col-span-2 lg:col-span-2">
-              <Suspense fallback={<div className="h-28 rounded-md bg-slate-100 animate-pulse" />}>
-                <WidgetCanaisOrigem empresaId={empresaAtual?.id} />
-              </Suspense>
-            </div>
-          </div>
+          <StatsSection statsCards={statsCards} empresaId={empresaAtual?.id} />
 
           {/* NOVOS KPIs OPERACIONAIS */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">KPIs Operacionais</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {kpisOperacionais.map((kpi, index) => (
-                <Card 
-                  key={index} 
-                  onClick={kpi.drillDown}
-                  className="border-0 shadow-md cursor-pointer hover:shadow-lg transition-all"
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className={`p-2 rounded-lg ${kpi.bgColor}`}>
-                        <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
-                      </div>
-                    </div>
-                    <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
-                    <p className="text-xs text-slate-600 mt-1">{kpi.title}</p>
-                    {kpi.subtitle && <p className="text-xs text-slate-500 mt-0.5">{kpi.subtitle}</p>}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <KPIsOperacionaisSection kpis={kpisOperacionais} />
 
           {/* KPIs Secundários */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Indicadores de Performance (KPIs)</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {kpiCards.map((kpi, index) => (
-                <Card 
-                  key={index} 
-                  onClick={kpi.drillDown}
-                  className={`border-0 shadow-md cursor-pointer hover:shadow-lg transition-all ${kpi.alert ? 'ring-2 ring-red-300' : ''}`}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className={`p-2 rounded-lg ${kpi.bgColor}`}>
-                        <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
-                      </div>
-                    </div>
-                    <div className={`text-2xl font-bold ${kpi.color}`}>{kpi.value}</div>
-                    <p className="text-xs text-slate-600 mt-1">{kpi.title}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <SecondaryKPIsSection kpis={kpiCards} />
 
           {/* Gráficos */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Vendas últimos 30 dias */}
-            <Card className="border-0 shadow-md">
-              <CardHeader className="border-b bg-slate-50">
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-blue-500" />
-                  Vendas - Últimos 30 Dias
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={vendasUltimos30Dias}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip 
-                      formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                    />
-                    <Area type="monotone" dataKey="valor" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Fluxo de Caixa 7 dias */}
-            <Card className="border-0 shadow-md">
-              <CardHeader className="border-b bg-slate-50">
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="w-5 h-5 text-green-500" />
-                  Fluxo de Caixa - 7 Dias
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={fluxo7Dias}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip 
-                      formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                      contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                    />
-                    <Legend />
-                    <Bar dataKey="receitas" fill="#10b981" name="Receitas" />
-                    <Bar dataKey="despesas" fill="#ef4444" name="Despesas" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
+          <ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />
 
           {/* Top Produtos e Status Pedidos */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            {/* Top Produtos */}
-            <Card className="border-0 shadow-md">
-              <CardHeader className="border-b bg-slate-50">
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-indigo-500" />
-                  Top 5 Produtos Mais Vendidos
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                {topProdutos.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={topProdutos} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis type="number" tick={{ fontSize: 12 }} />
-                      <YAxis dataKey="nome" type="category" width={150} tick={{ fontSize: 11 }} />
-                      <Tooltip 
-                        formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
-                        contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                      />
-                      <Bar dataKey="valor" fill="#6366f1" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="py-20 text-center text-slate-500">
-                    <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                    <p>Nenhuma venda no período</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Pedidos por Status */}
-            <Card className="border-0 shadow-md">
-              <CardHeader className="border-b bg-slate-50">
-                <CardTitle className="flex items-center gap-2">
-                  <PieChart className="w-5 h-5 text-purple-500" />
-                  Pedidos por Status (Período Atual)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                {dadosVendasStatus.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <RechartsPie>
-                      <Pie
-                        data={dadosVendasStatus}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({nome, quantidade}) => `${nome}: ${quantidade}`}
-                        outerRadius={100}
-                        fill="#8884d8"
-                        dataKey="quantidade"
-                      >
-                        {dadosVendasStatus.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        formatter={(value, name, props) => [`${value} pedidos`, props.payload.nome]}
-                        contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                      />
-                    </RechartsPie>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="py-20 text-center text-slate-500">
-                    <PieChart className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                    <p>Nenhum pedido no período</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <TopProdutosStatusPeriodoSection topProdutos={topProdutos} dadosVendasStatus={dadosVendasStatus} COLORS={COLORS} />
 
           {/* GRÁFICOS AVANÇADOS */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Análise Detalhada</h2>
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Vendas por Mês */}
-              <Card className="border-0 shadow-md">
-                <CardHeader className="bg-slate-50 border-b">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-blue-500" />
-                    Vendas por Mês (Ano Atual)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {vendasPorMes().length > 0 ? (
-                    <ResponsiveContainer width="100%" height={250}>
-                      <AreaChart data={vendasPorMes()}>
-                        <defs>
-                          <linearGradient id="colorVendas" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
-                                 contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}/>
-                        <Area type="monotone" dataKey="valor" stroke="#3b82f6" fillOpacity={1} fill="url(#colorVendas)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="py-20 text-center text-slate-500">
-                      <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                      <p>Nenhuma venda registrada no ano atual</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Top 5 Clientes */}
-              <Card className="border-0 shadow-md">
-                <CardHeader className="bg-slate-50 border-b">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Users className="w-5 h-5 text-green-500" />
-                    Top 5 Clientes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {top5Clientes().length > 0 ? (
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={top5Clientes()} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis type="number" tick={{ fontSize: 12 }} />
-                        <YAxis dataKey="cliente" type="category" width={120} tick={{ fontSize: 11 }} />
-                        <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
-                                 contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}/>
-                        <Bar dataKey="valor" fill="#10b981" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="py-20 text-center text-slate-500">
-                      <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                      <p>Nenhum cliente com vendas</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Status de Pedidos */}
-              <Card className="border-0 shadow-md">
-                <CardHeader className="bg-slate-50 border-b">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-purple-500" />
-                    Pedidos por Status (Todos)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {statusPedidosData().length > 0 ? (
-                    <ResponsiveContainer width="100%" height={250}>
-                      <RechartsPie>
-                        <Pie
-                          data={statusPedidosData()}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ status, quantidade }) => `${status}: ${quantidade}`}
-                          outerRadius={80}
-                          dataKey="quantidade"
-                        >
-                          {statusPedidosData().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value, name, props) => [`${value} pedidos`, props.payload.status]}
-                          contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                        />
-                      </RechartsPie>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="py-20 text-center text-slate-500">
-                      <ShoppingCart className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                      <p>Nenhum pedido registrado</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Fluxo de Caixa Mensal */}
-              <Card className="border-0 shadow-md">
-                <CardHeader className="bg-slate-50 border-b">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-red-500" />
-                    Fluxo de Caixa Mensal (Ano Atual)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {fluxoCaixaMensal().length > 0 ? (
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={fluxoCaixaMensal()}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                        <XAxis dataKey="mes" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`} 
-                                 contentStyle={{ backgroundColor: 'white', border: '1px solid #e5e7eb', borderRadius: '8px' }}/>
-                        <Legend />
-                        <Bar dataKey="entradas" fill="#10b981" name="Entradas" />
-                        <Bar dataKey="saidas" fill="#ef4444" name="Saídas" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="py-20 text-center text-slate-500">
-                      <DollarSign className="w-12 h-12 mx-auto mb-2 opacity-30" />
-                      <p>Nenhum movimento financeiro registrado no ano atual</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          <AdvancedAnalysisSection
+            vendasPorMes={vendasPorMesData}
+            top5Clientes={top5ClientesData}
+            statusPedidos={statusPedidosDataAll}
+            fluxoCaixaMensal={fluxoCaixaMensalData}
+            COLORS={COLORS}
+          />
 
           {/* Módulos de Acesso Rápido */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 mb-4">Acesso Rápido aos Módulos</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {quickAccess.map((module, index) => (
-                <Card 
-                  key={index} 
-                  onClick={() => handleDrillDown(module.url)}
-                  className="hover:shadow-xl transition-all duration-300 border-0 overflow-hidden group cursor-pointer h-full"
-                >
-                  <div className={`h-2 bg-gradient-to-r ${module.color}`} />
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={`p-4 rounded-xl bg-gradient-to-br ${module.color} shadow-lg group-hover:scale-110 transition-transform`}>
-                        <module.icon className="w-8 h-8 text-white" />
-                      </div>
-                      {module.count !== null && (
-                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                          module.alert ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'
-                        }`}>
-                          {module.count}
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-bold text-slate-900 mb-1">{module.title}</h3>
-                    <p className="text-slate-600 text-sm mb-4">{module.description}</p>
-                    <div className="flex items-center text-blue-600 font-medium text-sm group-hover:translate-x-1 transition-transform">
-                      Acessar <ArrowRight className="w-4 h-4 ml-1" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <QuickAccessModulesGrid modules={quickAccess} onClick={handleDrillDown} />
 
           {/* Resumo Financeiro */}
-          <Card className="border-0 shadow-md">
-            <CardHeader className="border-b bg-slate-50">
-              <CardTitle>Resumo Financeiro do Período</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center p-6 bg-green-50 rounded-lg">
-                  <TrendingUp className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                  <p className="text-sm text-slate-600 mb-1">Receitas Pendentes</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="text-center p-6 bg-red-50 rounded-lg">
-                  <TrendingDown className="w-8 h-8 mx-auto mb-2 text-red-600" />
-                  <p className="text-sm text-slate-600 mb-1">Despesas Pendentes</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    R$ {despesasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className={`text-center p-6 ${fluxoCaixa >= 0 ? 'bg-blue-50' : 'bg-orange-50'} rounded-lg`}>
-                  <DollarSign className={`w-8 h-8 mx-auto mb-2 ${fluxoCaixa >= 0 ? 'text-blue-600' : 'text-orange-600'}`} />
-                  <p className="text-sm text-slate-600 mb-1">Saldo Projetado</p>
-                  <p className={`text-2xl font-bold ${fluxoCaixa >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>
-                    R$ {fluxoCaixa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <FinancialSummary receitasPendentes={receitasPendentes} despesasPendentes={despesasPendentes} fluxoCaixa={fluxoCaixa} />
 
           {/* NOVO: Gamificação */}
           <div>
