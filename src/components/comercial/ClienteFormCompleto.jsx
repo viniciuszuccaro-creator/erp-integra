@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
+import EntregaTab from "@/components/comercial/cliente/EntregaTab";
 import FormWrapper from "@/components/common/FormWrapper";
 
 const defaultFormData = {
@@ -1283,7 +1284,7 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-end gap-3 pt-4 border-t">
+      <div className="flex justify-end gap-3 pt-4 border-t" style={{zIndex:1}}>
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
