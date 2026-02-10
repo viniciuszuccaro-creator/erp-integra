@@ -444,32 +444,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
       {/* Tabs - FIXO */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <TabsList className="flex-shrink-0 bg-white border-b px-6 py-0 h-auto rounded-none flex-wrap justify-start">
-          {abas.map((aba) => {
-            const Icon = aba.icon;
-            return (
-              <TabsTrigger
-                key={aba.id}
-                value={aba.id}
-                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white relative px-4 py-3"
-              >
-                <Icon className="w-4 h-4 mr-2" />
-                {aba.label}
-                {aba.novo && (
-                  <Badge className="ml-2 bg-purple-600 text-xs">NOVO</Badge>
-                )}
-                {aba.valido && (
-                  <Check className="w-4 h-4 ml-2 text-green-600" />
-                )}
-                {aba.count > 0 && (
-                  <Badge className="ml-2 bg-orange-600 text-xs">
-                    {aba.count}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
+        <PedidoTabsNav abas={abas} activeTab={activeTab} setActiveTab={setActiveTab} />
 
         {/* 🔥 V21.1.2-R1: CORREÇÃO CRÍTICA - ÁREA DE CONTEÚDO COM ALTURA FIXA E SCROLL */}
         <div className="flex-1 overflow-hidden">
@@ -771,28 +746,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
           </div>
         </div>
 
-        {/* Erros de Validação (RHF/Zod) */}
-        {errors && Object.keys(errors).length > 0 && (
-          <Alert className="mt-4 border-red-300 bg-red-50">
-            <AlertTriangle className="w-4 h-4 text-red-600" />
-            <AlertDescription className="text-sm">
-              {Object.values(errors).map((e, idx) => (
-                <p key={idx}>• {e?.message || 'Verifique os campos do formulário'}</p>
-              ))}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Validações (fluxo atual) */}
-        {(!validacoes.identificacao || !validacoes.itens) && (
-          <Alert className="mt-4 border-orange-300 bg-orange-50">
-            <AlertTriangle className="w-4 h-4 text-orange-600" />
-            <AlertDescription className="text-sm">
-              {!validacoes.identificacao && <p>• Complete os dados de identificação e cliente</p>}
-              {!validacoes.itens && <p>• Adicione pelo menos um item ao pedido</p>}
-            </AlertDescription>
-          </Alert>
-        )}
+        <PedidoValidationAlerts errors={errors} validacoes={validacoes} />
       </div>
     </div>
   );
