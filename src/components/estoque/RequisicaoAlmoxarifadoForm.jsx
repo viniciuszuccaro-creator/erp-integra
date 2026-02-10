@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Save, PackageMinus } from "lucide-react";
 
 /**
