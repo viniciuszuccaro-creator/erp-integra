@@ -9,8 +9,10 @@ import { base44 } from '@/api/base44Client';
 import InventarioContagem from './InventarioContagem';
 import { z } from 'zod';
 import FormWrapper from '@/components/common/FormWrapper';
+import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
 export default function InventarioForm({ windowMode = true }) {
+  const { carimbarContexto } = useContextoVisual();
   const [inv, setInv] = useState({ descricao: '', data_referencia: new Date().toISOString().slice(0,10), status: 'Aberto', itens: [] });
   const [salvando, setSalvando] = useState(false);
 
@@ -24,7 +26,7 @@ export default function InventarioForm({ windowMode = true }) {
     if (salvando) return;
     setSalvando(true);
     try {
-      const payload = { ...inv, status };
+      const payload = carimbarContexto({ ...inv, status }, 'empresa_id');
       let res;
       if (inv.id) res = await base44.entities.Inventario.update(inv.id, payload);
       else res = await base44.entities.Inventario.create(payload);
