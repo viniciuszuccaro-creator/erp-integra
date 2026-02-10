@@ -48,6 +48,7 @@ import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
 import PedidoFooterAcoes from './pedido/PedidoFooterAcoes';
 import { pedidoCompletoSchema } from './pedido/pedidoSchema';
 import { getDefaultPedidoValues } from './pedido/pedidoDefaults';
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * V21.1.2-R1 - Pedido Form Completo - PATCH OFICIAL
@@ -360,7 +361,8 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
   }
 
   const content = (
-    <div className="w-full h-full flex flex-col bg-white">
+    <FormWrapper schema={pedidoCompletoSchema} defaultValues={formData} externalData={formData} onSubmit={rhfHandleSubmit(handleSubmit)} className="w-full h-full">
+      <div className="w-full h-full flex flex-col bg-white">
       {/* Header - FIXO */}
       <PedidoHeader formData={formData} pedido={pedido} />
 
@@ -749,6 +751,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
         <PedidoValidationAlerts errors={errors} validacoes={validacoes} />
       </div>
     </div>
+  </FormWrapper>
   );
 
   if (windowMode) {
