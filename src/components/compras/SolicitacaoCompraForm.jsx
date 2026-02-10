@@ -70,7 +70,7 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   const unifiedSubmit = React.useCallback(() => handleSubmit(onValid)(), [handleSubmit, onValid]);
 
   const content = (
-    <FormWrapper onSubmit={unifiedSubmit} externalData={watch()} className={`space-y-6 ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
+    <FormWrapper onSubmit={unifiedSubmit} externalData={watch()} className={`space-y-6 w-full h-full ${windowMode ? 'p-6 h-full overflow-auto' : ''}`}>
       <Card>
         <CardContent className="p-6 space-y-4">
           <h3 className="font-bold text-lg flex items-center gap-2">

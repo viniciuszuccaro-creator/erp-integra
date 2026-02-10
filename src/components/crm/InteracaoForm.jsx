@@ -38,7 +38,7 @@ export default function InteracaoForm({ interacao, onSubmit, windowMode = false 
   };
 
   const content = (
-    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4">
+    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className="space-y-4 w-full h-full">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="tipo">Tipo *</Label>
