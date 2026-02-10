@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
 import { processReservas } from './_lib/orderReservationUtils.js';
+import { ensureEventType } from './_lib/validationUtils.js';
 
 Deno.serve(async (req) => {
   try {
@@ -11,7 +12,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { event, data } = body || {};
-    if (event?.type !== 'create' || !data) return Response.json({ ok: true, skipped: true });
+    if (!ensureEventType(event, 'create') || !data) return Response.json({ ok: true, skipped: true });
 
     // Permissão: editar estoque e criar movimentação
     const perm = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
