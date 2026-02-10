@@ -756,7 +756,26 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
       </Tabs>
 
       {/* Footer com Ações - FIXO */}
-      <div className="flex-shrink-0 p-6 border-t bg-slate-50">
+      <PedidoFooterAcoes
+        valorTotal={formData?.valor_total || 0}
+        pesoTotalKg={formData?.peso_total_kg || 0}
+        etapasCount={formData?.etapas_entrega?.length || 0}
+        salvando={salvando}
+        canSalvarRascunho={canSalvarRascunho && validacoes.identificacao && validacoes.itens}
+        canFecharCompleto={canFecharCompleto && validacoes.identificacao && validacoes.itens}
+        canFecharEnviarEntrega={canFecharEnviarEntrega && validacoes.identificacao && validacoes.itens}
+        canSalvarAlteracoes={canSalvarAlteracoes && validacoes.identificacao && validacoes.itens}
+        canCriarPedido={canCriarPedido && validacoes.identificacao && validacoes.itens}
+        onCancelar={onCancel}
+        onSalvarRascunho={onSalvarRascunho}
+        onFecharCompleto={onFecharCompleto}
+        onFecharEnviarEntrega={onFecharEnviarEntrega}
+        onSalvarAlteracoes={onSalvarAlteracoes}
+        onCriarPedido={onCriarPedido}
+      />
+
+      {/* Legacy footer removed and replaced by component */}
+      <div className="hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="text-sm">
