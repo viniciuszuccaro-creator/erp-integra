@@ -13,6 +13,7 @@ import FormErrorSummary from "@/components/common/FormErrorSummary";
 import FormWrapper from "@/components/common/FormWrapper";
 import PedidoItensEditor from "./PedidoItensEditor";
 import PedidoResumoTotal from "./PedidoResumoTotal";
+import DetalhesPedidoHeader from "./DetalhesPedidoHeader";
 
 // Tipos auxiliares
 const itemSchema = z
