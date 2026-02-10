@@ -13,10 +13,10 @@ Deno.serve(async (req) => {
     const payload = await req.json();
     const event = payload?.event;
     const data = payload?.data;
-    const inventario_id = payload?.inventario_id || data?.id || event?.entity_id; // unified source
+    const inventario_id = resolveEntityIdFromPayload({ ...payload, data, event }, ['inventario_id']);
     if (!inventario_id) return Response.json({ error: 'inventario_id é obrigatório' }, { status: 400 });
 
-    if (data && data.status && data.status !== 'Aprovado') {
+    if (!isApprovedStatus(data)) {
       return Response.json({ ok: true, skipped: true });
     }
 
