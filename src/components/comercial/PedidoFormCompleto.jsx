@@ -482,22 +482,22 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
 
       {/* Footer com Ações - FIXO */}
       <PedidoFooterAcoes
-        valorTotal={formData?.valor_total || 0}
-        pesoTotalKg={formData?.peso_total_kg || 0}
-        etapasCount={formData?.etapas_entrega?.length || 0}
-        salvando={salvando}
-        canSalvarRascunho={canSalvarRascunho && validacoes.identificacao && validacoes.itens}
-        canFecharCompleto={canFecharCompleto && validacoes.identificacao && validacoes.itens}
-        canFecharEnviarEntrega={canFecharEnviarEntrega && validacoes.identificacao && validacoes.itens}
-        canSalvarAlteracoes={canSalvarAlteracoes && validacoes.identificacao && validacoes.itens}
-        canCriarPedido={canCriarPedido && validacoes.identificacao && validacoes.itens}
-        onCancelar={onCancel}
-        onSalvarRascunho={onSalvarRascunho}
-        onFecharCompleto={onFecharCompleto}
-        onFecharEnviarEntrega={onFecharEnviarEntrega}
-        onSalvarAlteracoes={onSalvarAlteracoes}
-        onCriarPedido={onCriarPedido}
-      />
+         valorTotal={formData?.valor_total || 0}
+         pesoTotalKg={formData?.peso_total_kg || 0}
+         etapasCount={formData?.etapas_entrega?.length || 0}
+         salvando={salvando}
+         canSalvarRascunho={validacoes.identificacao && validacoes.itens}
+         canFecharCompleto={validacoes.identificacao && validacoes.itens}
+         canFecharEnviarEntrega={validacoes.identificacao && validacoes.itens}
+         canSalvarAlteracoes={validacoes.identificacao && validacoes.itens}
+         canCriarPedido={validacoes.identificacao && validacoes.itens}
+         onCancelar={onCancel}
+         onSalvarRascunho={onSalvarRascunho}
+         onFecharCompleto={onFecharCompleto}
+         onFecharEnviarEntrega={onFecharEnviarEntrega}
+         onSalvarAlteracoes={onSalvarAlteracoes}
+         onCriarPedido={onCriarPedido}
+       />
 
       {/* Legacy footer removed and replaced by component */}
       <div className="hidden">
