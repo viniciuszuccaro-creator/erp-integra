@@ -471,6 +471,103 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     return rhfHandleSubmit(handleSubmit)();
   };
 
+  const canSalvarRascunho = (!pedido || pedido.status === 'Rascunho');
+  const canFecharCompleto = (!pedido || pedido.status === 'Rascunho');
+  const canFecharEnviarEntrega = (pedido && pedido.status === 'Aprovado');
+  const canSalvarAlteracoes = (pedido && pedido.status !== 'Rascunho' && pedido.status !== 'Aprovado');
+  const canCriarPedido = (!pedido);
+
+  const onSalvarRascunho = async () => {
+    if (salvando) return;
+    setSalvando(true);
+    try {
+      const stamped = carimbarContexto({ ...formData, status: 'Rascunho' }, 'empresa_id');
+      const parsed = pedidoCompletoSchema.safeParse(stamped);
+      if (!parsed.success) {
+        const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
+        toast.error('❌ Erros de validação', { description: msg });
+        return;
+      }
+      await onSubmit(parsed.data);
+      toast.success('✅ Rascunho salvo!');
+      onCancel();
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const onFecharCompleto = async () => {
+    if (salvando) return;
+    setSalvando(true);
+    try {
+      const stamped = carimbarContexto({ ...formData, status: 'Aprovado' }, 'empresa_id');
+      const parsed = pedidoCompletoSchema.safeParse(stamped);
+      if (!parsed.success) {
+        const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
+        toast.error('❌ Erros de validação', { description: msg });
+        setSalvando(false);
+        return;
+      }
+      const pedidoSalvo = await onSubmit(parsed.data);
+      setSalvando(false);
+      onCancel();
+      setTimeout(() => {
+        if (window.__currentOpenWindow) {
+          window.__currentOpenWindow(
+            AutomacaoFluxoPedido,
+            { 
+              pedido: pedidoSalvo || { ...formData, id: formData.id, status: 'Aprovado' },
+              windowMode: true,
+              onComplete: () => { toast.success('✅ Pedido fechado com sucesso!'); }
+            },
+            { title: `🚀 Automação - Pedido ${formData.numero_pedido}`, width: 1200, height: 700 }
+          );
+        }
+      }, 150);
+    } catch (error) {
+      setSalvando(false);
+      toast.error('❌ Erro ao salvar pedido');
+    }
+  };
+
+  const onFecharEnviarEntrega = async () => {
+    if (salvando) return;
+    setSalvando(true);
+    try {
+      const stamped = carimbarContexto({ ...formData, status: 'Pronto para Faturar' }, 'empresa_id');
+      const parsed = pedidoCompletoSchema.safeParse(stamped);
+      if (!parsed.success) {
+        const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
+        toast.error('❌ Erros de validação', { description: msg });
+      } else {
+        await onSubmit(parsed.data);
+        toast.success('✅ Pedido fechado e pronto para faturar!');
+      }
+    } catch (error) {
+      toast.error('❌ Erro ao fechar pedido');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const onSalvarAlteracoes = async () => {
+    if (salvando) return;
+    setSalvando(true);
+    try {
+      await onSubmit(carimbarContexto(formData, 'empresa_id'));
+      toast.success('✅ Alterações salvas!');
+      onCancel();
+    } catch (error) {
+      toast.error('❌ Erro ao salvar');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const onCriarPedido = () => {
+    return rhfHandleSubmit(handleSubmit)();
+  };
+
   const abas = [
     { 
       id: 'identificacao', 
