@@ -24,6 +24,7 @@ import DocumentosTab from "@/components/comercial/cliente/DocumentosTab";
 import HistoricoTab from "@/components/comercial/cliente/HistoricoTab";
 import FormWrapper from "@/components/common/FormWrapper";
 import { z } from 'zod';
+import useContextoVisual from '@/components/lib/useContextoVisual';
 
 const defaultFormData = {
   tipo: "Pessoa Jurídica",
@@ -100,6 +101,7 @@ const schema = z.object({
 });
 
 export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, onCancel }) {
+  const { carimbarContexto } = useContextoVisual();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("principal");
   const [buscandoCep, setBuscandoCep] = useState(false);
@@ -336,7 +338,7 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
       }
     };
 
-    onSubmit(dataToSubmit);
+    onSubmit(carimbarContexto(dataToSubmit, 'empresa_id'));
   };
 
   // Atualizar limite de crédito quando condição mudar
