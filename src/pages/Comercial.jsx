@@ -174,7 +174,7 @@ export default function Comercial() {
           }
         }
       },
-      { title: '🛒 Novo Pedido', width: 1400, height: 800 }
+      { title: ' Novo Pedido', width: 1400, height: 800 }
     );
   };
 
@@ -215,7 +215,7 @@ export default function Comercial() {
       icon: Users,
       color: 'blue',
       component: ClientesTab,
-      windowTitle: '👥 Clientes',
+      windowTitle: ' Clientes',
       width: 1500,
       height: 850,
       props: { clientes, isLoading: false }
@@ -226,7 +226,7 @@ export default function Comercial() {
       icon: ShoppingCart,
       color: 'purple',
       component: PedidosTab,
-      windowTitle: '🛒 Pedidos',
+      windowTitle: ' Pedidos',
       width: 1500,
       height: 850,
       props: { pedidos: pedidosFiltrados, clientes: clientesFiltrados, isLoading: false, empresas, onCreatePedido: handleCreateNewPedido, onEditPedido: handleEditPedido }
@@ -237,7 +237,7 @@ export default function Comercial() {
       icon: Truck,
       color: 'blue',
       component: PedidosEntregaTab,
-      windowTitle: '🚚 Logística de Entrega',
+      windowTitle: ' Logística de Entrega',
       width: 1400,
       height: 800,
       badge: pedidosEntrega > 0 ? `${pedidosEntrega}` : null
@@ -248,7 +248,7 @@ export default function Comercial() {
       icon: Package,
       color: 'green',
       component: PedidosRetiradaTab,
-      windowTitle: '📦 Pedidos p/ Retirada',
+      windowTitle: ' Pedidos p/ Retirada',
       width: 1400,
       height: 800,
       badge: pedidosRetirada > 0 ? `${pedidosRetirada}` : null
@@ -270,7 +270,7 @@ export default function Comercial() {
       icon: FileText,
       color: 'indigo',
       component: NotasFiscaisTab,
-      windowTitle: '📄 Notas Fiscais',
+      windowTitle: ' Notas Fiscais',
       width: 1500,
       height: 850,
       props: { notasFiscais: notasFiscaisFiltradas, pedidos: pedidosFiltrados, clientes: clientesFiltrados }
@@ -281,7 +281,7 @@ export default function Comercial() {
       icon: ShieldCheck,
       color: 'orange',
       component: CentralAprovacoesManager,
-      windowTitle: '⚠️ Central de Aprovações',
+      windowTitle: 'Aviso: Central de Aprovações',
       width: 1400,
       height: 800,
       badge: pedidosPendentesAprovacao > 0 ? `${pedidosPendentesAprovacao} pendentes` : null
@@ -292,7 +292,7 @@ export default function Comercial() {
       icon: TrendingUp,
       color: 'indigo',
       component: TabelasPrecoTab,
-      windowTitle: '💵 Tabelas de Preço',
+      windowTitle: ' Tabelas de Preço',
       width: 1400,
       height: 800,
       props: { tabelasPreco }
@@ -303,7 +303,7 @@ export default function Comercial() {
       icon: TrendingUp,
       color: 'cyan',
       component: MonitoramentoCanaisRealtime,
-      windowTitle: '📊 Canais em Tempo Real',
+      windowTitle: ' Canais em Tempo Real',
       width: 1300,
       height: 750,
       props: { autoRefresh: true }
