@@ -11,7 +11,7 @@ import { z } from 'zod';
 import FormWrapper from '@/components/common/FormWrapper';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
-export default function InventarioForm({ windowMode = true }) {
+export default function InventarioForm({ windowMode = true }) { // w-full/h-full garantidos no container pai
   const { carimbarContexto } = useContextoVisual();
   const [inv, setInv] = useState({ descricao: '', data_referencia: new Date().toISOString().slice(0,10), status: 'Aberto', itens: [] });
   const [salvando, setSalvando] = useState(false);
