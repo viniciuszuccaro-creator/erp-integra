@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { base44 } from "@/api/base44Client";
+import FormWrapper from "@/components/common/FormWrapper";
 
 /**
  * FORMULÁRIO COMPLETO DE NOTA FISCAL V21.2
@@ -181,7 +182,7 @@ export default function NotaFiscalFormCompleto({
   return (
     <div className={containerClass}>
       <div className={contentClass}>
-        <form onSubmit={handleSubmitForm} className="space-y-6">
+        <FormWrapper onSubmit={() => onSubmit && onSubmit(formData)} externalData={formData} className="space-y-6">
           {/* VALIDAÇÃO IA */}
           {validacaoIA && (
             <Alert className={validacaoIA.valido ? "border-green-300 bg-green-50" : "border-orange-300 bg-orange-50"}>
@@ -712,7 +713,7 @@ export default function NotaFiscalFormCompleto({
               </Button>
             </div>
           </div>
-        </form>
+        </FormWrapper>
       </div>
     </div>
   );
