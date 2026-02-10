@@ -50,7 +50,8 @@ const PainelOperacoes3D = React.lazy(() => import("../components/dashboard/Paine
 const GamificacaoOperacoes = React.lazy(() => import("../components/dashboard/GamificacaoOperacoes"));
 const DashboardTempoReal = React.lazy(() => import('../components/dashboard/DashboardTempoReal'));
 const DashboardOperacionalBI = React.lazy(() => import("@/components/dashboard/DashboardOperacionalBI"));
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import DashboardTabsNav from "@/components/dashboard/DashboardTabsNav";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
 const WidgetCanaisOrigem = React.lazy(() => import("@/components/dashboard/WidgetCanaisOrigem")); // kept for backward-compat (not used directly here)
@@ -685,19 +686,7 @@ export default function Dashboard() {
 
       <ErrorBoundary>
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="bg-white border shadow-sm">
-          <TabsTrigger value="tempo-real" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <Activity className="w-4 h-4 mr-2" />
-            Tempo Real
-          </TabsTrigger>
-          <TabsTrigger value="resumo" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Resumo Geral
-          </TabsTrigger>
-          <TabsTrigger value="bi-operacional" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-            🤖 BI Operacional
-          </TabsTrigger>
-        </TabsList>
+        <DashboardTabsNav />
 
         <TabsContent value="tempo-real">
           <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
