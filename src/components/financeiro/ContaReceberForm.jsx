@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import FormErrorSummary from "@/components/common/FormErrorSummary";
+
 import { DollarSign, Calendar, FileText, Building2, Users, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
@@ -18,6 +18,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import ResumoValorStatus from "@/components/financeiro/ResumoValorStatus";
 import ContaReceberDadosGerais from "./ContaReceberDadosGerais";
 
 export default function ContaReceberForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
@@ -334,27 +335,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
       </Tabs>
 
       {/* RESUMO */}
-      <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-green-700">Valor Total</p>
-              <p className="text-3xl font-bold text-green-600">
-                R$ {(formData.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="text-right">
-              <Badge className={
-                formData.status === 'Recebido' ? 'bg-green-600' :
-                formData.status === 'Atrasado' ? 'bg-red-600' :
-                'bg-yellow-600'
-              }>
-                {formData.status}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ResumoValorStatus valor={formData.valor} badgeText={formData.status} tone={formData.status} variant="receber" />
 
       {/* BOTÃO SUBMIT */}
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">

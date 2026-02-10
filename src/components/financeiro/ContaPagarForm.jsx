@@ -12,9 +12,10 @@ import { DollarSign, Calendar, FileText, Building2, Package, Loader2, TrendingDo
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import FormErrorSummary from "@/components/common/FormErrorSummary";
+
 import { z } from 'zod';
 import FormWrapper from "@/components/common/FormWrapper";
+import ResumoValorStatus from "@/components/financeiro/ResumoValorStatus";
 import ContaPagarDadosGerais from "./ContaPagarDadosGerais";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
@@ -335,28 +336,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
       </Tabs>
 
       {/* RESUMO */}
-      <Card className="bg-gradient-to-r from-red-50 to-pink-50 border-red-200">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-red-700">Valor Total</p>
-              <p className="text-3xl font-bold text-red-600">
-                R$ {(formData.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-            </div>
-            <div className="text-right">
-              <Badge className={
-                formData.status === 'Pago' ? 'bg-green-600' :
-                formData.status === 'Aprovado' ? 'bg-blue-600' :
-                formData.status === 'Pendente' ? 'bg-yellow-600' :
-                'bg-red-600'
-              }>
-                {formData.status_pagamento}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ResumoValorStatus valor={formData.valor} badgeText={formData.status_pagamento} tone={formData.status} variant="pagar" />
 
       {/* BOTÃO SUBMIT */}
       <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white">
