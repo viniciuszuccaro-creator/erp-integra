@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useForm, Controller } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +19,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * V21.1.2: Solicitação Compra Form - Adaptado para Window Mode
  */
 export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMode = false }) {
+  const { carimbarContexto, filterInContext, empresaAtual } = useContextoVisual();
   const { carimbarContexto } = useContextoVisual();
   const scSchema = z.object({
     numero_solicitacao: z.string(),
@@ -53,8 +55,8 @@ export default function SolicitacaoCompraForm({ solicitacao, onSubmit, windowMod
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', empresaAtual?.id],
+    queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
   });
 
   const handleProdutoChange = (produtoId) => {

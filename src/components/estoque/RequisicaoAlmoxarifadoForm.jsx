@@ -10,12 +10,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Save, PackageMinus } from "lucide-react";
 
 /**
  * V21.1.2: Requisição Almoxarifado Form - Adaptado para Window Mode
  */
 export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windowMode = false }) {
+  const { carimbarContexto, filterInContext, empresaAtual } = useContextoVisual();
   const { carimbarContexto } = useContextoVisual();
   const [formData, setFormData] = useState(requisicao || {
     numero_requisicao: `REQ-ALM-${Date.now()}`,
@@ -32,8 +34,8 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', empresaAtual?.id],
+    queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
   });
 
   const handleProdutoChange = (produtoId) => {

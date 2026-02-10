@@ -51,8 +51,8 @@ export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = 
   }, [authUser?.id, defaultEmpresaId]);
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ['produtos', empresaAtual?.id],
+    queryFn: () => filterInContext('Produto', {}, '-updated_date', 9999),
   });
 
   const handleProdutoChange = (produtoId) => {
