@@ -17,7 +17,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  * V21.1.2: Recebimento Form - Adaptado para Window Mode
  */
 export default function RecebimentoForm({ recebimento, onSubmit, windowMode = false }) {
-  const { carimbarContexto } = useContextoVisual();
+  const { carimbarContexto, filterInContext, empresaAtual } = useContextoVisual();
   const schema = z.object({
     ordem_compra_id: z.string().min(1, 'OC é obrigatória'),
     data_recebimento: z.string().min(8, 'Data obrigatória'),
@@ -52,8 +52,8 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
   });
 
   const { data: ordensCompra = [] } = useQuery({
-    queryKey: ['ordensCompra'],
-    queryFn: () => base44.entities.OrdemCompra.list(),
+    queryKey: ['ordensCompra', empresaAtual?.id],
+    queryFn: () => filterInContext('OrdemCompra', {}, '-updated_date', 9999),
   });
 
   const handleOCChange = (ocId) => {
@@ -185,7 +185,7 @@ export default function RecebimentoForm({ recebimento, onSubmit, windowMode = fa
                   </TableCell>
                   <TableCell>
                     {item.divergencia && (
-                      <span className="text-xs text-orange-600 font-semibold">⚠️ Divergente</span>
+                      <span className="text-xs text-orange-600 font-semibold">Divergente</span>
                     )}
                   </TableCell>
                 </TableRow>

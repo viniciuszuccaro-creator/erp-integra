@@ -9,12 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Save, PackageMinus } from "lucide-react";
 
 /**
  * V21.1.2: Requisição Almoxarifado Form - Adaptado para Window Mode
  */
 export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windowMode = false }) {
+  const { carimbarContexto } = useContextoVisual();
   const [formData, setFormData] = useState(requisicao || {
     numero_requisicao: `REQ-ALM-${Date.now()}`,
     produto_id: '',
@@ -53,7 +55,7 @@ export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windo
   });
 
   const handleSubmit = async () => {
-    onSubmit(formData);
+    onSubmit(carimbarContexto(formData, 'empresa_id'));
   };
 
   const content = (
