@@ -1,6 +1,42 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
 
+// Helpers (refatoração Etapa 1)
+function computeUpdatesForContaPagar(action, justificativa, registro) {
+  const updates = {};
+  if (action === 'aprovar') {
+    updates.status_pagamento = 'Aprovado';
+  } else if (action === 'pagar') {
+    updates.status_pagamento = 'Pago';
+    updates.status = 'Pago';
+    updates.data_pagamento = new Date().toISOString().slice(0,10);
+    updates.detalhes_pagamento = {
+      ...(registro?.detalhes_pagamento || {}),
+      status_compensacao: 'Aguardando'
+    };
+  } else if (action === 'cancelar') {
+    updates.status_pagamento = 'Cancelado';
+    updates.motivo_rejeicao = justificativa || 'Cancelado';
+  }
+  return updates;
+}
+
+function computeUpdatesForContaReceber(action, justificativa, registro) {
+  const updates = {};
+  if (action === 'receber') {
+    updates.status = 'Recebido';
+    updates.data_recebimento = new Date().toISOString().slice(0,10);
+    updates.detalhes_pagamento = {
+      ...(registro?.detalhes_pagamento || {}),
+      status_compensacao: 'Aguardando'
+    };
+  } else if (action === 'cancelar') {
+    updates.status = 'Cancelado';
+    updates.motivo_rejeicao = justificativa || 'Cancelado';
+  }
+  return updates;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -20,34 +56,11 @@ Deno.serve(async (req) => {
     const api = base44.asServiceRole.entities[entity];
     const registro = await api.get(id);
 
-    const updates = {};
+    let updates = {};
     if (entity === 'ContaPagar') {
-      if (action === 'aprovar') {
-        updates.status_pagamento = 'Aprovado';
-      } else if (action === 'pagar') {
-        updates.status_pagamento = 'Pago';
-        updates.status = 'Pago';
-        updates.data_pagamento = new Date().toISOString().slice(0,10);
-        updates.detalhes_pagamento = {
-          ...(registro?.detalhes_pagamento || {}),
-          status_compensacao: 'Aguardando'
-        };
-      } else if (action === 'cancelar') {
-        updates.status_pagamento = 'Cancelado';
-        updates.motivo_rejeicao = justificativa || 'Cancelado';
-      }
+      updates = computeUpdatesForContaPagar(action, justificativa, registro);
     } else if (entity === 'ContaReceber') {
-      if (action === 'receber') {
-        updates.status = 'Recebido';
-        updates.data_recebimento = new Date().toISOString().slice(0,10);
-        updates.detalhes_pagamento = {
-          ...(registro?.detalhes_pagamento || {}),
-          status_compensacao: 'Aguardando'
-        };
-      } else if (action === 'cancelar') {
-        updates.status = 'Cancelado';
-        updates.motivo_rejeicao = justificativa || 'Cancelado';
-      }
+      updates = computeUpdatesForContaReceber(action, justificativa, registro);
     }
 
     const updated = await api.update(id, updates);
