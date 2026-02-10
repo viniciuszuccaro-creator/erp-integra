@@ -9,6 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import PedidoHeader from './pedido/PedidoHeader';
+import PedidoTabsNav from './pedido/PedidoTabsNav';
+import PedidoValidationAlerts from './pedido/PedidoValidationAlerts';
 import {
   User,
   Package,
