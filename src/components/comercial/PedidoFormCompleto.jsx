@@ -46,8 +46,8 @@ const ArquivosProjetosTab = React.lazy(() => import('./ArquivosProjetosTab'));
 const AuditoriaAprovacaoTab = React.lazy(() => import('./AuditoriaAprovacaoTab'));
 import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
 import PedidoFooterAcoes from './pedido/PedidoFooterAcoes';
-import { pedidoCompletoSchema } from './pedido/pedidoSchema.js';
-import { getDefaultPedidoValues } from './pedido/pedidoDefaults.js';
+import { pedidoCompletoSchema } from './pedido/pedidoSchema';
+import { getDefaultPedidoValues } from './pedido/pedidoDefaults';
 
 /**
  * V21.1.2-R1 - Pedido Form Completo - PATCH OFICIAL
