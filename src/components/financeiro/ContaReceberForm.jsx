@@ -18,6 +18,7 @@ import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import ContaReceberDadosGerais from "./ContaReceberDadosGerais";
 
 export default function ContaReceberForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
   const schema = z.object({

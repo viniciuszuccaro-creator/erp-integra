@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import FormErrorSummary from "@/components/common/FormErrorSummary";
 import { z } from 'zod';
 import FormWrapper from "@/components/common/FormWrapper";
+import ContaPagarDadosGerais from "./ContaPagarDadosGerais";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
