@@ -19,6 +19,13 @@ async function statusENotas(nfeId, integracao) {
   return { sucesso: true, status: j.status, protocolo: j.protocolo, dataAutorizacao: j.dataAutorizacao, xml: j.linkDownloadXml, pdf: j.linkDownloadPdf };
 }
 
+async function getFiscalConfig(base44, empresaId) {
+  const cfgs = await base44.asServiceRole.entities.ConfigFiscalEmpresa.filter({ empresa_id: empresaId });
+  const config = cfgs?.[0] || null;
+  const integracao = config?.integracao_nfe || null;
+  return { config, integracao };
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -35,10 +42,8 @@ Deno.serve(async (req) => {
     const ctxErr = assertContextPresence({ empresa_id: empresaId }, true);
     if (ctxErr) return ctxErr;
 
-    // Carrega config fiscal com service role
-    const cfgs = await base44.asServiceRole.entities.ConfigFiscalEmpresa.filter({ empresa_id: empresaId });
-    const config = cfgs?.[0] || null;
-    const integracao = config?.integracao_nfe || null;
+    // Carrega config fiscal com service role (refatorado)
+    const { config, integracao } = await getFiscalConfig(base44, empresaId);
 
     if (!integracao || integracao.ativa === false) {
       if (action === 'emitir') {
