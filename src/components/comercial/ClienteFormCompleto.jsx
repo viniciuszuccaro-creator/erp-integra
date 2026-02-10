@@ -17,6 +17,11 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import EntregaTab from "@/components/comercial/cliente/EntregaTab";
+import PrincipalTab from "@/components/comercial/cliente/PrincipalTab";
+import ComercialTab from "@/components/comercial/cliente/ComercialTab";
+import FiscalTab from "@/components/comercial/cliente/FiscalTab";
+import DocumentosTab from "@/components/comercial/cliente/DocumentosTab";
+import HistoricoTab from "@/components/comercial/cliente/HistoricoTab";
 import FormWrapper from "@/components/common/FormWrapper";
 
 const defaultFormData = {
