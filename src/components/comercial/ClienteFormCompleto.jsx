@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
+import FormWrapper from "@/components/common/FormWrapper";
 
 const defaultFormData = {
   tipo: "Pessoa Jurídica",
@@ -296,8 +297,8 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
   };
 
   // Validar e submeter
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
+
 
     if ((formData.status === 'Inativo' || formData.status === 'Bloqueado') && !formData.motivo_inatividade) {
       toast({
@@ -338,7 +339,7 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
   if (!formData) return null;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <FormWrapper onSubmit={handleSubmit} externalData={formData} className="space-y-4 w-full h-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-6 mb-6">
           <TabsTrigger value="principal">
@@ -1290,6 +1291,6 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
           {isSubmitting ? 'Salvando...' : cliente ? 'Atualizar Cliente' : 'Cadastrar Cliente'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 }
