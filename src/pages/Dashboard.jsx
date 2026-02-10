@@ -671,7 +671,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <ProtectedSection module="Dashboard" action="visualizar">
+    <ProtectedSection module="Dashboard" action="ver">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex-1 overflow-auto p-6 space-y-6">
       <DashboardHeader
