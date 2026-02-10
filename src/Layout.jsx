@@ -207,7 +207,7 @@ function LayoutContent({ children, currentPageName }) {
                         dados_novos: { stack, source: e?.filename, lineno: e?.lineno, colno: e?.colno },
                         data_hora: new Date().toISOString(),
                       });
-      } catch {}
+      } catch (e) {}
     };
     const onUnhandled = (e) => {
       try {
@@ -223,7 +223,7 @@ function LayoutContent({ children, currentPageName }) {
                         dados_novos: { reason: e?.reason },
                         data_hora: new Date().toISOString(),
                       });
-      } catch {}
+      } catch (e) {}
     };
     window.addEventListener('error', onError);
     window.addEventListener('unhandledrejection', onUnhandled);
@@ -454,7 +454,7 @@ function LayoutContent({ children, currentPageName }) {
                         descricao: `Acesso negado ao módulo ${currentModule} (${currentPageName})`,
                       });
       }
-    } catch {}
+    } catch (e) {}
   }, [currentModule, currentPageName, user?.id, empresaAtual?.id]);
 
 
