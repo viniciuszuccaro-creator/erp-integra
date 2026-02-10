@@ -63,6 +63,8 @@ import TopProdutosStatusPeriodoSection from "@/components/dashboard/TopProdutosS
 import AdvancedAnalysisSection from "@/components/dashboard/AdvancedAnalysisSection";
 import QuickAccessModulesGrid from "@/components/dashboard/QuickAccessModulesGrid";
 import FinancialSummary from "@/components/dashboard/FinancialSummary";
+import WidgetEstoqueCritico from "@/components/estoque/WidgetEstoqueCritico";
+import ResizableRow from "@/components/dashboard/ResizableRow";
 
 
 export default function Dashboard() {
@@ -719,11 +721,15 @@ export default function Dashboard() {
           {/* KPIs Secundários */}
           <SecondaryKPIsSection kpis={kpiCards} />
 
-          {/* Gráficos */}
-          <ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />
+          {/* Estoque Crítico */}
+          <WidgetEstoqueCritico count={produtosBaixoEstoque} onNavigate={() => handleDrillDown(createPageUrl("Estoque"))} />
 
-          {/* Top Produtos e Status Pedidos */}
-          <TopProdutosStatusPeriodoSection topProdutos={topProdutos} dadosVendasStatus={dadosVendasStatus} COLORS={COLORS} />
+          {/* Gráficos + Top Produtos (redimensionável) */}
+          <ResizableRow
+            initial={[55,45]}
+            left={<ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />}
+            right={<TopProdutosStatusPeriodoSection topProdutos={topProdutos} dadosVendasStatus={dadosVendasStatus} COLORS={COLORS} />}
+          />
 
           {/* GRÁFICOS AVANÇADOS */}
           <AdvancedAnalysisSection
