@@ -10,7 +10,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Save, PackageMinus } from "lucide-react";
 
 /**
@@ -18,7 +17,7 @@ import { Save, PackageMinus } from "lucide-react";
  */
 export default function RequisicaoAlmoxarifadoForm({ requisicao, onSubmit, windowMode = false }) {
   const { carimbarContexto, filterInContext, empresaAtual } = useContextoVisual();
-  const { carimbarContexto } = useContextoVisual();
+  
   const [formData, setFormData] = useState(requisicao || {
     numero_requisicao: `REQ-ALM-${Date.now()}`,
     produto_id: '',
