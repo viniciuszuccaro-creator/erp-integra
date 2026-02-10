@@ -98,6 +98,7 @@ const FechamentoFinanceiroTab = React.lazy(() => import('./FechamentoFinanceiroT
 const ArquivosProjetosTab = React.lazy(() => import('./ArquivosProjetosTab'));
 const AuditoriaAprovacaoTab = React.lazy(() => import('./AuditoriaAprovacaoTab'));
 import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
+import PedidoFooterAcoes from './pedido/PedidoFooterAcoes';
 
 /**
  * V21.1.2-R1 - Pedido Form Completo - PATCH OFICIAL
