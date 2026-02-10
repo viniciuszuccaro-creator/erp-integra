@@ -7,7 +7,7 @@ import { base44 } from '@/api/base44Client';
  * 
  * ⚡ Detecção 100% Automática - Campo SEMPRE bloqueado
  * 🔒 Bloqueio Total - Sem edição manual permitida
- * 🎯 Rastreabilidade 100% - Todos pedidos rastreados
+ * Rastreabilidade 100% - Todos pedidos rastreados
  * 
  * Detecta origem de onde o pedido está sendo criado:
  * - URL params (?origem=Site)
@@ -37,21 +37,21 @@ export function useOrigemPedido() {
     const urlParams = new URLSearchParams(window.location.search);
     const origemURL = urlParams.get('origem');
     if (origemURL) {
-      console.log(`🎯 Origem AUTO via URL: ${origemURL} (${(performance.now() - inicio).toFixed(1)}ms)`);
+      console.log(`Origem AUTO via URL: ${origemURL} (${(performance.now() - inicio).toFixed(1)}ms)`);
       return origemURL;
     }
 
     // 2️⃣ Sessão (origem persistida temporariamente)
     const origemSessao = localStorage.getItem('origem_pedido_sessao');
     if (origemSessao && origemSessao !== 'Manual') {
-      console.log(`🎯 Origem AUTO via sessão: ${origemSessao} (${(performance.now() - inicio).toFixed(1)}ms)`);
+      console.log(`Origem AUTO via sessão: ${origemSessao} (${(performance.now() - inicio).toFixed(1)}ms)`);
       return origemSessao;
     }
 
     // 3️⃣ Pathname (contexto da página)
     const pathname = window.location.pathname.toLowerCase();
     if (pathname.includes('portal')) {
-      console.log(`🎯 Origem AUTO via pathname: Portal (${(performance.now() - inicio).toFixed(1)}ms)`);
+      console.log(`Origem AUTO via pathname: Portal (${(performance.now() - inicio).toFixed(1)}ms)`);
       return 'Portal';
     }
     if (pathname.includes('site')) return 'Site';
@@ -68,7 +68,7 @@ export function useOrigemPedido() {
     if (referrer.includes('site')) return 'Site';
 
     // 5️⃣ Padrão: Manual (criado dentro do ERP)
-    console.log(`🎯 Origem padrão: Manual (ERP) (${(performance.now() - inicio).toFixed(1)}ms)`);
+    console.log(`Origem padrão: Manual (ERP) (${(performance.now() - inicio).toFixed(1)}ms)`);
     return 'Manual';
   }, []);
 

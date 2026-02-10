@@ -51,10 +51,10 @@ import { getDefaultPedidoValues } from './pedido/pedidoDefaults';
 
 /**
  * V21.1.2-R1 - Pedido Form Completo - PATCH OFICIAL
- * ✅ Modal agora SEMPRE max-w-[90vw] max-h-[95vh]
- * ✅ Todas as abas com scroll funcionando
- * ✅ Aba Histórico expandida com Top 20 produtos + Auditoria
- * ✅ Suporte multi-instância (múltiplos modais abertos)
+ * Modal agora SEMPRE max-w-[90vw] max-h-[95vh]
+ * Todas as abas com scroll funcionando
+ * Aba Histórico expandida com Top 20 produtos + Auditoria
+ * Suporte multi-instância (múltiplos modais abertos)
  * 
  * REGRA-MÃE: NUNCA APAGAR - APENAS ACRESCENTAR
  */
@@ -178,13 +178,13 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     if (!formData || salvando) return;
     
     if (!validacoes.identificacao) {
-      toast.error('❌ Complete os dados de identificação');
+      toast.error('Erro: Complete os dados de identificação');
       setActiveTab('identificacao');
       return;
     }
 
     if (!validacoes.itens) {
-      toast.error('❌ Adicione pelo menos um item ao pedido');
+      toast.error('Erro: Adicione pelo menos um item ao pedido');
       setActiveTab('revenda');
       return;
     }
@@ -194,7 +194,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     const parsed = pedidoCompletoSchema.safeParse(stamped);
     if (!parsed.success) {
       const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
-      toast.error('❌ Erros de validação', { description: msg });
+      toast.error('Erro: Erros de validação', { description: msg });
       return;
     }
     const empresaId = parsed.data.empresa_id || formData.empresa_id;
@@ -240,7 +240,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
             }
           }
         }
-        toast.success('✅ Pedido salvo e estoque baixado!');
+        toast.success('Pedido salvo e estoque baixado!');
       }
       
       // ETAPA 4: Validar aprovação de desconto
@@ -268,7 +268,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
               },
               justificativa: formData.justificativa_desconto || 'Ajuste comercial abaixo da margem mínima'
             });
-            toast.info('⚠️ Solicitação de aprovação enviada', { description: `#${solicitacao?.id || ''}` });
+            toast.info('Aviso: Solicitação de aprovação enviada', { description: `#${solicitacao?.id || ''}` });
           } catch (e) {
             toast.error('Não foi possível abrir a solicitação de aprovação');
           }
@@ -500,11 +500,11 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
              const parsed = pedidoCompletoSchema.safeParse(stamped);
              if (!parsed.success) {
                const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
-               toast.error('❌ Erros de validação', { description: msg });
+               toast.error('Erro: Erros de validação', { description: msg });
                return;
              }
              await onSubmit(parsed.data);
-             toast.success('✅ Rascunho salvo!');
+             toast.success('Rascunho salvo!');
              onCancel();
            } finally { setSalvando(false); }
          }}
@@ -516,7 +516,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
              const parsed = pedidoCompletoSchema.safeParse(stamped);
              if (!parsed.success) {
                const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
-               toast.error('❌ Erros de validação', { description: msg });
+               toast.error('Erro: Erros de validação', { description: msg });
                setSalvando(false);
                return;
              }
@@ -528,11 +528,11 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
                  window.__currentOpenWindow(
                    AutomacaoFluxoPedido,
                    { pedido: pedidoSalvo || { ...formData, id: formData.id, status: 'Aprovado' }, windowMode: true },
-                   { title: `🚀 Automação - Pedido ${formData.numero_pedido}`, width: 1200, height: 700 }
+                   { title: `Automação - Pedido ${formData.numero_pedido}`, width: 1200, height: 700 }
                  );
                }
              }, 150);
-           } catch (e) { setSalvando(false); toast.error('❌ Erro ao salvar pedido'); }
+           } catch (e) { setSalvando(false); toast.error('Erro: Erro ao salvar pedido'); }
          }}
          onFecharEnviarEntrega={async () => {
            if (salvando) return;
@@ -542,17 +542,17 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
              const parsed = pedidoCompletoSchema.safeParse(stamped);
              if (!parsed.success) {
                const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
-               toast.error('❌ Erros de validação', { description: msg });
+               toast.error('Erro: Erros de validação', { description: msg });
              } else {
                await onSubmit(parsed.data);
-               toast.success('✅ Pedido fechado e pronto para faturar!');
+               toast.success('Pedido fechado e pronto para faturar!');
              }
            } finally { setSalvando(false); }
          }}
          onSalvarAlteracoes={async () => {
            if (salvando) return;
            setSalvando(true);
-           try { await onSubmit(carimbarContexto(formData, 'empresa_id')); toast.success('✅ Alterações salvas!'); onCancel(); }
+           try { await onSubmit(carimbarContexto(formData, 'empresa_id')); toast.success('Alterações salvas!'); onCancel(); }
            finally { setSalvando(false); }
          }}
          onCriarPedido={rhfHandleSubmit(handleSubmit)}
@@ -605,14 +605,14 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
                     const parsed = pedidoCompletoSchema.safeParse(stamped);
                     if (!parsed.success) {
                       const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
-                      toast.error('❌ Erros de validação', { description: msg });
+                      toast.error('Erro: Erros de validação', { description: msg });
                       return;
                     }
                     await onSubmit(parsed.data);
-                    toast.success('✅ Rascunho salvo!');
+                    toast.success('Rascunho salvo!');
                     onCancel();
                   } catch (error) {
-                    toast.error('❌ Erro ao salvar');
+                    toast.error('Erro: Erro ao salvar');
                   } finally {
                     setSalvando(false);
                   }
@@ -636,7 +636,7 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
                     const parsed = pedidoCompletoSchema.safeParse(stamped);
                     if (!parsed.success) {
                       const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
-                      toast.error('❌ Erros de validação', { description: msg });
+                      toast.error('Erro: Erros de validação', { description: msg });
                       setSalvando(false);
                       return;
                     }
@@ -656,11 +656,11 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
                             pedido: pedidoSalvo || { ...formData, id: formData.id, status: 'Aprovado' },
                             windowMode: true,
                             onComplete: () => {
-                              toast.success('✅ Pedido fechado com sucesso!');
+                              toast.success('Pedido fechado com sucesso!');
                             }
                           },
                           {
-                            title: `🚀 Automação - Pedido ${formData.numero_pedido}`,
+                            title: `Automação - Pedido ${formData.numero_pedido}`,
                             width: 1200,
                             height: 700
                           }
@@ -669,14 +669,14 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
                     }, 150);
                   } catch (error) {
                     setSalvando(false);
-                    toast.error('❌ Erro ao salvar pedido');
+                    toast.error('Erro: Erro ao salvar pedido');
                   }
                 }}
                 className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 shadow-lg"
                 disabled={salvando || !validacoes.identificacao || !validacoes.itens}
               >
                 <CheckCircle2 className="w-4 h-4 mr-2" />
-                {salvando ? 'Salvando...' : '🚀 Fechar Pedido Completo'}
+                {salvando ? 'Salvando...' : 'Fechar Pedido Completo'}
               </Button>
             )}
             
@@ -691,13 +691,13 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
                     const parsed = pedidoCompletoSchema.safeParse(stamped);
                     if (!parsed.success) {
                       const msg = parsed.error.issues.map(i => `• ${i.message}`).join('\n');
-                      toast.error('❌ Erros de validação', { description: msg });
+                      toast.error('Erro: Erros de validação', { description: msg });
                     } else {
                       await onSubmit(parsed.data);
-                      toast.success('✅ Pedido fechado e pronto para faturar!');
+                      toast.success('Pedido fechado e pronto para faturar!');
                     }
                   } catch (error) {
-                    toast.error('❌ Erro ao fechar pedido');
+                    toast.error('Erro: Erro ao fechar pedido');
                   } finally {
                     setSalvando(false);
                   }
@@ -717,10 +717,10 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
                   setSalvando(true);
                   try {
                     await onSubmit(carimbarContexto(formData, 'empresa_id'));
-                    toast.success('✅ Alterações salvas!');
+                    toast.success('Alterações salvas!');
                     onCancel();
                   } catch (error) {
-                    toast.error('❌ Erro ao salvar');
+                    toast.error('Erro: Erro ao salvar');
                   } finally {
                     setSalvando(false);
                   }
