@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { sendEmail } from './_lib/notificationUtils.js';
 
 // Agregado de alertas de segurança com envio de e-mail para administradores
 // Heurísticas simples: alto volume de Exclusões, alterações em perfis, bloqueios de acesso em curto período
@@ -70,8 +71,8 @@ Deno.serve(async (req) => {
         `Total de eventos analisados: ${recent.length}`
       ].join('\n');
 
-      // Enviar e-mail para cada admin (simples e robusto)
-      await Promise.all(toList.map((to) => base44.asServiceRole.integrations.Core.SendEmail({ to, subject, body })));
+      // Enviar e-mail para cada admin (via helper)
+      await Promise.all(toList.map((to) => sendEmail(base44, to, subject, body)));
     }
 
     return Response.json({ ok: true, alerts: suspicious.length, recipients: toList.length });
