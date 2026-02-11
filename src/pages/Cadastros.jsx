@@ -201,7 +201,8 @@ export default function Cadastros() {
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Cadastros_subtab', value); } catch {}
   };
-  const { empresaAtual, filterInContext, createInContext, updateInContext, getFiltroContexto } = useContextoVisual();
+  const { empresaAtual, filterInContext, createInContext, updateInContext, getFiltroContexto, estaNoGrupo } = useContextoVisual();
+  const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
 
   // Seleções em massa (Clientes, Fornecedores, Produtos)
 
@@ -231,7 +232,8 @@ export default function Cadastros() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 2
+    retry: 2,
+    enabled: !bloqueadoSemEmpresa
   });
 
   // V22.0: Contagem total otimizada para grandes volumes
@@ -265,7 +267,8 @@ export default function Cadastros() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 2
+    retry: 2,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: totalFornecedores = 0 } = useQuery({
@@ -298,7 +301,8 @@ export default function Cadastros() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: colaboradores = [] } = useQuery({
@@ -314,7 +318,8 @@ export default function Cadastros() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: representantes = [] } = useQuery({
@@ -330,7 +335,8 @@ export default function Cadastros() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: contatosB2B = [] } = useQuery({
@@ -346,7 +352,8 @@ export default function Cadastros() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   // QUERIES - BLOCO 2: PRODUTOS & SERVIÇOS
