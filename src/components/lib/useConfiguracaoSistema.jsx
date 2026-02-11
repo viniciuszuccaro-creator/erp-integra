@@ -1,41 +1,65 @@
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
-export function useConfiguracaoSistema({ categoria, chave } = {}) {
-  const { filterInContext, carimbarContexto } = useContextoVisual();
+/**
+ * Hook de acesso centralizado às configurações do sistema
+ * - Busca por categoria + chave (primeiro registro mais recente)
+ * - Exposição segura (get/set) com cache via React Query
+ * - Mantém simplicidade e não cria novos módulos: integra-se ao fluxo existente
+ */
+export default function useConfiguracaoSistema({ categoria, chave } = {}) {
   const queryClient = useQueryClient();
 
-  const { data: itens = [], isLoading, error } = useQuery({
-    queryKey: ["configuracao-sistema", categoria || "all", chave || "all"],
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["configuracaoSistema", categoria || "*", chave || "*"],
     queryFn: async () => {
-      const crit = {};
-      if (categoria) crit.categoria = categoria;
-      if (chave) crit.chave = chave;
-      return await filterInContext("ConfiguracaoSistema", crit, "-updated_date", 500, "empresa_id");
+      const filtro = {};
+      if (categoria) filtro.categoria = categoria;
+      if (chave) filtro.chave = chave;
+      const list = await base44.entities.ConfiguracaoSistema.filter(filtro, "-updated_date", 1);
+      return Array.isArray(list) && list.length ? list[0] : null;
     },
-    staleTime: 300000,
+    staleTime: 60_000,
   });
 
-  const cfg = useMemo(() => (itens?.[0] || null), [itens]);
-
-  const upsertMutation = useMutation({
-    mutationFn: async (data) => {
-      const payload = carimbarContexto(data, "empresa_id");
-      if (cfg?.id) return await base44.entities.ConfiguracaoSistema.update(cfg.id, payload);
-      return await base44.entities.ConfiguracaoSistema.create(payload);
+  const setMutation = useMutation({
+    mutationFn: async (payload) => {
+      if (!data?.id) {
+        // Cria um novo registro simples (sem inventar campos fora do schema)
+        const novo = { categoria: categoria || "Sistema", chave: chave || "default", ...payload };
+        return base44.entities.ConfiguracaoSistema.create(novo);
+      }
+      return base44.entities.ConfiguracaoSistema.update(data.id, payload);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["configuracao-sistema"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["configuracaoSistema"] });
+    }
   });
+
+  // Helper para acessar caminhos aninhados com safety
+  const get = useMemo(() => {
+    return (path, defaultValue = undefined) => {
+      if (!data || !path) return defaultValue;
+      const parts = String(path).split(".");
+      let cur = data;
+      for (const p of parts) {
+        if (cur && Object.prototype.hasOwnProperty.call(cur, p)) {
+          cur = cur[p];
+        } else {
+          return defaultValue;
+        }
+      }
+      return cur == null ? defaultValue : cur;
+    };
+  }, [data]);
 
   return {
+    config: data,
     isLoading,
     error,
-    itens,
-    config: cfg,
-    upsert: upsertMutation.mutateAsync,
+    get,
+    setConfig: (patch) => setMutation.mutate(patch),
+    isSaving: setMutation.isPending,
   };
 }
-
-export default useConfiguracaoSistema;
