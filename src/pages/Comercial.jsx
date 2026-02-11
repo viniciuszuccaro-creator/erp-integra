@@ -150,13 +150,15 @@ export default function Comercial() {
   const pedidosFiltrados = pedidos;
   const notasFiscaisFiltradas = notasFiscais;
 
-  const pedidosExternosPendentes = pedidosExternos.filter(p => p.status_importacao === 'A Validar').length;
-  const totalVendas = pedidosFiltrados.filter(p => p.status !== 'Cancelado').reduce((sum, p) => sum + (p.valor_total || 0), 0);
-  const ticketMedio = pedidosFiltrados.length > 0 ? totalVendas / pedidosFiltrados.length : 0;
-  const clientesAtivos = clientesFiltrados.filter(c => c.status === 'Ativo').length;
-  const pedidosPendentesAprovacao = pedidosFiltrados.filter(p => p.status_aprovacao === "pendente").length;
-  const pedidosEntrega = pedidosFiltrados.filter(p => (p.tipo_frete === 'CIF' || p.tipo_frete === 'FOB') && ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Em Expedição', 'Em Trânsito'].includes(p.status)).length;
-  const pedidosRetirada = pedidosFiltrados.filter(p => p.tipo_frete === 'Retirada' && ['Aprovado', 'Pronto para Faturar', 'Faturado', 'Pronto para Retirada'].includes(p.status)).length;
+  const {
+    pedidosExternosPendentes,
+    totalVendas,
+    ticketMedio,
+    clientesAtivos,
+    pedidosPendentesAprovacao,
+    pedidosEntrega,
+    pedidosRetirada,
+  } = useComercialDerivedData({ pedidos: pedidosFiltrados, clientes: clientesFiltrados, pedidosExternos });
 
   const handleCreateNewPedido = () => {
     let pedidoCriado = false;
