@@ -1,12 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, backendHasPermission, assertContextPresence } from './_lib/guard.js';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const { user, perfil } = await getUserAndPerfil(base44);
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const userAgent = req.headers.get('user-agent') || '';
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || '';
 
     const body = await req.json().catch(() => ({}));
     const pedido = body?.pedido;
@@ -14,8 +17,34 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'empresa_id obrigatório no pedido' }, { status: 400 });
     }
 
+    // Multiempresa e RBAC
+    const ctxErr = assertContextPresence(pedido || {}, true);
+    if (ctxErr) return ctxErr;
+
+    const allowed = backendHasPermission(perfil, 'Comercial', 'Pedido', 'editar', user.role);
+    if (!allowed) {
+      try {
+        await base44.entities.AuditLog.create({
+          usuario: user.full_name || user.email || 'Usuário',
+          usuario_id: user.id,
+          empresa_id: pedido.empresa_id || null,
+          acao: 'Bloqueio',
+          modulo: 'Comercial',
+          tipo_auditoria: 'seguranca',
+          entidade: 'Pedido',
+          registro_id: pedido.id || null,
+          descricao: 'RBAC: tentativa de baixa de estoque sem permissão (Comercial.Pedido.editar)',
+          ip_address: ip,
+          user_agent: userAgent,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const itens = Array.isArray(pedido.itens_revenda) ? pedido.itens_revenda : [];
     let movimentos = 0;
+    const movimentosDetalhes = [];
 
     for (const item of itens) {
       if (!item?.produto_id || !item?.quantidade) continue;
@@ -50,6 +79,15 @@ Deno.serve(async (req) => {
       });
 
       await base44.entities.Produto.update(item.produto_id, { estoque_atual: novoEstoque });
+
+      movimentosDetalhes.push({
+        produto_id: item.produto_id,
+        codigo_produto: item.codigo_sku || produto.codigo,
+        estoque_anterior: estoqueAtual,
+        quantidade: qtd,
+        estoque_atual: novoEstoque
+      });
+
       movimentos += 1;
     }
 
@@ -64,7 +102,9 @@ Deno.serve(async (req) => {
       entidade: 'MovimentacaoEstoque',
       registro_id: pedido.id || null,
       descricao: `Baixa de estoque por aprovação de pedido (#movimentos=${movimentos})`,
-      dados_novos: { pedido_id: pedido.id, numero_pedido: pedido.numero_pedido, itens_processados: movimentos },
+      dados_novos: { pedido_id: pedido.id, numero_pedido: pedido.numero_pedido, itens_processados: movimentos, movimentos: movimentosDetalhes },
+      ip_address: ip,
+      user_agent: userAgent,
       data_hora: new Date().toISOString(),
     });
 
