@@ -190,7 +190,7 @@ export default function NotaFiscalFormCompleto({
   return (
     <div className={containerClass}>
       <div className={contentClass}>
-        <FormWrapper schema={schema} withContext onSubmit={() => onSubmit && onSubmit(formData)} externalData={formData} className="space-y-6">
+        <FormWrapper schema={schema} withContext onSubmit={(values) => onSubmit && onSubmit(values)} externalData={formData} className="space-y-6">
           {/* VALIDAÇÃO IA */}
           {validacaoIA && (
             <Alert className={validacaoIA.valido ? "border-green-300 bg-green-50" : "border-orange-300 bg-orange-50"}>
