@@ -135,44 +135,11 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     setSalvando(true);
 
     try {
-      // V21.5: BAIXAR ESTOQUE SE STATUS FOR APROVADO
+      // V21.5: BAIXAR ESTOQUE SE STATUS FOR APROVADO (migrado para função backend)
       if (formData.status === 'Aprovado' && formData.itens_revenda?.length > 0) {
-        for (const item of formData.itens_revenda) {
-          if (item.produto_id) {
-            const produtos = await base44.entities.Produto.filter({ 
-              id: item.produto_id,
-              empresa_id: formData.empresa_id 
-            });
-            
-            const produto = produtos[0];
-            if (produto && (produto.estoque_atual || 0) >= (item.quantidade || 0)) {
-              const novoEstoque = (produto.estoque_atual || 0) - (item.quantidade || 0);
-              
-              await base44.entities.MovimentacaoEstoque.create({
-                empresa_id: formData.empresa_id,
-                tipo_movimento: "saida",
-                origem_movimento: "pedido",
-                origem_documento_id: formData.id || `temp_${Date.now()}`,
-                produto_id: item.produto_id,
-                produto_descricao: item.descricao || item.produto_descricao,
-                codigo_produto: item.codigo_sku,
-                quantidade: item.quantidade,
-                unidade_medida: item.unidade,
-                estoque_anterior: produto.estoque_atual || 0,
-                estoque_atual: novoEstoque,
-                data_movimentacao: new Date().toISOString(),
-                documento: formData.numero_pedido,
-                motivo: `Baixa automática - Pedido ${formData.id ? 'atualizado' : 'criado'} aprovado`,
-                responsavel: "Sistema Automático",
-                aprovado: true
-              });
-              
-              await base44.entities.Produto.update(item.produto_id, {
-                estoque_atual: novoEstoque
-              });
-            }
-          }
-        }
+        await base44.functions.invoke('applyOrderStockMovements', {
+          pedido: carimbarContexto(formData, 'empresa_id')
+        });
         toast.success('Pedido salvo e estoque baixado!');
       }
       
