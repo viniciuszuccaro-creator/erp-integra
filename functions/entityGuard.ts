@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, backendHasPermission, assertContextPresence, audit } from './_lib/guard.js';
 import { notify } from './_lib/notificationService.js';
 import { computeRisk } from './_lib/security/riskScoring.js';
+import { assessActionRisk } from './_lib/security/iaAccessRiskAssessor.js';
 
 // entityGuard: valida RBAC e multiempresa para operações CRUD genéricas de entidades sensíveis
 // Payload: { entity, op: 'create'|'update'|'delete'|'read', data?, id?, filtros? , module, section }
@@ -61,8 +62,16 @@ Deno.serve(async (req) => {
     else if (op === 'delete') result = await api.delete(id);
     else if (op === 'read') result = id ? await api.get(id) : await api.filter(filtros);
 
-    // Risco (somente score/auditoria, sem bloqueio)
+    // Risco baseline (heurística) + Risco IA (não bloqueante, controlado por configuração)
     const risk = computeRisk({ event: { entity_name: entity, type: op }, data, ip, userAgent });
+    let iaRisk = null;
+    try {
+      const cfg = await base44.asServiceRole.entities?.ConfiguracaoSistema?.filter?.({})?.then(r => r?.[0]).catch(() => null);
+      const enabled = cfg?.seguranca?.rbac_ia?.habilitado === true;
+      if (enabled) {
+        iaRisk = await assessActionRisk(base44, { entity, op, user, ip, userAgent, data });
+      }
+    } catch (_) {}
 
     await audit(base44, user, {
       acao: op === 'read' ? 'Visualização' : op === 'delete' ? 'Exclusão' : op === 'update' ? 'Edição' : 'Criação',
@@ -70,7 +79,7 @@ Deno.serve(async (req) => {
       entidade: entity,
       registro_id: id || (result?.id ?? null),
       descricao: `entityGuard ${op} ${entity} (risco: ${risk.level})`,
-      dados_novos: op !== 'read' ? { ...(data || null), __risk: risk } : null
+      dados_novos: op !== 'read' ? { ...(data || null), __risk: risk, __risk_ia: iaRisk || null } : null
     });
 
     const isPilotEntity = entity === 'Produto' || entity === 'ContaPagar' || entity === 'ContaReceber';
@@ -82,7 +91,7 @@ Deno.serve(async (req) => {
           categoria: 'Segurança',
           prioridade: risk.level === 'Crítico' ? 'Alta' : 'Normal',
           empresa_id: (data?.empresa_id || null),
-          dados: { entity, op, id: id || result?.id, risk }
+          dados: { entity, op, id: id || result?.id, risk, iaRisk }
         });
       } catch (_) {}
     }
