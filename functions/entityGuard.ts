@@ -73,7 +73,8 @@ Deno.serve(async (req) => {
       dados_novos: op !== 'read' ? { ...(data || null), __risk: risk } : null
     });
 
-    if (risk?.level === 'Crítico' || risk?.level === 'Alto') {
+    const isPilotEntity = entity === 'Produto' || entity === 'ContaPagar' || entity === 'ContaReceber';
+    if (isPilotEntity && (risk?.level === 'Crítico' || risk?.level === 'Alto')) {
       try {
         await notify(base44, {
           titulo: 'Alerta de Segurança',
