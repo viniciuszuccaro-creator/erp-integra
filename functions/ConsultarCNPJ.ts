@@ -7,7 +7,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission } from './_lib/guard';
 
-export default async function ConsultarCNPJ({ cnpj }) {
+export default async function ConsultarCNPJ({ cnpj, cfg }) {
   console.log('🚀 [Backend] ConsultarCNPJ iniciado:', cnpj);
   
   const cnpjLimpo = cnpj?.replace(/\D/g, '') || '';
