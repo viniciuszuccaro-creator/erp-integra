@@ -24,6 +24,12 @@ export async function optimizeProductPrice(base44, ctx, { entityId, payload, use
   }
 
   const context = { empresa_id: produto?.empresa_id || null, group_id: produto?.group_id || null };
+
+  // Skip seguro quando configuração exige externa mas não há URL definida
+  if ((cfg?.fonte_cotacoes === 'externa') && !cfg?.api_url) {
+    return { success: true, skipped: true, reason: 'missing_api_url' };
+  }
+
   const quotes = await fetchExternalQuotes(cfg, context, produto);
 
   // Cálculo determinístico com cotações; fallback para heurística baseada em custo

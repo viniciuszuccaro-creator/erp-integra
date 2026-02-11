@@ -5,7 +5,7 @@
  */
 
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission } from './_lib/guard';
+import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 export default async function ConsultarCNPJ({ cnpj, cfg }) {
   console.log('🚀 [Backend] ConsultarCNPJ iniciado:', cnpj);
@@ -26,11 +26,13 @@ export default async function ConsultarCNPJ({ cnpj, cfg }) {
   try {
     console.log('🔄 [Backend] Chamando ReceitaWS...');
     
-    const response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`, {
+    const receitaUrl = `${(cfg?.receita_federal_api?.receitaws_base_url || 'https://www.receitaws.com.br').replace(/\/$/, '')}/v1/cnpj/${cnpjLimpo}`;
+    const response = await fetch(receitaUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'ERP-Zuccaro/1.0'
+        'User-Agent': 'ERP-Zuccaro/1.0',
+        ...(cfg?.receita_federal_api?.receitaws_token ? { 'Authorization': `Bearer ${cfg.receita_federal_api.receitaws_token}` } : {})
       }
     });
     
@@ -81,7 +83,8 @@ export default async function ConsultarCNPJ({ cnpj, cfg }) {
   try {
     console.log('🔄 [Backend] Chamando BrasilAPI...');
     
-    const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`, {
+    const brasilUrl = `${(cfg?.receita_federal_api?.brasilapi_base_url || 'https://brasilapi.com.br').replace(/\/$/, '')}/api/cnpj/v1/${cnpjLimpo}`;
+    const response = await fetch(brasilUrl, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -165,7 +168,10 @@ export default async function ConsultarCNPJ({ cnpj, cfg }) {
     const body = await req.json().catch(() => ({}));
     const { cnpj } = body || {};
 
-    const result = await ConsultarCNPJ({ cnpj });
+    // Carrega configuração centralizada (primeiro registro)
+    const cfg = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, undefined, 1).then(r => r?.[0]).catch(() => null);
+
+    const result = await ConsultarCNPJ({ cnpj, cfg });
     return Response.json(result);
   } catch (error) {
     return Response.json({ error: error?.message || String(error) }, { status: 500 });
