@@ -12,6 +12,10 @@ export async function loadAnomalyConfig(base44) {
 }
 
 export function computeIssues(receber, pagar, cfg) {
+  // Flag issues with a lightweight severity for UI
+  const add = (arr, issue) => {
+    arr.push({ severity: issue?.tipo === 'outlier' ? 'alto' : issue?.tipo === 'atraso' ? 'medio' : 'baixo', ...issue });
+  };
   const issues = [];
   const hoje = new Date();
   const limiar = Number(cfg?.limiar_atraso_dias ?? 1);
