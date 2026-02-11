@@ -48,8 +48,8 @@ import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
 import PedidoFooterAcoes from './pedido/PedidoFooterAcoes';
 import { pedidoCompletoSchema } from './pedido/pedidoSchema';
 import { getDefaultPedidoValues } from './pedido/pedidoDefaults';
-import { computePedidoTotais } from './pedido/utils/computePedidoTotais';
-import { isIdentificacaoValida, hasItens } from './pedido/utils/validatePedidoSections';
+import useTotais from './pedido/hooks/useTotais';
+import usePedidoValidacoes from './pedido/hooks/usePedidoValidacoes';
 import FormWrapper from "@/components/common/FormWrapper";
 
 /**
@@ -103,41 +103,9 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
     setFormData(prev => ({ ...prev, percentual_conclusao_wizard: progresso }));
   }, [validacoes]);
 
-  // Validar identificação - COM PROTEÇÃO
-  useEffect(() => {
-    if (!formData) return;
-    const valido = isIdentificacaoValida(formData);
-    setValidacoes(prev => ({ ...prev, identificacao: valido }));
-  }, [formData?.cliente_id, formData?.cliente_nome, formData?.data_pedido, formData?.numero_pedido]);
+  usePedidoValidacoes(formData, setValidacoes);
 
-  // Validar itens - COM PROTEÇÃO
-  useEffect(() => {
-    if (!formData) return;
-    const temItens = hasItens(formData);
-    setValidacoes(prev => ({ ...prev, itens: temItens }));
-  }, [formData?.itens_revenda?.length, formData?.itens_armado_padrao?.length, formData?.itens_corte_dobra?.length]);
-
-  // Recalcular totais - COM PROTEÇÃO (extraído)
-  const recalcularTotais = () => {
-    if (!formData) return;
-    const { valor_produtos, valor_total, peso_total_kg } = computePedidoTotais(formData);
-    setFormData(prev => ({
-      ...prev,
-      valor_produtos,
-      valor_total,
-      peso_total_kg
-    }));
-  };
-
-  useEffect(() => {
-    recalcularTotais();
-  }, [
-    formData?.itens_revenda,
-    formData?.itens_armado_padrao,
-    formData?.itens_corte_dobra,
-    formData?.desconto_geral_pedido_valor,
-    formData?.valor_frete
-  ]);
+  useTotais(formData, setFormData);
 
   const handleSubmit = async () => {
     if (!formData || salvando) return;

@@ -28,10 +28,10 @@ Deno.serve(async (req) => {
       if (!arr.length) return;
       const mean = ss.mean(arr);
       const stdev = ss.standardDeviation(arr) || 1;
-      const thr = 3; // |z| >= 3
+      const zThr = Number(cfg?.finance?.anomaly?.zscore_threshold ?? 3); // |z| >= zThr
       arr.forEach((v, i) => {
         const z = (v - mean) / stdev;
-        if (Math.abs(z) >= thr) {
+        if (Math.abs(z) >= zThr) {
           const ref = baseList[i];
           issues.push({ entidade, tipo: 'valor_outlier', severity: 'alto', valor: v, zscore: Number(z.toFixed(2)), id: ref?.id, data: ref });
         }
@@ -54,7 +54,8 @@ Deno.serve(async (req) => {
       const med = ss.median(arr);
       const absDev = arr.map(x => Math.abs(x - med));
       const mad = ss.median(absDev) || 1;
-      const thr = med + 3 * mad; // robusto
+      const madK = Number(cfg?.finance?.anomaly?.mad_multiplier ?? 3);
+      const thr = med + madK * mad; // robusto
       arr.forEach((v, i) => {
         if (v >= thr && v > 0) {
           const ref = baseList[i];

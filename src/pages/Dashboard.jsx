@@ -690,15 +690,31 @@ export default function Dashboard() {
         <DashboardTabsNav />
 
         <TabsContent value="tempo-real">
-          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-            <DashboardTempoReal empresaId={empresaAtual?.id} />
-          </Suspense>
+          <PanelGroup direction="vertical" className="gap-2">
+            <Panel defaultSize={70} minSize={40}>
+              <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+                <DashboardTempoReal empresaId={empresaAtual?.id} />
+              </Suspense>
+            </Panel>
+            <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
+            <Panel defaultSize={30} minSize={20}>
+              <KPIsOperacionaisSection kpis={kpisOperacionais} />
+            </Panel>
+          </PanelGroup>
         </TabsContent>
 
         <TabsContent value="bi-operacional">
-          <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-            <DashboardOperacionalBI />
-          </Suspense>
+          <PanelGroup direction="vertical" className="gap-2">
+            <Panel defaultSize={70} minSize={40}>
+              <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+                <DashboardOperacionalBI />
+              </Suspense>
+            </Panel>
+            <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
+            <Panel defaultSize={30} minSize={20}>
+              <SecondaryKPIsSection kpis={kpiCards} />
+            </Panel>
+          </PanelGroup>
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
