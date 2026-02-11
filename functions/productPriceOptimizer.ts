@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getTabelaPrecosIAConfig, fetchExternalQuotes, computeOptimizedPrice } from './_lib/priceUtils.js';
 
 Deno.serve(async (req) => {
   const t0 = Date.now();
@@ -11,65 +12,15 @@ Deno.serve(async (req) => {
 
     const produto = payload?.data || await base44.asServiceRole.entities.Produto.get(entityId);
 
-    // Carrega configurações comerciais (estrutura preparada, sem integrações externas por enquanto)
-    let cfg = null;
-    try {
-      const list = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Comercial', chave: 'tabela_precos_ia' }, '-updated_date', 1);
-      cfg = Array.isArray(list) && list.length ? list[0]?.configuracoes_comerciais?.tabela_precos_ia || list[0]?.tabela_precos_ia || null : null;
-    } catch (_) { cfg = null; }
+// Config comercial (multiempresa preparada) + cotações externas quando configuradas
+const cfg = await getTabelaPrecosIAConfig(base44);
+const context = { empresa_id: produto?.empresa_id || null, group_id: produto?.group_id || null };
+const quotes = await fetchExternalQuotes(cfg, context, produto);
 
-    const markupMinimo = Number(cfg?.markup_minimo_percentual ?? 10);
-    const moedaBase = cfg?.moeda_base || 'BRL';
-    const fonteCotacoes = cfg?.fonte_cotacoes || 'nenhuma';
+// Cálculo determinístico com cotações; fallback para heurística baseada em custo
+const opt = computeOptimizedPrice(produto, quotes, cfg || {});
 
-    const prompt = `Sugira preco_venda e margem_minima_percentual para o produto com base nos dados e políticas a seguir. Responda JSON.\n
-    Políticas: ${JSON.stringify({
-      moeda_base: moedaBase,
-      markup_minimo_percentual: markupMinimo,
-      regra_prioridade: cfg?.regra_prioridade || 'custo',
-      fonte_cotacoes: fonteCotacoes,
-      politicas_precificacao: cfg?.politicas_precificacao || []
-    })}
-
-    Dados: ${JSON.stringify({
-      descricao: produto?.descricao,
-      custo_medio: produto?.custo_medio,
-      custo_aquisicao: produto?.custo_aquisicao,
-      preco_venda_atual: produto?.preco_venda,
-      quantidade_vendida_12meses: produto?.quantidade_vendida_12meses,
-      classificacao_abc: produto?.classificacao_abc,
-      grupo: produto?.grupo,
-      unidade_principal: produto?.unidade_principal
-    })}`;
-
-    const res = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          preco_venda: { type: 'number' },
-          margem_minima_percentual: { type: 'number' },
-        },
-      },
-    });
-
-    const patch = {};
-    if (typeof res?.preco_venda === 'number') patch.preco_venda = Math.max(0, res.preco_venda);
-    if (typeof res?.margem_minima_percentual === 'number') patch.margem_minima_percentual = Math.max(0, Math.min(100, Math.round(res.margem_minima_percentual)));
-
-    // Garante markup mínimo configurado (estrutura pronta para cotações futuras)
-    try {
-      const custoBase = Number(produto?.custo_medio ?? produto?.custo_aquisicao ?? 0);
-      const minMarkup = Number(markupMinimo);
-      if (custoBase > 0 && minMarkup >= 0) {
-        const precoMinimo = custoBase * (1 + minMarkup / 100);
-        if (typeof patch.preco_venda === 'number' && patch.preco_venda < precoMinimo) {
-          patch.preco_venda = Number(precoMinimo.toFixed(2));
-          patch.margem_minima_percentual = Math.max(Number(patch.margem_minima_percentual || 0), Math.round(minMarkup));
-        }
-      }
-    } catch (_) {}
-
+const patch = { preco_venda: opt.preco_venda, margem_minima_percentual: opt.margem_minima_percentual };
     if (Object.keys(patch).length) {
       await base44.asServiceRole.entities.Produto.update(entityId, patch);
     }
@@ -81,8 +32,9 @@ Deno.serve(async (req) => {
         modulo: 'Estoque',
         entidade: 'Produto',
         registro_id: entityId,
-        descricao: 'Preço e margem otimizados por IA',
+        descricao: 'Preço e margem otimizados (cotações externas + políticas)',
         dados_novos: patch,
+        empresa_id: produto?.empresa_id || null,
         duracao_ms: Date.now() - t0,
       });
     } catch {}

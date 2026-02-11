@@ -21,6 +21,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 function DashboardOperacionalBI({ windowMode = false }) {
@@ -279,48 +280,52 @@ function DashboardOperacionalBI({ windowMode = false }) {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <Card className="border-0 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-base">Vendas por Mês</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={dadosVendasMes}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mes" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="valor" fill="#3b82f6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-md">
-          <CardHeader>
-            <CardTitle className="text-base">Evolução de Produção</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={[
-                { mes: "Jan", ops: 12 },
-                { mes: "Fev", ops: 15 },
-                { mes: "Mar", ops: 18 },
-                { mes: "Abr", ops: 22 },
-                { mes: "Mai", ops: 19 },
-                { mes: "Jun", ops: 25 },
-              ]}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mes" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="ops" stroke="#8b5cf6" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
+      <ResizablePanelGroup direction="horizontal" className="w-full">
+        <ResizablePanel defaultSize={50} minSize={30} className="pr-3">
+          <Card className="border-0 shadow-md h-full">
+            <CardHeader>
+              <CardTitle className="text-base">Vendas por Mês</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dadosVendasMes}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="valor" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </ResizablePanel>
+        <ResizableHandle withHandle className="mx-1" />
+        <ResizablePanel defaultSize={50} minSize={30} className="pl-3">
+          <Card className="border-0 shadow-md h-full">
+            <CardHeader>
+              <CardTitle className="text-base">Evolução de Produção</CardTitle>
+            </CardHeader>
+            <CardContent className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={[
+                  { mes: "Jan", ops: 12 },
+                  { mes: "Fev", ops: 15 },
+                  { mes: "Mar", ops: 18 },
+                  { mes: "Abr", ops: 22 },
+                  { mes: "Mai", ops: 19 },
+                  { mes: "Jun", ops: 25 },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="ops" stroke="#8b5cf6" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </ResizablePanel>
+      </ResizablePanelGroup>
 
       <Card className="border-2 border-purple-300 bg-gradient-to-r from-purple-50 to-blue-50">
         <CardHeader>
