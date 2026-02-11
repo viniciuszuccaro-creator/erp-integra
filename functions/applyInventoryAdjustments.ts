@@ -1,8 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
+import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 import { computeMovements, persistMovements, buildFinalizePatch } from './_lib/inventoryUtils.js';
 import { handleApplyInventoryAdjustments } from './_lib/inventario/applyAdjustmentsHandler.js';
 import { resolveEntityIdFromPayload, isApprovedStatus } from './_lib/validationUtils.js';
+import { stockAudit } from './_lib/estoque/auditUtils.js';
 
 Deno.serve(async (req) => {
   try {
@@ -29,6 +30,16 @@ Deno.serve(async (req) => {
 
     const { movimentos_count, skipped } = await handleApplyInventoryAdjustments(base44, ctx, { ...inv, id: inventario_id }, user);
     if (skipped) return Response.json({ ok: true, skipped: true });
+
+    await stockAudit(base44, user, {
+      acao: 'Edição',
+      entidade: 'Inventario',
+      registro_id: inventario_id,
+      descricao: 'Ajustes de inventário aplicados',
+      empresa_id: inv?.empresa_id || null,
+      dados_novos: { movimentos_count }
+    });
+
     return Response.json({ ok: true, movimentos_count });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
