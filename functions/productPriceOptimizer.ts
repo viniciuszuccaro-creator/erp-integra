@@ -12,6 +12,17 @@ Deno.serve(async (req) => {
     const entityId = event?.entity_id || payload?.produto_id;
     if (!entityId) return Response.json({ error: 'produto_id obrigatório' }, { status: 400 });
 
+    // Skip when it's an update that didn't change cost fields
+    const data = payload?.data || null;
+    const oldData = payload?.old_data || null;
+    if (event?.type === 'update') {
+      const costFields = ['custo_medio', 'custo_aquisicao'];
+      const changed = costFields.some(f => (data?.[f] ?? null) !== (oldData?.[f] ?? null));
+      if (!changed) {
+        return Response.json({ ok: true, skipped: true, reason: 'no_cost_change' });
+      }
+    }
+
     const user = await base44.auth.me().catch(() => null);
     let ctx = null;
     if (user) {
