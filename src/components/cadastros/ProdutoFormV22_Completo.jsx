@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import FormWrapper from "@/components/common/FormWrapper";
 import { useQuery } from "@tanstack/react-query";
 import { BotaoBuscaAutomatica } from "@/components/lib/BuscaDadosPublicos";
 import HistoricoProduto from "./HistoricoProduto";
@@ -169,6 +170,7 @@ export default function ProdutoFormV22_Completo({ produto, onSubmit, onSuccess, 
   });
 
   const [iaSugestao, setIaSugestao] = useState(null);
+  // Mantém w-full/h-full e responsivo/redimensionável (conteúdo já usa classes).
   const [processandoIA, setProcessandoIA] = useState(false);
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [calculoConversao, setCalculoConversao] = useState(null);
@@ -448,15 +450,12 @@ Caso contrário, sugira:
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
+  const submitProduto = async () => {
     if (!formData.descricao) {
       toast.error('Preencha a descrição do produto');
       return;
     }
 
-    // V22.0: Validação de código duplicado
     if (formData.codigo && !produto?.id) {
       try {
         const produtosExistentes = await base44.entities.Produto.filter({ codigo: formData.codigo });
@@ -470,7 +469,6 @@ Caso contrário, sugira:
       }
     }
 
-    // V21.2 FASE 2: Validação tripla classificação
     if (!formData.setor_atividade_id) {
       toast.error('Selecione o Setor de Atividade');
       setAbaAtiva('dados-gerais');
@@ -503,7 +501,6 @@ Caso contrário, sugira:
 
     const dadosSubmit = {
       ...formData,
-      // Sincroniza unidade do formulário com o schema (campo unidade_medida é requerido)
       unidade_medida: formData.unidade_principal || formData.unidade_medida || 'KG',
       empresa_id: user?.empresa_selecionada_id || user?.empresa_id || '1',
       tributacao: {
@@ -518,7 +515,6 @@ Caso contrário, sugira:
       }
     };
 
-    // V21.6: Salvar direto via SDK + callback
     try {
       if (produto?.id) {
         await base44.entities.Produto.update(produto.id, dadosSubmit);
@@ -527,7 +523,6 @@ Caso contrário, sugira:
         await base44.entities.Produto.create(dadosSubmit);
         toast.success('✅ Produto criado com sucesso!');
       }
-      
       if (onSuccess) onSuccess();
       if (onSubmit) onSubmit(dadosSubmit);
       if (typeof closeSelf === 'function') closeSelf();
@@ -535,6 +530,8 @@ Caso contrário, sugira:
       toast.error('❌ Erro ao salvar produto: ' + error.message);
     }
   };
+
+  const unifiedSubmit = submitProduto;
 
   const handleExcluir = () => {
     if (!window.confirm(`Tem certeza que deseja excluir o produto "${formData.descricao}"? Esta ação não pode ser desfeita.`)) {
@@ -553,7 +550,7 @@ Caso contrário, sugira:
   const totalAbas = 7; // SEMPRE 7 abas - ETAPA 4 COMPLETA
 
   const content = (
-    <form onSubmit={handleSubmit} className={`space-y-6 ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
+    <FormWrapper onSubmit={unifiedSubmit} externalData={formData} className={`${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'} space-y-6`}>
       {/* TOGGLE MODO MANUAL */}
       <Alert className="border-blue-300 bg-blue-50">
         <AlertDescription>
@@ -1184,7 +1181,7 @@ Caso contrário, sugira:
           {produto ? 'Atualizar Produto' : 'Criar Produto'}
         </Button>
       </div>
-    </form>
+    </FormWrapper>
   );
 
   if (windowMode) {
