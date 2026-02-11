@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { notify } from './_lib/notificationService.js';
 import { getModuleForEntity, safeTrimPayload } from './_lib/security/auditHelpers.js';
 import { computeRisk } from './_lib/security/riskScoring.js';
+import { assessActionRisk } from './_lib/security/iaAccessRiskAssessor.js';
 
 // auditEntityEvents: registra em AuditLog todos os eventos de entidade (create/update/delete)
 // Payload recebido por automação de entidade: { event:{type, entity_name, entity_id}, data, old_data, payload_too_large }
@@ -39,6 +40,15 @@ Deno.serve(async (req) => {
 
     const risk = computeRisk({ event, data: recordData, ip, userAgent });
 
+    // Risco IA (opcional via ConfiguracaoSistema.seguranca.rbac_ia.habilitado)
+    let iaRisk = null;
+    try {
+      const cfg = await base44.asServiceRole.entities?.ConfiguracaoSistema?.filter?.({})?.then(r => r?.[0]).catch(() => null);
+      if (cfg?.seguranca?.rbac_ia?.habilitado === true) {
+        iaRisk = await assessActionRisk(base44, { entity: entidade, op: type, user: null, ip, userAgent, data: recordData });
+      }
+    } catch (_) {}
+
     await base44.asServiceRole.entities.AuditLog.create({
       usuario: 'Sistema (Automação)',
       acao: type === 'create' ? 'Criação' : type === 'update' ? 'Edição' : 'Exclusão',
@@ -48,7 +58,7 @@ Deno.serve(async (req) => {
       descricao: `Evento ${type} em ${entidade} (risco: ${risk.level})`,
       empresa_id: empresa_id || undefined,
       dados_anteriores: type !== 'create' ? safeTrimPayload(previousData || null) : null,
-      dados_novos: type !== 'delete' ? { ...safeTrimPayload(recordData || null), __risk: risk } : null,
+      dados_novos: type !== 'delete' ? { ...safeTrimPayload(recordData || null), __risk: risk, __risk_ia: iaRisk || null } : null,
       data_hora: new Date().toISOString(),
       ip_address: ip,
       user_agent: userAgent,
@@ -63,7 +73,7 @@ Deno.serve(async (req) => {
           categoria: 'Segurança',
           prioridade: risk.level === 'Crítico' ? 'Alta' : 'Normal',
           empresa_id: empresa_id || undefined,
-          dados: { event, risk, entity_id: event.entity_id }
+          dados: { event, risk, iaRisk, entity_id: event.entity_id }
         });
       } catch (_) {}
     }

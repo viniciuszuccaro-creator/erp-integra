@@ -12,9 +12,14 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Coleta (escopo amplo; otimizar filtros por empresa/grupo quando necessário)
-    const receber = await base44.asServiceRole.entities.ContaReceber.filter({}, '-updated_date', 500);
-    const pagar = await base44.asServiceRole.entities.ContaPagar.filter({}, '-updated_date', 500);
+    // Filtros opcionais (multiempresa): { empresa_id?, group_id? }
+    let body = {};
+    try { body = await req.json(); } catch { body = {}; }
+    const filtros = (body?.filtros && (body.filtros.empresa_id || body.filtros.group_id)) ? body.filtros : {};
+
+    // Coleta com escopo (quando fornecido)
+    const receber = await base44.asServiceRole.entities.ContaReceber.filter(filtros, '-updated_date', 500);
+    const pagar = await base44.asServiceRole.entities.ContaPagar.filter(filtros, '-updated_date', 500);
 
     // Regras configuráveis + detecções já existentes
     const cfg = await loadAnomalyConfig(base44);
@@ -102,7 +107,7 @@ Deno.serve(async (req) => {
 
       const resumoSeveridade = issues.reduce((acc, i) => { acc[i.severity] = (acc[i.severity] || 0) + 1; return acc; }, {});
       // Usa empresa do primeiro título como contexto padrão
-      const alvoEmpresaId = (receber[0]?.empresa_id) || (pagar[0]?.empresa_id) || null;
+      const alvoEmpresaId = (filtros?.empresa_id) || (receber[0]?.empresa_id) || (pagar[0]?.empresa_id) || null;
 
       await notify(base44, {
         titulo: 'Anomalias Financeiras Detectadas',
