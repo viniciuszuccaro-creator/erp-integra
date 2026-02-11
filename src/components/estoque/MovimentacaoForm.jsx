@@ -18,7 +18,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  */
 export default function MovimentacaoForm({ movimentacao, onSubmit, windowMode = false }) {
   const { user: authUser } = useUser();
-  const { getFiltroContexto, carimbarContexto } = useContextoVisual();
+  const { getFiltroContexto, carimbarContexto, filterInContext, empresaAtual } = useContextoVisual();
   const schema = z.object({
     tipo_movimento: z.string().min(3, 'Tipo é obrigatório'),
     produto_id: z.string().min(1, 'Produto é obrigatório'),
