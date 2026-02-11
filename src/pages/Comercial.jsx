@@ -61,7 +61,8 @@ export default function Comercial() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: pedidos = [] } = pedidosQuery;
