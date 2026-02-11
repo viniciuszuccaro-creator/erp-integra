@@ -11,12 +11,23 @@ Deno.serve(async (req) => {
     const pagar = await base44.asServiceRole.entities.ContaPagar.filter({}, '-updated_date', 500);
 
     const issues = [];
-    const hoje = new Date().toISOString().slice(0,10);
+     const hoje = new Date().toISOString().slice(0,10);
 
-    const atrasado = (venc) => {
-      if (!venc) return false;
-      return new Date(venc) < new Date(hoje);
-    };
+     // Limiares configuráveis (fallbacks seguros)
+     let limiarAtrasoDias = 1;
+     let valorNegativoHabilita = true;
+     try {
+       const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Financeiro', chave: 'anomalias_financeiras' }, '-updated_date', 1);
+       const cfg = Array.isArray(cfgs) && cfgs.length ? cfgs[0] : null;
+       limiarAtrasoDias = Number(cfg?.limiar_atraso_dias ?? 1);
+       valorNegativoHabilita = cfg?.permitir_valor_negativo !== true;
+     } catch {}
+
+     const diasAtraso = (venc) => {
+       if (!venc) return 0;
+       const diff = (new Date(hoje).getTime() - new Date(venc).getTime()) / (1000*60*60*24);
+       return Math.floor(diff);
+     };
 
     for (const r of receber) {
       if (Number(r?.valor) < 0) issues.push({ tipo: 'Valor negativo', entidade: 'Receber', id: r.id });
