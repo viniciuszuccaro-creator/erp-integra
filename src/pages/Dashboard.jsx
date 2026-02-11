@@ -311,6 +311,7 @@ export default function Dashboard() {
   ];
 
   // NOVOS KPIs OPERACIONAIS (Cards)
+  const opsConcluidasCount = (ordensProducao || []).filter(op => ["Concluída","Concluido","Concluida","Concluído","Finalizada","Finalizado","Encerrada","Encerrado","Pronto"].includes(op?.status)).length;
   const kpisOperacionais = [
     {
       title: "OTD (On-Time)",
