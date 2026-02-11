@@ -1,6 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
 import { computeMovements, persistMovements, buildFinalizePatch } from './_lib/inventoryUtils.js';
+import { handleApplyInventoryAdjustments } from './_lib/inventario/applyAdjustmentsHandler.js';
 import { resolveEntityIdFromPayload, isApprovedStatus } from './_lib/validationUtils.js';
 
 Deno.serve(async (req) => {
@@ -26,18 +27,9 @@ Deno.serve(async (req) => {
     const inv = await base44.asServiceRole.entities.Inventario.get(inventario_id);
     if (!inv) return Response.json({ error: 'Inventário não encontrado' }, { status: 404 });
 
-    const movimentoRecords = computeMovements(inv, user);
-    if (movimentoRecords.length === 0) {
-      return Response.json({ ok: true, skipped: true });
-    }
-
-    const movimentos = await persistMovements(base44, movimentoRecords);
-
-    await base44.asServiceRole.entities.Inventario.update(inventario_id, buildFinalizePatch(user));
-
-    await audit(base44, user, { acao: 'Edição', modulo: 'Estoque', entidade: 'Inventario', registro_id: inventario_id, descricao: 'Aplicação de ajustes de inventário', dados_novos: { movimentos } });
-
-    return Response.json({ ok: true, movimentos_count: movimentos.length });
+    const { movimentos_count, skipped } = await handleApplyInventoryAdjustments(base44, ctx, { ...inv, id: inventario_id }, user);
+    if (skipped) return Response.json({ ok: true, skipped: true });
+    return Response.json({ ok: true, movimentos_count });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
   }
