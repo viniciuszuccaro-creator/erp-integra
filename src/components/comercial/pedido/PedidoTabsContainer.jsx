@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import PedidoTabsNav from '../pedido/PedidoTabsNav';
+import PedidoTabsNav from './PedidoTabsNav';
 import ProtectedSection from '@/components/security/ProtectedSection';
 import { toast } from 'sonner';
 
