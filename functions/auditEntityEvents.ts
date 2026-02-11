@@ -7,6 +7,8 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
+    const userAgent = req.headers.get('user-agent') || '';
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || '';
     const event = body?.event;
     const data = body?.data;
     const oldData = body?.old_data;
@@ -43,9 +45,8 @@ Deno.serve(async (req) => {
       dados_anteriores: type !== 'create' ? (oldData || null) : null,
       dados_novos: type !== 'delete' ? (data || null) : null,
       data_hora: new Date().toISOString(),
-      // Guardamos group_id em dados_novos para rastreio mesmo se campo não existir na entidade AuditLog
-      geolocation: '',
-      user_agent: '',
+      ip_address: ip,
+      user_agent: userAgent,
     });
 
     return Response.json({ ok: true });
