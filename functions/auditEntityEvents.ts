@@ -1,4 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { notify } from './_lib/notificationService.js';
+import { getModuleForEntity, safeTrimPayload } from './_lib/security/auditHelpers.js';
+import { computeRisk } from './_lib/security/riskScoring.js';
 
 // auditEntityEvents: registra em AuditLog todos os eventos de entidade (create/update/delete)
 // Payload recebido por automação de entidade: { event:{type, entity_name, entity_id}, data, old_data, payload_too_large }
@@ -13,6 +16,14 @@ Deno.serve(async (req) => {
     const data = body?.data;
     const oldData = body?.old_data;
 
+    // Recupera o registro quando payload é grande ou dados ausentes
+    let recordData = data;
+    let previousData = oldData;
+    if ((!recordData || body?.payload_too_large) && event?.entity_name && event?.entity_id) {
+      const list = await base44.asServiceRole.entities?.[event.entity_name]?.filter?.({ id: event.entity_id }, undefined, 1);
+      recordData = list?.[0] || recordData;
+    }
+
     if (!event?.entity_name || !event?.entity_id || !event?.type) {
       return Response.json({ ok: true, skipped: true, reason: 'payload incompleto' });
     }
@@ -20,19 +31,13 @@ Deno.serve(async (req) => {
     // Monta descrição e módulo por heurística simples
     const entidade = event.entity_name;
     const type = event.type; // create | update | delete
-    const moduloMap = {
-      Cliente: 'CRM', Oportunidade: 'CRM', Interacao: 'CRM',
-      Pedido: 'Comercial', Comissao: 'Comercial', NotaFiscal: 'Fiscal',
-      Produto: 'Estoque', MovimentacaoEstoque: 'Estoque',
-      ContaPagar: 'Financeiro', ContaReceber: 'Financeiro',
-      Entrega: 'Expedição', Romaneio: 'Expedição',
-      AuditoriaIA: 'IA', ChatbotInteracao: 'Chatbot',
-    };
-    const modulo = moduloMap[entidade] || 'Sistema';
+    const modulo = getModuleForEntity(entidade);
 
     // Empresa e grupo do registro (quando disponíveis) para contexto
-    const empresa_id = data?.empresa_id || oldData?.empresa_id || null;
-    const group_id = data?.group_id || oldData?.group_id || null;
+    const empresa_id = recordData?.empresa_id || previousData?.empresa_id || null;
+    const group_id = recordData?.group_id || previousData?.group_id || null;
+
+    const risk = computeRisk({ event, data: recordData, ip, userAgent });
 
     await base44.asServiceRole.entities.AuditLog.create({
       usuario: 'Sistema (Automação)',
@@ -40,15 +45,28 @@ Deno.serve(async (req) => {
       modulo,
       entidade,
       registro_id: event.entity_id,
-      descricao: `Evento ${type} em ${entidade}`,
+      descricao: `Evento ${type} em ${entidade} (risco: ${risk.level})`,
       empresa_id: empresa_id || undefined,
-      dados_anteriores: type !== 'create' ? (oldData || null) : null,
-      dados_novos: type !== 'delete' ? (data || null) : null,
+      dados_anteriores: type !== 'create' ? safeTrimPayload(previousData || null) : null,
+      dados_novos: type !== 'delete' ? { ...safeTrimPayload(recordData || null), __risk: risk } : null,
       data_hora: new Date().toISOString(),
       ip_address: ip,
       user_agent: userAgent,
     });
 
+    // Notificação somente para alto/crítico (sem bloqueio)
+    if (risk?.level === 'Crítico' || risk?.level === 'Alto') {
+      try {
+        await notify(base44, {
+          titulo: 'Alerta de Segurança',
+          mensagem: `${entidade} • ${type} • risco ${risk.level}`,
+          categoria: 'Segurança',
+          prioridade: risk.level === 'Crítico' ? 'Alta' : 'Normal',
+          empresa_id: empresa_id || undefined,
+          dados: { event, risk, entity_id: event.entity_id }
+        });
+      } catch (_) {}
+    }
     return Response.json({ ok: true });
   } catch (err) {
     return Response.json({ error: err.message }, { status: 500 });
