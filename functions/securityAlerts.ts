@@ -10,6 +10,11 @@ Deno.serve(async (req) => {
     if (user?.role !== 'admin') { return Response.json({ error: 'Forbidden' }, { status: 403 }); }
 
     // Janela de análise (minutos)
+    // Filtros multiempresa opcionais via payload { filtros: { empresa_id?, group_id? } }
+    let payload = {};
+    try { payload = await req.json(); } catch { payload = {}; }
+    const filtros = payload?.filtros || {};
+
     const WINDOW_MIN = 15;
     const now = new Date();
     const windowStart = new Date(now.getTime() - WINDOW_MIN * 60 * 1000);
@@ -24,9 +29,15 @@ Deno.serve(async (req) => {
       return null;
     };
 
+    const inScope = (l) => {
+      if (filtros?.empresa_id && l?.empresa_id && l.empresa_id !== filtros.empresa_id) return false;
+      if (filtros?.group_id && l?.group_id && l.group_id !== filtros.group_id) return false;
+      return true;
+    };
+
     const recent = logs.filter((l) => {
       const d = getLogDate(l);
-      return d && d >= windowStart;
+      return d && d >= windowStart && inScope(l);
     });
 
     // Estatísticas
