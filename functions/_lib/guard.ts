@@ -86,6 +86,30 @@ export async function assertPermission(base44, { user, perfil }, moduleName, sec
     } catch {}
     return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
+
+  // Bloqueio SoD em tempo real: se houver conflito registrado para o módulo/ação, negar
+  try {
+    const conflicts = perfil?.conflitos_sod_detectados || [];
+    const act = normalize(action);
+    const modLc = String(moduleName || '').toLowerCase();
+    const hasConflict = conflicts.some((c) => {
+      const tipo = String(c?.tipo_conflito || '').toLowerCase();
+      return tipo.startsWith(modLc + ':') && tipo.includes(act);
+    });
+    if (hasConflict) {
+      try {
+        await base44.asServiceRole.entities.AuditLog.create({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          acao: 'Bloqueio', modulo: moduleName, entidade: Array.isArray(section) ? section.join('.') : (section || '-'),
+          descricao: `Bloqueio SoD: ${moduleName}/${section || '-'} → ${action}`,
+          data_hora: new Date().toISOString(),
+        });
+      } catch {}
+      return Response.json({ error: 'Forbidden: Bloqueado por regra SoD' }, { status: 403 });
+    }
+  } catch {}
+
   return null;
 }
 
