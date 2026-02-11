@@ -25,7 +25,17 @@ export async function getTabelaPrecosIAConfig(base44, empresaId = null) {
       }
     }
 
-    return candidatoGlobal;
+    if (candidatoGlobal) return candidatoGlobal;
+    // Stub/config padrão multiempresa
+    return {
+      habilitado: true,
+      fonte_cotacoes: 'mock', // não chama API externa por padrão
+      markup_minimo_percentual: 12,
+      politicas_precificacao: [],
+      empresas_habilitadas: null,
+      empresas_bloqueadas: null,
+      _escopo: 'default'
+    };
   } catch (_) {
     return null;
   }
