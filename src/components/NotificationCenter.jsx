@@ -23,12 +23,10 @@ export default function NotificationCenter() {
     queryKey: ['notificacoes', empresaAtual?.id],
     queryFn: async () => {
       const user = await base44.auth.me();
-      // Busca ampla e filtra no cliente: pessoais (destinatario_email=user) e globais (sem destinatario)
-      const todas = await base44.entities.Notificacao.filter({}, '-created_date', 100);
+      // Preferir filtro no servidor para respeitar multiempresa
+      const filtroSrv = (!estaNoGrupo && empresaAtual) ? { empresa_id: empresaAtual.id } : {};
+      const todas = await base44.entities.Notificacao.filter(filtroSrv, '-created_date', 100);
       const visiveis = todas.filter(n => !n.arquivada && (!n.destinatario_email || n.destinatario_email === user.email));
-      if (!estaNoGrupo && empresaAtual) {
-        return visiveis.filter(n => !n.empresa_id || n.empresa_id === empresaAtual.id);
-      }
       return visiveis;
     },
     refetchInterval: 30000, // Atualiza a cada 30 segundos
