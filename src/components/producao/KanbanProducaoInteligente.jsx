@@ -9,6 +9,7 @@ import { Plus, AlertTriangle, TrendingUp, Package, Clock } from "lucide-react";
 import { useWindow } from "@/components/lib/useWindow";
 import { toast } from "sonner";
 import FormularioOrdemProducao from "./FormularioOrdemProducao";
+import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 
 const colunas = [
   { id: "Planejada", nome: "Planejada", cor: "bg-slate-100" },
@@ -125,63 +126,74 @@ export default function KanbanProducaoInteligente({ windowMode = false }) {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-4 gap-3">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">OPs Ativas</p>
-                  <p className="text-2xl font-bold">{opsFiltradas.filter(op => op.status !== "Concluída" && op.status !== "Cancelada").length}</p>
+        <PanelGroup direction="horizontal" className="mt-4 gap-2">
+          <Panel defaultSize={25} minSize={15}>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">OPs Ativas</p>
+                    <p className="text-2xl font-bold">{opsFiltradas.filter(op => op.status !== "Concluída" && op.status !== "Cancelada").length}</p>
+                  </div>
+                  <Package className="w-8 h-8 text-blue-500" />
                 </div>
-                <Package className="w-8 h-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Panel>
+          <PanelResizeHandle className="w-1 bg-slate-200 rounded" />
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Em Atraso</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {opsFiltradas.filter(op => op.risco_atraso === "Crítico" || op.risco_atraso === "Alto").length}
-                  </p>
+          <Panel defaultSize={25} minSize={15}>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Em Atraso</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      {opsFiltradas.filter(op => op.risco_atraso === "Crítico" || op.risco_atraso === "Alto").length}
+                    </p>
+                  </div>
+                  <AlertTriangle className="w-8 h-8 text-red-500" />
                 </div>
-                <AlertTriangle className="w-8 h-8 text-red-500" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Panel>
+          <PanelResizeHandle className="w-1 bg-slate-200 rounded" />
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Peso Total (KG)</p>
-                  <p className="text-2xl font-bold">
-                    {opsFiltradas.reduce((acc, op) => acc + (op.peso_total_kg || 0), 0).toFixed(0)}
-                  </p>
+          <Panel defaultSize={25} minSize={15}>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Peso Total (KG)</p>
+                    <p className="text-2xl font-bold">
+                      {opsFiltradas.reduce((acc, op) => acc + (op.peso_total_kg || 0), 0).toFixed(0)}
+                    </p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-green-500" />
                 </div>
-                <TrendingUp className="w-8 h-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Panel>
+          <PanelResizeHandle className="w-1 bg-slate-200 rounded" />
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-slate-600">Progresso Médio</p>
-                  <p className="text-2xl font-bold">
-                    {opsFiltradas.length > 0 
-                      ? (opsFiltradas.reduce((acc, op) => acc + (op.progresso_fisico_percentual || 0), 0) / opsFiltradas.length).toFixed(1)
-                      : 0}%
-                  </p>
+          <Panel defaultSize={25} minSize={15}>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-slate-600">Progresso Médio</p>
+                    <p className="text-2xl font-bold">
+                      {opsFiltradas.length > 0 
+                        ? (opsFiltradas.reduce((acc, op) => acc + (op.progresso_fisico_percentual || 0), 0) / opsFiltradas.length).toFixed(1)
+                        : 0}%
+                    </p>
+                  </div>
+                  <Clock className="w-8 h-8 text-purple-500" />
                 </div>
-                <Clock className="w-8 h-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </Panel>
+        </PanelGroup>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>

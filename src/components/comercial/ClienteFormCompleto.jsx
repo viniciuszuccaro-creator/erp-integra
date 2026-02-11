@@ -23,7 +23,7 @@ import FiscalTab from "@/components/comercial/cliente/FiscalTab";
 import DocumentosTab from "@/components/comercial/cliente/DocumentosTab";
 import HistoricoTab from "@/components/comercial/cliente/HistoricoTab";
 import FormWrapper from "@/components/common/FormWrapper";
-import { z } from 'zod';
+import { clienteCompletoSchema } from './cliente/clienteCompletoSchema';
 import useContextoVisual from '@/components/lib/useContextoVisual';
 
 const defaultFormData = {
@@ -91,14 +91,7 @@ const defaultFormData = {
   observacoes: ""
 };
 
-const schema = z.object({
-  nome: z.string().min(1, 'Nome é obrigatório'),
-  tipo: z.enum(['Pessoa Física', 'Pessoa Jurídica']),
-  status: z.enum(['Ativo', 'Inativo', 'Prospect', 'Bloqueado']),
-  endereco_principal: z.object({
-    cep: z.string().min(8, 'CEP inválido').max(9).optional().or(z.literal('')),
-  }).partial().optional(),
-});
+
 
 export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, onCancel }) {
   const { carimbarContexto } = useContextoVisual();
@@ -357,7 +350,7 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
   if (!formData) return null;
 
   return (
-    <FormWrapper schema={schema} onSubmit={handleSubmit} externalData={formData} className="space-y-4 w-full h-full">
+    <FormWrapper schema={clienteCompletoSchema} onSubmit={handleSubmit} externalData={formData} className="space-y-4 w-full h-full">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-6 mb-6">
           <TabsTrigger value="principal">
