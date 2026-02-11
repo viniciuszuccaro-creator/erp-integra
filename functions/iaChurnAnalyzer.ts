@@ -10,6 +10,18 @@ Deno.serve(async (req) => {
     if (permErr) return permErr;
     const oportunidades = await base44.asServiceRole.entities.Oportunidade.filter({}, '-updated_date', 500);
 
+    // Carrega sensibilidade via configuração (fallback seguro)
+    let minDiasSemContato = 14;
+    let maxAtrasoPrev = 7;
+    let minProbabilidade = 40; // abaixo disso sinaliza
+    try {
+      const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'CRM', chave: 'churn_ia' }, '-updated_date', 1);
+      const cfg = Array.isArray(cfgs) && cfgs.length ? cfgs[0] : null;
+      minDiasSemContato = Number(cfg?.min_dias_sem_contato ?? 14);
+      maxAtrasoPrev = Number(cfg?.max_atraso_previsao_dias ?? 7);
+      minProbabilidade = Number(cfg?.min_probabilidade ?? 40);
+    } catch {}
+
     const flagged = [];
     const now = Date.now();
 
