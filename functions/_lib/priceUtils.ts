@@ -46,6 +46,9 @@ export async function fetchExternalQuotes(cfg, context, produto) {
     // MOCK TEMPORÁRIO: quando cfg.mock === true ou url_api ausente/'mock', não chama API externa
     if (!cfg) return null;
     const isMock = cfg?.mock === true || !cfg?.url_api || String(cfg?.url_api).toLowerCase() === 'mock';
+    if (cfg.fonte_cotacoes === 'mock') {
+      return generateMockQuotes(context, produto, cfg);
+    }
     if (cfg.fonte_cotacoes === 'externa' && isMock) {
       return generateMockQuotes(context, produto, cfg);
     }
