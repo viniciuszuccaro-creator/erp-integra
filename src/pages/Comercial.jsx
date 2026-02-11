@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import HeaderComercialCompacto from "@/components/comercial/comercial-launchpad/HeaderComercialCompacto";
 import KPIsComercial from "@/components/comercial/comercial-launchpad/KPIsComercial";
 import ModulosGridComercial from "@/components/comercial/comercial-launchpad/ModulosGridComercial";
+import useComercialDerivedData from "@/components/comercial/hooks/useComercialDerivedData";
 
 const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
 const PedidosTab = React.lazy(() => import("../components/comercial/PedidosTab"));

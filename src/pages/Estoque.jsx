@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import HeaderEstoqueCompacto from "@/components/estoque/estoque-launchpad/HeaderEstoqueCompacto";
 import KPIsEstoque from "@/components/estoque/estoque-launchpad/KPIsEstoque";
 import ModulosGridEstoque from "@/components/estoque/estoque-launchpad/ModulosGridEstoque";
+import useEstoqueDerivedData from "@/components/estoque/hooks/useEstoqueDerivedData";
 import TransferenciaEntreEmpresasForm from "../components/estoque/TransferenciaEntreEmpresasForm";
 
 const ProdutosTab = React.lazy(() => import("../components/estoque/ProdutosTab"));
@@ -154,19 +155,10 @@ export default function Estoque() {
 
   const movimentacoesFiltradas = movimentacoes;
 
-  const totalReservado = useMemo(() => {
-    return produtosParaKPIs.reduce((sum, p) => sum + ((p.estoque_reservado || 0) * (p.custo_aquisicao || 0)), 0);
-  }, [produtosParaKPIs]);
-
-  const estoqueDisponivel = useMemo(() => {
-    return produtosParaKPIs.reduce((sum, p) => {
-      const disp = (p.estoque_atual || 0) - (p.estoque_reservado || 0);
-      return sum + (disp * (p.custo_aquisicao || 0));
-    }, 0);
-  }, [produtosParaKPIs]);
-
-  const recebimentos = movimentacoesFiltradas.filter(m => m.tipo_movimento === 'entrada' && (m.origem_movimento === 'compra' || m.documento?.startsWith('REC-')));
-  const requisicoesAlmoxarifado = movimentacoesFiltradas.filter(m => m.tipo_movimento === 'saida' && m.documento?.startsWith('REQ-ALM-'));
+  const { totalReservado, estoqueDisponivel, recebimentos, requisicoesAlmoxarifado } = useEstoqueDerivedData({
+    movimentacoes: movimentacoesFiltradas,
+    produtos: produtosParaKPIs,
+  });
 
   if (loadingPermissions) {
     return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>;
