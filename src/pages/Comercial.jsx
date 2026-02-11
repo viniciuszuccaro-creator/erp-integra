@@ -28,9 +28,11 @@ const MonitoramentoCanaisRealtime = React.lazy(() => import("@/components/comerc
 export default function Comercial() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow, closeWindow } = useWindow();
-  const { filtrarPorContexto, getFiltroContexto, createInContext, updateInContext, empresaAtual, grupoAtual } = useContextoVisual();
+  const { filtrarPorContexto, getFiltroContexto, createInContext, updateInContext, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
   const { user } = useUser();
   const queryClient = useQueryClient();
+
+  const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id],
@@ -75,7 +77,8 @@ export default function Comercial() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: notasFiscais = [] } = useQuery({
@@ -90,7 +93,8 @@ export default function Comercial() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: tabelasPreco = [] } = useQuery({
@@ -104,7 +108,8 @@ export default function Comercial() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: empresas = [] } = useQuery({
@@ -133,7 +138,8 @@ export default function Comercial() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   // Dados já vêm filtrados do servidor
@@ -206,6 +212,19 @@ export default function Comercial() {
 
   if (loadingPermissions) {
     return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
+  }
+
+  if (bloqueadoSemEmpresa) {
+    return (
+      <ProtectedSection module="Comercial" action="visualizar">
+        <div className="w-full h-full flex items-center justify-center p-6">
+          <div className="max-w-xl w-full bg-white border rounded-xl p-6 text-center">
+            <p className="text-lg font-semibold">Selecione uma empresa para continuar</p>
+            <p className="text-slate-500 mt-1">Use o seletor de empresa no topo para habilitar os dados do módulo.</p>
+          </div>
+        </div>
+      </ProtectedSection>
+    );
   }
 
   const modules = [
