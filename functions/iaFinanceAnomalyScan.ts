@@ -24,6 +24,7 @@ Deno.serve(async (req) => {
       });
 
       // Notificação resumida
+      let alvoEmpresaId = Array.isArray(receber) && receber[0]?.empresa_id ? receber[0].empresa_id : (Array.isArray(pagar) && pagar[0]?.empresa_id ? pagar[0].empresa_id : undefined);
       try {
         await base44.asServiceRole.entities.Notificacao?.create?.({
           titulo: 'Anomalias Financeiras Detectadas',
@@ -31,9 +32,30 @@ Deno.serve(async (req) => {
           tipo: 'alerta',
           categoria: 'Financeiro',
           prioridade: 'Alta',
-          empresa_id: Array.isArray(receber) && receber[0]?.empresa_id ? receber[0].empresa_id : (Array.isArray(pagar) && pagar[0]?.empresa_id ? pagar[0].empresa_id : undefined)
+          empresa_id: alvoEmpresaId
         });
       } catch {}
+
+      // Alerta opcional por WhatsApp (interno) se configurado
+      try {
+        if (alvoEmpresaId) {
+          const cfgs = await base44.asServiceRole.entities.ConfiguracaoWhatsApp.filter({ empresa_id: alvoEmpresaId }, '-updated_date', 1);
+          const whats = Array.isArray(cfgs) && cfgs.length ? cfgs[0] : null;
+          const podeWhats = whats && whats.ativo !== false && (whats.enviar_cobranca === true || whats.enviar_cobranca === undefined);
+          const numeroAlvo = whats?.numero_whatsapp;
+          if (podeWhats && numeroAlvo) {
+            const msg = `ALERTA Financeiro: ${issues.length} ocorrência(s) detectadas. Exemplos: ` +
+              issues.slice(0, 3).map(i => `${i.entidade}:${i.tipo}${i.dias ? ' ('+i.dias+'d)' : ''}`).join(', ') +
+              (issues.length > 3 ? ' ...' : '');
+            await base44.asServiceRole.functions.invoke('whatsappSend', {
+              action: 'sendText',
+              numero: numeroAlvo,
+              mensagem: msg,
+              empresaId: alvoEmpresaId
+            });
+          }
+        }
+      } catch (_) {}
     }
 
     return Response.json({ ok: true, issues: issues.length, details: issues });
