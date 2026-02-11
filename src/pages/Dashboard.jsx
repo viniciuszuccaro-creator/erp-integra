@@ -325,7 +325,7 @@ export default function Dashboard() {
     {
       title: "Peso Produzido",
       value: `${pesoProduzido.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg`,
-      subtitle: `${opsConcluidas.length} OPs concluídas`,
+      subtitle: `${opsConcluidasCount} OPs concluídas`,
       icon: Package,
       color: "text-indigo-600",
       bgColor: "bg-indigo-50",
