@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Registrar resumo
+    // Registrar resumo + notificar
     if (issues.length > 0) {
       await base44.asServiceRole.entities.AuditLog.create({
         usuario: 'Sistema',
@@ -53,9 +53,20 @@ Deno.serve(async (req) => {
         dados_novos: { issues: issues.slice(0, 50) },
         data_hora: new Date().toISOString(),
       });
+
+      // Notificação resumida
+      try {
+        await base44.asServiceRole.entities.Notificacao?.create?.({
+          titulo: 'Anomalias Financeiras Detectadas',
+          mensagem: `${issues.length} ocorrências encontradas (pagar/receber).`,
+          tipo: 'alerta',
+          categoria: 'Financeiro',
+          prioridade: 'Alta'
+        });
+      } catch {}
     }
 
-    return Response.json({ ok: true, issues: issues.length });
+    return Response.json({ ok: true, issues: issues.length, details: issues });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
   }

@@ -44,6 +44,14 @@ Deno.serve(async (req) => {
             dados_novos: { recomendacao: 'Agendar follow-up nas próximas 24h' },
             data_hora: new Date().toISOString(),
           });
+          // Notificação para CRM
+          await base44.asServiceRole.entities.Notificacao?.create?.({
+            titulo: 'Risco de Churn detectado',
+            mensagem: `Oportunidade ${o?.titulo || o?.id} em risco (dias:${dias}, prob:${prob}%).`,
+            tipo: 'alerta',
+            categoria: 'CRM',
+            prioridade: 'Média'
+          });
         } catch {}
       }
     }
