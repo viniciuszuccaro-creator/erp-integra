@@ -61,7 +61,8 @@ Deno.serve(async (req) => {
           mensagem: `${issues.length} ocorrências encontradas (pagar/receber).`,
           tipo: 'alerta',
           categoria: 'Financeiro',
-          prioridade: 'Alta'
+          prioridade: 'Alta',
+          empresa_id: Array.isArray(receber) && receber[0]?.empresa_id ? receber[0].empresa_id : (Array.isArray(pagar) && pagar[0]?.empresa_id ? pagar[0].empresa_id : undefined)
         });
       } catch {}
     }

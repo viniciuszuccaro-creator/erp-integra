@@ -50,7 +50,8 @@ Deno.serve(async (req) => {
             mensagem: `Oportunidade ${o?.titulo || o?.id} em risco (dias:${dias}, prob:${prob}%).`,
             tipo: 'alerta',
             categoria: 'CRM',
-            prioridade: 'Média'
+            prioridade: 'Média',
+            empresa_id: o?.empresa_id
           });
         } catch {}
       }
