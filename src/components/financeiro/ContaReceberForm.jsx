@@ -20,6 +20,8 @@ import FormWrapper from "@/components/common/FormWrapper";
 import { contaReceberSchema } from "@/components/financeiro/contaReceberSchema";
 import ResumoValorStatus from "@/components/financeiro/ResumoValorStatus";
 import ContaReceberDadosGerais from "./ContaReceberDadosGerais";
+import ContaReceberFinanceiroSection from "@/components/financeiro/ContaReceberFinanceiroSection";
+import ContaReceberVinculosSection from "@/components/financeiro/ContaReceberVinculosSection";
 
 export default function ContaReceberForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
 
@@ -134,149 +136,22 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
 
         {/* ABA 2: FINANCEIRO */}
         <TabsContent value="financeiro" className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Forma de Recebimento</Label>
-              <Select
-                value={formData.forma_recebimento_id || formData.forma_recebimento}
-                onValueChange={(formaId) => {
-                  const forma = formasPagamento.find(f => f.id === formaId);
-                  setFormData({
-                    ...formData, 
-                    forma_recebimento_id: formaId,
-                    forma_recebimento: forma?.descricao || formaId
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {formasPagamento.map(forma => (
-                    <SelectItem key={forma.id} value={forma.id}>
-                      {forma.icone && `${forma.icone} `}{forma.descricao}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(v) => setFormData({...formData, status: v})}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pendente">Pendente</SelectItem>
-                  <SelectItem value="Recebido">Recebido</SelectItem>
-                  <SelectItem value="Atrasado">Atrasado</SelectItem>
-                  <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  <SelectItem value="Parcial">Parcial</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Número do Documento</Label>
-              <Input
-                value={formData.numero_documento}
-                onChange={(e) => setFormData({...formData, numero_documento: e.target.value})}
-                placeholder="Ex: NF-123456"
-              />
-            </div>
-
-            <div>
-              <Label>Número Parcela</Label>
-              <Input
-                value={formData.numero_parcela}
-                onChange={(e) => setFormData({...formData, numero_parcela: e.target.value})}
-                placeholder="Ex: 1/3"
-              />
-            </div>
-          </div>
+          <ContaReceberFinanceiroSection
+            formData={formData}
+            setFormData={setFormData}
+            formasPagamento={formasPagamento}
+          />
         </TabsContent>
 
         {/* ABA 3: VÍNCULOS */}
         <TabsContent value="vinculacao" className="space-y-4">
-          <div>
-            <Label>Pedido Vinculado</Label>
-            <Select
-              value={formData.pedido_id}
-              onValueChange={(v) => setFormData({...formData, pedido_id: v})}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Nenhum pedido vinculado..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={null}>Nenhum</SelectItem>
-                {pedidos.map(p => (
-                  <SelectItem key={p.id} value={p.id}>
-                    {p.numero_pedido} - {p.cliente_nome} - R$ {p.valor_total?.toFixed(2)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Centro de Custo *</Label>
-            <Select
-              value={formData.centro_custo_id}
-              onValueChange={(v) => {
-                const cc = centrosCusto.find(c => c.id === v);
-                setFormData({
-                  ...formData,
-                  centro_custo_id: v,
-                  centro_custo: cc?.nome || ''
-                });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {centrosCusto.map(cc => (
-                  <SelectItem key={cc.id} value={cc.id}>
-                    {cc.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Plano de Contas *</Label>
-            <Select
-              value={formData.plano_contas_id}
-              onValueChange={(v) => setFormData({ ...formData, plano_contas_id: v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {planosContas.map(pc => (
-                  <SelectItem key={pc.id} value={pc.id}>
-                    {pc.codigo || pc.id} - {pc.descricao || pc.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Projeto/Obra</Label>
-            <Input
-              value={formData.projeto_obra}
-              onChange={(e) => setFormData({...formData, projeto_obra: e.target.value})}
-              placeholder="Nome do projeto ou obra..."
-            />
-          </div>
+          <ContaReceberVinculosSection
+            formData={formData}
+            setFormData={setFormData}
+            pedidos={pedidos}
+            centrosCusto={centrosCusto}
+            planosContas={planosContas}
+          />
         </TabsContent>
 
         {/* ABA 4: CONFIGURAÇÕES */}

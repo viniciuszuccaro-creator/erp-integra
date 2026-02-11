@@ -17,6 +17,8 @@ import FormWrapper from "@/components/common/FormWrapper";
 import { contaPagarSchema } from "@/components/financeiro/contaPagarSchema";
 import ResumoValorStatus from "@/components/financeiro/ResumoValorStatus";
 import ContaPagarDadosGerais from "./ContaPagarDadosGerais";
+import ContaPagarFinanceiroSection from "@/components/financeiro/ContaPagarFinanceiroSection";
+import ContaPagarVinculosSection from "@/components/financeiro/ContaPagarVinculosSection";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
@@ -135,155 +137,22 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
 
         {/* ABA 2: FINANCEIRO */}
         <TabsContent value="financeiro" className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Categoria</Label>
-              <Select
-                value={formData.categoria}
-                onValueChange={(v) => setFormData({...formData, categoria: v})}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Fornecedores">Fornecedores</SelectItem>
-                  <SelectItem value="Salários">Salários</SelectItem>
-                  <SelectItem value="Impostos">Impostos</SelectItem>
-                  <SelectItem value="Aluguel">Aluguel</SelectItem>
-                  <SelectItem value="Energia">Energia</SelectItem>
-                  <SelectItem value="Água">Água</SelectItem>
-                  <SelectItem value="Telefone">Telefone</SelectItem>
-                  <SelectItem value="Internet">Internet</SelectItem>
-                  <SelectItem value="Marketing">Marketing</SelectItem>
-                  <SelectItem value="Comissões">Comissões</SelectItem>
-                  <SelectItem value="Outros">Outros</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>Forma de Pagamento</Label>
-              <Select
-                value={formData.forma_pagamento_id || formData.forma_pagamento}
-                onValueChange={(formaId) => {
-                  const forma = formasPagamento.find(f => f.id === formaId);
-                  setFormData({
-                    ...formData,
-                    forma_pagamento_id: formaId,
-                    forma_pagamento: forma?.descricao || formaId
-                  });
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {formasPagamento.map(forma => (
-                    <SelectItem key={forma.id} value={forma.id}>
-                      {forma.icone && `${forma.icone} `}{forma.descricao}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Número do Documento</Label>
-              <Input
-                value={formData.numero_documento}
-                onChange={(e) => setFormData({...formData, numero_documento: e.target.value})}
-                placeholder="Ex: NF-789"
-              />
-            </div>
-
-            <div>
-              <Label>Número Parcela</Label>
-              <Input
-                value={formData.numero_parcela}
-                onChange={(e) => setFormData({...formData, numero_parcela: e.target.value})}
-                placeholder="Ex: 2/5"
-              />
-            </div>
-          </div>
+          <ContaPagarFinanceiroSection
+            formData={formData}
+            setFormData={setFormData}
+            formasPagamento={formasPagamento}
+          />
         </TabsContent>
 
         {/* ABA 3: VÍNCULOS */}
         <TabsContent value="vinculacao" className="space-y-4">
-          <div>
-            <Label>Ordem de Compra Vinculada</Label>
-            <Select
-              value={formData.ordem_compra_id}
-              onValueChange={(v) => setFormData({...formData, ordem_compra_id: v})}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Nenhuma OC vinculada..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={null}>Nenhuma</SelectItem>
-                {ordensCompra.map(oc => (
-                  <SelectItem key={oc.id} value={oc.id}>
-                    {oc.numero_oc} - {oc.fornecedor_nome} - R$ {oc.valor_total?.toFixed(2)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Centro de Custo *</Label>
-            <Select
-              value={formData.centro_custo_id}
-              onValueChange={(v) => {
-                const cc = centrosCusto.find(c => c.id === v);
-                setFormData({
-                  ...formData,
-                  centro_custo_id: v,
-                  centro_custo: cc?.nome || ''
-                });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {centrosCusto.map(cc => (
-                  <SelectItem key={cc.id} value={cc.id}>
-                    {cc.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Plano de Contas *</Label>
-            <Select
-              value={formData.plano_contas_id}
-              onValueChange={(v) => setFormData({ ...formData, plano_contas_id: v })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione..." />
-              </SelectTrigger>
-              <SelectContent>
-                {planosContas.map(pc => (
-                  <SelectItem key={pc.id} value={pc.id}>
-                    {pc.codigo || pc.id} - {pc.descricao || pc.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label>Projeto/Obra</Label>
-            <Input
-              value={formData.projeto_obra}
-              onChange={(e) => setFormData({...formData, projeto_obra: e.target.value})}
-              placeholder="Nome do projeto ou obra..."
-            />
-          </div>
+          <ContaPagarVinculosSection
+            formData={formData}
+            setFormData={setFormData}
+            ordensCompra={ordensCompra}
+            centrosCusto={centrosCusto}
+            planosContas={planosContas}
+          />
         </TabsContent>
 
         {/* ABA 4: APROVAÇÃO */}

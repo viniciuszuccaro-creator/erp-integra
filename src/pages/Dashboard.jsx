@@ -721,11 +721,15 @@ export default function Dashboard() {
           <WidgetEstoqueCritico count={produtosBaixoEstoque} onNavigate={() => handleDrillDown(createPageUrl("Estoque"))} />
 
           {/* Gráficos + Top Produtos (redimensionável) */}
-          <ResizableRow
-            initial={[55,45]}
-            left={<ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />}
-            right={<TopProdutosStatusPeriodoSection topProdutos={topProdutos} dadosVendasStatus={dadosVendasStatus} COLORS={COLORS} />}
-          />
+          <PanelGroup direction="horizontal" className="gap-2">
+            <Panel defaultSize={55} minSize={30}>
+              <ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />
+            </Panel>
+            <PanelResizeHandle className="w-1 bg-slate-200 rounded" />
+            <Panel defaultSize={45} minSize={20}>
+              <TopProdutosStatusPeriodoSection topProdutos={topProdutos} dadosVendasStatus={dadosVendasStatus} COLORS={COLORS} />
+            </Panel>
+          </PanelGroup>
 
           {/* GRÁFICOS AVANÇADOS */}
           <AdvancedAnalysisSection
