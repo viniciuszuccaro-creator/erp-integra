@@ -30,9 +30,10 @@ Deno.serve(async (req) => {
      };
 
     for (const r of receber) {
-      if (Number(r?.valor) < 0) issues.push({ tipo: 'Valor negativo', entidade: 'Receber', id: r.id });
-      if (r?.status === 'Pendente' && atrasado(r?.data_vencimento)) {
-        issues.push({ tipo: 'Atraso Receber', entidade: 'Receber', id: r.id });
+      if (valorNegativoHabilita && Number(r?.valor) < 0) issues.push({ tipo: 'Valor negativo', entidade: 'Receber', id: r.id });
+      const atraso = diasAtraso(r?.data_vencimento);
+      if (r?.status === 'Pendente' && atraso >= limiarAtrasoDias) {
+        issues.push({ tipo: 'Atraso Receber', entidade: 'Receber', id: r.id, dias: atraso });
       }
     }
     for (const c of pagar) {
