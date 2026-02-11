@@ -66,6 +66,7 @@ import QuickAccessModulesGrid from "@/components/dashboard/QuickAccessModulesGri
 import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import WidgetEstoqueCritico from "@/components/estoque/WidgetEstoqueCritico";
 import ResizableRow from "@/components/dashboard/ResizableRow";
+import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
 
 
 export default function Dashboard() {
@@ -701,11 +702,17 @@ export default function Dashboard() {
         </TabsContent>
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
-          {/* KPIs Principais + Widget Canais */}
-          <StatsSection statsCards={statsCards} empresaId={empresaAtual?.id} />
-
-          {/* NOVOS KPIs OPERACIONAIS */}
-          <KPIsOperacionaisSection kpis={kpisOperacionais} />
+          <PanelGroup direction="vertical" className="gap-2">
+            <Panel defaultSize={50} minSize={30}>
+              {/* KPIs Principais + Widget Canais */}
+              <StatsSection statsCards={statsCards} empresaId={empresaAtual?.id} />
+            </Panel>
+            <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
+            <Panel defaultSize={50} minSize={20}>
+              {/* NOVOS KPIs OPERACIONAIS */}
+              <KPIsOperacionaisSection kpis={kpisOperacionais} />
+            </Panel>
+          </PanelGroup>
 
           {/* KPIs Secundários */}
           <SecondaryKPIsSection kpis={kpiCards} />

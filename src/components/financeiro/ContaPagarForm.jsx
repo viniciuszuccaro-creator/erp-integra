@@ -13,8 +13,8 @@ import { base44 } from "@/api/base44Client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { z } from 'zod';
 import FormWrapper from "@/components/common/FormWrapper";
+import { contaPagarSchema } from "@/components/financeiro/contaPagarSchema";
 import ResumoValorStatus from "@/components/financeiro/ResumoValorStatus";
 import ContaPagarDadosGerais from "./ContaPagarDadosGerais";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -24,16 +24,7 @@ import { useUser } from "@/components/lib/UserContext";
 export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
   const [errorMessages, setErrorMessages] = useState([]);
   const { empresaAtual, filterInContext, carimbarContexto } = useContextoVisual();
-  const schema = z.object({
-    descricao: z.string().min(1, 'Descrição é obrigatória'),
-    fornecedor_id: z.string().min(1, 'Fornecedor é obrigatório'),
-    valor: z.number().positive('Valor deve ser maior que zero'),
-    empresa_id: z.string().min(1, 'Empresa é obrigatória'),
-    centro_custo_id: z.string().min(1, 'Centro de custo é obrigatório'),
-    plano_contas_id: z.string().min(1, 'Plano de contas é obrigatório'),
-    data_emissao: z.string().min(1, 'Data de emissão é obrigatória'),
-    data_vencimento: z.string().min(1, 'Data de vencimento é obrigatória'),
-  });
+
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const { user: authUser } = useUser();
   const [formData, setFormData] = useState(() => conta || {
@@ -88,7 +79,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
   });
 
   const handleSubmit = async () => {
-    const parsed = schema.safeParse({
+    const parsed = contaPagarSchema.safeParse({
       ...formData,
       valor: Number(formData.valor) || 0,
     });
@@ -109,7 +100,7 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
   };
 
   const content = (
-    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
+    <FormWrapper schema={contaPagarSchema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
 
       <Alert className="border-red-300 bg-red-50">
         <AlertDescription className="text-sm text-red-900">

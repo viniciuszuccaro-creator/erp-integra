@@ -16,22 +16,13 @@ import { toast } from "sonner";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { z } from "zod";
 import FormWrapper from "@/components/common/FormWrapper";
+import { contaReceberSchema } from "@/components/financeiro/contaReceberSchema";
 import ResumoValorStatus from "@/components/financeiro/ResumoValorStatus";
 import ContaReceberDadosGerais from "./ContaReceberDadosGerais";
 
 export default function ContaReceberForm({ conta, onSubmit, isSubmitting, windowMode = false }) {
-  const schema = z.object({
-    descricao: z.string().min(1, 'Descrição é obrigatória'),
-    cliente_id: z.string().min(1, 'Cliente é obrigatório'),
-    valor: z.number().positive('Valor deve ser maior que zero'),
-    empresa_id: z.string().min(1, 'Empresa é obrigatória'),
-    centro_custo_id: z.string().min(1, 'Centro de custo é obrigatório'),
-    plano_contas_id: z.string().min(1, 'Plano de contas é obrigatório'),
-    data_emissao: z.string().min(1, 'Data de emissão é obrigatória'),
-    data_vencimento: z.string().min(1, 'Data de vencimento é obrigatória'),
-  });
+
   const [abaAtiva, setAbaAtiva] = useState('dados-gerais');
   const [errorMessages, setErrorMessages] = useState([]);
   const { user: authUser } = useUser();
@@ -87,7 +78,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
   });
 
   const handleSubmit = async () => {
-    const parsed = schema.safeParse({
+    const parsed = contaReceberSchema.safeParse({
       ...formData,
       valor: Number(formData.valor) || 0,
     });
@@ -108,7 +99,7 @@ export default function ContaReceberForm({ conta, onSubmit, isSubmitting, window
   };
 
   const content = (
-    <FormWrapper schema={schema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
+    <FormWrapper schema={contaReceberSchema} defaultValues={formData} onSubmit={handleSubmit} externalData={formData} className={`space-y-6 w-full h-full ${windowMode ? 'h-full overflow-auto p-6' : 'max-h-[75vh] overflow-auto p-6'}`}>
 
       <Alert className="border-green-300 bg-green-50">
         <AlertDescription className="text-sm text-green-900">
