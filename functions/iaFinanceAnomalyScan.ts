@@ -41,6 +41,27 @@ Deno.serve(async (req) => {
     addZOutliers(valoresRec, receber, 'ContaReceber');
     addZOutliers(valoresPag, pagar, 'ContaPagar');
 
+    // ML leve: IQR (valor)
+    const detectIQR = (arr, baseList, entidade) => {
+      if (!arr.length) return;
+      const sorted = [...arr].sort((a, b) => a - b);
+      const q1 = ss.quantileSorted(sorted, 0.25);
+      const q3 = ss.quantileSorted(sorted, 0.75);
+      const iqr = q3 - q1 || 1;
+      const k = Number(cfg?.finance?.anomaly?.iqr_multiplier ?? 1.5);
+      const low = q1 - k * iqr;
+      const high = q3 + k * iqr;
+      arr.forEach((v, i) => {
+        if (v < low || v > high) {
+          const ref = baseList[i];
+          issues.push({ entidade, tipo: 'valor_outlier_iqr', severity: 'medio', valor: v, q1, q3, iqr, id: ref?.id, data: ref });
+        }
+      });
+    };
+
+    detectIQR(valoresRec, receber, 'ContaReceber');
+    detectIQR(valoresPag, pagar, 'ContaPagar');
+
     // ML leve: MAD (dias atraso) para pendentes
     const hoje = new Date();
     const daysLate = (dt) => Math.floor((hoje - new Date(dt)) / (1000 * 60 * 60 * 24));
@@ -92,6 +113,18 @@ Deno.serve(async (req) => {
         empresa_id: alvoEmpresaId,
         dados: { resumoSeveridade, exemplos: issues.slice(0, 5) }
       });
+
+      // Canal opcional: WhatsApp (se configurado em Configuração do Sistema)
+      try {
+        if (cfg?.finance?.alerts?.whatsapp?.enabled && cfg.finance.alerts.whatsapp.to) {
+          const msg = `Financeiro: ${issues.length} anomalia(s). Alta:${resumoSeveridade.alto || 0} • Média:${resumoSeveridade.medio || 0} • Baixa:${resumoSeveridade.baixo || 0}.`;
+          await base44.asServiceRole.functions.invoke('whatsappSend', {
+            to: cfg.finance.alerts.whatsapp.to,
+            message: msg,
+            empresa_id: alvoEmpresaId || null,
+          });
+        }
+      } catch (_) {}
     }
 
     return Response.json({ ok: true, issues: issues.length, details: issues });

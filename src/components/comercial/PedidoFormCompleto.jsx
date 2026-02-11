@@ -51,6 +51,7 @@ import { getDefaultPedidoValues } from './pedido/pedidoDefaults';
 import useTotais from './pedido/hooks/useTotais';
 import usePedidoValidacoes from './pedido/hooks/usePedidoValidacoes';
 import FormWrapper from "@/components/common/FormWrapper";
+import PedidoTabsContainer from './pedido/PedidoTabsContainer';
 
 /**
  * V21.1.2-R1 - Pedido Form Completo - PATCH OFICIAL
@@ -265,121 +266,18 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
       {/* Header - FIXO */}
       <PedidoHeader formData={formData} pedido={pedido} />
 
-      {/* Tabs - FIXO */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-        <PedidoTabsNav abas={abas} activeTab={activeTab} setActiveTab={setActiveTab} />
-
-        {/* 🔥 V21.1.2-R1: CORREÇÃO CRÍTICA - ÁREA DE CONTEÚDO COM ALTURA FIXA E SCROLL */}
-        <div className="flex-1 overflow-hidden">
-          {/* ABA 1: IDENTIFICAÇÃO */}
-          <TabsContent value="identificacao" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-              <WizardEtapa1Cliente
-                formData={formData}
-                setFormData={setFormData}
-                clientes={clientes}
-                onNext={() => setActiveTab('revenda')}
-                bloquearOrigemEdicao={bloquearEdicao}
-              />
-            </Suspense>
-          </TabsContent>
-
-          {/* ABA 2: ITENS DE REVENDA */}
-          <TabsContent value="revenda" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-              <ItensRevendaTab
-                formData={formData}
-                setFormData={setFormData}
-                onNext={() => setActiveTab('armado')}
-              />
-            </Suspense>
-          </TabsContent>
-
-          {/* ABA 3: ARMADO PADRÃO */}
-          <TabsContent value="armado" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-              <ArmadoPadraoTab
-                formData={formData}
-                setFormData={setFormData}
-                empresaId={formData?.empresa_id}
-                onNext={() => setActiveTab('corte')}
-              />
-            </Suspense>
-          </TabsContent>
-
-          {/* ABA 4: CORTE E DOBRA (IA) */}
-          <TabsContent value="corte" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-              <CorteDobraIATab
-                formData={formData}
-                setFormData={setFormData}
-                empresaId={formData?.empresa_id}
-                onNext={() => setActiveTab('historico')}
-              />
-            </Suspense>
-          </TabsContent>
-
-          {/* V21.1.2-R1: ABA 5 - HISTÓRICO DO CLIENTE (EXPANDIDA) */}
-          <TabsContent value="historico" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-              <HistoricoClienteTab
-                formData={formData}
-                setFormData={setFormData}
-                onAdicionarItemAoPedido={(produto) => {
-                  toast.success(`Produto ${produto.descricao} adicionado!`);
-                  // Optionally update formData here or let the HistoricoClienteTab do it
-                  setActiveTab('revenda');
-                }}
-              />
-            </Suspense>
-          </TabsContent>
-
-          {/* ABA 6: LOGÍSTICA */}
-          <TabsContent value="logistica" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-              <LogisticaEntregaTab
-                formData={formData}
-                setFormData={setFormData}
-                clientes={clientes}
-                onNext={() => setActiveTab('financeiro')}
-              />
-            </Suspense>
-          </TabsContent>
-
-          {/* ABA 7: FINANCEIRO (protegida) */}
-          <TabsContent value="financeiro" className="h-full overflow-y-auto p-6 m-0">
-            <ProtectedSection module="Comercial" section={"Pedido.Financeiro"} action="visualizar" fallback={<div className="text-sm text-slate-500">Acesso restrito ao financeiro.</div>}>
-              <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-                <FechamentoFinanceiroTab
-                  formData={formData}
-                  setFormData={setFormData}
-                  onNext={() => setActiveTab('arquivos')}
-                />
-              </Suspense>
-            </ProtectedSection>
-          </TabsContent>
-
-          {/* ABA 8: ARQUIVOS */}
-          <TabsContent value="arquivos" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-              <ArquivosProjetosTab
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </Suspense>
-          </TabsContent>
-
-          {/* V21.1.2-R1: ABA 9 - AUDITORIA (ALTURA CORRIGIDA) */}
-          <TabsContent value="auditoria" className="h-full overflow-y-auto p-6 m-0">
-            <Suspense fallback={<div className='h-40 rounded-md bg-slate-100 animate-pulse' />}>
-              <AuditoriaAprovacaoTab
-                formData={formData}
-                pedido={pedido}
-              />
-            </Suspense>
-          </TabsContent>
-        </div>
-      </Tabs>
+      {/* Tabs - FIXO (extraído para componente) */}
+      <PedidoTabsContainer
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        formData={formData}
+        setFormData={setFormData}
+        clientes={clientes}
+        bloquearEdicao={bloquearEdicao}
+        validacoes={validacoes}
+        errors={errors}
+        pedido={pedido}
+      />
 
       {/* Footer com Ações - FIXO */}
       <PedidoFooterAcoes
