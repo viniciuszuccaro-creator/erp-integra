@@ -16,10 +16,17 @@ export async function getTabelaPrecosIAConfig(base44) {
 
 export async function fetchExternalQuotes(cfg, context, produto) {
   try {
-    if (!cfg || cfg.fonte_cotacoes !== 'externa' || !cfg.url_api) return null;
+    // MOCK TEMPORÁRIO: quando cfg.mock === true ou url_api ausente/'mock', não chama API externa
+    if (!cfg) return null;
+    const isMock = cfg?.mock === true || !cfg?.url_api || String(cfg?.url_api).toLowerCase() === 'mock';
+    if (cfg.fonte_cotacoes === 'externa' && isMock) {
+      return generateMockQuotes(context, produto, cfg);
+    }
+
+    if (cfg.fonte_cotacoes !== 'externa' || !cfg.url_api) return null;
+
     const headers = { 'Content-Type': 'application/json' };
     if (cfg.api_key) {
-      // Tenta ambos padrões de header
       headers['Authorization'] = `Bearer ${cfg.api_key}`;
       headers['x-api-key'] = cfg.api_key;
     }
@@ -51,6 +58,14 @@ function extractSteelIndex(quotes) {
     return Number(cand?.preco || cand?.price || cand?.value) || null;
   }
   return Number(quotes?.preco || quotes?.price || quotes?.steel_price || quotes?.aco || quotes?.indice) || null;
+}
+
+export function generateMockQuotes(context, produto, cfg) {
+  const base = Number(produto?.custo_medio ?? produto?.custo_aquisicao ?? 1000);
+  const seg = String(produto?.grupo || produto?.classificacao_abc || '');
+  const factor = 1 + ((seg.length % 7) / 100); // determinístico
+  const steel_price = Math.max(50, Math.round(base * factor * 100) / 100);
+  return { steel_price, fonte: 'mock' };
 }
 
 export function computeOptimizedPrice(produto, quotes, cfg) {

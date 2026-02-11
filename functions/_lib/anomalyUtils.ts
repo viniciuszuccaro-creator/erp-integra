@@ -43,6 +43,18 @@ export function computeIssues(receber, pagar, cfg) {
   const highR = (q3R != null && iqrR != null) ? q3R + 1.5 * iqrR : Infinity;
   const highP = (q3P != null && iqrP != null) ? q3P + 1.5 * iqrP : Infinity;
 
+  const computeMeanStd = (arr) => {
+    const xs = arr.filter(v => Number.isFinite(v));
+    if (xs.length < 2) return { mean: null, std: null };
+    const mean = xs.reduce((s, v) => s + v, 0) / xs.length;
+    const variance = xs.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / (xs.length - 1);
+    const std = Math.sqrt(Math.max(variance, 0));
+    return { mean, std };
+  };
+  const { mean: meanR, std: stdR } = computeMeanStd(valoresR);
+  const { mean: meanP, std: stdP } = computeMeanStd(valoresP);
+  const zK = 3; // 3-sigma
+
   for (const r of Array.isArray(receber) ? receber : []) {
     const valor = Number(r?.valor);
     if (bloquearNeg && valor < 0) issues.push({ tipo: 'Valor negativo', entidade: 'Receber', id: r.id, empresa_id: r?.empresa_id });
@@ -51,7 +63,13 @@ export function computeIssues(receber, pagar, cfg) {
       issues.push({ tipo: 'Atraso Receber', entidade: 'Receber', id: r.id, dias: atraso, empresa_id: r?.empresa_id });
     }
     if (valor > highR && Number.isFinite(highR)) {
-      issues.push({ tipo: 'Valor atípico Receber', entidade: 'Receber', id: r.id, valor, empresa_id: r?.empresa_id });
+      issues.push({ tipo: 'Valor atípico Receber (IQR)', entidade: 'Receber', id: r.id, valor, empresa_id: r?.empresa_id });
+    }
+    if (Number.isFinite(stdR) && stdR > 0 && Number.isFinite(meanR)) {
+      const z = (valor - meanR) / stdR;
+      if (z >= zK) {
+        issues.push({ tipo: 'Valor atípico Receber (Z-Score)', entidade: 'Receber', id: r.id, valor, z, empresa_id: r?.empresa_id });
+      }
     }
   }
   for (const c of Array.isArray(pagar) ? pagar : []) {
@@ -62,7 +80,13 @@ export function computeIssues(receber, pagar, cfg) {
       issues.push({ tipo: 'Atraso Pagar', entidade: 'Pagar', id: c.id, dias: atraso, empresa_id: c?.empresa_id });
     }
     if (valor > highP && Number.isFinite(highP)) {
-      issues.push({ tipo: 'Valor atípico Pagar', entidade: 'Pagar', id: c.id, valor, empresa_id: c?.empresa_id });
+      issues.push({ tipo: 'Valor atípico Pagar (IQR)', entidade: 'Pagar', id: c.id, valor, empresa_id: c?.empresa_id });
+    }
+    if (Number.isFinite(stdP) && stdP > 0 && Number.isFinite(meanP)) {
+      const z = (valor - meanP) / stdP;
+      if (z >= zK) {
+        issues.push({ tipo: 'Valor atípico Pagar (Z-Score)', entidade: 'Pagar', id: c.id, valor, z, empresa_id: c?.empresa_id });
+      }
     }
   }
   return issues;

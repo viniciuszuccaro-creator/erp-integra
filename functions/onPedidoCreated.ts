@@ -2,6 +2,7 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
 import { processReservas } from './_lib/orderReservationUtils.js';
 import { ensureEventType } from './_lib/validationUtils.js';
+import { handleOnPedidoCreated } from './_lib/pedido/onPedidoCreatedHandler.js';
 
 Deno.serve(async (req) => {
   try {
@@ -18,14 +19,7 @@ Deno.serve(async (req) => {
     const perm = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
     if (perm) return perm;
 
-    const movimentos = await processReservas(base44, data, user);
-
-    await audit(base44, user, {
-      acao: 'Criação', modulo: 'Estoque', entidade: 'MovimentacaoEstoque',
-      registro_id: null, descricao: `Reservas criadas a partir do Pedido ${data?.id}`,
-      dados_novos: { movimentos }
-    });
-
+    const { movimentos } = await handleOnPedidoCreated(base44, ctx, data, user);
     return Response.json({ ok: true, movimentos });
   } catch (e) {
     return Response.json({ error: e.message }, { status: 500 });
