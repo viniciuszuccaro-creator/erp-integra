@@ -9,9 +9,18 @@ export async function optimizeProductPrice(base44, ctx, { entityId, payload, use
   const produto = payload?.data || await base44.asServiceRole.entities.Produto.get(entityId);
 
   // Config comercial (multiempresa) + cotações externas quando configuradas
-  const cfg = await getTabelaPrecosIAConfig(base44);
-  if (cfg && cfg.habilitado === false) {
-    return { success: true, skipped: true, reason: 'tabela_precos_ia desabilitada' };
+  const cfg = await getTabelaPrecosIAConfig(base44, produto?.empresa_id || null);
+  if (!cfg) {
+    return { success: true, skipped: true, reason: 'sem_configuracao' };
+  }
+  if (cfg.habilitado === false) {
+    return { success: true, skipped: true, reason: 'desabilitado_global' };
+  }
+  if (Array.isArray(cfg.empresas_habilitadas) && produto?.empresa_id && !cfg.empresas_habilitadas.includes(produto.empresa_id)) {
+    return { success: true, skipped: true, reason: 'feature_flag_empresa' };
+  }
+  if (Array.isArray(cfg.empresas_bloqueadas) && produto?.empresa_id && cfg.empresas_bloqueadas.includes(produto.empresa_id)) {
+    return { success: true, skipped: true, reason: 'empresa_bloqueada' };
   }
 
   const context = { empresa_id: produto?.empresa_id || null, group_id: produto?.group_id || null };

@@ -1,14 +1,31 @@
 // Utilities for price optimization with external quotations (multiempresa-ready)
-export async function getTabelaPrecosIAConfig(base44) {
+export async function getTabelaPrecosIAConfig(base44, empresaId = null) {
   try {
-    // Busca configs de categoria Comercial e retorna o primeiro que contenha tabela_precos_ia
-    const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Comercial' }, '-updated_date', 5);
+    const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Comercial' }, '-updated_date', 20);
     if (!Array.isArray(cfgs)) return null;
+
+    let candidatoGlobal = null;
     for (const c of cfgs) {
       const tpi = c?.configuracoes_comerciais?.tabela_precos_ia || c?.tabela_precos_ia;
-      if (tpi) return tpi;
+      if (!tpi) continue;
+
+      const habilitadas = Array.isArray(tpi.empresas_habilitadas) ? tpi.empresas_habilitadas : null;
+      const bloqueadas = Array.isArray(tpi.empresas_bloqueadas) ? tpi.empresas_bloqueadas : null;
+
+      if (empresaId && habilitadas && habilitadas.includes(empresaId)) {
+        return { ...tpi, _escopo: 'empresa', _empresaId: empresaId };
+      }
+
+      if (empresaId && bloqueadas && bloqueadas.includes(empresaId)) {
+        continue;
+      }
+
+      if (!candidatoGlobal) {
+        candidatoGlobal = { ...tpi, _escopo: 'global' };
+      }
     }
-    return null;
+
+    return candidatoGlobal;
   } catch (_) {
     return null;
   }
