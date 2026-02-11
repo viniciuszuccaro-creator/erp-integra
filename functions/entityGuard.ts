@@ -1,5 +1,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, backendHasPermission, assertContextPresence, audit } from './_lib/guard.js';
+import { notify } from './_lib/notificationService.js';
+import { computeRisk } from './_lib/security/riskScoring.js';
 
 // entityGuard: valida RBAC e multiempresa para operações CRUD genéricas de entidades sensíveis
 // Payload: { entity, op: 'create'|'update'|'delete'|'read', data?, id?, filtros? , module, section }
@@ -13,6 +15,9 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const { entity, op = 'read', data = null, id = null, filtros = {}, module: moduleName, section } = body || {};
+
+    const userAgent = req.headers.get('user-agent') || '';
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || '';
     if (!entity || !op) return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
 
     // RBAC
@@ -56,7 +61,30 @@ Deno.serve(async (req) => {
     else if (op === 'delete') result = await api.delete(id);
     else if (op === 'read') result = id ? await api.get(id) : await api.filter(filtros);
 
-    await audit(base44, user, { acao: op === 'read' ? 'Visualização' : op === 'delete' ? 'Exclusão' : op === 'update' ? 'Edição' : 'Criação', modulo: moduleName || entity, entidade: entity, registro_id: id || (result?.id ?? null), descricao: `entityGuard ${op} ${entity}`, dados_novos: op !== 'read' ? (data || null) : null });
+    // Risco (somente score/auditoria, sem bloqueio)
+    const risk = computeRisk({ event: { entity_name: entity, type: op }, data, ip, userAgent });
+
+    await audit(base44, user, {
+      acao: op === 'read' ? 'Visualização' : op === 'delete' ? 'Exclusão' : op === 'update' ? 'Edição' : 'Criação',
+      modulo: moduleName || entity,
+      entidade: entity,
+      registro_id: id || (result?.id ?? null),
+      descricao: `entityGuard ${op} ${entity} (risco: ${risk.level})`,
+      dados_novos: op !== 'read' ? { ...(data || null), __risk: risk } : null
+    });
+
+    if (risk?.level === 'Crítico' || risk?.level === 'Alto') {
+      try {
+        await notify(base44, {
+          titulo: 'Alerta de Segurança',
+          mensagem: `${entity} • ${op} • risco ${risk.level}`,
+          categoria: 'Segurança',
+          prioridade: risk.level === 'Crítico' ? 'Alta' : 'Normal',
+          empresa_id: (data?.empresa_id || null),
+          dados: { entity, op, id: id || result?.id, risk }
+        });
+      } catch (_) {}
+    }
 
     return Response.json({ ok: true, data: result });
   } catch (err) {
