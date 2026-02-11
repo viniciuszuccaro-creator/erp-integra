@@ -10,6 +10,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import HeaderCRMCompacto from "@/components/crm/crm-launchpad/HeaderCRMCompacto";
 import KPIsCRM from "@/components/crm/crm-launchpad/KPIsCRM";
 import ModulosGridCRM from "@/components/crm/crm-launchpad/ModulosGridCRM";
+import useCRMDerivedData from "@/components/crm/hooks/useCRMDerivedData";
 import { useUser } from "@/components/lib/UserContext";
 
 const FunilVisual = React.lazy(() => import("../components/crm/FunilVisual"));
@@ -20,7 +21,8 @@ const IAChurnDetection = React.lazy(() => import("../components/crm/IAChurnDetec
 
 export default function CRMPage() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, filterInContext, getFiltroContexto, empresaAtual } = useContextoVisual();
+  const { filtrarPorContexto, filterInContext, getFiltroContexto, empresaAtual, estaNoGrupo } = useContextoVisual();
+  const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
   const { openWindow } = useWindow();
   const { user } = useUser();
 
@@ -36,7 +38,8 @@ export default function CRMPage() {
       }
     },
     staleTime: 30000,
-    retry: 2
+    retry: 2,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: interacoes = [] } = useQuery({
@@ -51,7 +54,8 @@ export default function CRMPage() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: campanhas = [] } = useQuery({
@@ -66,7 +70,8 @@ export default function CRMPage() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: clientes = [] } = useQuery({
@@ -81,7 +86,8 @@ export default function CRMPage() {
       }
     },
     staleTime: 30000,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { data: totalClientes = 0 } = useQuery({
@@ -106,23 +112,26 @@ export default function CRMPage() {
   const interacoesFiltradas = interacoes;
   const campanhasFiltradas = campanhas;
 
-  const totalOportunidades = oportunidadesFiltradas.length;
-  const oportunidadesAbertas = oportunidadesFiltradas.filter(o => o.status === 'Aberto' || o.status === 'Em Andamento').length;
-  const valorPipeline = oportunidadesFiltradas
-    .filter(o => o.status === 'Aberto' || o.status === 'Em Andamento')
-    .reduce((sum, o) => sum + (o.valor_estimado || 0), 0);
-  const valorPonderado = oportunidadesFiltradas
-    .filter(o => o.status === 'Aberto' || o.status === 'Em Andamento')
-    .reduce((sum, o) => sum + ((o.valor_estimado || 0) * (o.probabilidade || 0) / 100), 0);
-  const taxaConversao = totalOportunidades > 0
-    ? ((oportunidades.filter(o => o.status === 'Ganho').length / totalOportunidades) * 100).toFixed(1)
-    : 0;
+  const { totalOportunidades, oportunidadesAbertas, valorPipeline, valorPonderado, taxaConversao } = useCRMDerivedData({ oportunidades: oportunidadesFiltradas });
 
   if (loadingPermissions) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
+    );
+  }
+
+  if (bloqueadoSemEmpresa) {
+    return (
+      <ProtectedSection module="CRM" action="visualizar">
+        <div className="w-full h-full flex items-center justify-center p-6">
+          <div className="max-w-xl w-full bg-white border rounded-xl p-6 text-center">
+            <p className="text-lg font-semibold">Selecione uma empresa para continuar</p>
+            <p className="text-slate-500 mt-1">Use o seletor de empresa no topo para habilitar os dados do módulo.</p>
+          </div>
+        </div>
+      </ProtectedSection>
     );
   }
 
