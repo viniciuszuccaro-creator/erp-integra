@@ -25,14 +25,16 @@ Deno.serve(async (req) => {
 
       // Notificação resumida
       let alvoEmpresaId = Array.isArray(receber) && receber[0]?.empresa_id ? receber[0].empresa_id : (Array.isArray(pagar) && pagar[0]?.empresa_id ? pagar[0].empresa_id : undefined);
+      const resumoSeveridade = issues.reduce((acc, i) => { acc[i.severity] = (acc[i.severity]||0)+1; return acc; }, {});
       try {
         await base44.asServiceRole.entities.Notificacao?.create?.({
           titulo: 'Anomalias Financeiras Detectadas',
-          mensagem: `${issues.length} ocorrências encontradas (pagar/receber).`,
+          mensagem: `${issues.length} ocorrências (Alta:${resumoSeveridade.alto||0} • Média:${resumoSeveridade.medio||0} • Baixa:${resumoSeveridade.baixo||0}).`,
           tipo: 'alerta',
           categoria: 'Financeiro',
           prioridade: 'Alta',
-          empresa_id: alvoEmpresaId
+          empresa_id: alvoEmpresaId,
+          dados: { resumoSeveridade, exemplos: issues.slice(0,5) }
         });
       } catch {}
 
@@ -44,9 +46,8 @@ Deno.serve(async (req) => {
           const podeWhats = whats && whats.ativo !== false && (whats.enviar_cobranca === true || whats.enviar_cobranca === undefined);
           const numeroAlvo = whats?.numero_whatsapp;
           if (podeWhats && numeroAlvo) {
-            const msg = `ALERTA Financeiro: ${issues.length} ocorrência(s) detectadas. Exemplos: ` +
-              issues.slice(0, 3).map(i => `${i.entidade}:${i.tipo}${i.dias ? ' ('+i.dias+'d)' : ''}`).join(', ') +
-              (issues.length > 3 ? ' ...' : '');
+            const exemplo = issues[0];
+            const msg = `ALERTA Financeiro: ${issues.length} ocorrência(s). Top: ${exemplo?.entidade}:${exemplo?.tipo}${exemplo?.dias ? ' ('+exemplo.dias+'d)' : ''}.`;
             await base44.asServiceRole.functions.invoke('whatsappSend', {
               action: 'sendText',
               numero: numeroAlvo,
