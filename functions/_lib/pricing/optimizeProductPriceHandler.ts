@@ -26,7 +26,7 @@ export async function optimizeProductPrice(base44, ctx, { entityId, payload, use
   const context = { empresa_id: produto?.empresa_id || null, group_id: produto?.group_id || null };
 
   // Skip seguro quando configuração exige externa mas não há URL definida
-  if ((cfg?.fonte_cotacoes === 'externa') && !cfg?.api_url) {
+  if ((cfg?.fonte_cotacoes === 'externa') && !cfg?.url_api) {
     return { success: true, skipped: true, reason: 'missing_api_url' };
   }
 
