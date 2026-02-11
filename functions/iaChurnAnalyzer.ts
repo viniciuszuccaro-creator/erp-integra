@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
         return d < now ? Math.ceil((now - d) / (1000*60*60*24)) : 0;
       })();
 
-      if (dias >= 14 || prob <= 40 || atrasoPrev >= 7) {
+      if (dias >= minDiasSemContato || prob <= minProbabilidade || atrasoPrev >= maxAtrasoPrev) {
         flagged.push(o.id);
         try {
           await base44.asServiceRole.entities.AuditLog.create({
