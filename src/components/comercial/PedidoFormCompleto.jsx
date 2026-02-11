@@ -48,6 +48,8 @@ import AutomacaoFluxoPedido from './AutomacaoFluxoPedido';
 import PedidoFooterAcoes from './pedido/PedidoFooterAcoes';
 import { pedidoCompletoSchema } from './pedido/pedidoSchema';
 import { getDefaultPedidoValues } from './pedido/pedidoDefaults';
+import { computePedidoTotais } from './pedido/utils/computePedidoTotais';
+import { isIdentificacaoValida, hasItens } from './pedido/utils/validatePedidoSections';
 import FormWrapper from "@/components/common/FormWrapper";
 
 /**
@@ -104,64 +106,26 @@ function PedidoFormCompleto({ pedido, clientes = [], onSubmit, onCancel, windowM
   // Validar identificação - COM PROTEÇÃO
   useEffect(() => {
     if (!formData) return;
-    
-    const valido = !!(
-      formData.cliente_id &&
-      formData.cliente_nome &&
-      formData.data_pedido &&
-      formData.numero_pedido
-    );
+    const valido = isIdentificacaoValida(formData);
     setValidacoes(prev => ({ ...prev, identificacao: valido }));
   }, [formData?.cliente_id, formData?.cliente_nome, formData?.data_pedido, formData?.numero_pedido]);
 
   // Validar itens - COM PROTEÇÃO
   useEffect(() => {
     if (!formData) return;
-    
-    const temItens = (
-      (formData.itens_revenda?.length > 0) ||
-      (formData.itens_armado_padrao?.length > 0) ||
-      (formData.itens_corte_dobra?.length > 0)
-    );
+    const temItens = hasItens(formData);
     setValidacoes(prev => ({ ...prev, itens: temItens }));
   }, [formData?.itens_revenda?.length, formData?.itens_armado_padrao?.length, formData?.itens_corte_dobra?.length]);
 
-  // Recalcular totais - COM PROTEÇÃO
+  // Recalcular totais - COM PROTEÇÃO (extraído)
   const recalcularTotais = () => {
     if (!formData) return;
-    
-    const valorRevenda = (formData.itens_revenda || []).reduce((sum, item) => 
-      sum + (item.valor_item || 0), 0
-    );
-    const valorArmado = (formData.itens_armado_padrao || []).reduce((sum, item) => 
-      sum + (item.preco_venda_total || 0), 0
-    );
-    const valorCorte = (formData.itens_corte_dobra || []).reduce((sum, item) => 
-      sum + (item.preco_venda_total || 0), 0
-    );
-
-    const valorProdutos = valorRevenda + valorArmado + valorCorte;
-    const valorDesconto = formData.desconto_geral_pedido_valor || 0;
-    const valorFrete = formData.valor_frete || 0;
-    const valorTotal = valorProdutos - valorDesconto + valorFrete;
-
-    const pesoRevenda = (formData.itens_revenda || []).reduce((sum, item) => 
-      sum + ((item.peso_unitario || 0) * (item.quantidade || 0)), 0
-    );
-    const pesoArmado = (formData.itens_armado_padrao || []).reduce((sum, item) => 
-      sum + (item.peso_total_kg || 0), 0
-    );
-    const pesoCorte = (formData.itens_corte_dobra || []).reduce((sum, item) => 
-      sum + (item.peso_total_kg || 0), 0
-    );
-
-    const pesoTotal = pesoRevenda + pesoArmado + pesoCorte;
-
+    const { valor_produtos, valor_total, peso_total_kg } = computePedidoTotais(formData);
     setFormData(prev => ({
       ...prev,
-      valor_produtos: valorProdutos,
-      valor_total: valorTotal,
-      peso_total_kg: pesoTotal
+      valor_produtos,
+      valor_total,
+      peso_total_kg
     }));
   };
 

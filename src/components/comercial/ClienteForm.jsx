@@ -6,24 +6,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import ValidadorCPFCNPJ from '../fiscal/ValidadorCPFCNPJ';
 import { formatarTelefone, formatarCEP } from '../lib/validacoes';
-import { z } from "zod";
+
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormWrapper from "@/components/common/FormWrapper";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { clienteSchema } from "./cliente/clienteSchema";
 
-const clienteSchema = z.object({
-  nome: z.string().min(1, 'Nome é obrigatório'),
-  tipo: z.enum(['Pessoa Física','Pessoa Jurídica'], { required_error: 'Selecione o tipo de pessoa' }),
-  cpf_cnpj: z.string().optional(),
-  email: z.string().email('E-mail inválido').optional().or(z.literal('')),
-  telefone: z.string().optional(),
-  whatsapp: z.string().optional(),
-  cep: z.string().optional(),
-  limite_credito: z.preprocess((v) => (v === '' || v === null || v === undefined) ? 0 : Number(v), z.number().min(0, 'Limite inválido')),
-  condicao_pagamento: z.enum(['À Vista','7 dias','15 dias','30 dias','45 dias','60 dias','Parcelado']).optional(),
-  status: z.enum(['Prospect','Ativo','Inativo','Bloqueado']).optional(),
-});
+
 
 export default function ClienteForm({ cliente, onSubmit, isSubmitting }) {
   const { carimbarContexto } = useContextoVisual();
