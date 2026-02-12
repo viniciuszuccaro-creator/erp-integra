@@ -320,7 +320,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
 
       {/* Entregas Ativas */}
       {entregasAtivas && entregasAtivas.length > 0 && (
-        <Card className="border-0 shadow-md">
+        <Card className="border-0 shadow-md overflow-hidden">
           <CardHeader className="bg-orange-50 border-b">
             <CardTitle className="text-base flex items-center gap-2">
               <Truck className="w-5 h-5 text-orange-600" />
