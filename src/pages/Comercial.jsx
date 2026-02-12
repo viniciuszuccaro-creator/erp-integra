@@ -36,7 +36,7 @@ export default function Comercial() {
   const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
+    queryKey: ['clientes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
@@ -52,7 +52,7 @@ export default function Comercial() {
   });
 
   const pedidosQuery = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
+    queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
@@ -69,7 +69,7 @@ export default function Comercial() {
 
   const { data: pedidos = [] } = pedidosQuery;
   const { data: comissoes = [] } = useQuery({
-    queryKey: ['comissoes', empresaAtual?.id],
+    queryKey: ['comissoes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
@@ -85,7 +85,7 @@ export default function Comercial() {
   });
 
   const { data: notasFiscais = [] } = useQuery({
-    queryKey: ['notasFiscais', empresaAtual?.id],
+    queryKey: ['notasFiscais', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
@@ -101,7 +101,7 @@ export default function Comercial() {
   });
 
   const { data: tabelasPreco = [] } = useQuery({
-    queryKey: ['tabelas-preco', empresaAtual?.id],
+    queryKey: ['tabelas-preco', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       try {
         return await filterInContext('TabelaPreco', {}, '-updated_date', 50);
@@ -116,7 +116,7 @@ export default function Comercial() {
   });
 
   const { data: empresas = [] } = useQuery({
-    queryKey: ['empresas', empresaAtual?.id],
+    queryKey: ['empresas', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       try {
         return await filterInContext('Empresa', {}, '-created_date', 9999);
@@ -130,7 +130,7 @@ export default function Comercial() {
   });
 
   const { data: pedidosExternos = [] } = useQuery({
-    queryKey: ['pedidos-externos', empresaAtual?.id],
+    queryKey: ['pedidos-externos', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
