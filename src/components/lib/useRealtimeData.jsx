@@ -27,11 +27,17 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
 
   const [lastData, setLastData] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsReady(true), 500 + Math.floor(Math.random() * 1200));
+    return () => clearTimeout(t);
+  }, []);
 
   const query = useQuery({
     queryKey,
     queryFn,
-    refetchInterval: () => (enabled ? currentInterval : false),
+    refetchInterval: () => (enabled && isReady ? (currentInterval + Math.floor(Math.random() * 3000)) : false),
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
@@ -39,7 +45,7 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
     gcTime: 300000,
     keepPreviousData: true,
     staleTime: typeof currentInterval === 'number' ? Math.max(0, currentInterval - 1000) : 10000,
-    enabled,
+    enabled: enabled && isReady,
     ...otherOptions
   });
 
