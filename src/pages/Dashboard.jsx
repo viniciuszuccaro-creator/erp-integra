@@ -113,51 +113,69 @@ export default function Dashboard() {
   const refetchInterval = autoRefresh ? 60000 : false; // 60 segundos
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ['pedidos', empresaAtual?.id],
-    queryFn: () => filterInContext('Pedido', {}, '-created_date', 9999),
+    queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo],
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Pedido', {}, '-created_date', 9999) : base44.entities.Pedido.list('-created_date', 200)),
     refetchInterval,
     staleTime: 30000,
-    retry: 2
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ['contasReceber', empresaAtual?.id],
-    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
+    queryKey: ['contasReceber', empresaAtual?.id, estaNoGrupo],
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('ContaReceber', {}, '-data_vencimento', 9999) : base44.entities.ContaReceber.list('-data_vencimento', 200)),
     refetchInterval,
     staleTime: 30000,
-    retry: 2
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false
   });
 
   const { data: contasPagar = [] } = useQuery({
-    queryKey: ['contasPagar', empresaAtual?.id],
-    queryFn: () => filterInContext('ContaPagar', {}, '-data_vencimento', 9999),
+    queryKey: ['contasPagar', empresaAtual?.id, estaNoGrupo],
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('ContaPagar', {}, '-data_vencimento', 9999) : base44.entities.ContaPagar.list('-data_vencimento', 200)),
     refetchInterval,
     staleTime: 30000,
-    retry: 2
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ['entregas', empresaAtual?.id],
-    queryFn: () => filterInContext('Entrega', {}, '-created_date', 9999),
+    queryKey: ['entregas', empresaAtual?.id, estaNoGrupo],
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Entrega', {}, '-created_date', 9999) : base44.entities.Entrega.list('-created_date', 200)),
     refetchInterval,
     staleTime: 30000,
-    retry: 1
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false
   });
 
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores', empresaAtual?.id],
-    queryFn: () => filterInContext('Colaborador', {}, '-created_date', 9999, 'empresa_alocada_id'),
+    queryKey: ['colaboradores', empresaAtual?.id, estaNoGrupo],
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Colaborador', {}, '-created_date', 9999, 'empresa_alocada_id') : base44.entities.Colaborador.list('-created_date', 200)),
     refetchInterval,
     staleTime: 60000,
-    retry: 1
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ['produtos', empresaAtual?.id],
-    queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
+    queryKey: ['produtos', empresaAtual?.id, estaNoGrupo],
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Produto', {}, '-created_date', 9999) : base44.entities.Produto.list('-created_date', 200)),
     refetchInterval,
     staleTime: 60000,
-    retry: 1
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false
   });
 
   const { data: totalProdutos = 0 } = useQuery({
@@ -179,11 +197,14 @@ export default function Dashboard() {
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ['clientes', empresaAtual?.id],
-    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
+    queryKey: ['clientes', empresaAtual?.id, estaNoGrupo],
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Cliente', {}, '-created_date', 9999) : base44.entities.Cliente.list('-created_date', 200)),
     refetchInterval,
     staleTime: 60000,
-    retry: 1
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false
   });
 
   const { data: totalClientes = 0 } = useQuery({
@@ -205,11 +226,14 @@ export default function Dashboard() {
   });
 
   const { data: ordensProducao = [] } = useQuery({
-    queryKey: ['ordensProducao', empresaAtual?.id],
-    queryFn: () => filterInContext('OrdemProducao', {}, '-data_emissao', 9999),
+    queryKey: ['ordensProducao', empresaAtual?.id, estaNoGrupo],
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('OrdemProducao', {}, '-data_emissao', 9999) : (base44.entities.OrdemProducao?.list ? base44.entities.OrdemProducao.list('-data_emissao', 200) : Promise.resolve([]))),
     refetchInterval,
     staleTime: 30000,
-    retry: 1
+    gcTime: 300000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false
   });
 
   const {
