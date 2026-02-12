@@ -32,36 +32,42 @@ function DashboardOperacionalBI({ windowMode = false }) {
     queryKey: ["bi-pedidos", empresaAtual?.id],
     queryFn: () => filterInContext('Pedido', {}, '-created_date', 9999),
     initialData: [],
+    enabled: Boolean(empresaAtual?.id || estaNoGrupo),
   });
 
   const { data: ops = [] } = useQuery({
     queryKey: ["bi-ordens-producao", empresaAtual?.id],
     queryFn: () => filterInContext('OrdemProducao', {}, '-data_emissao', 9999),
     initialData: [],
+    enabled: Boolean(empresaAtual?.id || estaNoGrupo),
   });
 
   const { data: entregas = [] } = useQuery({
     queryKey: ["bi-entregas", empresaAtual?.id],
     queryFn: () => filterInContext('Entrega', {}, '-created_date', 9999),
     initialData: [],
+    enabled: Boolean(empresaAtual?.id || estaNoGrupo),
   });
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ["bi-contasReceber", empresaAtual?.id],
     queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
     initialData: [],
+    enabled: Boolean(empresaAtual?.id || estaNoGrupo),
   });
 
   const { data: produtos = [] } = useQuery({
     queryKey: ["bi-produtos", empresaAtual?.id],
     queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
     initialData: [],
+    enabled: Boolean(empresaAtual?.id || estaNoGrupo),
   });
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["bi-clientes", empresaAtual?.id],
     queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
     initialData: [],
+    enabled: Boolean(empresaAtual?.id || estaNoGrupo),
   });
 
   // Filtrar por contexto empresa/grupo
