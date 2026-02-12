@@ -168,6 +168,24 @@ export default async function ConsultarCNPJ({ cnpj, cfg }) {
     const cfg = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({}, undefined, 1).then(r => r?.[0]).catch(() => null);
 
     const result = await ConsultarCNPJ({ cnpj, cfg });
+
+    // Auditoria da consulta (multiempresa, não bloqueante)
+    const empresaIdCtx = body?.empresa_id || null;
+    try {
+      await base44.asServiceRole.entities.AuditLog.create({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        empresa_id: empresaIdCtx,
+        acao: 'Visualização',
+        modulo: 'Cadastros',
+        tipo_auditoria: 'integracao',
+        entidade: 'ConsultaCNPJ',
+        descricao: `Consulta CNPJ ${String(cnpj || '').slice(0, 4)}**** realizada`,
+        dados_novos: { sucesso: !!result?.sucesso, fonte: result?.fonte || null },
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+
     return Response.json(result);
   } catch (error) {
     return Response.json({ error: error?.message || String(error) }, { status: 500 });
