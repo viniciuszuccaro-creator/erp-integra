@@ -63,6 +63,13 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
  * Hook para KPIs em tempo real
  */
 export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
+  const defaultKPIs = {
+    pedidos: { hoje: 0, valorHoje: 0, aguardandoAprovacao: 0, emProducao: 0 },
+    financeiro: { vencendoHoje: 0, valorHoje: 0, atrasados: 0, recebidosHoje: 0 },
+    producao: { opsEmAndamento: 0, percentualMedio: 0, opsAtrasadas: 0, opsFinalizadasHoje: 0 },
+    expedicao: { entregasHoje: 0, pendentes: 0, realizadas: 0, emRota: 0 },
+    ultimaAtualizacao: null,
+  };
   return useRealtimeData(
     ['kpis-realtime', empresaId, groupId],
     async () => {
@@ -167,7 +174,7 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
         };
       }
     },
-    { refetchInterval: intervalo, enabled: Boolean(empresaId || groupId) }
+    { refetchInterval: intervalo, enabled: Boolean(empresaId || groupId), initialData: defaultKPIs }
   );
 }
 
@@ -184,6 +191,7 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
     { 
       refetchInterval: 8000,
       enabled: Boolean(empresaId || groupId),
+      initialData: [],
       onUpdate: (novos, anteriores) => {
         // Detectar novos pedidos
         const novosPedidosIds = novos.map(p => p.id);
@@ -214,7 +222,7 @@ export function useRealtimeEntregas(empresaId, groupId = null) {
         !['Entregue', 'Cancelado', 'Devolvido'].includes(e.status)
       );
     },
-    { refetchInterval: 6000, enabled: Boolean(empresaId || groupId) }
+    { refetchInterval: 6000, enabled: Boolean(empresaId || groupId), initialData: [] }
     );
 }
 
