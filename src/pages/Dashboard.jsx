@@ -517,7 +517,7 @@ export default function Dashboard() {
 
         <TabsContent value="tempo-real" className="overflow-auto">
           <PanelGroup direction="vertical" className="gap-2 min-h-[760px]">
-            <Panel defaultSize={70} minSize={40} className="overflow-auto">
+            <Panel defaultSize={70} minSize={40} className="overflow-auto h-full">
               {activeTab === 'tempo-real' && (
                 <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
                   <DashboardTempoReal empresaId={empresaAtual?.id} />
