@@ -23,21 +23,22 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
     ...otherOptions
   } = options;
 
+  const [currentInterval, setCurrentInterval] = useState(refetchInterval);
+
   const [lastData, setLastData] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
 
   const query = useQuery({
     queryKey,
     queryFn,
-    refetchInterval: enabled ? refetchInterval : false,
-    refetchIntervalInBackground: true,
+    refetchInterval: () => (enabled ? currentInterval : false),
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-      retry: false,
-      staleTime: 30000,
-      gcTime: 300000,
-      keepPreviousData: true,
-    staleTime: typeof refetchInterval === 'number' ? Math.max(0, refetchInterval - 1000) : 10000,
+    refetchOnReconnect: false,
+    retry: false,
+    gcTime: 300000,
+    keepPreviousData: true,
+    staleTime: typeof currentInterval === 'number' ? Math.max(0, currentInterval - 1000) : 10000,
     enabled,
     ...otherOptions
   });
@@ -57,6 +58,20 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
       setLastData(query.data);
     }
   }, [query.data]);
+
+  // Backoff automático em 429 e reset ao normal quando voltar a responder
+  useEffect(() => {
+    const err = query.error;
+    if (err) {
+      const msg = String(err?.message || '');
+      const status = err?.status || err?.response?.status;
+      if (status === 429 || /429|rate limit/i.test(msg)) {
+        setCurrentInterval(prev => Math.min((prev || refetchInterval) * 2, 120000));
+      }
+    } else if (query.data) {
+      if (currentInterval !== refetchInterval) setCurrentInterval(refetchInterval);
+    }
+  }, [query.error, query.data, refetchInterval]);
 
   return {
     ...query,
