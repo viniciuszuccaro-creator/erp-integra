@@ -1,6 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { getUserAndPerfil, assertPermission, assertContextPresence, audit } from './_lib/guard.js';
-import { notify } from './_lib/notificationUtils.js';
+import { notify } from './_lib/notificationService.js';
 
 Deno.serve(async (req) => {
   try {
