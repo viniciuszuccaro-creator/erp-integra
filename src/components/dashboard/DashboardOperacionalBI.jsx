@@ -161,8 +161,8 @@ function DashboardOperacionalBI({ windowMode = false }) {
   const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50";
 
   return (
-    <div className={containerClass}>
-      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
+    <div className={`${containerClass} min-h-[500px]`}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6 overflow-auto"}>
       {erroGeral && (
         <Alert className="border-red-300 bg-red-50">
           <AlertDescription className="flex items-center justify-between gap-3">
