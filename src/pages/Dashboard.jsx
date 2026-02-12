@@ -531,12 +531,12 @@ export default function Dashboard() {
 
         <TabsContent value="resumo" className="space-y-6 mt-6">
           <PanelGroup direction="vertical" className="gap-2">
-            <Panel defaultSize={50} minSize={30}>
+            <Panel defaultSize={50} minSize={30} className="overflow-auto">
               {/* KPIs Principais + Widget Canais */}
               <StatsSection statsCards={statsCards} empresaId={empresaAtual?.id} />
             </Panel>
             <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
-            <Panel defaultSize={50} minSize={20}>
+            <Panel defaultSize={50} minSize={20} className="overflow-auto">
               {/* NOVOS KPIs OPERACIONAIS */}
               <KPIsOperacionaisSection kpis={kpisOperacionais} />
             </Panel>
@@ -550,11 +550,11 @@ export default function Dashboard() {
 
           {/* Gráficos + Top Produtos (redimensionável) */}
           <PanelGroup direction="horizontal" className="gap-2 min-h-[420px]">
-            <Panel defaultSize={55} minSize={30}>
+            <Panel defaultSize={55} minSize={30} className="overflow-auto">
               <ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />
             </Panel>
             <PanelResizeHandle className="w-1 bg-slate-200 rounded" />
-            <Panel defaultSize={45} minSize={20}>
+            <Panel defaultSize={45} minSize={20} className="overflow-auto">
               <TopProdutosStatusPeriodoSection topProdutos={topProdutos} dadosVendasStatus={dadosVendasStatus} COLORS={COLORS} />
             </Panel>
           </PanelGroup>
