@@ -497,7 +497,7 @@ export default function Dashboard() {
         <Tabs value={activeTab} onValueChange={handleTabChange}>
         <DashboardTabsNav />
 
-        <TabsContent value="tempo-real" className="overflow-hidden">
+        <TabsContent value="tempo-real" className="overflow-auto">
           <PanelGroup direction="vertical" className="gap-2 min-h-[620px]">
             <Panel defaultSize={70} minSize={40} className="overflow-auto">
               {activeTab === 'tempo-real' && (
@@ -513,7 +513,7 @@ export default function Dashboard() {
           </PanelGroup>
         </TabsContent>
 
-        <TabsContent value="bi-operacional" className="overflow-hidden">
+        <TabsContent value="bi-operacional" className="overflow-auto">
           <PanelGroup direction="vertical" className="gap-2 min-h-[620px]">
             <Panel defaultSize={70} minSize={40} className="overflow-auto">
               {activeTab === 'bi-operacional' && (

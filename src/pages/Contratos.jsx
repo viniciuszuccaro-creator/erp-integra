@@ -96,16 +96,22 @@ export default function ContratosPage() {
   const { data: contratos = [] } = useQuery({
     queryKey: ['contratos'],
     queryFn: () => base44.entities.Contrato.list('-created_date'),
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes'],
     queryFn: () => base44.entities.Cliente.list(),
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores'],
     queryFn: () => base44.entities.Fornecedor.list(),
+    staleTime: 60000,
+    refetchOnWindowFocus: false,
   });
 
   // Multiempresa: aplicar contexto

@@ -40,7 +40,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Cliente', {}, '-created_date', 100);
+        return await filterInContext('Cliente', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
         return [];
@@ -56,7 +56,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Pedido', {}, '-created_date', 100);
+        return await filterInContext('Pedido', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar pedidos:', err);
         return [];
@@ -73,7 +73,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('Comissao', {}, '-created_date', 50);
+        return await filterInContext('Comissao', {}, '-created_date', 50);
       } catch (err) {
         console.error('Erro ao buscar comissões:', err);
         return [];
@@ -89,7 +89,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
+        return await filterInContext('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
       } catch (err) {
         console.error('Erro ao buscar notas fiscais:', err);
         return [];
@@ -104,7 +104,7 @@ export default function Comercial() {
     queryKey: ['tabelas-preco', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('TabelaPreco', {}, '-updated_date', 50);
+        return await filterInContext('TabelaPreco', {}, '-updated_date', 50);
       } catch (err) {
         console.error('Erro ao buscar tabelas de preço:', err);
         return [];
@@ -119,7 +119,7 @@ export default function Comercial() {
     queryKey: ['empresas', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('Empresa', {}, '-created_date', 9999);
+        return await filterInContext('Empresa', {}, '-created_date', 9999);
       } catch (err) {
         console.error('Erro ao buscar empresas:', err);
         return [];
@@ -134,7 +134,7 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filtrarPorContexto('PedidoExterno', {}, '-created_date', 30);
+        return await filterInContext('PedidoExterno', {}, '-created_date', 30);
       } catch (err) {
         console.error('Erro ao buscar pedidos externos:', err);
         return [];
