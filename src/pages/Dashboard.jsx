@@ -66,7 +66,7 @@ import QuickAccessModulesGrid from "@/components/dashboard/QuickAccessModulesGri
 import FinancialSummary from "@/components/dashboard/FinancialSummary";
 import WidgetEstoqueCritico from "@/components/estoque/WidgetEstoqueCritico";
 import ResizableRow from "@/components/dashboard/ResizableRow";
-import { PanelGroup, Panel, PanelResizeHandle } from "react-resizable-panels";
+import { ResizablePanelGroup as PanelGroup, ResizablePanel as Panel, ResizableHandle as PanelResizeHandle } from "@/components/ui/resizable";
 import useDashboardDerivedData from "@/components/dashboard/hooks/useDashboardDerivedData";
 
 
