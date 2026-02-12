@@ -347,7 +347,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
             <CardHeader>
               <CardTitle className="text-base">Vendas por Mês</CardTitle>
             </CardHeader>
-            <CardContent className="h-[280px]">
+            <CardContent className="h-[320px] md:h-[360px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={dadosVendasMes}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -366,7 +366,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
             <CardHeader>
               <CardTitle className="text-base">Evolução de Produção</CardTitle>
             </CardHeader>
-            <CardContent className="h-[280px]">
+            <CardContent className="h-[320px] md:h-[360px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={[
                   { mes: "Jan", ops: 12 },
