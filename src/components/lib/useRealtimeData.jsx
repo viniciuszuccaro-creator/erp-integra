@@ -157,8 +157,8 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
         ultimaAtualizacao: new Date().toISOString()
       };
     },
-    { refetchInterval: intervalo }
-  );
+    { refetchInterval: intervalo, enabled: Boolean(empresaId || groupId) }
+    );
 }
 
 /**
@@ -173,6 +173,7 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
     },
     { 
       refetchInterval: 8000,
+      enabled: Boolean(empresaId || groupId),
       onUpdate: (novos, anteriores) => {
         // Detectar novos pedidos
         const novosPedidosIds = novos.map(p => p.id);
@@ -203,8 +204,8 @@ export function useRealtimeEntregas(empresaId, groupId = null) {
         !['Entregue', 'Cancelado', 'Devolvido'].includes(e.status)
       );
     },
-    { refetchInterval: 6000 }
-  );
+    { refetchInterval: 6000, enabled: Boolean(empresaId || groupId) }
+    );
 }
 
 /**
