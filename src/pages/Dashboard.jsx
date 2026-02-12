@@ -525,7 +525,7 @@ export default function Dashboard() {
               )}
             </Panel>
             <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
-            <Panel defaultSize={30} minSize={20} className="overflow-auto">
+            <Panel defaultSize={30} minSize={20} className="overflow-auto h-full">
               <KPIsOperacionaisSection kpis={kpisOperacionais} />
             </Panel>
           </PanelGroup>
