@@ -11,6 +11,7 @@ import { useUser } from "@/components/lib/UserContext";
 import HeaderComprasCompacto from "@/components/compras/compras-launchpad/HeaderComprasCompacto";
 import KPIsCompras from "@/components/compras/compras-launchpad/KPIsCompras";
 import ModulosGridCompras from "@/components/compras/compras-launchpad/ModulosGridCompras";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const FornecedoresTab = React.lazy(() => import("../components/compras/FornecedoresTab"));
 const OrdensCompraTab = React.lazy(() => import("../components/compras/OrdensCompraTab"));
@@ -213,17 +214,23 @@ export default function Compras() {
       <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-cyan-50">
         <HeaderComprasCompacto />
         
-        <KPIsCompras
-          totalFornecedores={totalFornecedores}
-          fornecedoresAtivos={fornecedoresAtivos}
-          totalOrdens={ordensCompraFiltradas.length}
-          totalCompras={totalCompras}
-        />
-
-        <ModulosGridCompras 
-          modules={allowedModules}
-          onModuleClick={handleModuleClick}
-        />
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
+          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
+            <KPIsCompras
+              totalFornecedores={totalFornecedores}
+              fornecedoresAtivos={fornecedoresAtivos}
+              totalOrdens={ordensCompraFiltradas.length}
+              totalCompras={totalCompras}
+            />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
+            <ModulosGridCompras 
+              modules={allowedModules}
+              onModuleClick={handleModuleClick}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </ErrorBoundary>
     </ProtectedSection>

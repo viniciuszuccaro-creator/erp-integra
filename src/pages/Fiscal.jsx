@@ -11,6 +11,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import HeaderFiscalCompacto from "@/components/fiscal/fiscal-launchpad/HeaderFiscalCompacto";
 import KPIsFiscal from "@/components/fiscal/fiscal-launchpad/KPIsFiscal";
 import ModulosGridFiscal from "@/components/fiscal/fiscal-launchpad/ModulosGridFiscal";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const ConfigFiscalAutomatica = React.lazy(() => import("../components/fiscal/ConfigFiscalAutomatica"));
 const PlanoDeContasTree = React.lazy(() => import("../components/fiscal/PlanoDeContasTree"));
@@ -174,18 +175,24 @@ export default function FiscalPage() {
       <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderFiscalCompacto />
         
-        <KPIsFiscal
-          total={statusCounts.total}
-          autorizadas={statusCounts.autorizadas}
-          rascunho={statusCounts.rascunho}
-          rejeitadas={statusCounts.rejeitadas}
-          canceladas={statusCounts.canceladas}
-        />
-
-        <ModulosGridFiscal 
-          modules={allowedModules}
-          onModuleClick={handleModuleClick}
-        />
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
+          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
+            <KPIsFiscal
+              total={statusCounts.total}
+              autorizadas={statusCounts.autorizadas}
+              rascunho={statusCounts.rascunho}
+              rejeitadas={statusCounts.rejeitadas}
+              canceladas={statusCounts.canceladas}
+            />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
+            <ModulosGridFiscal 
+              modules={allowedModules}
+              onModuleClick={handleModuleClick}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </ErrorBoundary>
     </ProtectedSection>

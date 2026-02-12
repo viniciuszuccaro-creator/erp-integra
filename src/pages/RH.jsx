@@ -11,6 +11,7 @@ import usePermissions from "@/components/lib/usePermissions";
 import HeaderRHCompacto from "@/components/rh/rh-launchpad/HeaderRHCompacto";
 import KPIsRH from "@/components/rh/rh-launchpad/KPIsRH";
 import ModulosGridRH from "@/components/rh/rh-launchpad/ModulosGridRH";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
 const PontoTab = React.lazy(() => import("../components/rh/PontoTab"));
 const GameficacaoProducao = React.lazy(() => import("@/components/rh/GameficacaoProducao"));
@@ -212,18 +213,24 @@ export default function RH() {
       <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-purple-50">
         <HeaderRHCompacto />
         
-        <KPIsRH
-          colaboradoresAtivos={colaboradoresAtivos}
-          totalColaboradores={totalColaboradores}
-          feriasAprovadas={feriasAprovadas}
-          feriasPendentes={feriasPendentes}
-          totalPontos={pontos.length}
-        />
-
-        <ModulosGridRH 
-          modules={allowedModules}
-          onModuleClick={handleModuleClick}
-        />
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
+          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
+            <KPIsRH
+              colaboradoresAtivos={colaboradoresAtivos}
+              totalColaboradores={totalColaboradores}
+              feriasAprovadas={feriasAprovadas}
+              feriasPendentes={feriasPendentes}
+              totalPontos={pontos.length}
+            />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
+            <ModulosGridRH 
+              modules={allowedModules}
+              onModuleClick={handleModuleClick}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </ErrorBoundary>
     </ProtectedSection>
