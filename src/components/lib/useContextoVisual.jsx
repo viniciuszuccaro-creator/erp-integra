@@ -242,7 +242,8 @@ export function useContextoVisual() {
   const filterInContext = (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
     const filtro = { ...criterios, ...getFiltroContexto(campo, true) };
     if (!filtro.group_id && !filtro[campo]) {
-      throw new Error('Filtro sem contexto multiempresa');
+      // Contexto ainda não pronto: evita quebrar a UI e retorna lista vazia
+      return Promise.resolve([]);
     }
     return base44.entities[entityName].filter(filtro, order, limit);
   };
