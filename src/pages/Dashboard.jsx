@@ -513,7 +513,7 @@ export default function Dashboard() {
           </PanelGroup>
         </TabsContent>
 
-        <TabsContent value="bi-operacional">
+        <TabsContent value="bi-operacional" className="overflow-hidden">
           <PanelGroup direction="vertical" className="gap-2 min-h-[520px]">
             <Panel defaultSize={70} minSize={40}>
               {activeTab === 'bi-operacional' && (
