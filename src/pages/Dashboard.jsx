@@ -549,7 +549,7 @@ export default function Dashboard() {
           <WidgetEstoqueCritico count={produtosBaixoEstoque} onNavigate={() => handleDrillDown(createPageUrl("Estoque"))} />
 
           {/* Gráficos + Top Produtos (redimensionável) */}
-          <PanelGroup direction="horizontal" className="gap-2">
+          <PanelGroup direction="horizontal" className="gap-2 min-h-[420px]">
             <Panel defaultSize={55} minSize={30}>
               <ChartsSection vendasUltimos30Dias={vendasUltimos30Dias} fluxo7Dias={fluxo7Dias} />
             </Panel>
