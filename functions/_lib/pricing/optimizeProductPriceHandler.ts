@@ -30,7 +30,15 @@ export async function optimizeProductPrice(base44, ctx, { entityId, payload, use
     return { success: true, skipped: true, reason: 'missing_api_url' };
   }
 
-  const quotes = await fetchExternalQuotes(cfg, context, produto);
+  let quotes = [];
+  let quoteSource = cfg?.fonte_cotacoes || 'nenhuma';
+  try {
+    quotes = await fetchExternalQuotes(cfg, context, produto);
+  } catch (e) {
+    // Fallback quando integrações externas falharem (ex.: créditos insuficientes)
+    quotes = [];
+    quoteSource = 'fallback_sem_cotacoes';
+  }
 
   // Cálculo determinístico com cotações; fallback para heurística baseada em custo
   const opt = computeOptimizedPrice(produto, quotes, cfg || {});
@@ -46,7 +54,7 @@ export async function optimizeProductPrice(base44, ctx, { entityId, payload, use
         entidade: 'Produto',
         registro_id: entityId,
         descricao: 'Otimização de preço/margem ignorada (sem mudança) — short-circuit',
-        dados_novos: { ...patch, skipped: 'no_change', fonte_cotacoes: cfg?.fonte_cotacoes || 'nenhuma' },
+        dados_novos: { ...patch, skipped: 'no_change', fonte_cotacoes: quoteSource },
         empresa_id: produto?.empresa_id || null,
         duracao_ms: Date.now() - t0,
       });
@@ -64,7 +72,7 @@ export async function optimizeProductPrice(base44, ctx, { entityId, payload, use
       entidade: 'Produto',
       registro_id: entityId,
       descricao: 'Preço e margem otimizados (cotações externas + políticas)',
-      dados_novos: { ...patch, fonte_cotacoes: cfg?.fonte_cotacoes || 'nenhuma' },
+      dados_novos: { ...patch, fonte_cotacoes: quoteSource },
       empresa_id: produto?.empresa_id || null,
       duracao_ms: Date.now() - t0,
     });

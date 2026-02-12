@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     let payload; try { payload = await req.json(); } catch { payload = {}; }
     const event = payload?.event || null;
-    const entityId = event?.entity_id || payload?.produto_id;
-    if (!entityId) return Response.json({ error: 'produto_id obrigatório' }, { status: 400 });
+    const entityId = event?.entity_id || payload?.produto_id || null;
+    const isBatch = !entityId;
 
     // Skip when it's an update that didn't change cost fields
     const data = payload?.data || null;
@@ -29,12 +29,35 @@ Deno.serve(async (req) => {
       ctx = await getUserAndPerfil(base44).catch(() => null);
       const perm = await assertPermission(base44, ctx, 'Comercial', 'Produto', 'editar');
       if (perm) return perm;
-    } else if (!event) {
+    } else if (!event && !isBatch) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await optimizeProductPrice(base44, ctx, { entityId, payload, user });
-    return Response.json(result);
+    if (isBatch) {
+      const limit = Number(payload?.limit) || 100;
+      const filtro = payload?.filter || {};
+      const produtos = await base44.asServiceRole.entities.Produto.filter(filtro, '-updated_date', limit);
+      let updated = 0, skipped = 0, failed = 0;
+      for (const p of produtos) {
+        try {
+          const r = await optimizeProductPrice(base44, ctx, { entityId: p.id, payload: { data: p }, user: user || { full_name: 'Automação' } });
+          if (r?.updated) updated++; else skipped++;
+        } catch (_) { failed++; }
+      }
+      try {
+        await audit(base44, user || { full_name: 'Automação' }, {
+          acao: 'Edição',
+          modulo: 'Comercial',
+          entidade: 'Produto',
+          descricao: 'Otimização de preços em lote (agendada)',
+          dados_novos: { total: produtos.length, updated, skipped, failed, duracao_ms: Date.now() - t0 }
+        });
+      } catch {}
+      return Response.json({ ok: true, batch: true, total: produtos.length, updated, skipped, failed });
+    } else {
+      const result = await optimizeProductPrice(base44, ctx, { entityId, payload, user });
+      return Response.json(result);
+    }
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
