@@ -112,7 +112,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
       )}
 
       {/* Grid de KPIs */}
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-4 gap-4 auto-rows-fr">
         {/* COMERCIAL */}
         <motion.div
           initial={false}
