@@ -67,12 +67,17 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
     ['kpis-realtime', empresaId, groupId],
     async () => {
       const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
-      const [pedidos, contas, ops, entregas] = await Promise.all([
+      const results = await Promise.allSettled([
         base44.entities.Pedido.filter(filtroBase),
         base44.entities.ContaReceber.filter(filtroBase),
-        base44.entities.OrdemProducao.filter(filtroBase),
+        base44.entities.OrdemProducao?.filter ? base44.entities.OrdemProducao.filter(filtroBase) : Promise.resolve([]),
         base44.entities.Entrega.filter(filtroBase)
       ]);
+
+      const pedidos = results[0].status === 'fulfilled' ? results[0].value : [];
+      const contas = results[1].status === 'fulfilled' ? results[1].value : [];
+      const ops     = results[2].status === 'fulfilled' ? results[2].value : [];
+      const entregas= results[3].status === 'fulfilled' ? results[3].value : [];
 
       // Pedidos
       const pedidosHoje = pedidos.filter(p => {
