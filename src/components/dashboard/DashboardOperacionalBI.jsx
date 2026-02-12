@@ -143,6 +143,9 @@ function DashboardOperacionalBI({ windowMode = false }) {
     c.risco_churn === 'Alto' || c.risco_churn === 'Crítico'
   ).length;
 
+  const semDados = [pedidosFiltrados, opsFiltradas, entregasFiltradas, clientesFiltrados, produtosFiltrados, contasReceberFiltradas]
+    .every(arr => (arr?.length || 0) === 0);
+
   const dadosVendasMes = [
     { mes: "Jan", valor: 45000 },
     { mes: "Fev", valor: 52000 },
@@ -157,6 +160,16 @@ function DashboardOperacionalBI({ windowMode = false }) {
   return (
     <div className={containerClass}>
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
+      {semDados && (
+        <Card className="border-2 border-amber-300 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="text-base">Sem dados para exibir</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-amber-700">
+            Nenhuma informação encontrada no contexto atual. Selecione uma empresa/grupo ou cadastre registros para visualizar.
+          </CardContent>
+        </Card>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">

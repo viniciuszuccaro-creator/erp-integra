@@ -36,6 +36,8 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
   const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5, groupIdFinal);
   const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal, groupIdFinal) || {};
 
+  const semDadosKPI = (kpis?.pedidos?.hoje || 0) + (kpis?.financeiro?.vencendoHoje || 0) + (kpis?.producao?.opsEmAndamento || 0) + (kpis?.expedicao?.entregasHoje || 0) === 0;
+
   // Pulse visual quando atualizar
   useEffect(() => {
     if (hasChanges) {
@@ -90,6 +92,14 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
           </div>
         </AlertDescription>
       </Alert>
+
+      {semDadosKPI && (
+        <Alert className="border-amber-300 bg-amber-50">
+          <AlertDescription>
+            Nenhum dado recente para exibir agora. Assim que novos pedidos, títulos, OPs ou entregas forem registrados, os KPIs aparecerão aqui.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Grid de KPIs */}
       <div className="grid md:grid-cols-4 gap-4">
