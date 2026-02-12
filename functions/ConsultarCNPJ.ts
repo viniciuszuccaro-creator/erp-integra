@@ -160,11 +160,7 @@ export default async function ConsultarCNPJ({ cnpj, cfg }) {
     const permErr = await assertPermission(base44, ctx, 'Cadastros', 'Cliente', 'visualizar');
     if (permErr) return permErr;
 
-    const companyIdHeader = req.headers.get('x-company-id');
-    if (!companyIdHeader) {
-      return Response.json({ error: 'x-company-id é obrigatório no header' }, { status: 400 });
-    }
-
+    // Contexto multiempresa validado por permissões (PerfilAcesso); empresa pode vir do payload
     const body = await req.json().catch(() => ({}));
     const { cnpj } = body || {};
 

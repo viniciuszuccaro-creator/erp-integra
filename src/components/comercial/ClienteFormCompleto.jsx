@@ -25,6 +25,7 @@ import HistoricoTab from "@/components/comercial/cliente/HistoricoTab";
 import FormWrapper from "@/components/common/FormWrapper";
 import { clienteCompletoSchema } from './cliente/clienteCompletoSchema';
 import useContextoVisual from '@/components/lib/useContextoVisual';
+import { base44 } from "@/api/base44Client";
 
 const defaultFormData = {
   tipo: "Pessoa Jurídica",
@@ -183,23 +184,56 @@ export default function ClienteFormCompleto({ cliente, onSubmit, isSubmitting, o
     }
   };
 
-  // Buscar CNPJ
+  // Buscar CNPJ (usa função backend ConsultarCNPJ com configurações centralizadas)
   const buscarCnpj = async (cnpj) => {
-    if (!cnpj || cnpj.length < 14) return;
+    const limpo = (cnpj || '').replace(/\D/g, '');
+    if (!limpo || limpo.length < 14) return;
 
     setBuscandoCnpj(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast({
-        title: "ℹ️ Integração CNPJ",
-        description: "Em produção, integraria com Receita Federal"
-      });
+      const { data } = await base44.functions.invoke('ConsultarCNPJ', { cnpj: limpo });
+      if (data?.sucesso && data?.dados) {
+        const d = data.dados;
+        setFormData(prev => ({
+          ...prev,
+          cnpj: limpo,
+          nome: d.razao_social || prev.nome,
+          razao_social: d.razao_social || prev.razao_social,
+          nome_fantasia: d.nome_fantasia || prev.nome_fantasia,
+          cnae_principal: d.cnae_principal || d.cnae_codigo || prev.cnae_principal,
+          endereco_principal: {
+            ...(prev.endereco_principal || {}),
+            logradouro: d.endereco_completo?.logradouro || prev.endereco_principal?.logradouro || '',
+            numero: d.endereco_completo?.numero || prev.endereco_principal?.numero || '',
+            complemento: d.endereco_completo?.complemento || prev.endereco_principal?.complemento || '',
+            bairro: d.endereco_completo?.bairro || prev.endereco_principal?.bairro || '',
+            cidade: d.endereco_completo?.cidade || prev.endereco_principal?.cidade || '',
+            estado: d.endereco_completo?.uf || prev.endereco_principal?.estado || '',
+            cep: d.endereco_completo?.cep || prev.endereco_principal?.cep || '',
+            pais: 'Brasil'
+          },
+          contatos: (() => {
+            const contatos = Array.isArray(prev.contatos) ? [...prev.contatos] : [];
+            if (d.telefone) {
+              const tel = (d.telefone || '').replace(/\D/g, '');
+              if (!contatos.some(c => c.tipo === 'Telefone' && c.valor === tel)) {
+                contatos.push({ tipo: 'Telefone', valor: tel, principal: contatos.length === 0 });
+              }
+            }
+            if (d.email) {
+              if (!contatos.some(c => c.tipo === 'E-mail' && c.valor === d.email)) {
+                contatos.push({ tipo: 'E-mail', valor: d.email, principal: contatos.length === 0 });
+              }
+            }
+            return contatos;
+          })()
+        }));
+        toast({ title: '✅ CNPJ encontrado', description: d.razao_social || limpo });
+      } else {
+        toast({ title: 'CNPJ não encontrado', description: data?.erro || 'Verifique o número informado', variant: 'destructive' });
+      }
     } catch (error) {
-      toast({
-        title: "Erro ao buscar CNPJ",
-        description: error.message,
-        variant: "destructive"
-      });
+      toast({ title: 'Erro ao buscar CNPJ', description: error?.message || String(error), variant: 'destructive' });
     } finally {
       setBuscandoCnpj(false);
     }
