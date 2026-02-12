@@ -240,12 +240,11 @@ export function useContextoVisual() {
     return base44.entities[entityName].delete(id);
   };
   const filterInContext = (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
-    const filtro = { ...criterios, ...getFiltroContexto(campo) };
-      if (!filtro.group_id && !filtro[campo]) {
-        throw new Error('Filtro sem contexto multiempresa');
-      }
-      // Segurança: remove campos sensíveis em listagens públicas (ex.: Produto)
-      return base44.entities[entityName].filter(filtro, order, limit);
+    const filtro = { ...criterios, ...getFiltroContexto(campo, true) };
+    if (!filtro.group_id && !filtro[campo]) {
+      throw new Error('Filtro sem contexto multiempresa');
+    }
+    return base44.entities[entityName].filter(filtro, order, limit);
   };
 
   return {

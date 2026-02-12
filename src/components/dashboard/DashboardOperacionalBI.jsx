@@ -26,36 +26,42 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 function DashboardOperacionalBI({ windowMode = false }) {
   const [periodoFiltro, setPeriodoFiltro] = useState("mes");
-  const { empresaAtual, estaNoGrupo, filtrarPorContexto } = useContextoVisual();
+  const { empresaAtual, estaNoGrupo, filtrarPorContexto, filterInContext } = useContextoVisual();
 
   const { data: pedidos = [] } = useQuery({
-    queryKey: ["pedidos"],
-    queryFn: () => base44.entities.Pedido.list(),
+    queryKey: ["bi-pedidos", empresaAtual?.id],
+    queryFn: () => filterInContext('Pedido', {}, '-created_date', 9999),
+    initialData: [],
   });
 
   const { data: ops = [] } = useQuery({
-    queryKey: ["ordens-producao"],
-    queryFn: () => base44.entities.OrdemProducao.list(),
+    queryKey: ["bi-ordens-producao", empresaAtual?.id],
+    queryFn: () => filterInContext('OrdemProducao', {}, '-data_emissao', 9999),
+    initialData: [],
   });
 
   const { data: entregas = [] } = useQuery({
-    queryKey: ["entregas"],
-    queryFn: () => base44.entities.Entrega.list(),
+    queryKey: ["bi-entregas", empresaAtual?.id],
+    queryFn: () => filterInContext('Entrega', {}, '-created_date', 9999),
+    initialData: [],
   });
 
   const { data: contasReceber = [] } = useQuery({
-    queryKey: ["contasReceber"],
-    queryFn: () => base44.entities.ContaReceber.list(),
+    queryKey: ["bi-contasReceber", empresaAtual?.id],
+    queryFn: () => filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
+    initialData: [],
   });
 
   const { data: produtos = [] } = useQuery({
-    queryKey: ["produtos"],
-    queryFn: () => base44.entities.Produto.list(),
+    queryKey: ["bi-produtos", empresaAtual?.id],
+    queryFn: () => filterInContext('Produto', {}, '-created_date', 9999),
+    initialData: [],
   });
 
   const { data: clientes = [] } = useQuery({
-    queryKey: ["clientes"],
-    queryFn: () => base44.entities.Cliente.list(),
+    queryKey: ["bi-clientes", empresaAtual?.id],
+    queryFn: () => filterInContext('Cliente', {}, '-created_date', 9999),
+    initialData: [],
   });
 
   // Filtrar por contexto empresa/grupo
