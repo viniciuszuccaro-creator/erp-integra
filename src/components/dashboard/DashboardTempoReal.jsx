@@ -15,7 +15,7 @@ import {
   Target,
   Sparkles
 } from 'lucide-react';
-import { useRealtimeKPIs, useRealtimePedidos, useRealtimeEntregas } from '../lib/useRealtimeData';
+import { useRealtimeKPIs, useRealtimePedidos, useRealtimeEntregas } from '@/components/lib/useRealtimeData';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 
