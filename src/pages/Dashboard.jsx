@@ -497,7 +497,7 @@ export default function Dashboard() {
         <Tabs value={activeTab} onValueChange={handleTabChange}>
         <DashboardTabsNav />
 
-        <TabsContent value="tempo-real">
+        <TabsContent value="tempo-real" className="overflow-hidden">
           <PanelGroup direction="vertical" className="gap-2 min-h-[520px]">
             <Panel defaultSize={70} minSize={40}>
               {activeTab === 'tempo-real' && (
