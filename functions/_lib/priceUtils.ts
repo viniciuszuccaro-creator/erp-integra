@@ -1,35 +1,70 @@
 // Utilities for price optimization with external quotations (multiempresa-ready)
 export async function getTabelaPrecosIAConfig(base44, empresaId = null) {
   try {
-    const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Comercial' }, '-updated_date', 20);
+    // Busca configurações comerciais (inclui caminhos antigos e novos)
+    const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Comercial' }, '-updated_date', 50);
     if (!Array.isArray(cfgs)) return null;
 
     let candidatoGlobal = null;
-    for (const c of cfgs) {
-      const tpi = c?.configuracoes_comerciais?.tabela_precos_ia || c?.tabela_precos_ia;
-      if (!tpi) continue;
 
+    const mergeOverride = (baseCfg, override) => {
+      if (!override) return baseCfg;
+      return {
+        ...baseCfg,
+        ...(override.markup_minimo_percentual != null ? { markup_minimo_percentual: override.markup_minimo_percentual } : {}),
+        ...(override.politicas_precificacao ? { politicas_precificacao: override.politicas_precificacao } : {}),
+        ...(override.fonte_cotacoes ? { fonte_cotacoes: override.fonte_cotacoes } : {}),
+        ...(override.url_api ? { url_api: override.url_api } : {}),
+        ...(override.api_key ? { api_key: override.api_key } : {}),
+        _escopo: 'empresa-override',
+        _empresaId: empresaId || baseCfg?._empresaId || null,
+      };
+    };
+
+    for (const c of cfgs) {
+      const tpiRaw = c?.configuracoes_comerciais?.tabela_precos_ia ?? c?.tabela_precos_ia;
+      if (!tpiRaw) continue;
+
+      const tpi = { ...tpiRaw }; // não mutar origem
       const habilitadas = Array.isArray(tpi.empresas_habilitadas) ? tpi.empresas_habilitadas : null;
       const bloqueadas = Array.isArray(tpi.empresas_bloqueadas) ? tpi.empresas_bloqueadas : null;
+      const overrides = tpi.empresas_overrides || tpi.overrides_por_empresa || null; // suporta ambos os nomes
 
+      // Se houver override específico para a empresa, aplica e retorna prioritariamente
+      if (empresaId && overrides && overrides[empresaId]) {
+        return mergeOverride(tpi, overrides[empresaId]);
+      }
+
+      // Feature flag por lista de empresas
       if (empresaId && habilitadas && habilitadas.includes(empresaId)) {
         return { ...tpi, _escopo: 'empresa', _empresaId: empresaId };
       }
-
       if (empresaId && bloqueadas && bloqueadas.includes(empresaId)) {
+        // empresa bloqueada neste registro — segue procurando outro registro compatível
         continue;
       }
 
+      // Guarda o primeiro candidato global (fallback)
       if (!candidatoGlobal) {
         candidatoGlobal = { ...tpi, _escopo: 'global' };
       }
     }
 
+    // Se houver candidato global e existir override para a empresa nele, aplica
+    if (candidatoGlobal && empresaId) {
+      const overrides = candidatoGlobal.empresas_overrides || candidatoGlobal.overrides_por_empresa || null;
+      if (overrides && overrides[empresaId]) {
+        return mergeOverride(candidatoGlobal, overrides[empresaId]);
+      }
+      return candidatoGlobal;
+    }
+
     if (candidatoGlobal) return candidatoGlobal;
-    // Stub/config padrão multiempresa
+
+    // Stub/config padrão multiempresa (seguro e não-invasivo)
     return {
       habilitado: true,
-      fonte_cotacoes: 'mock', // não chama API externa por padrão
+      fonte_cotacoes: 'mock', // padrão: não chama API externa
       markup_minimo_percentual: 12,
       politicas_precificacao: [],
       empresas_habilitadas: null,
