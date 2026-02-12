@@ -330,7 +330,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 max-h-[420px] overflow-auto">
             <div className="divide-y">
               <AnimatePresence>
                 {entregasAtivas.slice(0, 5).map((entrega) => (
