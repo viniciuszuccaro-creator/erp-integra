@@ -500,9 +500,11 @@ export default function Dashboard() {
         <TabsContent value="tempo-real">
           <PanelGroup direction="vertical" className="gap-2">
             <Panel defaultSize={70} minSize={40}>
-              <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-                <DashboardTempoReal empresaId={empresaAtual?.id} />
-              </Suspense>
+              {activeTab === 'tempo-real' && (
+                <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+                  <DashboardTempoReal empresaId={empresaAtual?.id} />
+                </Suspense>
+              )}
             </Panel>
             <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
             <Panel defaultSize={30} minSize={20}>
@@ -514,9 +516,11 @@ export default function Dashboard() {
         <TabsContent value="bi-operacional">
           <PanelGroup direction="vertical" className="gap-2">
             <Panel defaultSize={70} minSize={40}>
-              <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
-                <DashboardOperacionalBI />
-              </Suspense>
+              {activeTab === 'bi-operacional' && (
+                <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
+                  <DashboardOperacionalBI />
+                </Suspense>
+              )}
             </Panel>
             <PanelResizeHandle className="h-1 bg-slate-200 rounded" />
             <Panel defaultSize={30} minSize={20}>

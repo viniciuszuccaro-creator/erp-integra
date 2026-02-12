@@ -68,7 +68,7 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
 /**
  * Hook para KPIs em tempo real
  */
-export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
+export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null) {
   const defaultKPIs = {
     pedidos: { hoje: 0, valorHoje: 0, aguardandoAprovacao: 0, emProducao: 0 },
     financeiro: { vencendoHoje: 0, valorHoje: 0, atrasados: 0, recebidosHoje: 0 },
@@ -204,7 +204,7 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
     ['pedidos-realtime', empresaId, groupId],
     () => (empresaId || groupId ? filterInContext('Pedido', {}, '-created_date', limite) : base44.entities.Pedido.list('-created_date', limite)),
     { 
-      refetchInterval: 20000,
+      refetchInterval: 30000,
       enabled: true,
       initialData: [],
       onUpdate: (novos, anteriores) => {
@@ -237,7 +237,7 @@ export function useRealtimeEntregas(empresaId, groupId = null) {
         !['Entregue', 'Cancelado', 'Devolvido'].includes(e.status)
       );
     },
-    { refetchInterval: 25000, enabled: true, initialData: [] }
+    { refetchInterval: 35000, enabled: true, initialData: [] }
     );
 }
 
