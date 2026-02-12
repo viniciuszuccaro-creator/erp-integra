@@ -158,7 +158,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
     { mes: "Jun", valor: 67000 },
   ];
 
-  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full h-full space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50";
+  const containerClass = windowMode ? "w-full h-full flex flex-col overflow-auto" : "w-full space-y-6 p-6 bg-gradient-to-br from-slate-50 to-blue-50";
 
   return (
     <div className={containerClass}>
