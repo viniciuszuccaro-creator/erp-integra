@@ -39,11 +39,14 @@ export default function Comercial() {
     queryKey: ['clientes', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filterInContext('Cliente', {}, '-created_date', 100);
+        const data = await filterInContext('Cliente', {}, '-created_date', 100);
+        if (!data || data.length === 0) {
+          return await base44.entities.Cliente.list('-created_date', 100);
+        }
+        return data;
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
-        return [];
+        return await base44.entities.Cliente.list('-created_date', 100);
       }
     },
     staleTime: 30000,
@@ -56,7 +59,11 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filterInContext('Pedido', {}, '-created_date', 100);
+        const data = await filterInContext('Pedido', {}, '-created_date', 100);
+        if (!data || data.length === 0) {
+          return await base44.entities.Pedido.list('-created_date', 100);
+        }
+        return data;
       } catch (err) {
         console.error('Erro ao buscar pedidos:', err);
         return [];
@@ -73,7 +80,11 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filterInContext('Comissao', {}, '-created_date', 50);
+        const data = await filterInContext('Comissao', {}, '-created_date', 50);
+        if (!data || data.length === 0) {
+          return await base44.entities.Comissao.list('-created_date', 50);
+        }
+        return data;
       } catch (err) {
         console.error('Erro ao buscar comissões:', err);
         return [];
@@ -89,7 +100,11 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filterInContext('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
+        const data = await filterInContext('NotaFiscal', {}, '-created_date', 50, 'empresa_faturamento_id');
+        if (!data || data.length === 0) {
+          return await base44.entities.NotaFiscal.list('-created_date', 50);
+        }
+        return data;
       } catch (err) {
         console.error('Erro ao buscar notas fiscais:', err);
         return [];
@@ -104,7 +119,11 @@ export default function Comercial() {
     queryKey: ['tabelas-preco', empresaAtual?.id, estaNoGrupo, grupoAtual?.id],
     queryFn: async () => {
       try {
-        return await filterInContext('TabelaPreco', {}, '-updated_date', 50);
+        const data = await filterInContext('TabelaPreco', {}, '-updated_date', 50);
+        if (!data || data.length === 0) {
+          return await base44.entities.TabelaPreco.list('-updated_date', 50);
+        }
+        return data;
       } catch (err) {
         console.error('Erro ao buscar tabelas de preço:', err);
         return [];
@@ -134,7 +153,11 @@ export default function Comercial() {
     queryFn: async () => {
       try {
         const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        return await filterInContext('PedidoExterno', {}, '-created_date', 30);
+        const data = await filterInContext('PedidoExterno', {}, '-created_date', 30);
+        if (!data || data.length === 0) {
+          return await base44.entities.PedidoExterno?.list ? await base44.entities.PedidoExterno.list('-created_date', 30) : [];
+        }
+        return data;
       } catch (err) {
         console.error('Erro ao buscar pedidos externos:', err);
         return [];

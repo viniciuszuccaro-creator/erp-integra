@@ -115,9 +115,9 @@ export default function ContratosPage() {
   });
 
   // Multiempresa: aplicar contexto
-  const contratosContexto = filtrarPorContexto(contratos, 'empresa_id');
-  const clientesFiltrados = filtrarPorContexto(clientes, 'empresa_id');
-  const fornecedoresFiltrados = filtrarPorContexto(fornecedores, 'empresa_dona_id');
+  const contratosContexto = (() => { const ctx = filtrarPorContexto(contratos, 'empresa_id'); return (ctx && ctx.length > 0) ? ctx : contratos; })();
+  const clientesFiltrados = (() => { const ctx = filtrarPorContexto(clientes, 'empresa_id'); return (ctx && ctx.length > 0) ? ctx : clientes; })();
+  const fornecedoresFiltrados = (() => { const ctx = filtrarPorContexto(fornecedores, 'empresa_dona_id'); return (ctx && ctx.length > 0) ? ctx : fornecedores; })();
 
   const { data: user } = useQuery({
     queryKey: ['user'],

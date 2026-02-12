@@ -114,7 +114,16 @@ export default function Dashboard() {
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Pedido', {}, '-created_date', 9999) : base44.entities.Pedido.list('-created_date', 200)),
+    queryFn: async () => {
+        if (empresaAtual?.id || estaNoGrupo) {
+            const data = await filterInContext('Pedido', {}, '-created_date', 9999);
+            if (!data || data.length === 0) {
+                return await base44.entities.Pedido.list('-created_date', 200);
+            }
+            return data;
+        }
+        return await base44.entities.Pedido.list('-created_date', 200);
+    },
     refetchInterval,
     staleTime: 30000,
     gcTime: 300000,
@@ -210,7 +219,16 @@ export default function Dashboard() {
 
   const { data: clientes = [] } = useQuery({
     queryKey: ['clientes', empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Cliente', {}, '-created_date', 9999) : base44.entities.Cliente.list('-created_date', 200)),
+    queryFn: async () => {
+        if (empresaAtual?.id || estaNoGrupo) {
+            const data = await filterInContext('Cliente', {}, '-created_date', 9999);
+            if (!data || data.length === 0) {
+                return await base44.entities.Cliente.list('-created_date', 200);
+            }
+            return data;
+        }
+        return await base44.entities.Cliente.list('-created_date', 200);
+    },
     refetchInterval,
     staleTime: 60000,
     gcTime: 300000,

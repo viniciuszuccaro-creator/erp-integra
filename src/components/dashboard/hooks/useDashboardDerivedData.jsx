@@ -45,8 +45,8 @@ export default function useDashboardDerivedData({ pedidos = [], contasReceber = 
     (p) => p.estoque_atual <= p.estoque_minimo && p.status === "Ativo"
   ).length;
 
-  const colaboradoresAtivos = colaboradores.filter((c) => c.status === "Ativo").length;
-  const clientesAtivos = clientes.filter((c) => c.status === "Ativo").length;
+  const colaboradoresAtivos = colaboradores.filter((c) => (c.status || 'Ativo') !== 'Inativo' && (c.status || 'Ativo') !== 'Afastado').length;
+  const clientesAtivos = clientes.filter((c) => (c.status || 'Ativo') !== 'Inativo' && (c.status || 'Ativo') !== 'Bloqueado').length;
   const taxaConversao = clientesAtivos > 0
     ? ((pedidosPeriodo.filter((p) => p.status !== "Cancelado").length / clientesAtivos) * 100).toFixed(1)
     : 0;
