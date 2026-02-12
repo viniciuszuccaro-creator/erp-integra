@@ -341,7 +341,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
         </Card>
       </div>
 
-      <ResizablePanelGroup direction="horizontal" className="w-full min-h-[380px]">
+      <ResizablePanelGroup direction="horizontal" className="w-full min-h-[420px]">
         <ResizablePanel defaultSize={50} minSize={30} className="pr-3">
           <Card className="border-0 shadow-md h-full">
             <CardHeader>
