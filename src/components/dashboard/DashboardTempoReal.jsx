@@ -251,7 +251,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
       </div>
 
       {/* Pedidos Recentes */}
-      <Card className="border-0 shadow-md">
+      <Card className="border-0 shadow-md overflow-hidden">
         <CardHeader className="bg-slate-50 border-b">
           <CardTitle className="text-base flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
