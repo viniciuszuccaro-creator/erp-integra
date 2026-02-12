@@ -113,6 +113,14 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null) {
               ]
         );
 
+        const rejectedCount = results.filter(r => r.status === 'rejected').length;
+        if (rejectedCount >= 2) {
+          const firstErr = results.find(r => r.status === 'rejected')?.reason || {};
+          const e = new Error(String(firstErr?.message || 'Rate limit exceeded'));
+          e.status = firstErr?.status || 429;
+          throw e;
+        }
+
         const pedidos = results[0].status === 'fulfilled' ? results[0].value : [];
         const contas = results[1].status === 'fulfilled' ? results[1].value : [];
         const ops     = results[2].status === 'fulfilled' ? results[2].value : [];
