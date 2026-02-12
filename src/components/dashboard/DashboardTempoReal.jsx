@@ -44,7 +44,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
     }
   }, [hasChanges]);
 
-  if (isLoading || !kpis) {
+  if (!kpis) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">

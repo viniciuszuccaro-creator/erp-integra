@@ -32,7 +32,7 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
     refetchInterval: enabled ? refetchInterval : false,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
-    staleTime: refetchInterval - 1000,
+    staleTime: typeof refetchInterval === 'number' ? Math.max(0, refetchInterval - 1000) : 10000,
     enabled,
     ...otherOptions
   });
