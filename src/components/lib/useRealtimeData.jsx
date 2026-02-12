@@ -100,16 +100,16 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null) {
         const results = await Promise.allSettled(
           semContexto
             ? [
-                base44.entities.Pedido.list('-created_date', 50),
-                base44.entities.ContaReceber.list('-data_vencimento', 50),
+                base44.entities.Pedido.list('-created_date', 20),
+                base44.entities.ContaReceber.list('-data_vencimento', 20),
                 base44.entities.OrdemProducao?.list ? base44.entities.OrdemProducao.list('-data_emissao', 50) : Promise.resolve([]),
-                base44.entities.Entrega.list('-created_date', 50)
+                base44.entities.Entrega.list('-created_date', 10)
               ]
             : [
-                filterInContext('Pedido', {}, '-created_date', 100),
-                filterInContext('ContaReceber', {}, '-data_vencimento', 100),
-                base44.entities.OrdemProducao?.filter ? filterInContext('OrdemProducao', {}, '-data_emissao', 100) : Promise.resolve([]),
-                filterInContext('Entrega', {}, '-created_date', 100)
+                filterInContext('Pedido', {}, '-created_date', 30),
+                filterInContext('ContaReceber', {}, '-data_vencimento', 30),
+                base44.entities.OrdemProducao?.filter ? filterInContext('OrdemProducao', {}, '-data_emissao', 20) : Promise.resolve([]),
+                filterInContext('Entrega', {}, '-created_date', 20)
               ]
         );
 
