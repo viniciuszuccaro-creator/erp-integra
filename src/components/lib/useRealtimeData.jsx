@@ -96,22 +96,21 @@ export function useRealtimeKPIs(empresaId, intervalo = 30000, groupId = null) {
     ['kpis-realtime', empresaId, groupId],
     async () => {
       try {
-        const semContexto = !empresaId && !groupId;
-        const results = await Promise.allSettled(
-          semContexto
-            ? [
-                base44.entities.Pedido.list('-created_date', 20),
-                base44.entities.ContaReceber.list('-data_vencimento', 20),
-                base44.entities.OrdemProducao?.list ? base44.entities.OrdemProducao.list('-data_emissao', 50) : Promise.resolve([]),
-                base44.entities.Entrega.list('-created_date', 10)
-              ]
-            : [
-                filterInContext('Pedido', {}, '-created_date', 30),
-                filterInContext('ContaReceber', {}, '-data_vencimento', 30),
-                base44.entities.OrdemProducao?.filter ? filterInContext('OrdemProducao', {}, '-data_emissao', 20) : Promise.resolve([]),
-                filterInContext('Entrega', {}, '-created_date', 20)
-              ]
-        );
+        const getByContext = (entity, order, limit) => {
+          if (empresaId) return base44.entities[entity].filter({ empresa_id: empresaId }, order, limit);
+          if (groupId) return base44.entities[entity].filter({ group_id: groupId }, order, limit);
+          return base44.entities[entity].list(order, limit);
+        };
+        const results = await Promise.allSettled([
+          getByContext('Pedido', '-created_date', 20),
+          getByContext('ContaReceber', '-data_vencimento', 20),
+          (base44.entities.OrdemProducao?.filter || base44.entities.OrdemProducao?.list)
+            ? (empresaId || groupId
+                ? base44.entities.OrdemProducao.filter({ [empresaId ? 'empresa_id' : 'group_id']: empresaId || groupId }, '-data_emissao', 20)
+                : base44.entities.OrdemProducao.list('-data_emissao', 20))
+            : Promise.resolve([]),
+          getByContext('Entrega', '-created_date', 10)
+        ]);
 
         const rejectedCount = results.filter(r => r.status === 'rejected').length;
         if (rejectedCount >= 2) {
@@ -225,7 +224,13 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
   const { filterInContext } = useContextoVisual();
   return useRealtimeData(
     ['pedidos-realtime', empresaId, groupId],
-    () => (empresaId || groupId ? filterInContext('Pedido', {}, '-created_date', limite) : base44.entities.Pedido.list('-created_date', limite)),
+    () => (
+      empresaId
+        ? base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', limite)
+        : groupId
+          ? base44.entities.Pedido.filter({ group_id: groupId }, '-created_date', limite)
+          : base44.entities.Pedido.list('-created_date', limite)
+    ),
     { 
       refetchInterval: 30000,
       enabled: true,
@@ -254,12 +259,15 @@ export function useRealtimeEntregas(empresaId, groupId = null) {
   return useRealtimeData(
     ['entregas-realtime', empresaId, groupId],
     async () => {
-      const entregas = await (empresaId || groupId ? filterInContext('Entrega', {}, '-created_date', 20) : base44.entities.Entrega.list('-created_date', 20));
-      
-      // Entregas ativas (não finalizadas)
-      return entregas.filter(e => 
-        !['Entregue', 'Cancelado', 'Devolvido'].includes(e.status)
+      const entregas = await (
+        empresaId
+          ? base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 20)
+          : groupId
+            ? base44.entities.Entrega.filter({ group_id: groupId }, '-created_date', 20)
+            : base44.entities.Entrega.list('-created_date', 20)
       );
+      
+      return entregas.filter(e => !['Entregue', 'Cancelado', 'Devolvido'].includes(e.status));
     },
     { refetchInterval: 35000, enabled: true, initialData: [], retry: false }
     );
