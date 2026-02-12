@@ -106,7 +106,8 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
         // Pedidos
         const pedidosHoje = pedidos.filter(p => {
           const hoje = new Date().toISOString().split('T')[0];
-          return p.data_pedido === hoje;
+          const data = (p.data_pedido || p.created_date || '').split('T')[0];
+          return data === hoje;
         });
 
         const valorPedidosHoje = pedidosHoje.reduce((sum, p) => sum + (p.valor_total || 0), 0);

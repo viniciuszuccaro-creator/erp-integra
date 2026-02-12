@@ -110,7 +110,7 @@ export default function Dashboard() {
   }, [periodo]);
 
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const refetchInterval = autoRefresh ? 60000 : false; // 60 segundos
+  const refetchInterval = (activeTab === 'resumo' && autoRefresh) ? 60000 : false; // 60 segundos
 
   const { data: pedidos = [] } = useQuery({
     queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo],
@@ -120,7 +120,9 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false
+    retry: false,
+    enabled: activeTab === 'resumo',
+    initialData: []
   });
 
   const { data: contasReceber = [] } = useQuery({
@@ -131,7 +133,9 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false
+    retry: false,
+    enabled: activeTab === 'resumo',
+    initialData: []
   });
 
   const { data: contasPagar = [] } = useQuery({
@@ -142,7 +146,9 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false
+    retry: false,
+    enabled: activeTab === 'resumo',
+    initialData: []
   });
 
   const { data: entregas = [] } = useQuery({
@@ -153,7 +159,9 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false
+    retry: false,
+    enabled: activeTab === 'resumo',
+    initialData: []
   });
 
   const { data: colaboradores = [] } = useQuery({
@@ -164,7 +172,9 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false
+    retry: false,
+    enabled: activeTab === 'resumo',
+    initialData: []
   });
 
   const { data: produtos = [] } = useQuery({
@@ -175,7 +185,9 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false
+    retry: false,
+    enabled: activeTab === 'resumo',
+    initialData: []
   });
 
   const { data: totalProdutos = 0 } = useQuery({
@@ -204,7 +216,9 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false
+    retry: false,
+    enabled: activeTab === 'resumo',
+    initialData: []
   });
 
   const { data: totalClientes = 0 } = useQuery({
@@ -233,7 +247,9 @@ export default function Dashboard() {
     gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    retry: false
+    retry: false,
+    enabled: activeTab === 'resumo',
+    initialData: []
   });
 
   const {
