@@ -64,7 +64,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
 
   const containerClass = windowMode 
     ? "w-full h-full flex flex-col overflow-auto" 
-    : "w-full space-y-6";
+    : "w-full space-y-6 overflow-auto";
 
   return (
     <div className={`${containerClass} min-h-[500px]`}>
