@@ -96,8 +96,8 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
       const valorAReceberHoje = contasVencendoHoje.reduce((sum, c) => sum + (c.valor || 0), 0);
 
       // Produção
-      const opsEmAndamento = ops.filter(op => 
-        ['Liberada', 'Em Corte', 'Em Dobra', 'Em Armação'].includes(op.status)
+      const opsEmAndamento = (ops || []).filter(op => 
+       ['Liberada', 'Em Corte', 'Em Dobra', 'Em Armação', 'Em Produção', 'Produzindo'].includes(op.status)
       );
 
       const mediaPercentualConclusao = opsEmAndamento.length > 0
