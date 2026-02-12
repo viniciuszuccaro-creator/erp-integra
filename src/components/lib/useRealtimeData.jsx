@@ -105,9 +105,11 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
         : 0;
 
       // Expedição
-      const entregasHoje = entregas.filter(e => {
+      const entregasHoje = (entregas || []).filter(e => {
         const hoje = new Date().toISOString().split('T')[0];
-        return e.data_previsao === hoje || e.data_entrega?.split('T')[0] === hoje;
+        const prev = e.data_previsao || e.data_prevista; // compat
+        const entrega = e.data_entrega || e.data_entrega_real;
+        return (prev === hoje) || (entrega && entrega.split('T')[0] === hoje);
       });
 
       const entregasPendentes = entregasHoje.filter(e => 
