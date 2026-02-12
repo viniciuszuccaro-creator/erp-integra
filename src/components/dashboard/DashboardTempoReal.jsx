@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { 
   TrendingUp, 
   Package, 
@@ -32,7 +33,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
   const groupIdFinal = estaNoGrupo ? (grupoAtual?.id || null) : null;
   
   // Dados em tempo real
-  const { data: kpis, isLoading, hasChanges, error: kpiError } = useRealtimeKPIs(empresaIdFinal, 45000, groupIdFinal);
+  const { data: kpis, isLoading, hasChanges, error: kpiError, refetch } = useRealtimeKPIs(empresaIdFinal, 45000, groupIdFinal);
   const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5, groupIdFinal);
   const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal, groupIdFinal) || {};
 
@@ -95,15 +96,17 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
 
       {kpiError && (
         <Alert className="border-red-300 bg-red-50">
-          <AlertDescription>
-            Erro ao carregar dados em tempo real (possível limite de requisições). Aguarde alguns segundos e tente novamente.
+          <AlertDescription className="flex items-center justify-between gap-3">
+            <span>Erro ao carregar dados em tempo real (possível limite de requisições).</span>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>Tentar novamente</Button>
           </AlertDescription>
         </Alert>
       )}
       {semDadosKPI && !kpiError && (
         <Alert className="border-amber-300 bg-amber-50">
-          <AlertDescription>
-            Nenhum dado recente para exibir agora. Assim que novos pedidos, títulos, OPs ou entregas forem registrados, os KPIs aparecerão aqui.
+          <AlertDescription className="flex items-center justify-between gap-3">
+            <span>Nenhum dado recente por enquanto.</span>
+            <Button size="sm" variant="outline" onClick={() => refetch()}>Atualizar</Button>
           </AlertDescription>
         </Alert>
       )}

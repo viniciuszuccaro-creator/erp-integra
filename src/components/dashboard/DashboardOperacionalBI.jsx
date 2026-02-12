@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -138,6 +139,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
     return { valorAtual, valorAnterior, crescimento: parseFloat(crescimento) };
   };
 
+  const queryClient = useQueryClient();
   const tendenciaVendas = calcularTendenciaVendas();
 
   const clientesComRiscoChurn = clientesFiltrados.filter(c => 
@@ -164,15 +166,17 @@ function DashboardOperacionalBI({ windowMode = false }) {
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {erroGeral && (
         <Alert className="border-red-300 bg-red-50">
-          <AlertDescription>
-            Ocorreu um erro ao carregar dados (possível limite de requisições). Aguarde alguns segundos e tente novamente.
+          <AlertDescription className="flex items-center justify-between gap-3">
+            <span>Erro ao carregar dados (possível limite de requisições).</span>
+            <Button size="sm" variant="outline" onClick={() => queryClient.invalidateQueries({ predicate: () => true })}>Tentar novamente</Button>
           </AlertDescription>
         </Alert>
       )}
       {semDados && !erroGeral && (
         <Card className="border-2 border-amber-300 bg-amber-50">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Sem dados para exibir</CardTitle>
+            <Button size="sm" variant="outline" onClick={() => queryClient.invalidateQueries({ predicate: () => true })}>Atualizar</Button>
           </CardHeader>
           <CardContent className="text-sm text-amber-700">
             Nenhuma informação encontrada no contexto atual. Selecione uma empresa/grupo ou cadastre registros para visualizar.
