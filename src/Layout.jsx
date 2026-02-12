@@ -97,6 +97,7 @@ function LayoutContent({ children, currentPageName }) {
         const { hasPermission } = usePermissions();
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
+        const auditThrottleRef = React.useRef({ click: 0, change: 0 });
         const queryClient = useQueryClient();
 
         const prefetchForItem = (title) => {
@@ -366,6 +367,9 @@ function LayoutContent({ children, currentPageName }) {
     if (!user) return;
     const handlerClick = (e) => {
       try {
+        const now = Date.now();
+        if (now - auditThrottleRef.current.click < 1500) return; // throttle 1.5s
+        auditThrottleRef.current.click = now;
         const target = e.target.closest('button, a, [role="button"], [data-radix-collection-item]');
         if (!target) return;
         const label = target.getAttribute('aria-label') || target.innerText?.trim()?.slice(0, 80) || target.tagName;
@@ -386,6 +390,9 @@ function LayoutContent({ children, currentPageName }) {
 
     const handlerChange = (e) => {
       try {
+        const now = Date.now();
+        if (now - auditThrottleRef.current.change < 1000) return; // throttle 1s
+        auditThrottleRef.current.change = now;
         const el = e.target;
         if (!el) return;
         const tag = el.tagName;
