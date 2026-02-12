@@ -20,6 +20,7 @@ import {
   Sparkles,
   ArrowRight
 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area } from "recharts";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
@@ -28,7 +29,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
   const [periodoFiltro, setPeriodoFiltro] = useState("mes");
   const { empresaAtual, estaNoGrupo, filtrarPorContexto, filterInContext } = useContextoVisual();
 
-  const { data: pedidos = [] } = useQuery({
+  const { data: pedidos = [], isError: errPedidos } = useQuery({
     queryKey: ["bi-pedidos", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Pedido', {}, '-created_date', 9999) : base44.entities.Pedido.list('-created_date', 200)),
     initialData: [],
@@ -39,7 +40,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
     retry: false,
   });
 
-  const { data: ops = [] } = useQuery({
+  const { data: ops = [], isError: errOps } = useQuery({
     queryKey: ["bi-ordens-producao", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('OrdemProducao', {}, '-data_emissao', 9999) : (base44.entities.OrdemProducao?.list ? base44.entities.OrdemProducao.list('-data_emissao', 200) : Promise.resolve([]))),
     initialData: [],
@@ -50,7 +51,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
     retry: false,
   });
 
-  const { data: entregas = [] } = useQuery({
+  const { data: entregas = [], isError: errEntregas } = useQuery({
     queryKey: ["bi-entregas", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Entrega', {}, '-created_date', 9999) : base44.entities.Entrega.list('-created_date', 200)),
     initialData: [],
@@ -61,7 +62,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
     retry: false,
   });
 
-  const { data: contasReceber = [] } = useQuery({
+  const { data: contasReceber = [], isError: errCR } = useQuery({
     queryKey: ["bi-contasReceber", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('ContaReceber', {}, '-data_vencimento', 9999) : base44.entities.ContaReceber.list('-data_vencimento', 200)),
     initialData: [],
@@ -72,7 +73,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
     retry: false,
   });
 
-  const { data: produtos = [] } = useQuery({
+  const { data: produtos = [], isError: errProdutos } = useQuery({
     queryKey: ["bi-produtos", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Produto', {}, '-created_date', 9999) : base44.entities.Produto.list('-created_date', 200)),
     initialData: [],
@@ -83,7 +84,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
     retry: false,
   });
 
-  const { data: clientes = [] } = useQuery({
+  const { data: clientes = [], isError: errClientes } = useQuery({
     queryKey: ["bi-clientes", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Cliente', {}, '-created_date', 9999) : base44.entities.Cliente.list('-created_date', 200)),
     initialData: [],
@@ -145,6 +146,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
 
   const semDados = [pedidosFiltrados, opsFiltradas, entregasFiltradas, clientesFiltrados, produtosFiltrados, contasReceberFiltradas]
     .every(arr => (arr?.length || 0) === 0);
+  const erroGeral = errPedidos || errOps || errEntregas || errCR || errProdutos || errClientes;
 
   const dadosVendasMes = [
     { mes: "Jan", valor: 45000 },
@@ -160,7 +162,14 @@ function DashboardOperacionalBI({ windowMode = false }) {
   return (
     <div className={containerClass}>
       <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
-      {semDados && (
+      {erroGeral && (
+        <Alert className="border-red-300 bg-red-50">
+          <AlertDescription>
+            Ocorreu um erro ao carregar dados (possível limite de requisições). Aguarde alguns segundos e tente novamente.
+          </AlertDescription>
+        </Alert>
+      )}
+      {semDados && !erroGeral && (
         <Card className="border-2 border-amber-300 bg-amber-50">
           <CardHeader>
             <CardTitle className="text-base">Sem dados para exibir</CardTitle>

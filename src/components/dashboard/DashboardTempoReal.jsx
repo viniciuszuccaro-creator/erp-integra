@@ -32,7 +32,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
   const groupIdFinal = estaNoGrupo ? (grupoAtual?.id || null) : null;
   
   // Dados em tempo real
-  const { data: kpis, isLoading, hasChanges } = useRealtimeKPIs(empresaIdFinal, 20000, groupIdFinal);
+  const { data: kpis, isLoading, hasChanges, error: kpiError } = useRealtimeKPIs(empresaIdFinal, 20000, groupIdFinal);
   const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5, groupIdFinal);
   const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal, groupIdFinal) || {};
 
@@ -93,7 +93,14 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
         </AlertDescription>
       </Alert>
 
-      {semDadosKPI && (
+      {kpiError && (
+        <Alert className="border-red-300 bg-red-50">
+          <AlertDescription>
+            Erro ao carregar dados em tempo real (possível limite de requisições). Aguarde alguns segundos e tente novamente.
+          </AlertDescription>
+        </Alert>
+      )}
+      {semDadosKPI && !kpiError && (
         <Alert className="border-amber-300 bg-amber-50">
           <AlertDescription>
             Nenhum dado recente para exibir agora. Assim que novos pedidos, títulos, OPs ou entregas forem registrados, os KPIs aparecerão aqui.
