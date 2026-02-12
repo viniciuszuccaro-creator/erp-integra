@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     let payload; try { payload = await req.json(); } catch { payload = {}; }
     const event = payload?.event || null;
     const entityId = event?.entity_id || payload?.produto_id || null;
-    const isBatch = !entityId;
+    const isBatch = (payload?.batch === true) || !entityId;
 
     // Skip when it's an update that didn't change cost fields
     const data = payload?.data || null;
