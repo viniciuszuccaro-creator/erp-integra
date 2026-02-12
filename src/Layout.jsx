@@ -363,6 +363,26 @@ function LayoutContent({ children, currentPageName }) {
 
 
   // Auditoria global de interações (cliques/seletores/tabs)
+
+  // Auditoria de navegação entre páginas
+  useEffect(() => {
+    if (!user) return;
+    try {
+      base44.entities?.AuditLog?.create?.({
+        usuario: user?.full_name || user?.email || 'Usuário',
+        usuario_id: user?.id,
+        empresa_id: empresaAtual?.id || null,
+        empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+        acao: 'Visualização',
+        modulo: currentModule || 'Sistema',
+        tipo_auditoria: 'ui',
+        entidade: 'Navegação',
+        descricao: `Rota: ${location.pathname}`,
+        data_hora: new Date().toISOString(),
+      });
+    } catch (_) {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname, user?.id, empresaAtual?.id, currentModule]);
   useEffect(() => {
     if (!user) return;
     const handlerClick = (e) => {
