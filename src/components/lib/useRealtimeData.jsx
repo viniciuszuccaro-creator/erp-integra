@@ -6,6 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { useEffect, useState } from 'react';
+import { useContextoVisual } from './useContextoVisual';
 
 /**
  * Hook principal de tempo real
@@ -70,16 +71,16 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
     expedicao: { entregasHoje: 0, pendentes: 0, realizadas: 0, emRota: 0 },
     ultimaAtualizacao: null,
   };
+  const { filterInContext } = useContextoVisual();
   return useRealtimeData(
     ['kpis-realtime', empresaId, groupId],
     async () => {
       try {
-        const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
         const results = await Promise.allSettled([
-          base44.entities.Pedido.filter(filtroBase),
-          base44.entities.ContaReceber.filter(filtroBase),
-          base44.entities.OrdemProducao?.filter ? base44.entities.OrdemProducao.filter(filtroBase) : Promise.resolve([]),
-          base44.entities.Entrega.filter(filtroBase)
+          filterInContext('Pedido', {}, '-created_date', 9999),
+          filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
+          base44.entities.OrdemProducao?.filter ? filterInContext('OrdemProducao', {}, '-data_emissao', 9999) : Promise.resolve([]),
+          filterInContext('Entrega', {}, '-created_date', 9999)
         ]);
 
         const pedidos = results[0].status === 'fulfilled' ? results[0].value : [];
@@ -182,12 +183,10 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
  * Hook para Status de Pedidos em tempo real
  */
 export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
+  const { filterInContext } = useContextoVisual();
   return useRealtimeData(
     ['pedidos-realtime', empresaId, groupId],
-    () => {
-      const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
-      return base44.entities.Pedido.filter(filtroBase, '-created_date', limite);
-    },
+    () => filterInContext('Pedido', {}, '-created_date', limite),
     { 
       refetchInterval: 8000,
       enabled: Boolean(empresaId || groupId),
@@ -211,11 +210,11 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
  * Hook para Entregas em tempo real
  */
 export function useRealtimeEntregas(empresaId, groupId = null) {
+  const { filterInContext } = useContextoVisual();
   return useRealtimeData(
     ['entregas-realtime', empresaId, groupId],
     async () => {
-      const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
-      const entregas = await base44.entities.Entrega.filter(filtroBase, '-created_date', 20);
+      const entregas = await filterInContext('Entrega', {}, '-created_date', 20);
       
       // Entregas ativas (não finalizadas)
       return entregas.filter(e => 
