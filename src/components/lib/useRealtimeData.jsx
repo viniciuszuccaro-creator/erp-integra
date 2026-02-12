@@ -32,6 +32,11 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
     refetchInterval: enabled ? refetchInterval : false,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      retry: false,
+      staleTime: 30000,
+      gcTime: 300000,
+      keepPreviousData: true,
     staleTime: typeof refetchInterval === 'number' ? Math.max(0, refetchInterval - 1000) : 10000,
     enabled,
     ...otherOptions
@@ -86,10 +91,10 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
                 base44.entities.Entrega.list('-created_date', 50)
               ]
             : [
-                filterInContext('Pedido', {}, '-created_date', 200),
-                filterInContext('ContaReceber', {}, '-data_vencimento', 200),
-                base44.entities.OrdemProducao?.filter ? filterInContext('OrdemProducao', {}, '-data_emissao', 200) : Promise.resolve([]),
-                filterInContext('Entrega', {}, '-created_date', 200)
+                filterInContext('Pedido', {}, '-created_date', 100),
+                filterInContext('ContaReceber', {}, '-data_vencimento', 100),
+                base44.entities.OrdemProducao?.filter ? filterInContext('OrdemProducao', {}, '-data_emissao', 100) : Promise.resolve([]),
+                filterInContext('Entrega', {}, '-created_date', 100)
               ]
         );
 
@@ -198,7 +203,7 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
     ['pedidos-realtime', empresaId, groupId],
     () => (empresaId || groupId ? filterInContext('Pedido', {}, '-created_date', limite) : base44.entities.Pedido.list('-created_date', limite)),
     { 
-      refetchInterval: 8000,
+      refetchInterval: 20000,
       enabled: true,
       initialData: [],
       onUpdate: (novos, anteriores) => {
@@ -231,7 +236,7 @@ export function useRealtimeEntregas(empresaId, groupId = null) {
         !['Entregue', 'Cancelado', 'Devolvido'].includes(e.status)
       );
     },
-    { refetchInterval: 6000, enabled: true, initialData: [] }
+    { refetchInterval: 25000, enabled: true, initialData: [] }
     );
 }
 

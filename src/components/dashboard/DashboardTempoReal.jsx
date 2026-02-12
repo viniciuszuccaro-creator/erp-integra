@@ -32,7 +32,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
   const groupIdFinal = estaNoGrupo ? (grupoAtual?.id || null) : null;
   
   // Dados em tempo real
-  const { data: kpis, isLoading, hasChanges } = useRealtimeKPIs(empresaIdFinal, 10000, groupIdFinal);
+  const { data: kpis, isLoading, hasChanges } = useRealtimeKPIs(empresaIdFinal, 20000, groupIdFinal);
   const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5, groupIdFinal);
   const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal, groupIdFinal) || {};
 

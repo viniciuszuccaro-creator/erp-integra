@@ -32,36 +32,66 @@ function DashboardOperacionalBI({ windowMode = false }) {
     queryKey: ["bi-pedidos", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Pedido', {}, '-created_date', 9999) : base44.entities.Pedido.list('-created_date', 200)),
     initialData: [],
+    staleTime: 120000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 
   const { data: ops = [] } = useQuery({
     queryKey: ["bi-ordens-producao", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('OrdemProducao', {}, '-data_emissao', 9999) : (base44.entities.OrdemProducao?.list ? base44.entities.OrdemProducao.list('-data_emissao', 200) : Promise.resolve([]))),
     initialData: [],
+    staleTime: 120000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 
   const { data: entregas = [] } = useQuery({
     queryKey: ["bi-entregas", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Entrega', {}, '-created_date', 9999) : base44.entities.Entrega.list('-created_date', 200)),
     initialData: [],
+    staleTime: 120000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ["bi-contasReceber", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('ContaReceber', {}, '-data_vencimento', 9999) : base44.entities.ContaReceber.list('-data_vencimento', 200)),
     initialData: [],
+    staleTime: 120000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 
   const { data: produtos = [] } = useQuery({
     queryKey: ["bi-produtos", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Produto', {}, '-created_date', 9999) : base44.entities.Produto.list('-created_date', 200)),
     initialData: [],
+    staleTime: 120000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 
   const { data: clientes = [] } = useQuery({
     queryKey: ["bi-clientes", empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Cliente', {}, '-created_date', 9999) : base44.entities.Cliente.list('-created_date', 200)),
     initialData: [],
+    staleTime: 120000,
+    gcTime: 600000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    retry: false,
   });
 
   // Filtrar por contexto empresa/grupo
