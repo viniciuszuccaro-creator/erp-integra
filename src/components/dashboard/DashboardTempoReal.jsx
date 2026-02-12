@@ -34,7 +34,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
   // Dados em tempo real
   const { data: kpis, isLoading, hasChanges } = useRealtimeKPIs(empresaIdFinal, 10000, groupIdFinal);
   const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5, groupIdFinal);
-  const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal, groupIdFinal);
+  const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal, groupIdFinal) || {};
 
   // Pulse visual quando atualizar
   useEffect(() => {
