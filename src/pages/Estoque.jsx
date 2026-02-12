@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import HeaderEstoqueCompacto from "@/components/estoque/estoque-launchpad/HeaderEstoqueCompacto";
 import KPIsEstoque from "@/components/estoque/estoque-launchpad/KPIsEstoque";
 import ModulosGridEstoque from "@/components/estoque/estoque-launchpad/ModulosGridEstoque";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useEstoqueDerivedData from "@/components/estoque/hooks/useEstoqueDerivedData";
 import TransferenciaEntreEmpresasForm from "../components/estoque/TransferenciaEntreEmpresasForm";
 
@@ -299,38 +300,44 @@ export default function Estoque() {
       <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-indigo-50">
         <HeaderEstoqueCompacto />
         
-        <KPIsEstoque
-          produtosAtivos={contagensTotais.total}
-          produtosBaixoEstoque={contagensTotais.estoqueBaixo}
-          totalReservado={totalReservado}
-          estoqueDisponivel={estoqueDisponivel}
-          produtosRevenda={contagensTotais.revenda}
-          produtosProducao={contagensTotais.producao}
-        />
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
+          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
+            <KPIsEstoque
+              produtosAtivos={contagensTotais.total}
+              produtosBaixoEstoque={contagensTotais.estoqueBaixo}
+              totalReservado={totalReservado}
+              estoqueDisponivel={estoqueDisponivel}
+              produtosRevenda={contagensTotais.revenda}
+              produtosProducao={contagensTotais.producao}
+            />
 
-        {estaNoGrupo && (
-          <Button
-            onClick={() => openWindow(TransferenciaEntreEmpresasForm, {
-              empresasDoGrupo,
-              produtos: produtosParaKPIs,
-              windowMode: true
-            }, {
-              title: '↔️ Transferência Entre Empresas',
-              width: 900,
-              height: 600
-            })}
-            className="bg-purple-600 hover:bg-purple-700 w-full"
-            size="sm"
-          >
-            <ArrowLeftRight className="w-3 h-3 mr-2" />
-            Transferir entre Empresas
-          </Button>
-        )}
-
-        <ModulosGridEstoque 
-          modules={allowedModules}
-          onModuleClick={handleModuleClick}
-        />
+            {estaNoGrupo && (
+              <Button
+                onClick={() => openWindow(TransferenciaEntreEmpresasForm, {
+                  empresasDoGrupo,
+                  produtos: produtosParaKPIs,
+                  windowMode: true
+                }, {
+                  title: '↔️ Transferência Entre Empresas',
+                  width: 900,
+                  height: 600
+                })}
+                className="bg-purple-600 hover:bg-purple-700 w-full mt-2"
+                size="sm"
+              >
+                <ArrowLeftRight className="w-3 h-3 mr-2" />
+                Transferir entre Empresas
+              </Button>
+            )}
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
+            <ModulosGridEstoque 
+              modules={allowedModules}
+              onModuleClick={handleModuleClick}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </ErrorBoundary>
     </ProtectedSection>
