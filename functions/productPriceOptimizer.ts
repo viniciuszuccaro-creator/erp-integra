@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Execução em lote (sem produto_id): processa N produtos por execução para evitar timeouts
+    // Execução em lote (sem produto_id): processa N produtos por execução para evitar timeouts // v2
     if (isBatch) {
       const limit = Math.min(Math.max(Number(payload?.limit) || 100, 1), 1000); // 1..1000
       const filtro = payload?.filter || {};
