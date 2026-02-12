@@ -57,7 +57,14 @@ Deno.serve(async (req) => {
     const res = await r.json();
 
     // log simples
-    await notify(base44, '📱 WhatsApp Enviado', `Para ${body.number}`, 'info', 'Sistema', 'Baixa');
+    await notify(base44, {
+      titulo: 'WhatsApp Enviado',
+      mensagem: `Para ${body.number}`,
+      tipo: 'info',
+      categoria: 'Sistema',
+      prioridade: 'Baixa',
+      empresa_id: empresaId || null
+    });
     await audit(base44, currentUser, { acao: 'Criação', modulo: 'Integrações', entidade: 'WhatsApp', descricao: `Texto enviado`, dados_novos: { numero: body.number, action } });
 
     return Response.json({ sucesso: true, messageId: res.key?.id, status: 'sent', modo: 'real' });
