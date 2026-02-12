@@ -62,15 +62,16 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
 /**
  * Hook para KPIs em tempo real
  */
-export function useRealtimeKPIs(empresaId, intervalo = 10000) {
+export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
   return useRealtimeData(
     ['kpis-realtime', empresaId],
     async () => {
+      const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
       const [pedidos, contas, ops, entregas] = await Promise.all([
-        base44.entities.Pedido.filter({ empresa_id: empresaId }),
-        base44.entities.ContaReceber.filter({ empresa_id: empresaId }),
-        base44.entities.OrdemProducao.filter({ empresa_id: empresaId }),
-        base44.entities.Entrega.filter({ empresa_id: empresaId })
+        base44.entities.Pedido.filter(filtroBase),
+        base44.entities.ContaReceber.filter(filtroBase),
+        base44.entities.OrdemProducao.filter(filtroBase),
+        base44.entities.Entrega.filter(filtroBase)
       ]);
 
       // Pedidos
@@ -156,10 +157,13 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000) {
 /**
  * Hook para Status de Pedidos em tempo real
  */
-export function useRealtimePedidos(empresaId, limite = 10) {
+export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
   return useRealtimeData(
     ['pedidos-realtime', empresaId],
-    () => base44.entities.Pedido.filter({ empresa_id: empresaId }, '-created_date', limite),
+    () => {
+      const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
+      return base44.entities.Pedido.filter(filtroBase, '-created_date', limite);
+    },
     { 
       refetchInterval: 8000,
       onUpdate: (novos, anteriores) => {
@@ -180,11 +184,12 @@ export function useRealtimePedidos(empresaId, limite = 10) {
 /**
  * Hook para Entregas em tempo real
  */
-export function useRealtimeEntregas(empresaId) {
+export function useRealtimeEntregas(empresaId, groupId = null) {
   return useRealtimeData(
     ['entregas-realtime', empresaId],
     async () => {
-      const entregas = await base44.entities.Entrega.filter({ empresa_id: empresaId }, '-created_date', 20);
+      const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
+      const entregas = await base44.entities.Entrega.filter(filtroBase, '-created_date', 20);
       
       // Entregas ativas (não finalizadas)
       return entregas.filter(e => 

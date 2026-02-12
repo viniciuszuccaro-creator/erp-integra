@@ -25,15 +25,15 @@ import { useContextoVisual } from '@/components/lib/useContextoVisual';
  */
 function DashboardTempoReal({ empresaId, windowMode = false }) {
   const [pulseActive, setPulseActive] = useState(false);
-  const { empresaAtual, estaNoGrupo, filtrarPorContexto } = useContextoVisual();
+  const { empresaAtual, estaNoGrupo, grupoAtual, filtrarPorContexto } = useContextoVisual();
   
   // Usar empresa do contexto se não fornecida
   const empresaIdFinal = empresaId || empresaAtual?.id;
   
   // Dados em tempo real
-  const { data: kpis, isLoading, hasChanges } = useRealtimeKPIs(empresaIdFinal, 10000);
-  const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5);
-  const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal);
+  const { data: kpis, isLoading, hasChanges } = useRealtimeKPIs(empresaIdFinal, 10000, groupIdFinal);
+  const { data: pedidosRecentes } = useRealtimePedidos(empresaIdFinal, 5, groupIdFinal);
+  const { data: entregasAtivas } = useRealtimeEntregas(empresaIdFinal, groupIdFinal);
 
   // Pulse visual quando atualizar
   useEffect(() => {
