@@ -6,8 +6,10 @@ import { sendEmail } from './_lib/notificationUtils.js';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (user?.role !== 'admin') { return Response.json({ error: 'Forbidden' }, { status: 403 }); }
+    let user = null;
+    try { user = await base44.auth.me(); } catch { user = null; }
+    const isScheduled = !user;
+    if (!isScheduled && user?.role !== 'admin') { return Response.json({ error: 'Forbidden' }, { status: 403 }); }
 
     // Janela de análise (minutos)
     // Filtros multiempresa opcionais via payload { filtros: { empresa_id?, group_id? } }
