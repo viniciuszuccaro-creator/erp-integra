@@ -31,7 +31,7 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
     queryFn,
     refetchInterval: enabled ? refetchInterval : false,
     refetchIntervalInBackground: true,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     staleTime: typeof refetchInterval === 'number' ? Math.max(0, refetchInterval - 1000) : 10000,
     enabled,
     ...otherOptions
@@ -86,10 +86,10 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
                 base44.entities.Entrega.list('-created_date', 50)
               ]
             : [
-                filterInContext('Pedido', {}, '-created_date', 9999),
-                filterInContext('ContaReceber', {}, '-data_vencimento', 9999),
-                base44.entities.OrdemProducao?.filter ? filterInContext('OrdemProducao', {}, '-data_emissao', 9999) : Promise.resolve([]),
-                filterInContext('Entrega', {}, '-created_date', 9999)
+                filterInContext('Pedido', {}, '-created_date', 200),
+                filterInContext('ContaReceber', {}, '-data_vencimento', 200),
+                base44.entities.OrdemProducao?.filter ? filterInContext('OrdemProducao', {}, '-data_emissao', 200) : Promise.resolve([]),
+                filterInContext('Entrega', {}, '-created_date', 200)
               ]
         );
 
