@@ -259,7 +259,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
             <Badge className="ml-auto bg-blue-600">Tempo Real</Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0 max-h-[420px] overflow-auto">
+        <CardContent className="p-0 max-h-[520px] md:max-h-[640px] overflow-auto">
           <div className="divide-y">
             <AnimatePresence>
               {pedidosRecentes?.map((pedido) => (
@@ -330,7 +330,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0 max-h-[420px] overflow-auto">
+          <CardContent className="p-0 max-h-[520px] md:max-h-[640px] overflow-auto">
             <div className="divide-y">
               <AnimatePresence>
                 {entregasAtivas.slice(0, 5).map((entrega) => (

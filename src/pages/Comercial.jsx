@@ -29,7 +29,7 @@ const MonitoramentoCanaisRealtime = React.lazy(() => import("@/components/comerc
 export default function Comercial() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
   const { openWindow, closeWindow } = useWindow();
-  const { filtrarPorContexto, getFiltroContexto, createInContext, updateInContext, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
+  const { filterInContext, getFiltroContexto, createInContext, updateInContext, empresaAtual, grupoAtual, estaNoGrupo } = useContextoVisual();
   const { user } = useUser();
   const queryClient = useQueryClient();
 
