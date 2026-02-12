@@ -29,6 +29,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
   
   // Usar empresa do contexto se não fornecida
   const empresaIdFinal = empresaId || empresaAtual?.id;
+  const groupIdFinal = estaNoGrupo ? (grupoAtual?.id || null) : null;
   
   // Dados em tempo real
   const { data: kpis, isLoading, hasChanges } = useRealtimeKPIs(empresaIdFinal, 10000, groupIdFinal);

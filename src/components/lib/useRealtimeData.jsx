@@ -64,7 +64,7 @@ export function useRealtimeData(queryKey, queryFn, options = {}) {
  */
 export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
   return useRealtimeData(
-    ['kpis-realtime', empresaId],
+    ['kpis-realtime', empresaId, groupId],
     async () => {
       const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
       const [pedidos, contas, ops, entregas] = await Promise.all([
@@ -102,7 +102,7 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
       // Expedição
       const entregasHoje = entregas.filter(e => {
         const hoje = new Date().toISOString().split('T')[0];
-        return e.data_prevista === hoje || e.data_entrega?.split('T')[0] === hoje;
+        return e.data_previsao === hoje || e.data_entrega?.split('T')[0] === hoje;
       });
 
       const entregasPendentes = entregasHoje.filter(e => 
@@ -159,7 +159,7 @@ export function useRealtimeKPIs(empresaId, intervalo = 10000, groupId = null) {
  */
 export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
   return useRealtimeData(
-    ['pedidos-realtime', empresaId],
+    ['pedidos-realtime', empresaId, groupId],
     () => {
       const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
       return base44.entities.Pedido.filter(filtroBase, '-created_date', limite);
@@ -186,7 +186,7 @@ export function useRealtimePedidos(empresaId, limite = 10, groupId = null) {
  */
 export function useRealtimeEntregas(empresaId, groupId = null) {
   return useRealtimeData(
-    ['entregas-realtime', empresaId],
+    ['entregas-realtime', empresaId, groupId],
     async () => {
       const filtroBase = empresaId ? { empresa_id: empresaId } : (groupId ? { group_id: groupId } : {});
       const entregas = await base44.entities.Entrega.filter(filtroBase, '-created_date', 20);
