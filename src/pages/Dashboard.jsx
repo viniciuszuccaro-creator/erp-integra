@@ -498,7 +498,7 @@ export default function Dashboard() {
         <DashboardTabsNav />
 
         <TabsContent value="tempo-real">
-          <PanelGroup direction="vertical" className="gap-2">
+          <PanelGroup direction="vertical" className="gap-2 min-h-[520px]">
             <Panel defaultSize={70} minSize={40}>
               {activeTab === 'tempo-real' && (
                 <Suspense fallback={<div className="h-40 rounded-md bg-slate-100 animate-pulse" />}>
