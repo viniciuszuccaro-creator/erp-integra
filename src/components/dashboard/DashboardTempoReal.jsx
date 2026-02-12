@@ -112,14 +112,14 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
       )}
 
       {/* Grid de KPIs */}
-      <div className="grid md:grid-cols-4 gap-4 auto-rows-fr">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
         {/* COMERCIAL */}
-        <motion.div
+        <motion.div className="h-full"
           initial={false}
           animate={hasChanges ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.3 }}
         >
-          <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+          <Card className="h-full border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-blue-700 flex items-center gap-2">
                 <Package className="w-4 h-4" />
@@ -146,12 +146,12 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
         </motion.div>
 
         {/* FINANCEIRO */}
-        <motion.div
+        <motion.div className="h-full"
           initial={false}
           animate={hasChanges ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.3 }}
         >
-          <Card className="border-2 border-green-200 bg-gradient-to-br from-green-50 to-white">
+          <Card className="h-full border-2 border-green-200 bg-gradient-to-br from-green-50 to-white">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
@@ -182,12 +182,12 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
         </motion.div>
 
         {/* PRODUÇÃO */}
-        <motion.div
+        <motion.div className="h-full"
           initial={false}
           animate={hasChanges ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.3 }}
         >
-          <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white">
+          <Card className="h-full border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-purple-700 flex items-center gap-2">
                 <Factory className="w-4 h-4" />
@@ -218,12 +218,12 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
         </motion.div>
 
         {/* EXPEDIÇÃO */}
-        <motion.div
+        <motion.div className="h-full"
           initial={false}
           animate={hasChanges ? { scale: [1, 1.02, 1] } : {}}
           transition={{ duration: 0.3 }}
         >
-          <Card className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-white">
+          <Card className="h-full border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-white">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-orange-700 flex items-center gap-2">
                 <Truck className="w-4 h-4" />

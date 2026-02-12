@@ -246,8 +246,8 @@ function DashboardOperacionalBI({ windowMode = false }) {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="border-0 shadow-md bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-xl transition-all">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-stretch">
+        <Card className="border-0 shadow-md h-full bg-gradient-to-br from-blue-500 to-blue-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -262,7 +262,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-green-500 to-green-600 text-white hover:shadow-xl transition-all">
+        <Card className="border-0 shadow-md h-full bg-gradient-to-br from-green-500 to-green-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -275,7 +275,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:shadow-xl transition-all">
+        <Card className="border-0 shadow-md h-full bg-gradient-to-br from-purple-500 to-purple-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -288,7 +288,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:shadow-xl transition-all">
+        <Card className="border-0 shadow-md h-full bg-gradient-to-br from-orange-500 to-orange-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -301,7 +301,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-red-500 to-red-600 text-white hover:shadow-xl transition-all">
+        <Card className="border-0 shadow-md h-full bg-gradient-to-br from-red-500 to-red-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -314,7 +314,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-indigo-500 to-indigo-600 text-white hover:shadow-xl transition-all">
+        <Card className="border-0 shadow-md h-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -327,7 +327,7 @@ function DashboardOperacionalBI({ windowMode = false }) {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-md bg-gradient-to-br from-cyan-500 to-cyan-600 text-white hover:shadow-xl transition-all">
+        <Card className="border-0 shadow-md h-full bg-gradient-to-br from-cyan-500 to-cyan-600 text-white hover:shadow-xl transition-all">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
