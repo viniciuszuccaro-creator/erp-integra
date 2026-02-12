@@ -68,7 +68,7 @@ function DashboardTempoReal({ empresaId, windowMode = false }) {
 
   return (
     <div className={`${containerClass} min-h-[500px]`}>
-      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6 overflow-auto"}>
+      <div className={windowMode ? "p-6 space-y-6 flex-1 overflow-auto" : "space-y-6"}>
       {/* Header com Status */}
       <Alert className="border-green-300 bg-green-50">
         <Activity className={`w-5 h-5 text-green-600 ${pulseActive ? 'animate-pulse' : ''}`} />
