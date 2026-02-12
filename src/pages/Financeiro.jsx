@@ -13,6 +13,7 @@ import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunc
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
 import InsightsFinanceirosCompacto from "@/components/financeiro/InsightsFinanceirosCompacto";
 import ModulosGridFinanceiro from "@/components/financeiro/ModulosGridFinanceiro";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useFinanceiroDerivedData from "@/components/financeiro/hooks/useFinanceiroDerivedData";
 
 const CaixaCentralLiquidacao = React.lazy(() => import("../components/financeiro/CaixaCentralLiquidacao"));
@@ -392,44 +393,50 @@ export default function Financeiro() {
           empresaAtual={empresaAtual}
         />
 
-        <KPIsFinanceiroLaunchpad
-          receberPendente={receberPendente}
-          pagarPendente={pagarPendente}
-          saldo={saldo}
-          contasReceberVencidas={contasReceberVencidas}
-          contasPagarVencidas={contasPagarVencidas}
-        />
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[700px]">
+          <ResizablePanel defaultSize={50} minSize={30} className="overflow-auto">
+            <KPIsFinanceiroLaunchpad
+              receberPendente={receberPendente}
+              pagarPendente={pagarPendente}
+              saldo={saldo}
+              contasReceberVencidas={contasReceberVencidas}
+              contasPagarVencidas={contasPagarVencidas}
+            />
 
-        <MetricasSecundariasLaunchpad
-          titulosComBoleto={titulosComBoleto}
-          titulosComPix={titulosComPix}
-          empresasComGateway={empresasComGateway}
-          rateiosCount={rateios.length}
-          extratosNaoConciliados={extratosNaoConciliados}
-          valorNaoConciliado={valorNaoConciliado}
-          ordensLiquidacaoPendentes={ordensLiquidacaoPendentes}
-          totalPendentesAprovacao={totalPendentesAprovacao}
-        />
+            <MetricasSecundariasLaunchpad
+              titulosComBoleto={titulosComBoleto}
+              titulosComPix={titulosComPix}
+              empresasComGateway={empresasComGateway}
+              rateiosCount={rateios.length}
+              extratosNaoConciliados={extratosNaoConciliados}
+              valorNaoConciliado={valorNaoConciliado}
+              ordensLiquidacaoPendentes={ordensLiquidacaoPendentes}
+              totalPendentesAprovacao={totalPendentesAprovacao}
+            />
 
-        <InsightsFinanceirosCompacto 
-          saldo={saldo}
-          contasVencidas={contasReceberVencidas + contasPagarVencidas}
-          scoreIA={85}
-          automacaoAtiva={true}
-        />
+            <InsightsFinanceirosCompacto 
+              saldo={saldo}
+              contasVencidas={contasReceberVencidas + contasPagarVencidas}
+              scoreIA={85}
+              automacaoAtiva={true}
+            />
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={50} minSize={30} className="overflow-auto">
+            <ModulosGridFinanceiro 
+              modules={allowedAllModules}
+              onModuleClick={handleModuleClick}
+            />
 
-        <ModulosGridFinanceiro 
-          modules={allowedAllModules}
-          onModuleClick={handleModuleClick}
-        />
-
-        <div className="p-1.5 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg min-h-[28px] max-h-[28px]">
-          <div className="flex items-center gap-1.5 text-xs text-blue-700">
-            <Zap className="w-3 h-3 flex-shrink-0" />
-            <span className="font-semibold">V22.0:</span>
-            <span className="truncate">Janelas independentes • Compacto • Estável • 100%</span>
-          </div>
-        </div>
+            <div className="p-1.5 mt-2 bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg min-h-[28px] max-h-[28px]">
+              <div className="flex items-center gap-1.5 text-xs text-blue-700">
+                <Zap className="w-3 h-3 flex-shrink-0" />
+                <span className="font-semibold">V22.0:</span>
+                <span className="truncate">Janelas independentes • Compacto • Estável • 100%</span>
+              </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </ErrorBoundary>
     </ProtectedSection>

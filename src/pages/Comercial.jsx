@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import HeaderComercialCompacto from "@/components/comercial/comercial-launchpad/HeaderComercialCompacto";
 import KPIsComercial from "@/components/comercial/comercial-launchpad/KPIsComercial";
 import ModulosGridComercial from "@/components/comercial/comercial-launchpad/ModulosGridComercial";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import useComercialDerivedData from "@/components/comercial/hooks/useComercialDerivedData";
 
 const ClientesTab = React.lazy(() => import("../components/comercial/ClientesTab"));
@@ -390,25 +391,31 @@ export default function Comercial() {
       <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderComercialCompacto />
         
-        <KPIsComercial
-          totalClientes={clientesFiltrados.length}
-          clientesAtivos={clientesAtivos}
-          totalPedidos={pedidosFiltrados.length}
-          totalVendas={totalVendas}
-          ticketMedio={ticketMedio}
-        />
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
+          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
+            <KPIsComercial
+              totalClientes={clientesFiltrados.length}
+              clientesAtivos={clientesAtivos}
+              totalPedidos={pedidosFiltrados.length}
+              totalVendas={totalVendas}
+              ticketMedio={ticketMedio}
+            />
 
-        {pedidosExternosPendentes > 0 && (
-          <Badge className="bg-orange-100 text-orange-700 px-3 py-1.5 w-full justify-center">
-            <AlertCircle className="w-3 h-3 mr-2" />
-            {pedidosExternosPendentes} pedido(s) externo(s) a validar
-          </Badge>
-        )}
-
-        <ModulosGridComercial 
-          modules={allowedModules}
-          onModuleClick={handleModuleClick}
-        />
+            {pedidosExternosPendentes > 0 && (
+              <Badge className="bg-orange-100 text-orange-700 px-3 py-1.5 w-full justify-center">
+                <AlertCircle className="w-3 h-3 mr-2" />
+                {pedidosExternosPendentes} pedido(s) externo(s) a validar
+              </Badge>
+            )}
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
+            <ModulosGridComercial 
+              modules={allowedModules}
+              onModuleClick={handleModuleClick}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
     </ErrorBoundary>
     </ProtectedSection>
