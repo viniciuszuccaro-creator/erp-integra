@@ -4,6 +4,7 @@ import { computeMovements, persistMovements, buildFinalizePatch } from './_lib/i
 import { handleApplyInventoryAdjustments } from './_lib/inventario/applyAdjustmentsHandler.js';
 import { resolveEntityIdFromPayload, isApprovedStatus } from './_lib/validationUtils.js';
 import { stockAudit } from './_lib/estoque/auditUtils.js';
+import { notify } from './_lib/notificationService.js';
 
 Deno.serve(async (req) => {
   try {
@@ -44,6 +45,17 @@ Deno.serve(async (req) => {
       empresa_id: inv?.empresa_id || null,
       dados_novos: { movimentos_count }
     }, meta);
+
+    // Notificação leve para o NotificationCenter (multiempresa)
+    await notify(base44, {
+      titulo: 'Inventário: Ajustes Aplicados',
+      mensagem: `${movimentos_count} movimentação(ões) de estoque geradas a partir do inventário`,
+      tipo: 'info',
+      categoria: 'Estoque',
+      prioridade: 'Normal',
+      empresa_id: inv?.empresa_id || null,
+      dados: { inventario_id, movimentos_count }
+    });
 
     return Response.json({ ok: true, movimentos_count });
   } catch (e) {
