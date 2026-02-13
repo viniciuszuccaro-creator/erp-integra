@@ -98,7 +98,19 @@ export default function EmpresaSwitcher() {
     enabled: !!user,
   });
 
-  if (isLoading || !user) {
+   // Filtro e ordenação local de empresas (UX)
+   const empresasListadas = (empresasDisponiveis || [])
+     .filter((e) => {
+       if (!termo) return true;
+       const t = termo.toLowerCase();
+       return (
+         (e.nome_fantasia || e.razao_social || "").toLowerCase().includes(t) ||
+         (e.cnpj || "").toLowerCase().includes(t)
+       );
+     })
+     .sort((a, b) => (a.nome_fantasia || a.razao_social || "").localeCompare(b.nome_fantasia || b.razao_social || ""));
+
+   if (isLoading || !user) {
     return (
       <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg animate-pulse">
         <div className="w-32 h-8 bg-slate-200 rounded"></div>
