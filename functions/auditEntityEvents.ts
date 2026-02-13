@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
       descricao: `Evento ${type} em ${entidade} (risco: ${risk.level})`,
       empresa_id: empresa_id || undefined,
       dados_anteriores: type !== 'create' ? safeTrimPayload(previousData || null) : null,
-      dados_novos: type !== 'delete' ? { ...safeTrimPayload(recordData || null), __risk: risk, __risk_ia: iaRisk || null } : null,
+      dados_novos: type !== 'delete' ? { ...safeTrimPayload(recordData || null), __risk: risk, __risk_ia: iaRisk || null, group_id: group_id || null } : null,
       data_hora: new Date().toISOString(),
       ip_address: ip,
       user_agent: userAgent,
