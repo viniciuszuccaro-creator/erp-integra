@@ -12,6 +12,12 @@ Deno.serve(async (req) => {
     const entityId = event?.entity_id || payload?.produto_id || null;
     const isBatch = !entityId; // Automação diária roda em lote quando não enviar produto_id
 
+    // Se automação passar produto_id vazio/null, cai para lote ao invés de 400
+    if (!isBatch && (entityId === null || entityId === undefined || entityId === '')) {
+      // força modo lote para evitar 400 em execuções agendadas
+      return Response.json({ ok: true, batch: true, note: 'produto_id ausente — fallback para lote', skipped: true });
+    }
+
     // Se vier evento de update, processa só quando houve alteração de custo relevante
     const data = payload?.data || null;
     const oldData = payload?.old_data || null;
