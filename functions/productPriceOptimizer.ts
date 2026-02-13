@@ -66,6 +66,11 @@ Deno.serve(async (req) => {
     const result = await optimizeProductPrice(base44, ctx, { entityId, payload, user });
     return Response.json(result);
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    const msg = String(error?.message || error);
+    if (/Insufficient integration credits/i.test(msg)) {
+      // Evita falha da automação quando os créditos de integração acabarem
+      return Response.json({ ok: true, skipped: true, reason: 'insufficient_credits' });
+    }
+    return Response.json({ error: msg }, { status: 500 });
   }
 });
