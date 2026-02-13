@@ -78,14 +78,14 @@ Deno.serve(async (req) => {
       if (isMutation && sensitive && mode === 'block' && (highBaseline || highIa)) {
         // Audit + notify, depois bloquear
         await audit(base44, user, {
-          acao: 'Bloqueio',
-          modulo: moduleName || entity,
-          entidade: entity,
-          registro_id: id || null,
-          descricao: `RBAC dinâmico bloqueou ${op} por risco elevado (baseline=${preRisk?.level || '-'}, ia=${preIaRisk?.level || preIaRisk?.score || '-'})`,
-          empresa_id: (data?.empresa_id || null),
-          dados_novos: { tentativa: { entity, op, id, data }, __risk: preRisk, __risk_ia: preIaRisk }
-        }, meta);
+              acao: 'Bloqueio',
+              modulo: moduleName || entity,
+              entidade: entity,
+              registro_id: id || null,
+              descricao: `RBAC dinâmico bloqueou ${op} por risco elevado (baseline=${preRisk?.level || '-'}, ia=${preIaRisk?.level || preIaRisk?.score || '-'})`,
+              empresa_id: (data?.empresa_id || null),
+              dados_novos: { tentativa: { entity, op, id, data }, __risk: preRisk, __risk_ia: preIaRisk, _meta: meta }
+            }, meta);
         try {
           await notify(base44, {
             titulo: 'Ação Bloqueada por Segurança',
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       registro_id: id || (result?.id ?? null),
       descricao: `entityGuard ${op} ${entity} (risco: ${risk.level})`,
       empresa_id: (data?.empresa_id || null),
-      dados_novos: op !== 'read' ? { ...(data || null), __risk: risk, __risk_ia: iaRisk || null } : null
+      dados_novos: op !== 'read' ? { ...(data || null), __risk: risk, __risk_ia: iaRisk || null, _meta: meta } : null
     }, meta);
 
     const isPilotEntity = entity === 'Produto' || entity === 'ContaPagar' || entity === 'ContaReceber' || entity === 'Pedido' || entity === 'NotaFiscal';
