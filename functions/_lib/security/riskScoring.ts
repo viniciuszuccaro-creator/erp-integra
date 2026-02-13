@@ -12,6 +12,7 @@ export function computeRisk({ event, data, ip, userAgent }) {
   if (offHours) { score += 1; tags.push('off_hours'); }
   if (tipo === 'delete') { score += 2; tags.push('delete'); }
   if (['ContaPagar','ContaReceber','NotaFiscal'].includes(entidade)) { score += 2; tags.push('financeiro'); }
+  if (['Pedido'].includes(entidade)) { score += 1; tags.push('comercial'); }
   if (userAgent && /bot|crawler|scraper/i.test(userAgent)) { score += 1; tags.push('ua_suspeito'); }
   if (ip && /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(ip) === false) { score += 1; tags.push('ip_externo'); }
 
