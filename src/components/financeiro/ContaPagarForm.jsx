@@ -80,25 +80,16 @@ export default function ContaPagarForm({ conta, onSubmit, isSubmitting, windowMo
     queryFn: () => filterInContext('PlanoDeContas', {}, '-updated_date', 9999),
   });
 
-  const handleSubmit = async () => {
-    const parsed = contaPagarSchema.safeParse({
-      ...formData,
-      valor: Number(formData.valor) || 0,
-    });
-    if (!parsed.success) {
-      const issues = parsed.error.issues || [];
-      setErrorMessages(issues.map(i => i.message).filter(Boolean));
-      const msg = issues[0]?.message || 'Dados inválidos';
-      toast.error(msg);
-      return;
-    }
+  // Recebe payload já validado e carimbado pelo FormWrapper quando externalData é usado
+  const handleSubmit = async (payload) => {
     setErrorMessages([]);
-    onSubmit(carimbarContexto({
-      ...formData,
-      valor: Number(formData.valor) || 0,
+    const enriched = {
+      ...payload,
+      valor: Number(payload?.valor) || 0,
       criado_por: authUser?.full_name || authUser?.email,
       criado_por_id: authUser?.id
-    }, 'empresa_id'));
+    };
+    onSubmit(enriched);
   };
 
   const content = (
