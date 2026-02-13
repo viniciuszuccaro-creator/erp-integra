@@ -30,14 +30,15 @@ export async function optimizeProductPrice(base44, ctx, { entityId, payload, use
     return { success: true, skipped: true, reason: 'missing_api_url' };
   }
 
-  let quotes = [];
+  let quotes = null;
   let quoteSource = cfg?.fonte_cotacoes || 'nenhuma';
-  try {
-    quotes = await fetchExternalQuotes(cfg, context, produto);
-  } catch (e) {
-    // Fallback quando integrações externas falharem (ex.: créditos insuficientes)
-    quotes = [];
-    quoteSource = 'fallback_sem_cotacoes';
+  if (cfg?.fonte_cotacoes === 'externa') {
+    try {
+      quotes = await fetchExternalQuotes(cfg, context, produto);
+    } catch (e) {
+      quotes = null; // sem cotações quando falhar
+      quoteSource = 'fallback_sem_cotacoes';
+    }
   }
 
   // Cálculo determinístico com cotações; fallback para heurística baseada em custo
@@ -71,7 +72,7 @@ export async function optimizeProductPrice(base44, ctx, { entityId, payload, use
       modulo: 'Comercial',
       entidade: 'Produto',
       registro_id: entityId,
-      descricao: 'Preço e margem otimizados (cotações externas + políticas)',
+      descricao: 'Preço/margem otimizados (políticas internas/externas)',
       dados_novos: { ...patch, fonte_cotacoes: quoteSource },
       empresa_id: produto?.empresa_id || null,
       duracao_ms: Date.now() - t0,

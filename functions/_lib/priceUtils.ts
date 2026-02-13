@@ -64,7 +64,7 @@ export async function getTabelaPrecosIAConfig(base44, empresaId = null) {
     // Stub/config padrão multiempresa (seguro e não-invasivo)
     return {
       habilitado: true,
-      fonte_cotacoes: 'mock', // padrão: não chama API externa
+      fonte_cotacoes: 'internas', // políticas internas (sem cotações externas)
       markup_minimo_percentual: 12,
       politicas_precificacao: [],
       empresas_habilitadas: null,
