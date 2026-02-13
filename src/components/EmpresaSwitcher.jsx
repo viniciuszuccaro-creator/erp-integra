@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { Building2, Users, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import useContextoGrupoEmpresa from "@/components/lib/useContextoGrupoEmpresa";
 
 /**
@@ -33,6 +34,7 @@ export default function EmpresaSwitcher() {
   } = useContextoGrupoEmpresa();
 
   const [open, setOpen] = useState(false);
+  const [termo, setTermo] = useState("");
 
   // Buscar grupos disponíveis para o usuário
   const { data: gruposDisponiveis = [] } = useQuery({
@@ -127,7 +129,7 @@ export default function EmpresaSwitcher() {
   return (
     <div className="relative">
       <Select value={valorAtual} onValueChange={handleSelecaoContexto} open={open} onOpenChange={setOpen}>
-        <SelectTrigger className="w-[280px] bg-white border-slate-300 hover:bg-slate-50 transition-colors">
+        <SelectTrigger className="w-64 md:w-72 lg:w-[280px] bg-white border-slate-300 hover:bg-slate-50 transition-colors">
           <div className="flex items-center gap-2 w-full">
             {contexto === 'grupo' ? (
               <Users className="w-4 h-4 text-blue-600" />
@@ -146,7 +148,15 @@ export default function EmpresaSwitcher() {
           </div>
         </SelectTrigger>
         
-        <SelectContent className="w-[280px]">
+        <SelectContent className="w-64 md:w-72 lg:w-[280px]">
+           <div className="p-2 sticky top-0 bg-white border-b border-slate-200">
+             <Input
+               value={termo}
+               onChange={(e) => setTermo(e.target.value)}
+               placeholder="Buscar empresa por nome ou CNPJ..."
+               className="h-8 text-sm"
+             />
+           </div>
           {/* GRUPOS DISPONÍVEIS */}
           {podeOperarEmGrupo && gruposDisponiveis.length > 0 && (
             <SelectGroup>
@@ -175,13 +185,13 @@ export default function EmpresaSwitcher() {
           )}
 
           {/* EMPRESAS DISPONÍVEIS */}
-          {empresasDisponiveis.length > 0 && (
+          {empresasListadas.length > 0 && (
             <SelectGroup>
               <SelectLabel className="flex items-center gap-2 text-xs font-semibold text-slate-600 uppercase mt-2">
                 <Building2 className="w-4 h-4" />
                 Empresas / Filiais
               </SelectLabel>
-              {empresasDisponiveis.map((empresa) => (
+              {empresasListadas.map((empresa) => (
                 <SelectItem 
                   key={`empresa:${empresa.id}`} 
                   value={`empresa:${empresa.id}`}
