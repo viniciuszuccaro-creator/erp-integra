@@ -1,13 +1,37 @@
 export async function loadAnomalyConfig(base44) {
   try {
     const cfgs = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({ categoria: 'Financeiro', chave: 'anomalias_financeiras' }, '-updated_date', 1);
-    const cfg = Array.isArray(cfgs) && cfgs.length ? cfgs[0] : null;
+    const rec = Array.isArray(cfgs) && cfgs.length ? cfgs[0] : null;
+    const fin = rec?.configuracoes_financeiras || {};
+    const anomaly = fin.anomaly || {};
+    const alerts = fin.alerts || {};
+
     return {
-      limiar_atraso_dias: Number(cfg?.limiar_atraso_dias ?? 1),
-      bloquear_valor_negativo: cfg?.permitir_valor_negativo !== true,
+      finance: {
+        anomaly: {
+          zscore_threshold: Number(anomaly.zscore_threshold ?? 3),
+          iqr_multiplier: Number(anomaly.iqr_multiplier ?? 1.5),
+          mad_multiplier: Number(anomaly.mad_multiplier ?? 3),
+        },
+        alerts: {
+          whatsapp: {
+            enabled: alerts?.whatsapp?.enabled === true,
+            to: alerts?.whatsapp?.to || null,
+          },
+        },
+      },
+      limiar_atraso_dias: Number(anomaly.limiar_atraso_dias ?? 1),
+      bloquear_valor_negativo: (anomaly.bloquear_valor_negativo !== false),
     };
   } catch (_) {
-    return { limiar_atraso_dias: 1, bloquear_valor_negativo: true };
+    return {
+      finance: {
+        anomaly: { zscore_threshold: 3, iqr_multiplier: 1.5, mad_multiplier: 3 },
+        alerts: { whatsapp: { enabled: false, to: null } },
+      },
+      limiar_atraso_dias: 1,
+      bloquear_valor_negativo: true,
+    };
   }
 }
 

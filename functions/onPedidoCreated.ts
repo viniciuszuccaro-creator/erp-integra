@@ -5,6 +5,7 @@ import { ensureEventType } from './_lib/validationUtils.js';
 import { handleOnPedidoCreated } from './_lib/pedido/onPedidoCreatedHandler.js';
 import { stockAudit } from './_lib/estoque/auditUtils.js';
 import { notify } from './_lib/notificationService.js';
+import { emitPedidoMovementsGenerated } from './_lib/pedido/pedidoEvents.js';
 
 Deno.serve(async (req) => {
   try {
@@ -37,16 +38,8 @@ Deno.serve(async (req) => {
       dados_novos: { quantidade_movimentos: Array.isArray(movimentos) ? movimentos.length : (movimentos?.length || 0) }
     }, meta);
 
-    // Notificação leve para o NotificationCenter (multiempresa)
-    await notify(base44, {
-      titulo: 'Pedido Criado: Movimentações Geradas',
-      mensagem: `Foram geradas ${Array.isArray(movimentos) ? movimentos.length : (movimentos?.length || 0)} movimentação(ões) de estoque.`,
-      tipo: 'info',
-      categoria: 'Estoque',
-      prioridade: 'Normal',
-      empresa_id: data?.empresa_id || null,
-      dados: { pedido_id: data?.id, numero_pedido: data?.numero_pedido, movimentos }
-    });
+    // Notificação leve via helper centralizado (multiempresa)
+    await emitPedidoMovementsGenerated(base44, { pedido: data, movimentos, validation: null });
 
     return Response.json({ ok: true, movimentos });
   } catch (e) {
