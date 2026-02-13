@@ -114,22 +114,23 @@ export default function PedidoForm({ clientes = [], onSubmit, isSubmitting }) {
 
   const calculateTotal = () => (itens || []).reduce((sum, i) => sum + (Number(i?.valor_total) || 0), 0);
 
-  const onSubmitForm = handleSubmit((data) => {
-    const payload = { ...data, valor_total: calculateTotal() };
-    const stamped = carimbarContexto(payload, "empresa_id");
-    onSubmit(stamped);
-  });
+  const allValues = watch();
+
+  const handleFormWrapperSubmit = (data) => {
+      const total = (data?.itens || []).reduce((sum, i) => sum + (Number(i?.valor_total) || 0), 0);
+      const stamped = carimbarContexto({ ...data, valor_total: total }, "empresa_id");
+      onSubmit(stamped);
+  };
 
   return (
-    <FormWrapper schema={pedidoSchema} defaultValues={defaultValues} onSubmit={onSubmitForm} externalData={{ itens }} className="space-y-6 w-full h-full">
-      <FormErrorSummary messages={Object.values(errors || {}).map(e => e?.message).filter(Boolean)} />
-      <DetalhesPedidoHeader
-        control={control}
-        register={register}
-        setValue={setValue}
-        errors={errors}
-        clientes={clientes}
-      />
+      <FormWrapper schema={pedidoSchema} defaultValues={defaultValues} onSubmit={handleFormWrapperSubmit} externalData={allValues} className="space-y-6 w-full h-full">
+        <DetalhesPedidoHeader
+          control={control}
+          register={register}
+          setValue={setValue}
+          errors={errors}
+          clientes={clientes}
+        />
 
       <div>
         <PedidoItensEditor
