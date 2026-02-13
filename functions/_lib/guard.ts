@@ -122,6 +122,20 @@ export function assertContextPresence({ empresa_id, group_id }, requireEmpresa =
   return null;
 }
 
+// Extrai metadados úteis para auditoria/telemetria a partir da requisição
+export function extractRequestMeta(req) {
+  try {
+    const headers = req?.headers || new Headers();
+    const ipHeader = headers.get('x-forwarded-for') || headers.get('x-real-ip') || headers.get('cf-connecting-ip');
+    const ip = ipHeader ? String(ipHeader).split(',')[0].trim() : null;
+    const user_agent = headers.get('user-agent') || null;
+    const request_id = headers.get('x-request-id') || headers.get('cf-ray') || null;
+    return { ip, user_agent, request_id };
+  } catch (_) {
+    return { ip: null, user_agent: null, request_id: null };
+  }
+}
+
 export async function audit(base44, user, { acao = 'Ação', modulo = 'Sistema', entidade = '-', registro_id = null, descricao = '', dados_novos = null }) {
   try {
     await base44.asServiceRole.entities.AuditLog.create({

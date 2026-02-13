@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
+import { getUserAndPerfil, assertPermission, assertContextPresence, extractRequestMeta } from './_lib/guard.js';
 import { processReservas } from './_lib/orderReservationUtils.js';
 import { ensureEventType } from './_lib/validationUtils.js';
 import { handleOnPedidoCreated } from './_lib/pedido/onPedidoCreatedHandler.js';
@@ -11,10 +11,15 @@ Deno.serve(async (req) => {
     const ctx = await getUserAndPerfil(base44);
     const user = ctx.user;
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const meta = extractRequestMeta(req);
 
     const body = await req.json();
     const { event, data } = body || {};
     if (!ensureEventType(event, 'create') || !data) return Response.json({ ok: true, skipped: true });
+    {
+      const ctxErr = assertContextPresence(data, true);
+      if (ctxErr) return ctxErr;
+    }
 
     // Permissão: editar estoque e criar movimentação
     const perm = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
@@ -28,7 +33,7 @@ Deno.serve(async (req) => {
       registro_id: data?.id || null,
       descricao: 'Movimentações geradas a partir de Pedido criado',
       empresa_id: data?.empresa_id || null,
-      dados_novos: { quantidade_movimentos: Array.isArray(movimentos) ? movimentos.length : (movimentos?.length || 0) }
+      dados_novos: { quantidade_movimentos: Array.isArray(movimentos) ? movimentos.length : (movimentos?.length || 0), _meta: meta }
     });
 
     return Response.json({ ok: true, movimentos });

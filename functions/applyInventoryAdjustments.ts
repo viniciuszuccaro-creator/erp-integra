@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
+import { getUserAndPerfil, assertPermission, assertContextPresence, extractRequestMeta } from './_lib/guard.js';
 import { computeMovements, persistMovements, buildFinalizePatch } from './_lib/inventoryUtils.js';
 import { handleApplyInventoryAdjustments } from './_lib/inventario/applyAdjustmentsHandler.js';
 import { resolveEntityIdFromPayload, isApprovedStatus } from './_lib/validationUtils.js';
@@ -11,6 +11,7 @@ Deno.serve(async (req) => {
     const ctx = await getUserAndPerfil(base44);
     const user = ctx.user;
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const meta = extractRequestMeta(req);
 
     const payload = await req.json();
     const event = payload?.event;
@@ -27,6 +28,10 @@ Deno.serve(async (req) => {
 
     const inv = await base44.asServiceRole.entities.Inventario.get(inventario_id);
     if (!inv) return Response.json({ error: 'Inventário não encontrado' }, { status: 404 });
+    {
+      const ctxErr = assertContextPresence(inv, true);
+      if (ctxErr) return ctxErr;
+    }
 
     const { movimentos_count, skipped } = await handleApplyInventoryAdjustments(base44, ctx, { ...inv, id: inventario_id }, user);
     if (skipped) return Response.json({ ok: true, skipped: true });
@@ -37,7 +42,7 @@ Deno.serve(async (req) => {
       registro_id: inventario_id,
       descricao: 'Ajustes de inventário aplicados',
       empresa_id: inv?.empresa_id || null,
-      dados_novos: { movimentos_count }
+      dados_novos: { movimentos_count, _meta: meta }
     });
 
     return Response.json({ ok: true, movimentos_count });
