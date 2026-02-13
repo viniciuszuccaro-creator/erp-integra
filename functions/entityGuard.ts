@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, backendHasPermission, assertContextPresence, audit } from './_lib/guard.js';
+import { getUserAndPerfil, backendHasPermission, assertContextPresence, audit, extractRequestMeta } from './_lib/guard.js';
 import { notify } from './_lib/notificationService.js';
 import { computeRisk } from './_lib/security/riskScoring.js';
 import { assessActionRisk } from './_lib/security/iaAccessRiskAssessor.js';
@@ -17,8 +17,9 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { entity, op = 'read', data = null, id = null, filtros = {}, module: moduleName, section } = body || {};
 
-    const userAgent = req.headers.get('user-agent') || '';
-    const ip = req.headers.get('x-forwarded-for') || req.headers.get('cf-connecting-ip') || req.headers.get('x-real-ip') || '';
+    const meta = extractRequestMeta(req);
+    const userAgent = meta.user_agent || '';
+    const ip = meta.ip || '';
     if (!entity || !op) return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
 
     // RBAC
@@ -82,8 +83,9 @@ Deno.serve(async (req) => {
           entidade: entity,
           registro_id: id || null,
           descricao: `RBAC dinâmico bloqueou ${op} por risco elevado (baseline=${preRisk?.level || '-'}, ia=${preIaRisk?.level || preIaRisk?.score || '-'})`,
+          empresa_id: (data?.empresa_id || null),
           dados_novos: { tentativa: { entity, op, id, data }, __risk: preRisk, __risk_ia: preIaRisk }
-        });
+        }, meta);
         try {
           await notify(base44, {
             titulo: 'Ação Bloqueada por Segurança',
@@ -121,8 +123,9 @@ Deno.serve(async (req) => {
       entidade: entity,
       registro_id: id || (result?.id ?? null),
       descricao: `entityGuard ${op} ${entity} (risco: ${risk.level})`,
+      empresa_id: (data?.empresa_id || null),
       dados_novos: op !== 'read' ? { ...(data || null), __risk: risk, __risk_ia: iaRisk || null } : null
-    });
+    }, meta);
 
     const isPilotEntity = entity === 'Produto' || entity === 'ContaPagar' || entity === 'ContaReceber';
     if (isPilotEntity && (risk?.level === 'Crítico' || risk?.level === 'Alto')) {
