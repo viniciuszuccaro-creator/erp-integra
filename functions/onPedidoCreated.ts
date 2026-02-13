@@ -33,8 +33,8 @@ Deno.serve(async (req) => {
       registro_id: data?.id || null,
       descricao: 'Movimentações geradas a partir de Pedido criado',
       empresa_id: data?.empresa_id || null,
-      dados_novos: { quantidade_movimentos: Array.isArray(movimentos) ? movimentos.length : (movimentos?.length || 0), _meta: meta }
-    });
+      dados_novos: { quantidade_movimentos: Array.isArray(movimentos) ? movimentos.length : (movimentos?.length || 0) }
+    }, meta);
 
     return Response.json({ ok: true, movimentos });
   } catch (e) {

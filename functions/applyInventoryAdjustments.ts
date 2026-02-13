@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
       registro_id: inventario_id,
       descricao: 'Ajustes de inventário aplicados',
       empresa_id: inv?.empresa_id || null,
-      dados_novos: { movimentos_count, _meta: meta }
-    });
+      dados_novos: { movimentos_count }
+    }, meta);
 
     return Response.json({ ok: true, movimentos_count });
   } catch (e) {
