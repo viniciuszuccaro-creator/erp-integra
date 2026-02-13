@@ -5,7 +5,7 @@ import { computeRisk } from './_lib/security/riskScoring.js';
 import { assessActionRisk } from './_lib/security/iaAccessRiskAssessor.js';
 
 // entityGuard: valida RBAC e multiempresa para operações CRUD genéricas de entidades sensíveis
-// Payload: { entity, op: 'create'|'update'|'delete'|'read', data?, id?, filtros? , module, section }
+// Payload: { entity, op: 'create'|'update'|'delete'|'read', data?, id?, filtros? , module, section, _automation? }
 // Use este endpoint em formulários críticos via SDK em vez de chamar entities.* diretamente
 
 Deno.serve(async (req) => {
@@ -15,12 +15,13 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    const { entity, op = 'read', data = null, id = null, filtros = {}, module: moduleName, section } = body || {};
+    const { entity, op = 'read', data = null, id = null, filtros = {}, module: moduleName, section, _automation = false } = body || {};
 
     const meta = extractRequestMeta(req);
     const userAgent = meta.user_agent || '';
     const ip = meta.ip || '';
-    // Scheduler ping without payload -> healthcheck OK
+
+    // Healthcheck para automação agendada sem payload
     if (!entity) {
       try {
         await audit(base44, user, {
@@ -33,6 +34,7 @@ Deno.serve(async (req) => {
       } catch (_) {}
       return Response.json({ ok: true, status: 'healthy' });
     }
+
     if (!op) return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
 
     // RBAC
