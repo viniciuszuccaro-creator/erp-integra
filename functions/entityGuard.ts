@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
 
     // Pre‑checagem de risco (RBAC dinâmico com bloqueio condicional)
     const api = base44.asServiceRole.entities[entity];
-    const sensitive = entity === 'Produto' || entity === 'ContaPagar' || entity === 'ContaReceber';
+    const sensitive = entity === 'Produto' || entity === 'ContaPagar' || entity === 'ContaReceber' || entity === 'Pedido' || entity === 'NotaFiscal';
     let result = null;
 
     // baseline + IA (antes de executar mutações)
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
       dados_novos: op !== 'read' ? { ...(data || null), __risk: risk, __risk_ia: iaRisk || null } : null
     }, meta);
 
-    const isPilotEntity = entity === 'Produto' || entity === 'ContaPagar' || entity === 'ContaReceber';
+    const isPilotEntity = entity === 'Produto' || entity === 'ContaPagar' || entity === 'ContaReceber' || entity === 'Pedido' || entity === 'NotaFiscal';
     if (isPilotEntity && (risk?.level === 'Crítico' || risk?.level === 'Alto')) {
       try {
         await notify(base44, {

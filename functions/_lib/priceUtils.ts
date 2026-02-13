@@ -94,6 +94,7 @@ export async function fetchExternalQuotes(cfg, context, produto) {
     if (cfg.api_key) {
       headers['Authorization'] = `Bearer ${cfg.api_key}`;
       headers['x-api-key'] = cfg.api_key;
+      headers['X-Token'] = cfg.api_key; // compatibilidade com fornecedores privados
     }
     const body = {
       empresa_id: context?.empresa_id || null,
