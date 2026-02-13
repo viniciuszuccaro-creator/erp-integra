@@ -36,10 +36,6 @@ export async function loadAnomalyConfig(base44) {
 }
 
 export function computeIssues(receber, pagar, cfg) {
-  // Flag issues with a lightweight severity for UI
-  const add = (arr, issue) => {
-    arr.push({ severity: issue?.tipo === 'outlier' ? 'alto' : issue?.tipo === 'atraso' ? 'medio' : 'baixo', ...issue });
-  };
   const issues = [];
   const hoje = new Date();
   const limiar = Number(cfg?.limiar_atraso_dias ?? 1);
@@ -51,6 +47,7 @@ export function computeIssues(receber, pagar, cfg) {
     return Math.floor(diff);
   };
 
+  // IQR helpers
   const computeIQR = (arr) => {
     const xs = arr.filter(v => Number.isFinite(v)).sort((a,b)=>a-b);
     if (xs.length < 4) return { q1: null, q3: null, iqr: null };
@@ -71,6 +68,7 @@ export function computeIssues(receber, pagar, cfg) {
   const highR = (q3R != null && iqrR != null) ? q3R + 1.5 * iqrR : Infinity;
   const highP = (q3P != null && iqrP != null) ? q3P + 1.5 * iqrP : Infinity;
 
+  // Mean/Std helpers
   const computeMeanStd = (arr) => {
     const xs = arr.filter(v => Number.isFinite(v));
     if (xs.length < 2) return { mean: null, std: null };
@@ -83,39 +81,70 @@ export function computeIssues(receber, pagar, cfg) {
   const { mean: meanP, std: stdP } = computeMeanStd(valoresP);
   const zK = 3; // 3-sigma
 
+  // Receber base rules
   for (const r of Array.isArray(receber) ? receber : []) {
     const valor = Number(r?.valor);
-    if (bloquearNeg && valor < 0) issues.push({ tipo: 'Valor negativo', entidade: 'Receber', id: r.id, empresa_id: r?.empresa_id });
+    if (bloquearNeg && valor < 0) issues.push({ tipo: 'valor_negativo', entidade: 'ContaReceber', id: r.id, empresa_id: r?.empresa_id });
     const atraso = diasAtraso(r?.data_vencimento);
     if (r?.status === 'Pendente' && atraso >= limiar) {
-      issues.push({ tipo: 'Atraso Receber', entidade: 'Receber', id: r.id, dias: atraso, empresa_id: r?.empresa_id });
+      issues.push({ tipo: 'atraso_receber', entidade: 'ContaReceber', id: r.id, dias: atraso, empresa_id: r?.empresa_id });
     }
     if (valor > highR && Number.isFinite(highR)) {
-      issues.push({ tipo: 'Valor atípico Receber (IQR)', entidade: 'Receber', id: r.id, valor, empresa_id: r?.empresa_id });
+      issues.push({ tipo: 'valor_outlier_iqr', entidade: 'ContaReceber', id: r.id, valor, empresa_id: r?.empresa_id });
     }
     if (Number.isFinite(stdR) && stdR > 0 && Number.isFinite(meanR)) {
       const z = (valor - meanR) / stdR;
       if (z >= zK) {
-        issues.push({ tipo: 'Valor atípico Receber (Z-Score)', entidade: 'Receber', id: r.id, valor, z, empresa_id: r?.empresa_id });
+        issues.push({ tipo: 'valor_outlier_z', entidade: 'ContaReceber', id: r.id, valor, z, empresa_id: r?.empresa_id });
       }
     }
   }
+
+  // Pagar base rules + marketplace fee divergence + duplicates
+  const dupMapP = new Map();
   for (const c of Array.isArray(pagar) ? pagar : []) {
     const valor = Number(c?.valor);
-    if (bloquearNeg && valor < 0) issues.push({ tipo: 'Valor negativo', entidade: 'Pagar', id: c.id, empresa_id: c?.empresa_id });
+    if (bloquearNeg && valor < 0) issues.push({ tipo: 'valor_negativo', entidade: 'ContaPagar', id: c.id, empresa_id: c?.empresa_id });
+
     const atraso = diasAtraso(c?.data_vencimento);
     if (c?.status === 'Pendente' && atraso >= limiar) {
-      issues.push({ tipo: 'Atraso Pagar', entidade: 'Pagar', id: c.id, dias: atraso, empresa_id: c?.empresa_id });
+      issues.push({ tipo: 'atraso_pagar', entidade: 'ContaPagar', id: c.id, dias: atraso, empresa_id: c?.empresa_id });
     }
+
     if (valor > highP && Number.isFinite(highP)) {
-      issues.push({ tipo: 'Valor atípico Pagar (IQR)', entidade: 'Pagar', id: c.id, valor, empresa_id: c?.empresa_id });
+      issues.push({ tipo: 'valor_outlier_iqr', entidade: 'ContaPagar', id: c.id, valor, empresa_id: c?.empresa_id });
     }
     if (Number.isFinite(stdP) && stdP > 0 && Number.isFinite(meanP)) {
       const z = (valor - meanP) / stdP;
       if (z >= zK) {
-        issues.push({ tipo: 'Valor atípico Pagar (Z-Score)', entidade: 'Pagar', id: c.id, valor, z, empresa_id: c?.empresa_id });
+        issues.push({ tipo: 'valor_outlier_z', entidade: 'ContaPagar', id: c.id, valor, z, empresa_id: c?.empresa_id });
+      }
+    }
+
+    // Marketplace fee divergence (if present)
+    const esperada = Number(c?.taxa_marketplace_esperada);
+    const cobrada = Number(c?.taxa_marketplace_cobrada);
+    if (Number.isFinite(esperada) && Number.isFinite(cobrada) && (esperada >= 0 || cobrada >= 0)) {
+      const relBase = Math.max(Math.abs(esperada), 1e-6);
+      const relDiff = Math.abs(cobrada - esperada) / relBase;
+      if (relDiff >= 0.2) { // >= 20% desvio
+        issues.push({ tipo: 'taxa_marketplace_divergente', entidade: 'ContaPagar', id: c.id, empresa_id: c?.empresa_id, esperado: esperada, cobrado: cobrada, relDiff });
+      }
+    }
+
+    // Duplicate heuristic (same fornecedor/valor/date)
+    const fornecedorKey = c?.fornecedor_id || c?.fornecedor || '';
+    const dateKey = c?.data_emissao || c?.data_vencimento || '';
+    const k = `${fornecedorKey}|${Number.isFinite(valor) ? valor : 0}|${dateKey}`;
+    if (k) {
+      if (dupMapP.has(k)) {
+        const firstId = dupMapP.get(k);
+        issues.push({ tipo: 'duplicidade_pagar', entidade: 'ContaPagar', id: c.id, empresa_id: c?.empresa_id, similar_de: firstId });
+      } else {
+        dupMapP.set(k, c.id);
       }
     }
   }
+
   return issues;
 }

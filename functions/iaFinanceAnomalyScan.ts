@@ -24,8 +24,18 @@ Deno.serve(async (req) => {
     const pagar = await base44.asServiceRole.entities.ContaPagar.filter(filtros, '-updated_date', 500);
 
     // Regras configuráveis + detecções já existentes
-    const cfg = await loadAnomalyConfig(base44);
-    let issues = computeIssues(receber, pagar, cfg) || [];
+          const cfg = await loadAnomalyConfig(base44);
+          let issues = computeIssues(receber, pagar, cfg) || [];
+
+          // 2.0: Persistir flags em títulos de Pagar quando aplicável (service role)
+          try {
+            const idsDiverg = Array.from(new Set(issues.filter(i => i.entidade === 'ContaPagar' && i.tipo === 'taxa_marketplace_divergente' && i.id).map(i => i.id))).slice(0, 50);
+            const idsDup = Array.from(new Set(issues.filter(i => i.entidade === 'ContaPagar' && i.tipo === 'duplicidade_pagar' && i.id).map(i => i.id))).slice(0, 50);
+            await Promise.all([
+              ...idsDiverg.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { alerta_taxa_divergente: true })),
+              ...idsDup.map(id => base44.asServiceRole.entities.ContaPagar.update(id, { duplicidade_detectada: true }))
+            ]);
+          } catch (_) {}
 
     // ML leve: outliers por Z-Score (valor)
     const valoresRec = receber.map(r => Number(r.valor || 0)).filter(v => v > 0);
