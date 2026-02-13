@@ -55,8 +55,50 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Pre‑checagem de risco (RBAC dinâmico com bloqueio condicional)
     const api = base44.asServiceRole.entities[entity];
+    const sensitive = entity === 'Produto' || entity === 'ContaPagar' || entity === 'ContaReceber';
     let result = null;
+
+    // baseline + IA (antes de executar mutações)
+    let preRisk = null;
+    let preIaRisk = null;
+    try {
+      preRisk = computeRisk({ event: { entity_name: entity, type: op }, data, ip, userAgent });
+      const cfg = await base44.asServiceRole.entities?.ConfiguracaoSistema?.filter?.({})?.then(r => r?.[0]).catch(() => null);
+      const iaEnabled = cfg?.seguranca?.rbac_ia?.habilitado !== false; // default ON
+      if (iaEnabled) {
+        preIaRisk = await assessActionRisk(base44, { entity, op, user, ip, userAgent, data });
+      }
+      const mode = cfg?.seguranca?.rbac_ia?.modo || 'block'; // block|alert
+      const isMutation = op === 'create' || op === 'update' || op === 'delete';
+      const highBaseline = preRisk?.level === 'Alto' || preRisk?.level === 'Crítico';
+      const highIa = (preIaRisk?.level && /alto|cr(í|i)tico|high|critical/i.test(preIaRisk.level)) || (typeof preIaRisk?.score === 'number' && preIaRisk.score >= 0.8);
+      if (isMutation && sensitive && mode === 'block' && (highBaseline || highIa)) {
+        // Audit + notify, depois bloquear
+        await audit(base44, user, {
+          acao: 'Bloqueio',
+          modulo: moduleName || entity,
+          entidade: entity,
+          registro_id: id || null,
+          descricao: `RBAC dinâmico bloqueou ${op} por risco elevado (baseline=${preRisk?.level || '-'}, ia=${preIaRisk?.level || preIaRisk?.score || '-'})`,
+          dados_novos: { tentativa: { entity, op, id, data }, __risk: preRisk, __risk_ia: preIaRisk }
+        });
+        try {
+          await notify(base44, {
+            titulo: 'Ação Bloqueada por Segurança',
+            mensagem: `${entity} • ${op} bloqueado (risco elevado)`,
+            categoria: 'Segurança',
+            prioridade: 'Alta',
+            empresa_id: (data?.empresa_id || null),
+            dados: { entity, op, id, risk: preRisk, iaRisk: preIaRisk }
+          });
+        } catch (_) {}
+        return Response.json({ error: 'Ação bloqueada por RBAC dinâmico (risco elevado)' }, { status: 403 });
+      }
+    } catch (_) {}
+
+    // Execução da operação após validações
     if (op === 'create') result = await api.create(data);
     else if (op === 'update') result = await api.update(id, data);
     else if (op === 'delete') result = await api.delete(id);
