@@ -1,9 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { base44 } from "@/api/base44Client";
+import { Loader2 } from "lucide-react";
 
 export default function PrecosSection({ formData, setFormData }) {
+  const [optimizing, setOptimizing] = useState(false);
+  const canOptimize = Boolean(formData?.id);
+  const handleOptimize = async () => {
+    if (!canOptimize || optimizing) return;
+    setOptimizing(true);
+    try {
+      const { data } = await base44.functions.invoke('productPriceOptimizer', { produto_id: formData.id });
+      if (data?.updated) {
+        setFormData(prev => ({ ...prev, ...data.updated }));
+      }
+    } finally {
+      setOptimizing(false);
+    }
+  };
   return (
     <Card className="border-green-200 bg-green-50">
       <CardContent className="p-4 space-y-4">
@@ -46,6 +63,11 @@ export default function PrecosSection({ formData, setFormData }) {
             />
             <p className="text-xs text-slate-500 mt-1">Usada na aprovação de descontos</p>
           </div>
+        </div>
+        <div className="flex justify-end pt-2">
+          <Button onClick={handleOptimize} disabled={!canOptimize || optimizing} className="bg-blue-600 hover:bg-blue-700">
+            {optimizing ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Otimizando...</>) : 'Otimizar Preço (Políticas)'}
+          </Button>
         </div>
       </CardContent>
     </Card>
