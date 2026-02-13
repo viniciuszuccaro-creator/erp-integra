@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
     // Execução em lote (sem produto_id): processa N produtos por execução para evitar timeouts // v2
     if (isBatch) {
       const limit = Math.min(Math.max(Number(payload?.limit) || 100, 1), 1000); // 1..1000
-      const filtro = payload?.filter || {};
+      const filtro = payload?.filter || { status: 'Ativo' };
 
       const produtos = await base44.asServiceRole.entities.Produto.filter(filtro, '-updated_date', limit);
       let updated = 0, skipped = 0, failed = 0;
