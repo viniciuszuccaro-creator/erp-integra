@@ -20,7 +20,20 @@ Deno.serve(async (req) => {
     const meta = extractRequestMeta(req);
     const userAgent = meta.user_agent || '';
     const ip = meta.ip || '';
-    if (!entity || !op) return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
+    // Scheduler ping without payload -> healthcheck OK
+    if (!entity) {
+      try {
+        await audit(base44, user, {
+          acao: 'Visualização',
+          modulo: 'Sistema',
+          entidade: 'entityGuard',
+          descricao: 'Scheduled automation healthcheck',
+          dados_novos: { _automation: true, _meta: meta }
+        }, meta);
+      } catch (_) {}
+      return Response.json({ ok: true, status: 'healthy' });
+    }
+    if (!op) return Response.json({ error: 'Parâmetros inválidos' }, { status: 400 });
 
     // RBAC
     const allowed = backendHasPermission(perfil, moduleName || entity, section || null, op, user.role);
