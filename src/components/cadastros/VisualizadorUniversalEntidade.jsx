@@ -151,8 +151,8 @@ export default function VisualizadorUniversalEntidade({
 
   const getBackendSortString = useCallback(() => {
     if (colunaOrdenacao) {
-      // Mantém ordenação backend pelo campo original; correção numérica é aplicada localmente
-      return direcaoOrdenacao === 'desc' ? `-${colunaOrdenacao}` : colunaOrdenacao;
+      // Para ordenação por coluna clicada, aplicamos 100% no cliente para garantir consistência (ex.: Código numérico)
+      return undefined;
     }
     
     const sortMap = {
@@ -166,7 +166,7 @@ export default function VisualizadorUniversalEntidade({
     };
     
     return sortMap[ordenacao] || '-created_date';
-  }, [colunaOrdenacao, direcaoOrdenacao, ordenacao]);
+  }, [colunaOrdenacao, ordenacao]);
 
   const buildFilterWithSearch = useCallback(() => {
     const filtroContexto = getFiltroContexto('empresa_id', true);
