@@ -320,8 +320,7 @@ export default function VisualizadorUniversalEntidade({
           total = resp?.data?.count || 0;
         } catch (_) {}
 
-        // 2) Ordenação diretamente no backend pela coluna clicada, em lotes estáveis
-        const sortForHeader = `${direcaoOrdenacao === 'desc' ? '-' : ''}${colunaOrdenacao}`;
+        // 2) Buscar TUDO em lotes SEM ordenar no backend e ordenar localmente (garante numérico correto em Código)
         const pageSize = 500;
         const all = [];
         let skipIt = 0;
@@ -329,7 +328,7 @@ export default function VisualizadorUniversalEntidade({
         for (let i = 0; i < maxLoops; i++) {
           const batch = await base44.entities[nomeEntidade].filter(
             filtro,
-            sortForHeader,
+            undefined,
             pageSize,
             skipIt
           );
