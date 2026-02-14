@@ -46,13 +46,21 @@ Deno.serve(async (req) => {
       const filtro = payload?.filter || { status: 'Ativo' };
 
       const produtos = await base44.asServiceRole.entities.Produto.filter(filtro, '-updated_date', limit);
-      let updated = 0, skipped = 0, failed = 0;
+      let updated = 0, skipped = 0, failed = 0, creditExhausted = false;
 
       for (const p of produtos) {
+        if (creditExhausted) break;
         try {
           const r = await optimizeProductPrice(base44, ctx, { entityId: p.id, payload: { data: p }, user: user || { full_name: 'Automação' }, simulate: true });
           if (r?.updated) updated++; else skipped++;
-        } catch (_) { failed++; }
+        } catch (e) {
+          const msg = String(e?.message || e);
+          if (/Insufficient integration credits/i.test(msg)) {
+            creditExhausted = true;
+          } else {
+            failed++;
+          }
+        }
       }
 
       try {
@@ -61,11 +69,13 @@ Deno.serve(async (req) => {
           modulo: 'Comercial',
           entidade: 'Produto',
           descricao: 'Otimização de preços em lote (agendada)',
-          dados_novos: { total: produtos.length, updated, skipped, failed, duracao_ms: Date.now() - t0 }
+          dados_novos: { total: produtos.length, updated, skipped, failed, creditExhausted, duracao_ms: Date.now() - t0 }
         });
       } catch {}
 
-      return Response.json({ ok: true, batch: true, total: produtos.length, updated, skipped, failed });
+      const res = { ok: true, batch: true, total: produtos.length, updated, skipped, failed, creditExhausted };
+      if (creditExhausted) res.reason = 'insufficient_credits';
+      return Response.json(res);
     }
 
     // Execução unitária (com produto_id ou webhooks)
