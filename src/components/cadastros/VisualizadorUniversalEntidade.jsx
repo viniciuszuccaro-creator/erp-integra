@@ -31,64 +31,159 @@ import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from "@/components/ui/use-toast";
 
 const OPCOES_ORDENACAO = {
-Cliente: [
-  { value: 'nome', label: 'Nome (A-Z)' },
-  { value: 'nome_desc', label: 'Nome (Z-A)' },
-  { value: 'cidade', label: 'Cidade (A-Z)' },
-  { value: 'limite_credito', label: 'Limite de Crédito (Maior)' },
-  { value: 'mais_compras', label: 'Que Mais Compra' },
-  { value: 'recent', label: 'Mais Recentes' }
-],
-Fornecedor: [
-  { value: 'nome', label: 'Nome (A-Z)' },
-  { value: 'nota_media', label: 'Melhor Avaliação' },
-  { value: 'recent', label: 'Mais Recentes' }
-],
-Produto: [
-  { value: 'descricao', label: 'Descrição (A-Z)' },
-  { value: 'descricao_desc', label: 'Descrição (Z-A)' },
-  { value: 'codigo', label: 'Código (Crescente)' },
-  { value: 'codigo_desc', label: 'Código (Decrescente)' },
-  { value: 'recent', label: 'Mais Recentes' }
-],
-Colaborador: [
-  { value: 'nome_completo', label: 'Nome (A-Z)' },
-  { value: 'nome_completo_desc', label: 'Nome (Z-A)' },
-  { value: 'cargo', label: 'Cargo' },
-  { value: 'departamento', label: 'Departamento' },
-  { value: 'recent', label: 'Mais Recentes' }
-],
-default: [
-  { value: 'recent', label: 'Mais Recentes' }
-]
+  Cliente: [
+    { value: 'nome', label: 'Nome (A-Z)' },
+    { value: 'nome_desc', label: 'Nome (Z-A)' },
+    { value: 'cidade', label: 'Cidade (A-Z)' },
+    { value: 'limite_credito', label: 'Limite de Crédito (Maior)' },
+    { value: 'mais_compras', label: 'Que Mais Compra' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  Fornecedor: [
+    { value: 'nome', label: 'Nome (A-Z)' },
+    { value: 'nome_desc', label: 'Nome (Z-A)' },
+    { value: 'razao_social', label: 'Razão Social (A-Z)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  Transportadora: [
+    { value: 'razao_social', label: 'Razão Social (A-Z)' },
+    { value: 'nome_fantasia', label: 'Nome Fantasia (A-Z)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  Produto: [
+    { value: 'descricao', label: 'Descrição (A-Z)' },
+    { value: 'descricao_desc', label: 'Descrição (Z-A)' },
+    { value: 'codigo', label: 'Código (Crescente)' },
+    { value: 'codigo_desc', label: 'Código (Decrescente)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  Colaborador: [
+    { value: 'nome_completo', label: 'Nome (A-Z)' },
+    { value: 'nome_completo_desc', label: 'Nome (Z-A)' },
+    { value: 'cargo', label: 'Cargo' },
+    { value: 'departamento', label: 'Departamento' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  Representante: [
+    { value: 'nome', label: 'Nome (A-Z)' },
+    { value: 'nome_desc', label: 'Nome (Z-A)' },
+    { value: 'percentual_comissao', label: '% Comissão (Maior)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  ContatoB2B: [
+    { value: 'nome', label: 'Nome (A-Z)' },
+    { value: 'empresa', label: 'Empresa (A-Z)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  Marca: [
+    { value: 'nome_marca', label: 'Marca (A-Z)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  GrupoProduto: [
+    { value: 'nome_grupo', label: 'Grupo (A-Z)' },
+    { value: 'codigo', label: 'Código (A-Z)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  SetorAtividade: [
+    { value: 'nome', label: 'Nome (A-Z)' },
+    { value: 'tipo_operacao', label: 'Tipo' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  UnidadeMedida: [
+    { value: 'sigla', label: 'Sigla (A-Z)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  SegmentoCliente: [
+    { value: 'nome_segmento', label: 'Segmento (A-Z)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  RegiaoAtendimento: [
+    { value: 'nome_regiao', label: 'Região (A-Z)' },
+    { value: 'recent', label: 'Mais Recentes' }
+  ],
+  default: [
+    { value: 'recent', label: 'Mais Recentes' }
+  ]
 };
 
 const COLUNAS_ORDENACAO = {
-Produto: [
-  { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '', isNumeric: true },
-  { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' },
-  { campo: 'tipo_item', label: 'Tipo', getValue: (item) => item.tipo_item || '' },
-  { campo: 'setor_atividade_nome', label: 'Setor', getValue: (item) => item.setor_atividade_nome || '' },
-  { campo: 'grupo_produto_nome', label: 'Categoria', getValue: (item) => item.grupo_produto_nome || '' },
-  { campo: 'marca_nome', label: 'Marca', getValue: (item) => item.marca_nome || '' },
-  { campo: 'status', label: 'Status', getValue: (item) => item.status || '' },
-  { campo: 'estoque_atual', label: 'Estoque', getValue: (item) => item.estoque_atual || 0, isNumeric: true },
-  { campo: 'preco_venda', label: 'Preço', getValue: (item) => item.preco_venda || 0, isNumeric: true }
-],
-Cliente: [
-  { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
-  { campo: 'tipo', label: 'Tipo', getValue: (item) => item.tipo || '' },
-  { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
-],
-Colaborador: [
-  { campo: 'nome_completo', label: 'Nome', getValue: (item) => item.nome_completo || '' },
-  { campo: 'cargo', label: 'Cargo', getValue: (item) => item.cargo || '' },
-  { campo: 'departamento', label: 'Departamento', getValue: (item) => item.departamento || '' },
-  { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
-],
-default: [
-  { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || item.descricao || '' }
-]
+  Produto: [
+    { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '', isNumeric: true },
+    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' },
+    { campo: 'tipo_item', label: 'Tipo', getValue: (item) => item.tipo_item || '' },
+    { campo: 'setor_atividade_nome', label: 'Setor', getValue: (item) => item.setor_atividade_nome || '' },
+    { campo: 'grupo_produto_nome', label: 'Categoria', getValue: (item) => item.grupo_produto_nome || '' },
+    { campo: 'marca_nome', label: 'Marca', getValue: (item) => item.marca_nome || '' },
+    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' },
+    { campo: 'estoque_atual', label: 'Estoque', getValue: (item) => item.estoque_atual ?? 0, isNumeric: true },
+    { campo: 'preco_venda', label: 'Preço', getValue: (item) => item.preco_venda ?? 0, isNumeric: true }
+  ],
+  Cliente: [
+    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
+    { campo: 'tipo', label: 'Tipo', getValue: (item) => item.tipo || '' },
+    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+  ],
+  Fornecedor: [
+    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
+    { campo: 'razao_social', label: 'Razão Social', getValue: (item) => item.razao_social || '' },
+    { campo: 'cnpj', label: 'CNPJ', getValue: (item) => item.cnpj || '' },
+    { campo: 'categoria', label: 'Categoria', getValue: (item) => item.categoria || '' },
+    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+  ],
+  Transportadora: [
+    { campo: 'razao_social', label: 'Razão Social', getValue: (item) => item.razao_social || '' },
+    { campo: 'nome_fantasia', label: 'Nome Fantasia', getValue: (item) => item.nome_fantasia || '' },
+    { campo: 'cnpj', label: 'CNPJ', getValue: (item) => item.cnpj || '' },
+    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+  ],
+  Colaborador: [
+    { campo: 'nome_completo', label: 'Nome', getValue: (item) => item.nome_completo || '' },
+    { campo: 'cargo', label: 'Cargo', getValue: (item) => item.cargo || '' },
+    { campo: 'departamento', label: 'Departamento', getValue: (item) => item.departamento || '' },
+    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+  ],
+  Representante: [
+    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
+    { campo: 'tipo_representante', label: 'Tipo', getValue: (item) => item.tipo_representante || '' },
+    { campo: 'percentual_comissao', label: '% Comissão', getValue: (item) => item.percentual_comissao ?? 0, isNumeric: true }
+  ],
+  ContatoB2B: [
+    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
+    { campo: 'empresa', label: 'Empresa', getValue: (item) => item.empresa || '' },
+    { campo: 'cargo', label: 'Cargo', getValue: (item) => item.cargo || '' },
+    { campo: 'email', label: 'E-mail', getValue: (item) => item.email || '' },
+    { campo: 'telefone', label: 'Telefone', getValue: (item) => item.telefone || '' }
+  ],
+  Marca: [
+    { campo: 'nome_marca', label: 'Marca', getValue: (item) => item.nome_marca || '' },
+    { campo: 'pais_origem', label: 'País', getValue: (item) => item.pais_origem || '' }
+  ],
+  GrupoProduto: [
+    { campo: 'nome_grupo', label: 'Grupo', getValue: (item) => item.nome_grupo || '' },
+    { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '' },
+    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' }
+  ],
+  SetorAtividade: [
+    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
+    { campo: 'tipo_operacao', label: 'Tipo', getValue: (item) => item.tipo_operacao || '' },
+    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' }
+  ],
+  UnidadeMedida: [
+    { campo: 'sigla', label: 'Sigla', getValue: (item) => item.sigla || '' },
+    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' }
+  ],
+  SegmentoCliente: [
+    { campo: 'nome_segmento', label: 'Segmento', getValue: (item) => item.nome_segmento || '' },
+    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' }
+  ],
+  RegiaoAtendimento: [
+    { campo: 'nome_regiao', label: 'Região', getValue: (item) => item.nome_regiao || '' },
+    { campo: 'tipo_regiao', label: 'Tipo', getValue: (item) => item.tipo_regiao || '' }
+  ],
+  default: [
+    { campo: 'nome_generico', label: 'Nome', getValue: (item) => item.nome || item.nome_completo || item.razao_social || item.nome_fantasia || item.titulo || item.descricao || '' },
+    { campo: 'descricao_generica', label: 'Descrição', getValue: (item) => item.descricao || item.observacoes || item.observacao || item.cargo || item.departamento || '' }
+  ]
 };
 
 const ALIAS_QUERY_KEYS = {
@@ -180,9 +275,18 @@ export default function VisualizadorUniversalEntidade({
     
     const camposBusca = {
       'Produto': ['descricao', 'codigo', 'codigo_barras', 'grupo_produto_nome', 'marca_nome', 'setor_atividade_nome'],
-      'Cliente': ['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj'],
-      'Fornecedor': ['nome', 'razao_social', 'cnpj'],
-      'Colaborador': ['nome_completo', 'cpf', 'email', 'cargo', 'departamento']
+      'Cliente': ['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj', 'email'],
+      'Fornecedor': ['nome', 'razao_social', 'cnpj', 'categoria', 'email'],
+      'Colaborador': ['nome_completo', 'cpf', 'email', 'cargo', 'departamento'],
+      'Transportadora': ['razao_social', 'nome_fantasia', 'cnpj'],
+      'Representante': ['nome', 'tipo_representante', 'email', 'telefone'],
+      'ContatoB2B': ['nome', 'empresa', 'cargo', 'email', 'telefone'],
+      'Marca': ['nome_marca', 'pais_origem'],
+      'GrupoProduto': ['nome_grupo', 'codigo', 'descricao'],
+      'SetorAtividade': ['nome', 'tipo_operacao', 'descricao'],
+      'UnidadeMedida': ['sigla', 'descricao'],
+      'SegmentoCliente': ['nome_segmento', 'descricao'],
+      'RegiaoAtendimento': ['nome_regiao', 'tipo_regiao', 'estados_abrangidos']
     };
 
     const campos = camposBusca[nomeEntidade] || ['nome', 'descricao', 'codigo'];
