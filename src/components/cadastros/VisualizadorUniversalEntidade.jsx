@@ -308,9 +308,9 @@ export default function VisualizadorUniversalEntidade({
       const sortingAll = Boolean(colunaOrdenacao);
       const sortString = getBackendSortString();
 
-      // Quando o usuário clica no cabeçalho, buscamos TODOS os registros em lotes
+      // Quando o usuário clica no cabeçalho, buscamos TODOS os registros já ORDENADOS no backend
       if (sortingAll) {
-        // 1) Obter total para definir quantos lotes carregar
+        // 1) Obter total
         let total = 0;
         try {
           const resp = await base44.functions.invoke('countEntities', {
@@ -320,20 +320,16 @@ export default function VisualizadorUniversalEntidade({
           total = resp?.data?.count || 0;
         } catch (_) {}
 
-        // 2) Buscar em lotes (tamanho 500) continuamente até acabar
-        const pageSize = 500;
-        const all = [];
-        let skipIt = 0;
-        // Se conseguimos o total, usamos para limitar o máximo de iterações
-        const maxLoops = total > 0 ? Math.ceil(total / pageSize) + 1 : 10000; // guarda-chuva
-        for (let i = 0; i < maxLoops; i++) {
-          const batch = await base44.entities[nomeEntidade].filter(filtro, undefined, pageSize, skipIt);
-          if (!batch || batch.length === 0) break;
-          all.push(...batch);
-          if (batch.length < pageSize) break; // chegou ao fim
-          skipIt += pageSize;
-        }
-        return all;
+        // 2) Ordenação diretamente no backend pela coluna clicada
+        const sortForHeader = `${direcaoOrdenacao === 'desc' ? '-' : ''}${colunaOrdenacao}`;
+        const limit = Math.max(500, total || 5000); // se total vier 0 por algum motivo, garante um limite alto
+        const all = await base44.entities[nomeEntidade].filter(
+          filtro,
+          sortForHeader,
+          limit,
+          0
+        );
+        return all || [];
       }
 
       // Ordenação padrão pelo servidor com paginação
