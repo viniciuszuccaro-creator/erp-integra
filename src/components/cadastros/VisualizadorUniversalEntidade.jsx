@@ -306,17 +306,40 @@ export default function VisualizadorUniversalEntidade({
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
       const sortingAll = Boolean(colunaOrdenacao);
-      const effectiveItemsPerPage = sortingAll ? 20000 : itemsPerPage;
-      const skip = sortingAll ? 0 : (currentPage - 1) * itemsPerPage;
       const sortString = getBackendSortString();
-      
+
+      // Quando o usuário clica no cabeçalho, buscamos TODOS os registros em lotes
+      if (sortingAll) {
+        // 1) Obter total para definir quantos lotes carregar
+        let total = 0;
+        try {
+          const resp = await base44.functions.invoke('countEntities', {
+            entityName: nomeEntidade,
+            filter: filtro,
+          });
+          total = resp?.data?.count || 0;
+        } catch (_) {}
+
+        // 2) Buscar em lotes (tamanho 500) e concatenar
+        const pageSize = 500;
+        const pages = Math.max(1, Math.ceil(total / pageSize));
+        const requests = Array.from({ length: pages }).map((_, idx) => {
+          const skip = idx * pageSize;
+          return base44.entities[nomeEntidade].filter(filtro, undefined, pageSize, skip);
+        });
+        const chunks = await Promise.all(requests);
+        const all = chunks.flat().filter(Boolean);
+        return all;
+      }
+
+      // Ordenação padrão pelo servidor com paginação
+      const skip = (currentPage - 1) * itemsPerPage;
       const result = await base44.entities[nomeEntidade].filter(
         filtro,
         sortString,
-        effectiveItemsPerPage,
+        itemsPerPage,
         skip
       );
-      
       return result || [];
     },
     staleTime: Infinity,

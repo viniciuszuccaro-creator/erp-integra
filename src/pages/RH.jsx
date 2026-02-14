@@ -56,6 +56,26 @@ export default function RH() {
     retry: 1
   });
 
+  // Contagem confiável de colaboradores ATIVOS (não limitada a 100 registros)
+  const { data: colaboradoresAtivosCount = null } = useQuery({
+    queryKey: ['colaboradores-ativos-count-rh', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtroBase = getFiltroContexto('empresa_alocada_id');
+        const filtro = { ...(filtroBase || {}), status: 'Ativo' };
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Colaborador',
+          filter
+        });
+        return response.data?.count ?? null;
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   const { data: pontos = [] } = useQuery({
     queryKey: ['pontos', empresaAtual?.id],
     queryFn: async () => {
@@ -86,7 +106,9 @@ export default function RH() {
 
   // Dados já vêm filtrados do servidor
   const colaboradoresFiltrados = colaboradores;
-  const colaboradoresAtivos = colaboradoresFiltrados.filter(c => c.status === "Ativo").length;
+  const colaboradoresAtivos = (typeof colaboradoresAtivosCount === 'number' && colaboradoresAtivosCount >= 0)
+    ? colaboradoresAtivosCount
+    : colaboradoresFiltrados.filter(c => c.status === "Ativo").length;
   const feriasAprovadas = ferias.filter(f => f.status === "Aprovada").length;
   const feriasPendentes = ferias.filter(f => f.status === "Solicitada").length;
 
