@@ -138,13 +138,17 @@ export default function VisualizadorUniversalEntidade({
 
   const getBackendSortString = useCallback(() => {
     if (colunaOrdenacao) {
+      // Numeric-aware when coluna is 'codigo'
+      if (colunaOrdenacao === 'codigo') {
+        return direcaoOrdenacao === 'desc' ? '-codigo_num' : 'codigo_num';
+      }
       return direcaoOrdenacao === 'desc' ? `-${colunaOrdenacao}` : colunaOrdenacao;
     }
     
     const sortMap = {
       'recent': '-created_date',
-      'codigo': 'codigo',
-      'codigo_desc': '-codigo',
+      'codigo': 'codigo_num',
+      'codigo_desc': '-codigo_num',
       'descricao': 'descricao',
       'descricao_desc': '-descricao',
       'nome': 'nome',
