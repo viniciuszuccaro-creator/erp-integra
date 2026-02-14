@@ -320,15 +320,19 @@ export default function VisualizadorUniversalEntidade({
           total = resp?.data?.count || 0;
         } catch (_) {}
 
-        // 2) Buscar em lotes (tamanho 500) e concatenar
+        // 2) Buscar em lotes (tamanho 500) continuamente até acabar
         const pageSize = 500;
-        const pages = Math.max(1, Math.ceil(total / pageSize));
-        const requests = Array.from({ length: pages }).map((_, idx) => {
-          const skip = idx * pageSize;
-          return base44.entities[nomeEntidade].filter(filtro, undefined, pageSize, skip);
-        });
-        const chunks = await Promise.all(requests);
-        const all = chunks.flat().filter(Boolean);
+        const all = [];
+        let skipIt = 0;
+        // Se conseguimos o total, usamos para limitar o máximo de iterações
+        const maxLoops = total > 0 ? Math.ceil(total / pageSize) + 1 : 10000; // guarda-chuva
+        for (let i = 0; i < maxLoops; i++) {
+          const batch = await base44.entities[nomeEntidade].filter(filtro, undefined, pageSize, skipIt);
+          if (!batch || batch.length === 0) break;
+          all.push(...batch);
+          if (batch.length < pageSize) break; // chegou ao fim
+          skipIt += pageSize;
+        }
         return all;
       }
 
