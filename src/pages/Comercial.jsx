@@ -11,6 +11,8 @@ import ProtectedSection from "@/components/security/ProtectedSection";
 import { toast } from "sonner";
 import PedidoFormCompleto from "../components/comercial/PedidoFormCompleto";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import ValidarPedidosExternos from "@/components/comercial/ValidarPedidosExternos";
 import HeaderComercialCompacto from "@/components/comercial/comercial-launchpad/HeaderComercialCompacto";
 import KPIsComercial from "@/components/comercial/comercial-launchpad/KPIsComercial";
 import ModulosGridComercial from "@/components/comercial/comercial-launchpad/ModulosGridComercial";
@@ -402,10 +404,20 @@ export default function Comercial() {
             />
 
             {pedidosExternosPendentes > 0 && (
-              <Badge className="bg-orange-100 text-orange-700 px-3 py-1.5 w-full justify-center">
-                <AlertCircle className="w-3 h-3 mr-2" />
-                {pedidosExternosPendentes} pedido(s) externo(s) a validar
-              </Badge>
+              <div className="flex items-center justify-between w-full">
+                <Badge className="bg-orange-100 text-orange-700 px-3 py-1.5">
+                  <AlertCircle className="w-3 h-3 mr-2" />
+                  {pedidosExternosPendentes} pedido(s) externo(s) a validar
+                </Badge>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1200, height: 700 })}
+                  className="ml-2"
+                >
+                  Validar Pedido Externo
+                </Button>
+              </div>
             )}
           </ResizablePanel>
           <ResizableHandle withHandle />
