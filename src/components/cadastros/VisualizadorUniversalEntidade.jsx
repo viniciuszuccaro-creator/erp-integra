@@ -198,7 +198,7 @@ export default function VisualizadorUniversalEntidade({
   }, [getFiltroContexto, buscaBackend, nomeEntidade]);
 
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, empresaAtual?.id, ordenacao, colunaOrdenacao, direcaoOrdenacao, buscaBackend, currentPage, itemsPerPage],
+    queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
       const skip = (currentPage - 1) * itemsPerPage;
