@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
           prioridade: risk.level === 'Crítico' ? 'Alta' : 'Normal',
           empresa_id: empresa_id || undefined,
           dados: { event, risk, iaRisk, entity_id: event.entity_id }
-        });
+        }, { whatsapp: true });
       } catch (_) {}
     }
     return Response.json({ ok: true });

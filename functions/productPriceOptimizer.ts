@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
 
       for (const p of produtos) {
         try {
-          const r = await optimizeProductPrice(base44, ctx, { entityId: p.id, payload: { data: p }, user: user || { full_name: 'Automação' } });
+          const r = await optimizeProductPrice(base44, ctx, { entityId: p.id, payload: { data: p }, user: user || { full_name: 'Automação' }, simulate: true });
           if (r?.updated) updated++; else skipped++;
         } catch (_) { failed++; }
       }
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     }
 
     // Execução unitária (com produto_id ou webhooks)
-    const result = await optimizeProductPrice(base44, ctx, { entityId, payload, user });
+    const result = await optimizeProductPrice(base44, ctx, { entityId, payload, user, simulate: true });
     return Response.json(result);
   } catch (error) {
     const msg = String(error?.message || error);
