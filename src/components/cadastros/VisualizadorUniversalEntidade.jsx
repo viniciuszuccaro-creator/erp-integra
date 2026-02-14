@@ -198,16 +198,18 @@ export default function VisualizadorUniversalEntidade({
   }, [getFiltroContexto, buscaBackend, nomeEntidade]);
 
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage],
+    queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage, colunaOrdenacao, direcaoOrdenacao],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
-      const skip = (currentPage - 1) * itemsPerPage;
+      const sortingAll = Boolean(colunaOrdenacao);
+      const effectiveItemsPerPage = sortingAll ? 5000 : itemsPerPage;
+      const skip = sortingAll ? 0 : (currentPage - 1) * itemsPerPage;
       const sortString = getBackendSortString();
       
       const result = await base44.entities[nomeEntidade].filter(
-        filtro, 
+        filtro,
         sortString,
-        itemsPerPage,
+        effectiveItemsPerPage,
         skip
       );
       
@@ -731,7 +733,7 @@ export default function VisualizadorUniversalEntidade({
             </>
           )}
 
-          {!isLoading && totalItemsCount > 0 && (
+          {!isLoading && totalItemsCount > 0 && !colunaOrdenacao && (
             <PaginationControls
               currentPage={currentPage}
               totalItems={totalItemsCount}
