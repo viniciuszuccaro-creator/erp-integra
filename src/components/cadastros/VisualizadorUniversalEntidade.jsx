@@ -256,7 +256,7 @@ export default function VisualizadorUniversalEntidade({
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
 
-    // Ordenação local (fallback) quando backend não ordenar por coluna selecionada
+    // Ordenação local quando usuário clica no cabeçalho
     if (colunaOrdenacao && Array.isArray(resultado)) {
       const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === colunaOrdenacao);
       if (meta) {
@@ -264,15 +264,24 @@ export default function VisualizadorUniversalEntidade({
         const toNum = (v) => {
           if (v == null || v === '') return -Infinity;
           if (typeof v === 'number') return v;
+          // pega primeiro número; se não houver, usa localeCompare com option numeric
           const m = String(v).match(/\d+(?:[\.,]\d+)?/);
-          return m ? Number(m[0].replace(',', '.')) : Number(v);
+          return m ? Number(m[0].replace(',', '.')) : Number.isNaN(Number(v)) ? null : Number(v);
         };
         resultado.sort((a,b) => {
           const avRaw = getVal(a);
           const bvRaw = getVal(b);
           let comp;
           if (meta.isNumeric) {
-            comp = toNum(avRaw) - toNum(bvRaw);
+            const an = toNum(avRaw);
+            const bn = toNum(bvRaw);
+            if (an === null || bn === null) {
+              const as = (avRaw ?? '').toString();
+              const bs = (bvRaw ?? '').toString();
+              comp = as.localeCompare(bs, 'pt-BR', { numeric: true, sensitivity: 'base' });
+            } else {
+              comp = an - bn;
+            }
           } else {
             const as = (avRaw ?? '').toString();
             const bs = (bvRaw ?? '').toString();
