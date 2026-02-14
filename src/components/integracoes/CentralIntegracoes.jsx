@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useToast } from "@/components/ui/use-toast";
+import { useWindow } from "@/components/lib/useWindow";
+import ConfiguracaoNFeForm from "@/components/cadastros/ConfiguracaoNFeForm";
+import ConfiguracaoBoletosForm from "@/components/cadastros/ConfiguracaoBoletosForm";
+import ConfiguracaoWhatsAppForm from "@/components/cadastros/ConfiguracaoWhatsAppForm";
+import SincronizacaoMarketplaces from "@/components/integracoes/SincronizacaoMarketplaces";
+import BancosOpenBankingWIP from "@/components/integracoes/BancosOpenBankingWIP";
 import { 
   CheckCircle, 
   XCircle, 
@@ -22,6 +28,7 @@ export default function CentralIntegracoes() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { empresaAtual } = useContextoVisual();
+  const { openWindow } = useWindow();
 
   const { data: configs = [] } = useQuery({
     queryKey: ["configuracao-integracao-marketplace"],
@@ -61,7 +68,9 @@ export default function CentralIntegracoes() {
       icon: FileText,
       cor: "text-blue-600",
       descricao: "Emissão e validação de NF-e",
-      key: 'integracao_nfe'
+      key: 'integracao_nfe',
+      cmp: ConfiguracaoNFeForm,
+      win: { title: '⚙️ Configuração NF-e', width: 1100, height: 700 }
     },
     {
       nome: "Boletos & Pagamentos",
@@ -70,7 +79,9 @@ export default function CentralIntegracoes() {
       icon: CreditCard,
       cor: "text-green-600",
       descricao: "Geração de boletos e links de pagamento",
-      key: 'integracao_boletos'
+      key: 'integracao_boletos',
+      cmp: ConfiguracaoBoletosForm,
+      win: { title: '💳 Configuração de Boletos', width: 1000, height: 700 }
     },
     {
       nome: "WhatsApp Business",
@@ -79,7 +90,9 @@ export default function CentralIntegracoes() {
       icon: MessageCircle,
       cor: "text-green-600",
       descricao: "Chatbot e notificações automáticas",
-      key: 'integracao_whatsapp'
+      key: 'integracao_whatsapp',
+      cmp: ConfiguracaoWhatsAppForm,
+      win: { title: '💬 Configuração WhatsApp Business', width: 900, height: 680 }
     },
     {
       nome: "Marketplaces",
@@ -87,7 +100,10 @@ export default function CentralIntegracoes() {
       status: configs.length > 0 ? "Ativo" : "Inativo",
       icon: ShoppingCart,
       cor: "text-purple-600",
-      descricao: "Mercado Livre, Shopee, Amazon"
+      descricao: "Mercado Livre, Shopee, Amazon",
+      key: 'integracao_marketplaces',
+      cmp: SincronizacaoMarketplaces,
+      win: { title: '🛒 Sincronização de Marketplaces', width: 1200, height: 720 }
     },
     {
       nome: "Bancos (Open Banking)",
@@ -95,7 +111,10 @@ export default function CentralIntegracoes() {
       status: "Em Desenvolvimento",
       icon: TrendingUp,
       cor: "text-indigo-600",
-      descricao: "Conciliação automática de extratos"
+      descricao: "Conciliação automática de extratos",
+      key: 'integracao_bancos',
+      cmp: BancosOpenBankingWIP,
+      win: { title: '🏦 Bancos (Open Banking)', width: 900, height: 600 }
     },
   ];
 
@@ -162,10 +181,21 @@ export default function CentralIntegracoes() {
                     </Button>
                   )}
 
-                  <Button size="sm" variant="outline" className="ml-auto">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-auto"
+                    onClick={() => {
+                      if (integracao.cmp) {
+                        openWindow(integracao.cmp, { windowMode: true }, integracao.win || { title: 'Configuração', width: 1000, height: 700 });
+                      } else {
+                        toast({ title: 'Configuração indisponível', description: 'Esta integração ainda não possui tela de configuração.' });
+                      }
+                    }}
+                  >
                     <Link2 className="w-3 h-3 mr-1" />
                     Configurar
-                  </Button>
+                  </Button
                 </div>
               </CardContent>
             </Card>
