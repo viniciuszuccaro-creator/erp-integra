@@ -246,10 +246,10 @@ export default function VisualizadorUniversalEntidade({
 
   const getBackendSortString = useCallback(() => {
     if (colunaOrdenacao) {
-      const prefix = direcaoOrdenacao === 'desc' ? '-' : '';
-      return `${prefix}${colunaOrdenacao}`; // ordenação no backend pela coluna clicada
+      // Para ordenação por coluna clicada, aplicamos 100% no cliente para garantir consistência (ex.: Código numérico)
+      return undefined;
     }
-
+    
     const sortMap = {
       'recent': '-created_date',
       'codigo': 'codigo',
@@ -259,9 +259,9 @@ export default function VisualizadorUniversalEntidade({
       'nome': 'nome',
       'nome_desc': '-nome'
     };
-
+    
     return sortMap[ordenacao] || '-created_date';
-  }, [colunaOrdenacao, direcaoOrdenacao, ordenacao]);
+  }, [colunaOrdenacao, ordenacao]);
 
   const buildFilterWithSearch = useCallback(() => {
     const filtroContexto = getFiltroContexto('empresa_id', true);
@@ -305,7 +305,7 @@ export default function VisualizadorUniversalEntidade({
     queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage, colunaOrdenacao, direcaoOrdenacao],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
-      const sortingAll = false; // usamos ordenação do backend para cabeçalhos
+      const sortingAll = Boolean(colunaOrdenacao);
       const sortString = getBackendSortString();
 
       // Quando o usuário clica no cabeçalho, buscamos TODOS os registros em lotes
@@ -389,9 +389,8 @@ export default function VisualizadorUniversalEntidade({
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
 
-    // Ordenação local (desativada porque usamos ordenação no backend)
-    const usarOrdenacaoLocal = false;
-    if (usarOrdenacaoLocal && colunaOrdenacao && Array.isArray(resultado)) {
+    // Ordenação local quando usuário clica no cabeçalho
+    if (colunaOrdenacao && Array.isArray(resultado)) {
       const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === colunaOrdenacao);
       if (meta) {
         const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[colunaOrdenacao]);
@@ -866,7 +865,7 @@ export default function VisualizadorUniversalEntidade({
             </>
           )}
 
-          {!isLoading && totalItemsCount > 0 && (
+          {!isLoading && totalItemsCount > 0 && !colunaOrdenacao && (
             <PaginationControls
               currentPage={currentPage}
               totalItems={totalItemsCount}
