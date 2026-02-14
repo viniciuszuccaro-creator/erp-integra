@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
         prioridade: 'Alta',
         empresa_id: alvoEmpresaId,
         dados: { resumoSeveridade, exemplos: issues.slice(0, 5) }
-      });
+      }, { whatsapp: true });
 
       // Canal opcional: WhatsApp (se configurado em Configuração do Sistema)
       try {
