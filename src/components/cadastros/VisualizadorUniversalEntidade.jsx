@@ -147,8 +147,8 @@ export default function VisualizadorUniversalEntidade({
     
     const sortMap = {
       'recent': '-created_date',
-      'codigo': 'codigo_num',
-      'codigo_desc': '-codigo_num',
+      'codigo': 'codigo',
+      'codigo_desc': '-codigo',
       'descricao': 'descricao',
       'descricao_desc': '-descricao',
       'nome': 'nome',
