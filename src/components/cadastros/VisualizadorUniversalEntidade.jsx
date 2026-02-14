@@ -256,18 +256,31 @@ export default function VisualizadorUniversalEntidade({
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
 
-    // Ordenação local numérica correta quando colunaOrdenacao='codigo' sem suporte backend
-    if ((colunaOrdenacao === 'codigo') && Array.isArray(resultado)) {
-      const toNum = (v) => {
-        if (v == null) return -Infinity;
-        const m = String(v).match(/\d+/);
-        return m ? Number(m[0]) : Number(v);
-      };
-      resultado.sort((a,b) => {
-        const av = toNum(a?.codigo);
-        const bv = toNum(b?.codigo);
-        return direcaoOrdenacao === 'desc' ? (bv - av) : (av - bv);
-      });
+    // Ordenação local (fallback) quando backend não ordenar por coluna selecionada
+    if (colunaOrdenacao && Array.isArray(resultado)) {
+      const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === colunaOrdenacao);
+      if (meta) {
+        const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[colunaOrdenacao]);
+        const toNum = (v) => {
+          if (v == null || v === '') return -Infinity;
+          if (typeof v === 'number') return v;
+          const m = String(v).match(/\d+(?:[\.,]\d+)?/);
+          return m ? Number(m[0].replace(',', '.')) : Number(v);
+        };
+        resultado.sort((a,b) => {
+          const avRaw = getVal(a);
+          const bvRaw = getVal(b);
+          let comp;
+          if (meta.isNumeric) {
+            comp = toNum(avRaw) - toNum(bvRaw);
+          } else {
+            const as = (avRaw ?? '').toString();
+            const bs = (bvRaw ?? '').toString();
+            comp = as.localeCompare(bs, 'pt-BR', { numeric: true, sensitivity: 'base' });
+          }
+          return direcaoOrdenacao === 'desc' ? -comp : comp;
+        });
+      }
     }
     
     if (filtroAdicional && typeof filtroAdicional === 'function') {
@@ -275,7 +288,7 @@ export default function VisualizadorUniversalEntidade({
     }
     
     return resultado;
-  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao]);
+  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade]);
 
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   
