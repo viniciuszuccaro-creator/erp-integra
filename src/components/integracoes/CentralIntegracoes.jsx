@@ -1,9 +1,11 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { useToast } from "@/components/ui/use-toast";
 import { 
   CheckCircle, 
   XCircle, 
@@ -17,10 +19,39 @@ import {
 } from "lucide-react";
 
 export default function CentralIntegracoes() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { empresaAtual } = useContextoVisual();
+
   const { data: configs = [] } = useQuery({
     queryKey: ["configuracao-integracao-marketplace"],
     queryFn: () => base44.entities.ConfiguracaoIntegracaoMarketplace.list(),
   });
+
+  const chaveIntegracoes = empresaAtual?.id ? `integracoes_${empresaAtual.id}` : null;
+  const { data: cfgIntegracoes } = useQuery({
+    queryKey: ["cfg-integracoes", chaveIntegracoes],
+    enabled: !!chaveIntegracoes,
+    queryFn: async () => {
+      const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave: chaveIntegracoes }, undefined, 1);
+      return existentes?.[0] || null;
+    }
+  });
+
+  const setAtivo = async (key, ativo) => {
+    if (!chaveIntegracoes) return;
+    const existentes = await base44.entities.ConfiguracaoSistema.filter({ chave: chaveIntegracoes }, undefined, 1);
+    const payload = { chave: chaveIntegracoes, categoria: 'Integracoes', [key]: { ...(existentes?.[0]?.[key] || {}), ativo } };
+    if (existentes && existentes.length > 0) {
+      await base44.entities.ConfiguracaoSistema.update(existentes[0].id, { ...existentes[0], ...payload });
+    } else {
+      await base44.entities.ConfiguracaoSistema.create(payload);
+    }
+    toast({ title: ativo ? 'Integração ativada' : 'Integração desativada' });
+    queryClient.invalidateQueries({ queryKey: ["cfg-integracoes", chaveIntegracoes] });
+  };
+
+  const isAtivo = (key) => Boolean(cfgIntegracoes?.[key]?.ativo);
 
   const integracoesDisponiveis = [
     {
@@ -29,7 +60,8 @@ export default function CentralIntegracoes() {
       status: "Configurado",
       icon: FileText,
       cor: "text-blue-600",
-      descricao: "Emissão e validação de NF-e"
+      descricao: "Emissão e validação de NF-e",
+      key: 'integracao_nfe'
     },
     {
       nome: "Boletos & Pagamentos",
@@ -37,7 +69,8 @@ export default function CentralIntegracoes() {
       status: "Configurado",
       icon: CreditCard,
       cor: "text-green-600",
-      descricao: "Geração de boletos e links de pagamento"
+      descricao: "Geração de boletos e links de pagamento",
+      key: 'integracao_boletos'
     },
     {
       nome: "WhatsApp Business",
@@ -45,7 +78,8 @@ export default function CentralIntegracoes() {
       status: "Ativo",
       icon: MessageCircle,
       cor: "text-green-600",
-      descricao: "Chatbot e notificações automáticas"
+      descricao: "Chatbot e notificações automáticas",
+      key: 'integracao_whatsapp'
     },
     {
       nome: "Marketplaces",
@@ -112,15 +146,21 @@ export default function CentralIntegracoes() {
                 <div className="flex items-center gap-2">
                   <Badge 
                     className={
-                      integracao.status === "Ativo" || integracao.status === "Configurado" 
+                      (integracao.key && isAtivo(integracao.key)) || integracao.status === "Ativo" || integracao.status === "Configurado" 
                         ? "bg-green-100 text-green-800" 
                         : integracao.status === "Inativo"
                         ? "bg-red-100 text-red-800"
                         : "bg-yellow-100 text-yellow-800"
                     }
                   >
-                    {integracao.status}
+                    {(integracao.key && isAtivo(integracao.key)) ? 'Ativo' : integracao.status}
                   </Badge>
+
+                  {integracao.key && (
+                    <Button size="sm" variant="outline" onClick={() => setAtivo(integracao.key, !isAtivo(integracao.key))}>
+                      {isAtivo(integracao.key) ? 'Desativar' : 'Ativar'}
+                    </Button>
+                  )}
 
                   <Button size="sm" variant="outline" className="ml-auto">
                     <Link2 className="w-3 h-3 mr-1" />
