@@ -244,13 +244,27 @@ export default function VisualizadorUniversalEntidade({
 
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
+
+    // Ordenação local numérica correta quando colunaOrdenacao='codigo' sem suporte backend
+    if ((colunaOrdenacao === 'codigo') && Array.isArray(resultado)) {
+      const toNum = (v) => {
+        if (v == null) return -Infinity;
+        const m = String(v).match(/\d+/);
+        return m ? Number(m[0]) : Number(v);
+      };
+      resultado.sort((a,b) => {
+        const av = toNum(a?.codigo);
+        const bv = toNum(b?.codigo);
+        return direcaoOrdenacao === 'desc' ? (bv - av) : (av - bv);
+      });
+    }
     
     if (filtroAdicional && typeof filtroAdicional === 'function') {
       resultado = resultado.filter(filtroAdicional);
     }
     
     return resultado;
-  }, [dados, filtroAdicional]);
+  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao]);
 
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   
