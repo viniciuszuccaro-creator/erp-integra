@@ -202,7 +202,7 @@ export default function VisualizadorUniversalEntidade({
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
       const sortingAll = Boolean(colunaOrdenacao);
-      const effectiveItemsPerPage = sortingAll ? 5000 : itemsPerPage;
+      const effectiveItemsPerPage = sortingAll ? 20000 : itemsPerPage;
       const skip = sortingAll ? 0 : (currentPage - 1) * itemsPerPage;
       const sortString = getBackendSortString();
       
@@ -278,6 +278,7 @@ export default function VisualizadorUniversalEntidade({
           const n = Number(s);
           return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
         };
+        const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
         resultado.sort((a,b) => {
           const avRaw = getVal(a);
           const bvRaw = getVal(b);
@@ -288,14 +289,14 @@ export default function VisualizadorUniversalEntidade({
             if (!Number.isFinite(an) || !Number.isFinite(bn)) {
               const as = (avRaw ?? '').toString();
               const bs = (bvRaw ?? '').toString();
-              comp = as.localeCompare(bs, 'pt-BR', { numeric: true, sensitivity: 'base' });
+              comp = collator.compare(as, bs);
             } else {
               comp = an - bn;
             }
           } else {
             const as = (avRaw ?? '').toString();
             const bs = (bvRaw ?? '').toString();
-            comp = as.localeCompare(bs, 'pt-BR', { numeric: true, sensitivity: 'base' });
+            comp = collator.compare(as, bs);
           }
           return direcaoOrdenacao === 'desc' ? -comp : comp;
         });
