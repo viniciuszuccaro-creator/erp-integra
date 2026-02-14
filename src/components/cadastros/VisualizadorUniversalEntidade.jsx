@@ -685,7 +685,7 @@ export default function VisualizadorUniversalEntidade({
         </CardHeader>
 
         <CardContent className={`p-6 ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
-          {isLoading ? (
+          {(isLoading || (colunaOrdenacao && isFetching)) ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando...</p>
