@@ -246,10 +246,10 @@ export default function VisualizadorUniversalEntidade({
 
   const getBackendSortString = useCallback(() => {
     if (colunaOrdenacao) {
-      // Para ordenação por coluna clicada, aplicamos 100% no cliente para garantir consistência (ex.: Código numérico)
-      return undefined;
+      const prefix = direcaoOrdenacao === 'desc' ? '-' : '';
+      return `${prefix}${colunaOrdenacao}`; // ordenação no backend pela coluna clicada
     }
-    
+
     const sortMap = {
       'recent': '-created_date',
       'codigo': 'codigo',
@@ -259,9 +259,9 @@ export default function VisualizadorUniversalEntidade({
       'nome': 'nome',
       'nome_desc': '-nome'
     };
-    
+
     return sortMap[ordenacao] || '-created_date';
-  }, [colunaOrdenacao, ordenacao]);
+  }, [colunaOrdenacao, direcaoOrdenacao, ordenacao]);
 
   const buildFilterWithSearch = useCallback(() => {
     const filtroContexto = getFiltroContexto('empresa_id', true);
@@ -305,7 +305,7 @@ export default function VisualizadorUniversalEntidade({
     queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage, colunaOrdenacao, direcaoOrdenacao],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
-      const sortingAll = Boolean(colunaOrdenacao);
+      const sortingAll = false; // usamos ordenação do backend para cabeçalhos
       const sortString = getBackendSortString();
 
       // Quando o usuário clica no cabeçalho, buscamos TODOS os registros em lotes
@@ -865,7 +865,7 @@ export default function VisualizadorUniversalEntidade({
             </>
           )}
 
-          {!isLoading && totalItemsCount > 0 && !colunaOrdenacao && (
+          {!isLoading && totalItemsCount > 0 && (
             <PaginationControls
               currentPage={currentPage}
               totalItems={totalItemsCount}
