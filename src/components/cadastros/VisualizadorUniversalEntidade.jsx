@@ -308,7 +308,7 @@ export default function VisualizadorUniversalEntidade({
       const sortingAll = Boolean(colunaOrdenacao);
       const sortString = getBackendSortString();
 
-      // Quando o usuário clica no cabeçalho, buscamos TODOS os registros já ORDENADOS no backend
+      // Quando o usuário clica no cabeçalho, buscamos TODOS os registros já ORDENADOS no backend (em lotes)
       if (sortingAll) {
         // 1) Obter total
         let total = 0;
@@ -320,16 +320,25 @@ export default function VisualizadorUniversalEntidade({
           total = resp?.data?.count || 0;
         } catch (_) {}
 
-        // 2) Ordenação diretamente no backend pela coluna clicada
+        // 2) Ordenação diretamente no backend pela coluna clicada, em lotes estáveis
         const sortForHeader = `${direcaoOrdenacao === 'desc' ? '-' : ''}${colunaOrdenacao}`;
-        const limit = Math.max(500, total || 5000); // se total vier 0 por algum motivo, garante um limite alto
-        const all = await base44.entities[nomeEntidade].filter(
-          filtro,
-          sortForHeader,
-          limit,
-          0
-        );
-        return all || [];
+        const pageSize = 500;
+        const all = [];
+        let skipIt = 0;
+        const maxLoops = total > 0 ? Math.ceil(total / pageSize) + 1 : 10000;
+        for (let i = 0; i < maxLoops; i++) {
+          const batch = await base44.entities[nomeEntidade].filter(
+            filtro,
+            sortForHeader,
+            pageSize,
+            skipIt
+          );
+          if (!batch || batch.length === 0) break;
+          all.push(...batch);
+          if (batch.length < pageSize) break;
+          skipIt += pageSize;
+        }
+        return all;
       }
 
       // Ordenação padrão pelo servidor com paginação
