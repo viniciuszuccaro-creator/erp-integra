@@ -261,21 +261,29 @@ export default function VisualizadorUniversalEntidade({
       const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === colunaOrdenacao);
       if (meta) {
         const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[colunaOrdenacao]);
-        const toNum = (v) => {
-          if (v == null || v === '') return -Infinity;
+        const toNum = (v, campo) => {
+          if (v == null || v === '') return Number.POSITIVE_INFINITY;
           if (typeof v === 'number') return v;
-          // pega primeiro número; se não houver, usa localeCompare com option numeric
-          const m = String(v).match(/\d+(?:[\.,]\d+)?/);
-          return m ? Number(m[0].replace(',', '.')) : Number.isNaN(Number(v)) ? null : Number(v);
+          const s = String(v);
+          if (campo === 'codigo') {
+            const digits = s.replace(/\D/g, '');
+            return digits ? Number(digits) : Number.POSITIVE_INFINITY;
+          }
+          const m = s.match(/\d+(?:[\.,]\d+)?/);
+          if (m) {
+            return Number(m[0].replace(',', '.'));
+          }
+          const n = Number(s);
+          return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
         };
         resultado.sort((a,b) => {
           const avRaw = getVal(a);
           const bvRaw = getVal(b);
           let comp;
           if (meta.isNumeric) {
-            const an = toNum(avRaw);
-            const bn = toNum(bvRaw);
-            if (an === null || bn === null) {
+            const an = toNum(avRaw, meta.campo);
+            const bn = toNum(bvRaw, meta.campo);
+            if (!Number.isFinite(an) || !Number.isFinite(bn)) {
               const as = (avRaw ?? '').toString();
               const bs = (bvRaw ?? '').toString();
               comp = as.localeCompare(bs, 'pt-BR', { numeric: true, sensitivity: 'base' });

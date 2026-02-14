@@ -404,16 +404,15 @@ export default function Comercial() {
             />
 
             {pedidosExternosPendentes > 0 && (
-              <div className="flex items-center justify-between w-full">
-                <Badge className="bg-orange-100 text-orange-700 px-3 py-1.5">
+              <div className="sticky top-2 z-20 w-full bg-white/70 backdrop-blur-sm border border-orange-200 rounded-lg p-2 flex items-center gap-3">
+                <Badge className="bg-orange-100 text-orange-700 px-3 py-2 text-sm font-medium">
                   <AlertCircle className="w-3 h-3 mr-2" />
                   {pedidosExternosPendentes} pedido(s) externo(s) a validar
                 </Badge>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1200, height: 700 })}
-                  className="ml-2"
+                  onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
+                  className="ml-auto h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white shadow"
+                  size="lg"
                 >
                   Validar Pedido Externo
                 </Button>
