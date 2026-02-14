@@ -31,51 +31,64 @@ import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from "@/components/ui/use-toast";
 
 const OPCOES_ORDENACAO = {
-  Cliente: [
-    { value: 'nome', label: 'Nome (A-Z)' },
-    { value: 'nome_desc', label: 'Nome (Z-A)' },
-    { value: 'cidade', label: 'Cidade (A-Z)' },
-    { value: 'limite_credito', label: 'Limite de Crédito (Maior)' },
-    { value: 'mais_compras', label: 'Que Mais Compra' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  Fornecedor: [
-    { value: 'nome', label: 'Nome (A-Z)' },
-    { value: 'nota_media', label: 'Melhor Avaliação' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  Produto: [
-    { value: 'descricao', label: 'Descrição (A-Z)' },
-    { value: 'descricao_desc', label: 'Descrição (Z-A)' },
-    { value: 'codigo', label: 'Código (Crescente)' },
-    { value: 'codigo_desc', label: 'Código (Decrescente)' },
-    { value: 'recent', label: 'Mais Recentes' }
-  ],
-  default: [
-    { value: 'recent', label: 'Mais Recentes' }
-  ]
+Cliente: [
+  { value: 'nome', label: 'Nome (A-Z)' },
+  { value: 'nome_desc', label: 'Nome (Z-A)' },
+  { value: 'cidade', label: 'Cidade (A-Z)' },
+  { value: 'limite_credito', label: 'Limite de Crédito (Maior)' },
+  { value: 'mais_compras', label: 'Que Mais Compra' },
+  { value: 'recent', label: 'Mais Recentes' }
+],
+Fornecedor: [
+  { value: 'nome', label: 'Nome (A-Z)' },
+  { value: 'nota_media', label: 'Melhor Avaliação' },
+  { value: 'recent', label: 'Mais Recentes' }
+],
+Produto: [
+  { value: 'descricao', label: 'Descrição (A-Z)' },
+  { value: 'descricao_desc', label: 'Descrição (Z-A)' },
+  { value: 'codigo', label: 'Código (Crescente)' },
+  { value: 'codigo_desc', label: 'Código (Decrescente)' },
+  { value: 'recent', label: 'Mais Recentes' }
+],
+Colaborador: [
+  { value: 'nome_completo', label: 'Nome (A-Z)' },
+  { value: 'nome_completo_desc', label: 'Nome (Z-A)' },
+  { value: 'cargo', label: 'Cargo' },
+  { value: 'departamento', label: 'Departamento' },
+  { value: 'recent', label: 'Mais Recentes' }
+],
+default: [
+  { value: 'recent', label: 'Mais Recentes' }
+]
 };
 
 const COLUNAS_ORDENACAO = {
-  Produto: [
-    { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '', isNumeric: true },
-    { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' },
-    { campo: 'tipo_item', label: 'Tipo', getValue: (item) => item.tipo_item || '' },
-    { campo: 'setor_atividade_nome', label: 'Setor', getValue: (item) => item.setor_atividade_nome || '' },
-    { campo: 'grupo_produto_nome', label: 'Categoria', getValue: (item) => item.grupo_produto_nome || '' },
-    { campo: 'marca_nome', label: 'Marca', getValue: (item) => item.marca_nome || '' },
-    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' },
-    { campo: 'estoque_atual', label: 'Estoque', getValue: (item) => item.estoque_atual || 0, isNumeric: true },
-    { campo: 'preco_venda', label: 'Preço', getValue: (item) => item.preco_venda || 0, isNumeric: true }
-  ],
-  Cliente: [
-    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
-    { campo: 'tipo', label: 'Tipo', getValue: (item) => item.tipo || '' },
-    { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
-  ],
-  default: [
-    { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || item.descricao || '' }
-  ]
+Produto: [
+  { campo: 'codigo', label: 'Código', getValue: (item) => item.codigo || '', isNumeric: true },
+  { campo: 'descricao', label: 'Descrição', getValue: (item) => item.descricao || '' },
+  { campo: 'tipo_item', label: 'Tipo', getValue: (item) => item.tipo_item || '' },
+  { campo: 'setor_atividade_nome', label: 'Setor', getValue: (item) => item.setor_atividade_nome || '' },
+  { campo: 'grupo_produto_nome', label: 'Categoria', getValue: (item) => item.grupo_produto_nome || '' },
+  { campo: 'marca_nome', label: 'Marca', getValue: (item) => item.marca_nome || '' },
+  { campo: 'status', label: 'Status', getValue: (item) => item.status || '' },
+  { campo: 'estoque_atual', label: 'Estoque', getValue: (item) => item.estoque_atual || 0, isNumeric: true },
+  { campo: 'preco_venda', label: 'Preço', getValue: (item) => item.preco_venda || 0, isNumeric: true }
+],
+Cliente: [
+  { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || '' },
+  { campo: 'tipo', label: 'Tipo', getValue: (item) => item.tipo || '' },
+  { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+],
+Colaborador: [
+  { campo: 'nome_completo', label: 'Nome', getValue: (item) => item.nome_completo || '' },
+  { campo: 'cargo', label: 'Cargo', getValue: (item) => item.cargo || '' },
+  { campo: 'departamento', label: 'Departamento', getValue: (item) => item.departamento || '' },
+  { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
+],
+default: [
+  { campo: 'nome', label: 'Nome', getValue: (item) => item.nome || item.descricao || '' }
+]
 };
 
 const ALIAS_QUERY_KEYS = {
@@ -138,10 +151,7 @@ export default function VisualizadorUniversalEntidade({
 
   const getBackendSortString = useCallback(() => {
     if (colunaOrdenacao) {
-      // Numeric-aware when coluna is 'codigo'
-      if (colunaOrdenacao === 'codigo') {
-        return direcaoOrdenacao === 'desc' ? '-codigo_num' : 'codigo_num';
-      }
+      // Mantém ordenação backend pelo campo original; correção numérica é aplicada localmente
       return direcaoOrdenacao === 'desc' ? `-${colunaOrdenacao}` : colunaOrdenacao;
     }
     
@@ -171,7 +181,8 @@ export default function VisualizadorUniversalEntidade({
     const camposBusca = {
       'Produto': ['descricao', 'codigo', 'codigo_barras', 'grupo_produto_nome', 'marca_nome', 'setor_atividade_nome'],
       'Cliente': ['nome', 'razao_social', 'nome_fantasia', 'cpf', 'cnpj'],
-      'Fornecedor': ['nome', 'razao_social', 'cnpj']
+      'Fornecedor': ['nome', 'razao_social', 'cnpj'],
+      'Colaborador': ['nome_completo', 'cpf', 'email', 'cargo', 'departamento']
     };
 
     const campos = camposBusca[nomeEntidade] || ['nome', 'descricao', 'codigo'];

@@ -1,5 +1,5 @@
 import React from "react";
-import CentralIntegracoes from "@/components/integracoes/CentralIntegracoes";
+import CentralIntegracoes from "@/components/integracoes/CentralIntegracoes"; // Gerenciamento principal
 // import StatusIntegracoes from "@/components/integracoes/StatusIntegracoes";
 
 import ProtectedSection from "@/components/security/ProtectedSection";
