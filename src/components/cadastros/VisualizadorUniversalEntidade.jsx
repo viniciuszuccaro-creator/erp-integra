@@ -320,24 +320,15 @@ export default function VisualizadorUniversalEntidade({
           total = resp?.data?.count || 0;
         } catch (_) {}
 
-        // 2) Buscar TUDO em lotes SEM ordenar no backend e ordenar localmente (garante numérico correto em Código)
-        const pageSize = 500;
-        const all = [];
-        let skipIt = 0;
-        const maxLoops = total > 0 ? Math.ceil(total / pageSize) + 1 : 10000;
-        for (let i = 0; i < maxLoops; i++) {
-          const batch = await base44.entities[nomeEntidade].filter(
-            filtro,
-            undefined,
-            pageSize,
-            skipIt
-          );
-          if (!batch || batch.length === 0) break;
-          all.push(...batch);
-          if (batch.length < pageSize) break;
-          skipIt += pageSize;
-        }
-        return all;
+        // 2) Buscar TUDO em UMA chamada grande e ordenar localmente (garante numérico correto em Código)
+        const limit = total > 0 ? Math.min(total, 20000) : 20000;
+        const all = await base44.entities[nomeEntidade].filter(
+          filtro,
+          undefined,
+          limit,
+          0
+        );
+        return all || [];
       }
 
       // Ordenação padrão pelo servidor com paginação
