@@ -71,7 +71,7 @@ async function conciliarExtrato(base44, ctx, conc){
           valor_recebido: novoReceb,
           data_recebimento: new Date().toISOString().slice(0,10),
           status: quitado ? 'Recebido' : 'Parcial',
-          detalhes_pagamento: { ...(melhor.detalhes_pagamento||{}), forma_pagamento: 'Conciliação', valor_liquido: novoReceb }
+          detalhes_pagamento: { ...(melhor.detalhes_pagamento||{}), forma_pagamento: 'Conciliação', valor_liquido: novoReceb, status_compensacao: 'Conciliado' }
         });
       } else {
         const novoPago = Number(melhor.valor_pago||0) + Math.abs(valor);
@@ -80,7 +80,7 @@ async function conciliarExtrato(base44, ctx, conc){
           valor_pago: novoPago,
           data_pagamento: new Date().toISOString().slice(0,10),
           status: quitado ? 'Pago' : 'Parcelado',
-          detalhes_pagamento: { ...(melhor.detalhes_pagamento||{}), forma_pagamento: 'Conciliação', valor_liquido: novoPago }
+          detalhes_pagamento: { ...(melhor.detalhes_pagamento||{}), forma_pagamento: 'Conciliação', valor_liquido: novoPago, status_compensacao: 'Conciliado' }
         });
       }
       conciliados++;

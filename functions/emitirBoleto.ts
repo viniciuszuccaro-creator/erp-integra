@@ -68,12 +68,16 @@ Deno.serve(async (req) => {
       url_boleto_pdf: signedUrl,
       status_cobranca: 'gerada',
       data_envio_cobranca: new Date().toISOString(),
+      gateway_usado_nome: 'Boleto (Simulado)',
+      gateway_usado_id: 'simulado',
+      provedor_pagamento: 'boleto_simulado',
+      linha_digitavel: '00000.00000 00000.000000 00000.000000 0 00000000000000 (simulado)',
       ...(forma_cobranca ? { forma_cobranca } : {}),
       ...(projeto_obra ? { projeto_obra } : {})
     });
 
     // Auditoria
-    await audit(base44, me, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: conta_receber_id, descricao: 'Boleto PDF emitido e URL assinada gerada', dados_novos: { forma_cobranca: forma_cobranca||cr.forma_cobranca||'Boleto', projeto_obra: projeto_obra||cr.projeto_obra||null } });
+    await audit(base44, me, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: conta_receber_id, descricao: 'Boleto PDF emitido e URL assinada gerada', empresa_id: cr.empresa_id || null, dados_novos: { forma_cobranca: forma_cobranca||cr.forma_cobranca||'Boleto', projeto_obra: projeto_obra||cr.projeto_obra||null, gateway: { nome: 'Boleto (Simulado)', id: 'simulado', provedor: 'boleto_simulado' } } });
 
     return Response.json({ url: signedUrl });
   } catch (error) {
