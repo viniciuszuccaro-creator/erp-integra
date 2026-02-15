@@ -245,23 +245,20 @@ export default function VisualizadorUniversalEntidade({
   }, [buscaLocal]);
 
   const getBackendSortString = useCallback(() => {
+    // 1) Se usuário clicou no cabeçalho, ordenamos no backend por essa coluna
     if (colunaOrdenacao) {
-      // Para ordenação por coluna clicada, aplicamos 100% no cliente para garantir consistência (ex.: Código numérico)
-      return undefined;
+      return `${direcaoOrdenacao === 'desc' ? '-' : ''}${colunaOrdenacao}`;
     }
-    
-    const sortMap = {
-      'recent': '-created_date',
-      'codigo': 'codigo',
-      'codigo_desc': '-codigo',
-      'descricao': 'descricao',
-      'descricao_desc': '-descricao',
-      'nome': 'nome',
-      'nome_desc': '-nome'
-    };
-    
-    return sortMap[ordenacao] || '-created_date';
-  }, [colunaOrdenacao, ordenacao]);
+
+    // 2) Caso use o seletor "Organizar por...", mapeamento genérico + casos especiais
+    if (!ordenacao || ordenacao === 'recent') return '-created_date';
+
+    // Suporta padrões como "campo" e "campo_desc" para qualquer entidade
+    if (ordenacao.endsWith('_desc')) {
+      return `-${ordenacao.replace(/_desc$/, '')}`;
+    }
+    return ordenacao;
+  }, [colunaOrdenacao, direcaoOrdenacao, ordenacao]);
 
   const buildFilterWithSearch = useCallback(() => {
     const filtroContexto = getFiltroContexto('empresa_id', true);
@@ -308,28 +305,7 @@ export default function VisualizadorUniversalEntidade({
       const sortingAll = Boolean(colunaOrdenacao);
       const sortString = getBackendSortString();
 
-      // Quando o usuário clica no cabeçalho, buscamos TODOS os registros já ORDENADOS no backend (em lotes)
-      if (sortingAll) {
-        // 1) Obter total
-        let total = 0;
-        try {
-          const resp = await base44.functions.invoke('countEntities', {
-            entityName: nomeEntidade,
-            filter: filtro,
-          });
-          total = resp?.data?.count || 0;
-        } catch (_) {}
-
-        // 2) Buscar TUDO em UMA chamada grande e ordenar localmente (garante numérico correto em Código)
-        const limit = total > 0 ? Math.min(total, 20000) : 20000;
-        const all = await base44.entities[nomeEntidade].filter(
-          filtro,
-          undefined,
-          limit,
-          0
-        );
-        return all || [];
-      }
+      // Ordenação por coluna e por seletor agora são delegadas ao backend via sortString + paginação
 
       // Ordenação padrão pelo servidor com paginação
       const skip = (currentPage - 1) * itemsPerPage;
@@ -384,8 +360,8 @@ export default function VisualizadorUniversalEntidade({
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
 
-    // Ordenação local quando usuário clica no cabeçalho
-    if (colunaOrdenacao && Array.isArray(resultado)) {
+    // Ordenação local desativada: delegamos ao backend para consistência entre páginas
+    if (false) {
       const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === colunaOrdenacao);
       if (meta) {
         const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[colunaOrdenacao]);
