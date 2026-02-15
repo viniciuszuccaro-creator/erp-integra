@@ -123,7 +123,7 @@ export default function RH() {
   const colaboradoresFiltrados = colaboradores;
   const colaboradoresAtivos = (typeof colaboradoresAtivosCount === 'number' && colaboradoresAtivosCount >= 0)
     ? colaboradoresAtivosCount
-    : colaboradoresFiltrados.filter(c => c.status === "Ativo").length;
+    : colaboradoresFiltrados.filter(c => (c.status || '').toString().trim().toLowerCase() === 'ativo').length;
   const feriasAprovadas = ferias.filter(f => f.status === "Aprovada").length;
   const feriasPendentes = ferias.filter(f => f.status === "Solicitada").length;
 
