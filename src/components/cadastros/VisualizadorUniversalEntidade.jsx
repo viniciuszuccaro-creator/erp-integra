@@ -303,71 +303,18 @@ export default function VisualizadorUniversalEntidade({
   }, [getFiltroContexto, buscaBackend, nomeEntidade]);
 
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, empresaAtual?.id, buscaBackend, currentPage, itemsPerPage],
+    queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage, colunaOrdenacao, direcaoOrdenacao],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
-
-      // Busca cumulativa da página atual e aplica ordenação GLOBAL no cliente antes de fatiar
-      const limit = itemsPerPage * currentPage;
-      let list = await base44.entities[nomeEntidade].filter(
+      const sortString = getBackendSortString();
+      const skip = (currentPage - 1) * itemsPerPage;
+      const result = await base44.entities[nomeEntidade].filter(
         filtro,
-        undefined,
-        limit
+        sortString,
+        itemsPerPage,
+        skip
       );
-      list = list || [];
-
-      const metaCols = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default);
-      const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
-      const toNum = (v, campo) => {
-        if (v == null || v === '') return Number.POSITIVE_INFINITY;
-        if (typeof v === 'number') return v;
-        const s = String(v);
-        if (campo === 'codigo') {
-          const digits = s.replace(/\D/g, '');
-          return digits ? Number(digits) : Number.POSITIVE_INFINITY;
-        }
-        const m = s.match(/\d+(?:[\.,]\d+)?/);
-        if (m) return Number(m[0].replace(',', '.'));
-        const n = Number(s);
-        return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
-      };
-      const applySort = (campo, desc) => {
-        const meta = metaCols.find(c => c.campo === campo) || { campo, getValue: (item) => item[campo], isNumeric: campo === 'codigo' };
-        const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[campo]);
-        list.sort((a, b) => {
-          const avRaw = getVal(a);
-          const bvRaw = getVal(b);
-          let comp;
-          if (meta.isNumeric) {
-            const an = toNum(avRaw, meta.campo);
-            const bn = toNum(bvRaw, meta.campo);
-            if (!Number.isFinite(an) || !Number.isFinite(bn)) {
-              const as = (avRaw ?? '').toString();
-              const bs = (bvRaw ?? '').toString();
-              comp = collator.compare(as, bs);
-            } else {
-              comp = an - bn;
-            }
-          } else {
-            const as = (avRaw ?? '').toString();
-            const bs = (bvRaw ?? '').toString();
-            comp = collator.compare(as, bs);
-          }
-          return desc ? -comp : comp;
-        });
-      };
-
-      if (colunaOrdenacao) {
-        applySort(colunaOrdenacao, direcaoOrdenacao === 'desc');
-      } else if (ordenacao && ordenacao !== 'recent') {
-        const campo = ordenacao.replace(/_desc$/, '');
-        const desc = ordenacao.endsWith('_desc');
-        applySort(campo, desc);
-      }
-
-      const start = (currentPage - 1) * itemsPerPage;
-      const page = list.slice(start, start + itemsPerPage);
-      return page;
+      return result || [];
     },
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -749,7 +696,7 @@ export default function VisualizadorUniversalEntidade({
         </CardHeader>
 
         <CardContent className={`p-6 ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
-          {(isLoading || isFetching) ? (
+          {(isLoading || (colunaOrdenacao && isFetching)) ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando...</p>
