@@ -130,7 +130,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
     initialData: []
   });
 
@@ -143,7 +143,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
     initialData: []
   });
 
@@ -156,7 +156,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
     initialData: []
   });
 
@@ -169,7 +169,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
     initialData: []
   });
 
@@ -182,7 +182,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
     initialData: []
   });
 
@@ -213,7 +213,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
     initialData: []
   });
 
@@ -253,7 +253,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
     initialData: []
   });
 
@@ -284,7 +284,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
     initialData: []
   });
 

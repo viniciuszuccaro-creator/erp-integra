@@ -390,10 +390,10 @@ export default function Comercial() {
   return (
     <ProtectedSection module="Comercial" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="w-full h-full p-1 space-y-1 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderComercialCompacto />
         
-        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
+        <ResizablePanelGroup direction="vertical" className="gap-1 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
             <KPIsComercial
               totalClientes={clientesFiltrados.length}
@@ -418,7 +418,7 @@ export default function Comercial() {
               </div>
             )}
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle withHandle className="h-1" />
           <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
             <ModulosGridComercial 
               modules={allowedModules}
