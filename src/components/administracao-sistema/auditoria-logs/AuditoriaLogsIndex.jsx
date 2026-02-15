@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-// import AuditTrailPanel from "@/components/auditoria/AuditTrailPanel";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import AuditTrailPanel from "@/components/auditoria/AuditTrailPanel";
 import LogsAuditoria from "@/components/auditoria/LogsAuditoria";
 import GlobalAuditLog from "@/components/sistema/GlobalAuditLog";
 import { FileText } from "lucide-react";
 
 export default function AuditoriaLogsIndex() {
+  const [entidade, setEntidade] = useState('todas');
   return (
     <div className="w-full h-full flex flex-col">
       <Tabs defaultValue="painel" className="w-full h-full">

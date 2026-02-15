@@ -109,6 +109,20 @@ Deno.serve(async (req) => {
       await Promise.all(toList.map((to) => sendEmail(base44, to, subject, body)));
     }
 
+    // WhatsApp opcional para gestores via Configuração do Sistema
+    try {
+      const cfgAll = await base44.asServiceRole.entities.ConfiguracaoSistema.filter({});
+      const wcfg = cfgAll?.[0]?.seguranca?.alerts?.whatsapp;
+      if (wcfg?.enabled && wcfg?.to) {
+        const msg = `Segurança: ${suspicious.length} alerta(s) em ${WINDOW_MIN} min. Ex.: ${(suspicious[0]?.tipo || 'N/A')} - ${(suspicious[0]?.detalhes || '')}`;
+        await base44.asServiceRole.functions.invoke('whatsappSend', {
+          to: wcfg.to,
+          message: msg,
+          empresa_id: filtros?.empresa_id || null,
+        });
+      }
+    } catch (_) {}
+
     return Response.json({ ok: true, alerts: suspicious.length, recipients: toList.length });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });

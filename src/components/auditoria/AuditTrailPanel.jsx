@@ -8,7 +8,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { Clock } from "lucide-react";
 
-export default function AuditTrailPanel({ modulo = null, limit = 50 }) {
+export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = null }) {
   const { getFiltroContexto } = useContextoVisual();
   const { isAdmin, user } = usePermissions();
   const queryClient = useQueryClient();
@@ -19,6 +19,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50 }) {
   const filtro = useMemo(() => {
     const f = { ...filtroBase };
     if (modulo) f.modulo = modulo;
+    if (entidade) f.entidade = entidade;
     if (!isAdmin() || escopo === "meus") {
       if (user?.id) f.usuario_id = user.id;
     }
