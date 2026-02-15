@@ -12,9 +12,15 @@ Deno.serve(async (req) => {
       if (denied) return denied;
     }
 
-    const pedidos = await base44.asServiceRole.entities.Pedido.filter({}, '-updated_date', 500);
-    const receber = await base44.asServiceRole.entities.ContaReceber.filter({}, '-updated_date', 500);
-    const pagar = await base44.asServiceRole.entities.ContaPagar.filter({}, '-updated_date', 500);
+    let filtros = {};
+    try {
+      const b = await req.json();
+      if (b?.filtros && (b.filtros.group_id || b.filtros.empresa_id)) filtros = b.filtros;
+    } catch (_) {}
+
+    const pedidos = await base44.asServiceRole.entities.Pedido.filter(filtros, '-updated_date', 500);
+    const receber = await base44.asServiceRole.entities.ContaReceber.filter(filtros, '-updated_date', 500);
+    const pagar = await base44.asServiceRole.entities.ContaPagar.filter(filtros, '-updated_date', 500);
 
     // Diagnóstico de GAPS multiempresa
     const gaps = {
