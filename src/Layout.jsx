@@ -74,7 +74,7 @@ const navigationItems = [
   { title: "Compras e Suprimentos", url: createPageUrl("Compras"), icon: Package, group: "operacional" },
   { title: "Expedição e Logística", url: createPageUrl("Expedicao"), icon: Truck, group: "operacional" },
   { title: "Produção e Manufatura", url: createPageUrl("Producao"), icon: Factory, group: "operacional" },
-  { title: "Apontamento Mobile", url: createPageUrl("ProducaoMobile"), icon: Factory, group: "sistema" },
+  { title: "Apontamento Mobile", url: createPageUrl("ProducaoMobile"), icon: Factory, group: "operacional" },
   { title: "Financeiro e Contábil", url: createPageUrl("Financeiro"), icon: DollarSign, group: "administrativo" },
   { title: "Recursos Humanos", url: createPageUrl("RH"), icon: UserCircle, group: "administrativo" },
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
@@ -86,7 +86,7 @@ const navigationItems = [
   
   
   { title: "Hub de Atendimento", url: createPageUrl("HubAtendimento"), icon: MessageCircle, group: "principal" },
-  { title: "Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico" },
+  { title: "Portal do Cliente", url: createPageUrl("PortalCliente"), icon: Users, group: "publico", public: true },
 
   ];
 
@@ -97,7 +97,7 @@ function LayoutContent({ children, currentPageName }) {
         const { hasPermission } = usePermissions();
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
-        const auditThrottleRef = React.useRef({ click: 0, change: 0, resize: 0 });
+        const auditThrottleRef = React.useRef({ click: 0, change: 0 });
         const queryClient = useQueryClient();
 
         const prefetchForItem = (title) => {
@@ -441,32 +441,6 @@ function LayoutContent({ children, currentPageName }) {
     };
   }, [user?.id, empresaAtual?.id, currentModule]);
 
-  // Auditoria de resize (UX/layout)
-  useEffect(() => {
-    if (!user) return;
-    const handlerResize = () => {
-      try {
-        const now = Date.now();
-        if (now - (auditThrottleRef.current.resize || 0) < 3000) return;
-        auditThrottleRef.current.resize = now;
-        base44.entities?.AuditLog?.create?.({
-          usuario: user?.full_name || user?.email || 'Usuário',
-          usuario_id: user?.id,
-          empresa_id: empresaAtual?.id || null,
-          empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
-          acao: 'Visualização',
-          modulo: currentModule || 'Sistema',
-          tipo_auditoria: 'ui',
-          entidade: 'Resize',
-          descricao: `Resize: ${window.innerWidth}x${window.innerHeight}`,
-          data_hora: new Date().toISOString(),
-        });
-      } catch (_) {}
-    };
-    window.addEventListener('resize', handlerResize);
-    return () => window.removeEventListener('resize', handlerResize);
-  }, [user?.id, empresaAtual?.id, currentModule]);
-
   const isMobilePage = currentPageName === "ProducaoMobile";
 
 
@@ -479,13 +453,12 @@ function LayoutContent({ children, currentPageName }) {
     "Financeiro e Contábil": "Financeiro",
     "Fiscal e Tributário": "Fiscal",
     "Recursos Humanos": "RH",
-    "Portal do Cliente": "Portal",
   };
 
   const itemsFiltrados = navigationItems.filter(item => {
     if (item.adminOnly && user?.role !== 'admin') return false;
     const mod = titleToModule[item.title];
-    if (!mod) return true;
+    if (!mod) return true; // itens públicos ou informativos continuam visíveis
     return hasPermission(mod, null, 'ver');
   });
 
@@ -512,8 +485,6 @@ function LayoutContent({ children, currentPageName }) {
   }, [currentModule, currentPageName, user?.id, empresaAtual?.id]);
 
 
-
-  const portalInMenu = itemsFiltrados.some(item => item.title === "Portal do Cliente");
 
   const groupedItems = {
     principal: itemsFiltrados.filter(item => item.group === "principal"),
@@ -623,15 +594,6 @@ function LayoutContent({ children, currentPageName }) {
                 <LogOut className="w-4 h-4 text-slate-500" />
               </button>
             </div>
-
-            {/* RBAC: mostrar Portal do Cliente apenas se permitido */}
-            {hasPermission('Portal', null, 'ver') && !portalInMenu && (
-              <div className="mt-3">
-                <Link to={createPageUrl("PortalCliente")} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
-                  <Users className="w-4 h-4" /> Portal do Cliente
-                </Link>
-              </div>
-            )}
             
             <div className="mt-2 pt-2 border-t border-slate-200">
               <button

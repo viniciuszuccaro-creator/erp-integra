@@ -254,7 +254,7 @@ export default function VisualizadorUniversalEntidade({
     // 2) Dropdown "Organizar por": só aceita valores definidos nas opções
     const allowed = new Set((opcoesOrdenacao || []).map(o => o.value));
     if (!ordenacao || ordenacao === 'recent' || !allowed.has(ordenacao)) {
-      return '-updated_date';
+      return '-created_date';
     }
 
     // Padrões campo/campo_desc
@@ -306,13 +306,68 @@ export default function VisualizadorUniversalEntidade({
     queryKey: [...queryKey, empresaAtual?.id, buscaBackend, currentPage, itemsPerPage],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
-      const limit = itemsPerPage * currentPage; // carregamento cumulativo
-      const list = await base44.entities[nomeEntidade].filter(
+
+      // Busca cumulativa da página atual e aplica ordenação GLOBAL no cliente antes de fatiar
+      const limit = itemsPerPage * currentPage;
+      let list = await base44.entities[nomeEntidade].filter(
         filtro,
         undefined,
         limit
       );
-      return list || [];
+      list = list || [];
+
+      const metaCols = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default);
+      const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+      const toNum = (v, campo) => {
+        if (v == null || v === '') return Number.POSITIVE_INFINITY;
+        if (typeof v === 'number') return v;
+        const s = String(v);
+        if (campo === 'codigo') {
+          const digits = s.replace(/\D/g, '');
+          return digits ? Number(digits) : Number.POSITIVE_INFINITY;
+        }
+        const m = s.match(/\d+(?:[\.,]\d+)?/);
+        if (m) return Number(m[0].replace(',', '.'));
+        const n = Number(s);
+        return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
+      };
+      const applySort = (campo, desc) => {
+        const meta = metaCols.find(c => c.campo === campo) || { campo, getValue: (item) => item[campo], isNumeric: campo === 'codigo' };
+        const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[campo]);
+        list.sort((a, b) => {
+          const avRaw = getVal(a);
+          const bvRaw = getVal(b);
+          let comp;
+          if (meta.isNumeric) {
+            const an = toNum(avRaw, meta.campo);
+            const bn = toNum(bvRaw, meta.campo);
+            if (!Number.isFinite(an) || !Number.isFinite(bn)) {
+              const as = (avRaw ?? '').toString();
+              const bs = (bvRaw ?? '').toString();
+              comp = collator.compare(as, bs);
+            } else {
+              comp = an - bn;
+            }
+          } else {
+            const as = (avRaw ?? '').toString();
+            const bs = (bvRaw ?? '').toString();
+            comp = collator.compare(as, bs);
+          }
+          return desc ? -comp : comp;
+        });
+      };
+
+      if (colunaOrdenacao) {
+        applySort(colunaOrdenacao, direcaoOrdenacao === 'desc');
+      } else if (ordenacao && ordenacao !== 'recent') {
+        const campo = ordenacao.replace(/_desc$/, '');
+        const desc = ordenacao.endsWith('_desc');
+        applySort(campo, desc);
+      }
+
+      const start = (currentPage - 1) * itemsPerPage;
+      const page = list.slice(start, start + itemsPerPage);
+      return page;
     },
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -445,25 +500,14 @@ export default function VisualizadorUniversalEntidade({
         }
         return desc ? -comp : comp;
       });
-    } else {
-      // Padrão: "Mais Recentes" (updated_date desc, fallback created_date desc)
-      resultado.sort((a, b) => {
-        const au = a.updated_date || a.created_date || '';
-        const bu = b.updated_date || b.created_date || '';
-        const ad = new Date(au).getTime() || 0;
-        const bd = new Date(bu).getTime() || 0;
-        return bd - ad;
-      });
     }
     
     if (filtroAdicional && typeof filtroAdicional === 'function') {
       resultado = resultado.filter(filtroAdicional);
     }
     
-    // Paginação final no cliente para garantir consistência com a ordenação
-    const start = (currentPage - 1) * itemsPerPage;
-    return resultado.slice(start, start + itemsPerPage);
-  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade, ordenacao, currentPage, itemsPerPage]);
+    return resultado;
+  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade, ordenacao]);
 
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   
@@ -632,7 +676,7 @@ export default function VisualizadorUniversalEntidade({
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
               </Button>
-              <Button variant="primary" size="sm" onClick={handleAbrirNovo} disabled={!hasPermission(moduloPermissao, null, 'criar')}>
+              <Button variant="primary" size="sm" onClick={handleAbrirNovo} disabled={!hasPermission(moduloPermissao, 'criar')}>
                 <Plus className="w-4 h-4 mr-2" />
                 Novo
               </Button>
@@ -705,7 +749,7 @@ export default function VisualizadorUniversalEntidade({
         </CardHeader>
 
         <CardContent className={`p-6 ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
-          {(isLoading || (colunaOrdenacao && isFetching)) ? (
+          {(isLoading || isFetching) ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando...</p>
@@ -781,7 +825,7 @@ export default function VisualizadorUniversalEntidade({
                                 </Button>
                               )}
                               {componenteEdicao && (
-                                <Button size="sm" onClick={() => abrirEdicao(item)} disabled={!hasPermission(moduloPermissao, null, 'editar')}>
+                                <Button size="sm" onClick={() => abrirEdicao(item)} disabled={!hasPermission(moduloPermissao, 'editar')}>
                                   <Edit2 className="w-3 h-3" />
                                 </Button>
                               )}
@@ -822,7 +866,7 @@ export default function VisualizadorUniversalEntidade({
                             </Button>
                           )}
                           {componenteEdicao && (
-                            <Button size="sm" onClick={() => abrirEdicao(item)} className="flex-1" disabled={!hasPermission(moduloPermissao, null, 'editar')}>
+                            <Button size="sm" onClick={() => abrirEdicao(item)} className="flex-1" disabled={!hasPermission(moduloPermissao, 'editar')}>
                               <Edit2 className="w-3 h-3 mr-1" />
                               Editar
                             </Button>
@@ -863,7 +907,7 @@ export default function VisualizadorUniversalEntidade({
                               </Button>
                             )}
                             {componenteEdicao && (
-                              <Button size="sm" onClick={() => abrirEdicao(item)} disabled={!hasPermission(moduloPermissao, null, 'editar')}>
+                              <Button size="sm" onClick={() => abrirEdicao(item)} disabled={!hasPermission(moduloPermissao, 'editar')}>
                                 <Edit2 className="w-4 h-4" />
                               </Button>
                             )}

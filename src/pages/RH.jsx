@@ -126,33 +126,7 @@ export default function RH() {
       description: 'Cadastro e gestão',
       icon: Users,
       color: 'purple',
-      component: () => (
-        <div className="w-full h-full p-4 overflow-auto">
-          <div className="mb-3 text-sm text-slate-600">Colaboradores (multiempresa)</div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-600">
-                  <th className="py-2 pr-3">Nome</th>
-                  <th className="py-2 pr-3">Cargo</th>
-                  <th className="py-2 pr-3">Departamento</th>
-                  <th className="py-2">Filial (ID)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {colaboradoresFiltrados.map((c) => (
-                  <tr key={c.id} className="border-t border-slate-200">
-                    <td className="py-2 pr-3">{c.nome_completo || '-'}</td>
-                    <td className="py-2 pr-3">{c.cargo || '-'}</td>
-                    <td className="py-2 pr-3">{c.departamento || '-'}</td>
-                    <td className="py-2">{c.empresa_alocada_id || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ),
+      component: () => <div className="p-4">Ver em Cadastros Gerais</div>,
       windowTitle: '👥 Colaboradores',
       width: 1400,
       height: 800,
