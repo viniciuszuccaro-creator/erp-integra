@@ -34,12 +34,35 @@ Deno.serve(async (req) => {
 
     const orphanProdutos = produtos.filter(p => p.eh_bitola === true && !p.empresa_id);
     const estoqueSemFilial = movs.filter(m => !m.empresa_id || !m.localizacao_destino);
+    let issues = [];
     orphanProdutos.forEach(p => issues.push({ entidade: 'Produto', tipo: 'orfa_bitola_sem_empresa', severity: 'alto', id: p.id, data: p }));
     estoqueSemFilial.forEach(m => issues.push({ entidade: 'MovimentacaoEstoque', tipo: 'estoque_sem_filial', severity: 'alto', id: m.id, data: m }));
 
+    // Grandes variações em estoque de aço/bitola
+    try {
+      const minKg = Number((await loadAnomalyConfig(base44))?.estoque?.anomaly?.min_kg_change ?? 500);
+      const bigSteel = movs.filter(m => Number(Math.abs(m?.quantidade || 0)) >= minKg && (
+        String(m?.produto_descricao || '').toLowerCase().includes('aço') ||
+        String(m?.produto_descricao || '').toLowerCase().includes('aco') ||
+        m?.produto_id
+      ));
+      bigSteel.forEach(m => issues.push({ entidade: 'MovimentacaoEstoque', tipo: 'estoque_aco_grande_variacao', severity: 'alto', id: m.id, data: { id: m.id, quantidade: m.quantidade, produto: m.produto_descricao } }));
+    } catch (_) {}
+
+    // Tentativas repetidas (ajustes frequentes por responsável nas últimas 48h)
+    try {
+      const hoje = new Date();
+      const inicio = new Date(hoje.getTime() - 2 * 24 * 60 * 60 * 1000);
+      const ajustes = movs.filter(m => String(m?.tipo_movimento || '').toLowerCase() === 'ajuste' && m?.data_movimentacao && new Date(m.data_movimentacao) >= inicio);
+      const byResp = ajustes.reduce((acc, m) => { const k = m?.responsavel || 'desconhecido'; acc[k] = (acc[k] || 0) + 1; return acc; }, {});
+      Object.entries(byResp).forEach(([resp, cnt]) => {
+        if (cnt >= 5) issues.push({ entidade: 'MovimentacaoEstoque', tipo: 'ajustes_repetidos_responsavel', severity: 'medio', responsavel: resp, quantidade: cnt });
+      });
+    } catch (_) {}
+
     // Regras configuráveis + detecções já existentes
           const cfg = await loadAnomalyConfig(base44);
-          let issues = computeIssues(receber, pagar, cfg) || [];
+          issues = (computeIssues(receber, pagar, cfg) || []).concat(issues);
 
           // 2.0: Persistir flags em títulos de Pagar quando aplicável (service role)
           try {
