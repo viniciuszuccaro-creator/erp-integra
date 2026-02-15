@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { useWindow } from "@/components/lib/useWindow";
 import { createPageUrl } from "@/utils";
 import { Link } from "react-router-dom";
-import { MessageCircle, Truck, Users, Zap } from "lucide-react";
+import { MessageCircle, Truck, Users, Zap, Factory } from "lucide-react";
 
 // Apps e ferramentas já existentes no projeto
 import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
 import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
 import DashboardCliente from "@/components/portal/DashboardCliente";
+import ApontamentoProducao from "@/components/producao/ApontamentoProducao";
+import ChatCliente from "@/components/portal/ChatCliente";
 
 export default function ExternalAppsHub() {
   const { openWindow } = useWindow();
@@ -20,6 +22,8 @@ export default function ExternalAppsHub() {
     { title: "Portal do Cliente", icon: Users, color: "text-sky-600", bg: "from-sky-50 to-sky-100", action: launch(DashboardCliente, {}, { title: "Portal do Cliente" }) },
     { title: "Chatbot Dashboard", icon: MessageCircle, color: "text-purple-600", bg: "from-purple-50 to-purple-100", action: launch(ChatbotDashboard, {}, { title: "Chatbot Dashboard" }) },
     { title: "App Motorista", icon: Truck, color: "text-amber-600", bg: "from-amber-50 to-amber-100", action: launch(AppEntregasMotorista, {}, { title: "Apontamento de Entregas" }) },
+    { title: "Apontamento da Produção", icon: Factory, color: "text-emerald-600", bg: "from-emerald-50 to-emerald-100", action: launch(ApontamentoProducao, {}, { title: "Apontamento da Produção" }) },
+    { title: "Chat do Cliente", icon: MessageCircle, color: "text-indigo-600", bg: "from-indigo-50 to-indigo-100", action: launch(ChatCliente, {}, { title: "Chat do Cliente" }) },
     // Itens de integração foram centralizados em Administração > Integrações
 
   ];
