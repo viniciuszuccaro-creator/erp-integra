@@ -32,8 +32,14 @@ Deno.serve(async (req) => {
     };
 
     const inScope = (l) => {
-      if (filtros?.empresa_id && l?.empresa_id && l.empresa_id !== filtros.empresa_id) return false;
-      if (filtros?.group_id && l?.group_id && l.group_id !== filtros.group_id) return false;
+      if (filtros?.empresa_id) {
+        const eid = l?.empresa_id ?? l?.dados_novos?.empresa_id ?? null;
+        if (eid && eid !== filtros.empresa_id) return false;
+      }
+      if (filtros?.group_id) {
+        const gid = l?.group_id ?? l?.dados_novos?.group_id ?? null;
+        if (gid && gid !== filtros.group_id) return false;
+      }
       return true;
     };
 
