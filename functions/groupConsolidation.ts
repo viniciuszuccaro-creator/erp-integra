@@ -1,12 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { audit } from './_lib/guard';
+import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 // Consolidação Multiempresas: agrega KPIs por group_id (Pedidos, Receber, Pagar) e registra snapshot no AuditLog
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    if (user?.role !== 'admin') { return Response.json({ error: 'Forbidden' }, { status: 403 }); }
+    const { user, perfil } = await getUserAndPerfil(base44);
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (user?.role !== 'admin') {
+      const denied = await assertPermission(base44, { user, perfil }, 'Sistema', 'ConsolidacaoGrupo', 'visualizar');
+      if (denied) return denied;
+    }
 
     const pedidos = await base44.asServiceRole.entities.Pedido.filter({}, '-updated_date', 500);
     const receber = await base44.asServiceRole.entities.ContaReceber.filter({}, '-updated_date', 500);

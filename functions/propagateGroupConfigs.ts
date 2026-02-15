@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 // Propagação de configurações do nível de GRUPO para EMPRESAS do grupo
 // Suporta TabelaPreco e FormaPagamento (extensível no futuro)
@@ -6,9 +7,11 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const { user, perfil } = await getUserAndPerfil(base44);
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
     if (user?.role !== 'admin') {
-      return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+      const denied = await assertPermission(base44, { user, perfil }, 'Sistema', 'PropagacaoGrupo', 'executar');
+      if (denied) return denied;
     }
 
     const body = await req.json();
