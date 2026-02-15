@@ -12,13 +12,19 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
-    const groupId = body?.group_id;
+    const groupIdIn = body?.group_id || null;
+    const empresaIdIn = body?.empresa_id || null;
+    const direction = body?.direction || (empresaIdIn && !groupIdIn ? 'empresa_to_grupo' : 'grupo_to_empresas');
     const entidades = Array.isArray(body?.entidades) && body.entidades.length > 0 ? body.entidades : ['TabelaPreco', 'FormaPagamento'];
     const override = !!body?.override;
 
-    if (!groupId) return Response.json({ error: 'group_id é obrigatório' }, { status: 400 });
+    let groupId = groupIdIn;
+    if (!groupId && empresaIdIn) {
+      const emp = await base44.asServiceRole.entities.Empresa.filter({ id: empresaIdIn }, undefined, 1).then(r => r?.[0]).catch(() => null);
+      groupId = emp?.group_id || null;
+    }
+    if (!groupId) return Response.json({ error: 'Contexto inválido: group_id ou empresa_id obrigatório' }, { status: 400 });
 
-    // Empresas do grupo
     const empresas = await base44.asServiceRole.entities.Empresa.filter({ group_id: groupId }, undefined, 500);
 
     const results = [];
@@ -52,9 +58,36 @@ Deno.serve(async (req) => {
       results.push({ entity: entityName, count: baseRegs.length });
     };
 
-    for (const en of entidades) {
-      if (!base44.asServiceRole.entities?.[en]) continue;
-      await copiarRegistros(en);
+    if (direction === 'grupo_to_empresas') {
+      for (const en of entidades) {
+        if (!base44.asServiceRole.entities?.[en]) continue;
+        await copiarRegistros(en);
+      }
+    } else if (direction === 'empresa_to_grupo' && empresaIdIn) {
+      // Copia configurações da empresa origem para o nível do grupo (sem sobrescrever IDs)
+      const copiarEmpresaParaGrupo = async (entityName) => {
+        const baseRegs = await base44.asServiceRole.entities[entityName].filter({ empresa_id: empresaIdIn }, undefined, 1000);
+        for (const r of baseRegs) {
+          const keyFields = ['descricao', 'nome', 'codigo', 'titulo'];
+          const chave = keyFields.map((k) => r?.[k]).find((v) => !!v);
+          const existing = chave
+            ? await base44.asServiceRole.entities[entityName].filter({ group_id: groupId, ...(chave ? { descricao: r.descricao, nome: r.nome, codigo: r.codigo, titulo: r.titulo } : {}) }, undefined, 1)
+            : [];
+          const payload = { ...r };
+          delete payload.id; delete payload.created_date; delete payload.updated_date; delete payload.created_by; delete payload.empresa_id;
+          payload.group_id = groupId;
+          if (existing?.length && override) {
+            await base44.asServiceRole.entities[entityName].update(existing[0].id, payload);
+          } else if (!existing?.length) {
+            await base44.asServiceRole.entities[entityName].create(payload);
+          }
+        }
+        results.push({ entity: entityName, count: baseRegs.length, direction });
+      };
+      for (const en of entidades) {
+        if (!base44.asServiceRole.entities?.[en]) continue;
+        await copiarEmpresaParaGrupo(en);
+      }
     }
 
     // Auditoria
@@ -65,13 +98,13 @@ Deno.serve(async (req) => {
         acao: 'Criação',
         modulo: 'Sistema',
         entidade: 'PropagacaoGrupo',
-        descricao: `Propagação concluída (${results.map(r=>r.entity+':'+r.count).join(', ')})`,
-        dados_novos: { group_id: groupId, entidades, override, results },
+        descricao: `Propagação (${direction}) concluída (${results.map(r=>r.entity+':'+r.count).join(', ')})`,
+        dados_novos: { group_id: groupId, empresa_origem: empresaIdIn || null, direction, entidades, override, results },
         data_hora: new Date().toISOString(),
       });
     } catch {}
 
-    return Response.json({ ok: true, results });
+    return Response.json({ ok: true, direction, results });
   } catch (error) {
     return Response.json({ error: String(error?.message || error) }, { status: 500 });
   }

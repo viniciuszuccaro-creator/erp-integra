@@ -38,6 +38,13 @@ Deno.serve(async (req) => {
     const empresa_id = recordData?.empresa_id || previousData?.empresa_id || null;
     const group_id = recordData?.group_id || previousData?.group_id || null;
 
+    const gaps = [];
+    if (!empresa_id) gaps.push('sem_empresa');
+    if (!group_id) gaps.push('sem_grupo');
+    // Ferro & Aço: estoque sem filial/localização
+    const ferroAcoCritical = (entidade === 'MovimentacaoEstoque' && (!empresa_id || !recordData?.localizacao_destino)) ||
+                             (entidade === 'Produto' && recordData?.eh_bitola === true && !empresa_id);
+
     const risk = computeRisk({ event, data: recordData, ip, userAgent });
 
     // Risco IA (opcional via ConfiguracaoSistema.seguranca.rbac_ia.habilitado)
@@ -55,14 +62,27 @@ Deno.serve(async (req) => {
       modulo,
       entidade,
       registro_id: event.entity_id,
-      descricao: `Evento ${type} em ${entidade} (risco: ${risk.level})`,
+      descricao: `Evento ${type} em ${entidade} (risco: ${risk.level})${gaps.length ? ' • gaps: ' + gaps.join(',') : ''}${ferroAcoCritical ? ' • F&A crítico' : ''}`,
       empresa_id: empresa_id || undefined,
       dados_anteriores: type !== 'create' ? safeTrimPayload(previousData || null) : null,
-      dados_novos: type !== 'delete' ? { ...safeTrimPayload(recordData || null), __risk: risk, __risk_ia: iaRisk || null, group_id: group_id || null } : null,
+      dados_novos: type !== 'delete' ? { ...safeTrimPayload(recordData || null), __risk: risk, __risk_ia: iaRisk || null, group_id: group_id || null, __gaps: gaps } : null,
       data_hora: new Date().toISOString(),
       ip_address: ip,
       user_agent: userAgent,
     });
+
+    if (ferroAcoCritical) {
+      try {
+        await notify(base44, {
+          titulo: 'Alerta Multiempresa (Ferro & Aço)',
+          mensagem: `${entidade} ${event.entity_id} com inconsistências de contexto (estoque/filial).`,
+          categoria: 'Logística/Estoque',
+          prioridade: 'Alta',
+          empresa_id: empresa_id || undefined,
+          dados: { event, gaps, entidade }
+        }, { whatsapp: true });
+      } catch (_){ }
+    }
 
     // Notificação somente para alto/crítico (sem bloqueio)
     if (risk?.level === 'Crítico' || risk?.level === 'Alto') {

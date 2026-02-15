@@ -12,6 +12,14 @@ Deno.serve(async (req) => {
     const receber = await base44.asServiceRole.entities.ContaReceber.filter({}, '-updated_date', 500);
     const pagar = await base44.asServiceRole.entities.ContaPagar.filter({}, '-updated_date', 500);
 
+    // Diagnóstico de GAPS multiempresa
+    const gaps = {
+      pedido_sem_empresa: pedidos.filter(p => !p?.empresa_id).length,
+      pedido_sem_grupo: pedidos.filter(p => !p?.group_id).length,
+      receber_sem_empresa: receber.filter(r => !r?.empresa_id).length,
+      pagar_sem_empresa: pagar.filter(c => !c?.empresa_id).length,
+    };
+
     const groups = new Map();
     const add = (gid) => { if (!groups.has(gid)) groups.set(gid, { group_id: gid || null, pedidos: 0, valor_pedidos: 0, receber: 0, valor_receber: 0, pagar: 0, valor_pagar: 0 }); };
 
@@ -36,14 +44,14 @@ Deno.serve(async (req) => {
 
     const summary = Array.from(groups.values());
 
-    // Gravar uma entrada de auditoria consolidada (mantém histórico sem criar nova entidade)
+    // Gravar uma entrada de auditoria consolidada + GAPS
     await base44.asServiceRole.entities.AuditLog.create({
       usuario: 'Sistema',
       acao: 'Criação',
       modulo: 'Sistema',
       entidade: 'ConsolidaçãoGrupo',
-      descricao: `Snapshot multiempresa (${summary.length} grupos/escopos)`,
-      dados_novos: { gerado_em: new Date().toISOString(), summary },
+      descricao: `Snapshot multiempresa (${summary.length} grupos/escopos) — gaps: ${JSON.stringify(gaps)}`,
+      dados_novos: { gerado_em: new Date().toISOString(), summary, gaps },
       data_hora: new Date().toISOString(),
     });
 

@@ -23,6 +23,17 @@ Deno.serve(async (req) => {
     const receber = await base44.asServiceRole.entities.ContaReceber.filter(filtros, '-updated_date', 500);
     const pagar = await base44.asServiceRole.entities.ContaPagar.filter(filtros, '-updated_date', 500);
 
+    // Ferro & Aço: detectar órfãos/inconsistências de estoque/produto
+    let produtos = [];
+    let movs = [];
+    try { produtos = await base44.asServiceRole.entities.Produto.filter(filtros, '-updated_date', 300); } catch(_) {}
+    try { movs = await base44.asServiceRole.entities.MovimentacaoEstoque.filter(filtros, '-updated_date', 300); } catch(_) {}
+
+    const orphanProdutos = produtos.filter(p => p.eh_bitola === true && !p.empresa_id);
+    const estoqueSemFilial = movs.filter(m => !m.empresa_id || !m.localizacao_destino);
+    orphanProdutos.forEach(p => issues.push({ entidade: 'Produto', tipo: 'orfa_bitola_sem_empresa', severity: 'alto', id: p.id, data: p }));
+    estoqueSemFilial.forEach(m => issues.push({ entidade: 'MovimentacaoEstoque', tipo: 'estoque_sem_filial', severity: 'alto', id: m.id, data: m }));
+
     // Regras configuráveis + detecções já existentes
           const cfg = await loadAnomalyConfig(base44);
           let issues = computeIssues(receber, pagar, cfg) || [];

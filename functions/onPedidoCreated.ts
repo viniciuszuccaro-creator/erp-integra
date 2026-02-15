@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission, assertContextPresence, extractRequestMeta } from './_lib/guard.js';
+import { getUserAndPerfil, assertPermission, assertContextPresence, extractRequestMeta, ensureContextFields } from './_lib/guard.js';
 import { processReservas } from './_lib/orderReservationUtils.js';
 import { ensureEventType } from './_lib/validationUtils.js';
 import { handleOnPedidoCreated } from './_lib/pedido/onPedidoCreatedHandler.js';
@@ -23,23 +23,26 @@ Deno.serve(async (req) => {
       if (ctxErr) return ctxErr;
     }
 
+    const dataEnriched = await ensureContextFields(base44, data, true);
+    if ((dataEnriched as any)?.error) return dataEnriched;
+
     // Permissão: editar estoque e criar movimentação
     const perm = await assertPermission(base44, ctx, 'Estoque', 'MovimentacaoEstoque', 'criar');
     if (perm) return perm;
 
-    const { movimentos } = await handleOnPedidoCreated(base44, ctx, data, user);
+    const { movimentos } = await handleOnPedidoCreated(base44, ctx, dataEnriched, user);
 
     await stockAudit(base44, user, {
       acao: 'Criação',
       entidade: 'MovimentacaoEstoque',
-      registro_id: data?.id || null,
+      registro_id: dataEnriched?.id || null,
       descricao: 'Movimentações geradas a partir de Pedido criado',
-      empresa_id: data?.empresa_id || null,
+      empresa_id: dataEnriched?.empresa_id || null,
       dados_novos: { quantidade_movimentos: Array.isArray(movimentos) ? movimentos.length : (movimentos?.length || 0) }
     }, meta);
 
     // Notificação leve via helper centralizado (multiempresa)
-    await emitPedidoMovementsGenerated(base44, { pedido: data, movimentos, validation: null });
+    await emitPedidoMovementsGenerated(base44, { pedido: dataEnriched, movimentos, validation: null });
 
     return Response.json({ ok: true, movimentos });
   } catch (e) {

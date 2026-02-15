@@ -136,6 +136,24 @@ export function extractRequestMeta(req) {
   }
 }
 
+export async function ensureContextFields(base44, data, requireEmpresa = true) {
+  try {
+    if (!data) return data;
+    let enriched = { ...data };
+    if (requireEmpresa && !enriched.empresa_id && !enriched.group_id) {
+      return Response.json({ error: 'Contexto multiempresa obrigatório (empresa_id ou group_id)' }, { status: 400 });
+    }
+    if (!enriched.group_id && enriched.empresa_id) {
+      const empresas = await base44.asServiceRole.entities.Empresa.filter({ id: enriched.empresa_id }, undefined, 1);
+      const emp = Array.isArray(empresas) ? empresas[0] : null;
+      if (emp?.group_id) enriched.group_id = emp.group_id;
+    }
+    return enriched;
+  } catch (_) {
+    return data;
+  }
+}
+
 export async function audit(base44, user, { acao = 'Ação', modulo = 'Sistema', entidade = '-', registro_id = null, descricao = '', dados_novos = null, empresa_id = null, empresa_nome = null, duracao_ms = null }, meta = null) {
   try {
     const payloadDados = (dados_novos && typeof dados_novos === 'object') ? { ...dados_novos } : {};
