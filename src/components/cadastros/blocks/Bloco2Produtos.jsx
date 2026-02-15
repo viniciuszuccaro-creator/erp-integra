@@ -1,6 +1,10 @@
 import React from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
@@ -16,6 +20,22 @@ import TabelaPrecoFormCompleto from "@/components/cadastros/TabelaPrecoFormCompl
 import KitProdutoForm from "@/components/cadastros/KitProdutoForm";
 import CatalogoWebForm from "@/components/cadastros/CatalogoWebForm";
 import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
+
+function CountBadge({ entityName }) {
+  const { getFiltroContexto } = useContextoVisual();
+  const { data: count = 0 } = useQuery({
+    queryKey: ['count', 'cadastros', entityName],
+    queryFn: async () => {
+      const resp = await base44.functions.invoke('countEntities', {
+        entityName,
+        filter: getFiltroContexto('empresa_id')
+      });
+      return resp?.data?.count || 0;
+    },
+    staleTime: 60000
+  });
+  return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
+}
 
 export default function Bloco2Produtos() {
   const { openWindow } = useWindow();
@@ -46,6 +66,7 @@ export default function Bloco2Produtos() {
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-5 h-5 text-purple-600"/> Produtos
+              <span className="ml-2"><CountBadge entityName="Produto" /></span>
             </CardTitle>
             <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={openProdutos} disabled={!hasPermission('estoque','ver')}>
               Abrir
@@ -61,6 +82,7 @@ export default function Bloco2Produtos() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Icon className="w-5 h-5 text-slate-600"/> {title}
+                <span className="ml-2"><CountBadge entityName={k} /></span>
               </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, title, Icon, campos, FormComp)} disabled={!hasPermission('cadastros','ver')}>
                 Abrir

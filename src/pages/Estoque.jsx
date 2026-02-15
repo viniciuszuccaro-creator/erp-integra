@@ -170,7 +170,7 @@ export default function Estoque() {
       title: 'Inventário',
       description: 'Contagem e ajustes',
       icon: Box,
-      color: 'slate',
+      color: 'cyan',
       component: React.lazy(() => import('../components/estoque/InventarioForm')),
       windowTitle: '📋 Inventário',
       width: 1200,

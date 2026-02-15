@@ -10,6 +10,8 @@ import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
 import HeaderRHCompacto from "@/components/rh/rh-launchpad/HeaderRHCompacto";
 import KPIsRH from "@/components/rh/rh-launchpad/KPIsRH";
+import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
+import ColaboradorForm from "@/components/rh/ColaboradorForm";
 import ModulosGridRH from "@/components/rh/rh-launchpad/ModulosGridRH";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 
@@ -18,6 +20,19 @@ const GameficacaoProducao = React.lazy(() => import("@/components/rh/Gameficacao
 const MonitoramentoRHInteligente = React.lazy(() => import("@/components/rh/MonitoramentoRHInteligente"));
 const PontoEletronicoBiometrico = React.lazy(() => import("@/components/rh/PontoEletronicoBiometrico"));
 const DashboardRHRealtime = React.lazy(() => import("../components/rh/DashboardRHRealtime"));
+
+const ColaboradoresWindow = () => (
+  <div className="h-full w-full">
+    <VisualizadorUniversalEntidade
+      nomeEntidade="Colaborador"
+      tituloDisplay="Colaboradores"
+      icone={Users}
+      camposPrincipais={["nome_completo","cpf","email","cargo","departamento","status","telefone"]}
+      componenteEdicao={ColaboradorForm}
+      windowMode
+    />
+  </div>
+);
 
 export default function RH() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
@@ -126,7 +141,7 @@ export default function RH() {
       description: 'Cadastro e gestão',
       icon: Users,
       color: 'purple',
-      component: () => <div className="p-4">Ver em Cadastros Gerais</div>,
+      component: ColaboradoresWindow,
       windowTitle: '👥 Colaboradores',
       width: 1400,
       height: 800,
