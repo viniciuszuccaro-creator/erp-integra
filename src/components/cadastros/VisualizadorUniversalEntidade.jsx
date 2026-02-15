@@ -245,20 +245,23 @@ export default function VisualizadorUniversalEntidade({
   }, [buscaLocal]);
 
   const getBackendSortString = useCallback(() => {
-    // 1) Se usuário clicou no cabeçalho, ordenamos no backend por essa coluna
+    // 1) Cabeçalho clicado: ordena pela coluna atual
     if (colunaOrdenacao) {
       return `${direcaoOrdenacao === 'desc' ? '-' : ''}${colunaOrdenacao}`;
     }
 
-    // 2) Caso use o seletor "Organizar por...", mapeamento genérico + casos especiais
-    if (!ordenacao || ordenacao === 'recent') return '-created_date';
+    // 2) Dropdown "Organizar por": só aceita valores definidos nas opções
+    const allowed = new Set((opcoesOrdenacao || []).map(o => o.value));
+    if (!ordenacao || ordenacao === 'recent' || !allowed.has(ordenacao)) {
+      return '-created_date';
+    }
 
-    // Suporta padrões como "campo" e "campo_desc" para qualquer entidade
+    // Padrões campo/campo_desc
     if (ordenacao.endsWith('_desc')) {
       return `-${ordenacao.replace(/_desc$/, '')}`;
     }
     return ordenacao;
-  }, [colunaOrdenacao, direcaoOrdenacao, ordenacao]);
+  }, [colunaOrdenacao, direcaoOrdenacao, ordenacao, opcoesOrdenacao]);
 
   const buildFilterWithSearch = useCallback(() => {
     const filtroContexto = getFiltroContexto('empresa_id', true);
