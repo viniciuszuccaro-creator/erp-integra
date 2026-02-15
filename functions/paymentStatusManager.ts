@@ -115,7 +115,8 @@ Deno.serve(async (req) => {
     }
 
     // RBAC por módulo Financeiro
-    const perm = await assertPermission(base44, ctx, 'Financeiro', entity, 'editar');
+    const entityForPerm = action === 'conciliar_extrato' ? 'ContaReceber' : entity;
+    const perm = await assertPermission(base44, ctx, 'Financeiro', entityForPerm, 'editar');
     if (perm) return perm;
 
     // Conciliação automática por extrato bancário
@@ -128,6 +129,8 @@ Deno.serve(async (req) => {
     const api = base44.asServiceRole.entities[entity];
     const idsList = (ids && Array.isArray(ids) && ids.length) ? ids : [id];
     const pagamento = normalizePagamento(pagamentoIn);
+    const extraFromMulti = Array.isArray(pagamento.multiplos_meios) ? pagamento.multiplos_meios.reduce((s,m)=> s + (Number(m?.valor)||0), 0) : 0;
+    const valorTotal = (Number(pagamento.valor)||0) + extraFromMulti;
 
     const resultados = [];
     for (const alvoId of idsList){
@@ -135,24 +138,24 @@ Deno.serve(async (req) => {
       let updates = {};
       if (isCP(entity)) {
         updates = computeUpdatesForContaPagar(action, justificativa, registro) || {};
-        if (pagamento.valor>0) {
-          const novo = Number(registro.valor_pago||0) + pagamento.valor;
+        if (valorTotal>0) {
+          const novo = Number(registro.valor_pago||0) + valorTotal;
           const quitado = novo + 0.005 >= Number(registro.valor||0);
           updates.valor_pago = novo;
           updates.data_pagamento = new Date().toISOString().slice(0,10);
           updates.status = quitado ? 'Pago' : 'Parcelado';
-          updates.detalhes_pagamento = { ...(registro.detalhes_pagamento||{}), forma_pagamento: pagamento.meio, valor_liquido: novo };
+          updates.detalhes_pagamento = { ...(registro.detalhes_pagamento||{}), forma_pagamento: pagamento.meio, valor_liquido: novo, multimeios: pagamento.multiplos_meios, parcelas: pagamento.parcelas };
           if (pagamento.fornecedor_id && !registro.fornecedor_id) updates.fornecedor_id = pagamento.fornecedor_id;
         }
       } else if (isCR(entity)) {
         updates = computeUpdatesForContaReceber(action, justificativa, registro) || {};
-        if (pagamento.valor>0) {
-          const novo = Number(registro.valor_recebido||0) + pagamento.valor;
+        if (valorTotal>0) {
+          const novo = Number(registro.valor_recebido||0) + valorTotal;
           const quitado = novo + 0.005 >= Number(registro.valor||0);
           updates.valor_recebido = novo;
           updates.data_recebimento = new Date().toISOString().slice(0,10);
           updates.status = quitado ? 'Recebido' : 'Parcial';
-          updates.detalhes_pagamento = { ...(registro.detalhes_pagamento||{}), forma_pagamento: pagamento.meio, valor_liquido: novo };
+          updates.detalhes_pagamento = { ...(registro.detalhes_pagamento||{}), forma_pagamento: pagamento.meio, valor_liquido: novo, multimeios: pagamento.multiplos_meios, parcelas: pagamento.parcelas };
           if (pagamento.obra_id && !registro.projeto_obra) updates.projeto_obra = pagamento.obra_id;
         }
       }
