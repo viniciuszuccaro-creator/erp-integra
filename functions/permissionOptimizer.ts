@@ -11,9 +11,13 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin required' }, { status: 403 });
     }
 
-    // Heurística simples: marcar módulos com muitos bloqueios/erros como candidatos a refinamento
-    const ultimos = await base44.asServiceRole.entities.AuditLog.filter({ modulo: 'Sistema' }, '-data_hora', 500);
+    // Heurística: analisar bloqueios por módulo nos últimos eventos
+    const ultimos = await base44.asServiceRole.entities.AuditLog.filter({}, '-data_hora', 800);
     const bloqueios = ultimos.filter(l => l.acao === 'Bloqueio');
+
+    // Contagem por módulo
+    const countBy = (arr, fn) => arr.reduce((acc, v) => { const k = fn(v); acc[k] = (acc[k] || 0) + 1; return acc; }, {});
+    const blocksByModule = countBy(bloqueios, (l) => l.modulo || 'Sistema');
 
     const perfis = await base44.asServiceRole.entities.PerfilAcesso.list();
     const sugestoes = {};
