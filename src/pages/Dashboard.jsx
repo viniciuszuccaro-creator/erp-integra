@@ -428,7 +428,7 @@ export default function Dashboard() {
     },
     {
       title: "Colaboradores",
-      value: colaboradoresAtivos,
+      value: colaboradores.length,
       icon: UserCircle,
       color: "text-pink-600",
       bgColor: "bg-pink-50",
@@ -453,7 +453,7 @@ export default function Dashboard() {
     },
     {
       title: "Total Pedidos",
-      value: pedidosPeriodo.length,
+      value: pedidos.length,
       icon: ShoppingCart,
       color: "text-cyan-600",
       bgColor: "bg-cyan-50",
