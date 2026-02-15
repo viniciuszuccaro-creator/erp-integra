@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserCircle, Calendar, Clock, CheckCircle } from "lucide-react";
 
 export default function KPIsRH({ 
-  colaboradoresAtivos, 
+  colaboradoresAtivos,
+  totalColaboradores,
   feriasAprovadas, 
   feriasPendentes, 
   totalPontos 
@@ -12,12 +13,23 @@ export default function KPIsRH({
     <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
       <Card className="border-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
-          <CardTitle className="text-xs font-medium">Ativos</CardTitle>
+          <CardTitle className="text-xs font-medium">Cadastrados</CardTitle>
           <UserCircle className="w-4 h-4 text-purple-600" />
         </CardHeader>
         <CardContent className="px-3 pb-2">
-          <div className="text-2xl font-bold text-purple-600">{colaboradoresAtivos}</div>
+          <div className="text-2xl font-bold text-purple-600">{totalColaboradores}</div>
           <p className="text-xs text-slate-500">colaboradores</p>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-3 px-3">
+          <CardTitle className="text-xs font-medium">Ativos</CardTitle>
+          <CheckCircle className="w-4 h-4 text-green-600" />
+        </CardHeader>
+        <CardContent className="px-3 pb-2">
+          <div className="text-2xl font-bold text-green-600">{colaboradoresAtivos}</div>
+          <p className="text-xs text-slate-500">em atividade</p>
         </CardContent>
       </Card>
 

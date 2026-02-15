@@ -174,7 +174,7 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
  */
 export default function Cadastros() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [acordeonAberto, setAcordeonAberto] = useState(['bloco1', 'bloco2', 'bloco3', 'bloco4', 'bloco5', 'bloco6']);
+  const [acordeonAberto, setAcordeonAberto] = useState([]);
   const [abaGerenciamento, setAbaGerenciamento] = useState("cadastros");
   const [abaIntegracoes, setAbaIntegracoes] = useState("gerenciamento");
 
@@ -733,13 +733,156 @@ export default function Cadastros() {
     },
   });
 
-  // V22.0: Cálculo de totais por bloco com contagens otimizadas
-  const totalBloco1 = totalClientes + totalFornecedores + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
-  const totalBloco2 = totalProdutos + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
-  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
-  const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
-  const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + apisExternas.length + jobsAgendados.length + parametrosPortal.length + parametrosOrigemPedido.length + parametrosRecebimentoNFe.length + parametrosRoteirizacao.length + parametrosConciliacao.length + parametrosCaixa.length;
+  // Totais precisos por bloco via countEntities (respeitando multiempresa)
+  const { data: totalBloco1 = 0 } = useQuery({
+    queryKey: ['cad-bloco1-total', empresaAtual?.id],
+    queryFn: async () => {
+      const sum = async (entity, campo = 'empresa_id') => {
+        try {
+          const filtro = campo === 'empresa_alocada_id' ? getFiltroContexto('empresa_alocada_id') : (campo === 'empresa_dona_id' ? getFiltroContexto('empresa_dona_id') : getFiltroContexto('empresa_id'));
+          const r = await base44.functions.invoke('countEntities', { entityName: entity, filter: filtro });
+          return r.data?.count || 0;
+        } catch { return 0; }
+      };
+      const vals = await Promise.all([
+        sum('Cliente'),
+        sum('Fornecedor','empresa_dona_id'),
+        sum('Transportadora'),
+        sum('Colaborador','empresa_alocada_id'),
+        sum('Representante'),
+        sum('ContatoB2B'),
+        sum('SegmentoCliente'),
+        sum('RegiaoAtendimento'),
+      ]);
+      return vals.reduce((a,b)=>a+b,0);
+    },
+    staleTime: 60000,
+  });
+
+  const { data: totalBloco2 = 0 } = useQuery({
+    queryKey: ['cad-bloco2-total', empresaAtual?.id],
+    queryFn: async () => {
+      const sum = async (entity) => {
+        try {
+          const r = await base44.functions.invoke('countEntities', { entityName: entity, filter: getFiltroContexto('empresa_id') });
+          return r.data?.count || 0;
+        } catch { return 0; }
+      };
+      const vals = await Promise.all([
+        sum('Produto'),
+        sum('Servico'),
+        sum('SetorAtividade'),
+        sum('GrupoProduto'),
+        sum('Marca'),
+        sum('TabelaPreco'),
+        sum('CatalogoWeb'),
+        sum('KitProduto'),
+        sum('UnidadeMedida'),
+      ]);
+      return vals.reduce((a,b)=>a+b,0);
+    },
+    staleTime: 60000,
+  });
+
+  const { data: totalBloco3 = 0 } = useQuery({
+    queryKey: ['cad-bloco3-total', empresaAtual?.id],
+    queryFn: async () => {
+      const sum = async (entity) => {
+        try {
+          const r = await base44.functions.invoke('countEntities', { entityName: entity, filter: getFiltroContexto('empresa_id') });
+          return r.data?.count || 0;
+        } catch { return 0; }
+      };
+      const vals = await Promise.all([
+        sum('Banco'),
+        sum('FormaPagamento'),
+        sum('PlanoDeContas'),
+        sum('CentroCusto'),
+        sum('CentroResultado'),
+        sum('TipoDespesa'),
+        sum('MoedaIndice'),
+        sum('CondicaoComercial'),
+        sum('TabelaFiscal'),
+      ]);
+      return vals.reduce((a,b)=>a+b,0);
+    },
+    staleTime: 60000,
+  });
+
+  const { data: totalBloco4 = 0 } = useQuery({
+    queryKey: ['cad-bloco4-total', empresaAtual?.id],
+    queryFn: async () => {
+      const sum = async (entity) => {
+        try {
+          const r = await base44.functions.invoke('countEntities', { entityName: entity, filter: getFiltroContexto('empresa_id') });
+          return r.data?.count || 0;
+        } catch { return 0; }
+      };
+      const vals = await Promise.all([
+        sum('Veiculo'),
+        sum('Motorista'),
+        sum('TipoFrete'),
+        sum('LocalEstoque'),
+        sum('RotaPadrao'),
+        sum('ModeloDocumento'),
+      ]);
+      return vals.reduce((a,b)=>a+b,0);
+    },
+    staleTime: 60000,
+  });
+
+  const { data: totalBloco5 = 0 } = useQuery({
+    queryKey: ['cad-bloco5-total', empresaAtual?.id],
+    queryFn: async () => {
+      const sum = async (entity) => {
+        try {
+          const r = await base44.functions.invoke('countEntities', { entityName: entity, filter: getFiltroContexto('empresa_id') });
+          return r.data?.count || 0;
+        } catch { return 0; }
+      };
+      const vals = await Promise.all([
+        sum('Empresa'),
+        sum('GrupoEmpresarial'),
+        sum('Departamento'),
+        sum('Cargo'),
+        sum('Turno'),
+        sum('User'),
+        sum('PerfilAcesso'),
+      ]);
+      return vals.reduce((a,b)=>a+b,0);
+    },
+    staleTime: 60000,
+  });
+
+  const { data: totalBloco6 = 0 } = useQuery({
+    queryKey: ['cad-bloco6-total', empresaAtual?.id],
+    queryFn: async () => {
+      const sum = async (entity) => {
+        try {
+          const r = await base44.functions.invoke('countEntities', { entityName: entity, filter: getFiltroContexto('empresa_id') });
+          return r.data?.count || 0;
+        } catch { return 0; }
+      };
+      const vals = await Promise.all([
+        sum('EventoNotificacao'),
+        sum('ConfiguracaoIntegracaoMarketplace'),
+        sum('Webhook'),
+        sum('ChatbotIntent'),
+        sum('ChatbotCanal'),
+        sum('ApiExterna'),
+        sum('JobAgendado'),
+        sum('ParametroPortalCliente'),
+        sum('ParametroOrigemPedido'),
+        sum('ParametroRecebimentoNFe'),
+        sum('ParametroRoteirizacao'),
+        sum('ParametroConciliacaoBancaria'),
+        sum('ParametroCaixaDiario'),
+        sum('IAConfig'),
+      ]);
+      return vals.reduce((a,b)=>a+b,0);
+    },
+    staleTime: 60000,
+  });
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {

@@ -186,6 +186,24 @@ export default function Dashboard() {
     initialData: []
   });
 
+  const { data: totalColaboradoresDash = 0 } = useQuery({
+    queryKey: ['colaboradores-count-dash', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = getFiltroContexto('empresa_alocada_id');
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Colaborador',
+          filter: filtro
+        });
+        return response.data?.count || colaboradores.length;
+      } catch {
+        return colaboradores.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', empresaAtual?.id, estaNoGrupo],
     queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Produto', {}, '-created_date', 9999) : base44.entities.Produto.list('-created_date', 200)),
@@ -427,8 +445,8 @@ export default function Dashboard() {
       drillDown: () => handleDrillDown(createPageUrl("Estoque"))
     },
     {
-      title: "Colaboradores",
-      value: colaboradoresAtivos,
+      title: "Colaboradores (Total)",
+      value: totalColaboradoresDash,
       icon: UserCircle,
       color: "text-pink-600",
       bgColor: "bg-pink-50",
