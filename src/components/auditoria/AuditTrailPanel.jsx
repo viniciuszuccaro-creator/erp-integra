@@ -7,12 +7,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = null }) {
   const { getFiltroContexto } = useContextoVisual();
   const { isAdmin, user } = usePermissions();
   const queryClient = useQueryClient();
   const [escopo, setEscopo] = useState("meus"); // meus | todos
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(null);
 
   const filtroBase = getFiltroContexto("empresa_id") || {};
 
@@ -24,7 +28,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
       if (user?.id) f.usuario_id = user.id;
     }
     return f;
-  }, [filtroBase, modulo, escopo, user, isAdmin]);
+  }, [filtroBase, modulo, entidade, escopo, user, isAdmin]);
 
   const { data: logs = [] } = useQuery({
     queryKey: ["audit-logs", filtro, limit],
@@ -72,6 +76,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
               <TableHead>Ação</TableHead>
               <TableHead>Descrição</TableHead>
               <TableHead>Responsável</TableHead>
+              <TableHead>Detalhes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -90,12 +95,61 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
                   <TableCell>{l.acao || l.action}</TableCell>
                   <TableCell className="max-w-[600px] truncate" title={l.descricao}>{l.descricao}</TableCell>
                   <TableCell className="whitespace-nowrap">{l.usuario}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {isAdmin() ? (
+                      <Button variant="outline" size="sm" onClick={() => { setSelected(l); setOpen(true); }}>
+                        Ver {l?.dados_novos?.__sensitive ? <span className="ml-2 inline-flex items-center text-red-600">• sensível</span> : null}
+                      </Button>
+                    ) : (
+                      <span className="text-slate-400">-</span>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Auditoria</DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              {(selected?.modulo || '-') + ' • ' + (selected?.entidade || '-') + ' • ' + (selected?.acao || '-')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-[60vh] overflow-auto">
+            {isAdmin() ? (
+              <>
+                {Array.isArray(selected?.dados_novos?.__diff_sensitive) && selected.dados_novos.__diff_sensitive.length > 0 && (
+                  <div>
+                    <div className="text-xs font-medium mb-1">Mudanças sensíveis</div>
+                    <ul className="list-disc ml-5 text-sm text-slate-700">
+                      {selected.dados_novos.__diff_sensitive.map((d, idx) => (
+                        <li key={idx}><span className="font-medium">{d.campo}:</span> {String(d.antes)} → {String(d.depois)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div>
+                  <div className="text-xs font-medium mb-1">Antes</div>
+                  <pre className="bg-slate-50 rounded p-2 text-xs overflow-auto">{JSON.stringify(selected?.dados_anteriores ?? null, null, 2)}</pre>
+                </div>
+                <div>
+                  <div className="text-xs font-medium mb-1">Depois</div>
+                  <pre className="bg-slate-50 rounded p-2 text-xs overflow-auto">{JSON.stringify(selected?.dados_novos ?? null, null, 2)}</pre>
+                </div>
+              </>
+            ) : (
+              <div className="text-slate-600 text-sm">Apenas administradores podem ver detalhes completos.</div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
