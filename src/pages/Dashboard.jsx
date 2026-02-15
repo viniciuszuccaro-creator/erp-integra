@@ -243,7 +243,7 @@ export default function Dashboard() {
     queryKey: ['clientes-count', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtro = getFiltroContexto('empresa_id');
+        const filtro = getFiltroContexto('empresa_id', true);
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Cliente',
           filter: filtro
@@ -251,6 +251,24 @@ export default function Dashboard() {
         return response.data?.count || clientes.length;
       } catch {
         return clientes.length;
+      }
+    },
+    staleTime: 60000,
+    retry: 1
+  });
+
+  const { data: totalColaboradoresDash = 0 } = useQuery({
+    queryKey: ['colaboradores-count-dash', empresaAtual?.id],
+    queryFn: async () => {
+      try {
+        const filtro = getFiltroContexto('empresa_alocada_id', true);
+        const response = await base44.functions.invoke('countEntities', {
+          entityName: 'Colaborador',
+          filter: filtro
+        });
+        return response.data?.count || colaboradores.length;
+      } catch {
+        return colaboradores.length;
       }
     },
     staleTime: 60000,
@@ -428,7 +446,7 @@ export default function Dashboard() {
     },
     {
       title: "Colaboradores",
-      value: colaboradores.length,
+      value: totalColaboradoresDash,
       icon: UserCircle,
       color: "text-pink-600",
       bgColor: "bg-pink-50",

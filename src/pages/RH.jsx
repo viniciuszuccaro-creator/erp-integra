@@ -60,7 +60,7 @@ export default function RH() {
       try {
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Colaborador',
-          filter: getFiltroContexto('empresa_alocada_id')
+          filter: getFiltroContexto('empresa_alocada_id', true)
         });
         return response.data?.count || colaboradores.length;
       } catch {
@@ -76,7 +76,7 @@ export default function RH() {
     queryKey: ['colaboradores-ativos-count-rh', empresaAtual?.id],
     queryFn: async () => {
       try {
-        const filtroBase = getFiltroContexto('empresa_alocada_id');
+        const filtroBase = getFiltroContexto('empresa_alocada_id', true);
         const filtro = { ...(filtroBase || {}), status: 'Ativo' };
         const response = await base44.functions.invoke('countEntities', {
           entityName: 'Colaborador',
