@@ -595,6 +595,15 @@ function LayoutContent({ children, currentPageName }) {
                 <LogOut className="w-4 h-4 text-slate-500" />
               </button>
             </div>
+
+            {/* RBAC: mostrar Portal do Cliente apenas se permitido */}
+            {hasPermission('Portal', null, 'ver') && (
+              <div className="mt-3">
+                <Link to={createPageUrl("PortalCliente")} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
+                  <Users className="w-4 h-4" /> Portal do Cliente
+                </Link>
+              </div>
+            )}
             
             <div className="mt-2 pt-2 border-t border-slate-200">
               <button
