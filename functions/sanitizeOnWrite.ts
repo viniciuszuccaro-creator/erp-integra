@@ -80,7 +80,9 @@ Deno.serve(async (req) => {
           entidade: event.entity_name,
           registro_id: event.entity_id,
           descricao: 'Sanitização automática aplicada (prevenção XSS/injeções).',
-          dados_novos: patch,
+          empresa_id: enriched?.empresa_id || data?.empresa_id || null,
+          dados_anteriores: oldData || null,
+          dados_novos: { ...patch, group_id: enriched?.group_id || data?.group_id || null },
           data_hora: new Date().toISOString(),
         });
       } catch {}
