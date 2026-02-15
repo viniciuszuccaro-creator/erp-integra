@@ -64,7 +64,7 @@ export default function ProtectedSection({
 
   useEffect(() => {
     if (!isLoading && allowedFinal === false) setOpenDenied(true);
-  }, [isLoading, allowed]);
+  }, [isLoading, allowedFinal]);
 
   if (isLoading || allowedFinal === null) return null;
   if (!allowedFinal) {

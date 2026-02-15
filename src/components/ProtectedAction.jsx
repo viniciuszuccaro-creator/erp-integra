@@ -22,6 +22,7 @@ export function ProtectedAction({
   const { user } = useUser();
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const [open, setOpen] = useState(false);
+  const [allowedFinal, setAllowedFinal] = useState(null);
 
   React.useEffect(() => {
     if (isLoading) return;
