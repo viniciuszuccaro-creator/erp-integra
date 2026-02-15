@@ -26,9 +26,10 @@ function CountBadge({ entityName }) {
   const { data: count = 0 } = useQuery({
     queryKey: ['count', 'cadastros', entityName],
     queryFn: async () => {
+      const campo = entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id';
       const resp = await base44.functions.invoke('countEntities', {
         entityName,
-        filter: getFiltroContexto('empresa_id')
+        filter: getFiltroContexto(campo)
       });
       return resp?.data?.count || 0;
     },
@@ -78,11 +79,7 @@ export default function Bloco1Pessoas() {
                 <span className="ml-2"><CountBadge entityName={k} /></span>
               </CardTitle>
               <div className="flex items-center gap-2">
-                {k === 'Cliente' && (
-                  <Link to={createPageUrl('PortalCliente')} className="hidden md:block">
-                    <Button size="sm" variant="outline">Portal do Cliente</Button>
-                  </Link>
-                )}
+
                 <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('cadastros','ver')}>
                   Abrir
                 </Button>

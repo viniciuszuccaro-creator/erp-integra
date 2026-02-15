@@ -288,7 +288,8 @@ export default function VisualizadorUniversalEntidade({
   }, [colunaOrdenacao, ordenacao]);
 
   const buildFilterWithSearch = useCallback(() => {
-    const filtroContexto = getFiltroContexto('empresa_id', true);
+    const campoEmpresa = (nomeEntidade === 'Colaborador') ? 'empresa_alocada_id' : 'empresa_id';
+    const filtroContexto = getFiltroContexto(campoEmpresa, true);
     
     if (!buscaBackend.trim()) {
       return filtroContexto;
