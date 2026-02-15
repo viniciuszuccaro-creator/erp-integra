@@ -121,9 +121,10 @@ export default function RH() {
 
   // Dados já vêm filtrados do servidor
   const colaboradoresFiltrados = colaboradores;
-  const colaboradoresAtivos = (typeof colaboradoresAtivosCount === 'number' && colaboradoresAtivosCount >= 0)
-    ? colaboradoresAtivosCount
-    : colaboradoresFiltrados.filter(c => (c.status || '').toString().trim().toLowerCase() === 'ativo').length;
+  const localAtivos = colaboradoresFiltrados.filter(c => (c.status || '').toString().trim().toLowerCase() === 'ativo').length;
+  const colaboradoresAtivos = (typeof colaboradoresAtivosCount === 'number')
+    ? (colaboradoresAtivosCount === 0 ? localAtivos : colaboradoresAtivosCount)
+    : localAtivos;
   const feriasAprovadas = ferias.filter(f => f.status === "Aprovada").length;
   const feriasPendentes = ferias.filter(f => f.status === "Solicitada").length;
 
