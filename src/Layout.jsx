@@ -75,7 +75,7 @@ const navigationItems = [
   { title: "Expedição e Logística", url: createPageUrl("Expedicao"), icon: Truck, group: "operacional" },
   { title: "Produção e Manufatura", url: createPageUrl("Producao"), icon: Factory, group: "operacional" },
 
-  { title: "Apps Externos - Portal do Cliente", url: createPageUrl("AdministracaoSistema?tab=apps&app=portal"), icon: Users, group: "sistema" },
+
   { title: "Apps Externos - Chat do Cliente", url: createPageUrl("AdministracaoSistema?tab=apps&app=chatcliente"), icon: MessageCircle, group: "sistema" },
   { title: "Financeiro e Contábil", url: createPageUrl("Financeiro"), icon: DollarSign, group: "administrativo" },
   { title: "Recursos Humanos", url: createPageUrl("RH"), icon: UserCircle, group: "administrativo" },
