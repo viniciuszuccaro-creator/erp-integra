@@ -254,7 +254,7 @@ export default function VisualizadorUniversalEntidade({
     // 2) Dropdown "Organizar por": só aceita valores definidos nas opções
     const allowed = new Set((opcoesOrdenacao || []).map(o => o.value));
     if (!ordenacao || ordenacao === 'recent' || !allowed.has(ordenacao)) {
-      return '-created_date';
+      return '-updated_date';
     }
 
     // Padrões campo/campo_desc
@@ -460,8 +460,10 @@ export default function VisualizadorUniversalEntidade({
       resultado = resultado.filter(filtroAdicional);
     }
     
-    return resultado;
-  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade, ordenacao]);
+    // Paginação final no cliente para garantir consistência com a ordenação
+    const start = (currentPage - 1) * itemsPerPage;
+    return resultado.slice(start, start + itemsPerPage);
+  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade, ordenacao, currentPage, itemsPerPage]);
 
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   
