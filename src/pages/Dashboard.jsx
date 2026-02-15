@@ -130,7 +130,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional' || activeTab === 'tempo-real',
     initialData: []
   });
 
@@ -143,7 +143,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional' || activeTab === 'tempo-real',
     initialData: []
   });
 
@@ -156,7 +156,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional' || activeTab === 'tempo-real',
     initialData: []
   });
 
@@ -169,7 +169,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional' || activeTab === 'tempo-real',
     initialData: []
   });
 
@@ -182,7 +182,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional' || activeTab === 'tempo-real',
     initialData: []
   });
 
@@ -213,7 +213,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional' || activeTab === 'tempo-real',
     initialData: []
   });
 
@@ -253,7 +253,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional' || activeTab === 'tempo-real',
     initialData: []
   });
 
@@ -284,7 +284,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: false,
-    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional',
+    enabled: activeTab === 'resumo' || activeTab === 'bi-operacional' || activeTab === 'tempo-real',
     initialData: []
   });
 

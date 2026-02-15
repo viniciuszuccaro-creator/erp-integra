@@ -45,7 +45,7 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
 
   return (
     <Card className="w-full h-full flex flex-col">
-      <CardHeader className="border-b bg-slate-50">
+      <CardHeader className="border-b bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200">
         <CardTitle>Inventário</CardTitle>
       </CardHeader>
       <FormWrapper schema={schema} defaultValues={inv} onSubmit={() => salvar('Em Contagem')} externalData={inv} className="flex-1 overflow-auto p-4 space-y-4">

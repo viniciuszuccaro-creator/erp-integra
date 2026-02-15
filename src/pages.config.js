@@ -71,8 +71,8 @@ import HubAtendimento from './pages/HubAtendimento';
 import PortalCliente from './pages/PortalCliente';
 import Producao from './pages/Producao';
 import ProducaoMobile from './pages/ProducaoMobile';
-import RH from './pages/RH';
 import Relatorios from './pages/Relatorios';
+import RH from './pages/RH';
 import __Layout from './Layout.jsx';
 
 
@@ -101,8 +101,8 @@ export const PAGES = {
     "PortalCliente": PortalCliente,
     "Producao": Producao,
     "ProducaoMobile": ProducaoMobile,
-    "RH": RH,
     "Relatorios": Relatorios,
+    "RH": RH,
 }
 
 export const pagesConfig = {
