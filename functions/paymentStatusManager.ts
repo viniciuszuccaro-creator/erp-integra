@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
     // Conciliação automática por extrato bancário
     if (action === 'conciliar_extrato') {
       const result = await conciliarExtrato(base44, ctx, conciliacao);
-      await audit(base44, user, { acao:'Edição', modulo:'Financeiro', entidade:'Conciliação', registro_id: null, descricao: `Conciliação automática executada (${result.conciliados} itens)`, dados_novos: { ...result, origem:'paymentStatusManager' } });
+      await audit(base44, user, { acao:'Edição', modulo:'Financeiro', entidade:'Conciliação', registro_id: null, descricao: `Conciliação automática executada (${result.conciliados} itens)`, empresa_id: conciliacao?.empresa_id || null, dados_novos: { ...result, origem:'paymentStatusManager' } });
       return Response.json(result);
     }
 
