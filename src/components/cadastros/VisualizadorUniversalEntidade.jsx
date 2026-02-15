@@ -406,6 +406,51 @@ export default function VisualizadorUniversalEntidade({
           return direcaoOrdenacao === 'desc' ? -comp : comp;
         });
       }
+    } else if (ordenacao && ordenacao !== 'recent') {
+      // Suporte de fallback também para o seletor "Organizar por"
+      const campo = ordenacao.replace(/_desc$/, '');
+      const desc = ordenacao.endsWith('_desc');
+      const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === campo) || {
+        campo,
+        getValue: (item) => item[campo],
+        isNumeric: campo === 'codigo'
+      };
+      const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[campo]);
+      const toNum = (v, c) => {
+        if (v == null || v === '') return Number.POSITIVE_INFINITY;
+        if (typeof v === 'number') return v;
+        const s = String(v);
+        if (c === 'codigo') {
+          const digits = s.replace(/\D/g, '');
+          return digits ? Number(digits) : Number.POSITIVE_INFINITY;
+        }
+        const m = s.match(/\d+(?:[\.,]\d+)?/);
+        if (m) return Number(m[0].replace(',', '.'));
+        const n = Number(s);
+        return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
+      };
+      const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+      resultado.sort((a,b) => {
+        const avRaw = getVal(a);
+        const bvRaw = getVal(b);
+        let comp;
+        if (meta.isNumeric) {
+          const an = toNum(avRaw, meta.campo);
+          const bn = toNum(bvRaw, meta.campo);
+          if (!Number.isFinite(an) || !Number.isFinite(bn)) {
+            const as = (avRaw ?? '').toString();
+            const bs = (bvRaw ?? '').toString();
+            comp = collator.compare(as, bs);
+          } else {
+            comp = an - bn;
+          }
+        } else {
+          const as = (avRaw ?? '').toString();
+          const bs = (bvRaw ?? '').toString();
+          comp = collator.compare(as, bs);
+        }
+        return desc ? -comp : comp;
+      });
     }
     
     if (filtroAdicional && typeof filtroAdicional === 'function') {
@@ -413,7 +458,7 @@ export default function VisualizadorUniversalEntidade({
     }
     
     return resultado;
-  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade]);
+  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade, ordenacao]);
 
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   
