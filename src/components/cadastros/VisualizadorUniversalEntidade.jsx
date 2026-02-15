@@ -781,7 +781,7 @@ export default function VisualizadorUniversalEntidade({
                                 </Button>
                               )}
                               {componenteEdicao && (
-                                <Button size="sm" onClick={() => abrirEdicao(item)} disabled={!hasPermission(moduloPermissao, 'editar')}>
+                                <Button size="sm" onClick={() => abrirEdicao(item)} disabled={!hasPermission(moduloPermissao, null, 'editar')}>
                                   <Edit2 className="w-3 h-3" />
                                 </Button>
                               )}
