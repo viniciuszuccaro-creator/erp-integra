@@ -65,6 +65,12 @@ Deno.serve(async (req) => {
       suspicious.push({ tipo: 'Muitos bloqueios de acesso', severidade: 'Média', detalhes: `${blocks.length} bloqueios em ${WINDOW_MIN} min` });
     }
 
+    // 4) RBAC backend negações (entityGuard)
+    const rbacBlocks = recent.filter((l) => l.acao === 'Bloqueio' && (l.tipo_auditoria === 'seguranca' || (l.descricao && /RBAC backend negou/i.test(l.descricao))));
+    if (rbacBlocks.length >= 5) {
+      suspicious.push({ tipo: 'RBAC backend negações', severidade: 'Média', detalhes: `${rbacBlocks.length} negações em ${WINDOW_MIN} min` });
+    }
+
     // Se nada suspeito, retorna rápido
     if (suspicious.length === 0) {
       return Response.json({ ok: true, message: 'Sem alertas', analyzed: recent.length });

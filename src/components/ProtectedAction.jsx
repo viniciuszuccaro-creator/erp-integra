@@ -23,11 +23,30 @@ export function ProtectedAction({
   const { empresaAtual, grupoAtual, contexto } = useContextoVisual();
   const [open, setOpen] = useState(false);
 
-  if (isLoading) return null;
+  React.useEffect(() => {
+    if (isLoading) return;
+    (async () => {
+      try {
+        const { data } = await base44.functions.invoke('entityGuard', {
+          module,
+          section,
+          action,
+          empresa_id: empresaAtual?.id || null,
+          group_id: grupoAtual?.id || null,
+        });
+        setAllowedFinal(Boolean(data?.allowed) && hasPermission(module, section, action));
+      } catch (_) {
+        setAllowedFinal(hasPermission(module, section, action));
+      }
+    })();
+  }, [isLoading, module, section, action, empresaAtual?.id, grupoAtual?.id]);
+  const [allowedFinal, setAllowedFinal] = useState(null);
+
+  if (isLoading || allowedFinal === null) return null;
 
   const allowed = hasPermission(module, section, action);
 
-  if (!allowed) {
+  if (!allowedFinal) {
     // Auditoria opcional de tentativa bloqueada (não bloqueia UI se falhar)
     if (auditDenied) {
       try {
