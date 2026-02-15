@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     const windowStart = new Date(now.getTime() - WINDOW_MIN * 60 * 1000);
 
     // Buscar últimos logs recentes (limite razoável)
-    const logs = await base44.asServiceRole.entities.AuditLog.filter({}, '-created_date', 300);
+    const logs = await base44.asServiceRole.entities.AuditLog.filter({}, '-created_date', 500);
 
     // Normalizar data do log
     const getLogDate = (l) => {
