@@ -516,7 +516,19 @@ export default function VisualizadorUniversalEntidade({
     a.click();
   };
 
-  const handleAbrirNovo = () => abrirEdicao(null);
+  const handleAbrirNovo = async () => {
+    if (componenteEdicao) return abrirEdicao(null);
+    // Se n e3o houver componente de edi e7 e3o, cria 3 sugest f5es quando a lista est e1 vazia
+    if ((totalItemsCount || 0) === 0) {
+      const exemplos = [1,2,3].map((i) => ({
+        nome: `${tituloDisplay || nomeEntidade} ${i}`,
+        descricao: `Cadastro sugerido automaticamente (${i})`,
+        ativo: true
+      }));
+      await Promise.all(exemplos.map((e) => createInContext(nomeEntidade, e)));
+      await invalidateAllRelated();
+    }
+  };
 
   const abrirEdicao = (item) => {
     if (componenteEdicao) {
