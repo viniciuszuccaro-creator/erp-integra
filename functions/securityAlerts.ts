@@ -76,6 +76,21 @@ Deno.serve(async (req) => {
       return Response.json({ ok: true, message: 'Sem alertas', analyzed: recent.length });
     }
 
+    // Registrar auditoria consolidada das tentativas bloqueadas/alertas
+    try {
+      await base44.asServiceRole.entities.AuditLog.create({
+        usuario: user?.full_name || 'automacao',
+        usuario_id: user?.id || null,
+        acao: 'Visualização',
+        modulo: 'Sistema',
+        tipo_auditoria: 'seguranca',
+        entidade: 'SecurityAlerts',
+        descricao: `Alertas de segurança detectados (${suspicious.length}) na janela de ${WINDOW_MIN} min`,
+        dados_novos: { suspicious, totais: byAction, analisados: recent.length },
+        data_hora: new Date().toISOString(),
+      });
+    } catch {}
+
     // Obter admins para notificar
     const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' }, undefined, 100);
     const toList = admins.map((u) => u.email).filter(Boolean);
