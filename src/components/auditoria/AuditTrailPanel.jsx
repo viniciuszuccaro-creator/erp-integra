@@ -17,6 +17,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
   const [escopo, setEscopo] = useState("meus"); // meus | todos
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [usuarioId, setUsuarioId] = useState('todos');
 
   const filtroBase = getFiltroContexto("empresa_id") || {};
 
@@ -26,9 +27,11 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
     if (entidade) f.entidade = entidade;
     if (!isAdmin() || escopo === "meus") {
       if (user?.id) f.usuario_id = user.id;
+    } else {
+      if (usuarioId && usuarioId !== 'todos') f.usuario_id = usuarioId;
     }
     return f;
-  }, [filtroBase, modulo, entidade, escopo, user, isAdmin]);
+  }, [filtroBase, modulo, entidade, escopo, user, isAdmin, usuarioId]);
 
   const { data: logs = [] } = useQuery({
     queryKey: ["audit-logs", filtro, limit],
@@ -37,6 +40,13 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
       return rows;
     },
     staleTime: 3000,
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: async () => base44.entities.User.list(),
+    enabled: isAdmin(),
+    staleTime: 60000,
   });
 
   useEffect(() => {
@@ -53,7 +63,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
           <Clock className="w-4 h-4" />
           <span>Eventos recentes</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Select value={escopo} onValueChange={setEscopo} disabled={!isAdmin()}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Escopo" />
@@ -63,6 +73,20 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
               <SelectItem value="todos">Todos (admin)</SelectItem>
             </SelectContent>
           </Select>
+
+          {isAdmin() && escopo === 'todos' && (
+            <Select value={usuarioId} onValueChange={setUsuarioId}>
+              <SelectTrigger className="w-56">
+                <SelectValue placeholder="Usuário" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os usuários</SelectItem>
+                {users?.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>{u.full_name || u.email}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -82,7 +106,7 @@ export default function AuditTrailPanel({ modulo = null, limit = 50, entidade = 
           <TableBody>
             {logs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-slate-500 py-6">
+                <TableCell colSpan={7} className="text-center text-slate-500 py-6">
                   Nenhum evento encontrado.
                 </TableCell>
               </TableRow>
