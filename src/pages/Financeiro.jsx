@@ -387,13 +387,13 @@ export default function Financeiro() {
   return (
     <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="w-full h-full p-1 space-y-1 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
         <HeaderFinanceiroCompacto 
           estaNoGrupo={estaNoGrupo}
           empresaAtual={empresaAtual}
         />
 
-        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[700px]">
+        <ResizablePanelGroup direction="vertical" className="gap-1 min-h-[700px]">
           <ResizablePanel defaultSize={50} minSize={30} className="overflow-auto">
             <KPIsFinanceiroLaunchpad
               receberPendente={receberPendente}
@@ -416,7 +416,7 @@ export default function Financeiro() {
 
 
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle withHandle className="h-1" />
           <ResizablePanel defaultSize={50} minSize={30} className="overflow-auto">
             <ModulosGridFinanceiro 
               modules={allowedAllModules}

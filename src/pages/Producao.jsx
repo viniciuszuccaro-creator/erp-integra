@@ -218,7 +218,7 @@ export default function Producao() {
   return (
     <ProtectedSection module="Produção" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-orange-50">
+      <div className="w-full h-full flex flex-col p-1 space-y-1 overflow-auto bg-gradient-to-br from-slate-50 to-orange-50">
         <HeaderProducaoCompacto />
         
         <KPIsProducao
