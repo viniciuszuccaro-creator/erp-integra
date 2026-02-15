@@ -211,10 +211,10 @@ export default function Compras() {
   return (
     <ProtectedSection module="Compras" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1 space-y-1 overflow-auto bg-gradient-to-br from-slate-50 to-cyan-50">
+      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-cyan-50">
         <HeaderComprasCompacto />
         
-        <ResizablePanelGroup direction="vertical" className="gap-1 min-h-[640px]">
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
             <KPIsCompras
               totalFornecedores={totalFornecedores}
@@ -223,7 +223,7 @@ export default function Compras() {
               totalCompras={totalCompras}
             />
           </ResizablePanel>
-          <ResizableHandle withHandle className="h-1" />
+          <ResizableHandle withHandle />
           <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
             <ModulosGridCompras 
               modules={allowedModules}

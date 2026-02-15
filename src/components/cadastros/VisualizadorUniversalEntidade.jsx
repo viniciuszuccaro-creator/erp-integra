@@ -34,10 +34,9 @@ const OPCOES_ORDENACAO = {
   Cliente: [
     { value: 'nome', label: 'Nome (A-Z)' },
     { value: 'nome_desc', label: 'Nome (Z-A)' },
-    { value: 'razao_social', label: 'Razão Social (A-Z)' },
-    { value: 'razao_social_desc', label: 'Razão Social (Z-A)' },
-    { value: 'valor_compras_12meses_desc', label: 'Quem Mais Compra' },
-    { value: 'quantidade_pedidos_desc', label: 'Mais Pedidos' },
+    { value: 'cidade', label: 'Cidade (A-Z)' },
+    { value: 'limite_credito', label: 'Limite de Crédito (Maior)' },
+    { value: 'mais_compras', label: 'Que Mais Compra' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Fornecedor: [
@@ -139,11 +138,8 @@ const COLUNAS_ORDENACAO = {
   ],
   Colaborador: [
     { campo: 'nome_completo', label: 'Nome', getValue: (item) => item.nome_completo || '' },
-    { campo: 'email', label: 'E-mail', getValue: (item) => item.email || '' },
-    { campo: 'cpf', label: 'CPF', getValue: (item) => item.cpf || '' },
     { campo: 'cargo', label: 'Cargo', getValue: (item) => item.cargo || '' },
     { campo: 'departamento', label: 'Departamento', getValue: (item) => item.departamento || '' },
-    { campo: 'data_admissao', label: 'Admissão', getValue: (item) => item.data_admissao || '' },
     { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
   ],
   Representante: [
@@ -249,34 +245,26 @@ export default function VisualizadorUniversalEntidade({
   }, [buscaLocal]);
 
   const getBackendSortString = useCallback(() => {
-    // 1) Cabeçalho clicado: ordena pela coluna atual
     if (colunaOrdenacao) {
-      return `${direcaoOrdenacao === 'desc' ? '-' : ''}${colunaOrdenacao}`;
+      // Para ordenação por coluna clicada, aplicamos 100% no cliente para garantir consistência (ex.: Código numérico)
+      return undefined;
     }
-
-    // 2) Dropdown "Organizar por": só aceita valores definidos nas opções
-    const allowed = new Set((opcoesOrdenacao || []).map(o => o.value));
-    if (!ordenacao || ordenacao === 'recent' || !allowed.has(ordenacao)) {
-      return '-created_date';
-    }
-
-    // Padrões campo/campo_desc
-    if (ordenacao.endsWith('_desc')) {
-      return `-${ordenacao.replace(/_desc$/, '')}`;
-    }
-    return ordenacao;
-  }, [colunaOrdenacao, direcaoOrdenacao, ordenacao, opcoesOrdenacao]);
+    
+    const sortMap = {
+      'recent': '-created_date',
+      'codigo': 'codigo',
+      'codigo_desc': '-codigo',
+      'descricao': 'descricao',
+      'descricao_desc': '-descricao',
+      'nome': 'nome',
+      'nome_desc': '-nome'
+    };
+    
+    return sortMap[ordenacao] || '-created_date';
+  }, [colunaOrdenacao, ordenacao]);
 
   const buildFilterWithSearch = useCallback(() => {
-    // Campo de empresa por entidade (multiempresa absoluto)
-    const campoEmpresaPorEntidade = {
-      Colaborador: 'empresa_alocada_id',
-      Fornecedor: 'empresa_dona_id',
-      Transportadora: 'empresa_dona_id',
-      Inventario: 'empresa_id',
-    };
-    const campoEmpresa = campoEmpresaPorEntidade[nomeEntidade] || 'empresa_id';
-    const filtroContexto = getFiltroContexto(campoEmpresa, true);
+    const filtroContexto = getFiltroContexto('empresa_id', true);
     
     if (!buscaBackend.trim()) {
       return filtroContexto;
@@ -317,58 +305,33 @@ export default function VisualizadorUniversalEntidade({
     queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage, colunaOrdenacao, direcaoOrdenacao],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
+      const sortingAll = Boolean(colunaOrdenacao);
+      const sortString = getBackendSortString();
 
-      // Decide estratégia: numéricos sempre no cliente para garantir ordem correta; demais via backend
-      const metaCols = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default);
-      const alvoCampo = colunaOrdenacao || (ordenacao && ordenacao !== 'recent' ? ordenacao.replace(/_desc$/, '') : null);
-      const alvoDesc = colunaOrdenacao ? (direcaoOrdenacao === 'desc') : (ordenacao?.endsWith('_desc') || false);
-      const alvoMeta = alvoCampo ? metaCols.find(c => c.campo === alvoCampo) : null;
+      // Quando o usuário clica no cabeçalho, buscamos TODOS os registros já ORDENADOS no backend (em lotes)
+      if (sortingAll) {
+        // 1) Obter total
+        let total = 0;
+        try {
+          const resp = await base44.functions.invoke('countEntities', {
+            entityName: nomeEntidade,
+            filter: filtro,
+          });
+          total = resp?.data?.count || 0;
+        } catch (_) {}
 
-      if (alvoMeta?.isNumeric) {
-        // Client-side numeric sort with cumulative fetch to ensure global order within current range
-        const limit = itemsPerPage * currentPage;
-        let list = await base44.entities[nomeEntidade].filter(
+        // 2) Buscar TUDO em UMA chamada grande e ordenar localmente (garante numérico correto em Código)
+        const limit = total > 0 ? Math.min(total, 20000) : 20000;
+        const all = await base44.entities[nomeEntidade].filter(
           filtro,
           undefined,
-          limit
+          limit,
+          0
         );
-        list = list || [];
-        const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
-        const toNum = (v, campo) => {
-          if (v == null || v === '') return Number.POSITIVE_INFINITY;
-          if (typeof v === 'number') return v;
-          const s = String(v);
-          if (campo === 'codigo') {
-            const digits = s.replace(/\D/g, '');
-            return digits ? Number(digits) : Number.POSITIVE_INFINITY;
-          }
-          const m = s.match(/\d+(?:[\.,]\d+)?/);
-          if (m) return Number(m[0].replace(',', '.'));
-          const n = Number(s);
-          return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
-        };
-        const getVal = (item) => (alvoMeta.getValue ? alvoMeta.getValue(item) : item[alvoCampo]);
-        list.sort((a, b) => {
-          const avRaw = getVal(a);
-          const bvRaw = getVal(b);
-          let comp;
-          const an = toNum(avRaw, alvoMeta.campo);
-          const bn = toNum(bvRaw, alvoMeta.campo);
-          if (!Number.isFinite(an) || !Number.isFinite(bn)) {
-            const as = (avRaw ?? '').toString();
-            const bs = (bvRaw ?? '').toString();
-            comp = collator.compare(as, bs);
-          } else {
-            comp = an - bn;
-          }
-          return alvoDesc ? -comp : comp;
-        });
-        const start = (currentPage - 1) * itemsPerPage;
-        return list.slice(start, start + itemsPerPage);
+        return all || [];
       }
 
-      // Backend sort for non-numeric fields (fast + paginação correta)
-      const sortString = getBackendSortString();
+      // Ordenação padrão pelo servidor com paginação
       const skip = (currentPage - 1) * itemsPerPage;
       const result = await base44.entities[nomeEntidade].filter(
         filtro,
@@ -421,8 +384,8 @@ export default function VisualizadorUniversalEntidade({
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
 
-    // Backup: se o backend ignorar a ordenação, garantimos no cliente quando houver coluna selecionada
-    if (colunaOrdenacao) {
+    // Ordenação local quando usuário clica no cabeçalho
+    if (colunaOrdenacao && Array.isArray(resultado)) {
       const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === colunaOrdenacao);
       if (meta) {
         const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[colunaOrdenacao]);
@@ -464,51 +427,6 @@ export default function VisualizadorUniversalEntidade({
           return direcaoOrdenacao === 'desc' ? -comp : comp;
         });
       }
-    } else if (ordenacao && ordenacao !== 'recent') {
-      // Suporte de fallback também para o seletor "Organizar por"
-      const campo = ordenacao.replace(/_desc$/, '');
-      const desc = ordenacao.endsWith('_desc');
-      const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === campo) || {
-        campo,
-        getValue: (item) => item[campo],
-        isNumeric: campo === 'codigo'
-      };
-      const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[campo]);
-      const toNum = (v, c) => {
-        if (v == null || v === '') return Number.POSITIVE_INFINITY;
-        if (typeof v === 'number') return v;
-        const s = String(v);
-        if (c === 'codigo') {
-          const digits = s.replace(/\D/g, '');
-          return digits ? Number(digits) : Number.POSITIVE_INFINITY;
-        }
-        const m = s.match(/\d+(?:[\.,]\d+)?/);
-        if (m) return Number(m[0].replace(',', '.'));
-        const n = Number(s);
-        return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
-      };
-      const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
-      resultado.sort((a,b) => {
-        const avRaw = getVal(a);
-        const bvRaw = getVal(b);
-        let comp;
-        if (meta.isNumeric) {
-          const an = toNum(avRaw, meta.campo);
-          const bn = toNum(bvRaw, meta.campo);
-          if (!Number.isFinite(an) || !Number.isFinite(bn)) {
-            const as = (avRaw ?? '').toString();
-            const bs = (bvRaw ?? '').toString();
-            comp = collator.compare(as, bs);
-          } else {
-            comp = an - bn;
-          }
-        } else {
-          const as = (avRaw ?? '').toString();
-          const bs = (bvRaw ?? '').toString();
-          comp = collator.compare(as, bs);
-        }
-        return desc ? -comp : comp;
-      });
     }
     
     if (filtroAdicional && typeof filtroAdicional === 'function') {
@@ -516,7 +434,7 @@ export default function VisualizadorUniversalEntidade({
     }
     
     return resultado;
-  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade, ordenacao]);
+  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade]);
 
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   
@@ -660,7 +578,7 @@ export default function VisualizadorUniversalEntidade({
   return (
     <Wrapper>
       <Card className={windowMode ? 'h-full flex flex-col' : ''}>
-        <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-purple-50 py-3">
+        <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {Icone && <Icone className="w-6 h-6 text-blue-600" />}
@@ -757,8 +675,8 @@ export default function VisualizadorUniversalEntidade({
           </div>
         </CardHeader>
 
-        <CardContent className={`p-3 ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
-          {(isLoading || isFetching) ? (
+        <CardContent className={`p-6 ${windowMode ? 'flex-1 overflow-y-auto' : ''}`}>
+          {(isLoading || (colunaOrdenacao && isFetching)) ? (
             <div className="text-center py-12">
               <RefreshCw className="w-12 h-12 mx-auto text-blue-600 animate-spin mb-3" />
               <p className="text-slate-600">Carregando...</p>
@@ -783,7 +701,7 @@ export default function VisualizadorUniversalEntidade({
             <>
               {visualizacao === 'table' && (
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
+                  <table className="w-full border-collapse">
                     <thead>
                       <tr className="bg-slate-50 border-b-2 border-slate-200">
                         <th className="p-3 text-left">
@@ -942,7 +860,7 @@ export default function VisualizadorUniversalEntidade({
             </>
           )}
 
-          {!isLoading && totalItemsCount > 0 && (
+          {!isLoading && totalItemsCount > 0 && !colunaOrdenacao && (
             <PaginationControls
               currentPage={currentPage}
               totalItems={totalItemsCount}

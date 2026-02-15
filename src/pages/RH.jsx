@@ -232,10 +232,10 @@ export default function RH() {
   return (
     <ProtectedSection module="RH" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1 space-y-1 overflow-auto bg-gradient-to-br from-slate-50 to-purple-50">
+      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-purple-50">
         <HeaderRHCompacto />
         
-        <ResizablePanelGroup direction="vertical" className="gap-1 min-h-[640px]">
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
             <KPIsRH
               colaboradoresAtivos={colaboradoresAtivos}
@@ -245,7 +245,7 @@ export default function RH() {
               totalPontos={pontos.length}
             />
           </ResizablePanel>
-          <ResizableHandle withHandle className="h-1" />
+          <ResizableHandle withHandle />
           <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
             <ModulosGridRH 
               modules={allowedModules}

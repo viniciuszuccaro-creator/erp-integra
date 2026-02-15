@@ -297,10 +297,10 @@ export default function Estoque() {
   return (
     <ProtectedSection module="Estoque" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full p-1 space-y-1 overflow-auto bg-gradient-to-br from-slate-50 to-indigo-50">
+      <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-indigo-50">
         <HeaderEstoqueCompacto />
         
-        <ResizablePanelGroup direction="vertical" className="gap-1 min-h-[640px]">
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
             <KPIsEstoque
               produtosAtivos={contagensTotais.total}
@@ -330,7 +330,7 @@ export default function Estoque() {
               </Button>
             )}
           </ResizablePanel>
-          <ResizableHandle withHandle className="h-1" />
+          <ResizableHandle withHandle />
           <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
             <ModulosGridEstoque 
               modules={allowedModules}
