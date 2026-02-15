@@ -24,6 +24,36 @@ function computeSteelSuggestions(produtos = []) {
   return sugestoes;
 }
 
+// Ferro & Aço: oscilação de preço por bitola/fornecedor
+function detectSteelPriceOscillation(produtos = [], fornecedores = []) {
+  const fornById = fornecedores.reduce((m, f) => { m[f.id] = f; return m; }, {});
+  const issues = [];
+  const sugestoes = [];
+  for (const p of produtos) {
+    if (p?.eh_bitola !== true) continue;
+    const custoRef = Number(p.ultimo_preco_compra ?? p.custo_aquisicao ?? p.custo_medio) || 0;
+    const precoVenda = Number(p.preco_venda) || 0;
+    const oscil = custoRef > 0 ? Math.abs(((Number(p.custo_medio) || custoRef) - custoRef) / custoRef) : 0;
+    if (oscil >= 0.1) {
+      issues.push({ entidade: 'Produto', tipo: 'oscilacao_preco_aco', severity: oscil >= 0.2 ? 'alto' : 'medio', id: p.id, dados: { produto: p.descricao, oscilacao: Number((oscil*100).toFixed(1)), fornecedor_id: p.fornecedor_id || null } });
+    }
+    const margemMin = ((Number(p.margem_minima_percentual) || 10) / 100);
+    const margemAtual = custoRef > 0 ? (precoVenda - custoRef) / custoRef : 0;
+    if (margemAtual < margemMin + 0.05) {
+      sugestoes.push({ tipo: 'reajuste_preco', produto_id: p.id, motivo: 'margem_baixa', dados: { margemAtual: Number((margemAtual*100).toFixed(1)), margemMin: Number((margemMin*100).toFixed(1)) } });
+    }
+    const f = fornById[p.fornecedor_id];
+    const lead = Number(f?.lead_time_medio) || 0;
+    const giro30 = Number(p.quantidade_vendida_30dias) || 0;
+    const estDisp = Number(p.estoque_disponivel ?? (p.estoque_atual - p.estoque_reservado)) || 0;
+    const estMin = Number(p.estoque_minimo) || 0;
+    if (giro30 > 0 && estDisp < estMin + giro30 && lead >= 7) {
+      sugestoes.push({ tipo: 'compra_antecipada', produto_id: p.id, motivo: 'estoque_baixo_giro_alto_lead_alto', dados: { giro30, lead, estDisp, estMin } });
+    }
+  }
+  return { issues, sugestoes };
+}
+
 Deno.serve(async (req) => {
   const t0 = Date.now();
   try {
