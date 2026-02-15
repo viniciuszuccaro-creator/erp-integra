@@ -45,8 +45,11 @@ export default function InventarioForm({ windowMode = true }) { // w-full/h-full
 
   return (
     <Card className="w-full h-full flex flex-col">
-      <CardHeader className="border-b bg-slate-50">
-        <CardTitle>Inventário</CardTitle>
+      <CardHeader className={`border-b ${inv.status === 'Aprovado' || inv.status === 'Concluído' ? 'bg-green-50' : inv.status === 'Em Contagem' ? 'bg-blue-50' : inv.status === 'Em Aprovação' ? 'bg-amber-50' : inv.status === 'Cancelado' ? 'bg-red-50' : 'bg-slate-50'}`}>
+        <CardTitle className="flex items-center gap-2">
+          Inventário
+          <Badge className={`${inv.status === 'Aprovado' || inv.status === 'Concluído' ? 'bg-green-100 text-green-700' : inv.status === 'Em Contagem' ? 'bg-blue-100 text-blue-700' : inv.status === 'Em Aprovação' ? 'bg-amber-100 text-amber-800' : inv.status === 'Cancelado' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>{inv.status}</Badge>
+        </CardTitle>
       </CardHeader>
       <FormWrapper schema={schema} defaultValues={inv} onSubmit={() => salvar('Em Contagem')} externalData={inv} className="flex-1 overflow-auto p-4 space-y-4">
         <CardContent className="flex-1 overflow-auto p-4 space-y-4">

@@ -97,7 +97,7 @@ function LayoutContent({ children, currentPageName }) {
         const { hasPermission } = usePermissions();
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
-        const auditThrottleRef = React.useRef({ click: 0, change: 0 });
+        const auditThrottleRef = React.useRef({ click: 0, change: 0, resize: 0 });
         const queryClient = useQueryClient();
 
         const prefetchForItem = (title) => {
@@ -439,6 +439,32 @@ function LayoutContent({ children, currentPageName }) {
       document.removeEventListener('click', handlerClick, true);
       document.removeEventListener('change', handlerChange, true);
     };
+  }, [user?.id, empresaAtual?.id, currentModule]);
+
+  // Auditoria de resize (UX/layout)
+  useEffect(() => {
+    if (!user) return;
+    const handlerResize = () => {
+      try {
+        const now = Date.now();
+        if (now - (auditThrottleRef.current.resize || 0) < 3000) return;
+        auditThrottleRef.current.resize = now;
+        base44.entities?.AuditLog?.create?.({
+          usuario: user?.full_name || user?.email || 'Usuário',
+          usuario_id: user?.id,
+          empresa_id: empresaAtual?.id || null,
+          empresa_nome: empresaAtual?.nome_fantasia || empresaAtual?.razao_social || null,
+          acao: 'Visualização',
+          modulo: currentModule || 'Sistema',
+          tipo_auditoria: 'ui',
+          entidade: 'Resize',
+          descricao: `Resize: ${window.innerWidth}x${window.innerHeight}`,
+          data_hora: new Date().toISOString(),
+        });
+      } catch (_) {}
+    };
+    window.addEventListener('resize', handlerResize);
+    return () => window.removeEventListener('resize', handlerResize);
   }, [user?.id, empresaAtual?.id, currentModule]);
 
   const isMobilePage = currentPageName === "ProducaoMobile";

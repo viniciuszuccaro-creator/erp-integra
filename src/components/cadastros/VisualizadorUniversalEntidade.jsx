@@ -632,7 +632,7 @@ export default function VisualizadorUniversalEntidade({
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
               </Button>
-              <Button variant="primary" size="sm" onClick={handleAbrirNovo} disabled={!hasPermission(moduloPermissao, 'criar')}>
+              <Button variant="primary" size="sm" onClick={handleAbrirNovo} disabled={!hasPermission(moduloPermissao, null, 'criar')}>
                 <Plus className="w-4 h-4 mr-2" />
                 Novo
               </Button>
@@ -822,7 +822,7 @@ export default function VisualizadorUniversalEntidade({
                             </Button>
                           )}
                           {componenteEdicao && (
-                            <Button size="sm" onClick={() => abrirEdicao(item)} className="flex-1" disabled={!hasPermission(moduloPermissao, 'editar')}>
+                            <Button size="sm" onClick={() => abrirEdicao(item)} className="flex-1" disabled={!hasPermission(moduloPermissao, null, 'editar')}>
                               <Edit2 className="w-3 h-3 mr-1" />
                               Editar
                             </Button>
