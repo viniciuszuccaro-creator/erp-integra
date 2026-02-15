@@ -62,7 +62,8 @@ try {
     await base44.asServiceRole.entities.Notificacao?.create?.({
       titulo: 'Clientes com Risco Financeiro (CRM)',
       mensagem: `${tops.length} cliente(s) com atraso médio >=20 dias e alto valor.`,
-      tipo: 'alerta', categoria: 'CRM', prioridade: 'Alta'
+      tipo: 'alerta', categoria: 'CRM', prioridade: 'Alta',
+      empresa_id: (filtros?.empresa_id ?? null)
     });
   }
 } catch {}
