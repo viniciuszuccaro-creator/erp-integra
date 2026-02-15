@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
         acao: 'Edição',
         modulo: 'Sistema',
         entidade: 'PerfilAcesso',
-        descricao: 'Otimização de permissões sugerida por IA',
+        descricao: 'Otimização de permissões sugerida por IA (RBAC granular + SoD + multiempresa)',
         dados_novos: sugestoes,
         duracao_ms: Date.now() - t0,
       });
