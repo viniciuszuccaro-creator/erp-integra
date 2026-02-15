@@ -516,6 +516,26 @@ export default function VisualizadorUniversalEntidade({
     a.click();
   };
 
+  const criarSugestoes = async () => {
+    const campos = (Array.isArray(camposPrincipais) && camposPrincipais.length > 0)
+      ? camposPrincipais
+      : ['nome', 'descricao'];
+    const baseNome = tituloDisplay || nomeEntidade;
+    const exemplos = [1,2,3].map((i) => {
+      const obj = {};
+      campos.forEach((c) => {
+        const lc = c.toLowerCase();
+        if (lc.includes('nome')) obj[c] = `${baseNome} ${i}`;
+        else if (lc.includes('descr')) obj[c] = `Sugestão automática (${i})`;
+        else if (lc.includes('ativo')) obj[c] = true;
+        else obj[c] = obj[c] ?? '';
+      });
+      return obj;
+    });
+    await Promise.all(exemplos.map((e) => createInContext(nomeEntidade, e, nomeEntidade === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id')));
+    await invalidateAllRelated();
+  };
+
   const handleAbrirNovo = async () => {
     if (componenteEdicao) return abrirEdicao(null);
     // Se n e3o houver componente de edi e7 e3o, cria 3 sugest f5es quando a lista est e1 vazia
@@ -735,11 +755,16 @@ export default function VisualizadorUniversalEntidade({
               </Button>
             </div>
           ) : dadosBuscadosEOrdenados.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 space-y-3">
               <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
               <p className="text-slate-600 font-medium">
                 {buscaBackend ? 'Nenhum resultado' : 'Nenhum registro'}
               </p>
+              {!buscaBackend && (
+                <Button size="sm" onClick={criarSugestoes} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-1" /> Criar 3 sugestões
+                </Button>
+              )}
             </div>
           ) : (
             <>
