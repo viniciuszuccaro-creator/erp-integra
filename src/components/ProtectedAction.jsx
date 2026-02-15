@@ -27,6 +27,7 @@ export function ProtectedAction({
   const [allowedFinal, setAllowedFinal] = useState(null);
   const [allowedFinal, setAllowedFinal] = useState(null);
   const [allowedFinal, setAllowedFinal] = useState(null);
+  const [allowedFinal, setAllowedFinal] = useState(null);
 
   React.useEffect(() => {
     if (isLoading) return;
