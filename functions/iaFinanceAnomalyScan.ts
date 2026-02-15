@@ -261,6 +261,7 @@ Deno.serve(async (req) => {
         entidade: 'Monitoramento',
         descricao: `Anomalias detectadas: ${issues.length}`,
         dados_novos: { issues: issues.slice(0, 50), sugestoes: (sugestoes || []).slice(0, 50) },
+        empresa_id: alvoEmpresaId || null,
         data_hora: new Date().toISOString(),
       });
 

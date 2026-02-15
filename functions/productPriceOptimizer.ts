@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
           modulo: 'Comercial',
           entidade: 'Produto',
           descricao: 'Otimização de preços em lote (agendada)',
+          empresa_id: (payload?.filtros?.empresa_id ?? null),
           dados_novos: { total: produtos.length, updated, skipped, failed, creditExhausted, duracao_ms: Date.now() - t0, sugestoes }
         });
         if (sugestoes.length) {

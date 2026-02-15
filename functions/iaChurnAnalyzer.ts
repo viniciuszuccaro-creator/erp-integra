@@ -56,7 +56,7 @@ try {
     await base44.asServiceRole.entities.AuditLog.create({
       usuario: 'Sistema', acao: 'Visualização', modulo: 'CRM', entidade: 'PerfilCliente',
       descricao: `Pagadores lentos e alto valor: ${tops.length}`,
-      dados_novos: { clientes: tops }, data_hora: new Date().toISOString()
+      dados_novos: { clientes: tops }, empresa_id: (filtros?.empresa_id ?? null), data_hora: new Date().toISOString()
     });
     await base44.asServiceRole.entities.Notificacao?.create?.({
       titulo: 'Clientes com Risco Financeiro (CRM)',
