@@ -41,7 +41,6 @@ export function ProtectedAction({
       }
     })();
   }, [isLoading, module, section, action, empresaAtual?.id, grupoAtual?.id]);
-  const [allowedFinal, setAllowedFinal] = useState(null);
 
   if (isLoading || allowedFinal === null) return null;
 
