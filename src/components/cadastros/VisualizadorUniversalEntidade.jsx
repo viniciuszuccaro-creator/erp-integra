@@ -34,9 +34,10 @@ const OPCOES_ORDENACAO = {
   Cliente: [
     { value: 'nome', label: 'Nome (A-Z)' },
     { value: 'nome_desc', label: 'Nome (Z-A)' },
-    { value: 'cidade', label: 'Cidade (A-Z)' },
-    { value: 'limite_credito', label: 'Limite de Crédito (Maior)' },
-    { value: 'mais_compras', label: 'Que Mais Compra' },
+    { value: 'razao_social', label: 'Razão Social (A-Z)' },
+    { value: 'razao_social_desc', label: 'Razão Social (Z-A)' },
+    { value: 'valor_compras_12meses_desc', label: 'Quem Mais Compra' },
+    { value: 'quantidade_pedidos_desc', label: 'Mais Pedidos' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Fornecedor: [
