@@ -127,6 +127,7 @@ Deno.serve(async (req) => {
     const orphanProdutos = produtos.filter(p => p.eh_bitola === true && !p.empresa_id);
     const estoqueSemFilial = movs.filter(m => !m.empresa_id || !m.localizacao_destino);
     let issues = [];
+    let sugestoes = [];
     orphanProdutos.forEach(p => issues.push({ entidade: 'Produto', tipo: 'orfa_bitola_sem_empresa', severity: 'alto', id: p.id, data: p }));
     estoqueSemFilial.forEach(m => issues.push({ entidade: 'MovimentacaoEstoque', tipo: 'estoque_sem_filial', severity: 'alto', id: m.id, data: m }));
 
@@ -156,7 +157,6 @@ Deno.serve(async (req) => {
           const cfg = await loadAnomalyConfig(base44);
           issues = (computeIssues(receber, pagar, cfg) || []).concat(issues);
           // IA Setorial: extensões Ferro & Aço
-          let sugestoes = [];
           try {
             const r1 = detectSteelPriceOscillation(produtos, fornecedores);
             issues = issues.concat(r1.issues); sugestoes = sugestoes.concat(r1.sugestoes);
