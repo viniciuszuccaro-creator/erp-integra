@@ -88,7 +88,11 @@ Deno.serve(async (req) => {
         }
       }
 
-      const sugestoes = computeSteelSuggestions(produtos).slice(0, 100);
+      // Oscilação de preços por bitola/fornecedor + sugestões setoriais
+      const fornecedores = await base44.asServiceRole.entities.Fornecedor.filter(filtro, '-updated_date', 200);
+      const osc = detectSteelPriceOscillation(produtos, fornecedores);
+      const sugestoes = computeSteelSuggestions(produtos).concat(osc.sugestoes).slice(0, 100);
+      const oscIssues = (osc.issues || []).slice(0, 100);
       try {
         await audit(base44, user || { full_name: 'Automação' }, {
           acao: 'Edição',
@@ -96,12 +100,12 @@ Deno.serve(async (req) => {
           entidade: 'Produto',
           descricao: 'Otimização de preços em lote (agendada)',
           empresa_id: (payload?.filtros?.empresa_id ?? null),
-          dados_novos: { total: produtos.length, updated, skipped, failed, creditExhausted, duracao_ms: Date.now() - t0, sugestoes }
+          dados_novos: { total: produtos.length, updated, skipped, failed, creditExhausted, duracao_ms: Date.now() - t0, sugestoes, oscIssues }
         });
         if (sugestoes.length) {
           await base44.asServiceRole.entities.Notificacao?.create?.({
             titulo: 'Sugestões Comerciais (Aço)',
-            mensagem: `${sugestoes.length} sugestão(ões) geradas (reajuste/compra antecipada).`,
+            mensagem: `${sugestoes.length} sugestão(ões) (reajuste/compra antecipada/oscilação).`,
             tipo: 'info',
             categoria: 'Comercial',
             prioridade: 'Média'

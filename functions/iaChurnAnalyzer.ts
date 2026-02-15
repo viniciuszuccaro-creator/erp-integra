@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
           acao: 'Visualização', modulo: 'CRM', entidade: 'Oportunidade', registro_id: o.id,
           descricao: `Sinal de churn: dias_sem_contato=${evalRes.detalhes.dias_sem_contato}, prob=${evalRes.detalhes.probabilidade}, atrasoPrev=${evalRes.detalhes.atraso_prev}`,
           dados_novos: { recomendacao: evalRes.recomendacao },
+          empresa_id: o?.empresa_id ?? (filtros?.empresa_id ?? null),
           data_hora: new Date().toISOString(),
         });
         await base44.asServiceRole.entities.Notificacao?.create?.({
