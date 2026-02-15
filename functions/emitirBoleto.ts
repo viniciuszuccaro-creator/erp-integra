@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { conta_receber_id } = await req.json();
+    const { conta_receber_id, forma_cobranca, projeto_obra, simular } = await req.json();
     const { user: me, perfil } = await getUserAndPerfil(base44);
     const denied = await assertPermission(base44, { user: me, perfil }, 'Financeiro', 'ContaReceber', 'emitir');
     if (denied) return denied;
@@ -67,11 +67,13 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.entities.ContaReceber.update(conta_receber_id, {
       url_boleto_pdf: signedUrl,
       status_cobranca: 'gerada',
-      data_envio_cobranca: new Date().toISOString()
+      data_envio_cobranca: new Date().toISOString(),
+      ...(forma_cobranca ? { forma_cobranca } : {}),
+      ...(projeto_obra ? { projeto_obra } : {})
     });
 
     // Auditoria
-    await audit(base44, me, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: conta_receber_id, descricao: 'Boleto PDF emitido e URL assinada gerada' });
+    await audit(base44, me, { acao: 'Criação', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: conta_receber_id, descricao: 'Boleto PDF emitido e URL assinada gerada', dados_novos: { forma_cobranca: forma_cobranca||cr.forma_cobranca||'Boleto', projeto_obra: projeto_obra||cr.projeto_obra||null } });
 
     return Response.json({ url: signedUrl });
   } catch (error) {
