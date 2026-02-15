@@ -513,6 +513,8 @@ function LayoutContent({ children, currentPageName }) {
 
 
 
+  const portalInMenu = itemsFiltrados.some(item => item.title === "Portal do Cliente");
+
   const groupedItems = {
     principal: itemsFiltrados.filter(item => item.group === "principal"),
     cadastros: itemsFiltrados.filter(item => item.group === "cadastros"),
@@ -623,7 +625,7 @@ function LayoutContent({ children, currentPageName }) {
             </div>
 
             {/* RBAC: mostrar Portal do Cliente apenas se permitido */}
-            {hasPermission('Portal', null, 'ver') && (
+            {hasPermission('Portal', null, 'ver') && !portalInMenu && (
               <div className="mt-3">
                 <Link to={createPageUrl("PortalCliente")} className="flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900">
                   <Users className="w-4 h-4" /> Portal do Cliente
