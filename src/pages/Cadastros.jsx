@@ -846,7 +846,6 @@ export default function Cadastros() {
         sum('Departamento'),
         sum('Cargo'),
         sum('Turno'),
-        sum('User'),
         sum('PerfilAcesso'),
       ]);
       return vals.reduce((a,b)=>a+b,0);
