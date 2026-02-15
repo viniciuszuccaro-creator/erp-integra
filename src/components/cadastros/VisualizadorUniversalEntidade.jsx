@@ -317,6 +317,57 @@ export default function VisualizadorUniversalEntidade({
     queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage, colunaOrdenacao, direcaoOrdenacao],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
+
+      // Decide estratégia: numéricos sempre no cliente para garantir ordem correta; demais via backend
+      const metaCols = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default);
+      const alvoCampo = colunaOrdenacao || (ordenacao && ordenacao !== 'recent' ? ordenacao.replace(/_desc$/, '') : null);
+      const alvoDesc = colunaOrdenacao ? (direcaoOrdenacao === 'desc') : (ordenacao?.endsWith('_desc') || false);
+      const alvoMeta = alvoCampo ? metaCols.find(c => c.campo === alvoCampo) : null;
+
+      if (alvoMeta?.isNumeric) {
+        // Client-side numeric sort with cumulative fetch to ensure global order within current range
+        const limit = itemsPerPage * currentPage;
+        let list = await base44.entities[nomeEntidade].filter(
+          filtro,
+          undefined,
+          limit
+        );
+        list = list || [];
+        const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
+        const toNum = (v, campo) => {
+          if (v == null || v === '') return Number.POSITIVE_INFINITY;
+          if (typeof v === 'number') return v;
+          const s = String(v);
+          if (campo === 'codigo') {
+            const digits = s.replace(/\D/g, '');
+            return digits ? Number(digits) : Number.POSITIVE_INFINITY;
+          }
+          const m = s.match(/\d+(?:[\.,]\d+)?/);
+          if (m) return Number(m[0].replace(',', '.'));
+          const n = Number(s);
+          return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
+        };
+        const getVal = (item) => (alvoMeta.getValue ? alvoMeta.getValue(item) : item[alvoCampo]);
+        list.sort((a, b) => {
+          const avRaw = getVal(a);
+          const bvRaw = getVal(b);
+          let comp;
+          const an = toNum(avRaw, alvoMeta.campo);
+          const bn = toNum(bvRaw, alvoMeta.campo);
+          if (!Number.isFinite(an) || !Number.isFinite(bn)) {
+            const as = (avRaw ?? '').toString();
+            const bs = (bvRaw ?? '').toString();
+            comp = collator.compare(as, bs);
+          } else {
+            comp = an - bn;
+          }
+          return alvoDesc ? -comp : comp;
+        });
+        const start = (currentPage - 1) * itemsPerPage;
+        return list.slice(start, start + itemsPerPage);
+      }
+
+      // Backend sort for non-numeric fields (fast + paginação correta)
       const sortString = getBackendSortString();
       const skip = (currentPage - 1) * itemsPerPage;
       const result = await base44.entities[nomeEntidade].filter(

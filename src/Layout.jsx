@@ -80,6 +80,7 @@ const navigationItems = [
   { title: "Fiscal e Tributário", url: createPageUrl("Fiscal"), icon: FileText, group: "administrativo" },
   { title: "Gestão de Contratos", url: createPageUrl("Contratos"), icon: FileText, group: "administrativo" },
   { title: "Administração do Sistema", url: createPageUrl("AdministracaoSistema?tab=config"), icon: Settings, group: "sistema" },
+  { title: "Apps Externos", url: createPageUrl("AdministracaoSistema?tab=external-apps"), icon: Zap, group: "sistema" },
   { title: "📚 Documentação", url: createPageUrl("Documentacao"), icon: BookOpen, group: "sistema" },
   
   
