@@ -22,6 +22,9 @@ Deno.serve(async (req) => {
     // Coleta com escopo (quando fornecido)
     const receber = await base44.asServiceRole.entities.ContaReceber.filter(filtros, '-updated_date', 500);
     const pagar = await base44.asServiceRole.entities.ContaPagar.filter(filtros, '-updated_date', 500);
+    if (!Array.isArray(receber) || !Array.isArray(pagar)) {
+      return Response.json({ ok: true, issues: 0, details: [] });
+    }
 
     // Ferro & Aço: detectar órfãos/inconsistências de estoque/produto
     let produtos = [];
@@ -49,8 +52,8 @@ Deno.serve(async (req) => {
           } catch (_) {}
 
     // ML leve: outliers por Z-Score (valor)
-    const valoresRec = receber.map(r => Number(r.valor || 0)).filter(v => v > 0);
-    const valoresPag = pagar.map(p => Number(p.valor || 0)).filter(v => v > 0);
+    const valoresRec = Array.isArray(receber) ? receber.map(r => Number(r.valor || 0)).filter(v => v > 0) : [];
+    const valoresPag = Array.isArray(pagar) ? pagar.map(p => Number(p.valor || 0)).filter(v => v > 0) : [];
 
     const addZOutliers = (arr, baseList, entidade) => {
       if (!arr.length) return;
@@ -94,8 +97,8 @@ Deno.serve(async (req) => {
     const hoje = new Date();
     const daysLate = (dt) => Math.floor((hoje - new Date(dt)) / (1000 * 60 * 60 * 24));
 
-    const pendRec = receber.filter(c => c.status === 'Pendente' && c.data_vencimento);
-    const pendPag = pagar.filter(c => c.status === 'Pendente' && c.data_vencimento);
+    const pendRec = Array.isArray(receber) ? receber.filter(c => c.status === 'Pendente' && c.data_vencimento) : [];
+    const pendPag = Array.isArray(pagar) ? pagar.filter(c => c.status === 'Pendente' && c.data_vencimento) : [];
 
     const detectMad = (baseList, entidade) => {
       const arr = baseList.map(c => Math.max(0, daysLate(c.data_vencimento)));
