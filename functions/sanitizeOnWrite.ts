@@ -11,6 +11,7 @@ Deno.serve(async (req) => {
 
     const event = payload?.event;
     const data = payload?.data;
+    const oldData = payload?.old_data;
 
     if (!event || !event.entity_name || !event.entity_id || !data) {
       return Response.json({ ok: true, skipped: true, reason: 'Payload incompleto' });
