@@ -139,8 +139,11 @@ const COLUNAS_ORDENACAO = {
   ],
   Colaborador: [
     { campo: 'nome_completo', label: 'Nome', getValue: (item) => item.nome_completo || '' },
+    { campo: 'email', label: 'E-mail', getValue: (item) => item.email || '' },
+    { campo: 'cpf', label: 'CPF', getValue: (item) => item.cpf || '' },
     { campo: 'cargo', label: 'Cargo', getValue: (item) => item.cargo || '' },
     { campo: 'departamento', label: 'Departamento', getValue: (item) => item.departamento || '' },
+    { campo: 'data_admissao', label: 'Admissão', getValue: (item) => item.data_admissao || '' },
     { campo: 'status', label: 'Status', getValue: (item) => item.status || '' }
   ],
   Representante: [
@@ -265,7 +268,15 @@ export default function VisualizadorUniversalEntidade({
   }, [colunaOrdenacao, direcaoOrdenacao, ordenacao, opcoesOrdenacao]);
 
   const buildFilterWithSearch = useCallback(() => {
-    const filtroContexto = getFiltroContexto('empresa_id', true);
+    // Campo de empresa por entidade (multiempresa absoluto)
+    const campoEmpresaPorEntidade = {
+      Colaborador: 'empresa_alocada_id',
+      Fornecedor: 'empresa_dona_id',
+      Transportadora: 'empresa_dona_id',
+      Inventario: 'empresa_id',
+    };
+    const campoEmpresa = campoEmpresaPorEntidade[nomeEntidade] || 'empresa_id';
+    const filtroContexto = getFiltroContexto(campoEmpresa, true);
     
     if (!buscaBackend.trim()) {
       return filtroContexto;
