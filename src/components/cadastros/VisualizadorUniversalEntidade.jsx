@@ -609,7 +609,7 @@ export default function VisualizadorUniversalEntidade({
   return (
     <Wrapper>
       <Card className={windowMode ? 'h-full flex flex-col' : ''}>
-        <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-purple-50">
+        <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-purple-50 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {Icone && <Icone className="w-6 h-6 text-blue-600" />}
@@ -732,7 +732,7 @@ export default function VisualizadorUniversalEntidade({
             <>
               {visualizacao === 'table' && (
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
                       <tr className="bg-slate-50 border-b-2 border-slate-200">
                         <th className="p-3 text-left">

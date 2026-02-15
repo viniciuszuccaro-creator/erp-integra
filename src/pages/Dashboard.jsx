@@ -116,7 +116,7 @@ export default function Dashboard() {
     queryKey: ['pedidos', empresaAtual?.id, estaNoGrupo],
     queryFn: async () => {
         if (empresaAtual?.id || estaNoGrupo) {
-            const data = await filterInContext('Pedido', {}, '-created_date', 9999);
+            const data = await filterInContext('Pedido', {}, '-created_date', 500);
             if (!data || data.length === 0) {
                 return await base44.entities.Pedido.list('-created_date', 200);
             }
@@ -136,7 +136,7 @@ export default function Dashboard() {
 
   const { data: contasReceber = [] } = useQuery({
     queryKey: ['contasReceber', empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('ContaReceber', {}, '-data_vencimento', 9999) : base44.entities.ContaReceber.list('-data_vencimento', 200)),
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('ContaReceber', {}, '-data_vencimento', 500) : base44.entities.ContaReceber.list('-data_vencimento', 200)),
     refetchInterval,
     staleTime: 30000,
     gcTime: 300000,
@@ -149,7 +149,7 @@ export default function Dashboard() {
 
   const { data: contasPagar = [] } = useQuery({
     queryKey: ['contasPagar', empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('ContaPagar', {}, '-data_vencimento', 9999) : base44.entities.ContaPagar.list('-data_vencimento', 200)),
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('ContaPagar', {}, '-data_vencimento', 500) : base44.entities.ContaPagar.list('-data_vencimento', 200)),
     refetchInterval,
     staleTime: 30000,
     gcTime: 300000,
@@ -162,7 +162,7 @@ export default function Dashboard() {
 
   const { data: entregas = [] } = useQuery({
     queryKey: ['entregas', empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Entrega', {}, '-created_date', 9999) : base44.entities.Entrega.list('-created_date', 200)),
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Entrega', {}, '-created_date', 500) : base44.entities.Entrega.list('-created_date', 200)),
     refetchInterval,
     staleTime: 30000,
     gcTime: 300000,
@@ -175,7 +175,7 @@ export default function Dashboard() {
 
   const { data: colaboradores = [] } = useQuery({
     queryKey: ['colaboradores', empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Colaborador', {}, '-created_date', 9999, 'empresa_alocada_id') : base44.entities.Colaborador.list('-created_date', 200)),
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Colaborador', {}, '-created_date', 500, 'empresa_alocada_id') : base44.entities.Colaborador.list('-created_date', 200)),
     refetchInterval,
     staleTime: 60000,
     gcTime: 300000,
@@ -206,7 +206,7 @@ export default function Dashboard() {
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos', empresaAtual?.id, estaNoGrupo],
-    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Produto', {}, '-created_date', 9999) : base44.entities.Produto.list('-created_date', 200)),
+    queryFn: () => (empresaAtual?.id || estaNoGrupo ? filterInContext('Produto', {}, '-created_date', 500) : base44.entities.Produto.list('-created_date', 200)),
     refetchInterval,
     staleTime: 60000,
     gcTime: 300000,
@@ -239,7 +239,7 @@ export default function Dashboard() {
     queryKey: ['clientes', empresaAtual?.id, estaNoGrupo],
     queryFn: async () => {
         if (empresaAtual?.id || estaNoGrupo) {
-            const data = await filterInContext('Cliente', {}, '-created_date', 9999);
+            const data = await filterInContext('Cliente', {}, '-created_date', 500);
             if (!data || data.length === 0) {
                 return await base44.entities.Cliente.list('-created_date', 200);
             }
@@ -518,7 +518,7 @@ export default function Dashboard() {
   return (
     <ProtectedSection module="Dashboard" action="ver">
     <div className="w-full h-full min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="flex-1 overflow-auto p-6 space-y-6">
+      <div className="flex-1 overflow-auto p-4 space-y-4">
       <DashboardHeader
         empresaAtual={empresaAtual}
         estaNoGrupo={estaNoGrupo}
