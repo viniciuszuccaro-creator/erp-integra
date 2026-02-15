@@ -363,8 +363,8 @@ export default function VisualizadorUniversalEntidade({
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
 
-    // Ordenação local desativada: delegamos ao backend para consistência entre páginas
-    if (false) {
+    // Backup: se o backend ignorar a ordenação, garantimos no cliente quando houver coluna selecionada
+    if (colunaOrdenacao) {
       const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === colunaOrdenacao);
       if (meta) {
         const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[colunaOrdenacao]);
