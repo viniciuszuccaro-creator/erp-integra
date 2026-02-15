@@ -239,12 +239,19 @@ export default function VisualizadorUniversalEntidade({
   }, [nomeEntidade]);
 
   const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
-  const colunasOrdenacao = COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default;
+  let colunasOrdenacao = COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default;
+  if (Array.isArray(camposPrincipais) && camposPrincipais.length > 0) {
+    colunasOrdenacao = camposPrincipais.map((c) => ({
+      campo: c,
+      label: c.replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase()),
+      getValue: (item) => item?.[c] ?? ''
+    }));
+  }
 
   const override = (typeof legacyQueryKey !== 'undefined' ? legacyQueryKey : queryKeyOverride);
   const queryKey = Array.isArray(override) ? override : [override || nomeEntidade.toLowerCase()];
 
-  const { getFiltroContexto } = useContextoVisual();
+  const { getFiltroContexto, createInContext } = useContextoVisual();
 
   React.useEffect(() => {
     const handler = setTimeout(() => {

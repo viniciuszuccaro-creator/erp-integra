@@ -29,7 +29,7 @@ function CountBadge({ entityName }) {
       const campo = entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id';
       const resp = await base44.functions.invoke('countEntities', {
         entityName,
-        filter: getFiltroContexto(campo)
+        filter: getFiltroContexto(campo, true)
       });
       return resp?.data?.count || 0;
     },

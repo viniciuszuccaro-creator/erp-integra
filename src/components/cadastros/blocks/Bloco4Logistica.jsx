@@ -23,7 +23,7 @@ function CountBadge({ entityName }) {
   const { data: count = 0 } = useQuery({
     queryKey: ['count','cadastros',entityName],
     queryFn: async () => {
-      const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto('empresa_id') });
+      const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto('empresa_id', true) });
       return resp?.data?.count || 0;
     },
     staleTime: 60000

@@ -28,7 +28,7 @@ function CountBadge({ entityName }) {
     queryFn: async () => {
       const resp = await base44.functions.invoke('countEntities', {
         entityName,
-        filter: getFiltroContexto('empresa_id')
+        filter: getFiltroContexto('empresa_id', true)
       });
       return resp?.data?.count || 0;
     },
