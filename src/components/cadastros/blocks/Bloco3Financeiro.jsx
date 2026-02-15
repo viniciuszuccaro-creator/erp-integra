@@ -5,6 +5,10 @@ import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { Landmark, CreditCard, Wallet, Calculator, FolderKanban, Banknote, LineChart, Layers, BookText, DollarSign, Settings, Blocks } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 import BancoForm from "@/components/cadastros/BancoForm";
 import FormaPagamentoFormCompleto from "@/components/cadastros/FormaPagamentoFormCompleto";
@@ -18,6 +22,19 @@ import PlanoContasForm from "@/components/cadastros/PlanoContasForm";
 import TipoDespesaForm from "@/components/cadastros/TipoDespesaForm";
 import MoedaIndiceForm from "@/components/cadastros/MoedaIndiceForm";
 import OperadorCaixaForm from "@/components/cadastros/OperadorCaixaForm";
+
+function CountBadge({ entityName }) {
+  const { getFiltroContexto } = useContextoVisual();
+  const { data: count = 0 } = useQuery({
+    queryKey: ['count','cadastros',entityName],
+    queryFn: async () => {
+      const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto('empresa_id') });
+      return resp?.data?.count || 0;
+    },
+    staleTime: 60000
+  });
+  return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
+}
 
 export default function Bloco3Financeiro() {
   const { openWindow } = useWindow();
@@ -46,8 +63,9 @@ export default function Bloco3Financeiro() {
           <CardHeader className="bg-slate-50 border-b">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <Icon className="w-5 h-5 text-slate-600"/> {t}
-              </CardTitle>
+                                <Icon className="w-5 h-5 text-slate-600"/> {t}
+                                <span className="ml-2"><CountBadge entityName={k} /></span>
+                              </CardTitle>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={custom ? (()=>openWindow(GestorGatewaysPagamento, { windowMode: true }, { title: t, width: 1200, height: 720 })) : openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('financeiro','ver')}>
                 Abrir
               </Button>

@@ -5,6 +5,10 @@ import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
 import { MessageCircle, Link2, Clock, Bell, FileText, MessageSquare, Wrench, Sparkles, ShoppingCart, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { base44 } from "@/api/base44Client";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 
 import ApiExternaForm from "@/components/cadastros/ApiExternaForm";
 import WebhookForm from "@/components/cadastros/WebhookForm";
@@ -29,6 +33,19 @@ import ConfigWhatsAppBusiness from "@/components/integracoes/ConfigWhatsAppBusin
 import TesteTransportadoras from "@/components/integracoes/TesteTransportadoras";
 import TesteGoogleMaps from "@/components/integracoes/TesteGoogleMaps";
 import SincronizacaoMarketplacesAtiva from "@/components/integracoes/SincronizacaoMarketplacesAtiva";
+
+function CountBadge({ entityName }) {
+  const { getFiltroContexto } = useContextoVisual();
+  const { data: count = 0 } = useQuery({
+    queryKey: ['count','cadastros',entityName],
+    queryFn: async () => {
+      const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto('empresa_id') });
+      return resp?.data?.count || 0;
+    },
+    staleTime: 60000
+  });
+  return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
+}
 
 export default function Bloco6Tecnologia() {
   const { openWindow } = useWindow();
@@ -72,6 +89,7 @@ export default function Bloco6Tecnologia() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Icon className="w-5 h-5 text-slate-600"/> {t}
+                  <span className="ml-2"><CountBadge entityName={k} /></span>
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   {k === 'ChatbotCanal' && (

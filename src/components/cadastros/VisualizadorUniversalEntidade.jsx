@@ -43,11 +43,14 @@ const OPCOES_ORDENACAO = {
     { value: 'nome', label: 'Nome (A-Z)' },
     { value: 'nome_desc', label: 'Nome (Z-A)' },
     { value: 'razao_social', label: 'Razão Social (A-Z)' },
+    { value: 'razao_social_desc', label: 'Razão Social (Z-A)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Transportadora: [
     { value: 'razao_social', label: 'Razão Social (A-Z)' },
+    { value: 'razao_social_desc', label: 'Razão Social (Z-A)' },
     { value: 'nome_fantasia', label: 'Nome Fantasia (A-Z)' },
+    { value: 'nome_fantasia_desc', label: 'Nome Fantasia (Z-A)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   Produto: [
@@ -77,28 +80,35 @@ const OPCOES_ORDENACAO = {
   ],
   Marca: [
     { value: 'nome_marca', label: 'Marca (A-Z)' },
+    { value: 'nome_marca_desc', label: 'Marca (Z-A)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   GrupoProduto: [
     { value: 'nome_grupo', label: 'Grupo (A-Z)' },
-    { value: 'codigo', label: 'Código (A-Z)' },
+    { value: 'nome_grupo_desc', label: 'Grupo (Z-A)' },
+    { value: 'codigo', label: 'Código (Crescente)' },
+    { value: 'codigo_desc', label: 'Código (Decrescente)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   SetorAtividade: [
     { value: 'nome', label: 'Nome (A-Z)' },
+    { value: 'nome_desc', label: 'Nome (Z-A)' },
     { value: 'tipo_operacao', label: 'Tipo' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   UnidadeMedida: [
     { value: 'sigla', label: 'Sigla (A-Z)' },
+    { value: 'sigla_desc', label: 'Sigla (Z-A)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   SegmentoCliente: [
     { value: 'nome_segmento', label: 'Segmento (A-Z)' },
+    { value: 'nome_segmento_desc', label: 'Segmento (Z-A)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   RegiaoAtendimento: [
     { value: 'nome_regiao', label: 'Região (A-Z)' },
+    { value: 'nome_regiao_desc', label: 'Região (Z-A)' },
     { value: 'recent', label: 'Mais Recentes' }
   ],
   default: [
@@ -257,7 +267,21 @@ export default function VisualizadorUniversalEntidade({
       'descricao': 'descricao',
       'descricao_desc': '-descricao',
       'nome': 'nome',
-      'nome_desc': '-nome'
+      'nome_desc': '-nome',
+      'razao_social': 'razao_social',
+      'razao_social_desc': '-razao_social',
+      'nome_fantasia': 'nome_fantasia',
+      'nome_fantasia_desc': '-nome_fantasia',
+      'nome_marca': 'nome_marca',
+      'nome_marca_desc': '-nome_marca',
+      'nome_grupo': 'nome_grupo',
+      'nome_grupo_desc': '-nome_grupo',
+      'sigla': 'sigla',
+      'sigla_desc': '-sigla',
+      'nome_segmento': 'nome_segmento',
+      'nome_segmento_desc': '-nome_segmento',
+      'nome_regiao': 'nome_regiao',
+      'nome_regiao_desc': '-nome_regiao'
     };
     
     return sortMap[ordenacao] || '-created_date';
