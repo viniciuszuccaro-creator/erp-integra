@@ -36,7 +36,7 @@ const ColaboradoresWindow = () => (
 
 export default function RH() {
   const { hasPermission, isLoading: loadingPermissions } = usePermissions();
-  const { filtrarPorContexto, getFiltroContexto, empresaAtual } = useContextoVisual();
+  const { filterInContext, getFiltroContexto, empresaAtual } = useContextoVisual();
   const { openWindow } = useWindow();
   const { user } = useUser();
 
@@ -44,7 +44,7 @@ export default function RH() {
     queryKey: ['colaboradores', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('Colaborador', {}, '-created_date', 100, 'empresa_alocada_id');
+        return await filterInContext('Colaborador', {}, '-created_date', 100, 'empresa_alocada_id');
       } catch (err) {
         console.error('Erro ao buscar colaboradores:', err);
         return [];
@@ -95,7 +95,7 @@ export default function RH() {
     queryKey: ['pontos', empresaAtual?.id],
     queryFn: async () => {
         try {
-          return await filtrarPorContexto('Ponto', {}, '-data', 100);
+          return await filterInContext('Ponto', {}, '-data', 100);
         } catch (err) {
           console.error('Erro ao buscar pontos:', err);
           return [];
@@ -109,7 +109,7 @@ export default function RH() {
     queryKey: ['ferias', empresaAtual?.id],
     queryFn: async () => {
         try {
-          return await filtrarPorContexto('Ferias', {}, '-created_date', 50);
+          return await filterInContext('Ferias', {}, '-created_date', 50);
         } catch (err) {
           console.error('Erro ao buscar férias:', err);
           return [];
