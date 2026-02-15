@@ -254,6 +254,9 @@ Deno.serve(async (req) => {
 
     // Auditoria + Alerta no NotificationCenter
     if (issues.length > 0) {
+      // Usa empresa do primeiro título como contexto padrão
+      const alvoEmpresaId = (filtros?.empresa_id) || (receber[0]?.empresa_id) || (pagar[0]?.empresa_id) || null;
+
       await base44.asServiceRole.entities.AuditLog.create({
         usuario: 'Sistema',
         acao: 'Visualização',
@@ -266,8 +269,6 @@ Deno.serve(async (req) => {
       });
 
       const resumoSeveridade = issues.reduce((acc, i) => { acc[i.severity] = (acc[i.severity] || 0) + 1; return acc; }, {});
-      // Usa empresa do primeiro título como contexto padrão
-      const alvoEmpresaId = (filtros?.empresa_id) || (receber[0]?.empresa_id) || (pagar[0]?.empresa_id) || null;
 
       await notify(base44, {
         titulo: 'Anomalias Financeiras Detectadas',
