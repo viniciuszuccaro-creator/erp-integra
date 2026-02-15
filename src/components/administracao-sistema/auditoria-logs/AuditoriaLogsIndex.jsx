@@ -18,13 +18,27 @@ export default function AuditoriaLogsIndex() {
           <TabsTrigger value="global">Global</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="painel" className="mt-4">
-          <Card className="w-full">
-            <CardContent className="p-4">
-              <div className="text-center py-10 text-slate-500">
-                <FileText className="w-10 h-10 mx-auto mb-2 opacity-30" />
-                <p>O painel de auditoria será disponibilizado em breve.</p>
-                <p className="text-sm">Placeholder temporário até a conclusão da implementação.</p>
+        <TabsContent value="painel" className="mt-4 h-full">
+          <Card className="w-full h-full">
+            <CardContent className="p-4 space-y-3 h-full">
+              <div className="flex items-center gap-2">
+                <Select value={entidade} onValueChange={setEntidade}>
+                  <SelectTrigger className="w-56">
+                    <SelectValue placeholder="Entidade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todas">Todas as entidades</SelectItem>
+                    <SelectItem value="Pedido">Pedido</SelectItem>
+                    <SelectItem value="ContaPagar">Conta Pagar</SelectItem>
+                    <SelectItem value="ContaReceber">Conta Receber</SelectItem>
+                    <SelectItem value="Produto">Produto</SelectItem>
+                    <SelectItem value="MovimentacaoEstoque">Movimentação Estoque</SelectItem>
+                    <SelectItem value="PerfilAcesso">Perfil de Acesso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-full h-[60vh]">
+                <AuditTrailPanel limit={100} entidade={entidade === 'todas' ? null : entidade} />
               </div>
             </CardContent>
           </Card>

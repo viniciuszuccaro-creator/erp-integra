@@ -31,7 +31,16 @@ Deno.serve(async (req) => {
 
     const updated = await api.update(id, updates);
 
-    await audit(base44, user, { acao: 'Edição', modulo: 'Financeiro', entidade: entity, registro_id: id, descricao: `Transição pagamento: ${action}`, dados_novos: updates });
+    await audit(base44, user, {
+      acao: 'Edição',
+      modulo: 'Financeiro',
+      entidade: entity,
+      registro_id: id,
+      descricao: `Transição pagamento: ${action}`,
+      empresa_id: registro?.empresa_id || null,
+      dados_anteriores: registro,
+      dados_novos: { ...updates, __justificativa: justificativa || null }
+    });
 
     return Response.json({ ok: true, data: updated });
   } catch (e) {
