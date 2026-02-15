@@ -836,7 +836,7 @@ export default function VisualizadorUniversalEntidade({
             </>
           )}
 
-          {!isLoading && totalItemsCount > 0 && !colunaOrdenacao && (
+          {!isLoading && totalItemsCount > 0 && (
             <PaginationControls
               currentPage={currentPage}
               totalItems={totalItemsCount}
