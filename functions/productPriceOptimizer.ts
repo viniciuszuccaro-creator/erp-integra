@@ -2,6 +2,28 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { optimizeProductPrice } from './_lib/pricing/optimizeProductPriceHandler.js';
 import { getUserAndPerfil, assertPermission, audit } from './_lib/guard.js';
 
+// === IA Setorial (Ferro & Aço) — helpers locais ===
+function computeSteelSuggestions(produtos = []) {
+  const sugestoes = [];
+  for (const p of produtos) {
+    if (p?.eh_bitola !== true) continue;
+    const custoRef = Number(p.ultimo_preco_compra ?? p.custo_aquisicao ?? p.custo_medio) || 0;
+    const precoVenda = Number(p.preco_venda) || 0;
+    const margemMin = (Number(p.margem_minima_percentual) || 10) / 100;
+    const margemAtual = custoRef > 0 ? (precoVenda - custoRef) / custoRef : 0;
+    if (margemAtual < margemMin + 0.05) {
+      sugestoes.push({ tipo: 'reajuste_preco', produto_id: p.id, motivo: 'margem_baixa', dados: { margemAtual: Number((margemAtual*100).toFixed(1)), margemMin: Number((margemMin*100).toFixed(1)) } });
+    }
+    const giro30 = Number(p.quantidade_vendida_30dias) || 0;
+    const estDisp = Number(p.estoque_disponivel ?? (p.estoque_atual - p.estoque_reservado)) || 0;
+    const estMin = Number(p.estoque_minimo) || 0;
+    if (giro30 > 0 && estDisp < estMin + giro30) {
+      sugestoes.push({ tipo: 'compra_antecipada', produto_id: p.id, motivo: 'estoque_baixo_giro_alto', dados: { giro30, estDisp, estMin } });
+    }
+  }
+  return sugestoes;
+}
+
 Deno.serve(async (req) => {
   const t0 = Date.now();
   try {
@@ -43,7 +65,10 @@ Deno.serve(async (req) => {
     // Execução em lote (sem produto_id): processa N produtos por execução para evitar timeouts // v2
     if (isBatch) {
       const limit = Math.min(Math.max(Number(payload?.limit) || 100, 1), 1000); // 1..1000
-      const filtro = payload?.filter || { status: 'Ativo' };
+      const rawFiltro = payload?.filter || { status: 'Ativo' };
+      const filtro = { ...rawFiltro };
+      if (payload?.filtros?.empresa_id) filtro.empresa_id = payload.filtros.empresa_id;
+      if (payload?.filtros?.group_id) filtro.group_id = payload.filtros.group_id;
 
       const produtos = await base44.asServiceRole.entities.Produto.filter(filtro, '-updated_date', limit);
       let updated = 0, skipped = 0, failed = 0, creditExhausted = false;
@@ -63,14 +88,24 @@ Deno.serve(async (req) => {
         }
       }
 
+      const sugestoes = computeSteelSuggestions(produtos).slice(0, 100);
       try {
         await audit(base44, user || { full_name: 'Automação' }, {
           acao: 'Edição',
           modulo: 'Comercial',
           entidade: 'Produto',
           descricao: 'Otimização de preços em lote (agendada)',
-          dados_novos: { total: produtos.length, updated, skipped, failed, creditExhausted, duracao_ms: Date.now() - t0 }
+          dados_novos: { total: produtos.length, updated, skipped, failed, creditExhausted, duracao_ms: Date.now() - t0, sugestoes }
         });
+        if (sugestoes.length) {
+          await base44.asServiceRole.entities.Notificacao?.create?.({
+            titulo: 'Sugestões Comerciais (Aço)',
+            mensagem: `${sugestoes.length} sugestão(ões) geradas (reajuste/compra antecipada).`,
+            tipo: 'info',
+            categoria: 'Comercial',
+            prioridade: 'Média'
+          });
+        }
       } catch {}
 
       const res = { ok: true, batch: true, total: produtos.length, updated, skipped, failed, creditExhausted };

@@ -4,6 +4,96 @@ import * as ss from 'npm:simple-statistics@7.8.3';
 import { notify } from './_lib/notificationService.js';
 
 // Detecção de anomalias financeiras (ML leve) com alerta no NotificationCenter
+// === Helpers IA Estratégica Setorial (Ferro & Aço) - v1 ===
+const safeNum = (v, d = 0) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : d;
+};
+const groupBy = (arr, keyFn) => arr.reduce((acc, x) => { const k = keyFn(x); (acc[k] = acc[k] || []).push(x); return acc; }, {});
+
+function detectSteelPriceOscillation(produtos = [], fornecedores = []) {
+  const fornById = fornecedores.reduce((m, f) => { m[f.id] = f; return m; }, {});
+  const issues = [];
+  const sugestoes = [];
+  for (const p of produtos) {
+    if (p?.eh_bitola !== true) continue;
+    const custoRef = safeNum(p.ultimo_preco_compra ?? p.custo_aquisicao ?? p.custo_medio, 0);
+    const precoVenda = safeNum(p.preco_venda, 0);
+    const oscil = custoRef > 0 ? Math.abs((safeNum(p.custo_medio, custoRef) - custoRef) / custoRef) : 0;
+    if (oscil >= 0.1) {
+      issues.push({ entidade: 'Produto', tipo: 'oscilacao_preco_aco', severity: oscil >= 0.2 ? 'alto' : 'medio', id: p.id, data: { produto: p.descricao, oscilacao: Number((oscil*100).toFixed(1)) } });
+    }
+    const margemMin = safeNum(p.margem_minima_percentual, 10) / 100;
+    const margemAtual = custoRef > 0 ? (precoVenda - custoRef) / custoRef : 0;
+    if (margemAtual < margemMin + 0.05) {
+      sugestoes.push({ tipo: 'reajuste_preco', produto_id: p.id, motivo: 'margem_baixa', dados: { margemAtual: Number((margemAtual*100).toFixed(1)), margemMin: Number((margemMin*100).toFixed(1)) } });
+    }
+    const f = fornById[p.fornecedor_id];
+    const lead = safeNum(f?.lead_time_medio, 0);
+    const giro30 = safeNum(p.quantidade_vendida_30dias, 0);
+    const estDisp = safeNum(p.estoque_disponivel ?? (p.estoque_atual - p.estoque_reservado), 0);
+    const estMin = safeNum(p.estoque_minimo, 0);
+    if (giro30 > 0 && estDisp < estMin + giro30 && lead >= 7) {
+      sugestoes.push({ tipo: 'compra_antecipada', produto_id: p.id, motivo: 'estoque_baixo_giro_alto_lead_alto', dados: { giro30, lead, estDisp, estMin } });
+    }
+  }
+  return { issues, sugestoes };
+}
+
+function analyzeObraConsumption(pedidos = [], movs = []) {
+  const issues = [];
+  const sugestoes = [];
+  const movByDoc = groupBy(movs, m => m?.origem_documento_id || '');
+  for (const ped of pedidos) {
+    if (!Array.isArray(ped?.itens_corte_dobra) || ped.itens_corte_dobra.length === 0) continue;
+    const estimado = ped.itens_corte_dobra.reduce((s, it) => s + safeNum(it.quantidade, 0), 0);
+    const relMovs = movByDoc[ped.id] || [];
+    const real = relMovs.reduce((s, m) => s + Math.abs(safeNum(m.quantidade, 0)), 0);
+    if (estimado <= 0) continue;
+    const rendimento = real / estimado;
+    const sucata = real > estimado ? (real - estimado) / estimado : 0;
+    if (rendimento < 0.9 || sucata > 0.1) {
+      issues.push({ entidade: 'Pedido', tipo: 'rendimento_obra_baixo', severity: 'medio', id: ped.id, data: { obra: ped.obra_destino_nome || ped.obra_destino_id, rendimento: Number((rendimento*100).toFixed(1)), sucata: Number((sucata*100).toFixed(1)) } });
+      sugestoes.push({ tipo: 'ajuste_rendimento_obra', pedido_id: ped.id, motivo: 'rendimento_baixo_ou_sucata_alta' });
+    }
+  }
+  return { issues, sugestoes };
+}
+
+function analyzeLogistics(entregas = []) {
+  const issues = [];
+  const sugestoes = [];
+  const byMotorista = groupBy(entregas, e => e?.motorista_id || '');
+  for (const [mid, list] of Object.entries(byMotorista)) {
+    if (!mid || mid === 'null' || mid === 'undefined') continue;
+    const avgTempo = list.reduce((s, e) => s + safeNum(e.tempo_total_minutos, 0), 0) / Math.max(1, list.length);
+    const atrasos = list.filter(e => e?.data_previsao && e?.data_entrega && new Date(e.data_entrega) > new Date(e.data_previsao)).length;
+    const taxaAtraso = atrasos / Math.max(1, list.length);
+    if (taxaAtraso >= 0.3 || avgTempo > 180) {
+      issues.push({ entidade: 'Entrega', tipo: 'ineficiencia_logistica', severity: taxaAtraso >= 0.5 ? 'alto' : 'medio', id: mid, data: { motorista_id: mid, taxaAtraso: Number((taxaAtraso*100).toFixed(1)), avgTempo: Math.round(avgTempo) } });
+      sugestoes.push({ tipo: 'melhoria_rota', motorista_id: mid, motivo: 'taxa_atraso_ou_tempo_alto' });
+    }
+  }
+  return { issues, sugestoes };
+}
+
+function profileClients(contas = []) {
+  const issues = [];
+  const sugestoes = [];
+  const pend = (Array.isArray(contas) ? contas : []).filter(c => c.status === 'Pendente' && c.data_vencimento);
+  const byCliente = groupBy(pend, c => c?.cliente_id || c?.cliente || '');
+  for (const [cid, list] of Object.entries(byCliente)) {
+    const total = list.reduce((s, c) => s + safeNum(c.valor, 0), 0);
+    const dias = list.map(c => Math.max(0, Math.floor((Date.now() - new Date(c.data_vencimento).getTime()) / 86400000)));
+    const media = dias.length ? dias.reduce((a,b)=>a+b,0)/dias.length : 0;
+    if (media >= 20 && total >= 50000) {
+      issues.push({ entidade: 'ContaReceber', tipo: 'perfil_pagador_lento', severity: 'medio', id: cid, data: { cliente_id: cid, mediaDias: Math.round(media), total } });
+      sugestoes.push({ tipo: 'cobranca_proativa', cliente_id: cid, motivo: 'media_dias_alta_e_valor_alto', dados: { mediaDias: Math.round(media), total } });
+    }
+  }
+  return { issues, sugestoes };
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -26,11 +116,13 @@ Deno.serve(async (req) => {
       return Response.json({ ok: true, issues: 0, details: [] });
     }
 
-    // Ferro & Aço: detectar órfãos/inconsistências de estoque/produto
-    let produtos = [];
-    let movs = [];
+    // Ferro & Aço: detectar órfãos/inconsistências de estoque/produto + contexto ampliado
+    let produtos = [], movs = [], fornecedores = [], pedidos = [], entregas = [];
     try { produtos = await base44.asServiceRole.entities.Produto.filter(filtros, '-updated_date', 300); } catch(_) {}
     try { movs = await base44.asServiceRole.entities.MovimentacaoEstoque.filter(filtros, '-updated_date', 300); } catch(_) {}
+    try { fornecedores = await base44.asServiceRole.entities.Fornecedor.filter(filtros, '-updated_date', 200); } catch(_) {}
+    try { pedidos = await base44.asServiceRole.entities.Pedido.filter(filtros, '-updated_date', 200); } catch(_) {}
+    try { entregas = await base44.asServiceRole.entities.Entrega.filter(filtros, '-updated_date', 200); } catch(_) {}
 
     const orphanProdutos = produtos.filter(p => p.eh_bitola === true && !p.empresa_id);
     const estoqueSemFilial = movs.filter(m => !m.empresa_id || !m.localizacao_destino);
@@ -63,6 +155,24 @@ Deno.serve(async (req) => {
     // Regras configuráveis + detecções já existentes
           const cfg = await loadAnomalyConfig(base44);
           issues = (computeIssues(receber, pagar, cfg) || []).concat(issues);
+          // IA Setorial: extensões Ferro & Aço
+          let sugestoes = [];
+          try {
+            const r1 = detectSteelPriceOscillation(produtos, fornecedores);
+            issues = issues.concat(r1.issues); sugestoes = sugestoes.concat(r1.sugestoes);
+          } catch(_) {}
+          try {
+            const r2 = analyzeObraConsumption(pedidos, movs);
+            issues = issues.concat(r2.issues); sugestoes = sugestoes.concat(r2.sugestoes);
+          } catch(_) {}
+          try {
+            const r3 = analyzeLogistics(entregas);
+            issues = issues.concat(r3.issues); sugestoes = sugestoes.concat(r3.sugestoes);
+          } catch(_) {}
+          try {
+            const r4 = profileClients(receber);
+            issues = issues.concat(r4.issues); sugestoes = sugestoes.concat(r4.sugestoes);
+          } catch(_) {}
 
           // 2.0: Persistir flags em títulos de Pagar quando aplicável (service role)
           try {
@@ -150,7 +260,7 @@ Deno.serve(async (req) => {
         modulo: 'Financeiro',
         entidade: 'Monitoramento',
         descricao: `Anomalias detectadas: ${issues.length}`,
-        dados_novos: { issues: issues.slice(0, 50) },
+        dados_novos: { issues: issues.slice(0, 50), sugestoes: (sugestoes || []).slice(0, 50) },
         data_hora: new Date().toISOString(),
       });
 
@@ -165,7 +275,7 @@ Deno.serve(async (req) => {
         categoria: 'Financeiro',
         prioridade: 'Alta',
         empresa_id: alvoEmpresaId,
-        dados: { resumoSeveridade, exemplos: issues.slice(0, 5) }
+        dados: { resumoSeveridade, exemplos: issues.slice(0, 5), sugestoes: (sugestoes || []).slice(0, 5) }
       }, { whatsapp: true });
 
       // Canal opcional: WhatsApp (se configurado em Configuração do Sistema)
