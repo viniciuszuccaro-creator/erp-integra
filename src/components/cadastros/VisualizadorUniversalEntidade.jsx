@@ -303,80 +303,16 @@ export default function VisualizadorUniversalEntidade({
   }, [getFiltroContexto, buscaBackend, nomeEntidade]);
 
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage, colunaOrdenacao, direcaoOrdenacao],
+    queryKey: [...queryKey, empresaAtual?.id, buscaBackend, currentPage, itemsPerPage],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
-
-      // Decide se vamos ordenar no backend (quando o campo é real) ou no cliente (campos virtuais *_generico)
-      const isLocalSort = (() => {
-        if (colunaOrdenacao && /_generico$/.test(colunaOrdenacao)) return true;
-        if (ordenacao && ordenacao !== 'recent') {
-          const campo = ordenacao.replace(/_desc$/, '');
-          if (/_generico$/.test(campo)) return true;
-        }
-        return false;
-      })();
-
-      const limit = itemsPerPage * currentPage; // evita depender de skip (compat com SDK)
-      let list = await base44.entities[nomeEntidade].filter(
+      const limit = itemsPerPage * currentPage; // carregamento cumulativo
+      const list = await base44.entities[nomeEntidade].filter(
         filtro,
-        isLocalSort ? undefined : getBackendSortString(),
+        undefined,
         limit
       );
-      list = list || [];
-
-      if (isLocalSort) {
-        const metaCols = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default);
-        const collator = new Intl.Collator('pt-BR', { numeric: true, sensitivity: 'base' });
-        const toNum = (v, campo) => {
-          if (v == null || v === '') return Number.POSITIVE_INFINITY;
-          if (typeof v === 'number') return v;
-          const s = String(v);
-          if (campo === 'codigo') {
-            const digits = s.replace(/\D/g, '');
-            return digits ? Number(digits) : Number.POSITIVE_INFINITY;
-          }
-          const m = s.match(/\d+(?:[\.,]\d+)?/);
-          if (m) return Number(m[0].replace(',', '.'));
-          const n = Number(s);
-          return Number.isNaN(n) ? Number.POSITIVE_INFINITY : n;
-        };
-        const applySort = (campo, desc) => {
-          const meta = metaCols.find(c => c.campo === campo) || { campo, getValue: (item) => item[campo], isNumeric: campo === 'codigo' };
-          const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[campo]);
-          list.sort((a, b) => {
-            const avRaw = getVal(a);
-            const bvRaw = getVal(b);
-            let comp;
-            if (meta.isNumeric) {
-              const an = toNum(avRaw, meta.campo);
-              const bn = toNum(bvRaw, meta.campo);
-              if (!Number.isFinite(an) || !Number.isFinite(bn)) {
-                const as = (avRaw ?? '').toString();
-                const bs = (bvRaw ?? '').toString();
-                comp = collator.compare(as, bs);
-              } else {
-                comp = an - bn;
-              }
-            } else {
-              const as = (avRaw ?? '').toString();
-              const bs = (bvRaw ?? '').toString();
-              comp = collator.compare(as, bs);
-            }
-            return desc ? -comp : comp;
-          });
-        };
-        if (colunaOrdenacao) {
-          applySort(colunaOrdenacao, direcaoOrdenacao === 'desc');
-        } else if (ordenacao && ordenacao !== 'recent') {
-          const campo = ordenacao.replace(/_desc$/, '');
-          const desc = ordenacao.endsWith('_desc');
-          applySort(campo, desc);
-        }
-      }
-
-      const start = (currentPage - 1) * itemsPerPage;
-      return list.slice(start, start + itemsPerPage);
+      return list || [];
     },
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -508,6 +444,15 @@ export default function VisualizadorUniversalEntidade({
           comp = collator.compare(as, bs);
         }
         return desc ? -comp : comp;
+      });
+    } else {
+      // Padrão: "Mais Recentes" (updated_date desc, fallback created_date desc)
+      resultado.sort((a, b) => {
+        const au = a.updated_date || a.created_date || '';
+        const bu = b.updated_date || b.created_date || '';
+        const ad = new Date(au).getTime() || 0;
+        const bd = new Date(bu).getTime() || 0;
+        return bd - ad;
       });
     }
     
