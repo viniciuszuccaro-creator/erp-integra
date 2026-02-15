@@ -16,16 +16,36 @@ export default function ProtectedSection({
 }) {
   const { isLoading, hasPermission } = usePermissions();
   const { user } = useUser();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, grupoAtual } = useContextoVisual();
   const loggedRef = useRef(false);
   const [openDenied, setOpenDenied] = useState(false);
 
   // Sempre manter a mesma ordem de hooks entre renders
   const allowed = !isLoading && hasPermission(modulo, section, action);
+  const [allowedFinal, setAllowedFinal] = useState(null);
+
+  useEffect(() => {
+    if (isLoading) return;
+    (async () => {
+      if (!modulo) { setAllowedFinal(allowed); return; }
+      try {
+        const { data } = await base44.functions.invoke('entityGuard', {
+          module: modulo,
+          section,
+          action,
+          empresa_id: empresaAtual?.id || null,
+          group_id: grupoAtual?.id || null,
+        });
+        setAllowedFinal(Boolean(data?.allowed) && allowed);
+      } catch (_) {
+        setAllowedFinal(allowed);
+      }
+    })();
+  }, [isLoading, allowed, modulo, section, action, empresaAtual?.id, grupoAtual?.id]);
 
   useEffect(() => {
     if (isLoading) return; // não audita durante carregamento
-    if (!allowed && !loggedRef.current) {
+    if (allowedFinal === false && !loggedRef.current) {
       loggedRef.current = true;
       try {
         base44.entities.AuditLog.create({
@@ -40,14 +60,14 @@ export default function ProtectedSection({
         });
       } catch {}
     }
-  }, [isLoading, allowed, action, modulo, section, user?.id, empresaAtual?.id]);
+  }, [isLoading, allowedFinal, action, modulo, section, user?.id, empresaAtual?.id]);
 
   useEffect(() => {
-    if (!isLoading && !allowed) setOpenDenied(true);
+    if (!isLoading && allowedFinal === false) setOpenDenied(true);
   }, [isLoading, allowed]);
 
-  if (isLoading) return null;
-  if (!allowed) {
+  if (isLoading || allowedFinal === null) return null;
+  if (!allowedFinal) {
     if (hideInstead) return fallback;
     if (disableInstead) {
       return (
