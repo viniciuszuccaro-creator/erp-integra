@@ -773,6 +773,7 @@ export default function VisualizadorUniversalEntidade({
                     colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
                     return row;
                   })}
+                  entityName={nomeEntidade}
                   sortField={sortField || (getDefaultSortForEntity().field)}
                   sortDirection={sortDirection || (getDefaultSortForEntity().direction)}
                   onSortChange={(field, direction) => { setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); setColunaOrdenacao(null); }}
