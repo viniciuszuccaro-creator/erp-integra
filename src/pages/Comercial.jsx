@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ValidarPedidosExternos from "@/components/comercial/ValidarPedidosExternos";
 import HeaderComercialCompacto from "@/components/comercial/comercial-launchpad/HeaderComercialCompacto";
+import ModuleContainer from "@/components/layout/ModuleContainer";
+import ModuleHeader from "@/components/layout/ModuleHeader";
 import KPIsComercial from "@/components/comercial/comercial-launchpad/KPIsComercial";
 import ModulosGridComercial from "@/components/comercial/comercial-launchpad/ModulosGridComercial";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -390,8 +392,8 @@ export default function Comercial() {
   return (
     <ProtectedSection module="Comercial" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full p-2 space-y-2 overflow-hidden bg-transparent">
-        <HeaderComercialCompacto />
+      <ModuleContainer header={<ModuleHeader><HeaderComercialCompacto /></ModuleHeader>}>
+
         
         <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">

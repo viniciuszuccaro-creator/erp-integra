@@ -9,6 +9,8 @@ import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import HeaderFinanceiroCompacto from "@/components/financeiro/HeaderFinanceiroCompacto";
+import ModuleContainer from "@/components/layout/ModuleContainer";
+import ModuleHeader from "@/components/layout/ModuleHeader";
 import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunchpad";
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
 
@@ -387,7 +389,7 @@ export default function Financeiro() {
   return (
     <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full p-2 space-y-2 overflow-hidden bg-transparent">
+      <ModuleContainer header={<ModuleHeader><HeaderFinanceiroCompacto /></ModuleHeader>}>
         <HeaderFinanceiroCompacto 
           estaNoGrupo={estaNoGrupo}
           empresaAtual={empresaAtual}

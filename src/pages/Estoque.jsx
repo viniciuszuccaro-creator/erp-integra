@@ -10,6 +10,8 @@ import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import { Button } from "@/components/ui/button";
 import HeaderEstoqueCompacto from "@/components/estoque/estoque-launchpad/HeaderEstoqueCompacto";
+import ModuleContainer from "@/components/layout/ModuleContainer";
+import ModuleHeader from "@/components/layout/ModuleHeader";
 import KPIsEstoque from "@/components/estoque/estoque-launchpad/KPIsEstoque";
 import ModulosGridEstoque from "@/components/estoque/estoque-launchpad/ModulosGridEstoque";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -317,8 +319,8 @@ export default function Estoque() {
   return (
     <ProtectedSection module="Estoque" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full p-2 space-y-2 overflow-hidden bg-transparent">
-        <HeaderEstoqueCompacto />
+      <ModuleContainer header={<ModuleHeader><HeaderEstoqueCompacto /></ModuleHeader>}>
+
         
         <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
