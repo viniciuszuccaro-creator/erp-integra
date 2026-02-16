@@ -143,9 +143,23 @@ function withAuditRoot(props) {
   return cleanProps;
 }
 
-const AuditedSelect = (props) => (
-  <_Root {...withAuditRoot(props)} />
-);
+const AuditedSelect = (props) => {
+  // RBAC visual automático via data-permission (mesmo padrão do Button)
+  const perm = props?.['data-permission'];
+  let allowed = true;
+  try {
+    if (perm) {
+      const { default: usePermissions } = require('@/components/lib/usePermissions');
+      const { hasPermission } = usePermissions();
+      const [m,s,a] = String(perm).split('.');
+      allowed = hasPermission(m, s || null, a || null);
+    }
+  } catch (_) { allowed = true; }
+  const p = { ...props };
+  if ('data-permission' in p) delete p['data-permission'];
+  if (perm && !allowed) return null;
+  return <_Root {...withAuditRoot(p)} />
+};
 
 export {
   AuditedSelect as Select,

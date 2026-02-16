@@ -16,6 +16,21 @@ const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props },
   // CORREÇÃO CRÍTICA: Remover __wrapped_audit antes de passar para elemento nativo
   const { __wrapped_audit, ...cleanProps } = props;
 
+  // RBAC visual automático: data-permission
+  const perm = props?.['data-permission'];
+  let isAllowed = true;
+  try {
+    if (perm) {
+      const { default: usePermissions } = require('@/components/lib/usePermissions');
+      const { hasPermission } = usePermissions();
+      const [m,s,a] = String(perm).split('.');
+      isAllowed = hasPermission(m, s || null, a || null);
+    }
+  } catch (_) { isAllowed = true; }
+  const forwardedProps = { ...cleanProps };
+  if ('data-permission' in forwardedProps) delete forwardedProps['data-permission'];
+  if (perm && !isAllowed) return null;
+
   return (
     (<input
       type={type}
@@ -26,7 +41,7 @@ const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props },
       ref={ref}
       onChange={auditedOnChange}
       onBlur={auditedOnBlur}
-      {...cleanProps} />)
+      {...forwardedProps} />)
   );
 })
 Input.displayName = "Input"
