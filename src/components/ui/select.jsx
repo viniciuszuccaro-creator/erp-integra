@@ -2,6 +2,7 @@ import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
 import { cn } from "@/lib/utils"
+import usePermissions from "@/components/lib/usePermissions";
 
 const Select = SelectPrimitive.Root
 
@@ -144,19 +145,11 @@ function withAuditRoot(props) {
 }
 
 const AuditedSelect = (props) => {
-  // RBAC visual automático via data-permission (mesmo padrão do Button)
+  const { hasPermission } = usePermissions();
   const perm = props?.['data-permission'];
-  let allowed = true;
-  try {
-    if (perm) {
-      const { default: usePermissions } = require('@/components/lib/usePermissions');
-      const { hasPermission } = usePermissions();
-      const [m,s,a] = String(perm).split('.');
-      allowed = hasPermission(m, s || null, a || null);
-    }
-  } catch (_) { allowed = true; }
   const p = { ...props };
   if ('data-permission' in p) delete p['data-permission'];
+  const allowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || null); })() : true;
   if (perm && !allowed) return null;
   return <_Root {...withAuditRoot(p)} />
 };

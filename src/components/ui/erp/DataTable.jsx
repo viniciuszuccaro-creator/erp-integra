@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDown, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import usePermissions from "@/components/lib/usePermissions";
 
 export default function ERPDataTable({
   columns = [], // [{ key, label, isNumeric }]
@@ -113,16 +114,13 @@ export default function ERPDataTable({
 
   const totalPages = Math.max(1, Math.ceil((totalItems || 0) / (pageSize || 20)));
 
-  // RBAC Visual Automático por data-permission/prop permission
-  try {
-    if (permission) {
-      const { default: usePermissions } = require('@/components/lib/usePermissions');
-      const { hasPermission } = usePermissions();
-      const [m,s,a] = String(permission).split('.');
-      const allowed = hasPermission(m, s || null, a || null);
-      if (!allowed) return null;
-    }
-  } catch (_) {}
+  // RBAC Visual Automático por prop permission
+  const { hasPermission } = usePermissions();
+  if (permission) {
+    const [m,s,a] = String(permission).split('.');
+    const allowed = hasPermission(m, s || null, a || null);
+    if (!allowed) return null;
+  }
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">

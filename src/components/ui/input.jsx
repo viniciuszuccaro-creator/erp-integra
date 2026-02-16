@@ -2,6 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit";
+import usePermissions from "@/components/lib/usePermissions";
 
 const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props }, ref) => {
   React.useEffect(() => {
@@ -17,18 +18,11 @@ const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props },
   const { __wrapped_audit, ...cleanProps } = props;
 
   // RBAC visual automático: data-permission
+  const { hasPermission } = usePermissions();
   const perm = props?.['data-permission'];
-  let isAllowed = true;
-  try {
-    if (perm) {
-      const { default: usePermissions } = require('@/components/lib/usePermissions');
-      const { hasPermission } = usePermissions();
-      const [m,s,a] = String(perm).split('.');
-      isAllowed = hasPermission(m, s || null, a || null);
-    }
-  } catch (_) { isAllowed = true; }
   const forwardedProps = { ...cleanProps };
   if ('data-permission' in forwardedProps) delete forwardedProps['data-permission'];
+  const isAllowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || null); })() : true;
   if (perm && !isAllowed) return null;
 
   return (
