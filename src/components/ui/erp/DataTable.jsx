@@ -78,6 +78,16 @@ export default function ERPDataTable({
     return sortDirection === "asc" ? <ArrowUp className="w-3.5 h-3.5 text-blue-600" /> : <ArrowDown className="w-3.5 h-3.5 text-blue-600" />;
   };
 
+  // Persistência de sort por entidade (frontend) – delega para caller aplicar no backend
+  useEffect(() => {
+    if (!autoPersistSort || !entityName || !sortField) return;
+    try {
+      localStorage.setItem(`sort_${entityName}`, JSON.stringify({ sortField, sortDirection }));
+    } catch {}
+  }, [autoPersistSort, entityName, sortField, sortDirection]);
+
+  const totalPages = Math.max(1, Math.ceil((totalItems || 0) / (pageSize || 20)));
+
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       <div className="flex items-center justify-between pb-2 gap-2">
