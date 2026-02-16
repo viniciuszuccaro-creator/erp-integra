@@ -260,6 +260,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         contasSelecionadas={contasSelecionadas}
         totalSelecionado={totalSelecionado}
         onExportar={() => {
+          if (!hasPermission('Financeiro','ContaPagar','exportar')) { toast({ title: '⛔ Sem permissão para exportar', variant: 'destructive' }); return; }
           const itens = contasSelecionadas.length > 0
             ? contasList.filter(c => contasSelecionadas.includes(c.id))
             : contasFiltradas;
@@ -272,6 +273,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
           a.download = `contas_pagar_${new Date().toISOString().slice(0,10)}.csv`;
           a.click();
           URL.revokeObjectURL(url);
+          try { base44.entities.AuditLog.create({ acao: 'Exportação', modulo: 'Financeiro', entidade: 'ContaPagar', descricao: `Exportados ${itens.length} títulos`, data_hora: new Date().toISOString() }); } catch(_) {}
         }}
         onBaixarMultipla={handleBaixarMultipla}
         onNovaConta={() => { if (!hasPermission('Financeiro','ContaPagar','criar')) { toast({ title: '⛔ Sem permissão para criar', variant: 'destructive' }); return; } openWindow(ContaPagarForm, {

@@ -291,6 +291,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         contasSelecionadas={contasSelecionadas}
         totalSelecionado={totalSelecionado}
         onExportar={() => {
+          if (!hasPermission('Financeiro','ContaReceber','exportar')) { toast({ title: '⛔ Sem permissão para exportar', variant: 'destructive' }); return; }
           const itens = contasSelecionadas.length > 0
             ? contasList.filter(c => contasSelecionadas.includes(c.id))
             : filteredContas;
@@ -303,6 +304,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           a.download = `contas_receber_${new Date().toISOString().slice(0,10)}.csv`;
           a.click();
           URL.revokeObjectURL(url);
+          try { base44.entities.AuditLog.create({ acao: 'Exportação', modulo: 'Financeiro', entidade: 'ContaReceber', descricao: `Exportados ${itens.length} títulos`, data_hora: new Date().toISOString() }); } catch(_) {}
         }}
         onBaixarMultipla={handleBaixarMultipla}
         onNovaConta={() => { if (!hasPermission('Financeiro','ContaReceber','criar')) { toast({ title: '⛔ Sem permissão para criar', variant: 'destructive' }); return; } openWindow(ContaReceberForm, {
