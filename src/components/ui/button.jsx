@@ -74,6 +74,8 @@ function withUIAudit(props) {
 
   const p = { ...props };
   if (typeof p.onClick === 'function' && !p.__wrapped_audit) {
+  p.onClick = wrapIfDenied(p.onClick);
+
     const meta = { kind: 'button', toastSuccess: true };
     p.onClick = uiAuditWrap(p['data-action'] || 'Button.onClick', p.onClick, meta);
     p.__wrapped_audit = true;
