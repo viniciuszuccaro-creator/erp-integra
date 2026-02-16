@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PaginationControls from '@/components/ui/PaginationControls';
+import ERPDataTable from '@/components/ui/erp/DataTable';
 import SearchInputIsolado from '@/components/ui/SearchInputIsolado';
 import { 
   Search, 

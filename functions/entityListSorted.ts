@@ -58,7 +58,14 @@ Deno.serve(async (req) => {
     if (!entityName) return Response.json({ error: 'entityName is required' }, { status: 400 });
 
     const filtros = body?.filter || {};
+    // Enforce empresa/context filter
+    const hasEmpresa = typeof filtros?.empresa_id === 'string' || typeof filtros?.empresa_alocada_id === 'string';
+    const hasGrupo = typeof filtros?.group_id === 'string';
+    if (!hasEmpresa && !hasGrupo) {
+      return Response.json({ error: 'filter with empresa_id (or empresa_alocada_id) or group_id is required' }, { status: 400 });
+    }
     const limit = body?.limit || 500;
+    const skip = body?.skip || 0;
     const sortField = body?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
     const sortDirection = (body?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
 
