@@ -52,7 +52,7 @@ export default function Financeiro() {
     queryKey: ['contasReceber', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('ContaReceber', {}, 'data_vencimento', 100);
+        return await filtrarPorContexto('ContaReceber', {}, ' -data_vencimento', 100);
       } catch (err) {
         console.error('Erro ao buscar contas a receber:', err);
         return [];
@@ -83,7 +83,7 @@ export default function Financeiro() {
     queryKey: ['contasPagar', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await filtrarPorContexto('ContaPagar', {}, 'data_vencimento', 100);
+        return await filtrarPorContexto('ContaPagar', {}, ' -data_vencimento', 100);
       } catch (err) {
         console.error('Erro ao buscar contas a pagar:', err);
         return [];
