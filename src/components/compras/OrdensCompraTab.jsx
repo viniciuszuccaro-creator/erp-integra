@@ -22,6 +22,7 @@ import OrdemCompraForm from "./OrdemCompraForm";
 import AvaliacaoFornecedorForm from "./AvaliacaoFornecedorForm";
 import RecebimentoOCForm from "./RecebimentoOCForm";
 import { useWindow } from "@/components/lib/useWindow";
+import usePersistedSort from "@/components/lib/usePersistedSort";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import { toast as sonnerToast } from "sonner";
@@ -32,22 +33,9 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const { createInContext, updateInContext } = useContextoVisual();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [sortField, setSortField] = useState('data_solicitacao');
-  const [sortDirection, setSortDirection] = useState('desc');
+  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('OrdemCompra', 'data_solicitacao', 'desc');
 
-  useEffect?.(() => {
-    try {
-      if (!sortField) {
-        const raw = localStorage.getItem('sort_OrdemCompra');
-        if (raw) {
-          const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
-          if (sf && sd) { setSortField(sf); setSortDirection(sd); }
-        }
-      } else {
-        localStorage.setItem('sort_OrdemCompra', JSON.stringify({ sortField, sortDirection }));
-      }
-    } catch {}
-  }, [sortField, sortDirection]);
+  // persistência de sort movida para usePersistedSort
 
   const { data: ocBackend = [] } = useEntityListSorted('OrdemCompra', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
   const ocList = Array.isArray(ordensCompra) && ordensCompra.length ? ordensCompra : ocBackend;

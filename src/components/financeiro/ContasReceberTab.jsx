@@ -23,25 +23,15 @@ import KPIsReceber from "./contas-receber/KPIsReceber";
 import FiltrosReceber from "./contas-receber/FiltrosReceber";
 import TabelaReceber from "./contas-receber/TabelaReceber";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
+import usePersistedSort from "@/components/lib/usePersistedSort";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
   const { createInContext, updateInContext } = useContextoVisual();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [sortField, setSortField] = useState('data_vencimento');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaReceber', 'data_vencimento', 'asc');
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('sort_ContaReceber');
-      if (!sortField && raw) {
-        const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
-        if (sf && sd) { setSortField(sf); setSortDirection(sd); }
-      } else if (sortField) {
-        localStorage.setItem('sort_ContaReceber', JSON.stringify({ sortField, sortDirection }));
-      }
-    } catch {}
-  }, [sortField, sortDirection]);
+  // persistência de sort movida para usePersistedSort
 
   const { data: contasBackend = [] } = useEntityListSorted('ContaReceber', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
   const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
