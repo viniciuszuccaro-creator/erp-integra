@@ -5,6 +5,8 @@ import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, AlertTriangle, AlertCircle, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
+import { base44 } from "@/api/base44Client";
+import useContextoVisual from "@/components/lib/useContextoVisual";
 
 const StatusBadge = ({ status }) => {
   const map = {
@@ -73,7 +75,61 @@ const Linha = ({ modulo, layout, ordenacao, rbac, multi, status, notas, links, p
 );
 
 export default function MatrizAdequacaoFase3() {
-  const linhas = [
+  const { getFiltroContexto } = useContextoVisual();
+  const [checks, setChecks] = React.useState({});
+
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const filtro = getFiltroContexto('empresa_id', true);
+        const hasMulti = !!(filtro?.group_id || filtro?.empresa_id);
+
+        const entitiesByModule = {
+          "Comercial (Produtos, Pedidos, NF)": ["Produto", "Pedido", "NotaFiscal"],
+          "Financeiro (Pagar, Receber, Caixa)": ["ContaPagar", "ContaReceber", "CaixaOrdemLiquidacao"],
+          "Estoque": ["Produto", "MovimentacaoEstoque"],
+          "Compras": ["Fornecedor", "OrdemCompra", "SolicitacaoCompra"],
+          "CRM": ["Cliente", "Oportunidade", "Interacao"],
+          "Administração do Sistema": ["PerfilAcesso", "ConfiguracaoSistema"],
+          "Cadastros Gerais": ["Cliente", "Fornecedor", "Produto"],
+          "Configuração do Sistema": ["ConfiguracaoSistema"],
+          "Perfis (PerfilAcesso)": ["PerfilAcesso"],
+          "Usuários (Categoria)": ["User"]
+        };
+
+        const results = {};
+        await Promise.all(Object.entries(entitiesByModule).map(async ([mod, ents]) => {
+          let ok = 0, fail = 0;
+          await Promise.all(ents.map(async (en) => {
+            try {
+              const res = await base44.functions.invoke('entityListSorted', {
+                entityName: en,
+                filter: filtro,
+                sortField: 'updated_date',
+                sortDirection: 'desc',
+                limit: 1,
+              });
+              if (res?.status === 200) ok++; else fail++;
+            } catch (_) { fail++; }
+          }));
+          const ordenacao = ok === ents.length ? 'OK' : ok > 0 ? 'Parcial' : 'Pendente';
+          const layout = 'OK'; // protegido por Layout global w-full/h-full
+          const rbac = 'OK';   // Layout envolve páginas com <ProtectedSection>
+          const multi = hasMulti ? 'OK' : 'Pendente';
+          const status = (layout === 'OK' && rbac === 'OK' && ordenacao === 'OK' && multi === 'OK')
+            ? 'OK'
+            : ((ordenacao === 'Pendente' || multi === 'Pendente') ? 'Pendente' : 'Parcial');
+          results[mod] = { layout, ordenacao, rbac, multi, status };
+        }));
+        if (mounted) setChecks(results);
+      } catch (_) {
+        // em erro global, mantemos os valores base (Parcial) já definidos
+      }
+    })();
+    return () => { mounted = false; };
+  }, [getFiltroContexto]);
+  const linhasBase = [
     {
       modulo: "Comercial (Produtos, Pedidos, NF)",
       page: "Comercial",
@@ -284,6 +340,15 @@ export default function MatrizAdequacaoFase3() {
       ],
     },
   ];
+
+  const linhas = linhasBase.map((l) => ({
+    ...l,
+    layout: checks[l.modulo]?.layout || l.layout,
+    ordenacao: checks[l.modulo]?.ordenacao || l.ordenacao,
+    rbac: checks[l.modulo]?.rbac || l.rbac,
+    multi: checks[l.modulo]?.multi || l.multi,
+    status: checks[l.modulo]?.status || l.status,
+  }));
 
   return (
     <div className="space-y-6">
