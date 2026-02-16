@@ -1,5 +1,6 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
 import { jsPDF } from 'npm:jspdf@4.0.0';
+import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 Deno.serve(async (req) => {
   try {
@@ -8,6 +9,11 @@ Deno.serve(async (req) => {
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    // RBAC: requer permissão para exportar no módulo Estoque
+    const ctx = await getUserAndPerfil(base44);
+    const permErr = await assertPermission(base44, ctx, 'Estoque', 'Produto', 'exportar');
+    if (permErr) return permErr;
 
     let body = {};
     try { body = await req.json(); } catch {}
