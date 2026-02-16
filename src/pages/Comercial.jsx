@@ -390,7 +390,7 @@ export default function Comercial() {
   return (
     <ProtectedSection module="Comercial" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="w-full h-full p-2 space-y-2 overflow-hidden bg-transparent">
         <HeaderComercialCompacto />
         
         <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
