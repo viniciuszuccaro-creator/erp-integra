@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, AlertTriangle, AlertCircle, FileText } from "lucide-react";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
 
 const StatusBadge = ({ status }) => {
   const map = {
@@ -19,7 +21,7 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const Linha = ({ modulo, layout, ordenacao, rbac, multi, status, notas, links }) => (
+const Linha = ({ modulo, layout, ordenacao, rbac, multi, status, notas, links, page }) => (
   <Card className="border-0 shadow-sm">
     <CardHeader className="pb-2">
       <CardTitle className="text-base">{modulo}</CardTitle>
