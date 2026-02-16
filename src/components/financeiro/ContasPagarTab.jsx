@@ -320,7 +320,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
             queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
             toast({ title: "✅ Conta atualizada!" });
           }
-        }, { title: `✏️ Editar: ${conta.fornecedor}`, width: 900, height: 600 })}
+        }, { title: `✏️ Editar: ${conta.fornecedor}`, width: 900, height: 600 })}}
         onAprovar={(contaId) => {
           if (!hasPermission('Financeiro','ContaPagar','aprovar')) { toast({ title: '⛔ Sem permissão para aprovar', variant: 'destructive' }); return; }
           aprovarPagamentoMutation.mutate(contaId);

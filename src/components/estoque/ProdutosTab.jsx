@@ -10,7 +10,6 @@ import { useToast } from "@/components/ui/use-toast";
 
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
-import { base44 } from "@/api/base44Client";
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
 import { useWindow } from "@/components/lib/useWindow";
 import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMassa";

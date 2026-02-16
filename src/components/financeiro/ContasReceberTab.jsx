@@ -326,7 +326,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
             queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
             toast({ title: "✅ Conta criada!" });
           }
-        }, { title: '💰 Nova Conta a Receber', width: 900, height: 600 })}
+        }, { title: '💰 Nova Conta a Receber', width: 900, height: 600 })}}
         onEnviarCaixa={() => { if (!hasPermission('Financeiro','ContaReceber','enviar_caixa') && !hasPermission('Financeiro','ContaReceber','editar')) { toast({ title: '⛔ Sem permissão para enviar ao Caixa', variant: 'destructive' }); return; }
           const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
           enviarParaCaixaMutation.mutate(titulos);
