@@ -8,7 +8,9 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
     sortField = undefined,
     sortDirection = undefined,
     limit = 500,
-    campo = "empresa_id"
+    campo = "empresa_id",
+    page = 1,
+    pageSize = 20,
   } = options || {};
 
   // Best default sort: last user choice -> per-entity default -> updated_date desc
@@ -43,7 +45,7 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
   }
 
   return useQuery({
-    queryKey: ["entityListSorted", entityName, criterios, finalSortField, finalSortDirection, limit],
+    queryKey: ["entityListSorted", entityName, criterios, finalSortField, finalSortDirection, limit, page, pageSize],
     queryFn: async () => {
       const filtroContexto = getFiltroContexto(campo, true);
       const filtro = { ...criterios, ...filtroContexto };
@@ -53,7 +55,8 @@ export default function useEntityListSorted(entityName, criterios = {}, options 
         filter: filtro,
         sortField: finalSortField,
         sortDirection: finalSortDirection,
-        limit,
+        limit: (typeof limit === 'number' && limit > 0) ? limit : pageSize,
+        skip: (typeof page === 'number' && typeof pageSize === 'number') ? Math.max(0, (Math.max(1, page) - 1) * pageSize) : undefined,
       });
       return Array.isArray(res?.data) ? res.data : [];
     },

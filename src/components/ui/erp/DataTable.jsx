@@ -87,9 +87,13 @@ export default function ERPDataTable({
 
   // Persistência de sort por entidade (frontend) – delega para caller aplicar no backend
   useEffect(() => {
-    if (!autoPersistSort || !entityName || !sortField) return;
+    if (!autoPersistSort || !entityName) return;
     try {
-      localStorage.setItem(`sort_${entityName}`, JSON.stringify({ sortField, sortDirection }));
+      if (sortField) {
+        localStorage.setItem(`sort_${entityName}`, JSON.stringify({ sortField, sortDirection }));
+      } else {
+        localStorage.removeItem(`sort_${entityName}`);
+      }
     } catch {}
   }, [autoPersistSort, entityName, sortField, sortDirection]);
 
