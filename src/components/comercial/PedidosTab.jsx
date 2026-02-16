@@ -32,9 +32,14 @@ import SearchInput from "../ui/SearchInput";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
+import usePermissions from "@/components/lib/usePermissions";
+import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
+  const { canEdit, canCreate, canApprove } = usePermissions();
+  const { data: pedidosBackend = [] } = useEntityListSorted('Pedido', {}, { limit: 500 });
+  const pedidosList = Array.isArray(pedidos) && pedidos.length ? pedidos : pedidosBackend;
   // V21.6: Multi-empresa
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -69,7 +74,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
     },
   });
 
-  const filteredPedidos = pedidos.filter(p => {
+  const filteredPedidos = pedidosList.filter(p => {
     const matchStatus = statusFilter === "todos" || p.status === statusFilter;
     const searchLower = searchTerm.toLowerCase();
     const matchSearch = 
@@ -159,7 +164,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
 
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Pedidos</h2>
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={onCreatePedido}>
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={onCreatePedido} disabled={!canCreate('Comercial','Pedido')}>
           <Plus className="w-4 h-4 mr-2" />
           Novo Pedido
         </Button>
@@ -357,12 +362,14 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                                   });
                                   toast({ title: "✅ Pedido fechado para entrega!" });
                                   queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+                                  try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Comercial', entidade: 'Pedido', registro_id: pedido.id, descricao: 'Status → Pronto para Faturar', usuario: (await base44.auth.me())?.full_name || 'Usuário', data_hora: new Date().toISOString(), sucesso: true }); } catch(_) {}
                                 } catch (error) {
                                   toast({ title: "❌ Erro ao fechar pedido", variant: "destructive" });
                                 }
                               }}
                               title="Fechar Pedido e Enviar para Entrega"
                               className="h-8 px-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold border border-blue-200"
+                              disabled={!canEdit('Comercial','Pedido')}
                             >
                               <Truck className="w-4 h-4 mr-1" />
                               <span className="text-xs">🚚 Fechar p/ Entrega</span>
