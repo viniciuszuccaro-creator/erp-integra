@@ -226,6 +226,10 @@ export default function VisualizadorUniversalEntidade({
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [sortField, setSortField] = useState(null);
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [columnFilters, setColumnFilters] = useState({});
+  const [hiddenCols, setHiddenCols] = useState(new Set());
   
   const { openWindow, closeWindow } = useWindow();
   const { empresaAtual } = useContextoVisual();
@@ -237,7 +241,7 @@ export default function VisualizadorUniversalEntidade({
     const estoque = ['Produto','UnidadeMedida','LocalEstoque','GrupoProduto','Marca'];
     if (estoque.includes(nomeEntidade)) return 'estoque';
     return 'cadastros';
-  }, [nomeEntidade]);
+  }, [nomeEntidade, columnFilters]);
 
   const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
   let colunasOrdenacao = COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default;
@@ -260,9 +264,29 @@ export default function VisualizadorUniversalEntidade({
       setCurrentPage(1);
     }, 500);
     return () => clearTimeout(handler);
-  }, [buscaLocal]);
+  }, [buscaLocal, columnFilters]);
 
-  const getBackendSortString = useCallback(() => {
+  useEffect(() => {
+    const saved = localStorage.getItem(`ord_${nomeEntidade}_${empresaAtual?.id || 'all'}`);
+    if (saved) {
+      try {
+        const s = JSON.parse(saved);
+        if (s.field) setSortField(s.field);
+        if (s.direction) setSortDirection(s.direction);
+      } catch {}
+    }
+  }, [nomeEntidade, empresaAtual?.id, columnFilters]);
+
+  useEffect(() => {
+    if (sortField) {
+      localStorage.setItem(
+        `ord_${nomeEntidade}_${empresaAtual?.id || 'all'}`,
+        JSON.stringify({ field: sortField, direction: sortDirection })
+      );
+    }
+  }, [sortField, sortDirection, nomeEntidade, empresaAtual?.id, columnFilters]);
+
+  const getDefaultSortForEntity = useCallback(() => {
     if (colunaOrdenacao) {
       // Para ordenação por coluna clicada, aplicamos 100% no cliente para garantir consistência (ex.: Código numérico)
       return undefined;
@@ -292,8 +316,8 @@ export default function VisualizadorUniversalEntidade({
       'nome_regiao_desc': '-nome_regiao'
     };
     
-    return sortMap[ordenacao] || '-created_date';
-  }, [colunaOrdenacao, ordenacao]);
+    return { field: 'updated_date', direction: 'desc' };
+  }, [nomeEntidade, columnFilters]);
 
   const buildFilterWithSearch = useCallback(() => {
     const campoEmpresa = (nomeEntidade === 'Colaborador') ? 'empresa_alocada_id' : 'empresa_id';
@@ -328,51 +352,32 @@ export default function VisualizadorUniversalEntidade({
       buscaFiltros.push({ [campo]: { $regex: termoBusca, $options: 'i' } });
     });
 
-    return {
-      ...filtroContexto,
-      $or: buscaFiltros
-    };
-  }, [getFiltroContexto, buscaBackend, nomeEntidade]);
+    const filtrosColunas = Object.entries(columnFilters || {}).filter(([, v]) => String(v || '').trim() !== '').map(([campo, val]) => ({ [campo]: { $regex: String(val).trim(), $options: 'i' } }));
+    const combinado = { ...filtroContexto };
+    const and = [];
+    if (buscaFiltros.length) and.push({ $or: buscaFiltros });
+    if (filtrosColunas.length) and.push(...filtrosColunas);
+    if (and.length) combinado.$and = and;
+    return combinado;
+  }, [getFiltroContexto, buscaBackend, nomeEntidade, columnFilters]);
 
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
-    queryKey: [...queryKey, empresaAtual?.id, ordenacao, buscaBackend, currentPage, itemsPerPage, colunaOrdenacao, direcaoOrdenacao],
+    queryKey: [...queryKey, empresaAtual?.id, buscaBackend, currentPage, itemsPerPage, sortField, sortDirection, JSON.stringify(columnFilters)],
     queryFn: async () => {
       const filtro = buildFilterWithSearch();
-      const sortingAll = Boolean(colunaOrdenacao);
-      const sortString = getBackendSortString();
-
-      // Quando o usuário clica no cabeçalho, buscamos TODOS os registros já ORDENADOS no backend (em lotes)
-      if (sortingAll) {
-        // 1) Obter total
-        let total = 0;
-        try {
-          const resp = await base44.functions.invoke('countEntities', {
-            entityName: nomeEntidade,
-            filter: filtro,
-          });
-          total = resp?.data?.count || 0;
-        } catch (_) {}
-
-        // 2) Buscar TUDO em UMA chamada grande e ordenar localmente (garante numérico correto em Código)
-        const limit = total > 0 ? Math.min(total, 20000) : 20000;
-        const all = await base44.entities[nomeEntidade].filter(
-          filtro,
-          undefined,
-          limit,
-          0
-        );
-        return all || [];
-      }
-
-      // Ordenação padrão pelo servidor com paginação
       const skip = (currentPage - 1) * itemsPerPage;
-      const result = await base44.entities[nomeEntidade].filter(
-        filtro,
-        sortString,
-        itemsPerPage,
+      const def = getDefaultSortForEntity();
+      const sf = sortField || def.field;
+      const sd = sortDirection || def.direction;
+      const resp = await base44.functions.invoke('entityListSorted', {
+        entityName: nomeEntidade,
+        filter: filtro,
+        sortField: sf,
+        sortDirection: sd,
+        limit: itemsPerPage,
         skip
-      );
-      return result || [];
+      });
+      return resp.data || [];
     },
     staleTime: Infinity,
     refetchOnWindowFocus: false,
@@ -404,24 +409,24 @@ export default function VisualizadorUniversalEntidade({
       queryClient.invalidateQueries({ queryKey }),
       queryClient.invalidateQueries({ queryKey: [...queryKey, 'total-count'] }),
       ...aliasKeys.map((k) => queryClient.invalidateQueries({ queryKey: [k] }))
-    ]);
-  }, [queryClient, queryKey, aliasKeys]);
+    , columnFilters]);
+  }, [queryClient, queryKey, aliasKeys, columnFilters]);
 
   React.useEffect(() => {
     const unsubscribe = base44.entities[nomeEntidade].subscribe(() => {
       invalidateAllRelated();
     });
     return unsubscribe;
-  }, [nomeEntidade, invalidateAllRelated]);
+  }, [nomeEntidade, invalidateAllRelated, columnFilters]);
 
   const dadosBuscadosEOrdenados = useMemo(() => {
     let resultado = [...dados];
 
     // Ordenação local quando usuário clica no cabeçalho
-    if (colunaOrdenacao && Array.isArray(resultado)) {
+    if (false && colunaOrdenacao && Array.isArray(resultado)) {
       const meta = (COLUNAS_ORDENACAO[nomeEntidade] || COLUNAS_ORDENACAO.default).find(c => c.campo === colunaOrdenacao);
       if (meta) {
-        const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[colunaOrdenacao]);
+        const getVal = (item) => (meta.getValue ? meta.getValue(item) : item[colunaOrdenacao, columnFilters]);
         const toNum = (v, campo) => {
           if (v == null || v === '') return Number.POSITIVE_INFINITY;
           if (typeof v === 'number') return v;
@@ -467,7 +472,7 @@ export default function VisualizadorUniversalEntidade({
     }
     
     return resultado;
-  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade]);
+  }, [dados, filtroAdicional, colunaOrdenacao, direcaoOrdenacao, nomeEntidade, columnFilters]);
 
   const allSelected = dadosBuscadosEOrdenados.length > 0 && selectedIds.size === dadosBuscadosEOrdenados.length;
   
@@ -475,7 +480,7 @@ export default function VisualizadorUniversalEntidade({
     const ns = allSelected ? new Set() : new Set(dadosBuscadosEOrdenados.map(i => i.id));
     setSelectedIds(ns);
     if (typeof onSelectionChange === 'function') onSelectionChange(ns);
-  }, [allSelected, dadosBuscadosEOrdenados, onSelectionChange]);
+  }, [allSelected, dadosBuscadosEOrdenados, onSelectionChange, columnFilters]);
 
   const toggleItem = useCallback((id) => {
     setSelectedIds(prev => {
@@ -484,7 +489,7 @@ export default function VisualizadorUniversalEntidade({
       if (typeof onSelectionChange === 'function') onSelectionChange(ns);
       return ns;
     });
-  }, [onSelectionChange]);
+  }, [onSelectionChange, columnFilters]);
   
   const excluirSelecionados = async () => {
     if (selectedIds.size === 0) return;
@@ -770,8 +775,27 @@ export default function VisualizadorUniversalEntidade({
           ) : (
             <>
               {visualizacao === 'table' && (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                <ERPDataTable
+                  columns={colunasOrdenacao.map(c => ({ key: c.campo, label: c.label, isNumeric: c.isNumeric }))}
+                  data={dadosBuscadosEOrdenados.map(item => {
+                    const row = { id: item.id };
+                    colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
+                    return row;
+                  })}
+                  sortField={sortField || (getDefaultSortForEntity().field)}
+                  sortDirection={sortDirection || (getDefaultSortForEntity().direction)}
+                  onSortChange={(field, direction) => { setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); setColunaOrdenacao(null); }}
+                  onToggleSelectAll={toggleSelectAll}
+                  onToggleItem={(id) => toggleItem(id)}
+                  allSelected={allSelected}
+                  selectedIds={selectedIds}
+                  enableColumnFilters
+                  columnFilters={columnFilters}
+                  onColumnFiltersChange={(next) => { setColumnFilters(next); setCurrentPage(1); }}
+                  hiddenColumns={hiddenCols}
+                  onHiddenColumnsChange={setHiddenCols}
+                  footerTotals
+                />
                     <thead>
                       <tr className="bg-slate-50 border-b-2 border-slate-200">
                         <th className="p-3 text-left">
@@ -930,7 +954,7 @@ export default function VisualizadorUniversalEntidade({
             </>
           )}
 
-          {!isLoading && totalItemsCount > 0 && !colunaOrdenacao && (
+          {!isLoading && totalItemsCount > 0 && (
             <PaginationControls
               currentPage={currentPage}
               totalItems={totalItemsCount}
