@@ -19,13 +19,13 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-const Linha = ({ modulo, layout, ordenacao, rbac, multi, notas, links }) => (
+const Linha = ({ modulo, layout, ordenacao, rbac, multi, status, notas, links }) => (
   <Card className="border-0 shadow-sm">
     <CardHeader className="pb-2">
       <CardTitle className="text-base">{modulo}</CardTitle>
     </CardHeader>
     <CardContent className="space-y-3 text-sm">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
         <div>
           <p className="text-slate-500">Layout</p>
           <StatusBadge status={layout} />
@@ -41,6 +41,10 @@ const Linha = ({ modulo, layout, ordenacao, rbac, multi, notas, links }) => (
         <div>
           <p className="text-slate-500">Multiempresa</p>
           <StatusBadge status={multi} />
+        </div>
+        <div>
+          <p className="text-slate-500">Status Geral</p>
+          <StatusBadge status={status || 'Parcial'} />
         </div>
       </div>
       {notas && (
@@ -73,6 +77,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "Parcial",
       rbac: "Parcial",
       multi: "Parcial",
+      status: "Parcial",
       notas: [
         "Migrar 100% dos grids para functions/entityListSorted com persistência de sort e rolagem interna (ERPDataTable).",
         "Proteger ações críticas (aprovar desconto, emitir NF-e, enviar produção, cancelar) com ProtectedAction + entityGuard.",
@@ -95,6 +100,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "Parcial",
       rbac: "Parcial",
       multi: "Parcial",
+      status: "Parcial",
       notas: [
         "Padronizar Contas Pagar/Receber/Extratos para entityListSorted; sort persistido por entidade.",
         "Ações sensíveis (aprovar, liquidar, estornar, cancelar) sob ProtectedAction + validação em entityGuard.",
@@ -117,6 +123,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "Parcial",
       rbac: "Parcial",
       multi: "OK/Parcial",
+      status: "Parcial",
       notas: [
         "Migrar Movimentações/Produtos faltantes para entityListSorted; manter rolagem interna + persistência de sort.",
         "Ações (ajuste, reserva/liberação, transferência) com ProtectedAction; checagem backend."
@@ -136,6 +143,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "Parcial",
       rbac: "Parcial",
       multi: "Parcial",
+      status: "Parcial",
       notas: [
         "Fornecedores/OCs/Solicitações → entityListSorted + sort persistido; ERPDataTable uniforme.",
         "Ações (aprovar, enviar fornecedor, receber) com ProtectedAction.",
@@ -157,6 +165,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "Parcial",
       rbac: "Parcial",
       multi: "OK/Parcial",
+      status: "Parcial",
       notas: [
         "Onde não usa VisualizadorUniversal, migrar listas para entityListSorted com sort persistido.",
         "Ações de pipeline/etapas sob ProtectedAction; entityGuard no backend.",
@@ -177,6 +186,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "Parcial",
       rbac: "OK/Parcial",
       multi: "Parcial",
+      status: "Parcial",
       notas: [
         "Listagens administrativas remanescentes → entityListSorted.",
         "Ações administrativas com ProtectedAction e dupla validação.",
@@ -197,6 +207,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "OK/Parcial",
       rbac: "OK/Parcial",
       multi: "OK",
+      status: "Parcial",
       notas: [
         "Revisar cadastros fora do VisualizadorUniversal e padronizar DataTable + sort persistido.",
         "Ações Novo/Editar/Excluir sob ProtectedAction em 100%."
@@ -213,6 +224,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "N/A/Parcial",
       rbac: "OK",
       multi: "Parcial",
+      status: "Parcial",
       notas: [
         "Onde houver listagens, usar entityListSorted.",
         "Operações de escrita com sanitizeOnWrite + auditoria.",
@@ -231,6 +243,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "N/A/Parcial",
       rbac: "OK",
       multi: "N/A/Parcial",
+      status: "Parcial",
       notas: [
         "Se houver grid/lista, migrar para entityListSorted.",
         "Confirmar logs de alterações de permissões (auditEntityEvents)."
@@ -247,6 +260,7 @@ export default function MatrizAdequacaoFase3() {
       ordenacao: "Parcial",
       rbac: "OK",
       multi: "N/A",
+      status: "Parcial",
       notas: [
         "Listagens de usuários com entityListSorted quando aplicável.",
         "Convites via base44.users.inviteUser (sem insert direto)."
