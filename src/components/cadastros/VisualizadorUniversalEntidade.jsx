@@ -298,7 +298,7 @@ export default function VisualizadorUniversalEntidade({
       Cliente: { field: 'nome', direction: 'asc' },
       Fornecedor: { field: 'nome', direction: 'asc' },
       Pedido: { field: 'data_pedido', direction: 'desc' },
-      ContaPagar: { field: 'data_vencimento', direction: 'desc' },
+      ContaPagar: { field: 'data_vencimento', direction: 'asc' },
       ContaReceber: { field: 'data_vencimento', direction: 'asc' },
       User: { field: 'full_name', direction: 'asc' },
       CentroCusto: { field: 'codigo', direction: 'asc' },
