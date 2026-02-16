@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Building2, Printer, Eye, Edit, CreditCard, QrCode, FileText, MessageSquare, CheckCircle2, Wallet, Zap, DollarSign } from 'lucide-react';
 import { ProtectedAction } from '@/components/ProtectedAction';
-import ERPDataTable from '@/components/ui/erp/DataTable';
+
 import EstagiosRecebimentoWidget from '../EstagiosRecebimentoWidget';
 
 export default function TabelaReceber({
