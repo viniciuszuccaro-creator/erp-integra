@@ -353,7 +353,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
               toast({ title: "✅ Conta atualizada!" });
             }
           }
-        }, { title: editar ? `✏️ Editar: ${conta.cliente}` : `👁️ Detalhes: ${conta.cliente}`, width: 900, height: 600 })}
+        }, { title: editar ? `✏️ Editar: ${conta.cliente}` : `👁️ Detalhes: ${conta.cliente}`, width: 900, height: 600 })}}
         onGerarCobranca={(conta) => {
           setContaParaCobranca(conta);
           setGerarCobrancaDialogOpen(true);
