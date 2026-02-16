@@ -161,6 +161,26 @@ export default function Estoque() {
     produtos: produtosParaKPIs,
   });
 
+  // Exportação PDF do estoque de aço (bitolas)
+  const handleExportAco = async () => {
+    try {
+      const { data } = await base44.functions.invoke('exportEstoqueAco', {
+        filtros: { empresa_id: empresaAtual?.id || null, group_id: null }
+      });
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'estoque_aco.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (e) {
+      console.error('Falha ao exportar estoque de aço:', e);
+    }
+  };
+
   if (loadingPermissions) {
     return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>;
   }
@@ -329,6 +349,9 @@ export default function Estoque() {
                 Transferir entre Empresas
               </Button>
             )}
+          <Button onClick={handleExportAco} variant="outline" className="w-full mt-2 gap-2" size="sm">
+            <Download className="w-3 h-3" /> Exportar Estoque de Aço (PDF)
+          </Button>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
