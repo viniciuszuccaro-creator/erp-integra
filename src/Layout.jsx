@@ -521,7 +521,46 @@ function LayoutContent({ children, currentPageName }) {
     try {
       Object.keys(base44.entities).forEach((name) => wrapEntity(base44.entities[name], name));
     } catch (_) {}
-  }, [user?.id, empresaAtual?.id, grupoAtual?.id, contexto]);
+
+    // Phase 4: RBAC + Auditoria também para chamadas de funções backend
+    try {
+      if (base44?.functions && base44.functions.invoke && base44.functions.__wrappedPhase4 !== true) {
+        const origInvoke = base44.functions.invoke.bind(base44.functions);
+        base44.functions.invoke = async (functionName, params) => {
+          try {
+            const scope = getScope();
+            const guardPayload = {
+              module: currentModule || 'Sistema',
+              section: 'Funções',
+              action: 'executar',
+              function_name: functionName,
+              empresa_id: scope.empresa_id || null,
+              group_id: scope.group_id || null,
+            };
+            const res = await base44.functions.invoke('entityGuard', guardPayload);
+            if (res?.data && res.data.allowed === false) {
+              try { await base44.entities.AuditLog.create({
+                acao: 'Bloqueio', modulo: currentModule || 'Sistema', tipo_auditoria: 'seguranca',
+                entidade: 'Function', descricao: `Acesso negado à função ${functionName}`, data_hora: new Date().toISOString(),
+              }); } catch {}
+              throw new Error('RBAC backend: ação negada');
+            }
+          } catch (err) {
+            if (err?.response?.status === 403) throw err;
+            // Se o guard falhar por indisponibilidade, não bloquear a UI
+          }
+
+          const result = await origInvoke(functionName, params);
+          try { await base44.entities.AuditLog.create({
+            acao: 'Execução', modulo: currentModule || 'Sistema', tipo_auditoria: 'sistema',
+            entidade: 'Function', descricao: `Função ${functionName} chamada`, dados_novos: { params }, data_hora: new Date().toISOString(),
+          }); } catch {}
+          return result;
+        };
+        base44.functions.__wrappedPhase4 = true;
+      }
+    } catch (_) {}
+    }, [user?.id, empresaAtual?.id, grupoAtual?.id, contexto]);
 
 
   // Auditoria global de interações (cliques/seletores/tabs)
