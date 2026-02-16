@@ -17,8 +17,11 @@ import HeaderPagarCompacto from "./contas-pagar/HeaderPagarCompacto";
 import KPIsPagar from "./contas-pagar/KPIsPagar";
 import FiltrosPagar from "./contas-pagar/FiltrosPagar";
 import TabelaPagar from "./contas-pagar/TabelaPagar";
+import useEntityListSorted from "@/components/lib/useEntityListSorted";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
+  const { data: contasBackend = [] } = useEntityListSorted('ContaPagar', {}, { sortField: 'data_vencimento', sortDirection: 'asc', limit: 500 });
+  const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow } = useWindow();
@@ -121,7 +124,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   const baixarMultiplaMutation = useMutation({
     mutationFn: async (dados) => {
       await Promise.all(contasSelecionadas.map(async (contaId) => {
-        const conta = contas.find(c => c.id === contaId);
+       const conta = contasList.find(c => c.id === contaId);
         if (conta) {
           await baixarTituloMutation.mutateAsync({ id: contaId, dados });
         }
@@ -149,7 +152,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
     }
   });
 
-  const contasFiltradas = contas
+  const contasFiltradas = contasList
     .filter(c => statusFilter === "todos" || c.status === statusFilter)
     .filter(c => {
       const searchLower = searchTerm.toLowerCase();
@@ -166,7 +169,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         c.observacoes?.toLowerCase().includes(searchLower);
     });
 
-  const totalSelecionado = contas
+  const totalSelecionado = contasList
     .filter(c => contasSelecionadas.includes(c.id))
     .reduce((sum, c) => sum + (c.valor || 0), 0);
 
@@ -237,7 +240,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         totalSelecionado={totalSelecionado}
         onExportar={() => {
           const itens = contasSelecionadas.length > 0
-            ? contas.filter(c => contasSelecionadas.includes(c.id))
+            ? contasList.filter(c => contasSelecionadas.includes(c.id))
             : contasFiltradas;
           const headers = ['fornecedor','descricao','empresa_id','data_vencimento','valor','status'];
           const csv = [headers.join(','), ...itens.map(c => headers.map(h => JSON.stringify(c[h] ?? '')).join(','))].join('\n');

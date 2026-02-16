@@ -18,11 +18,14 @@ import OrdemCompraForm from "./OrdemCompraForm";
 import AvaliacaoFornecedorForm from "./AvaliacaoFornecedorForm";
 import RecebimentoOCForm from "./RecebimentoOCForm";
 import { useWindow } from "@/components/lib/useWindow";
+import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import { toast as sonnerToast } from "sonner";
 import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
+  const { data: ocBackend = [] } = useEntityListSorted('OrdemCompra', {}, { sortField: 'data_solicitacao', sortDirection: 'desc', limit: 500 });
+  const ocList = Array.isArray(ordensCompra) && ordensCompra.length ? ordensCompra : ocBackend;
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -407,7 +410,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
     });
   };
 
-  const filteredOCs = ordensCompra.filter(oc => {
+  const filteredOCs = ocList.filter(oc => {
     const searchLower = searchTerm.toLowerCase();
     return oc.numero_oc?.toLowerCase().includes(searchLower) ||
       oc.fornecedor_nome?.toLowerCase().includes(searchLower) ||

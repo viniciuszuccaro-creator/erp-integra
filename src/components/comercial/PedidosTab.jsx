@@ -93,9 +93,9 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   });
 
   // ETAPA 4: Estatísticas de aprovação
-  const pedidosPendentesAprovacao = pedidos.filter(p => p.status_aprovacao === "pendente");
-  const pedidosAprovados = pedidos.filter(p => p.status_aprovacao === "aprovado");
-  const pedidosNegados = pedidos.filter(p => p.status_aprovacao === "negado");
+  const pedidosPendentesAprovacao = pedidosList.filter(p => p.status_aprovacao === "pendente");
+  const pedidosAprovados = pedidosList.filter(p => p.status_aprovacao === "aprovado");
+  const pedidosNegados = pedidosList.filter(p => p.status_aprovacao === "negado");
 
   return (
     <div className="space-y-6">
