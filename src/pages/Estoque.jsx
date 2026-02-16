@@ -357,7 +357,7 @@ export default function Estoque() {
         </ModuleDashboard>
         <ModuleTabs
           listagem={<ModulosGridEstoque modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />>
+        />
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>

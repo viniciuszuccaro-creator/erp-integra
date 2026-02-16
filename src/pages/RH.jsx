@@ -265,7 +265,7 @@ export default function RH() {
         </ModuleDashboard>
         <ModuleTabs
           listagem={<ModulosGridRH modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />>
+        />
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>

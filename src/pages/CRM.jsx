@@ -272,7 +272,7 @@ export default function CRMPage() {
         </ModuleDashboard>
         <ModuleTabs
           listagem={<ModulosGridCRM modules={modules} onModuleClick={handleModuleClick} />}
-        />>
+        />
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>

@@ -414,7 +414,7 @@ export default function Financeiro() {
         </ModuleDashboard>
         <ModuleTabs
           listagem={<ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />}
-        />>
+        />
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>

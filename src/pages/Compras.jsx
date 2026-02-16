@@ -227,7 +227,7 @@ export default function Compras() {
         </ModuleDashboard>
         <ModuleTabs
           listagem={<ModulosGridCompras modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />>
+        />
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>

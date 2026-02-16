@@ -316,7 +316,7 @@ export default function Expedicao() {
         </ModuleDashboard>
         <ModuleTabs
           listagem={<ModulosGridExpedicao modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />>
+        />
       </ModuleContainer>
 
       <Dialog open={notificadorOpen} onOpenChange={setNotificadorOpen}>

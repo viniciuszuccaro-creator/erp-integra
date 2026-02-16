@@ -189,7 +189,7 @@ export default function FiscalPage() {
         </ModuleDashboard>
         <ModuleTabs
           listagem={<ModulosGridFiscal modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />>
+        />
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
