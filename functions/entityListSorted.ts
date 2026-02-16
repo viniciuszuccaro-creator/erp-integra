@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
       });
     } catch {}
 
-    return Response.json(sorted.slice(0, limit));
+    return Response.json(sorted.slice(skip, skip + limit));
   } catch (err) {
     return Response.json({ error: String(err?.message || err) }, { status: 500 });
   }
