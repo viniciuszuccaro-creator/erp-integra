@@ -21,6 +21,9 @@ export default function ERPDataTable({
   hiddenColumns = new Set(),
   onHiddenColumnsChange,
   footerTotals = true,
+  enableGlobalSearch = false,
+  globalSearchValue = "",
+  onGlobalSearchChange,
 }) {
   const [colWidths, setColWidths] = useState({});
   const headerRefs = useRef({});
@@ -92,6 +95,14 @@ export default function ERPDataTable({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+        {enableGlobalSearch && (
+          <input
+            value={globalSearchValue}
+            onChange={(e) => onGlobalSearchChange && onGlobalSearchChange(e.target.value)}
+            className="h-8 w-full sm:w-64 border rounded px-2 text-sm"
+            placeholder="Busca global..."
+          />
+        )}
       </div>
 
       <div className="flex-1 overflow-auto border rounded-lg">
