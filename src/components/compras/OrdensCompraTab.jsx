@@ -612,19 +612,11 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       </div>
 
       <Card className="border-0 shadow-sm">
-        {selectedOCs.length > 0 && (
-          <Alert className="m-2 border-blue-300 bg-blue-50 py-2 px-3">
-            <AlertDescription className="flex items-center justify-between text-xs">
-              <div className="text-blue-900 font-semibold">{selectedOCs.length} OC selecionada(s)</div>
-              <div className="flex gap-1">
-                <Button variant="outline" size="sm" onClick={() => exportarOCsCSV(filteredOCs.filter(o => selectedOCs.includes(o.id)))}>
-                  <Download className="w-3 h-3 mr-1" /> CSV
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setSelectedOCs([])}>Limpar</Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
+        <OCSelecionadasBar
+          selectedCount={selectedOCs.length}
+          onExportCSV={() => exportarOCsCSV(filteredOCs.filter(o => selectedOCs.includes(o.id)))}
+          onClear={() => setSelectedOCs([])}
+        />
         <CardContent className="p-0">
           <Table>
             <TableHeader>
