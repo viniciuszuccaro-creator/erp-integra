@@ -461,39 +461,25 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
 
   const content = (
     <div className="space-y-1.5">
-      <div className="flex justify-between items-center gap-2">
-        <h2 className="text-lg font-bold">Ordens de Compra</h2>
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
-          <Input
-            placeholder="Buscar por OC, fornecedor, status, solicitante, centro custo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-7 h-8 text-sm"
-          />
-        </div>
-
-        <Button
-          onClick={() => openWindow(OrdemCompraForm, {
-            windowMode: true,
-            onSubmit: async (data) => {
-              try {
-                await createMutation.mutateAsync(data);
-                sonnerToast.success("✅ Ordem de Compra criada!");
-              } catch (error) {
-                sonnerToast.error("Erro ao criar OC");
-              }
+      <OrdensCompraHeader
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onNovaOC={() => openWindow(OrdemCompraForm, {
+          windowMode: true,
+          onSubmit: async (data) => {
+            try {
+              await createMutation.mutateAsync(data);
+              sonnerToast.success("✅ Ordem de Compra criada!");
+            } catch (error) {
+              sonnerToast.error("Erro ao criar OC");
             }
-          }, {
-            title: '🛒 Nova Ordem de Compra',
-            width: 1100,
-            height: 700
-          })}
-          size="sm"
-        >
-          <Plus className="w-3 h-3 mr-1" />
-          Nova OC
-        </Button>
+          }
+        }, {
+          title: '🛒 Nova Ordem de Compra',
+          width: 1100,
+          height: 700
+        })}
+      />
 
         {/* BACKUP: Dialog removido */}
         <Dialog open={false}>
