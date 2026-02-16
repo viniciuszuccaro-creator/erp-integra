@@ -33,6 +33,7 @@ import FormWrapper from "@/components/common/FormWrapper";
 
 const AgendamentoRelatorios = React.lazy(() => import("../components/relatorios/AgendamentoRelatorios"));
 const GeradorRelatorios = React.lazy(() => import('../components/sistema/GeradorRelatorios')); // Added import
+const MatrizAdequacaoFase3 = React.lazy(() => import("@/components/relatorios/MatrizAdequacaoFase3"));
 
 export default function Relatorios() {
   const [activeTab, setActiveTab] = useState("vendas");
@@ -354,7 +355,11 @@ export default function Relatorios() {
             <Download className="w-4 h-4 mr-2" />
             Exportações
           </TabsTrigger>
-        </TabsList>
+          <TabsTrigger value="matriz">
+            <FileText className="w-4 h-4 mr-2" />
+            Matriz Fase 3
+          </TabsTrigger>
+          </TabsList>
 
         <TabsContent value="estrategicos">
           <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
@@ -600,6 +605,10 @@ export default function Relatorios() {
             <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
             <p>Conteúdo DRE em desenvolvimento.</p>
           </div>
+        </TabsContent>
+
+        <TabsContent value="matriz">
+          <Suspense fallback={<div>Carregando...</div>}><MatrizAdequacaoFase3 /></Suspense>
         </TabsContent>
 
         {/* NEW: Tab Exportação */}
