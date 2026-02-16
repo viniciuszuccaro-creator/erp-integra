@@ -650,10 +650,10 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             </div>
           )}
           </CardContent>
-          </Card>
+        </Card>
 
-      {/* DIALOGS REMOVIDOS - Agora usam Windows */}
-    </div>
+        {/* DIALOGS REMOVIDOS - Agora usam Windows */}
+      </div>
   );
 
   if (windowMode) {
