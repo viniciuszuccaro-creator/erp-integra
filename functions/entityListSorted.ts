@@ -1,5 +1,4 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
 
 const MODULE_BY_ENTITY = {
   Cliente: 'CRM',
@@ -63,11 +62,23 @@ Deno.serve(async (req) => {
     const sortField = body?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
     const sortDirection = (body?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
 
-    // RBAC
-    const ctx = await getUserAndPerfil(base44);
+    // RBAC via função entityGuard (sem imports locais)
     const mod = MODULE_BY_ENTITY[entityName] || 'Sistema';
-    const permErr = await assertPermission(base44, ctx, mod, entityName, 'visualizar');
-    if (permErr) return permErr;
+    try {
+      const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
+        module: mod,
+        section: entityName,
+        action: 'visualizar',
+        empresa_id: filtros?.empresa_id || null,
+        group_id: filtros?.group_id || null,
+      });
+      if (!guard?.data?.allowed) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch (_) {
+      // Em caso de erro no guard, nega por segurança
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Pré-ordenar via backend quando possível, ainda garantindo collation no pós-processamento
     const orderHint = `${sortDirection === 'desc' ? '-' : ''}${sortField}`;
