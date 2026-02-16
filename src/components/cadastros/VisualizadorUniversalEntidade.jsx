@@ -796,67 +796,7 @@ export default function VisualizadorUniversalEntidade({
                   onHiddenColumnsChange={setHiddenCols}
                   footerTotals
                 />
-                    <thead>
-                      <tr className="bg-slate-50 border-b-2 border-slate-200">
-                        <th className="p-3 text-left">
-                          <input type="checkbox" className="h-4 w-4" checked={allSelected} onChange={toggleSelectAll} />
-                        </th>
-                        {colunasOrdenacao.map((coluna) => (
-                          <th
-                            key={coluna.campo}
-                            className="p-3 text-left font-semibold text-slate-700 cursor-pointer hover:bg-slate-100"
-                            onClick={() => handleOrdenarPorColuna(coluna.campo)}
-                          >
-                            <div className="flex items-center gap-2">
-                              <span>{coluna.label}</span>
-                              {colunaOrdenacao === coluna.campo ? (
-                                direcaoOrdenacao === 'asc' ? <ArrowUp className="w-4 h-4 text-blue-600" /> : <ArrowDown className="w-4 h-4 text-blue-600" />
-                              ) : <ArrowUpDown className="w-4 h-4 text-slate-400" />}
-                            </div>
-                          </th>
-                        ))}
-                        <th className="p-3 text-right font-semibold text-slate-700">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dadosBuscadosEOrdenados.map((item) => (
-                        <tr key={item.id} className="border-b border-slate-100 hover:bg-blue-50">
-                          <td className="p-3">
-                            <input type="checkbox" className="h-4 w-4" checked={selectedIds.has(item.id)} onChange={() => toggleItem(item.id)} />
-                          </td>
-                          {colunasOrdenacao.map((coluna) => {
-                            const valor = coluna.getValue(item);
-                            return (
-                              <td key={coluna.campo} className="p-3 text-sm">
-                                {coluna.isNumeric ? (
-                                  <span className="font-medium">
-                                    {typeof valor === 'number' ? valor.toLocaleString('pt-BR') : valor}
-                                  </span>
-                                ) : (
-                                  <span className="truncate max-w-xs block">{String(valor)}</span>
-                                )}
-                              </td>
-                            );
-                          })}
-                          <td className="p-3">
-                            <div className="flex items-center justify-end gap-2">
-                              {componenteVisualizacao && (
-                                <Button size="sm" variant="outline" onClick={() => abrirVisualizacao(item)}>
-                                  <Eye className="w-3 h-3" />
-                                </Button>
-                              )}
-                              {componenteEdicao && (
-                                <Button size="sm" onClick={() => abrirEdicao(item)} disabled={!hasPermission(moduloPermissao, 'editar')}>
-                                  <Edit2 className="w-3 h-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+
               )}
 
               {visualizacao === 'grid' && (

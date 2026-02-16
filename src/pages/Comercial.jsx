@@ -423,7 +423,7 @@ export default function Comercial() {
         <ModuleTabs
           listagem={<ModulosGridComercial modules={allowedModules} onModuleClick={handleModuleClick} />}
         />
-      </ModuleContainer>
+        </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
   );
