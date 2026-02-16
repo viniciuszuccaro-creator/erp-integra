@@ -239,14 +239,54 @@ export function useContextoVisual() {
   const deleteInContext = (entityName, id) => {
     return base44.entities[entityName].delete(id);
   };
-  const filterInContext = (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
-    const filtro = { ...criterios, ...getFiltroContexto(campo, true) };
-    if (!filtro.group_id && !filtro[campo]) {
-      // Contexto ainda não pronto: evita quebrar a UI e retorna lista vazia
-      return Promise.resolve([]);
-    }
-    return base44.entities[entityName].filter(filtro, order, limit);
-  };
+  const DEFAULT_SORTS = {
+            Produto: { field: 'descricao', direction: 'asc' },
+            Cliente: { field: 'nome', direction: 'asc' },
+            Fornecedor: { field: 'nome', direction: 'asc' },
+            Pedido: { field: 'data_pedido', direction: 'desc' },
+            ContaPagar: { field: 'data_vencimento', direction: 'asc' },
+            ContaReceber: { field: 'data_vencimento', direction: 'asc' },
+            OrdemCompra: { field: 'data_solicitacao', direction: 'desc' },
+            CentroCusto: { field: 'descricao', direction: 'asc' },
+            PlanoDeContas: { field: 'descricao', direction: 'asc' },
+            PlanoContas: { field: 'descricao', direction: 'asc' },
+            User: { field: 'full_name', direction: 'asc' }
+          };
+
+          const getLastSort = (entityName) => {
+            try { return JSON.parse(localStorage.getItem(`sort_${entityName}`) || 'null'); } catch { return null; }
+          };
+          const setLastSort = (entityName, sort) => {
+            try { localStorage.setItem(`sort_${entityName}`, JSON.stringify(sort)); } catch {}
+          };
+
+          const filterInContext = async (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
+            const filtro = { ...criterios, ...getFiltroContexto(campo, true) };
+            if (!filtro.group_id && !filtro[campo]) {
+              return [];
+            }
+
+            // Derivar sort
+            let sortField, sortDirection;
+            if (typeof order === 'string' && order.length) {
+              sortDirection = order.startsWith('-') ? 'desc' : 'asc';
+              sortField = order.replace(/^-/, '');
+              setLastSort(entityName, { sortField, sortDirection });
+            } else {
+              const last = getLastSort(entityName);
+              sortField = last?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
+              sortDirection = last?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc';
+            }
+
+            const res = await base44.functions.invoke('entityListSorted', {
+              entityName,
+              filter: filtro,
+              sortField,
+              sortDirection,
+              limit: limit || 500,
+            });
+            return Array.isArray(res?.data) ? res.data : [];
+          };
 
   return {
     contexto,

@@ -1,0 +1,118 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
+import { getUserAndPerfil, assertPermission } from './_lib/guard.js';
+
+const MODULE_BY_ENTITY = {
+  Cliente: 'CRM',
+  Oportunidade: 'CRM',
+  Interacao: 'CRM',
+  Pedido: 'Comercial',
+  NotaFiscal: 'Fiscal',
+  Entrega: 'Expedição',
+  Fornecedor: 'Compras',
+  SolicitacaoCompra: 'Compras',
+  OrdemCompra: 'Compras',
+  Produto: 'Estoque',
+  MovimentacaoEstoque: 'Estoque',
+  ContaPagar: 'Financeiro',
+  ContaReceber: 'Financeiro',
+  CentroCusto: 'Financeiro',
+  PlanoDeContas: 'Financeiro',
+  PlanoContas: 'Financeiro',
+  User: 'Sistema',
+};
+
+const DEFAULT_SORTS = {
+  Produto: { field: 'descricao', direction: 'asc' },
+  Cliente: { field: 'nome', direction: 'asc' },
+  Fornecedor: { field: 'nome', direction: 'asc' },
+  Pedido: { field: 'data_pedido', direction: 'desc' },
+  ContaPagar: { field: 'data_vencimento', direction: 'asc' },
+  ContaReceber: { field: 'data_vencimento', direction: 'asc' },
+  OrdemCompra: { field: 'data_solicitacao', direction: 'desc' },
+  CentroCusto: { field: 'descricao', direction: 'asc' },
+  PlanoDeContas: { field: 'descricao', direction: 'asc' },
+  PlanoContas: { field: 'descricao', direction: 'asc' },
+  User: { field: 'full_name', direction: 'asc' },
+};
+
+function getValue(obj, path) {
+  if (!obj || !path) return undefined;
+  return path.split('.').reduce((acc, k) => (acc == null ? acc : acc[k]), obj);
+}
+
+function toNumOrDate(v) {
+  if (v == null) return null;
+  const n = Number(v);
+  if (!Number.isNaN(n) && isFinite(n)) return n;
+  const d = new Date(v);
+  return isNaN(d.getTime()) ? null : d.getTime();
+}
+
+Deno.serve(async (req) => {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    let body = {}; try { body = await req.json(); } catch {}
+    const entityName = body?.entityName;
+    if (!entityName) return Response.json({ error: 'entityName is required' }, { status: 400 });
+
+    const filtros = body?.filter || {};
+    const limit = body?.limit || 500;
+    const sortField = body?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
+    const sortDirection = (body?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
+
+    // RBAC
+    const ctx = await getUserAndPerfil(base44);
+    const mod = MODULE_BY_ENTITY[entityName] || 'Sistema';
+    const permErr = await assertPermission(base44, ctx, mod, entityName, 'visualizar');
+    if (permErr) return permErr;
+
+    // Pré-ordenar via backend quando possível, ainda garantindo collation no pós-processamento
+    const orderHint = `${sortDirection === 'desc' ? '-' : ''}${sortField}`;
+    const raw = await base44.asServiceRole.entities[entityName].filter(filtros, orderHint, limit);
+    const rows = Array.isArray(raw) ? raw : [];
+
+    // Case/acentos-insensível
+    const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', ignorePunctuation: true, numeric: true });
+
+    const sorted = rows.slice().sort((a, b) => {
+      const va = getValue(a, sortField);
+      const vb = getValue(b, sortField);
+
+      // Numérico/data prioritário quando aplicável
+      const na = toNumOrDate(va);
+      const nb = toNumOrDate(vb);
+      let cmp = 0;
+      if (na !== null && nb !== null) {
+        cmp = na === nb ? 0 : (na < nb ? -1 : 1);
+      } else {
+        const sa = (va ?? '').toString().trim();
+        const sb = (vb ?? '').toString().trim();
+        cmp = collator.compare(sa, sb);
+      }
+      return sortDirection === 'asc' ? cmp : -cmp;
+    });
+
+    // Auditoria leve
+    try {
+      await base44.entities.AuditLog.create({
+        usuario: user.full_name || user.email || 'Usuário',
+        usuario_id: user.id,
+        acao: 'Visualização',
+        modulo: mod,
+        tipo_auditoria: 'entidade',
+        entidade: entityName,
+        descricao: `Listagem ordenada por ${sortField} (${sortDirection})`,
+        dados_novos: { filtros, sortField, sortDirection, count: sorted.length },
+        empresa_id: filtros?.empresa_id || null,
+        data_hora: new Date().toISOString(),
+      });
+    } catch {}
+
+    return Response.json(sorted.slice(0, limit));
+  } catch (err) {
+    return Response.json({ error: String(err?.message || err) }, { status: 500 });
+  }
+});
