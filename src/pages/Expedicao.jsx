@@ -10,6 +10,9 @@ import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import ModuleContainer from "@/components/layout/ModuleContainer";
+import ModuleHeader from "@/components/layout/ModuleHeader";
 import HeaderExpedicaoCompacto from "@/components/expedicao/expedicao-launchpad/HeaderExpedicaoCompacto";
 import KPIsExpedicao from "@/components/expedicao/expedicao-launchpad/KPIsExpedicao";
 import ModulosGridExpedicao from "@/components/expedicao/expedicao-launchpad/ModulosGridExpedicao";
@@ -298,10 +301,11 @@ export default function Expedicao() {
   return (
     <ProtectedSection module="Expedição" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
-        <HeaderExpedicaoCompacto />
+      <ModuleContainer header={<ModuleHeader><HeaderExpedicaoCompacto /></ModuleHeader>}>
         
-        <KPIsExpedicao statusCounts={statusCounts} />
+        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
+          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
+            <KPIsExpedicao statusCounts={statusCounts} />
 
         {estaNoGrupo && (
           <Badge className="bg-blue-100 text-blue-700 px-3 py-1.5 w-full justify-center">
@@ -309,12 +313,16 @@ export default function Expedicao() {
             Visão Consolidada do Grupo
           </Badge>
         )}
-
-        <ModulosGridExpedicao 
-          modules={allowedModules}
-          onModuleClick={handleModuleClick}
-        />
-      </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
+            <ModulosGridExpedicao 
+              modules={allowedModules}
+              onModuleClick={handleModuleClick}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </ModuleContainer>
 
       <Dialog open={notificadorOpen} onOpenChange={setNotificadorOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">

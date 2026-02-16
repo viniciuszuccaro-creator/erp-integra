@@ -12,6 +12,8 @@ import HeaderComprasCompacto from "@/components/compras/compras-launchpad/Header
 import KPIsCompras from "@/components/compras/compras-launchpad/KPIsCompras";
 import ModulosGridCompras from "@/components/compras/compras-launchpad/ModulosGridCompras";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import ModuleContainer from "@/components/layout/ModuleContainer";
+import ModuleHeader from "@/components/layout/ModuleHeader";
 
 const FornecedoresTab = React.lazy(() => import("../components/compras/FornecedoresTab"));
 const OrdensCompraTab = React.lazy(() => import("../components/compras/OrdensCompraTab"));
@@ -211,8 +213,7 @@ export default function Compras() {
   return (
     <ProtectedSection module="Compras" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-cyan-50">
-        <HeaderComprasCompacto />
+      <ModuleContainer header={<ModuleHeader><HeaderComprasCompacto /></ModuleHeader>}>
         
         <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
@@ -231,7 +232,7 @@ export default function Compras() {
             />
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
+      </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
   );

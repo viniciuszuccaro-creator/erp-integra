@@ -14,6 +14,8 @@ import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUn
 import ColaboradorForm from "@/components/rh/ColaboradorForm";
 import ModulosGridRH from "@/components/rh/rh-launchpad/ModulosGridRH";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import ModuleContainer from "@/components/layout/ModuleContainer";
+import ModuleHeader from "@/components/layout/ModuleHeader";
 
 const PontoTab = React.lazy(() => import("../components/rh/PontoTab"));
 const GameficacaoProducao = React.lazy(() => import("@/components/rh/GameficacaoProducao"));
@@ -248,8 +250,7 @@ export default function RH() {
   return (
     <ProtectedSection module="RH" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-purple-50">
-        <HeaderRHCompacto />
+      <ModuleContainer header={<ModuleHeader><HeaderRHCompacto /></ModuleHeader>}>
         
         <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
@@ -269,7 +270,7 @@ export default function RH() {
             />
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
+      </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
   );

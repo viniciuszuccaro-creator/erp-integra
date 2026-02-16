@@ -11,6 +11,8 @@ import HeaderCRMCompacto from "@/components/crm/crm-launchpad/HeaderCRMCompacto"
 import KPIsCRM from "@/components/crm/crm-launchpad/KPIsCRM";
 import ModulosGridCRM from "@/components/crm/crm-launchpad/ModulosGridCRM";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import ModuleContainer from "@/components/layout/ModuleContainer";
+import ModuleHeader from "@/components/layout/ModuleHeader";
 import useCRMDerivedData from "@/components/crm/hooks/useCRMDerivedData";
 import { useUser } from "@/components/lib/UserContext";
 
@@ -255,8 +257,7 @@ export default function CRMPage() {
   return (
     <ProtectedSection module="CRM" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
-        <HeaderCRMCompacto />
+      <ModuleContainer header={<ModuleHeader><HeaderCRMCompacto /></ModuleHeader>}>
         
         <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
@@ -276,7 +277,7 @@ export default function CRMPage() {
             />
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
+      </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
   );

@@ -12,6 +12,8 @@ import HeaderFiscalCompacto from "@/components/fiscal/fiscal-launchpad/HeaderFis
 import KPIsFiscal from "@/components/fiscal/fiscal-launchpad/KPIsFiscal";
 import ModulosGridFiscal from "@/components/fiscal/fiscal-launchpad/ModulosGridFiscal";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
+import ModuleContainer from "@/components/layout/ModuleContainer";
+import ModuleHeader from "@/components/layout/ModuleHeader";
 
 const ConfigFiscalAutomatica = React.lazy(() => import("../components/fiscal/ConfigFiscalAutomatica"));
 const PlanoDeContasTree = React.lazy(() => import("../components/fiscal/PlanoDeContasTree"));
@@ -172,8 +174,7 @@ export default function FiscalPage() {
   return (
     <ProtectedSection module="Fiscal" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-blue-50">
-        <HeaderFiscalCompacto />
+      <ModuleContainer header={<ModuleHeader><HeaderFiscalCompacto /></ModuleHeader>}>
         
         <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
           <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
@@ -193,7 +194,7 @@ export default function FiscalPage() {
             />
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
+      </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
   );
