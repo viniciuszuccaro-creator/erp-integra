@@ -35,6 +35,8 @@ export default function ERPDataTable({
   onPageSizeChange,
   // RBAC: permissão global opcional para visualizar a tabela
   permission,
+  // Seleção granular por linha
+  isRowSelectable = () => true,
 }) {
   const [colWidths, setColWidths] = useState({});
   const headerRefs = useRef({});
@@ -204,7 +206,11 @@ export default function ERPDataTable({
             {data.map((row) => (
               <TableRow key={row.id} className="hover:bg-blue-50/40">
                 <TableCell className="px-3">
-                  <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => onToggleItem && onToggleItem(row.id)} />
+                  {isRowSelectable(row) ? (
+                    <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => onToggleItem && onToggleItem(row.id)} />
+                  ) : (
+                    <span className="inline-block w-4 h-4 opacity-40" />
+                  )}
                 </TableCell>
                 {visibleColumns.map((c) => (
                   <TableCell key={c.key} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>

@@ -319,6 +319,9 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         }}
         onBaixar={handleBaixar}
         aprovarPending={aprovarPagamentoMutation.isPending}
+        sortField={sortField}
+        sortDirection={sortDirection}
+        onSortChange={(sf, sd) => { setSortField(sf); setSortDirection(sd); }}
       />
 
       {/* Paginação backend padronizada */}
