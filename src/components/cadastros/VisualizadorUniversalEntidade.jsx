@@ -300,9 +300,11 @@ export default function VisualizadorUniversalEntidade({
       Pedido: { field: 'data_pedido', direction: 'desc' },
       ContaPagar: { field: 'data_vencimento', direction: 'asc' },
       ContaReceber: { field: 'data_vencimento', direction: 'asc' },
+      OrdemCompra: { field: 'data_solicitacao', direction: 'desc' },
       User: { field: 'full_name', direction: 'asc' },
       CentroCusto: { field: 'codigo', direction: 'asc' },
-      PlanoDeContas: { field: 'codigo', direction: 'asc' }
+      PlanoDeContas: { field: 'codigo', direction: 'asc' },
+      PlanoContas: { field: 'codigo', direction: 'asc' }
     };
 
     return entityDefaults[nomeEntidade] || { field: 'updated_date', direction: 'desc' };
