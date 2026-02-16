@@ -24,6 +24,14 @@ export default function ERPDataTable({
   enableGlobalSearch = false,
   globalSearchValue = "",
   onGlobalSearchChange,
+  // Fase 2: padronização opcional por entidade
+  entityName, // para persistência de sort por entidade
+  autoPersistSort = true,
+  page = 1,
+  pageSize = 20,
+  totalItems = 0,
+  onPageChange,
+  onPageSizeChange,
 }) {
   const [colWidths, setColWidths] = useState({});
   const headerRefs = useRef({});
