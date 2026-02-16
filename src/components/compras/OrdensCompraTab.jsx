@@ -613,7 +613,6 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             </form>
           </DialogContent>
         </Dialog>
-      </div>
 
       <Card className="border-0 shadow-sm">
         <OCSelecionadasBar
