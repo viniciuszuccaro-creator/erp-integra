@@ -104,7 +104,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
       const conta = contas.find(c => c.id === id);
       const valorTotal = (conta?.valor || 0) + (dados.juros || 0) + (dados.multa || 0) - (dados.desconto || 0);
       
-      await base44.entities.CaixaMovimento.create({
+      await createInContext('CaixaMovimento', {
         empresa_id: conta.empresa_id,
         group_id: conta.group_id,
         tipo_movimento: 'Saída',
@@ -312,7 +312,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         contasSelecionadas={contasSelecionadas}
         toggleSelecao={toggleSelecao}
         onPrint={(conta, empresa) => ImprimirBoleto({ conta, empresa, tipo: 'pagar' })}
-        onEdit={(conta) => openWindow(ContaPagarForm, {
+        onEdit={(conta) => { if (!hasPermission('Financeiro','ContaPagar','editar')) { toast({ title: '⛔ Sem permissão para editar', variant: 'destructive' }); return; } openWindow(ContaPagarForm, {
           conta,
           windowMode: true,
           onSubmit: async (data) => {

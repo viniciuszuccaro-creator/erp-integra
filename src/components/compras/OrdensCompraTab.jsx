@@ -234,7 +234,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       // Criar movimentação de estoque (entrada) para cada item
       if (oc.itens && oc.itens.length > 0) {
         for (const item of oc.itens) {
-          await base44.entities.MovimentacaoEstoque.create({
+          await createInContext('MovimentacaoEstoque', {
             produto_id: item.produto_id,
             produto_descricao: item.descricao,
             tipo_movimentacao: 'Entrada',

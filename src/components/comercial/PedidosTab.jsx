@@ -38,7 +38,7 @@ import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
-  const { canEdit, canCreate, canApprove } = usePermissions();
+  const { canEdit, canCreate, canApprove, canDelete } = usePermissions();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sortField, setSortField] = useState(undefined);
@@ -89,9 +89,10 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Pedido.delete(id),
-    onSuccess: () => {
+    onSuccess: async (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
       toast({ title: "✅ Pedido excluído!" });
+      try { await base44.entities.AuditLog.create({ acao: 'Exclusão', modulo: 'Comercial', entidade: 'Pedido', registro_id: id, descricao: 'Pedido excluído', data_hora: new Date().toISOString() }); } catch(_) {}
     },
   });
 
@@ -526,13 +527,14 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           variant="ghost" 
                           size="sm" 
                           onClick={() => {
-                            if (confirm("Excluir pedido?")) {
-                              deleteMutation.mutate(pedido.id);
-                            }
-                          }}
-                          title="Excluir"
-                          className="h-8 px-2 text-red-600"
-                          disabled={!canEdit('Comercial','Pedido')}
+                                                        if (!canDelete('Comercial','Pedido')) { toast({ title: '⛔ Sem permissão para excluir', variant: 'destructive' }); return; }
+                                                        if (confirm("Excluir pedido?")) {
+                                                          deleteMutation.mutate(pedido.id);
+                                                        }
+                                                      }}
+                                                    title="Excluir"
+                                                    className="h-8 px-2 text-red-600"
+                                                    disabled={!canDelete('Comercial','Pedido')}
                         >
                           <Trash2 className="w-3 h-3 mr-1" />
                           <span className="text-xs">Excluir</span>

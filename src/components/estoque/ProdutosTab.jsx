@@ -10,6 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 
 import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import { base44 } from "@/api/base44Client";
 import ProdutoFormV22_Completo from "@/components/cadastros/ProdutoFormV22_Completo";
 import { useWindow } from "@/components/lib/useWindow";
 import ConversaoProducaoMassa from "@/components/cadastros/ConversaoProducaoMassa";
@@ -233,8 +234,9 @@ export default function ProdutosTab(props) {
               windowMode: true,
               onSubmit: async (data) => {
                 try {
-                  await base44.entities.Produto.create(data);
+                  await createInContext('Produto', data);
                   queryClient.invalidateQueries({ queryKey: ['produtos'] });
+                  try { await base44.entities.AuditLog.create({ acao: 'Criação', modulo: 'Estoque', entidade: 'Produto', descricao: 'Produto criado', data_hora: new Date().toISOString() }); } catch(_) {}
                   toast({ title: "✅ Produto criado!" });
                 } catch (error) {
                   toast({ title: "❌ Erro", description: error.message, variant: "destructive" });

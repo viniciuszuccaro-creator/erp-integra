@@ -134,7 +134,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
         const conta = contasList.find(c => c.id === id);
         if (conta?.cliente_id) {
-          await base44.entities.HistoricoCliente.create({
+          await createInContext('HistoricoCliente', {
             group_id: conta.group_id,
             empresa_id: conta.empresa_id,
             cliente_id: conta.cliente_id,
@@ -342,7 +342,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         contasSelecionadas={contasSelecionadas}
         toggleSelecao={toggleSelecao}
         onPrint={(conta, empresa) => ImprimirBoleto({ conta, empresa, tipo: 'receber' })}
-        onEdit={(conta, editar = false) => openWindow(ContaReceberForm, {
+        onEdit={(conta, editar = false) => { if (editar && !hasPermission('Financeiro','ContaReceber','editar')) { toast({ title: '⛔ Sem permissão para editar', variant: 'destructive' }); return; } openWindow(ContaReceberForm, {
           conta: editar ? conta : null,
           windowMode: true,
           readonly: !editar,
