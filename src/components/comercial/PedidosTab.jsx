@@ -40,8 +40,7 @@ import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
   const { canEdit, canCreate, canApprove, canDelete } = usePermissions();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const { page, setPage, pageSize, setPageSize } = useBackendPagination('Pedido', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('Pedido', 'data_pedido', 'desc');
 
   // persistência de sort movida para usePersistedSort

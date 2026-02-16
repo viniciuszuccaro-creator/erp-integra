@@ -23,12 +23,12 @@ import KPIsReceber from "./contas-receber/KPIsReceber";
 import FiltrosReceber from "./contas-receber/FiltrosReceber";
 import TabelaReceber from "./contas-receber/TabelaReceber";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
+import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
   const { createInContext, updateInContext } = useContextoVisual();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaReceber', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaReceber', 'data_vencimento', 'asc');
 
   // persistência de sort movida para usePersistedSort

@@ -23,6 +23,7 @@ import AvaliacaoFornecedorForm from "./AvaliacaoFornecedorForm";
 import RecebimentoOCForm from "./RecebimentoOCForm";
 import { useWindow } from "@/components/lib/useWindow";
 import usePersistedSort from "@/components/lib/usePersistedSort";
+import useBackendPagination from "@/components/lib/useBackendPagination";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import { toast as sonnerToast } from "sonner";
@@ -31,8 +32,7 @@ import { useUser } from "@/components/lib/UserContext";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
   const { createInContext, updateInContext } = useContextoVisual();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const { page, setPage, pageSize, setPageSize } = useBackendPagination('OrdemCompra', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('OrdemCompra', 'data_solicitacao', 'desc');
 
   // persistência de sort movida para usePersistedSort

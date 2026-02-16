@@ -20,12 +20,12 @@ import KPIsPagar from "./contas-pagar/KPIsPagar";
 import FiltrosPagar from "./contas-pagar/FiltrosPagar";
 import TabelaPagar from "./contas-pagar/TabelaPagar";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
+import useBackendPagination from "@/components/lib/useBackendPagination";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
   const { createInContext, updateInContext } = useContextoVisual();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const { page, setPage, pageSize, setPageSize } = useBackendPagination('ContaPagar', 20);
   const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaPagar', 'data_vencimento', 'asc');
 
   // persistência de sort movida para usePersistedSort
