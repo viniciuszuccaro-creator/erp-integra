@@ -428,7 +428,7 @@ export default function Financeiro() {
 
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
+      </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
   );

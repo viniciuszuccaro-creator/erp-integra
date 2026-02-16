@@ -428,7 +428,7 @@ export default function Comercial() {
             />
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
+      </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
   );

@@ -363,7 +363,7 @@ export default function Estoque() {
             />
           </ResizablePanel>
         </ResizablePanelGroup>
-      </div>
+      </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
   );
