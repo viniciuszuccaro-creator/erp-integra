@@ -32,6 +32,8 @@ export default function ERPDataTable({
   totalItems = 0,
   onPageChange,
   onPageSizeChange,
+  // RBAC: permissão global opcional para visualizar a tabela
+  permission,
 }) {
   const [colWidths, setColWidths] = useState({});
   const headerRefs = useRef({});
