@@ -1,8 +1,11 @@
 import React from "react";
 
-export default function ModuleKPIs({ children, className = "" }) {
+export default function ModuleKPIs({ children, className = "", minItemWidth = "16rem" }) {
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6 gap-4 mb-4 ${className}`}>
+    <div
+      className={`w-full grid gap-4 md:gap-5 mb-4 ${className}`}
+      style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${minItemWidth}, 1fr))` }}
+    >
       {children}
     </div>
   );
