@@ -66,6 +66,7 @@ Deno.serve(async (req) => {
     }
     const limit = body?.limit || 500;
     const skip = body?.skip || 0;
+    const fetchLimit = Math.min(limit + skip, 1000);
     const sortField = body?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
     const sortDirection = (body?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
 
@@ -89,7 +90,7 @@ Deno.serve(async (req) => {
 
     // Pré-ordenar via backend quando possível, ainda garantindo collation no pós-processamento
     const orderHint = `${sortDirection === 'desc' ? '-' : ''}${sortField}`;
-    const raw = await base44.asServiceRole.entities[entityName].filter(filtros, orderHint, limit);
+    const raw = await base44.asServiceRole.entities[entityName].filter(filtros, orderHint, fetchLimit);
     const rows = Array.isArray(raw) ? raw : [];
 
     // Case/acentos-insensível

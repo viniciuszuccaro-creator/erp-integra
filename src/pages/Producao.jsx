@@ -223,21 +223,25 @@ export default function Producao() {
   return (
     <ProtectedSection module="Produção" action="visualizar">
     <ErrorBoundary>
-      <div className="w-full h-full flex flex-col p-1.5 space-y-1.5 overflow-auto bg-gradient-to-br from-slate-50 to-orange-50">
-        <HeaderProducaoCompacto />
-        
-        <KPIsProducao
-          totalOPs={totalOPs}
-          opsLiberadas={opsLiberadas}
-          opsEmProducao={opsEmProducao}
-          opsFinalizadas={opsFinalizadas}
-        />
-
-        <ModulosGridProducao 
-          modules={modules}
-          onModuleClick={handleModuleClick}
-        />
-      </div>
+      <ModuleLayout
+        title="Produção"
+        subtitle="Chão de fábrica, OPs e desempenho"
+        actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'producao_primary_action' })}>Nova OP</Button></div>}
+      >
+        <ModuleKPIs>
+          <KPIsProducao
+            totalOPs={totalOPs}
+            opsLiberadas={opsLiberadas}
+            opsEmProducao={opsEmProducao}
+            opsFinalizadas={opsFinalizadas}
+          />
+        </ModuleKPIs>
+        <ModuleContent>
+          <ModuleTabs
+            listagem={<ModulosGridProducao modules={modules} onModuleClick={handleModuleClick} />}
+          />
+        </ModuleContent>
+      </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>
   );
