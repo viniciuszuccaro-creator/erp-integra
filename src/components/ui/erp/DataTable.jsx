@@ -113,6 +113,17 @@ export default function ERPDataTable({
 
   const totalPages = Math.max(1, Math.ceil((totalItems || 0) / (pageSize || 20)));
 
+  // RBAC Visual Automático por data-permission/prop permission
+  try {
+    if (permission) {
+      const { default: usePermissions } = require('@/components/lib/usePermissions');
+      const { hasPermission } = usePermissions();
+      const [m,s,a] = String(permission).split('.');
+      const allowed = hasPermission(m, s || null, a || null);
+      if (!allowed) return null;
+    }
+  } catch (_) {}
+
   return (
     <div className="w-full h-full flex flex-col overflow-hidden">
       <div className="flex items-center justify-between pb-2 gap-2">
