@@ -2,7 +2,7 @@ import React from "react";
 
 export default function ModuleHeader({ title, subtitle, actions, children, className = "" }) {
   return (
-    <div className={`flex items-center justify-between gap-2 py-2 ${className}`}>
+    <div className={`flex items-center justify-between gap-2 py-2 px-1.5 ${className}`}>
       <div className="min-w-0">
         {title && (
           <h1 className="text-lg sm:text-xl font-semibold text-slate-900 leading-tight truncate">{title}</h1>

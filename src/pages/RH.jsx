@@ -8,6 +8,7 @@ import ProtectedSection from "@/components/security/ProtectedSection";
 import { useWindow } from "@/components/lib/useWindow";
 import { useUser } from "@/components/lib/UserContext";
 import usePermissions from "@/components/lib/usePermissions";
+import { Button } from "@/components/ui/button";
 import HeaderRHCompacto from "@/components/rh/rh-launchpad/HeaderRHCompacto";
 import KPIsRH from "@/components/rh/rh-launchpad/KPIsRH";
 import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUniversalEntidade";
@@ -252,7 +253,7 @@ export default function RH() {
   return (
     <ProtectedSection module="RH" action="visualizar">
     <ErrorBoundary>
-      <ModuleLayout title="Recursos Humanos">
+      <ModuleLayout title="Recursos Humanos" subtitle="Colaboradores, ponto e indicadores" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'rh_primary_action' })}>Novo Colaborador</Button></div>}>
         <ModuleKPIs>
           <KPIsRH
             colaboradoresAtivos={colaboradoresAtivos}
