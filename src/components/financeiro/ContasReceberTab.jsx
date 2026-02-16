@@ -14,6 +14,7 @@ import SimularPagamentoModal from "./SimularPagamentoModal";
 import GerarLinkPagamentoModal from "./GerarLinkPagamentoModal";
 import ContaReceberForm from "./ContaReceberForm";
 import { useWindow } from "@/components/lib/useWindow";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
 import HeaderReceberCompacto from "./contas-receber/HeaderReceberCompacto";
@@ -23,6 +24,7 @@ import TabelaReceber from "./contas-receber/TabelaReceber";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
+  const { createInContext } = useContextoVisual();
   const { data: contasBackend = [] } = useEntityListSorted('ContaReceber', {}, { sortField: 'data_vencimento', sortDirection: 'asc', limit: 500 });
   const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
   const queryClient = useQueryClient();
@@ -250,7 +252,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         onNovaConta={() => openWindow(ContaReceberForm, {
           windowMode: true,
           onSubmit: async (data) => {
-            const created = await base44.entities.ContaReceber.create({
+            await createInContext('ContaReceber', {
               ...data,
               criado_por: authUser?.full_name || authUser?.email,
               criado_por_id: authUser?.id

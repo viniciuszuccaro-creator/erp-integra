@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ImprimirBoleto } from "@/components/lib/ImprimirBoleto";
 import ContaPagarForm from "./ContaPagarForm";
 import { useWindow } from "@/components/lib/useWindow";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
 import HeaderPagarCompacto from "./contas-pagar/HeaderPagarCompacto";
@@ -20,6 +21,7 @@ import TabelaPagar from "./contas-pagar/TabelaPagar";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
+  const { createInContext } = useContextoVisual();
   const { data: contasBackend = [] } = useEntityListSorted('ContaPagar', {}, { sortField: 'data_vencimento', sortDirection: 'asc', limit: 500 });
   const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
   const { toast } = useToast();
@@ -70,9 +72,10 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
       }));
       return ordens;
     },
-    onSuccess: (ordens) => {
+    onSuccess: async (ordens) => {
       queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
       toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
+      try { await base44.entities.AuditLog.create({ acao: 'Criação', modulo: 'Financeiro', entidade: 'CaixaOrdemLiquidacao', descricao: `${ordens.length} título(s) do Pagar enviados para o Caixa`, data_hora: new Date().toISOString() }); } catch(_) {}
       setContasSelecionadas([]);
     }
   });
@@ -256,7 +259,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         onNovaConta={() => openWindow(ContaPagarForm, {
           windowMode: true,
           onSubmit: async (data) => {
-            const created = await base44.entities.ContaPagar.create({
+            await createInContext('ContaPagar', {
               ...data,
               criado_por: authUser?.full_name || authUser?.email,
               criado_por_id: authUser?.id
@@ -266,7 +269,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
           }
         }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600 })}
         onEnviarCaixa={() => {
-          const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
+          const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
           enviarParaCaixaMutation.mutate(titulos);
         }}
         empresaId={empresas[0]?.id}

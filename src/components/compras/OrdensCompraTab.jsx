@@ -18,12 +18,14 @@ import OrdemCompraForm from "./OrdemCompraForm";
 import AvaliacaoFornecedorForm from "./AvaliacaoFornecedorForm";
 import RecebimentoOCForm from "./RecebimentoOCForm";
 import { useWindow } from "@/components/lib/useWindow";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import { toast as sonnerToast } from "sonner";
 import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
+  const { createInContext } = useContextoVisual();
   const { data: ocBackend = [] } = useEntityListSorted('OrdemCompra', {}, { sortField: 'data_solicitacao', sortDirection: 'desc', limit: 500 });
   const ocList = Array.isArray(ordensCompra) && ordensCompra.length ? ordensCompra : ocBackend;
   const { user: authUser } = useUser();
@@ -86,7 +88,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const { toast } = useToast();
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.OrdemCompra.create(data),
+    mutationFn: (data) => createInContext('OrdemCompra', data),
     onSuccess: () => {
       queryClient.invalidateQueries(['ordensCompra']);
       setIsDialogOpen(false);
@@ -124,7 +126,11 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         ]
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Compras', entidade: 'OrdemCompra', descricao: 'OC aprovada', data_hora: new Date().toISOString() }); } catch(_) {}
+      queryClient.invalidateQueries(['ordensCompra']);
+      toast({ title: "✅ Ordem de Compra aprovada!" });
+    }
       queryClient.invalidateQueries(['ordensCompra']);
       toast({ title: "✅ Ordem de Compra aprovada!" });
     },
@@ -149,7 +155,14 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         ]
       });
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Compras', entidade: 'OrdemCompra', descricao: 'OC enviada ao fornecedor', data_hora: new Date().toISOString() }); } catch(_) {}
+      queryClient.invalidateQueries(['ordensCompra']);
+      toast({ 
+        title: "✅ OC Enviada ao Fornecedor!",
+        description: "E-mail enviado (se configurado)"
+      });
+    }
       queryClient.invalidateQueries(['ordensCompra']);
       toast({ 
         title: "✅ OC Enviada ao Fornecedor!",
@@ -240,7 +253,9 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
 
       return { leadTimeReal, fornecedorNome: oc.fornecedor_nome };
     },
-    onSuccess: ({ leadTimeReal, fornecedorNome }) => {
+    onSuccess: async ({ leadTimeReal, fornecedorNome }) => {
+      try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Compras', entidade: 'OrdemCompra', descricao: 'Recebimento registrado', data_hora: new Date().toISOString() }); } catch(_) {}
+
       queryClient.invalidateQueries(['ordensCompra']);
       queryClient.invalidateQueries(['fornecedores']);
       queryClient.invalidateQueries(['movimentacoes']);
