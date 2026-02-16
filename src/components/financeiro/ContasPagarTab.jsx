@@ -21,7 +21,7 @@ import TabelaPagar from "./contas-pagar/TabelaPagar";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
-  const { createInContext } = useContextoVisual();
+  const { createInContext, updateInContext } = useContextoVisual();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sortField, setSortField] = useState('data_vencimento');
@@ -121,7 +121,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         usuario_responsavel_id: authUser?.id
       });
 
-      return await base44.entities.ContaPagar.update(id, {
+      return await updateInContext('ContaPagar', id, {
         status: "Pago",
         data_pagamento: dados.data_pagamento,
         valor_pago: valorTotal,
@@ -159,7 +159,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
 
   const aprovarPagamentoMutation = useMutation({
     mutationFn: async (contaId) => {
-      return await base44.entities.ContaPagar.update(contaId, {
+      return await updateInContext('ContaPagar', contaId, {
         status_pagamento: "Aprovado",
         aprovado_por: authUser?.full_name || authUser?.email,
         aprovado_por_id: authUser?.id,
@@ -304,7 +304,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
           conta,
           windowMode: true,
           onSubmit: async (data) => {
-            await base44.entities.ContaPagar.update(conta.id, data);
+            await updateInContext('ContaPagar', conta.id, data);
             queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
             toast({ title: "✅ Conta atualizada!" });
           }

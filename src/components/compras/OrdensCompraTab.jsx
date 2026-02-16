@@ -25,7 +25,7 @@ import { ImprimirOrdemCompra } from "@/components/lib/ImprimirOrdemCompra";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
-  const { createInContext } = useContextoVisual();
+  const { createInContext, updateInContext } = useContextoVisual();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sortField, setSortField] = useState('data_solicitacao');
@@ -117,7 +117,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.OrdemCompra.update(id, data),
+    mutationFn: ({ id, data }) => updateInContext('OrdemCompra', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['ordensCompra']);
       setIsDialogOpen(false);
@@ -130,7 +130,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
     mutationFn: async ({ id, oc }) => {
       const hoje = new Date().toISOString().split('T')[0];
       
-      await base44.entities.OrdemCompra.update(id, {
+      await updateInContext('OrdemCompra', id, {
         status: 'Aprovada',
         data_aprovacao: hoje,
         historico: [
@@ -156,7 +156,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
     mutationFn: async ({ id, oc }) => {
       const hoje = new Date().toISOString().split('T')[0];
       
-      await base44.entities.OrdemCompra.update(id, {
+      await updateInContext('OrdemCompra', id, {
         status: 'Enviada ao Fornecedor',
         data_envio_fornecedor: hoje,
         historico: [
@@ -188,7 +188,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       const leadTimeReal = Math.floor((dataRecebimento - dataEnvio) / (1000 * 60 * 60 * 24));
 
       // Atualizar OC
-      await base44.entities.OrdemCompra.update(id, {
+      await updateInContext('OrdemCompra', id, {
         status: 'Recebida',
         data_entrega_real: dados.data_entrega_real,
         nota_fiscal_entrada: dados.nota_fiscal_entrada,

@@ -24,7 +24,7 @@ import TabelaReceber from "./contas-receber/TabelaReceber";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
-  const { createInContext } = useContextoVisual();
+  const { createInContext, updateInContext } = useContextoVisual();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [sortField, setSortField] = useState('data_vencimento');
@@ -119,7 +119,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
-        const titulo = await base44.entities.ContaReceber.update(id, {
+        const titulo = await updateInContext('ContaReceber', id, {
           status: "Recebido",
           data_recebimento: dados.data_recebimento,
           valor_recebido: dados.valor_recebido,
@@ -338,7 +338,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           readonly: !editar,
           onSubmit: async (data) => {
             if (editar) {
-              await base44.entities.ContaReceber.update(conta.id, data);
+              await updateInContext('ContaReceber', conta.id, data);
               queryClient.invalidateQueries({ queryKey: ['contasReceber'] });
               toast({ title: "✅ Conta atualizada!" });
             }

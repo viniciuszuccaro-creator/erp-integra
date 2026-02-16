@@ -31,6 +31,7 @@ import StatusBadge from "../StatusBadge";
 import SearchInput from "../ui/SearchInput";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useWindow } from "@/components/lib/useWindow";
+import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
@@ -65,6 +66,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { openWindow, closeWindow } = useWindow();
+  const { updateInContext } = useContextoVisual();
 
   // Seleção em massa + exportação
   const [selectedPedidos, setSelectedPedidos] = useState([]);
@@ -401,7 +403,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                               size="sm"
                               onClick={async () => {
                                 try {
-                                  await base44.entities.Pedido.update(pedido.id, {
+                                  await updateInContext('Pedido', pedido.id, {
                                     status: 'Pronto para Faturar'
                                   });
                                   toast({ title: "✅ Pedido fechado para entrega!" });
@@ -530,6 +532,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                           }}
                           title="Excluir"
                           className="h-8 px-2 text-red-600"
+                          disabled={!canEdit('Comercial','Pedido')}
                         >
                           <Trash2 className="w-3 h-3 mr-1" />
                           <span className="text-xs">Excluir</span>
