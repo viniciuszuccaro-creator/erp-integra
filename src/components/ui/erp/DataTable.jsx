@@ -7,7 +7,7 @@ import { ChevronDown, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
 
 export default function ERPDataTable({
-  columns = [], // [{ key, label, isNumeric }]
+  columns = [], // [{ key, label, isNumeric, render?: (row) => ReactNode }]
   data = [],
   sortField,
   sortDirection = "asc",
@@ -208,7 +208,7 @@ export default function ERPDataTable({
                 </TableCell>
                 {visibleColumns.map((c) => (
                   <TableCell key={c.key} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>
-                    {row[c.key] != null ? String(row[c.key]) : ''}
+                    {typeof c.render === 'function' ? c.render(row) : (row[c.key] != null ? String(row[c.key]) : '')}
                   </TableCell>
                 ))}
               </TableRow>
