@@ -366,26 +366,15 @@ export default function Relatorios() {
             <ResizablePanel defaultSize={55} minSize={35} className="overflow-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatoriosEstrategicos.map((rel) => (
-                  <Card 
-                    key={rel.id} 
-                    className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer" 
+                  <RelatorioCard
+                    key={rel.id}
+                    title={rel.titulo}
+                    description={rel.descricao}
+                    Icon={rel.icone}
+                    colorClass={rel.cor}
+                    badgeText="Estratégico"
                     onClick={() => setSelectedReport(rel)}
-                  >
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className={`p-3 rounded-lg bg-slate-50`}>
-                          <rel.icone className={`w-6 h-6 ${rel.cor}`} />
-                        </div>
-                        <Badge variant="outline" className="text-xs">Estratégico</Badge>
-                      </div>
-                      <h3 className="font-semibold text-lg mb-2">{rel.titulo}</h3>
-                      <p className="text-sm text-slate-600 mb-4">{rel.descricao}</p>
-                      <Button className="w-full" variant="outline" size="sm">
-                        <Eye className="w-4 h-4 mr-2" />
-                        Visualizar
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  />
                 ))}
               </div>
             </ResizablePanel>
@@ -425,147 +414,33 @@ export default function Relatorios() {
           <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[740px]">
             <ResizablePanel defaultSize={35} minSize={25} className="overflow-auto">
               {/* Filtros Globais */}
-              <Card className="border-0 shadow-md">
-                <CardContent className="p-4">
-                  <div className="flex flex-wrap gap-4 items-end">
-                    <div>
-                      <Label htmlFor="data_inicio">Data Início</Label>
-                      <Input
-                        id="data_inicio"
-                        type="date"
-                        value={filtros.data_inicio}
-                        onChange={(e) => setFiltros({ ...filtros, data_inicio: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="data_fim">Data Fim</Label>
-                      <Input
-                        id="data_fim"
-                        type="date"
-                        value={filtros.data_fim}
-                        onChange={(e) => setFiltros({ ...filtros, data_fim: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label>Período Rápido</Label>
-                      <Select
-                        value={filtros.periodo}
-                        onValueChange={(value) => {
-                          const hoje = new Date();
-                          let inicio = new Date();
-                          
-                          switch(value) {
-                            case 'hoje':
-                              inicio = hoje;
-                              break;
-                            case 'semana':
-                              inicio = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000);
-                              break;
-                            case 'mes':
-                              inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-                              break;
-                            case 'trimestre':
-                              inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 3, 1);
-                              break;
-                            case 'ano':
-                              inicio = new Date(hoje.getFullYear(), 0, 1);
-                              break;
-                          }
-                          
-                          setFiltros({
-                            ...filtros,
-                            periodo: value,
-                            data_inicio: inicio.toISOString().split('T')[0],
-                            data_fim: hoje.toISOString().split('T')[0]
-                          });
-                        }}
-                      >
-                        <SelectTrigger className="w-40">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="hoje">Hoje</SelectItem>
-                          <SelectItem value="semana">Última Semana</SelectItem>
-                          <SelectItem value="mes">Este Mês</SelectItem>
-                          <SelectItem value="trimestre">Último Trimestre</SelectItem>
-                          <SelectItem value="ano">Este Ano</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button variant="outline">
-                      <Filter className="w-4 h-4 mr-2" />
-                      Aplicar Filtros
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <RelatoriosFiltrosGlobais filtros={filtros} setFiltros={setFiltros} />
             </ResizablePanel>
             <ResizableHandle withHandle />
             <ResizablePanel defaultSize={65} minSize={35} className="overflow-auto">
               {/* Grid de Relatórios Operacionais */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {relatoriosPredefinidos.map((rel) => (
-                  <Card key={rel.id} className="border-0 shadow-md hover:shadow-lg transition-shadow cursor-pointer" onClick={() => setSelectedReport(rel)}>
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className={`p-3 rounded-lg bg-slate-50`}>
-                          <rel.icone className={`w-6 h-6 ${rel.cor}`} />
-                        </div>
-                        <Badge variant="outline" className="text-xs">
-                          {rel.tipo}
-                        </Badge>
-                      </div>
-                      <h3 className="font-semibold text-lg mb-2">{rel.titulo}</h3>
-                      <p className="text-sm text-slate-600 mb-4">{rel.descricao}</p>
-                      <Button className="w-full" variant="outline" size="sm">
-                        <Eye className="w-4 h-4 mr-2" />
-                        Visualizar
-                      </Button>
-                    </CardContent>
-                  </Card>
+                  <RelatorioCard
+                    key={rel.id}
+                    title={rel.titulo}
+                    description={rel.descricao}
+                    Icon={rel.icone}
+                    colorClass={rel.cor}
+                    badgeText={rel.tipo}
+                    onClick={() => setSelectedReport(rel)}
+                  />
                 ))}
               </div>
 
               {/* Relatório Selecionado Operacional */}
-              {selectedReport && !selectedReport.component && (
-                <Card className="border-0 shadow-md mt-4">
-                  <CardHeader className="border-b bg-slate-50">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          <selectedReport.icone className={`w-5 h-5 ${selectedReport.cor}`} />
-                          {selectedReport.titulo}
-                        </CardTitle>
-                        <p className="text-sm text-slate-600 mt-1">{selectedReport.descricao}</p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Período: {new Date(filtros.data_inicio).toLocaleDateString('pt-BR')} a {new Date(filtros.data_fim).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const dados = selectedReport.getData();
-                            if (Array.isArray(dados)) {
-                              exportarParaExcel(dados, selectedReport.titulo);
-                            }
-                          }}
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Excel
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => setSelectedReport(null)}>
-                          Fechar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    {renderChart(selectedReport)}
-                  </CardContent>
-                </Card>
-              )}
+              <SelectedOperationalReport
+                selectedReport={selectedReport}
+                filtros={filtros}
+                onExport={(dados, nome) => exportarParaExcel(dados, nome)}
+                onClose={() => setSelectedReport(null)}
+                renderChart={renderChart}
+              />
             </ResizablePanel>
           </ResizablePanelGroup>
         </TabsContent>
