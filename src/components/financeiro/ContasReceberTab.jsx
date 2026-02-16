@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -25,7 +25,24 @@ import useEntityListSorted from "@/components/lib/useEntityListSorted";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
   const { createInContext } = useContextoVisual();
-  const { data: contasBackend = [] } = useEntityListSorted('ContaReceber', {}, { sortField: 'data_vencimento', sortDirection: 'asc', limit: 500 });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sortField, setSortField] = useState('data_vencimento');
+  const [sortDirection, setSortDirection] = useState('asc');
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('sort_ContaReceber');
+      if (!sortField && raw) {
+        const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
+        if (sf && sd) { setSortField(sf); setSortDirection(sd); }
+      } else if (sortField) {
+        localStorage.setItem('sort_ContaReceber', JSON.stringify({ sortField, sortDirection }));
+      }
+    } catch {}
+  }, [sortField, sortDirection]);
+
+  const { data: contasBackend = [] } = useEntityListSorted('ContaReceber', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
   const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -348,6 +365,18 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         onBaixar={handleBaixar}
         configsCobranca={configsCobranca}
       />
+
+      {/* Paginação backend padronizada */}
+      <div className="mt-3 flex items-center justify-between gap-2 text-sm">
+        <div className="text-slate-600">Página {page}</div>
+        <div className="flex items-center gap-2">
+          <select className="h-8 border rounded px-2" value={pageSize} onChange={(e)=>{ setPageSize(Number(e.target.value)); setPage(1); }}>
+            {[10,20,50,100].map(n => (<option key={n} value={n}>{n}/página</option>))}
+          </select>
+          <Button variant="outline" size="sm" onClick={()=>setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</Button>
+          <Button variant="outline" size="sm" onClick={()=>setPage(p => p+1)} disabled={contasBackend.length < pageSize}>Próxima</Button>
+        </div>
+      </div>
 
       <Dialog open={dialogBaixaOpen} onOpenChange={setDialogBaixaOpen}>
         <DialogContent className="max-w-2xl">
