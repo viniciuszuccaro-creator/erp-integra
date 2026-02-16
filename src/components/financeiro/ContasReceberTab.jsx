@@ -102,8 +102,40 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const baixarTituloMutation = useMutation({
     mutationFn: async ({ id, dados }) => {
-...
-    onSuccess: async (_data, vars) => {
+        const titulo = await base44.entities.ContaReceber.update(id, {
+          status: "Recebido",
+          data_recebimento: dados.data_recebimento,
+          valor_recebido: dados.valor_recebido,
+          forma_recebimento: dados.forma_recebimento,
+          juros: dados.juros,
+          multa: dados.multa,
+          desconto: dados.desconto,
+          observacoes: dados.observacoes
+        });
+
+        const conta = contasList.find(c => c.id === id);
+        if (conta?.cliente_id) {
+          await base44.entities.HistoricoCliente.create({
+            group_id: conta.group_id,
+            empresa_id: conta.empresa_id,
+            cliente_id: conta.cliente_id,
+            cliente_nome: conta.cliente,
+            modulo_origem: "Financeiro",
+            referencia_id: id,
+            referencia_tipo: "ContaReceber",
+            tipo_evento: "Recebimento",
+            titulo_evento: `Recebimento de R$ ${dados.valor_recebido.toFixed(2)}`,
+            descricao_detalhada: `Título ${conta.descricao} recebido via ${dados.forma_recebimento}`,
+            usuario_responsavel: authUser?.full_name || authUser?.email,
+            usuario_responsavel_id: authUser?.id,
+            data_evento: new Date().toISOString(),
+            valor_relacionado: dados.valor_recebido,
+            resolvido: true
+          });
+        }
+        return titulo;
+      },
+      onSuccess: async (_data, vars) => {
       await base44.entities.AuditLog.create({
         acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaReceber', registro_id: vars?.id,
         descricao: 'Baixa de título registrada', data_hora: new Date().toISOString()
@@ -117,8 +149,15 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const baixarMultiplaMutation = useMutation({
     mutationFn: async (dados) => {
-...
-    onSuccess: async () => {
+        await Promise.all(contasSelecionadas.map(async (contaId) => {
+          const conta = contasList.find(c => c.id === contaId);
+          if (conta) {
+            const valorTotal = (conta.valor || 0) + (dados.juros || 0) + (dados.multa || 0) - (dados.desconto || 0);
+            await baixarTituloMutation.mutateAsync({ id: contaId, dados: { ...dados, valor_recebido: valorTotal } });
+          }
+        }));
+      },
+      onSuccess: async () => {
       await base44.entities.AuditLog.create({
         acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaReceber',
         descricao: `Baixa múltipla (${contasSelecionadas.length})`, data_hora: new Date().toISOString()

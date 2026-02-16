@@ -130,9 +130,6 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Compras', entidade: 'OrdemCompra', descricao: 'OC aprovada', data_hora: new Date().toISOString() }); } catch(_) {}
       queryClient.invalidateQueries(['ordensCompra']);
       toast({ title: "✅ Ordem de Compra aprovada!" });
-    }
-      queryClient.invalidateQueries(['ordensCompra']);
-      toast({ title: "✅ Ordem de Compra aprovada!" });
     },
   });
 
@@ -157,12 +154,6 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
     },
     onSuccess: async () => {
       try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Compras', entidade: 'OrdemCompra', descricao: 'OC enviada ao fornecedor', data_hora: new Date().toISOString() }); } catch(_) {}
-      queryClient.invalidateQueries(['ordensCompra']);
-      toast({ 
-        title: "✅ OC Enviada ao Fornecedor!",
-        description: "E-mail enviado (se configurado)"
-      });
-    }
       queryClient.invalidateQueries(['ordensCompra']);
       toast({ 
         title: "✅ OC Enviada ao Fornecedor!",
