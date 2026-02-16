@@ -30,6 +30,7 @@ import { useWindow } from '@/components/lib/useWindow';
 import { useContextoVisual } from '@/components/lib/useContextoVisual';
 import usePermissions from '@/components/lib/usePermissions';
 import { useToast } from "@/components/ui/use-toast";
+import ProtectedAction from "@/components/ProtectedAction";
 
 const OPCOES_ORDENACAO = {
   Cliente: [
@@ -239,8 +240,8 @@ export default function VisualizadorUniversalEntidade({
 
   const moduloPermissao = React.useMemo(() => {
     const estoque = ['Produto','UnidadeMedida','LocalEstoque','GrupoProduto','Marca'];
-    if (estoque.includes(nomeEntidade)) return 'estoque';
-    return 'cadastros';
+    if (estoque.includes(nomeEntidade)) return 'Estoque';
+    return 'Cadastros';
   }, [nomeEntidade, columnFilters]);
 
   const opcoesOrdenacao = OPCOES_ORDENACAO[nomeEntidade] || OPCOES_ORDENACAO.default;
@@ -664,17 +665,21 @@ export default function VisualizadorUniversalEntidade({
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
               </Button>
-              <Button variant="primary" size="sm" onClick={handleAbrirNovo} disabled={!hasPermission(moduloPermissao, 'criar')}>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo
-              </Button>
+              <ProtectedAction module={moduloPermissao} action="criar" mode="hide">
+                <Button variant="primary" size="sm" onClick={handleAbrirNovo}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo
+                </Button>
+              </ProtectedAction>
               <Button variant="outline" size="sm" onClick={toggleSelectAll}>
                 {allSelected ? 'Limpar' : 'Selecionar Todos'}
               </Button>
-              <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={selectedIds.size === 0} className="border-red-300 text-red-700">
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir ({selectedIds.size})
-              </Button>
+              <ProtectedAction module={moduloPermissao} action="excluir" mode="hide">
+                <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={selectedIds.size === 0} className="border-red-300 text-red-700">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Excluir ({selectedIds.size})
+                </Button>
+              </ProtectedAction>
             </div>
           </div>
 
@@ -819,10 +824,12 @@ export default function VisualizadorUniversalEntidade({
                             </Button>
                           )}
                           {componenteEdicao && (
-                            <Button size="sm" onClick={() => abrirEdicao(item)} className="flex-1" disabled={!hasPermission(moduloPermissao, 'editar')}>
-                              <Edit2 className="w-3 h-3 mr-1" />
-                              Editar
-                            </Button>
+                            <ProtectedAction module={moduloPermissao} action="editar" mode="hide">
+                              <Button size="sm" onClick={() => abrirEdicao(item)} className="flex-1">
+                                <Edit2 className="w-3 h-3 mr-1" />
+                                Editar
+                              </Button>
+                            </ProtectedAction>
                           )}
                         </div>
                       </CardContent>
@@ -860,9 +867,11 @@ export default function VisualizadorUniversalEntidade({
                               </Button>
                             )}
                             {componenteEdicao && (
-                              <Button size="sm" onClick={() => abrirEdicao(item)} disabled={!hasPermission(moduloPermissao, 'editar')}>
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
+                              <ProtectedAction module={moduloPermissao} action="editar" mode="hide">
+                                <Button size="sm" onClick={() => abrirEdicao(item)}>
+                                  <Edit2 className="w-4 h-4" />
+                                </Button>
+                              </ProtectedAction>
                             )}
                           </div>
                         </div>
