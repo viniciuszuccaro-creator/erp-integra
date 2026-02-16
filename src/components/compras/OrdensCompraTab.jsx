@@ -618,169 +618,20 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
           onClear={() => setSelectedOCs([])}
         />
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>
-                  <button className="hover:underline" onClick={() => { setSortField('numero_oc'); setSortDirection(prev => (sortField==='numero_oc' && prev==='asc')?'desc':'asc'); }}>Número OC</button>
-                </TableHead>
-                <TableHead>
-                  <button className="hover:underline" onClick={() => { setSortField('fornecedor_nome'); setSortDirection(prev => (sortField==='fornecedor_nome' && prev==='asc')?'desc':'asc'); }}>Fornecedor</button>
-                </TableHead>
-                <TableHead>
-                  <button className="hover:underline" onClick={() => { setSortField('data_solicitacao'); setSortDirection(prev => (sortField==='data_solicitacao' && prev==='asc')?'desc':'asc'); }}>Data Solicitação</button>
-                </TableHead>
-                <TableHead>
-                  <button className="hover:underline" onClick={() => { setSortField('valor_total'); setSortDirection(prev => (sortField==='valor_total' && prev==='asc')?'desc':'asc'); }}>Valor</button>
-                </TableHead>
-                <TableHead>
-                  <button className="hover:underline" onClick={() => { setSortField('status'); setSortDirection(prev => (sortField==='status' && prev==='asc')?'desc':'asc'); }}>Status</button>
-                </TableHead>
-                <TableHead>
-                  <button className="hover:underline" onClick={() => { setSortField('lead_time_real'); setSortDirection(prev => (sortField==='lead_time_real' && prev==='asc')?'desc':'asc'); }}>Lead Time</button>
-                </TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOCs.map((oc) => (
-                <TableRow key={oc.id} className="hover:bg-slate-50">
-                  <TableCell>
-                  <Checkbox
-                    checked={selectedOCs.includes(oc.id)}
-                    onCheckedChange={() => toggleOC(oc.id)}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{oc.numero_oc}</TableCell>
-                  <TableCell>{oc.fornecedor_nome}</TableCell>
-                  <TableCell>{new Date(oc.data_solicitacao).toLocaleDateString('pt-BR')}</TableCell>
-                  <TableCell className="font-semibold">
-                    R$ {oc.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={statusColors[oc.status]}>
-                      {oc.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {oc.lead_time_real ? (
-                      <Badge variant="outline" className="text-xs">
-                        {oc.lead_time_real} dias
-                      </Badge>
-                    ) : (
-                      <span className="text-slate-400 text-xs">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => {
-                          const empresa = empresas?.find(e => e.id === oc.empresa_id);
-                          const fornecedor = fornecedores?.find(f => f.id === oc.fornecedor_id);
-                          ImprimirOrdemCompra({ oc, empresa, fornecedor });
-                        }}
-                        title="Imprimir OC"
-                        className="text-slate-600"
-                      >
-                        <Printer className="w-4 h-4" />
-                      </Button>
-
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => openWindow(OrdemCompraForm, {
-                          ordemCompra: oc,
-                          windowMode: true,
-                          onSubmit: async (data) => {
-                            try {
-                              await updateMutation.mutateAsync({ id: oc.id, data });
-                              sonnerToast.success("✅ OC atualizada!");
-                            } catch (error) {
-                              sonnerToast.error("Erro ao atualizar OC");
-                            }
-                          }
-                        }, {
-                          title: `👁️ Ver: ${oc.numero_oc}`,
-                          width: 1100,
-                          height: 700
-                        })}
-                        title="Ver Detalhes"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-
-                      <Button variant="ghost" size="sm" onClick={() => handleEdit(oc)} title="Editar OC">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-
-                      {oc.status === 'Solicitada' && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => aprovarMutation.mutate({ id: oc.id, oc })}
-                          disabled={aprovarMutation.isPending}
-                          className="text-purple-600"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                        </Button>
-                      )}
-
-                      {oc.status === 'Aprovada' && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => enviarFornecedorMutation.mutate({ id: oc.id, oc })}
-                          disabled={enviarFornecedorMutation.isPending}
-                          className="text-indigo-600"
-                        >
-                          <Send className="w-4 h-4" />
-                        </Button>
-                      )}
-
-                      {(oc.status === 'Enviada ao Fornecedor' || oc.status === 'Em Processo') && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleReceberClick(oc)}
-                          className="text-green-600"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                        </Button>
-                      )}
-
-                      {oc.status === 'Recebida' && !oc.avaliacao_fornecedor?.realizada && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => openWindow(AvaliacaoFornecedorForm, {
-                            ordemCompra: oc,
-                            windowMode: true,
-                            onSubmit: async (avaliacao) => {
-                              try {
-                                await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao });
-                                sonnerToast.success("⭐ Avaliação registrada!");
-                              } catch (error) {
-                                sonnerToast.error("Erro ao avaliar fornecedor");
-                              }
-                            }
-                          }, {
-                            title: `⭐ Avaliar: ${oc.fornecedor_nome}`,
-                            width: 800,
-                            height: 650
-                          })}
-                          className="text-amber-600"
-                        >
-                          <Star className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <OCTabela
+            ocs={filteredOCs}
+            selectedOCs={selectedOCs}
+            onToggleOC={toggleOC}
+            onSort={(field) => { setSortField(field); setSortDirection(prev => (sortField===field && prev==='asc')?'desc':'asc'); }}
+            statusColors={statusColors}
+            onImprimir={(oc)=>{ const empresa = empresas?.find(e => e.id === oc.empresa_id); const fornecedor = fornecedores?.find(f => f.id === oc.fornecedor_id); ImprimirOrdemCompra({ oc, empresa, fornecedor }); }}
+            onVer={(oc)=> openWindow(OrdemCompraForm, { ordemCompra: oc, windowMode: true, onSubmit: async (data) => { try { await updateMutation.mutateAsync({ id: oc.id, data }); sonnerToast.success('✅ OC atualizada!'); } catch { sonnerToast.error('Erro ao atualizar OC'); } } }, { title: `👁️ Ver: ${oc.numero_oc}`, width: 1100, height: 700 })}
+            onEditar={handleEdit}
+            onAprovar={(oc)=> aprovarMutation.mutate({ id: oc.id, oc })}
+            onEnviar={(oc)=> enviarFornecedorMutation.mutate({ id: oc.id, oc })}
+            onReceber={handleReceberClick}
+            onAvaliar={(oc)=> openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650 })}
+          />
 
           {/* Paginação backend simples */}
           <div className="flex items-center justify-between p-4 border-t">
