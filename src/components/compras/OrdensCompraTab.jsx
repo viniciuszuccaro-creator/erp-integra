@@ -633,17 +633,13 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             onAvaliar={(oc)=> openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650 })}
           />
 
-          {/* Paginação backend simples */}
-          <div className="flex items-center justify-between p-4 border-t">
-            <div className="text-sm text-slate-600">Página {page}</div>
-            <div className="flex items-center gap-2">
-              <select className="h-8 border rounded px-2" value={pageSize} onChange={(e)=>{ setPageSize(Number(e.target.value)); setPage(1); }}>
-                {[10,20,50,100].map(n => (<option key={n} value={n}>{n}/página</option>))}
-              </select>
-              <Button variant="outline" size="sm" onClick={()=>setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</Button>
-              <Button variant="outline" size="sm" onClick={()=>setPage(p => p+1)} disabled={ocBackend.length < pageSize}>Próxima</Button>
-            </div>
-          </div>
+          <OCPaginacao
+            page={page}
+            pageSize={pageSize}
+            setPage={setPage}
+            setPageSize={setPageSize}
+            hasNext={ocBackend.length >= pageSize}
+          />
 
           {filteredOCs.length === 0 && (
             <div className="text-center py-8">
