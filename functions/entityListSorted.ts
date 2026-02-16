@@ -25,12 +25,12 @@ const DEFAULT_SORTS = {
   Cliente: { field: 'nome', direction: 'asc' },
   Fornecedor: { field: 'nome', direction: 'asc' },
   Pedido: { field: 'data_pedido', direction: 'desc' },
-  ContaPagar: { field: 'data_vencimento', direction: 'asc' },
+  ContaPagar: { field: 'data_vencimento', direction: 'desc' },
   ContaReceber: { field: 'data_vencimento', direction: 'asc' },
   OrdemCompra: { field: 'data_solicitacao', direction: 'desc' },
-  CentroCusto: { field: 'descricao', direction: 'asc' },
-  PlanoDeContas: { field: 'descricao', direction: 'asc' },
-  PlanoContas: { field: 'descricao', direction: 'asc' },
+  CentroCusto: { field: 'codigo', direction: 'asc' },
+  PlanoDeContas: { field: 'codigo', direction: 'asc' },
+  PlanoContas: { field: 'codigo', direction: 'asc' },
   User: { field: 'full_name', direction: 'asc' },
 };
 
