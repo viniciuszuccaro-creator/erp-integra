@@ -134,7 +134,7 @@ export default function ERPDataTable({
                   )}
                 </TableHead>
               ))}
-              <TableHead className="px-3 text-right">Ações</TableHead>
+              {/* Placeholder para ações externas: manter a estrutura sem quebrar colunas */}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -148,9 +148,6 @@ export default function ERPDataTable({
                     {row[c.key] != null ? String(row[c.key]) : ''}
                   </TableCell>
                 ))}
-                <TableCell className="px-3 text-right">
-                  {/* Espaço reservado para ações externas */}
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>

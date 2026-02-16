@@ -288,36 +288,25 @@ export default function VisualizadorUniversalEntidade({
 
   const getDefaultSortForEntity = useCallback(() => {
     if (colunaOrdenacao) {
-      // Para ordenação por coluna clicada, aplicamos 100% no cliente para garantir consistência (ex.: Código numérico)
+      // Quando usuário clica no cabeçalho, mantemos ordenação 100% no cliente
       return undefined;
     }
-    
-    const sortMap = {
-      'recent': '-created_date',
-      'codigo': 'codigo',
-      'codigo_desc': '-codigo',
-      'descricao': 'descricao',
-      'descricao_desc': '-descricao',
-      'nome': 'nome',
-      'nome_desc': '-nome',
-      'razao_social': 'razao_social',
-      'razao_social_desc': '-razao_social',
-      'nome_fantasia': 'nome_fantasia',
-      'nome_fantasia_desc': '-nome_fantasia',
-      'nome_marca': 'nome_marca',
-      'nome_marca_desc': '-nome_marca',
-      'nome_grupo': 'nome_grupo',
-      'nome_grupo_desc': '-nome_grupo',
-      'sigla': 'sigla',
-      'sigla_desc': '-sigla',
-      'nome_segmento': 'nome_segmento',
-      'nome_segmento_desc': '-nome_segmento',
-      'nome_regiao': 'nome_regiao',
-      'nome_regiao_desc': '-nome_regiao'
+
+    // Padrões por entidade (case-insensitive no backend via entityListSorted)
+    const entityDefaults = {
+      Produto: { field: 'descricao', direction: 'asc' },
+      Cliente: { field: 'nome', direction: 'asc' },
+      Fornecedor: { field: 'nome', direction: 'asc' },
+      Pedido: { field: 'data_pedido', direction: 'desc' },
+      ContaPagar: { field: 'data_vencimento', direction: 'desc' },
+      ContaReceber: { field: 'data_vencimento', direction: 'asc' },
+      User: { field: 'full_name', direction: 'asc' },
+      CentroCusto: { field: 'codigo', direction: 'asc' },
+      PlanoDeContas: { field: 'codigo', direction: 'asc' }
     };
-    
-    return { field: 'updated_date', direction: 'desc' };
-  }, [nomeEntidade, columnFilters]);
+
+    return entityDefaults[nomeEntidade] || { field: 'updated_date', direction: 'desc' };
+  }, [nomeEntidade, colunaOrdenacao]);
 
   const buildFilterWithSearch = useCallback(() => {
     const campoEmpresa = (nomeEntidade === 'Colaborador') ? 'empresa_alocada_id' : 'empresa_id';
