@@ -190,6 +190,42 @@ export default function ERPDataTable({
           ))}
         </div>
       )}
+
+      {/* Paginação backend padronizada */}
+      <div className="mt-3 flex items-center justify-between gap-2 text-sm">
+        <div className="text-slate-600">
+          Página {page} de {totalPages}{totalItems ? ` • ${totalItems} registros` : ''}
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            className="h-8 border rounded px-2"
+            value={pageSize}
+            onChange={(e) => onPageSizeChange && onPageSizeChange(Number(e.target.value))}
+          >
+            {[10, 20, 50, 100].map((n) => (
+              <option key={n} value={n}>{n}/página</option>
+            ))}
+          </select>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange && onPageChange(Math.max(1, page - 1))}
+              disabled={page <= 1}
+            >
+              Anterior
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange && onPageChange(Math.min(totalPages, page + 1))}
+              disabled={page >= totalPages}
+            >
+              Próxima
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
