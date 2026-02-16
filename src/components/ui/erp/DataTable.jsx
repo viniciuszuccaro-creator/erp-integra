@@ -47,6 +47,13 @@ export default function ERPDataTable({
 
   const visibleColumns = useMemo(() => columns.filter(c => !hiddenColumns.has(c.key)), [columns, hiddenColumns]);
 
+  // Aceita Set ou Array para seleção
+  const selectedSet = useMemo(() => {
+    if (selectedIds instanceof Set) return selectedIds;
+    if (Array.isArray(selectedIds)) return new Set(selectedIds);
+    return new Set();
+  }, [selectedIds]);
+
   const handleResize = (key, e) => {
     e.preventDefault();
     const startX = e.clientX;
@@ -85,6 +92,18 @@ export default function ERPDataTable({
       localStorage.setItem(`sort_${entityName}`, JSON.stringify({ sortField, sortDirection }));
     } catch {}
   }, [autoPersistSort, entityName, sortField, sortDirection]);
+
+  // Restaura sort salvo quando não vier definido
+  useEffect(() => {
+    if (!autoPersistSort || !entityName || sortField) return;
+    try {
+      const raw = localStorage.getItem(`sort_${entityName}`);
+      if (raw && onSortChange) {
+        const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
+        if (sf && sd) onSortChange(sf, sd);
+      }
+    } catch {}
+  }, [autoPersistSort, entityName, sortField]);
 
   const totalPages = Math.max(1, Math.ceil((totalItems || 0) / (pageSize || 20)));
 
@@ -170,7 +189,7 @@ export default function ERPDataTable({
             {data.map((row) => (
               <TableRow key={row.id} className="hover:bg-blue-50/40">
                 <TableCell className="px-3">
-                  <Checkbox checked={selectedIds.has(row.id)} onCheckedChange={() => onToggleItem && onToggleItem(row.id)} />
+                  <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => onToggleItem && onToggleItem(row.id)} />
                 </TableCell>
                 {visibleColumns.map((c) => (
                   <TableCell key={c.key} className={`px-3 ${c.isNumeric ? 'text-right' : ''}`}>
