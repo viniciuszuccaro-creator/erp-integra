@@ -95,7 +95,11 @@ export default function MatrizAdequacaoFase3() {
           "Cadastros Gerais": ["Cliente", "Fornecedor", "Produto"],
           "Configuração do Sistema": ["ConfiguracaoSistema"],
           "Perfis (PerfilAcesso)": ["PerfilAcesso"],
-          "Usuários (Categoria)": ["User"]
+          "Usuários (Categoria)": ["User"],
+          "Fiscal e Tributário": ["NotaFiscal"],
+          "Expedição e Logística": ["Entrega", "Romaneio"],
+          "Produção e Manufatura": ["OrdemProducao", "MovimentacaoEstoque"],
+          "RH": ["Colaborador", "Ponto"]
         };
 
         const results = {};
@@ -341,7 +345,90 @@ export default function MatrizAdequacaoFase3() {
     },
   ];
 
-  const linhas = linhasBase.map((l) => ({
+  const linhasExtras = [
+    {
+      modulo: "Fiscal e Tributário",
+      page: "Fiscal",
+      layout: "OK",
+      ordenacao: "Parcial",
+      rbac: "Parcial",
+      multi: "Parcial",
+      status: "Parcial",
+      notas: [
+        "Garantir listagens fiscais via entityListSorted e rolagem interna.",
+        "Ações (emitir/cancelar/inutilizar) sob ProtectedAction + validação em entityGuard.",
+      ],
+      links: [
+        "pages/Fiscal",
+        "components/comercial/NotasFiscaisTab",
+        "functions/entityListSorted",
+        "components/ProtectedAction",
+        "functions/entityGuard"
+      ],
+    },
+    {
+      modulo: "Expedição e Logística",
+      page: "Expedicao",
+      layout: "OK",
+      ordenacao: "Parcial",
+      rbac: "Parcial",
+      multi: "Parcial",
+      status: "Parcial",
+      notas: [
+        "Entregas/Romaneio → entityListSorted; sort persistido.",
+        "Ações (separar, sair para entrega, comprovar) com ProtectedAction.",
+      ],
+      links: [
+        "pages/Expedicao",
+        "components/expedicao/EntregasListagem",
+        "functions/entityListSorted",
+        "components/ProtectedAction",
+        "components/lib/useContextoVisual"
+      ],
+    },
+    {
+      modulo: "Produção e Manufatura",
+      page: "Producao",
+      layout: "OK",
+      ordenacao: "Parcial",
+      rbac: "Parcial",
+      multi: "Parcial",
+      status: "Parcial",
+      notas: [
+        "Ordem de Produção/Apontamentos → entityListSorted.",
+        "Ações (enviar/ajustar/refugo) sob ProtectedAction + backend.",
+      ],
+      links: [
+        "pages/Producao",
+        "components/producao/ApontamentoProducao",
+        "functions/entityListSorted",
+        "components/ProtectedAction",
+        "components/lib/useContextoVisual"
+      ],
+    },
+    {
+      modulo: "RH",
+      page: "RH",
+      layout: "OK",
+      ordenacao: "Parcial",
+      rbac: "Parcial",
+      multi: "Parcial",
+      status: "Parcial",
+      notas: [
+        "Colaboradores/Ponto → entityListSorted e sort persistido.",
+        "Ações sensíveis (aprovar ponto, férias) com ProtectedAction.",
+      ],
+      links: [
+        "pages/RH",
+        "components/rh/PontoTab",
+        "functions/entityListSorted",
+        "components/ProtectedAction",
+        "components/lib/useContextoVisual"
+      ],
+    },
+  ];
+
+  const linhas = [...linhasBase, ...linhasExtras].map((l) => ({
     ...l,
     layout: checks[l.modulo]?.layout || l.layout,
     ordenacao: checks[l.modulo]?.ordenacao || l.ordenacao,
