@@ -323,6 +323,7 @@ export default function Estoque() {
     <ErrorBoundary>
       <ModuleLayout
         title="Estoque e Almoxarifado"
+        subtitle="Produtos, níveis e movimentações"
         actions={<div className="flex items-center gap-2">
           <Button onClick={handleExportAco} variant="outline" className="gap-2"><Download className="w-3 h-3" /> Exportar Aço (PDF)</Button>
         </div>}

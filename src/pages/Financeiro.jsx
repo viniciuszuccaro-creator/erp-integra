@@ -391,7 +391,7 @@ export default function Financeiro() {
   return (
     <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
-      <ModuleLayout title="Financeiro e Contábil">
+      <ModuleLayout title="Financeiro e Contábil" subtitle="Pagamentos, recebimentos e conciliação">
         <ModuleKPIs>
           <KPIsFinanceiroLaunchpad
             receberPendente={receberPendente}

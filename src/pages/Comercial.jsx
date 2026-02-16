@@ -396,6 +396,7 @@ export default function Comercial() {
     <ErrorBoundary>
       <ModuleLayout
               title="Comercial e Vendas"
+              subtitle="Vendas, clientes e canais"
               actions={<div className="flex items-center gap-2">
                 <Button onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>
                 <Button
