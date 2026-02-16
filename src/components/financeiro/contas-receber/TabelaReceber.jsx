@@ -125,11 +125,11 @@ export default function TabelaReceber({
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col gap-1 items-start">
-                      <Button variant="ghost" size="sm" onClick={() => onPrint(conta, empresa)} className="justify-start h-6 px-2 text-xs">
+                      <Button data-permission="Financeiro.ContasReceber.exportar" variant="ghost" size="sm" onClick={() => onPrint(conta, empresa)} className="justify-start h-6 px-2 text-xs">
                         <Printer className="w-3 h-3 mr-1" /> Imprimir
                       </Button>
                       <ProtectedAction permission="financeiro_receber_visualizar">
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(conta)} className="justify-start h-6 px-2 text-xs">
+                        <Button data-permission="Financeiro.ContasReceber.visualizar" variant="ghost" size="sm" onClick={() => onEdit(conta)} className="justify-start h-6 px-2 text-xs">
                           <Eye className="w-3 h-3 mr-1" /> Detalhes
                         </Button>
                       </ProtectedAction>
@@ -139,12 +139,12 @@ export default function TabelaReceber({
                           {!conta.status_cobranca && temConfig && (
                             <>
                               <ProtectedAction permission="financeiro_receber_gerar_cobranca">
-                                <Button variant="ghost" size="sm" onClick={() => onGerarCobranca(conta)} className="justify-start h-6 px-2 text-xs">
+                                <Button data-permission="Financeiro.ContasReceber.gerar_cobranca" variant="ghost" size="sm" onClick={() => onGerarCobranca(conta)} className="justify-start h-6 px-2 text-xs">
                                   <CreditCard className="w-3 h-3 mr-1" /> Cobrança
                                 </Button>
                               </ProtectedAction>
                               <ProtectedAction permission="financeiro_receber_gerar_cobranca">
-                                <Button variant="ghost" size="sm" onClick={() => onGerarLink(conta)} className="justify-start h-6 px-2 text-xs text-purple-600">
+                                <Button data-permission="Financeiro.ContasReceber.gerar_link_pagamento" variant="ghost" size="sm" onClick={() => onGerarLink(conta)} className="justify-start h-6 px-2 text-xs text-purple-600">
                                   <Wallet className="w-3 h-3 mr-1" /> Link
                                 </Button>
                               </ProtectedAction>
@@ -164,7 +164,7 @@ export default function TabelaReceber({
 
                           {(conta.boleto_url || conta.pix_copia_cola) && (
                             <ProtectedAction permission="financeiro_receber_enviar_cobranca_whatsapp">
-                              <Button variant="ghost" size="sm" onClick={() => onEnviarWhatsApp(conta)} className="justify-start h-6 px-2 text-xs">
+                              <Button data-permission="Financeiro.ContasReceber.enviar_cobranca_whatsapp" variant="ghost" size="sm" onClick={() => onEnviarWhatsApp(conta)} className="justify-start h-6 px-2 text-xs">
                                 <MessageSquare className="w-3 h-3 mr-1" /> WhatsApp
                               </Button>
                             </ProtectedAction>
@@ -172,14 +172,14 @@ export default function TabelaReceber({
 
                           {conta.status_cobranca === "gerada_simulada" && (
                             <ProtectedAction permission="financeiro_receber_simular_pagamento">
-                              <Button variant="ghost" size="sm" onClick={() => onSimularPagamento(conta)} className="justify-start h-6 px-2 text-xs text-green-600">
+                              <Button data-permission="Financeiro.ContasReceber.simular_pagamento" variant="ghost" size="sm" onClick={() => onSimularPagamento(conta)} className="justify-start h-6 px-2 text-xs text-green-600">
                                 <Zap className="w-3 h-3 mr-1" /> Simular
                               </Button>
                             </ProtectedAction>
                           )}
 
                           <ProtectedAction permission="financeiro_receber_baixar">
-                            <Button variant="ghost" size="sm" onClick={() => onBaixar(conta)} className="justify-start h-6 px-2 text-xs text-green-700">
+                            <Button data-permission="Financeiro.ContasReceber.baixar" variant="ghost" size="sm" onClick={() => onBaixar(conta)} className="justify-start h-6 px-2 text-xs text-green-700">
                               <CheckCircle2 className="w-3 h-3 mr-1" /> Baixar
                             </Button>
                           </ProtectedAction>
@@ -187,7 +187,7 @@ export default function TabelaReceber({
                       )}
 
                       <ProtectedAction permission="financeiro_receber_editar">
-                        <Button variant="ghost" size="sm" onClick={() => onEdit(conta, true)} className="justify-start h-6 px-2 text-xs">
+                        <Button data-permission="Financeiro.ContasReceber.editar" variant="ghost" size="sm" onClick={() => onEdit(conta, true)} className="justify-start h-6 px-2 text-xs">
                           <Edit className="w-3 h-3 mr-1" /> Editar
                         </Button>
                       </ProtectedAction>
