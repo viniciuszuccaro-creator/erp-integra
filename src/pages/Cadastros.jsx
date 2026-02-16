@@ -1063,6 +1063,8 @@ export default function Cadastros() {
       {/* ==================== FASE 1 DEFINITIVO-100% ==================== */}
       {/* TODOS OS FORMULÁRIOS AGORA ABREM EM JANELAS REDIMENSIONÁVEIS */}
       {/* ZERO DIALOGS - TUDO É WINDOW MODE */}
-    </div>
+        </div>
+      </ModuleContent>
+    </ModuleLayout>
   );
 }
