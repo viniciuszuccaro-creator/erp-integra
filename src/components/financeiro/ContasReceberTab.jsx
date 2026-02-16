@@ -20,8 +20,11 @@ import HeaderReceberCompacto from "./contas-receber/HeaderReceberCompacto";
 import KPIsReceber from "./contas-receber/KPIsReceber";
 import FiltrosReceber from "./contas-receber/FiltrosReceber";
 import TabelaReceber from "./contas-receber/TabelaReceber";
+import useEntityListSorted from "@/components/lib/useEntityListSorted";
 
 export default function ContasReceberTab({ contas, empresas = [], windowMode = false }) {
+  const { data: contasBackend = [] } = useEntityListSorted('ContaReceber', {}, { sortField: 'data_vencimento', sortDirection: 'asc', limit: 500 });
+  const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { openWindow } = useWindow();
@@ -83,7 +86,12 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
       }));
       return ordens;
     },
-    onSuccess: (ordens) => {
+    onSuccess: async (ordens) => {
+      await base44.entities.AuditLog.create({
+        acao: 'Criação', modulo: 'Financeiro', entidade: 'CaixaOrdemLiquidacao',
+        descricao: `${ordens.length} título(s) enviados para o Caixa (Receber)`,
+        data_hora: new Date().toISOString()
+      });
       queryClient.invalidateQueries({ queryKey: ['caixa-ordens-liquidacao'] });
       toast({ title: `✅ ${ordens.length} título(s) enviado(s) para o Caixa!` });
       setContasSelecionadas([]);
@@ -103,7 +111,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         observacoes: dados.observacoes
       });
 
-      const conta = contas.find(c => c.id === id);
+      const conta = contasList.find(c => c.id === id);
       if (conta?.cliente_id) {
         await base44.entities.HistoricoCliente.create({
           group_id: conta.group_id,
@@ -136,7 +144,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const baixarMultiplaMutation = useMutation({
     mutationFn: async (dados) => {
       await Promise.all(contasSelecionadas.map(async (contaId) => {
-        const conta = contas.find(c => c.id === contaId);
+        const conta = contasList.find(c => c.id === contaId);
         if (conta) {
           const valorTotal = conta.valor + (dados.juros || 0) + (dados.multa || 0) - (dados.desconto || 0);
           await baixarTituloMutation.mutateAsync({
@@ -155,7 +163,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
 
   const enviarWhatsAppMutation = useMutation({
     mutationFn: async (contaId) => {
-      const conta = contas.find(c => c.id === contaId);
+      const conta = contasList.find(c => c.id === contaId);
       await base44.entities.ContaReceber.update(contaId, {
         data_envio_cobranca: new Date().toISOString()
       });
@@ -164,7 +172,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
     onSuccess: () => toast({ title: "✅ WhatsApp enviado (simulação)!" })
   });
 
-  const filteredContas = contas
+  const filteredContas = contasList
     .filter(c => statusFilter === "todas" || c.status === statusFilter)
     .filter(c => {
       const searchLower = searchTerm.toLowerCase();
@@ -181,7 +189,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         c.observacoes?.toLowerCase().includes(searchLower);
     });
 
-  const totalSelecionado = contas
+  const totalSelecionado = contasList
     .filter(c => contasSelecionadas.includes(c.id))
     .reduce((sum, c) => sum + (c.valor || 0), 0);
 
@@ -260,7 +268,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
         totalSelecionado={totalSelecionado}
         onExportar={() => {
           const itens = contasSelecionadas.length > 0
-            ? contas.filter(c => contasSelecionadas.includes(c.id))
+            ? contasList.filter(c => contasSelecionadas.includes(c.id))
             : filteredContas;
           const headers = ['cliente','descricao','numero_documento','empresa_id','data_vencimento','valor','status'];
           const csv = [headers.join(','), ...itens.map(c => headers.map(h => JSON.stringify(c[h] ?? '')).join(','))].join('\n');
@@ -286,7 +294,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           }
         }, { title: '💰 Nova Conta a Receber', width: 900, height: 600 })}
         onEnviarCaixa={() => {
-          const titulos = contas.filter(c => contasSelecionadas.includes(c.id));
+          const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
           enviarParaCaixaMutation.mutate(titulos);
         }}
         baixarPending={baixarMultiplaMutation.isPending}

@@ -13,12 +13,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import MovimentacaoForm from "./MovimentacaoForm";
 import { useWindow } from "@/components/lib/useWindow";
+import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast } from "sonner";
 import { useUser } from "@/components/lib/UserContext";
 
 export default function MovimentacoesTab({ movimentacoes, produtos }) {
+  const { data: movsBackend = [] } = useEntityListSorted('MovimentacaoEstoque', {}, { sortField: 'data_movimentacao', sortDirection: 'desc', limit: 500 });
+  const movList = Array.isArray(movimentacoes) && movimentacoes.length ? movimentacoes : movsBackend;
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -132,7 +135,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
     });
   };
 
-  const filteredMovimentacoes = movimentacoes.filter(m => {
+  const filteredMovimentacoes = movList.filter(m => {
     const searchLower = searchTerm.toLowerCase();
     return m.produto_nome?.toLowerCase().includes(searchLower) ||
       m.produto_descricao?.toLowerCase().includes(searchLower) ||
