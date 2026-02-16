@@ -274,7 +274,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
           URL.revokeObjectURL(url);
         }}
         onBaixarMultipla={handleBaixarMultipla}
-        onNovaConta={() => openWindow(ContaPagarForm, {
+        onNovaConta={() => { if (!hasPermission('Financeiro','ContaPagar','criar')) { toast({ title: '⛔ Sem permissão para criar', variant: 'destructive' }); return; } openWindow(ContaPagarForm, {
           windowMode: true,
           onSubmit: async (data) => {
             await createInContext('ContaPagar', {
@@ -285,7 +285,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
             queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
             toast({ title: "✅ Conta criada!" });
           }
-        }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600 })}
+        }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600 }) }}
         onEnviarCaixa={() => {
           const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
           if (!hasPermission('Financeiro','ContaPagar','enviar_caixa') && !hasPermission('Financeiro','ContaPagar','editar')) { toast({ title: '⛔ Sem permissão para enviar ao Caixa', variant: 'destructive' }); return; }

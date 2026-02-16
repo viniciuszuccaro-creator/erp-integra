@@ -24,6 +24,7 @@ import RecebimentoOCForm from "./RecebimentoOCForm";
 import { useWindow } from "@/components/lib/useWindow";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 import useBackendPagination from "@/components/lib/useBackendPagination";
+import usePermissions from "@/components/lib/usePermissions";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import { toast as sonnerToast } from "sonner";
@@ -40,6 +41,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   const { data: ocBackend = [] } = useEntityListSorted('OrdemCompra', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
   const ocList = Array.isArray(ordensCompra) && ordensCompra.length ? ordensCompra : ocBackend;
   const { user: authUser } = useUser();
+  const { hasPermission } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingOC, setEditingOC] = useState(null);
@@ -409,6 +411,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
   };
 
   const handleReceberClick = (oc) => {
+    if (!hasPermission('Compras','OrdemCompra','receber')) { toast({ title: '⛔ Sem permissão para receber', variant: 'destructive' }); return; }
     openWindow(RecebimentoOCForm, {
       ordemCompra: oc,
       windowMode: true,
@@ -456,21 +459,24 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
       <OrdensCompraHeader
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        onNovaOC={() => openWindow(OrdemCompraForm, {
-          windowMode: true,
-          onSubmit: async (data) => {
-            try {
-              await createMutation.mutateAsync(data);
-              sonnerToast.success("✅ Ordem de Compra criada!");
-            } catch (error) {
-              sonnerToast.error("Erro ao criar OC");
+        onNovaOC={() => {
+          if (!hasPermission('Compras','OrdemCompra','criar')) { toast({ title: '⛔ Sem permissão para criar', variant: 'destructive' }); return; }
+          openWindow(OrdemCompraForm, {
+            windowMode: true,
+            onSubmit: async (data) => {
+              try {
+                await createMutation.mutateAsync(data);
+                sonnerToast.success("✅ Ordem de Compra criada!");
+              } catch (error) {
+                sonnerToast.error("Erro ao criar OC");
+              }
             }
-          }
-        }, {
-          title: '🛒 Nova Ordem de Compra',
-          width: 1100,
-          height: 700
-        })}
+          }, {
+            title: '🛒 Nova Ordem de Compra',
+            width: 1100,
+            height: 700
+          })
+        }}
       />
 
         {/* BACKUP: Dialog removido */}
@@ -618,10 +624,10 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             onImprimir={(oc)=>{ const empresa = empresas?.find(e => e.id === oc.empresa_id); const fornecedor = fornecedores?.find(f => f.id === oc.fornecedor_id); ImprimirOrdemCompra({ oc, empresa, fornecedor }); }}
             onVer={(oc)=> openWindow(OrdemCompraForm, { ordemCompra: oc, windowMode: true, onSubmit: async (data) => { try { await updateMutation.mutateAsync({ id: oc.id, data }); sonnerToast.success('✅ OC atualizada!'); } catch { sonnerToast.error('Erro ao atualizar OC'); } } }, { title: `👁️ Ver: ${oc.numero_oc}`, width: 1100, height: 700 })}
             onEditar={handleEdit}
-            onAprovar={(oc)=> aprovarMutation.mutate({ id: oc.id, oc })}
-            onEnviar={(oc)=> enviarFornecedorMutation.mutate({ id: oc.id, oc })}
+            onAprovar={(oc)=> { if (!hasPermission('Compras','OrdemCompra','aprovar')) { toast({ title: '⛔ Sem permissão para aprovar', variant: 'destructive' }); return; } aprovarMutation.mutate({ id: oc.id, oc }); }}
+            onEnviar={(oc)=> { if (!hasPermission('Compras','OrdemCompra','enviar_fornecedor')) { toast({ title: '⛔ Sem permissão para enviar', variant: 'destructive' }); return; } enviarFornecedorMutation.mutate({ id: oc.id, oc }); }}
             onReceber={handleReceberClick}
-            onAvaliar={(oc)=> openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650 })}
+            onAvaliar={(oc)=> { if (!hasPermission('Compras','OrdemCompra','avaliar_fornecedor')) { toast({ title: '⛔ Sem permissão para avaliar', variant: 'destructive' }); return; } openWindow(AvaliacaoFornecedorForm, { ordemCompra: oc, windowMode: true, onSubmit: async (avaliacao) => { try { await avaliarFornecedorMutation.mutateAsync({ oc, avaliacao }); sonnerToast.success('⭐ Avaliação registrada!'); } catch { sonnerToast.error('Erro ao avaliar fornecedor'); } } }, { title: `⭐ Avaliar: ${oc.fornecedor_nome}`, width: 800, height: 650 }); }}
           />
 
           <OCPaginacao
