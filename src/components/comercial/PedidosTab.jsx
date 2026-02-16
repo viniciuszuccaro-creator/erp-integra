@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +38,26 @@ import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
   const { canEdit, canCreate, canApprove } = usePermissions();
-  const { data: pedidosBackend = [] } = useEntityListSorted('Pedido', {}, { limit: 500 });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sortField, setSortField] = useState(undefined);
+  const [sortDirection, setSortDirection] = useState(undefined);
+
+  useEffect(() => {
+    try {
+      if (!sortField) {
+        const raw = localStorage.getItem('sort_Pedido');
+        if (raw) {
+          const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
+          if (sf && sd) { setSortField(sf); setSortDirection(sd); }
+        }
+      } else {
+        localStorage.setItem('sort_Pedido', JSON.stringify({ sortField, sortDirection: sortDirection || 'desc' }));
+      }
+    } catch {}
+  }, [sortField, sortDirection]);
+
+  const { data: pedidosBackend = [] } = useEntityListSorted('Pedido', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
   const pedidosList = Array.isArray(pedidos) && pedidos.length ? pedidos : pedidosBackend;
   // V21.6: Multi-empresa
   const [searchTerm, setSearchTerm] = useState("");
@@ -221,12 +240,37 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             <Table>
               <TableHeader>
                 <TableRow className="bg-slate-50">
-                  <TableHead>Nº Pedido</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Data</TableHead>
+                  <TableHead>
+                    <button className="hover:underline" onClick={() => {
+                      setSortField('numero_pedido');
+                      setSortDirection(prev => (sortField === 'numero_pedido' && prev === 'asc') ? 'desc' : 'asc');
+                    }}>Nº Pedido</button>
+                  </TableHead>
+                  <TableHead>
+                    <button className="hover:underline" onClick={() => {
+                      setSortField('cliente_nome');
+                      setSortDirection(prev => (sortField === 'cliente_nome' && prev === 'asc') ? 'desc' : 'asc');
+                    }}>Cliente</button>
+                  </TableHead>
+                  <TableHead>
+                    <button className="hover:underline" onClick={() => {
+                      setSortField('data_pedido');
+                      setSortDirection(prev => (sortField === 'data_pedido' && prev === 'asc') ? 'desc' : 'asc');
+                    }}>Data</button>
+                  </TableHead>
                   <TableHead>Origem</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <button className="hover:underline" onClick={() => {
+                      setSortField('valor_total');
+                      setSortDirection(prev => (sortField === 'valor_total' && prev === 'asc') ? 'desc' : 'asc');
+                    }}>Valor</button>
+                  </TableHead>
+                  <TableHead>
+                    <button className="hover:underline" onClick={() => {
+                      setSortField('status');
+                      setSortDirection(prev => (sortField === 'status' && prev === 'asc') ? 'desc' : 'asc');
+                    }}>Status</button>
+                  </TableHead>
                   <TableHead>Aprovação</TableHead>
                   <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
                 </TableRow>
@@ -496,6 +540,18 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          {/* Paginação backend simples */}
+          <div className="flex items-center justify-between p-4 border-t">
+            <div className="text-sm text-slate-600">Página {page}</div>
+            <div className="flex items-center gap-2">
+              <select className="h-8 border rounded px-2" value={pageSize} onChange={(e)=>{ setPageSize(Number(e.target.value)); setPage(1); }}>
+                {[10,20,50,100].map(n => (<option key={n} value={n}>{n}/página</option>))}
+              </select>
+              <Button variant="outline" size="sm" onClick={()=>setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</Button>
+              <Button variant="outline" size="sm" onClick={()=>setPage(p => p+1)} disabled={pedidosBackend.length < pageSize}>Próxima</Button>
+            </div>
           </div>
 
           {filteredPedidos.length === 0 && (

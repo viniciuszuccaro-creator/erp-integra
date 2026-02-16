@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +26,26 @@ import { useUser } from "@/components/lib/UserContext";
 
 export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas = [], windowMode = false }) {
   const { createInContext } = useContextoVisual();
-  const { data: ocBackend = [] } = useEntityListSorted('OrdemCompra', {}, { sortField: 'data_solicitacao', sortDirection: 'desc', limit: 500 });
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [sortField, setSortField] = useState('data_solicitacao');
+  const [sortDirection, setSortDirection] = useState('desc');
+
+  useEffect?.(() => {
+    try {
+      if (!sortField) {
+        const raw = localStorage.getItem('sort_OrdemCompra');
+        if (raw) {
+          const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
+          if (sf && sd) { setSortField(sf); setSortDirection(sd); }
+        }
+      } else {
+        localStorage.setItem('sort_OrdemCompra', JSON.stringify({ sortField, sortDirection }));
+      }
+    } catch {}
+  }, [sortField, sortDirection]);
+
+  const { data: ocBackend = [] } = useEntityListSorted('OrdemCompra', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
   const ocList = Array.isArray(ordensCompra) && ordensCompra.length ? ordensCompra : ocBackend;
   const { user: authUser } = useUser();
   const [searchTerm, setSearchTerm] = useState("");
@@ -624,12 +643,24 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
-                <TableHead>Número OC</TableHead>
-                <TableHead>Fornecedor</TableHead>
-                <TableHead>Data Solicitação</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Lead Time</TableHead>
+                <TableHead>
+                  <button className="hover:underline" onClick={() => { setSortField('numero_oc'); setSortDirection(prev => (sortField==='numero_oc' && prev==='asc')?'desc':'asc'); }}>Número OC</button>
+                </TableHead>
+                <TableHead>
+                  <button className="hover:underline" onClick={() => { setSortField('fornecedor_nome'); setSortDirection(prev => (sortField==='fornecedor_nome' && prev==='asc')?'desc':'asc'); }}>Fornecedor</button>
+                </TableHead>
+                <TableHead>
+                  <button className="hover:underline" onClick={() => { setSortField('data_solicitacao'); setSortDirection(prev => (sortField==='data_solicitacao' && prev==='asc')?'desc':'asc'); }}>Data Solicitação</button>
+                </TableHead>
+                <TableHead>
+                  <button className="hover:underline" onClick={() => { setSortField('valor_total'); setSortDirection(prev => (sortField==='valor_total' && prev==='asc')?'desc':'asc'); }}>Valor</button>
+                </TableHead>
+                <TableHead>
+                  <button className="hover:underline" onClick={() => { setSortField('status'); setSortDirection(prev => (sortField==='status' && prev==='asc')?'desc':'asc'); }}>Status</button>
+                </TableHead>
+                <TableHead>
+                  <button className="hover:underline" onClick={() => { setSortField('lead_time_real'); setSortDirection(prev => (sortField==='lead_time_real' && prev==='asc')?'desc':'asc'); }}>Lead Time</button>
+                </TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -773,13 +804,25 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
             </TableBody>
           </Table>
 
+          {/* Paginação backend simples */}
+          <div className="flex items-center justify-between p-4 border-t">
+            <div className="text-sm text-slate-600">Página {page}</div>
+            <div className="flex items-center gap-2">
+              <select className="h-8 border rounded px-2" value={pageSize} onChange={(e)=>{ setPageSize(Number(e.target.value)); setPage(1); }}>
+                {[10,20,50,100].map(n => (<option key={n} value={n}>{n}/página</option>))}
+              </select>
+              <Button variant="outline" size="sm" onClick={()=>setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</Button>
+              <Button variant="outline" size="sm" onClick={()=>setPage(p => p+1)} disabled={ocBackend.length < pageSize}>Próxima</Button>
+            </div>
+          </div>
+
           {filteredOCs.length === 0 && (
             <div className="text-center py-8">
               <p className="text-sm text-slate-500">Nenhuma ordem de compra encontrada</p>
             </div>
           )}
-        </CardContent>
-      </Card>
+          </CardContent>
+          </Card>
 
       {/* DIALOGS REMOVIDOS - Agora usam Windows */}
     </div>
