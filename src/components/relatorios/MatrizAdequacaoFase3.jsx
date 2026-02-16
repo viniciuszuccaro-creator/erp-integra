@@ -87,7 +87,7 @@ export default function MatrizAdequacaoFase3() {
 
         const entitiesByModule = {
           "Comercial (Produtos, Pedidos, NF)": ["Produto", "Pedido", "NotaFiscal"],
-          "Financeiro (Pagar, Receber, Caixa)": ["ContaPagar", "ContaReceber", "CaixaOrdemLiquidacao"],
+          "Financeiro (Pagar, Receber, Caixa)": ["ContaPagar", "ContaReceber", "ExtratoBancario"],
           "Estoque": ["Produto", "MovimentacaoEstoque"],
           "Compras": ["Fornecedor", "OrdemCompra", "SolicitacaoCompra"],
           "CRM": ["Cliente", "Oportunidade", "Interacao"],
