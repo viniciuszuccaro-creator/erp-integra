@@ -557,18 +557,16 @@ Retorne JSON com:
                           )}
                         </>
                       )}
-                      {sol.status === 'Aprovada' && (
-                        {hasPermission('Compras','SolicitacaoCompra','gerar_oc') && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleGerarOC(sol)}
-                            className="text-purple-600"
-                          >
-                            <ShoppingCart className="w-4 h-4 mr-1" />
-                            Gerar OC
-                          </Button>
-                        )}
+                      {sol.status === 'Aprovada' && hasPermission('Compras','SolicitacaoCompra','gerar_oc') && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleGerarOC(sol)}
+                          className="text-purple-600"
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-1" />
+                          Gerar OC
+                        </Button>
                       )}
                     </div>
                   </TableCell>
