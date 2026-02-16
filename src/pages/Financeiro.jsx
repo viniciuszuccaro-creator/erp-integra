@@ -390,10 +390,6 @@ export default function Financeiro() {
     <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
       <ModuleContainer header={<ModuleHeader><HeaderFinanceiroCompacto /></ModuleHeader>}>
-        <HeaderFinanceiroCompacto 
-          estaNoGrupo={estaNoGrupo}
-          empresaAtual={empresaAtual}
-        />
 
         <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[700px]">
           <ResizablePanel defaultSize={50} minSize={30} className="overflow-auto">
