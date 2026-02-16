@@ -14,6 +14,8 @@ import ModulosGridCompras from "@/components/compras/compras-launchpad/ModulosGr
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import ModuleContainer from "@/components/layout/ModuleContainer";
 import ModuleHeader from "@/components/layout/ModuleHeader";
+import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleTabs from "@/components/layout/ModuleTabs";
 
 const FornecedoresTab = React.lazy(() => import("../components/compras/FornecedoresTab"));
 const OrdensCompraTab = React.lazy(() => import("../components/compras/OrdensCompraTab"));
@@ -215,23 +217,17 @@ export default function Compras() {
     <ErrorBoundary>
       <ModuleContainer header={<ModuleHeader><HeaderComprasCompacto /></ModuleHeader>}>
         
-        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
-          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
-            <KPIsCompras
-              totalFornecedores={totalFornecedores}
-              fornecedoresAtivos={fornecedoresAtivos}
-              totalOrdens={ordensCompraFiltradas.length}
-              totalCompras={totalCompras}
-            />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
-            <ModulosGridCompras 
-              modules={allowedModules}
-              onModuleClick={handleModuleClick}
-            />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        <ModuleDashboard>
+          <KPIsCompras
+            totalFornecedores={totalFornecedores}
+            fornecedoresAtivos={fornecedoresAtivos}
+            totalOrdens={ordensCompraFiltradas.length}
+            totalCompras={totalCompras}
+          />
+        </ModuleDashboard>
+        <ModuleTabs
+          listagem={<ModulosGridCompras modules={allowedModules} onModuleClick={handleModuleClick} />}
+        />>
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>

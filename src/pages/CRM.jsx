@@ -13,6 +13,8 @@ import ModulosGridCRM from "@/components/crm/crm-launchpad/ModulosGridCRM";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import ModuleContainer from "@/components/layout/ModuleContainer";
 import ModuleHeader from "@/components/layout/ModuleHeader";
+import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleTabs from "@/components/layout/ModuleTabs";
 import useCRMDerivedData from "@/components/crm/hooks/useCRMDerivedData";
 import { useUser } from "@/components/lib/UserContext";
 
@@ -259,24 +261,18 @@ export default function CRMPage() {
     <ErrorBoundary>
       <ModuleContainer header={<ModuleHeader><HeaderCRMCompacto /></ModuleHeader>}>
         
-        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
-          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
-            <KPIsCRM
-              oportunidadesAbertas={oportunidadesAbertas}
-              totalOportunidades={totalOportunidades}
-              valorPipeline={valorPipeline}
-              valorPonderado={valorPonderado}
-              taxaConversao={taxaConversao}
-            />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
-            <ModulosGridCRM 
-              modules={modules}
-              onModuleClick={handleModuleClick}
-            />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        <ModuleDashboard>
+          <KPIsCRM
+            oportunidadesAbertas={oportunidadesAbertas}
+            totalOportunidades={totalOportunidades}
+            valorPipeline={valorPipeline}
+            valorPonderado={valorPonderado}
+            taxaConversao={taxaConversao}
+          />
+        </ModuleDashboard>
+        <ModuleTabs
+          listagem={<ModulosGridCRM modules={modules} onModuleClick={handleModuleClick} />}
+        />>
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>

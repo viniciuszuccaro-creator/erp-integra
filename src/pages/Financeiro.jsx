@@ -11,6 +11,8 @@ import ProtectedSection from "@/components/security/ProtectedSection";
 import HeaderFinanceiroCompacto from "@/components/financeiro/HeaderFinanceiroCompacto";
 import ModuleContainer from "@/components/layout/ModuleContainer";
 import ModuleHeader from "@/components/layout/ModuleHeader";
+import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleTabs from "@/components/layout/ModuleTabs";
 import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunchpad";
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
 
@@ -391,39 +393,28 @@ export default function Financeiro() {
     <ErrorBoundary>
       <ModuleContainer header={<ModuleHeader><HeaderFinanceiroCompacto /></ModuleHeader>}>
 
-        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[700px]">
-          <ResizablePanel defaultSize={50} minSize={30} className="overflow-auto">
-            <KPIsFinanceiroLaunchpad
-              receberPendente={receberPendente}
-              pagarPendente={pagarPendente}
-              saldo={saldo}
-              contasReceberVencidas={contasReceberVencidas}
-              contasPagarVencidas={contasPagarVencidas}
-            />
-
-            <MetricasSecundariasLaunchpad
-              titulosComBoleto={titulosComBoleto}
-              titulosComPix={titulosComPix}
-              empresasComGateway={empresasComGateway}
-              rateiosCount={rateios.length}
-              extratosNaoConciliados={extratosNaoConciliados}
-              valorNaoConciliado={valorNaoConciliado}
-              ordensLiquidacaoPendentes={ordensLiquidacaoPendentes}
-              totalPendentesAprovacao={totalPendentesAprovacao}
-            />
-
-
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={50} minSize={30} className="overflow-auto">
-            <ModulosGridFinanceiro 
-              modules={allowedAllModules}
-              onModuleClick={handleModuleClick}
-            />
-
-
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        <ModuleDashboard>
+          <KPIsFinanceiroLaunchpad
+            receberPendente={receberPendente}
+            pagarPendente={pagarPendente}
+            saldo={saldo}
+            contasReceberVencidas={contasReceberVencidas}
+            contasPagarVencidas={contasPagarVencidas}
+          />
+          <MetricasSecundariasLaunchpad
+            titulosComBoleto={titulosComBoleto}
+            titulosComPix={titulosComPix}
+            empresasComGateway={empresasComGateway}
+            rateiosCount={rateios.length}
+            extratosNaoConciliados={extratosNaoConciliados}
+            valorNaoConciliado={valorNaoConciliado}
+            ordensLiquidacaoPendentes={ordensLiquidacaoPendentes}
+            totalPendentesAprovacao={totalPendentesAprovacao}
+          />
+        </ModuleDashboard>
+        <ModuleTabs
+          listagem={<ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />}
+        />>
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>

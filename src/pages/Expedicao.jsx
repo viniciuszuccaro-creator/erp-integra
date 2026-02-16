@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import ModuleContainer from "@/components/layout/ModuleContainer";
 import ModuleHeader from "@/components/layout/ModuleHeader";
+import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleTabs from "@/components/layout/ModuleTabs";
 import HeaderExpedicaoCompacto from "@/components/expedicao/expedicao-launchpad/HeaderExpedicaoCompacto";
 import KPIsExpedicao from "@/components/expedicao/expedicao-launchpad/KPIsExpedicao";
 import ModulosGridExpedicao from "@/components/expedicao/expedicao-launchpad/ModulosGridExpedicao";
@@ -302,26 +304,19 @@ export default function Expedicao() {
     <ProtectedSection module="Expedição" action="visualizar">
     <ErrorBoundary>
       <ModuleContainer header={<ModuleHeader><HeaderExpedicaoCompacto /></ModuleHeader>}>
-        
-        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
-          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
-            <KPIsExpedicao statusCounts={statusCounts} />
 
-        {estaNoGrupo && (
-          <Badge className="bg-blue-100 text-blue-700 px-3 py-1.5 w-full justify-center">
-            <Building2 className="w-3 h-3 mr-2" />
-            Visão Consolidada do Grupo
-          </Badge>
-        )}
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
-            <ModulosGridExpedicao 
-              modules={allowedModules}
-              onModuleClick={handleModuleClick}
-            />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        <ModuleDashboard>
+          <KPIsExpedicao statusCounts={statusCounts} />
+          {estaNoGrupo && (
+            <Badge className="bg-blue-100 text-blue-700 px-3 py-1.5 w-full justify-center">
+              <Building2 className="w-3 h-3 mr-2" />
+              Visão Consolidada do Grupo
+            </Badge>
+          )}
+        </ModuleDashboard>
+        <ModuleTabs
+          listagem={<ModulosGridExpedicao modules={allowedModules} onModuleClick={handleModuleClick} />}
+        />>
       </ModuleContainer>
 
       <Dialog open={notificadorOpen} onOpenChange={setNotificadorOpen}>

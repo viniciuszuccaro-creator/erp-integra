@@ -16,6 +16,8 @@ import ValidarPedidosExternos from "@/components/comercial/ValidarPedidosExterno
 import HeaderComercialCompacto from "@/components/comercial/comercial-launchpad/HeaderComercialCompacto";
 import ModuleContainer from "@/components/layout/ModuleContainer";
 import ModuleHeader from "@/components/layout/ModuleHeader";
+import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleTabs from "@/components/layout/ModuleTabs";
 import KPIsComercial from "@/components/comercial/comercial-launchpad/KPIsComercial";
 import ModulosGridComercial from "@/components/comercial/comercial-launchpad/ModulosGridComercial";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
@@ -394,40 +396,33 @@ export default function Comercial() {
     <ErrorBoundary>
       <ModuleContainer header={<ModuleHeader><HeaderComercialCompacto /></ModuleHeader>}>
 
-        
-        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
-          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
-            <KPIsComercial
-              totalClientes={clientesFiltrados.length}
-              clientesAtivos={clientesAtivos}
-              totalPedidos={pedidosFiltrados.length}
-              totalVendas={totalVendas}
-              ticketMedio={ticketMedio}
-            />
 
-            <div className="w-full flex items-center gap-1">
-              {pedidosExternosPendentes > 0 && (
-                <Badge className="bg-orange-100 text-orange-700 px-3 py-2 text-sm font-medium">
-                  <AlertCircle className="w-3 h-3 mr-2" />
-                  {pedidosExternosPendentes} pedido(s) externo(s) a validar
-                </Badge>
-              )}
-              <Button
-                onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
-                className="h-11 px-5 bg-blue-600 hover:bg-blue-700 text-white shadow"
-              >
-                Validar Pedido Externo
-              </Button>
-            </div>
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
-            <ModulosGridComercial 
-              modules={allowedModules}
-              onModuleClick={handleModuleClick}
-            />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        <ModuleDashboard>
+          <KPIsComercial
+            totalClientes={clientesFiltrados.length}
+            clientesAtivos={clientesAtivos}
+            totalPedidos={pedidosFiltrados.length}
+            totalVendas={totalVendas}
+            ticketMedio={ticketMedio}
+          />
+          <div className="w-full flex items-center gap-1">
+            {pedidosExternosPendentes > 0 && (
+              <Badge className="bg-orange-100 text-orange-700 px-3 py-2 text-sm font-medium">
+                <AlertCircle className="w-3 h-3 mr-2" />
+                {pedidosExternosPendentes} pedido(s) externo(s) a validar
+              </Badge>
+            )}
+            <Button
+              onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
+              className="h-11 px-5 bg-blue-600 hover:bg-blue-700 text-white shadow"
+            >
+              Validar Pedido Externo
+            </Button>
+          </div>
+        </ModuleDashboard>
+        <ModuleTabs
+          listagem={<ModulosGridComercial modules={allowedModules} onModuleClick={handleModuleClick} />}
+        />>
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>

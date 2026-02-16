@@ -14,6 +14,8 @@ import ModulosGridFiscal from "@/components/fiscal/fiscal-launchpad/ModulosGridF
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import ModuleContainer from "@/components/layout/ModuleContainer";
 import ModuleHeader from "@/components/layout/ModuleHeader";
+import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleTabs from "@/components/layout/ModuleTabs";
 
 const ConfigFiscalAutomatica = React.lazy(() => import("../components/fiscal/ConfigFiscalAutomatica"));
 const PlanoDeContasTree = React.lazy(() => import("../components/fiscal/PlanoDeContasTree"));
@@ -175,25 +177,19 @@ export default function FiscalPage() {
     <ProtectedSection module="Fiscal" action="visualizar">
     <ErrorBoundary>
       <ModuleContainer header={<ModuleHeader><HeaderFiscalCompacto /></ModuleHeader>}>
-        
-        <ResizablePanelGroup direction="vertical" className="gap-2 min-h-[640px]">
-          <ResizablePanel defaultSize={45} minSize={30} className="overflow-auto">
-            <KPIsFiscal
-              total={statusCounts.total}
-              autorizadas={statusCounts.autorizadas}
-              rascunho={statusCounts.rascunho}
-              rejeitadas={statusCounts.rejeitadas}
-              canceladas={statusCounts.canceladas}
-            />
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={55} minSize={40} className="overflow-auto">
-            <ModulosGridFiscal 
-              modules={allowedModules}
-              onModuleClick={handleModuleClick}
-            />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+
+        <ModuleDashboard>
+          <KPIsFiscal
+            total={statusCounts.total}
+            autorizadas={statusCounts.autorizadas}
+            rascunho={statusCounts.rascunho}
+            rejeitadas={statusCounts.rejeitadas}
+            canceladas={statusCounts.canceladas}
+          />
+        </ModuleDashboard>
+        <ModuleTabs
+          listagem={<ModulosGridFiscal modules={allowedModules} onModuleClick={handleModuleClick} />}
+        />>
       </ModuleContainer>
     </ErrorBoundary>
     </ProtectedSection>
