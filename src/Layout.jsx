@@ -537,7 +537,7 @@ function LayoutContent({ children, currentPageName }) {
               empresa_id: scope.empresa_id || null,
               group_id: scope.group_id || null,
             };
-            const res = await base44.functions.invoke('entityGuard', guardPayload);
+            const res = await origInvoke('entityGuard', guardPayload);
             if (res?.data && res.data.allowed === false) {
               try { await base44.entities.AuditLog.create({
                 acao: 'Bloqueio', modulo: currentModule || 'Sistema', tipo_auditoria: 'seguranca',
