@@ -88,22 +88,35 @@ export function useContextoVisual() {
     return [];
   };
 
-  const filtrarPorContexto = (dados, campo = 'empresa_id') => {
+  // Compatibilidade: se receber array -> filtra local; se receber string -> delega para filterInContext (consulta server com ordenação)
+  const filtrarPorContexto = (arg, campo = 'empresa_id', maybeOrder, maybeLimit) => {
+    // Caso 1: entidade (string) => usa backend ordenado e multiempresa
+    if (typeof arg === 'string') {
+      const entityName = arg;
+      const criterios = typeof campo === 'object' ? campo : {};
+      const order = typeof maybeOrder === 'string' ? maybeOrder : undefined;
+      const limit = typeof maybeLimit === 'number' ? maybeLimit : undefined;
+      const contextoCampo = typeof campo === 'string' ? campo : 'empresa_id';
+      return filterInContext(entityName, criterios, order, limit, contextoCampo);
+    }
+
+    // Caso 2: lista local (array) => mantém filtro por contexto (retrocompatibilidade)
+    const dados = Array.isArray(arg) ? arg : [];
     if (!dados || dados.length === 0) return [];
 
     if (estaNoGrupo) {
       if (filtroEmpresa !== 'todas') {
         return dados.filter(item => item[campo] === filtroEmpresa || item.group_id === grupoAtual?.id);
       }
-      return dados.filter(item => 
-        item.group_id === grupoAtual?.id || 
+      return dados.filter(item =>
+        item.group_id === grupoAtual?.id ||
         empresasDoGrupo.some(emp => emp.id === item[campo])
       );
     }
 
     if (estaEmEmpresa && empresaAtual) {
-      return dados.filter(item => 
-        item[campo] === empresaAtual.id || 
+      return dados.filter(item =>
+        item[campo] === empresaAtual.id ||
         (item.group_id && item.documento_grupo_id && item[campo] === empresaAtual.id)
       );
     }
