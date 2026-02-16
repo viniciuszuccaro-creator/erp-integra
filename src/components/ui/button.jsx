@@ -51,6 +51,27 @@ import { uiAuditWrap } from "@/components/lib/uiAudit";
 
 // HOC to wrap onClick with audit (non-invasive)
 function withUIAudit(props) {
+  // Modo transição: mostrar e bloquear no clique (Big Bang imediato)
+  const wrapIfDenied = (onClick) => async (e) => {
+    try {
+      const path = typeof window !== 'undefined' ? window.location.pathname : '';
+      const page = (path.split('/').pop() || '').replace(/^\//,'');
+      // Heurística simples: deriva módulo pela rota atual
+      const pageToModule = {
+        CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição', Producao: 'Produção'
+      };
+      const moduleName = pageToModule[page] || 'Sistema';
+      const res = await base44.functions.invoke('entityGuard', { module: moduleName, action: 'executar' });
+      if (res?.data && res.data.allowed === false) {
+        e?.preventDefault?.(); e?.stopPropagation?.();
+        try { await base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: moduleName, entidade: 'UI', descricao: 'Clique bloqueado (sem permissão)', data_hora: new Date().toISOString() }); } catch {}
+        try { toast.error('Permissão negada'); } catch {}
+        return;
+      }
+    } catch (_) {}
+    return onClick?.(e);
+  };
+
   const p = { ...props };
   if (typeof p.onClick === 'function' && !p.__wrapped_audit) {
     const meta = { kind: 'button', toastSuccess: true };
