@@ -17,6 +17,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
 import HeaderReceberCompacto from "./contas-receber/HeaderReceberCompacto";
 import KPIsReceber from "./contas-receber/KPIsReceber";
 import FiltrosReceber from "./contas-receber/FiltrosReceber";
@@ -49,6 +50,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const { openWindow } = useWindow();
   const { formasPagamento } = useFormasPagamento();
   const { user: authUser } = useUser();
+  const { hasPermission } = usePermissions();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
@@ -239,6 +241,10 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   };
 
   const handleBaixar = (conta) => {
+    if (!hasPermission('Financeiro','ContaReceber','baixar') && !hasPermission('Financeiro','ContaReceber','liquidar')) {
+      toast({ title: '⛔ Sem permissão para baixar', variant: 'destructive' });
+      return;
+    }
     setContaAtual(conta);
     setDadosBaixa({
       data_recebimento: new Date().toISOString().split('T')[0],
@@ -253,6 +259,10 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   };
 
   const handleBaixarMultipla = () => {
+    if (!hasPermission('Financeiro','ContaReceber','baixar') && !hasPermission('Financeiro','ContaReceber','liquidar')) {
+      toast({ title: '⛔ Sem permissão para baixa múltipla', variant: 'destructive' });
+      return;
+    }
     if (contasSelecionadas.length === 0) {
       toast({ title: "⚠️ Selecione pelo menos um título", variant: "destructive" });
       return;
@@ -305,7 +315,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
           URL.revokeObjectURL(url);
         }}
         onBaixarMultipla={handleBaixarMultipla}
-        onNovaConta={() => openWindow(ContaReceberForm, {
+        onNovaConta={() => { if (!hasPermission('Financeiro','ContaReceber','criar')) { toast({ title: '⛔ Sem permissão para criar', variant: 'destructive' }); return; } openWindow(ContaReceberForm, {
           windowMode: true,
           onSubmit: async (data) => {
             await createInContext('ContaReceber', {
@@ -317,7 +327,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
             toast({ title: "✅ Conta criada!" });
           }
         }, { title: '💰 Nova Conta a Receber', width: 900, height: 600 })}
-        onEnviarCaixa={() => {
+        onEnviarCaixa={() => { if (!hasPermission('Financeiro','ContaReceber','enviar_caixa') && !hasPermission('Financeiro','ContaReceber','editar')) { toast({ title: '⛔ Sem permissão para enviar ao Caixa', variant: 'destructive' }); return; }
           const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
           enviarParaCaixaMutation.mutate(titulos);
         }}

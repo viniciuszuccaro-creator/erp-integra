@@ -14,6 +14,7 @@ import { useWindow } from "@/components/lib/useWindow";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { useFormasPagamento } from "@/components/lib/useFormasPagamento";
 import { useUser } from "@/components/lib/UserContext";
+import usePermissions from "@/components/lib/usePermissions";
 import HeaderPagarCompacto from "./contas-pagar/HeaderPagarCompacto";
 import KPIsPagar from "./contas-pagar/KPIsPagar";
 import FiltrosPagar from "./contas-pagar/FiltrosPagar";
@@ -46,6 +47,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   const { openWindow } = useWindow();
   const { formasPagamento } = useFormasPagamento();
   const { user: authUser } = useUser();
+  const { hasPermission } = usePermissions();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -166,9 +168,10 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         data_aprovacao: new Date().toISOString()
       });
     },
-    onSuccess: () => {
+    onSuccess: async (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ['contasPagar'] });
       toast({ title: "✅ Pagamento aprovado!" });
+      try { await base44.entities.AuditLog.create({ acao: 'Edição', modulo: 'Financeiro', entidade: 'ContaPagar', registro_id: id, descricao: 'Aprovação de pagamento', data_hora: new Date().toISOString() }); } catch(_) {}
     }
   });
 
@@ -207,6 +210,10 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   };
 
   const handleBaixar = (conta) => {
+    if (!hasPermission('Financeiro','ContaPagar','baixar') && !hasPermission('Financeiro','ContaPagar','liquidar')) {
+      toast({ title: '⛔ Sem permissão para baixar', variant: 'destructive' });
+      return;
+    }
     setContaAtual(conta);
     setDadosBaixa({
       data_pagamento: new Date().toISOString().split('T')[0],
@@ -221,6 +228,10 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
   };
 
   const handleBaixarMultipla = () => {
+    if (!hasPermission('Financeiro','ContaPagar','baixar') && !hasPermission('Financeiro','ContaPagar','liquidar')) {
+      toast({ title: '⛔ Sem permissão para baixa múltipla', variant: 'destructive' });
+      return;
+    }
     if (contasSelecionadas.length === 0) {
       toast({ title: "⚠️ Selecione pelo menos um título", variant: "destructive" });
       return;
@@ -287,6 +298,7 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
         }, { title: '💸 Nova Conta a Pagar', width: 900, height: 600 })}
         onEnviarCaixa={() => {
           const titulos = contasList.filter(c => contasSelecionadas.includes(c.id));
+          if (!hasPermission('Financeiro','ContaPagar','enviar_caixa') && !hasPermission('Financeiro','ContaPagar','editar')) { toast({ title: '⛔ Sem permissão para enviar ao Caixa', variant: 'destructive' }); return; }
           enviarParaCaixaMutation.mutate(titulos);
         }}
         empresaId={empresas[0]?.id}
@@ -309,7 +321,10 @@ export default function ContasPagarTab({ contas, windowMode = false }) {
             toast({ title: "✅ Conta atualizada!" });
           }
         }, { title: `✏️ Editar: ${conta.fornecedor}`, width: 900, height: 600 })}
-        onAprovar={(contaId) => aprovarPagamentoMutation.mutate(contaId)}
+        onAprovar={(contaId) => {
+          if (!hasPermission('Financeiro','ContaPagar','aprovar')) { toast({ title: '⛔ Sem permissão para aprovar', variant: 'destructive' }); return; }
+          aprovarPagamentoMutation.mutate(contaId);
+        }}
         onBaixar={handleBaixar}
         aprovarPending={aprovarPagamentoMutation.isPending}
       />
