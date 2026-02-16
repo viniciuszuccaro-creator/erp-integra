@@ -20,25 +20,15 @@ import KPIsPagar from "./contas-pagar/KPIsPagar";
 import FiltrosPagar from "./contas-pagar/FiltrosPagar";
 import TabelaPagar from "./contas-pagar/TabelaPagar";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
+import usePersistedSort from "@/components/lib/usePersistedSort";
 
 export default function ContasPagarTab({ contas, windowMode = false }) {
   const { createInContext, updateInContext } = useContextoVisual();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [sortField, setSortField] = useState('data_vencimento');
-  const [sortDirection, setSortDirection] = useState('asc');
+  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('ContaPagar', 'data_vencimento', 'asc');
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem('sort_ContaPagar');
-      if (!sortField && raw) {
-        const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
-        if (sf && sd) { setSortField(sf); setSortDirection(sd); }
-      } else if (sortField) {
-        localStorage.setItem('sort_ContaPagar', JSON.stringify({ sortField, sortDirection }));
-      }
-    } catch {}
-  }, [sortField, sortDirection]);
+  // persistência de sort movida para usePersistedSort
 
   const { data: contasBackend = [] } = useEntityListSorted('ContaPagar', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
   const contasList = Array.isArray(contas) && contas.length ? contas : contasBackend;

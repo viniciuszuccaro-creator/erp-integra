@@ -35,28 +35,16 @@ import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import CentralAprovacoesManager from "./CentralAprovacoesManager";
 import usePermissions from "@/components/lib/usePermissions";
 import useEntityListSorted from "@/components/lib/useEntityListSorted";
+import usePersistedSort from "@/components/lib/usePersistedSort";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
   const { canEdit, canCreate, canApprove, canDelete } = usePermissions();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [sortField, setSortField] = useState(undefined);
-  const [sortDirection, setSortDirection] = useState(undefined);
+  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('Pedido', 'data_pedido', 'desc');
 
-  useEffect(() => {
-    try {
-      if (!sortField) {
-        const raw = localStorage.getItem('sort_Pedido');
-        if (raw) {
-          const { sortField: sf, sortDirection: sd } = JSON.parse(raw);
-          if (sf && sd) { setSortField(sf); setSortDirection(sd); }
-        }
-      } else {
-        localStorage.setItem('sort_Pedido', JSON.stringify({ sortField, sortDirection: sortDirection || 'desc' }));
-      }
-    } catch {}
-  }, [sortField, sortDirection]);
+  // persistência de sort movida para usePersistedSort
 
   const { data: pedidosBackend = [] } = useEntityListSorted('Pedido', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
   const pedidosList = Array.isArray(pedidos) && pedidos.length ? pedidos : pedidosBackend;
