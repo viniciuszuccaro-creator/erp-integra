@@ -25,7 +25,7 @@ const DEFAULT_SORTS = {
   Cliente: { field: 'nome', direction: 'asc' },
   Fornecedor: { field: 'nome', direction: 'asc' },
   Pedido: { field: 'data_pedido', direction: 'desc' },
-  ContaPagar: { field: 'data_vencimento', direction: 'desc' },
+  ContaPagar: { field: 'data_vencimento', direction: 'asc' },
   ContaReceber: { field: 'data_vencimento', direction: 'asc' },
   OrdemCompra: { field: 'data_solicitacao', direction: 'desc' },
   CentroCusto: { field: 'codigo', direction: 'asc' },
