@@ -376,6 +376,49 @@ function LayoutContent({ children, currentPageName }) {
       return out;
     };
 
+    const getScope = () => {
+      const scope = {};
+      try {
+        if (grupoAtual?.id) scope.group_id = grupoAtual.id;
+        if (contexto !== 'grupo' && empresaAtual?.id) scope.empresa_id = empresaAtual.id;
+      } catch (_) {}
+      return scope;
+    };
+
+    const checkRBAC = async (entityName, action, sectionHint = null, op = null) => {
+      try {
+        // Map entity → module (granular)
+        const map = {
+          Cliente: 'CRM', Oportunidade: 'CRM', Interacao: 'CRM',
+          Pedido: 'Comercial', Comissao: 'Comercial',
+          NotaFiscal: 'Fiscal',
+          Entrega: 'Expedição', Romaneio: 'Expedição',
+          Fornecedor: 'Compras', SolicitacaoCompra: 'Compras', OrdemCompra: 'Compras',
+          Produto: 'Estoque', MovimentacaoEstoque: 'Estoque',
+          ContaPagar: 'Financeiro', ContaReceber: 'Financeiro', CentroCusto: 'Financeiro',
+          PerfilAcesso: 'Administração', User: 'Administração', Evento: 'Agenda'
+        };
+        const moduleName = map[entityName] || 'Sistema';
+        const scope = getScope();
+        const payload = {
+          module: moduleName,
+          section: sectionHint || entityName,
+          action,
+          entity_name: entityName,
+          operation: op,
+          empresa_id: scope.empresa_id || null,
+          group_id: scope.group_id || null,
+        };
+        const res = await base44.functions.invoke('entityGuard', payload);
+        if (res?.data && res.data.allowed === false) {
+          throw new Error('RBAC backend: ação negada');
+        }
+      } catch (err) {
+        // Se o endpoint não existir/erro rede, não bloquear UI; somente bloquear quando 403/allowed false
+        if (err?.response?.status === 403) throw new Error('RBAC backend: ação negada');
+      }
+    };
+
     const wrapEntity = (api, name) => {
       if (!api || api.__wrappedContext === true || name === 'AuditLog') return;
       const orig = {
@@ -383,10 +426,13 @@ function LayoutContent({ children, currentPageName }) {
         bulkCreate: typeof api.bulkCreate === 'function' ? api.bulkCreate.bind(api) : null,
         update: typeof api.update === 'function' ? api.update.bind(api) : null,
         delete: typeof api.delete === 'function' ? api.delete.bind(api) : null,
+        filter: typeof api.filter === 'function' ? api.filter.bind(api) : null,
+        list: typeof api.list === 'function' ? api.list.bind(api) : null,
       };
 
       if (orig.create) {
         api.create = async (data) => {
+          await checkRBAC(name, 'criar');
           const res = await orig.create(stamp(data));
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
@@ -418,6 +464,7 @@ function LayoutContent({ children, currentPageName }) {
 
       if (orig.update) {
         api.update = async (id, data) => {
+          await checkRBAC(name, 'editar');
           const res = await orig.update(id, stamp(data));
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
@@ -433,6 +480,7 @@ function LayoutContent({ children, currentPageName }) {
 
       if (orig.delete) {
         api.delete = async (id) => {
+          await checkRBAC(name, 'excluir');
           const res = await orig.delete(id);
           try { await base44.entities.AuditLog.create({
             usuario: user?.full_name || user?.email || 'Usuário',
@@ -443,6 +491,26 @@ function LayoutContent({ children, currentPageName }) {
             data_hora: new Date().toISOString(),
           }); } catch (_) {}
           return res;
+        };
+      }
+
+      // Multiempresa em list/filter por padrão para não-admins
+      if (orig.filter) {
+        api.filter = async (criteria = {}, order, limit, skip) => {
+          const isAdmin = user?.role === 'admin';
+          const hasScope = !!criteria?.empresa_id || !!criteria?.group_id;
+          const merged = (!isAdmin && !hasScope) ? { ...criteria, ...getScope() } : criteria;
+          return await orig.filter(merged, order, limit, skip);
+        };
+      }
+
+      if (orig.list) {
+        api.list = async (order, limit, skip) => {
+          const isAdmin = user?.role === 'admin';
+          if (!isAdmin && orig.filter) {
+            return await orig.filter(getScope(), order, limit, skip);
+          }
+          return await orig.list(order, limit, skip);
         };
       }
 

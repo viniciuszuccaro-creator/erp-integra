@@ -190,7 +190,7 @@ export default function ContasReceberTab({ contas, empresas = [], windowMode = f
   const enviarWhatsAppMutation = useMutation({
     mutationFn: async (contaId) => {
       const conta = contasList.find(c => c.id === contaId);
-      await base44.entities.ContaReceber.update(contaId, {
+      await updateInContext('ContaReceber', contaId, {
         data_envio_cobranca: new Date().toISOString()
       });
       return { sucesso: true };
