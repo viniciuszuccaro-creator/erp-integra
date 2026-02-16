@@ -25,12 +25,14 @@ import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import SolicitacaoCompraForm from "./SolicitacaoCompraForm";
 import { useWindow } from "@/components/lib/useWindow";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast as sonnerToast } from "sonner";
 
 export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const { openWindow } = useWindow();
+  const { hasPermission } = usePermissions();
   // Seleção em massa + exportação
   const [selectedSolicitacoes, setSelectedSolicitacoes] = useState([]);
   const toggleSolicitacao = (id) => setSelectedSolicitacoes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
@@ -329,28 +331,30 @@ Retorne JSON com:
               <span className="text-xs">🤖 IA</span>
             )}
           </Button>
-          <Button
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => openWindow(SolicitacaoCompraForm, {
-              windowMode: true,
-              onSubmit: async (data) => {
-                try {
-                  await createMutation.mutateAsync(data);
-                  sonnerToast.success("✅ Solicitação criada!");
-                } catch (error) {
-                  sonnerToast.error("Erro ao criar solicitação");
+          {hasPermission('Compras','SolicitacaoCompra','criar') && (
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => openWindow(SolicitacaoCompraForm, {
+                windowMode: true,
+                onSubmit: async (data) => {
+                  try {
+                    await createMutation.mutateAsync(data);
+                    sonnerToast.success("✅ Solicitação criada!");
+                  } catch (error) {
+                    sonnerToast.error("Erro ao criar solicitação");
+                  }
                 }
-              }
-            }, {
-              title: '🛒 Nova Solicitação de Compra',
-              width: 900,
-              height: 650
-            })}
-          >
-            <Plus className="w-3 h-3 mr-1" />
-            Nova
-          </Button>
+              }, {
+                title: '🛒 Nova Solicitação de Compra',
+                width: 900,
+                height: 650
+              })}
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Nova
+            </Button>
+          )}
 
           {/* BACKUP: Dialog removido */}
           <Dialog open={false}>
@@ -531,34 +535,40 @@ Retorne JSON com:
                     <div className="flex gap-1">
                       {sol.status === 'Pendente' && (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleAprovar(sol)}
-                            title="Aprovar"
-                          >
-                            <CheckCircle2 className="w-4 h-4 text-green-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRejeitar(sol)}
-                            title="Rejeitar"
-                          >
-                            <XCircle className="w-4 h-4 text-red-600" />
-                          </Button>
+                          {hasPermission('Compras','SolicitacaoCompra','aprovar') && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleAprovar(sol)}
+                              title="Aprovar"
+                            >
+                              <CheckCircle2 className="w-4 h-4 text-green-600" />
+                            </Button>
+                          )}
+                          {hasPermission('Compras','SolicitacaoCompra','rejeitar') && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRejeitar(sol)}
+                              title="Rejeitar"
+                            >
+                              <XCircle className="w-4 h-4 text-red-600" />
+                            </Button>
+                          )}
                         </>
                       )}
                       {sol.status === 'Aprovada' && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleGerarOC(sol)}
-                          className="text-purple-600"
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-1" />
-                          Gerar OC
-                        </Button>
+                        {hasPermission('Compras','SolicitacaoCompra','gerar_oc') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleGerarOC(sol)}
+                            className="text-purple-600"
+                          >
+                            <ShoppingCart className="w-4 h-4 mr-1" />
+                            Gerar OC
+                          </Button>
+                        )}
                       )}
                     </div>
                   </TableCell>

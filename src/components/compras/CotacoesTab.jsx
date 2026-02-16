@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Plus, Send, Eye, CheckCircle2, TrendingUp, Award, FileText, ShoppingCart, AlertCircle, Building2, Package } from "lucide-react";
 import CotacaoForm from "./CotacaoForm";
 import { useWindow } from "@/components/lib/useWindow";
+import usePermissions from "@/components/lib/usePermissions";
 import { toast as sonnerToast } from "sonner";
 
 export default function CotacoesTab({ windowMode = false }) {
@@ -22,6 +23,7 @@ export default function CotacoesTab({ windowMode = false }) {
   const [cotacaoSelecionada, setCotacaoSelecionada] = useState(null);
   const [comparativoModal, setComparativoModal] = useState(null);
   const { openWindow } = useWindow();
+  const { hasPermission } = usePermissions();
   const [formCotacao, setFormCotacao] = useState({
     descricao: "",
     data_limite_resposta: "",
@@ -206,27 +208,29 @@ export default function CotacoesTab({ windowMode = false }) {
           <h2 className="text-2xl font-bold">Sistema de Cotações</h2>
           <p className="text-sm text-slate-600">Cote com múltiplos fornecedores e escolha a melhor proposta</p>
         </div>
-        <Button
-          className="bg-cyan-600 hover:bg-cyan-700"
-          onClick={() => openWindow(CotacaoForm, {
-            windowMode: true,
-            onSubmit: async (data) => {
-              try {
-                await criarCotacaoMutation.mutateAsync(data);
-                sonnerToast.success("✅ Cotação criada e enviada!");
-              } catch (error) {
-                sonnerToast.error("Erro ao criar cotação");
+        {hasPermission('Compras','Cotacao','criar') && (
+          <Button
+            className="bg-cyan-600 hover:bg-cyan-700"
+            onClick={() => openWindow(CotacaoForm, {
+              windowMode: true,
+              onSubmit: async (data) => {
+                try {
+                  await criarCotacaoMutation.mutateAsync(data);
+                  sonnerToast.success("✅ Cotação criada e enviada!");
+                } catch (error) {
+                  sonnerToast.error("Erro ao criar cotação");
+                }
               }
-            }
-          }, {
-            title: '📊 Nova Cotação de Compras',
-            width: 1100,
-            height: 700
-          })}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Cotação
-        </Button>
+            }, {
+              title: '📊 Nova Cotação de Compras',
+              width: 1100,
+              height: 700
+            })}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Cotação
+          </Button>
+        )}
 
         <Dialog open={false}>
           <DialogTrigger asChild>
@@ -635,15 +639,17 @@ export default function CotacoesTab({ windowMode = false }) {
                                 <Send className="w-4 h-4 mr-2" />
                                 Solicitar Esclarecimentos
                               </Button>
-                              <Button
-                                size="sm"
-                                className="bg-green-600 hover:bg-green-700"
-                                onClick={() => gerarOrdemCompraMutation.mutate(proposta)}
-                                disabled={gerarOrdemCompraMutation.isPending}
-                              >
-                                <ShoppingCart className="w-4 h-4 mr-2" />
-                                {gerarOrdemCompraMutation.isPending ? 'Gerando...' : 'Gerar Ordem de Compra'}
-                              </Button>
+                              {hasPermission('Compras','Cotacao','gerar_oc') && (
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700"
+                                  onClick={() => gerarOrdemCompraMutation.mutate(proposta)}
+                                  disabled={gerarOrdemCompraMutation.isPending}
+                                >
+                                  <ShoppingCart className="w-4 h-4 mr-2" />
+                                  {gerarOrdemCompraMutation.isPending ? 'Gerando...' : 'Gerar Ordem de Compra'}
+                                </Button>
+                              )}
                             </div>
                           </CardContent>
                         </Card>

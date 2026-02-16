@@ -300,7 +300,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                 <SelectItem value="CT-e">CT-e</SelectItem>
               </SelectContent>
             </Select>
-            {onCreateNFe && (
+            {onCreateNFe && hasPermission('Fiscal','NotaFiscal','criar') && (
               <Button 
                 className="bg-blue-600 hover:bg-blue-700"
                 onClick={onCreateNFe}
@@ -317,7 +317,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
               }
             }}>
               <DialogTrigger asChild>
-                {!onCreateNFe && (
+                {!onCreateNFe && hasPermission('Fiscal','NotaFiscal','criar') && (
                   <Button className="bg-blue-600 hover:bg-blue-700">
                     <Plus className="w-4 h-4 mr-2" />
                     Nova NF-e (Rápido)
@@ -525,7 +525,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                           </Button>
                         )}
 
-                        {nota.status === "Pendente" && (
+                        {nota.status === "Pendente" && hasPermission('Fiscal','NotaFiscal','enviar') && (
                           <Button 
                             variant="ghost" 
                             size="sm" 
