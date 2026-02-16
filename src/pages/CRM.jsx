@@ -15,6 +15,7 @@ import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleKPIs from "@/components/layout/ModuleKPIs";
 import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
+import { Button } from "@/components/ui/button";
 import useCRMDerivedData from "@/components/crm/hooks/useCRMDerivedData";
 import { useUser } from "@/components/lib/UserContext";
 
@@ -259,7 +260,7 @@ export default function CRMPage() {
   return (
     <ProtectedSection module="CRM" action="visualizar">
     <ErrorBoundary>
-      <ModuleLayout title="CRM - Relacionamento">
+      <ModuleLayout title="CRM - Relacionamento" subtitle="Relacionamento, funil e campanhas" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'crm_primary_action' })}>Novo</Button></div>}>
         <ModuleKPIs>
           <KPIsCRM
             oportunidadesAbertas={oportunidadesAbertas}

@@ -11,6 +11,11 @@ import usePermissions from "@/components/lib/usePermissions";
 import HeaderProducaoCompacto from "@/components/producao/producao-launchpad/HeaderProducaoCompacto";
 import KPIsProducao from "@/components/producao/producao-launchpad/KPIsProducao";
 import ModulosGridProducao from "@/components/producao/producao-launchpad/ModulosGridProducao";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleKPIs from "@/components/layout/ModuleKPIs";
+import ModuleContent from "@/components/layout/ModuleContent";
+import ModuleTabs from "@/components/layout/ModuleTabs";
+import { Button } from "@/components/ui/button";
 
 const KanbanProducaoInteligente = React.lazy(() => import("@/components/producao/KanbanProducaoInteligente"));
 const ApontamentoProducao = React.lazy(() => import("@/components/producao/ApontamentoProducao"));

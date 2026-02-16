@@ -16,6 +16,7 @@ import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleKPIs from "@/components/layout/ModuleKPIs";
 import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
+import { Button } from "@/components/ui/button";
 
 const FornecedoresTab = React.lazy(() => import("../components/compras/FornecedoresTab"));
 const OrdensCompraTab = React.lazy(() => import("../components/compras/OrdensCompraTab"));
@@ -215,7 +216,7 @@ export default function Compras() {
   return (
     <ProtectedSection module="Compras" action="visualizar">
     <ErrorBoundary>
-      <ModuleLayout title="Compras e Suprimentos">
+      <ModuleLayout title="Compras e Suprimentos" subtitle="Fornecedores, OCs e recebimento" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'compras_primary_action' })}>Nova OC</Button></div>}>
         <ModuleKPIs>
           <KPIsCompras
             totalFornecedores={totalFornecedores}

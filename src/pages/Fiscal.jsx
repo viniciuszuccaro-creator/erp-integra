@@ -16,6 +16,7 @@ import ModuleLayout from "@/components/layout/ModuleLayout";
 import ModuleKPIs from "@/components/layout/ModuleKPIs";
 import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
+import { Button } from "@/components/ui/button";
 
 const ConfigFiscalAutomatica = React.lazy(() => import("../components/fiscal/ConfigFiscalAutomatica"));
 const PlanoDeContasTree = React.lazy(() => import("../components/fiscal/PlanoDeContasTree"));
@@ -176,7 +177,7 @@ export default function FiscalPage() {
   return (
     <ProtectedSection module="Fiscal" action="visualizar">
     <ErrorBoundary>
-      <ModuleLayout title="Fiscal e Tributário">
+      <ModuleLayout title="Fiscal e Tributário" subtitle="NF-e, tributos e relatórios" actions={<div className="flex items-center gap-2"><Button size="sm" onClick={() => base44.analytics.track({ eventName: 'fiscal_primary_action' })}>Nova NF-e</Button></div>}>
         <ModuleKPIs>
           <KPIsFiscal
             total={statusCounts.total}
