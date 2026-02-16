@@ -95,7 +95,7 @@ const navigationItems = [
 function LayoutContent({ children, currentPageName }) {
         const location = useLocation();
         const { user } = useUser();
-        const { empresaAtual, filterInContext } = useContextoVisual();
+        const { empresaAtual, filterInContext, grupoAtual, contexto } = useContextoVisual();
         const { hasPermission } = usePermissions();
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
@@ -362,6 +362,97 @@ function LayoutContent({ children, currentPageName }) {
 
     return () => { unsubs.forEach(u => { if (typeof u === 'function') u(); }); };
   }, [user?.id, empresaAtual?.id]);
+
+  // Global Phase 4 patch: multiempresa stamping + audit on entity writes
+  useEffect(() => {
+    if (!base44?.entities) return;
+
+    const stamp = (dados) => {
+      const out = { ...(dados || {}) };
+      try {
+        if (grupoAtual?.id && !out.group_id) out.group_id = grupoAtual.id;
+        if (contexto !== 'grupo' && empresaAtual?.id && !out.empresa_id) out.empresa_id = empresaAtual.id;
+      } catch (_) {}
+      return out;
+    };
+
+    const wrapEntity = (api, name) => {
+      if (!api || api.__wrappedContext === true || name === 'AuditLog') return;
+      const orig = {
+        create: typeof api.create === 'function' ? api.create.bind(api) : null,
+        bulkCreate: typeof api.bulkCreate === 'function' ? api.bulkCreate.bind(api) : null,
+        update: typeof api.update === 'function' ? api.update.bind(api) : null,
+        delete: typeof api.delete === 'function' ? api.delete.bind(api) : null,
+      };
+
+      if (orig.create) {
+        api.create = async (data) => {
+          const res = await orig.create(stamp(data));
+          try { await base44.entities.AuditLog.create({
+            usuario: user?.full_name || user?.email || 'Usuário',
+            usuario_id: user?.id,
+            acao: 'Criação', modulo: 'Sistema', tipo_auditoria: 'entidade',
+            entidade: name, registro_id: res?.id, dados_novos: res,
+            empresa_id: empresaAtual?.id || null,
+            data_hora: new Date().toISOString(),
+          }); } catch (_) {}
+          return res;
+        };
+      }
+
+      if (orig.bulkCreate) {
+        api.bulkCreate = async (arr) => {
+          const stamped = Array.isArray(arr) ? arr.map(stamp) : arr;
+          const res = await orig.bulkCreate(stamped);
+          try { await base44.entities.AuditLog.create({
+            usuario: user?.full_name || user?.email || 'Usuário',
+            usuario_id: user?.id,
+            acao: 'Criação', modulo: 'Sistema', tipo_auditoria: 'entidade',
+            entidade: name, descricao: `bulkCreate`,
+            empresa_id: empresaAtual?.id || null,
+            data_hora: new Date().toISOString(),
+          }); } catch (_) {}
+          return res;
+        };
+      }
+
+      if (orig.update) {
+        api.update = async (id, data) => {
+          const res = await orig.update(id, stamp(data));
+          try { await base44.entities.AuditLog.create({
+            usuario: user?.full_name || user?.email || 'Usuário',
+            usuario_id: user?.id,
+            acao: 'Edição', modulo: 'Sistema', tipo_auditoria: 'entidade',
+            entidade: name, registro_id: id, dados_novos: data,
+            empresa_id: empresaAtual?.id || null,
+            data_hora: new Date().toISOString(),
+          }); } catch (_) {}
+          return res;
+        };
+      }
+
+      if (orig.delete) {
+        api.delete = async (id) => {
+          const res = await orig.delete(id);
+          try { await base44.entities.AuditLog.create({
+            usuario: user?.full_name || user?.email || 'Usuário',
+            usuario_id: user?.id,
+            acao: 'Exclusão', modulo: 'Sistema', tipo_auditoria: 'entidade',
+            entidade: name, registro_id: id,
+            empresa_id: empresaAtual?.id || null,
+            data_hora: new Date().toISOString(),
+          }); } catch (_) {}
+          return res;
+        };
+      }
+
+      api.__wrappedContext = true;
+    };
+
+    try {
+      Object.keys(base44.entities).forEach((name) => wrapEntity(base44.entities[name], name));
+    } catch (_) {}
+  }, [user?.id, empresaAtual?.id, grupoAtual?.id, contexto]);
 
 
   // Auditoria global de interações (cliques/seletores/tabs)
