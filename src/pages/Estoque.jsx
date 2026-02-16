@@ -10,9 +10,9 @@ import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import { Button } from "@/components/ui/button";
 import HeaderEstoqueCompacto from "@/components/estoque/estoque-launchpad/HeaderEstoqueCompacto";
-import ModuleContainer from "@/components/layout/ModuleContainer";
-import ModuleHeader from "@/components/layout/ModuleHeader";
-import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleKPIs from "@/components/layout/ModuleKPIs";
+import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 import KPIsEstoque from "@/components/estoque/estoque-launchpad/KPIsEstoque";
 import ModulosGridEstoque from "@/components/estoque/estoque-launchpad/ModulosGridEstoque";
@@ -321,10 +321,13 @@ export default function Estoque() {
   return (
     <ProtectedSection module="Estoque" action="visualizar">
     <ErrorBoundary>
-      <ModuleContainer header={<ModuleHeader><HeaderEstoqueCompacto /></ModuleHeader>}>
-
-
-        <ModuleDashboard>
+      <ModuleLayout
+        title="Estoque e Almoxarifado"
+        actions={<div className="flex items-center gap-2">
+          <Button onClick={handleExportAco} variant="outline" className="gap-2"><Download className="w-3 h-3" /> Exportar Aço (PDF)</Button>
+        </div>}
+      >
+        <ModuleKPIs>
           <KPIsEstoque
             produtosAtivos={contagensTotais.total}
             produtosBaixoEstoque={contagensTotais.estoqueBaixo}
@@ -333,6 +336,8 @@ export default function Estoque() {
             produtosRevenda={contagensTotais.revenda}
             produtosProducao={contagensTotais.producao}
           />
+        </ModuleKPIs>
+        <ModuleContent>
           {estaNoGrupo && (
             <Button
               onClick={() => openWindow(TransferenciaEntreEmpresasForm, {
@@ -344,21 +349,18 @@ export default function Estoque() {
                 width: 900,
                 height: 600
               })}
-              className="bg-purple-600 hover:bg-purple-700 w-full mt-2"
+              className="bg-purple-600 hover:bg-purple-700 mb-2"
               size="sm"
             >
               <ArrowLeftRight className="w-3 h-3 mr-2" />
               Transferir entre Empresas
             </Button>
           )}
-          <Button onClick={handleExportAco} variant="outline" className="w-full mt-2 gap-2" size="sm">
-            <Download className="w-3 h-3" /> Exportar Estoque de Aço (PDF)
-          </Button>
-        </ModuleDashboard>
-        <ModuleTabs
-          listagem={<ModulosGridEstoque modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />
-      </ModuleContainer>
+          <ModuleTabs
+            listagem={<ModulosGridEstoque modules={allowedModules} onModuleClick={handleModuleClick} />}
+          />
+        </ModuleContent>
+      </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>
   );

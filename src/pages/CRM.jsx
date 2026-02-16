@@ -11,9 +11,9 @@ import HeaderCRMCompacto from "@/components/crm/crm-launchpad/HeaderCRMCompacto"
 import KPIsCRM from "@/components/crm/crm-launchpad/KPIsCRM";
 import ModulosGridCRM from "@/components/crm/crm-launchpad/ModulosGridCRM";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import ModuleContainer from "@/components/layout/ModuleContainer";
-import ModuleHeader from "@/components/layout/ModuleHeader";
-import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleKPIs from "@/components/layout/ModuleKPIs";
+import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 import useCRMDerivedData from "@/components/crm/hooks/useCRMDerivedData";
 import { useUser } from "@/components/lib/UserContext";
@@ -259,9 +259,8 @@ export default function CRMPage() {
   return (
     <ProtectedSection module="CRM" action="visualizar">
     <ErrorBoundary>
-      <ModuleContainer header={<ModuleHeader><HeaderCRMCompacto /></ModuleHeader>}>
-        
-        <ModuleDashboard>
+      <ModuleLayout title="CRM - Relacionamento">
+        <ModuleKPIs>
           <KPIsCRM
             oportunidadesAbertas={oportunidadesAbertas}
             totalOportunidades={totalOportunidades}
@@ -269,11 +268,13 @@ export default function CRMPage() {
             valorPonderado={valorPonderado}
             taxaConversao={taxaConversao}
           />
-        </ModuleDashboard>
-        <ModuleTabs
-          listagem={<ModulosGridCRM modules={modules} onModuleClick={handleModuleClick} />}
-        />
-      </ModuleContainer>
+        </ModuleKPIs>
+        <ModuleContent>
+          <ModuleTabs
+            listagem={<ModulosGridCRM modules={modules} onModuleClick={handleModuleClick} />}
+          />
+        </ModuleContent>
+      </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>
   );

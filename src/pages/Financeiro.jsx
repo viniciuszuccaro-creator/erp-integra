@@ -9,9 +9,9 @@ import { useUser } from "@/components/lib/UserContext";
 import ErrorBoundary from "@/components/lib/ErrorBoundary";
 import ProtectedSection from "@/components/security/ProtectedSection";
 import HeaderFinanceiroCompacto from "@/components/financeiro/HeaderFinanceiroCompacto";
-import ModuleContainer from "@/components/layout/ModuleContainer";
-import ModuleHeader from "@/components/layout/ModuleHeader";
-import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleKPIs from "@/components/layout/ModuleKPIs";
+import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 import KPIsFinanceiroLaunchpad from "@/components/financeiro/KPIsFinanceiroLaunchpad";
 import MetricasSecundariasLaunchpad from "@/components/financeiro/MetricasSecundariasLaunchpad";
@@ -391,9 +391,8 @@ export default function Financeiro() {
   return (
     <ProtectedSection module="Financeiro" action="visualizar">
     <ErrorBoundary>
-      <ModuleContainer header={<ModuleHeader><HeaderFinanceiroCompacto /></ModuleHeader>}>
-
-        <ModuleDashboard>
+      <ModuleLayout title="Financeiro e Contábil">
+        <ModuleKPIs>
           <KPIsFinanceiroLaunchpad
             receberPendente={receberPendente}
             pagarPendente={pagarPendente}
@@ -401,6 +400,8 @@ export default function Financeiro() {
             contasReceberVencidas={contasReceberVencidas}
             contasPagarVencidas={contasPagarVencidas}
           />
+        </ModuleKPIs>
+        <ModuleContent>
           <MetricasSecundariasLaunchpad
             titulosComBoleto={titulosComBoleto}
             titulosComPix={titulosComPix}
@@ -411,11 +412,11 @@ export default function Financeiro() {
             ordensLiquidacaoPendentes={ordensLiquidacaoPendentes}
             totalPendentesAprovacao={totalPendentesAprovacao}
           />
-        </ModuleDashboard>
-        <ModuleTabs
-          listagem={<ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />}
-        />
-      </ModuleContainer>
+          <ModuleTabs
+            listagem={<ModulosGridFinanceiro modules={allowedAllModules} onModuleClick={handleModuleClick} />}
+          />
+        </ModuleContent>
+      </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>
   );

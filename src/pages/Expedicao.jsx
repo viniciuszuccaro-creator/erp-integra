@@ -11,9 +11,9 @@ import ProtectedSection from "@/components/security/ProtectedSection";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import ModuleContainer from "@/components/layout/ModuleContainer";
-import ModuleHeader from "@/components/layout/ModuleHeader";
-import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleKPIs from "@/components/layout/ModuleKPIs";
+import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 import HeaderExpedicaoCompacto from "@/components/expedicao/expedicao-launchpad/HeaderExpedicaoCompacto";
 import KPIsExpedicao from "@/components/expedicao/expedicao-launchpad/KPIsExpedicao";
@@ -303,21 +303,21 @@ export default function Expedicao() {
   return (
     <ProtectedSection module="Expedição" action="visualizar">
     <ErrorBoundary>
-      <ModuleContainer header={<ModuleHeader><HeaderExpedicaoCompacto /></ModuleHeader>}>
-
-        <ModuleDashboard>
+      <ModuleLayout title="Expedição e Logística">
+        <ModuleKPIs>
           <KPIsExpedicao statusCounts={statusCounts} />
           {estaNoGrupo && (
-            <Badge className="bg-blue-100 text-blue-700 px-3 py-1.5 w-full justify-center">
-              <Building2 className="w-3 h-3 mr-2" />
-              Visão Consolidada do Grupo
+            <Badge className="bg-blue-100 text-blue-700 px-3 py-1.5">
+              <Building2 className="w-3 h-3 mr-2" /> Visão Consolidada do Grupo
             </Badge>
           )}
-        </ModuleDashboard>
-        <ModuleTabs
-          listagem={<ModulosGridExpedicao modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />
-      </ModuleContainer>
+        </ModuleKPIs>
+        <ModuleContent>
+          <ModuleTabs
+            listagem={<ModulosGridExpedicao modules={allowedModules} onModuleClick={handleModuleClick} />}
+          />
+        </ModuleContent>
+      </ModuleLayout>
 
       <Dialog open={notificadorOpen} onOpenChange={setNotificadorOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">

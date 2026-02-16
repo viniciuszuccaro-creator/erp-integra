@@ -14,9 +14,9 @@ import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUn
 import ColaboradorForm from "@/components/rh/ColaboradorForm";
 import ModulosGridRH from "@/components/rh/rh-launchpad/ModulosGridRH";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import ModuleContainer from "@/components/layout/ModuleContainer";
-import ModuleHeader from "@/components/layout/ModuleHeader";
-import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleKPIs from "@/components/layout/ModuleKPIs";
+import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 
 const PontoTab = React.lazy(() => import("../components/rh/PontoTab"));
@@ -252,9 +252,8 @@ export default function RH() {
   return (
     <ProtectedSection module="RH" action="visualizar">
     <ErrorBoundary>
-      <ModuleContainer header={<ModuleHeader><HeaderRHCompacto /></ModuleHeader>}>
-
-        <ModuleDashboard>
+      <ModuleLayout title="Recursos Humanos">
+        <ModuleKPIs>
           <KPIsRH
             colaboradoresAtivos={colaboradoresAtivos}
             totalColaboradores={totalColaboradores}
@@ -262,11 +261,13 @@ export default function RH() {
             feriasPendentes={feriasPendentes}
             totalPontos={pontos.length}
           />
-        </ModuleDashboard>
-        <ModuleTabs
-          listagem={<ModulosGridRH modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />
-      </ModuleContainer>
+        </ModuleKPIs>
+        <ModuleContent>
+          <ModuleTabs
+            listagem={<ModulosGridRH modules={allowedModules} onModuleClick={handleModuleClick} />}
+          />
+        </ModuleContent>
+      </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>
   );

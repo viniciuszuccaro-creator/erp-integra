@@ -12,9 +12,9 @@ import HeaderComprasCompacto from "@/components/compras/compras-launchpad/Header
 import KPIsCompras from "@/components/compras/compras-launchpad/KPIsCompras";
 import ModulosGridCompras from "@/components/compras/compras-launchpad/ModulosGridCompras";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import ModuleContainer from "@/components/layout/ModuleContainer";
-import ModuleHeader from "@/components/layout/ModuleHeader";
-import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleKPIs from "@/components/layout/ModuleKPIs";
+import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 
 const FornecedoresTab = React.lazy(() => import("../components/compras/FornecedoresTab"));
@@ -215,20 +215,21 @@ export default function Compras() {
   return (
     <ProtectedSection module="Compras" action="visualizar">
     <ErrorBoundary>
-      <ModuleContainer header={<ModuleHeader><HeaderComprasCompacto /></ModuleHeader>}>
-        
-        <ModuleDashboard>
+      <ModuleLayout title="Compras e Suprimentos">
+        <ModuleKPIs>
           <KPIsCompras
             totalFornecedores={totalFornecedores}
             fornecedoresAtivos={fornecedoresAtivos}
             totalOrdens={ordensCompraFiltradas.length}
             totalCompras={totalCompras}
           />
-        </ModuleDashboard>
-        <ModuleTabs
-          listagem={<ModulosGridCompras modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />
-      </ModuleContainer>
+        </ModuleKPIs>
+        <ModuleContent>
+          <ModuleTabs
+            listagem={<ModulosGridCompras modules={allowedModules} onModuleClick={handleModuleClick} />}
+          />
+        </ModuleContent>
+      </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>
   );

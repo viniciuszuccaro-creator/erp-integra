@@ -146,6 +146,8 @@ import AppEntregasMotorista from "@/components/mobile/AppEntregasMotorista";
 import ChatbotDashboard from "@/components/chatbot/ChatbotDashboard";
 import DashboardCliente from "@/components/portal/DashboardCliente";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleContent from "@/components/layout/ModuleContent";
 
 
 /**
@@ -795,7 +797,9 @@ export default function Cadastros() {
   };
 
   return (
-    <div className="h-full min-h-screen w-full p-6 lg:p-8 space-y-6 overflow-auto">
+    <ModuleLayout title="Cadastros Gerais">
+      <ModuleContent>
+        <div className="h-full w-full p-6 lg:p-8 space-y-6">
       {/* GERENCIADOR DE JANELAS ABERTAS */}
       <GerenciadorJanelas />
 

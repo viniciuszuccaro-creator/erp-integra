@@ -14,9 +14,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ValidarPedidosExternos from "@/components/comercial/ValidarPedidosExternos";
 import HeaderComercialCompacto from "@/components/comercial/comercial-launchpad/HeaderComercialCompacto";
-import ModuleContainer from "@/components/layout/ModuleContainer";
-import ModuleHeader from "@/components/layout/ModuleHeader";
-import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleKPIs from "@/components/layout/ModuleKPIs";
+import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 import KPIsComercial from "@/components/comercial/comercial-launchpad/KPIsComercial";
 import ModulosGridComercial from "@/components/comercial/comercial-launchpad/ModulosGridComercial";
@@ -394,36 +394,37 @@ export default function Comercial() {
   return (
     <ProtectedSection module="Comercial" action="visualizar">
     <ErrorBoundary>
-      <ModuleContainer header={<ModuleHeader><HeaderComercialCompacto /></ModuleHeader>}>
-
-
-        <ModuleDashboard>
-          <KPIsComercial
-            totalClientes={clientesFiltrados.length}
-            clientesAtivos={clientesAtivos}
-            totalPedidos={pedidosFiltrados.length}
-            totalVendas={totalVendas}
-            ticketMedio={ticketMedio}
-          />
-          <div className="w-full flex items-center gap-1">
-            {pedidosExternosPendentes > 0 && (
-              <Badge className="bg-orange-100 text-orange-700 px-3 py-2 text-sm font-medium">
-                <AlertCircle className="w-3 h-3 mr-2" />
-                {pedidosExternosPendentes} pedido(s) externo(s) a validar
-              </Badge>
-            )}
-            <Button
-              onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
-              className="h-11 px-5 bg-blue-600 hover:bg-blue-700 text-white shadow"
+      <ModuleLayout
+              title="Comercial e Vendas"
+              actions={<div className="flex items-center gap-2">
+                <Button onClick={handleCreateNewPedido} className="bg-indigo-600 hover:bg-indigo-700">Novo Pedido</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => openWindow(ValidarPedidosExternos, { windowMode: true }, { title: 'Validar Pedidos Externos', width: 1300, height: 800 })}
+                >Validar Pedido Externo</Button>
+              </div>}
             >
-              Validar Pedido Externo
-            </Button>
-          </div>
-        </ModuleDashboard>
-        <ModuleTabs
-          listagem={<ModulosGridComercial modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />
-        </ModuleContainer>
+              <ModuleKPIs>
+                <KPIsComercial
+                  totalClientes={clientesFiltrados.length}
+                  clientesAtivos={clientesAtivos}
+                  totalPedidos={pedidosFiltrados.length}
+                  totalVendas={totalVendas}
+                  ticketMedio={ticketMedio}
+                />
+                {pedidosExternosPendentes > 0 && (
+                  <Badge className="bg-orange-100 text-orange-700 px-3 py-2 text-sm font-medium">
+                    <AlertCircle className="w-3 h-3 mr-2" />
+                    {pedidosExternosPendentes} pedido(s) externo(s) a validar
+                  </Badge>
+                )}
+              </ModuleKPIs>
+              <ModuleContent>
+                <ModuleTabs
+                  listagem={<ModulosGridComercial modules={allowedModules} onModuleClick={handleModuleClick} />}
+                />
+              </ModuleContent>
+            </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>
   );

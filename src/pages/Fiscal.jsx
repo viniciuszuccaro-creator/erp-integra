@@ -12,9 +12,9 @@ import HeaderFiscalCompacto from "@/components/fiscal/fiscal-launchpad/HeaderFis
 import KPIsFiscal from "@/components/fiscal/fiscal-launchpad/KPIsFiscal";
 import ModulosGridFiscal from "@/components/fiscal/fiscal-launchpad/ModulosGridFiscal";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
-import ModuleContainer from "@/components/layout/ModuleContainer";
-import ModuleHeader from "@/components/layout/ModuleHeader";
-import ModuleDashboard from "@/components/layout/ModuleDashboard";
+import ModuleLayout from "@/components/layout/ModuleLayout";
+import ModuleKPIs from "@/components/layout/ModuleKPIs";
+import ModuleContent from "@/components/layout/ModuleContent";
 import ModuleTabs from "@/components/layout/ModuleTabs";
 
 const ConfigFiscalAutomatica = React.lazy(() => import("../components/fiscal/ConfigFiscalAutomatica"));
@@ -176,9 +176,8 @@ export default function FiscalPage() {
   return (
     <ProtectedSection module="Fiscal" action="visualizar">
     <ErrorBoundary>
-      <ModuleContainer header={<ModuleHeader><HeaderFiscalCompacto /></ModuleHeader>}>
-
-        <ModuleDashboard>
+      <ModuleLayout title="Fiscal e Tributário">
+        <ModuleKPIs>
           <KPIsFiscal
             total={statusCounts.total}
             autorizadas={statusCounts.autorizadas}
@@ -186,11 +185,13 @@ export default function FiscalPage() {
             rejeitadas={statusCounts.rejeitadas}
             canceladas={statusCounts.canceladas}
           />
-        </ModuleDashboard>
-        <ModuleTabs
-          listagem={<ModulosGridFiscal modules={allowedModules} onModuleClick={handleModuleClick} />}
-        />
-      </ModuleContainer>
+        </ModuleKPIs>
+        <ModuleContent>
+          <ModuleTabs
+            listagem={<ModulosGridFiscal modules={allowedModules} onModuleClick={handleModuleClick} />}
+          />
+        </ModuleContent>
+      </ModuleLayout>
     </ErrorBoundary>
     </ProtectedSection>
   );
