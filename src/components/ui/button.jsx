@@ -5,6 +5,7 @@ import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils"
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import usePermissions from "@/components/lib/usePermissions";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -37,12 +38,27 @@ const buttonVariants = cva(
 )
 
 const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
-  const Comp = asChild ? Slot : "button"
+  const Comp = asChild ? Slot : "button";
+  const { hasPermission } = usePermissions();
+  const perm = props?.['data-permission'];
+  let isAllowed = true;
+  if (perm) {
+    const [mod, sec, act] = String(perm).split('.');
+    try { isAllowed = hasPermission(mod, sec || null, act || null); } catch { isAllowed = true; }
+  }
+  const passProps = { ...props };
+  if ('data-permission' in passProps) delete passProps['data-permission'];
+
+  if (perm && !isAllowed) {
+    return null; // RBAC visual automático: oculta o botão quando não permitido
+  }
+
   return (
-    (<Comp
+    <Comp
       className={cn(buttonVariants({ variant, size, className }))}
       ref={ref}
-      {...withUIAudit(props)} />)
+      {...withUIAudit(passProps)}
+    />
   );
 })
 Button.displayName = "Button"
