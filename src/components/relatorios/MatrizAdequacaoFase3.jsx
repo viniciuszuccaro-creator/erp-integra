@@ -23,8 +23,9 @@ const StatusBadge = ({ status }) => {
 
 const Linha = ({ modulo, layout, ordenacao, rbac, multi, status, notas, links, page }) => (
   <Card className="border-0 shadow-sm">
-    <CardHeader className="pb-2">
+    <CardHeader className="pb-2 flex items-center justify-between">
       <CardTitle className="text-base">{modulo}</CardTitle>
+      {page && (<Link to={createPageUrl(page)} className="text-xs text-blue-600 hover:underline">Acessar</Link>)}
     </CardHeader>
     <CardContent className="space-y-3 text-sm">
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -75,6 +76,7 @@ export default function MatrizAdequacaoFase3() {
   const linhas = [
     {
       modulo: "Comercial (Produtos, Pedidos, NF)",
+      page: "Comercial",
       layout: "OK",
       ordenacao: "Parcial",
       rbac: "Parcial",
@@ -98,6 +100,7 @@ export default function MatrizAdequacaoFase3() {
     },
     {
       modulo: "Financeiro (Pagar, Receber, Caixa)",
+      page: "Financeiro",
       layout: "OK",
       ordenacao: "Parcial",
       rbac: "Parcial",
@@ -121,6 +124,7 @@ export default function MatrizAdequacaoFase3() {
     },
     {
       modulo: "Estoque",
+      page: "Estoque",
       layout: "OK",
       ordenacao: "Parcial",
       rbac: "Parcial",
@@ -141,6 +145,7 @@ export default function MatrizAdequacaoFase3() {
     },
     {
       modulo: "Compras",
+      page: "Compras",
       layout: "OK",
       ordenacao: "Parcial",
       rbac: "Parcial",
@@ -163,6 +168,7 @@ export default function MatrizAdequacaoFase3() {
     },
     {
       modulo: "CRM",
+      page: "CRM",
       layout: "OK",
       ordenacao: "Parcial",
       rbac: "Parcial",
@@ -184,6 +190,7 @@ export default function MatrizAdequacaoFase3() {
     },
     {
       modulo: "Administração do Sistema",
+      page: "AdministracaoSistema",
       layout: "OK",
       ordenacao: "Parcial",
       rbac: "OK/Parcial",
@@ -205,6 +212,7 @@ export default function MatrizAdequacaoFase3() {
     },
     {
       modulo: "Cadastros Gerais",
+      page: "Cadastros",
       layout: "OK",
       ordenacao: "OK/Parcial",
       rbac: "OK/Parcial",
@@ -222,6 +230,7 @@ export default function MatrizAdequacaoFase3() {
     },
     {
       modulo: "Configuração do Sistema",
+      page: "AdministracaoSistema?tab=config",
       layout: "OK",
       ordenacao: "N/A/Parcial",
       rbac: "OK",
@@ -241,6 +250,7 @@ export default function MatrizAdequacaoFase3() {
     },
     {
       modulo: "Perfis (PerfilAcesso)",
+      page: "AdministracaoSistema",
       layout: "OK",
       ordenacao: "N/A/Parcial",
       rbac: "OK",
@@ -258,6 +268,7 @@ export default function MatrizAdequacaoFase3() {
     },
     {
       modulo: "Usuários (Categoria)",
+      page: "AdministracaoSistema",
       layout: "OK",
       ordenacao: "Parcial",
       rbac: "OK",
