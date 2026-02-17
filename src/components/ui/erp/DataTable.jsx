@@ -127,7 +127,6 @@ export default function ERPDataTable({
   const totalPages = Math.max(1, Math.ceil((totalItems || 0) / (pageSize || 20)));
 
   // RBAC Visual Automático por prop permission
-  const { hasPermission } = usePermissions();
   if (permission) {
     const [m,s,a] = String(permission).split('.');
     const allowed = hasPermission(m, s || null, a || null);
