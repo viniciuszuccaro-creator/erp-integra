@@ -516,6 +516,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
             }}
             onToggleItem={(id) => toggleNota(id)}
             permission="Fiscal.NotaFiscal.visualizar"
+            contextFilterKey="empresa_faturamento_id"
           />
 
           {/* Paginação backend simples */}
