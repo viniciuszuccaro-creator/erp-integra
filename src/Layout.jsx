@@ -710,6 +710,7 @@ function LayoutContent({ children, currentPageName }) {
       {modoEscuro && <div dangerouslySetInnerHTML={{ __html: darkModeStyles }} />}
       
       <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-50 to-blue-50">
+        {/* Fase 2: preencher h-full com rolagem interna em todo conteúdo central */}
         <Sidebar className="border-r border-slate-200 bg-white/80 backdrop-blur-sm">
           <SidebarHeader className="border-b border-slate-200 p-6">
             <div className="flex items-center gap-3">
