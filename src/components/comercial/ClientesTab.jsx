@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { UserCircle, Building2, ExternalLink, Users } from "lucide-react";
+
+
+
+import { Users } from "lucide-react";
 import useContextoVisual from "@/components/lib/useContextoVisual";
 import SearchInput from "@/components/ui/SearchInput";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
