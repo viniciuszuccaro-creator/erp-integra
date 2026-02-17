@@ -319,7 +319,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
 
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Pedidos</h2>
-        <Button className="bg-blue-600 hover:bg-blue-700" onClick={onCreatePedido} disabled={!canCreate('Comercial','Pedido')}>
+        <Button className="bg-blue-600 hover:bg-blue-700" onClick={onCreatePedido} data-permission="Comercial.Pedido.criar">
           <Plus className="w-4 h-4 mr-2" />
           Novo Pedido
         </Button>
