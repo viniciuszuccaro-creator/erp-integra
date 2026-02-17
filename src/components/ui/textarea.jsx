@@ -4,6 +4,7 @@ import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit"
 import usePermissions from "@/components/lib/usePermissions";
 
 const Textarea = React.forwardRef(({ className, onChange, onBlur, ...props }, ref) => {
+  const { hasPermission } = usePermissions();
   React.useEffect(() => {
     if (!onChange) {
       logUIIssue({ component: 'Textarea', issue: 'Sem onChange associado', severity: 'warn', meta: { name: props?.name } });
