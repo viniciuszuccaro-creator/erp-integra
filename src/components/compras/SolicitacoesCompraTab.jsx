@@ -218,7 +218,7 @@ Retorne JSON com:
       for (const sug of resultado.sugestoes.slice(0, 10)) { // Limiting to 10 suggestions for practical reasons
         const produto = produtosBaixos.find(p => p.codigo === sug.produto_codigo);
         if (produto) {
-          const sol = await base44.entities.SolicitacaoCompra.create({
+          const sol = await createInContext('SolicitacaoCompra', {
             numero_solicitacao: `SC-IA-${Date.now()}-${solicitacoesCriadas.length}`,
             data_solicitacao: new Date().toISOString().split('T')[0],
             produto_id: produto.id,
@@ -540,6 +540,7 @@ Retorne JSON com:
                             <Button
                               variant="ghost"
                               size="icon"
+                              data-permission="Compras.SolicitacaoCompra.aprovar"
                               onClick={() => handleAprovar(sol)}
                               title="Aprovar"
                             >
@@ -550,6 +551,7 @@ Retorne JSON com:
                             <Button
                               variant="ghost"
                               size="icon"
+                              data-permission="Compras.SolicitacaoCompra.rejeitar"
                               onClick={() => handleRejeitar(sol)}
                               title="Rejeitar"
                             >
@@ -562,6 +564,7 @@ Retorne JSON com:
                         <Button
                           variant="ghost"
                           size="sm"
+                          data-permission="Compras.SolicitacaoCompra.gerar_oc"
                           onClick={() => handleGerarOC(sol)}
                           className="text-purple-600"
                         >

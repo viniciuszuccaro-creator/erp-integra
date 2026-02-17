@@ -216,7 +216,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         const totalEntregasPrazo = (fornecedor.percentual_entregas_prazo || 0) * (qtdCompras - 1);
         const novoPercentual = ((totalEntregasPrazo + (noPrazo ? 1 : 0)) / qtdCompras) * 100;
 
-        await base44.entities.Fornecedor.update(fornecedor.id, {
+        await updateInContext('Fornecedor',fornecedor.id, {
           quantidade_compras: qtdCompras,
           valor_total_compras: valorTotal,
           ultima_compra: dados.data_entrega_real,
@@ -329,7 +329,7 @@ export default function OrdensCompraTab({ ordensCompra, fornecedores, empresas =
         const somaNotas = novasAvaliacoes.reduce((sum, av) => sum + av.nota, 0);
         const notaMediaFornecedor = somaNotas / novasAvaliacoes.length;
 
-        await base44.entities.Fornecedor.update(fornecedor.id, {
+        await updateInContext('Fornecedor',fornecedor.id, {
           avaliacoes: novasAvaliacoes,
           nota_media: parseFloat(notaMediaFornecedor.toFixed(2))
         });
