@@ -227,8 +227,8 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
     return matchSearch && matchStatus && matchTipo;
   });
 
-  const totalAutorizada = notasFiscais.filter(n => n.status === "Autorizada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
-  const totalCancelada = notasFiscais.filter(n => n.status === "Cancelada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
+  const totalAutorizada = notasList.filter(n => n.status === "Autorizada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
+  const totalCancelada = notasList.filter(n => n.status === "Cancelada").reduce((sum, n) => sum + (n.valor_total || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -480,7 +480,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                   <Button variant="ghost" size="sm" onClick={() => setViewingDetails(nota)} title="Ver Detalhes" className="h-8 px-2">
                     <Eye className="w-3 h-3 mr-1" /> <span className="text-xs">Ver</span>
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => { const empresa = empresas?.find(e => e.id === nota.empresa_id); ImprimirDANFESimplificado({ nfe: nota, empresa }); }} title="Imprimir DANFE" className="h-8 px-2 text-slate-600">
+                  <Button variant="ghost" size="sm" onClick={() => { const empresa = empresasDoGrupo?.find(e => e.id === nota.empresa_id); ImprimirDANFESimplificado({ nfe: nota, empresa }); }} title="Imprimir DANFE" className="h-8 px-2 text-slate-600">
                     <Printer className="w-3 h-3 mr-1" /> <span className="text-xs">Imprimir</span>
                   </Button>
                   {nota.danfe_url && (
