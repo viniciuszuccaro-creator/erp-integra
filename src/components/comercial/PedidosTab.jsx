@@ -392,6 +392,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             onToggleSelectAll={onToggleSelectAll}
             onToggleItem={(id) => togglePedido(id)}
             permission="Comercial.Pedido.visualizar"
+            contextFilterKey="empresa_id"
           />
 
           {/* Paginação backend simples */}
