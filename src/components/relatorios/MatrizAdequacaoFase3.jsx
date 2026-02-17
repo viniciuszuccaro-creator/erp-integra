@@ -508,6 +508,9 @@ export default function MatrizAdequacaoFase3() {
           <CardTitle>Fase 1 — Mapeamento Técnico Completo</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 text-sm">
+          <div className="col-span-1 md:col-span-2 xl:col-span-4 mb-2 text-xs text-slate-500">
+            Estratégia confirmada: Migração em ondas (Comercial → Financeiro → Estoque) e snapshot quando cada módulo alcançar 100%.
+          </div>
           <div>
             <p className="text-slate-500 mb-2">Arquivos críticos</p>
             <ul className="list-disc ml-5 space-y-1 text-slate-700">
