@@ -435,6 +435,7 @@ export default function MatrizAdequacaoFase3() {
     rbac: checks[l.modulo]?.rbac || l.rbac,
     multi: checks[l.modulo]?.multi || l.multi,
     status: checks[l.modulo]?.status || l.status,
+    snapshot: checks[l.modulo]?.status === 'OK' ? { date: new Date().toISOString() } : undefined,
   }));
 
   // Fase 1 — Mapeamento técnico: listas consolidadas (sem criar telas novas)
