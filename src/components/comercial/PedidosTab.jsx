@@ -393,12 +393,6 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             onToggleItem={(id) => togglePedido(id)}
             permission="Comercial.Pedido.visualizar"
           />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
 
           {/* Paginação backend simples */}
           <div className="flex items-center justify-between p-4 border-t">
