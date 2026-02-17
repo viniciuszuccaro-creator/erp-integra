@@ -161,6 +161,7 @@ export default function ProdutosTab(props) {
             <Button 
               variant="outline"
               className="border-orange-300 text-orange-700 hover:bg-orange-50" 
+              data-permission="Estoque.Produtos.visualizar"
               onClick={() => openWindow(DashboardProdutosProducao, {
               windowMode: true,
               onAbrirConversao: () => {
@@ -190,6 +191,7 @@ export default function ProdutosTab(props) {
             <Button 
               variant="outline"
               className="border-purple-300 text-purple-700 hover:bg-purple-50" 
+              data-permission="Estoque.Produtos.editar"
               onClick={() => openWindow(ConversaoProducaoMassa, {
               windowMode: true,
               onConcluido: () => {
@@ -210,6 +212,7 @@ export default function ProdutosTab(props) {
             <Button 
               variant="outline"
               className="border-green-300 text-green-700 hover:bg-green-50"
+              data-permission="Estoque.Produtos.criar"
               onClick={() => openWindow(ImportadorProdutosPlanilha, {
               windowMode: true,
               onConcluido: () => {
@@ -229,6 +232,7 @@ export default function ProdutosTab(props) {
           {hasPermission('Estoque', 'Produtos', 'criar') && (
             <Button 
               className="bg-blue-600 hover:bg-blue-700" 
+              data-permission="Estoque.Produtos.criar"
               onClick={() => openWindow(ProdutoFormV22_Completo, {
               windowMode: true,
               onSubmit: async (data) => {

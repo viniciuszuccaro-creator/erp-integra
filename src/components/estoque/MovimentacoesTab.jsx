@@ -26,7 +26,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { openWindow } = useWindow();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, createInContext, updateInContext } = useContextoVisual();
   const { canCreate } = usePermissions();
   const [novaMovimentacao, setNovaMovimentacao] = useState({
     tipo_movimentacao: "",
@@ -82,7 +82,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
         responsavel: data.responsavel
       };
 
-      const novaMovimentacao = await base44.entities.MovimentacaoEstoque.create(movimentacaoData);
+      const novaMovimentacao = await createInContext('MovimentacaoEstoque', movimentacaoData);
       
       const produto = produtos.find(p => p.id === data.produto_id);
       if (produto) {
@@ -99,7 +99,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
           novoEstoque = qtd;
         }
         
-        await base44.entities.Produto.update(produto.id, {
+        await updateInContext('Produto', produto.id, {
           estoque_atual: novoEstoque
         });
       }
@@ -184,6 +184,7 @@ export default function MovimentacoesTab({ movimentacoes, produtos }) {
         {canCreate('Estoque', 'Movimentacoes') && (
           <Button 
             className="bg-indigo-600 hover:bg-indigo-700"
+            data-permission="Estoque.Movimentacoes.criar"
             onClick={() => openWindow(MovimentacaoForm, {
             windowMode: true,
             onSubmit: async (data) => {
