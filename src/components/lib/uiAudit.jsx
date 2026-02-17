@@ -102,7 +102,7 @@ export function uiAuditWrap(actionName, handler, baseMeta = {}) {
   return function wrapped(...args) {
     // Log assíncrono não-bloqueante (fire-and-forget)
     Promise.resolve().then(() => {
-      logUIAction({ component: inferComponent(actionName), action: actionName, status: "start", meta: baseMeta });
+      if (AUDIT_VERBOSE) logUIAction({ component: inferComponent(actionName), action: actionName, status: "start", meta: baseMeta });
     });
     
     try {
