@@ -123,7 +123,7 @@ export function uiAuditWrap(actionName, handler, baseMeta = {}) {
       // Log de erro não-bloqueante
       Promise.resolve().then(() => {
         try { toast.error(`Falha: ${actionName}`, { description: msg }); } catch (_) {}
-        logUIAction({ component: inferComponent(actionName), action: actionName, status: "error", meta: { ...baseMeta, error: msg } });
+        if (AUDIT_VERBOSE) logUIAction({ component: inferComponent(actionName), action: actionName, status: "error", meta: { ...baseMeta, error: msg } });
       });
       
       throw error;
