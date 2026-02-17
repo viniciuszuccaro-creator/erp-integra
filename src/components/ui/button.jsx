@@ -46,8 +46,9 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
     const [mod, sec, act] = String(perm).split('.');
     try { isAllowed = hasPermission(mod, sec || null, act || null); } catch { isAllowed = true; }
   }
-  const passProps = { ...props };
+  const passProps = { ...props, __perm: perm, __sensitive: props?.['data-sensitive'] };
   if ('data-permission' in passProps) delete passProps['data-permission'];
+  if ('data-sensitive' in passProps) delete passProps['data-sensitive'];
 
   if (perm && !isAllowed) {
           // Placeholder visual quando sem permissão
@@ -77,22 +78,25 @@ import { uiAuditWrap } from "@/components/lib/uiAudit";
 
 // HOC to wrap onClick with audit (non-invasive)
 function withUIAudit(props) {
-  // Modo transição: mostrar e bloquear no clique (Big Bang imediato)
+  // Política híbrida: só bloquear ações sensíveis (data-sensitive ou perm); demais apenas auditar
+  const isSensitive = !!(props?.__sensitive || props?.__perm);
+
   const wrapIfDenied = (onClick) => async (e) => {
     try {
-      const path = typeof window !== 'undefined' ? window.location.pathname : '';
-      const page = (path.split('/').pop() || '').replace(/^\//,'');
-      // Heurística simples: deriva módulo pela rota atual
-      const pageToModule = {
-        CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição', Producao: 'Produção'
-      };
-      const moduleName = pageToModule[page] || 'Sistema';
-      const res = await base44.functions.invoke('entityGuard', { module: moduleName, action: 'executar' });
-      if (res?.data && res.data.allowed === false) {
-        e?.preventDefault?.(); e?.stopPropagation?.();
-        try { await base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: moduleName, entidade: 'UI', descricao: 'Clique bloqueado (sem permissão)', data_hora: new Date().toISOString() }); } catch {}
-        try { toast.error('Permissão negada'); } catch {}
-        return;
+      if (isSensitive) {
+        const path = typeof window !== 'undefined' ? window.location.pathname : '';
+        const page = (path.split('/').pop() || '').replace(/^\//,'');
+        const pageToModule = {
+          CRM: 'CRM', Comercial: 'Comercial', Estoque: 'Estoque', Compras: 'Compras', Financeiro: 'Financeiro', Fiscal: 'Fiscal', RH: 'RH', Expedicao: 'Expedição', Producao: 'Produção'
+        };
+        const moduleName = pageToModule[page] || 'Sistema';
+        const res = await base44.functions.invoke('entityGuard', { module: moduleName, action: 'executar' });
+        if (res?.data && res.data.allowed === false) {
+          e?.preventDefault?.(); e?.stopPropagation?.();
+          try { await base44.entities.AuditLog.create({ acao: 'Bloqueio', modulo: moduleName, entidade: 'UI', descricao: 'Clique bloqueado (sem permissão)', data_hora: new Date().toISOString() }); } catch {}
+          try { toast.error('Permissão negada'); } catch {}
+          return;
+        }
       }
     } catch (_) {}
     return onClick?.(e);
@@ -100,14 +104,16 @@ function withUIAudit(props) {
 
   const p = { ...props };
   if (typeof p.onClick === 'function' && !p.__wrapped_audit) {
-  p.onClick = wrapIfDenied(p.onClick);
+    p.onClick = wrapIfDenied(p.onClick);
 
     const meta = { kind: 'button', toastSuccess: true };
     p.onClick = uiAuditWrap(p['data-action'] || 'Button.onClick', p.onClick, meta);
     p.__wrapped_audit = true;
   }
-  // CORREÇÃO CRÍTICA: Remove __wrapped_audit from props to avoid React warning
+  // Remover flags internas/atributos não-dom
   delete p.__wrapped_audit;
+  if ('__perm' in p) delete p.__perm;
+  if ('__sensitive' in p) delete p.__sensitive;
   return p;
 }
 

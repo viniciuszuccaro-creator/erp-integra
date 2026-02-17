@@ -528,28 +528,39 @@ function LayoutContent({ children, currentPageName }) {
     try {
       if (base44?.functions && base44.functions.invoke && base44.functions.__wrappedPhase4 !== true) {
         const origInvoke = base44.functions.invoke.bind(base44.functions);
+        // Política híbrida: apenas funções sensíveis exigem guard; demais apenas auditam
+        const SENSITIVE_FUNCTIONS = new Set([
+          'permissionOptimizer', 'securityAlerts', 'adminInviteUser', 'propagateGroupConfigs',
+          'migrateAuditoriasToAuditLog', 'migrateIntegrationsToConfiguracaoSistema', 'migrateChatbotIntents',
+          'applyInventoryAdjustments', 'applyOrderStockMovements', 'emitirBoleto', 'sendEmailProvider',
+          'groupConsolidation', 'sodValidator', 'solicitacoesAprovacao'
+        ]);
+
         base44.functions.invoke = async (functionName, params) => {
-          try {
-            const scope = getScope();
-            const guardPayload = {
-              module: currentModule || 'Sistema',
-              section: 'Funções',
-              action: 'executar',
-              function_name: functionName,
-              empresa_id: scope.empresa_id || null,
-              group_id: scope.group_id || null,
-            };
-            const res = await origInvoke('entityGuard', guardPayload);
-            if (res?.data && res.data.allowed === false) {
-              try { await base44.entities.AuditLog.create({
-                acao: 'Bloqueio', modulo: currentModule || 'Sistema', tipo_auditoria: 'seguranca',
-                entidade: 'Function', descricao: `Acesso negado à função ${functionName}`, data_hora: new Date().toISOString(),
-              }); } catch {}
-              throw new Error('RBAC backend: ação negada');
+          const shouldGuard = SENSITIVE_FUNCTIONS.has(functionName) || (params && params.__sensitive === true);
+          if (shouldGuard) {
+            try {
+              const scope = getScope();
+              const guardPayload = {
+                module: currentModule || 'Sistema',
+                section: 'Funções',
+                action: 'executar',
+                function_name: functionName,
+                empresa_id: scope.empresa_id || null,
+                group_id: scope.group_id || null,
+              };
+              const res = await origInvoke('entityGuard', guardPayload);
+              if (res?.data && res.data.allowed === false) {
+                try { await base44.entities.AuditLog.create({
+                  acao: 'Bloqueio', modulo: currentModule || 'Sistema', tipo_auditoria: 'seguranca',
+                  entidade: 'Function', descricao: `Acesso negado à função ${functionName}`, data_hora: new Date().toISOString(),
+                }); } catch {}
+                throw new Error('RBAC backend: ação negada');
+              }
+            } catch (err) {
+              if (err?.response?.status === 403) throw err;
+              // Se o guard falhar por indisponibilidade, não bloquear a UI
             }
-          } catch (err) {
-            if (err?.response?.status === 403) throw err;
-            // Se o guard falhar por indisponibilidade, não bloquear a UI
           }
 
           const result = await origInvoke(functionName, params);
