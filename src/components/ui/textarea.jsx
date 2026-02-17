@@ -1,6 +1,7 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { uiAuditWrap, logUIIssue } from "@/components/lib/uiAudit"
+import usePermissions from "@/components/lib/usePermissions";
 
 const Textarea = React.forwardRef(({ className, onChange, onBlur, ...props }, ref) => {
   React.useEffect(() => {
