@@ -60,7 +60,7 @@ export default function ERPDataTable({
       }
       return true;
     })
-  , [columns, hiddenColumns, hasPermission]);
+  , [columns, hiddenColumns]);
 
   // Aceita Set ou Array para seleção
   const selectedSet = useMemo(() => {
