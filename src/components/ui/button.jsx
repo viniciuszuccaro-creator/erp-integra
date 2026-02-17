@@ -50,8 +50,18 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
   if ('data-permission' in passProps) delete passProps['data-permission'];
 
   if (perm && !isAllowed) {
-    return null; // RBAC visual automático: oculta o botão quando não permitido
-  }
+          // Placeholder visual quando sem permissão
+          return (
+            <button
+              className={cn(buttonVariants({ variant: "outline", size })) + " pointer-events-none opacity-50 cursor-not-allowed"}
+              aria-disabled="true"
+              type="button"
+              title="Acesso negado"
+            >
+              Acesso negado
+            </button>
+          );
+        }
 
   return (
     <Comp

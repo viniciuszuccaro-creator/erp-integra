@@ -150,8 +150,8 @@ const AuditedSelect = (props) => {
   const p = { ...props };
   if ('data-permission' in p) delete p['data-permission'];
   const allowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || null); })() : true;
-  if (perm && !allowed) return null;
-  return <_Root {...withAuditRoot(p)} />
+        if (perm && !allowed) return <span className="inline-flex h-10 items-center rounded-md border border-dashed px-3 text-xs text-slate-400 select-none">Acesso negado</span>;
+        return <_Root {...withAuditRoot(p)} />
 };
 
 export {

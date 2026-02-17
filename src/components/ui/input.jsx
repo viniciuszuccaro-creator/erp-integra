@@ -23,7 +23,17 @@ const Input = React.forwardRef(({ className, type, onChange, onBlur, ...props },
   const forwardedProps = { ...cleanProps };
   if ('data-permission' in forwardedProps) delete forwardedProps['data-permission'];
   const isAllowed = perm ? (() => { const [m,s,a] = String(perm).split('.'); return hasPermission(m, s || null, a || null); })() : true;
-  if (perm && !isAllowed) return null;
+  if (perm && !isAllowed) {
+    return (
+      <input
+        type={type || 'text'}
+        className={cn("flex h-9 w-full rounded-md border border-dashed bg-slate-50 px-3 py-1 text-sm text-slate-400", className)}
+        disabled
+        placeholder="Acesso negado"
+        aria-disabled="true"
+      />
+    );
+  }
 
   return (
     (<input

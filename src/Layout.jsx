@@ -101,6 +101,7 @@ function LayoutContent({ children, currentPageName }) {
         const [pesquisaOpen, setPesquisaOpen] = useState(false);
         const [modoEscuro, setModoEscuro] = useState(false);
         const auditThrottleRef = React.useRef({ click: 0, change: 0 });
+        const AUDIT_BUSINESS_ONLY = true;
         const queryClient = useQueryClient();
 
         const prefetchForItem = (title) => {
@@ -585,8 +586,9 @@ function LayoutContent({ children, currentPageName }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, user?.id, empresaAtual?.id, currentModule]);
   useEffect(() => {
-    if (!user) return;
-    const handlerClick = (e) => {
+            if (!user) return;
+            if (AUDIT_BUSINESS_ONLY) return;
+            const handlerClick = (e) => {
       try {
         const now = Date.now();
         if (now - auditThrottleRef.current.click < 1500) return; // throttle 1.5s
