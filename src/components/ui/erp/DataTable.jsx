@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDown, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import usePermissions from "@/components/lib/usePermissions";
+import { uiAuditWrap } from "@/components/lib/uiAudit";
 
 export default function ERPDataTable({
   columns = [], // [{ key, label, isNumeric, render?: (row) => ReactNode }]
@@ -61,6 +62,19 @@ export default function ERPDataTable({
       return true;
     })
   , [columns, hiddenColumns]);
+
+  const wrapAudit = (label, fn, meta = { kind: 'datatable' }) => (typeof fn === 'function' ? uiAuditWrap(label, fn, meta) : undefined);
+
+  const audited = useMemo(() => ({
+    onSortChange: wrapAudit('ERPDataTable.onSortChange', onSortChange),
+    onPageChange: wrapAudit('ERPDataTable.onPageChange', onPageChange),
+    onPageSizeChange: wrapAudit('ERPDataTable.onPageSizeChange', onPageSizeChange),
+    onColumnFiltersChange: wrapAudit('ERPDataTable.onColumnFiltersChange', onColumnFiltersChange),
+    onHiddenColumnsChange: wrapAudit('ERPDataTable.onHiddenColumnsChange', onHiddenColumnsChange),
+    onGlobalSearchChange: wrapAudit('ERPDataTable.onGlobalSearchChange', onGlobalSearchChange),
+    onToggleSelectAll: wrapAudit('ERPDataTable.onToggleSelectAll', onToggleSelectAll),
+    onToggleItem: wrapAudit('ERPDataTable.onToggleItem', onToggleItem),
+  }), [onSortChange, onPageChange, onPageSizeChange, onColumnFiltersChange, onHiddenColumnsChange, onGlobalSearchChange, onToggleSelectAll, onToggleItem]);
 
   // Aceita Set ou Array para seleção
   const selectedSet = useMemo(() => {
@@ -150,7 +164,7 @@ export default function ERPDataTable({
                 onCheckedChange={(checked) => {
                   const next = new Set(hiddenColumns);
                   if (!checked) next.add(c.key); else next.delete(c.key);
-                  onHiddenColumnsChange && onHiddenColumnsChange(next);
+                  audited.onHiddenColumnsChange && audited.onHiddenColumnsChange(next);
                 }}
               >
                 {c.label}
@@ -161,7 +175,7 @@ export default function ERPDataTable({
         {enableGlobalSearch && (
           <input
             value={globalSearchValue}
-            onChange={(e) => onGlobalSearchChange && onGlobalSearchChange(e.target.value)}
+            onChange={(e) => audited.onGlobalSearchChange && audited.onGlobalSearchChange(e.target.value)}
             className="h-8 w-full sm:w-64 border rounded px-2 text-sm"
             placeholder="Busca global..."
           />
@@ -173,7 +187,7 @@ export default function ERPDataTable({
           <TableHeader className="sticky top-0 bg-slate-50 z-10">
             <TableRow>
               <TableHead className="w-10 px-3">
-                <Checkbox checked={allSelected} onCheckedChange={onToggleSelectAll} />
+                <Checkbox checked={allSelected} onCheckedChange={audited.onToggleSelectAll} />
               </TableHead>
               {visibleColumns.map((col) => (
                 <TableHead
@@ -186,7 +200,7 @@ export default function ERPDataTable({
                     <button
                       type="button"
                       className="flex items-center gap-1 hover:underline"
-                      onClick={() => onSortChange && onSortChange(col.key, sortField === col.key && sortDirection === "asc" ? "desc" : "asc")}
+                      onClick={() => audited.onSortChange && audited.onSortChange(col.key, sortField === col.key && sortDirection === "asc" ? "desc" : "asc")}
                     >
                       <span className="font-semibold text-slate-700">{col.label}</span>
                       {renderSortIcon(col.key)}
@@ -200,7 +214,7 @@ export default function ERPDataTable({
                     <div className="mt-1">
                       <input
                         value={columnFilters[col.key] || ""}
-                        onChange={(e) => onColumnFiltersChange && onColumnFiltersChange({ ...columnFilters, [col.key]: e.target.value })}
+                        onChange={(e) => audited.onColumnFiltersChange && audited.onColumnFiltersChange({ ...columnFilters, [col.key]: e.target.value })}
                         className="w-full h-7 px-2 text-xs border rounded"
                         placeholder={`Filtrar ${col.label}`}
                       />
@@ -216,7 +230,7 @@ export default function ERPDataTable({
               <TableRow key={row.id} className="hover:bg-blue-50/40">
                 <TableCell className="px-3">
                   {isRowSelectable(row) ? (
-                    <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => onToggleItem && onToggleItem(row.id)} />
+                   <Checkbox checked={selectedSet.has(row.id)} onCheckedChange={() => audited.onToggleItem && audited.onToggleItem(row.id)} />
                   ) : (
                     <span className="inline-block w-4 h-4 opacity-40" />
                   )}
@@ -250,7 +264,7 @@ export default function ERPDataTable({
             <select
               className="h-8 border rounded px-2"
               value={pageSize}
-              onChange={(e) => onPageSizeChange && onPageSizeChange(Number(e.target.value))}
+              onChange={(e) => audited.onPageSizeChange && audited.onPageSizeChange(Number(e.target.value))}
             >
               {[10, 20, 50, 100].map((n) => (
                 <option key={n} value={n}>{n}/página</option>
@@ -260,7 +274,7 @@ export default function ERPDataTable({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onPageChange && onPageChange(Math.max(1, page - 1))}
+                onClick={() => audited.onPageChange && audited.onPageChange(Math.max(1, page - 1))}
                 disabled={page <= 1}
               >
                 Anterior
@@ -268,7 +282,7 @@ export default function ERPDataTable({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => onPageChange && onPageChange(Math.min(totalPages, page + 1))}
+                onClick={() => audited.onPageChange && audited.onPageChange(Math.min(totalPages, page + 1))}
                 disabled={page >= totalPages}
               >
                 Próxima
