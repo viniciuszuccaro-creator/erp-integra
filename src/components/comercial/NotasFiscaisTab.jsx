@@ -489,7 +489,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                     </Button>
                   )}
                   {nota.status === 'Pendente' && hasPermission('Fiscal','NotaFiscal','enviar') && (
-                    <Button variant="ghost" size="sm" title="Enviar NF-e" className="h-8 px-2 text-green-600" data-permission="Fiscal.NotaFiscal.enviar">
+                    <Button variant="ghost" size="sm" title="Enviar NF-e" className="h-8 px-2 text-green-600" data-permission="Fiscal.NotaFiscal.enviar" data-permission="Fiscal.NotaFiscal.enviar">
                       <Send className="w-3 h-3 mr-1" /> <span className="text-xs">Enviar</span>
                     </Button>
                   )}

@@ -541,6 +541,7 @@ Retorne JSON com:
                               variant="ghost"
                               size="icon"
                               data-permission="Compras.SolicitacaoCompra.aprovar"
+                              data-permission="Compras.SolicitacaoCompra.aprovar"
                               onClick={() => handleAprovar(sol)}
                               title="Aprovar"
                             >
@@ -551,6 +552,7 @@ Retorne JSON com:
                             <Button
                               variant="ghost"
                               size="icon"
+                              data-permission="Compras.SolicitacaoCompra.rejeitar"
                               data-permission="Compras.SolicitacaoCompra.rejeitar"
                               onClick={() => handleRejeitar(sol)}
                               title="Rejeitar"
@@ -564,6 +566,7 @@ Retorne JSON com:
                         <Button
                           variant="ghost"
                           size="sm"
+                          data-permission="Compras.SolicitacaoCompra.gerar_oc"
                           data-permission="Compras.SolicitacaoCompra.gerar_oc"
                           onClick={() => handleGerarOC(sol)}
                           className="text-purple-600"
