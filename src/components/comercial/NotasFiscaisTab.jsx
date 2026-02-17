@@ -89,7 +89,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.NotaFiscal.create(data),
+    mutationFn: (data) => createInContext('NotaFiscal', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notasfiscais'] });
       setIsDialogOpen(false);
@@ -99,7 +99,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.NotaFiscal.update(id, data),
+    mutationFn: ({ id, data }) => updateInContext('NotaFiscal', id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notasfiscais'] });
       setIsDialogOpen(false);
@@ -329,7 +329,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
             }}>
               <DialogTrigger asChild>
                 {!onCreateNFe && hasPermission('Fiscal','NotaFiscal','criar') && (
-                  <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Button className="bg-blue-600 hover:bg-blue-700" data-permission="Fiscal.NotaFiscal.criar">
                     <Plus className="w-4 h-4 mr-2" />
                     Nova NF-e (Rápido)
                   </Button>
@@ -489,7 +489,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                     </Button>
                   )}
                   {nota.status === 'Pendente' && hasPermission('Fiscal','NotaFiscal','enviar') && (
-                    <Button variant="ghost" size="sm" title="Enviar NF-e" className="h-8 px-2 text-green-600">
+                    <Button variant="ghost" size="sm" title="Enviar NF-e" className="h-8 px-2 text-green-600" data-permission="Fiscal.NotaFiscal.enviar">
                       <Send className="w-3 h-3 mr-1" /> <span className="text-xs">Enviar</span>
                     </Button>
                   )}

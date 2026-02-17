@@ -82,7 +82,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.SolicitacaoCompra.create({
+    mutationFn: (data) => createInContext('SolicitacaoCompra', {
       ...data,
       empresa_id: empresaAtual?.id,
       group_id: empresaAtual?.grupo_id,
@@ -97,7 +97,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   });
 
   const aprovarMutation = useMutation({
-    mutationFn: ({ id }) => base44.entities.SolicitacaoCompra.update(id, {
+    mutationFn: ({ id }) => updateInContext('SolicitacaoCompra', id, {
       status: "Aprovada",
       aprovador: user?.full_name,
       data_aprovacao: new Date().toISOString().split('T')[0]
@@ -109,7 +109,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   });
 
   const rejeitarMutation = useMutation({
-    mutationFn: ({ id, motivo }) => base44.entities.SolicitacaoCompra.update(id, {
+    mutationFn: ({ id, motivo }) => updateInContext('SolicitacaoCompra', id, {
       status: "Rejeitada",
       aprovador: user?.full_name,
       data_aprovacao: new Date().toISOString().split('T')[0],
