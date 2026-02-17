@@ -69,7 +69,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual } = useContextoVisual();
+  const { empresaAtual, createInContext, updateInContext } = useContextoVisual();
 
   const { data: produtos = [] } = useQuery({
     queryKey: ['produtos'],
@@ -124,7 +124,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
   const gerarOCMutation = useMutation({
     mutationFn: async (solicitacao) => {
       // Criar Ordem de Compra
-      const oc = await base44.entities.OrdemCompra.create({
+      const oc = await createInContext('OrdemCompra', {
         numero_oc: `OC-${Date.now()}`,
         fornecedor_nome: "A definir",
         solicitacao_compra_id: solicitacao.id,
@@ -144,7 +144,7 @@ export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false
       });
 
       // Atualizar solicitação
-      await base44.entities.SolicitacaoCompra.update(solicitacao.id, {
+      await updateInContext('SolicitacaoCompra', solicitacao.id, {
         status: "Compra Gerada",
         ordem_compra_id: oc.id
       });
@@ -335,6 +335,7 @@ Retorne JSON com:
             <Button
               size="sm"
               className="bg-blue-600 hover:bg-blue-700"
+              data-permission="Compras.SolicitacaoCompra.criar"
               onClick={() => openWindow(SolicitacaoCompraForm, {
                 windowMode: true,
                 onSubmit: async (data) => {

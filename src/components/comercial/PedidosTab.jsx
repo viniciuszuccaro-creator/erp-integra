@@ -152,6 +152,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         {pedido.status === 'Rascunho' && (
           <Button 
             variant="ghost" size="sm"
+            data-permission="Comercial.Pedido.fechar"
             onClick={() => {
               const windowId = openWindow(
                 AutomacaoFluxoPedido,
@@ -183,8 +184,9 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
         {pedido.status === 'Aprovado' && (
           <>
             <Button 
-              variant="ghost" size="sm"
-              onClick={async () => {
+               variant="ghost" size="sm"
+               data-permission="Comercial.Pedido.marcarProntoFaturar"
+               onClick={async () => {
                 try {
                   await updateInContext('Pedido', pedido.id, { status: 'Pronto para Faturar' });
                   toast({ title: '✅ Pedido fechado para entrega!' });
@@ -244,7 +246,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
           </Button>
         )}
 
-        <Button variant="ghost" size="sm" onClick={() => { if (confirm('Excluir pedido?')) { deleteMutation.mutate(pedido.id); } }} title="Excluir" className="h-8 px-2 text-red-600">
+        <Button variant="ghost" size="sm" data-permission="Comercial.Pedido.excluir" onClick={() => { if (confirm('Excluir pedido?')) { deleteMutation.mutate(pedido.id); } }} title="Excluir" className="h-8 px-2 text-red-600">
           <Trash2 className="w-3 h-3 mr-1" />
           <span className="text-xs">Excluir</span>
         </Button>

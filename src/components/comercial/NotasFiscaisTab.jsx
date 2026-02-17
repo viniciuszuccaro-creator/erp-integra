@@ -74,7 +74,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { empresaAtual, empresasDoGrupo } = useContextoVisual();
+  const { empresaAtual, empresasDoGrupo, createInContext, updateInContext } = useContextoVisual();
   const { hasPermission } = usePermissions();
 
   const [formData, setFormData] = useState({
@@ -494,7 +494,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                     </Button>
                   )}
                   {nota.status === 'Autorizada' && (
-                    <ProtectedAction permission="nfe_cancelar">
+                    <ProtectedAction permission="Fiscal.NotaFiscal.cancelar">
                       <Button variant="ghost" size="sm" onClick={() => handleCancelarNFe(nota)} className="h-8 px-2 text-red-600" title="Cancelar NF-e">
                         <XCircle className="w-3 h-3 mr-1" /> <span className="text-xs">Cancelar</span>
                       </Button>
