@@ -50,7 +50,17 @@ export default function ERPDataTable({
     }
   }, [columns]);
 
-  const visibleColumns = useMemo(() => columns.filter(c => !hiddenColumns.has(c.key)), [columns, hiddenColumns]);
+  const { hasPermission } = usePermissions();
+  const visibleColumns = useMemo(() =>
+    columns.filter(c => {
+      if (hiddenColumns.has(c.key)) return false;
+      if (c.permission) {
+        const [m, s, a] = String(c.permission).split('.');
+        try { if (!hasPermission(m, s || null, a || null)) return false; } catch {}
+      }
+      return true;
+    })
+  , [columns, hiddenColumns, hasPermission]);
 
   // Aceita Set ou Array para seleção
   const selectedSet = useMemo(() => {
