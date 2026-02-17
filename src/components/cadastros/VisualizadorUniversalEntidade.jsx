@@ -772,27 +772,32 @@ export default function VisualizadorUniversalEntidade({
             <>
               {visualizacao === 'table' && (
                 <ERPDataTable
-                  columns={colunasOrdenacao.map(c => ({ key: c.campo, label: c.label, isNumeric: c.isNumeric }))}
-                  data={dadosBuscadosEOrdenados.map(item => {
-                    const row = { id: item.id };
-                    colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
-                    return row;
-                  })}
-                  entityName={nomeEntidade}
-                  sortField={sortField || (getDefaultSortForEntity().field)}
-                  sortDirection={sortDirection || (getDefaultSortForEntity().direction)}
-                  onSortChange={(field, direction) => { setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); setColunaOrdenacao(null); }}
-                  onToggleSelectAll={toggleSelectAll}
-                  onToggleItem={(id) => toggleItem(id)}
-                  allSelected={allSelected}
-                  selectedIds={selectedIds}
-                  enableColumnFilters
-                  columnFilters={columnFilters}
-                  onColumnFiltersChange={(next) => { setColumnFilters(next); setCurrentPage(1); }}
-                  hiddenColumns={hiddenCols}
-                  onHiddenColumnsChange={setHiddenCols}
-                  footerTotals
-                />
+                    columns={colunasOrdenacao.map(c => ({ key: c.campo, label: c.label, isNumeric: c.isNumeric }))}
+                    data={dadosBuscadosEOrdenados.map(item => {
+                      const row = { id: item.id };
+                      colunasOrdenacao.forEach(c => { row[c.campo] = c.getValue ? c.getValue(item) : item[c.campo]; });
+                      return row;
+                    })}
+                    entityName={nomeEntidade}
+                    sortField={sortField || (getDefaultSortForEntity().field)}
+                    sortDirection={sortDirection || (getDefaultSortForEntity().direction)}
+                    onSortChange={(field, direction) => { setSortField(field); setSortDirection(direction); setCurrentPage(1); setOrdenacao(''); setColunaOrdenacao(null); }}
+                    onToggleSelectAll={toggleSelectAll}
+                    onToggleItem={(id) => toggleItem(id)}
+                    allSelected={allSelected}
+                    selectedIds={selectedIds}
+                    enableColumnFilters
+                    columnFilters={columnFilters}
+                    onColumnFiltersChange={(next) => { setColumnFilters(next); setCurrentPage(1); }}
+                    hiddenColumns={hiddenCols}
+                    onHiddenColumnsChange={setHiddenCols}
+                    footerTotals
+                    page={currentPage}
+                    pageSize={itemsPerPage}
+                    totalItems={totalItemsCount}
+                    onPageChange={(p) => { setCurrentPage(p); setSelectedIds(new Set()); }}
+                    onPageSizeChange={(n) => { setItemsPerPage(n); setCurrentPage(1); setSelectedIds(new Set()); }}
+                  />
 
               )}
 

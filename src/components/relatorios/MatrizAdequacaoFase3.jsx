@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, AlertTriangle, AlertCircle, FileText } from "lucide-react";
@@ -478,8 +479,21 @@ export default function MatrizAdequacaoFase3() {
   return (
     <div className="space-y-6">
       <Card className="border-0 shadow-md">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 flex items-center justify-between">
           <CardTitle>Matriz Completa de Adequação — Fase 3</CardTitle>
+          <Button variant="outline" size="sm" onClick={() => {
+            const headers = ['Módulo','Layout','Ordenação','RBAC','Multiempresa','Status'];
+            const rows = (linhas || []).map(l => [l.modulo, l.layout, l.ordenacao, l.rbac, l.multi, l.status]);
+            const csv = [headers.join(','), ...rows.map(r => r.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(','))].join('\n');
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `matriz_adequacao_fase3_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+          }}>
+            Exportar CSV
+          </Button>
         </CardHeader>
         <CardContent className="text-sm text-slate-700 space-y-3">
           <p>
