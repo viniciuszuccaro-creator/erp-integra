@@ -144,7 +144,13 @@ export default function ERPDataTable({
   if (permission) {
     const [m,s,a] = String(permission).split('.');
     const allowed = hasPermission(m, s || null, a || null);
-    if (!allowed) return null;
+    if (!allowed) {
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center border border-dashed rounded-lg text-slate-400 p-8">
+          <div className="text-sm">Acesso negado</div>
+        </div>
+      );
+    }
   }
 
   return (
