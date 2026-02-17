@@ -94,6 +94,7 @@ const navigationItems = [
   ];
 
 function LayoutContent({ children, currentPageName }) {
+              // AppLayout + Sidebar + Topbar padrão já implementados; reforço de h-full/scroll interno preservado
         const location = useLocation();
         const { user } = useUser();
         const { empresaAtual, filterInContext, grupoAtual, contexto } = useContextoVisual();
