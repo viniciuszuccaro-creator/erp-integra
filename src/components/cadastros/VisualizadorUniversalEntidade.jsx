@@ -900,23 +900,7 @@ export default function VisualizadorUniversalEntidade({
             </>
           )}
 
-          {!isLoading && totalItemsCount > 0 && (
-            <PaginationControls
-              currentPage={currentPage}
-              totalItems={totalItemsCount}
-              itemsPerPage={itemsPerPage}
-              onPageChange={(page) => {
-                setCurrentPage(page);
-                setSelectedIds(new Set());
-              }}
-              onItemsPerPageChange={(items) => {
-                setItemsPerPage(items);
-                setCurrentPage(1);
-                setSelectedIds(new Set());
-              }}
-              isLoading={isFetching}
-            />
-          )}
+          {/* Paginação consolidada no ERPDataTable (padrão global) */}
         </CardContent>
       </Card>
     </Wrapper>
