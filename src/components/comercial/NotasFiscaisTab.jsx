@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea"; // Added Textarea
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
+
+
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
@@ -34,6 +34,10 @@ import { mockCancelarNFe } from "@/components/integracoes/MockIntegracoes";
 import usePermissions from "@/components/lib/usePermissions";
 import { ProtectedAction } from "@/components/ProtectedAction";
 import { ImprimirDANFESimplificado } from "@/components/lib/impressao";
+import ERPDataTable from "@/components/ui/erp/DataTable";
+import usePersistedSort from "@/components/lib/usePersistedSort";
+import useEntityListSorted from "@/components/lib/useEntityListSorted";
+import useBackendPagination from "@/components/lib/useBackendPagination";
 
 export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCreateNFe }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +50,13 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
   const [selectedNotas, setSelectedNotas] = useState([]);
   const toggleNota = (id) => setSelectedNotas(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleAllNotas = (checked, lista) => setSelectedNotas(checked ? lista.map(n => n.id) : []);
+
+  // Paginação e ordenação persistente (backend)
+  const { page, setPage, pageSize, setPageSize } = useBackendPagination('NotaFiscal', 20);
+  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('NotaFiscal', 'data_emissao', 'desc');
+  const { data: notasBackend = [] } = useEntityListSorted('NotaFiscal', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
+  const notasList = Array.isArray(notasFiscais) && notasFiscais.length ? notasFiscais : notasBackend;
+
   const exportarNotasCSV = (lista) => {
     const headers = ['numero','serie','tipo','cliente_fornecedor','empresa_id','data_emissao','valor_total','status'];
     const csv = [
@@ -197,7 +208,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
     cancelarNFeMutation.mutate({ nfe, motivo });
   };
 
-  const filteredNotas = notasFiscais.filter(n => {
+  const filteredNotas = notasList.filter(n => {
     const searchLower = searchTerm.toLowerCase();
     const matchSearch = n.cliente_fornecedor?.toLowerCase().includes(searchLower) ||
                        n.numero?.toString().includes(searchLower) ||
@@ -443,121 +454,88 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
               </AlertDescription>
             </Alert>
           )}
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead>Número</TableHead>
-                  <TableHead>Série</TableHead>
-                  <TableHead>Tipo</TableHead> {/* Added Type column */}
-                  <TableHead>Cliente/Fornecedor</TableHead>
-                  <TableHead>Data Emissão</TableHead>
-                  <TableHead>Valor Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredNotas.map((nota) => (
-                  <TableRow key={nota.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedNotas.includes(nota.id)}
-                        onCheckedChange={() => toggleNota(nota.id)}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{nota.numero}</TableCell>
-                    <TableCell>{nota.serie}</TableCell>
-                    <TableCell>{nota.tipo}</TableCell> {/* Display Type */}
-                    <TableCell>{nota.cliente_fornecedor}</TableCell>
-                    <TableCell>{new Date(nota.data_emissao).toLocaleDateString('pt-BR')}</TableCell>
-                    <TableCell className="font-semibold">
-                      R$ {nota.valor_total?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={
-                        nota.status === 'Autorizada' ? 'bg-green-100 text-green-700' :
-                        nota.status === 'Cancelada' ? 'bg-red-100 text-red-700' :
-                        nota.status === 'Denegada' ? 'bg-gray-100 text-gray-700' :
-                        nota.status === 'Pendente' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-orange-100 text-orange-700' // For "Erro" or other statuses
-                      }>
-                        {nota.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setViewingDetails(nota)}
-                          title="Ver Detalhes"
-                          className="h-8 px-2"
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          <span className="text-xs">Ver</span>
-                        </Button>
 
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const empresa = empresas?.find(e => e.id === nota.empresa_id);
-                            ImprimirDANFESimplificado({ nfe: nota, empresa });
-                          }}
-                          title="Imprimir DANFE"
-                          className="h-8 px-2 text-slate-600"
-                        >
-                          <Printer className="w-3 h-3 mr-1" />
-                          <span className="text-xs">Imprimir</span>
-                        </Button>
-                        
-                        {nota.danfe_url && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(nota.danfe_url, '_blank')}
-                            title="Baixar DANFE"
-                            className="h-8 px-2 text-blue-600"
-                          >
-                            <Download className="w-3 h-3 mr-1" />
-                            <span className="text-xs">PDF</span>
-                          </Button>
-                        )}
+          {/* DataTable padronizado com backend sort/paginação */}
+          <ERPDataTable
+            columns={[
+              { key: 'numero', label: 'Número', render: (n) => <span className="font-medium">{n.numero}</span> },
+              { key: 'serie', label: 'Série' },
+              { key: 'tipo', label: 'Tipo' },
+              { key: 'cliente_fornecedor', label: 'Cliente/Fornecedor' },
+              { key: 'data_emissao', label: 'Data Emissão', render: (n) => new Date(n.data_emissao).toLocaleDateString('pt-BR') },
+              { key: 'valor_total', label: 'Valor Total', isNumeric: true, render: (n) => `R$ ${Number(n.valor_total||0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
+              { key: 'status', label: 'Status', render: (n) => (
+                <Badge className={
+                  n.status === 'Autorizada' ? 'bg-green-100 text-green-700' :
+                  n.status === 'Cancelada' ? 'bg-red-100 text-red-700' :
+                  n.status === 'Denegada' ? 'bg-gray-100 text-gray-700' :
+                  n.status === 'Pendente' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-orange-100 text-orange-700'
+                }>
+                  {n.status}
+                </Badge>
+              ) },
+              { key: 'actions', label: 'Ações', render: (nota) => (
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => setViewingDetails(nota)} title="Ver Detalhes" className="h-8 px-2">
+                    <Eye className="w-3 h-3 mr-1" /> <span className="text-xs">Ver</span>
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => { const empresa = empresas?.find(e => e.id === nota.empresa_id); ImprimirDANFESimplificado({ nfe: nota, empresa }); }} title="Imprimir DANFE" className="h-8 px-2 text-slate-600">
+                    <Printer className="w-3 h-3 mr-1" /> <span className="text-xs">Imprimir</span>
+                  </Button>
+                  {nota.danfe_url && (
+                    <Button variant="ghost" size="sm" onClick={() => window.open(nota.danfe_url, '_blank')} title="Baixar DANFE" className="h-8 px-2 text-blue-600">
+                      <Download className="w-3 h-3 mr-1" /> <span className="text-xs">PDF</span>
+                    </Button>
+                  )}
+                  {nota.status === 'Pendente' && hasPermission('Fiscal','NotaFiscal','enviar') && (
+                    <Button variant="ghost" size="sm" title="Enviar NF-e" className="h-8 px-2 text-green-600">
+                      <Send className="w-3 h-3 mr-1" /> <span className="text-xs">Enviar</span>
+                    </Button>
+                  )}
+                  {nota.status === 'Autorizada' && (
+                    <ProtectedAction permission="nfe_cancelar">
+                      <Button variant="ghost" size="sm" onClick={() => handleCancelarNFe(nota)} className="h-8 px-2 text-red-600" title="Cancelar NF-e">
+                        <XCircle className="w-3 h-3 mr-1" /> <span className="text-xs">Cancelar</span>
+                      </Button>
+                    </ProtectedAction>
+                  )}
+                </div>
+              ) }
+            ]}
+            data={filteredNotas}
+            entityName="NotaFiscal"
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortChange={(sf, sd) => { setSortField(sf); setSortDirection(sd); }}
+            selectedIds={selectedNotas}
+            allSelected={selectedNotas.length === filteredNotas.length && filteredNotas.length > 0}
+            onToggleSelectAll={() => {
+              const all = selectedNotas.length === filteredNotas.length && filteredNotas.length > 0;
+              setSelectedNotas(all ? [] : filteredNotas.map(n=>n.id));
+            }}
+            onToggleItem={(id) => toggleNota(id)}
+            permission="Fiscal.NotaFiscal.visualizar"
+          />
 
-                        {nota.status === "Pendente" && hasPermission('Fiscal','NotaFiscal','enviar') && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            title="Enviar NF-e"
-                            className="h-8 px-2 text-green-600"
-                          >
-                            <Send className="w-3 h-3 mr-1" />
-                            <span className="text-xs">Enviar</span>
-                          </Button>
-                        )}
-
-                        {nota.status === "Autorizada" && (
-                          <ProtectedAction permission="nfe_cancelar">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleCancelarNFe(nota)}
-                              className="h-8 px-2 text-red-600"
-                              title="Cancelar NF-e"
-                            >
-                              <XCircle className="w-3 h-3 mr-1" />
-                              <span className="text-xs">Cancelar</span>
-                            </Button>
-                          </ProtectedAction>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          {/* Paginação backend simples */}
+          <div className="flex items-center justify-between pt-4">
+            <div className="text-sm text-slate-600">Página {page}</div>
+            <div className="flex items-center gap-2">
+              <select className="h-8 border rounded px-2" value={pageSize} onChange={(e)=>{ setPageSize(Number(e.target.value)); setPage(1); }}>
+                {[10,20,50,100].map(n => (<option key={n} value={n}>{n}/página</option>))}
+              </select>
+              <Button variant="outline" size="sm" onClick={()=>setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</Button>
+              <Button variant="outline" size="sm" onClick={()=>setPage(p => p+1)} disabled={notasBackend.length < pageSize}>Próxima</Button>
+            </div>
           </div>
+
+          {filteredNotas.length === 0 && (
+            <div className="text-center py-8 text-slate-500">
+              <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>Nenhuma nota encontrada</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
