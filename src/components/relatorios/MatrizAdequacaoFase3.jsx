@@ -437,6 +437,43 @@ export default function MatrizAdequacaoFase3() {
     status: checks[l.modulo]?.status || l.status,
   }));
 
+  // Fase 1 — Mapeamento técnico: listas consolidadas (sem criar telas novas)
+  const arquivosCriticos = [
+    'layout',
+    'components/ui/erp/DataTable',
+    'components/lib/useContextoVisual',
+    'components/lib/usePermissions',
+    'components/security/ProtectedSection',
+    'components/ProtectedAction',
+    'components/cadastros/VisualizadorUniversalEntidade',
+    'functions/entityListSorted',
+    'functions/entityGuard',
+    'functions/sanitizeOnWrite',
+    'functions/auditEntityEvents',
+    'components/comercial/PedidosTab',
+    'components/comercial/NotasFiscaisTab',
+    'components/financeiro/ContasPagarTab',
+    'components/financeiro/ContasReceberTab',
+    'components/estoque/ProdutosTab',
+    'components/compras/OrdensCompraTab',
+    'components/expedicao/EntregasListagem'
+  ];
+
+  const riscosArquiteturais = [
+    'Listagens sem entityListSorted (ordenacao/paginacao no backend) — risco de performance e inconsistência',
+    'Operacoes de escrita sem carimbo group_id/empresa_id — risco multiempresa',
+    'Acoes sem ProtectedAction/ProtectedSection — risco de acesso indevido',
+    'Filtros sem getFiltroContexto — risco de vazar dados entre empresas',
+  ];
+
+  const modulosAdequar = [...new Set(linhas.filter(l => l.status !== 'OK').map(l => l.modulo))];
+
+  const violacoesRegraMae = [
+    'Ausência de multiempresa explícita em alguns creates/updates',
+    'Ações críticas sem dupla validação (frontend + backend)',
+    'Tabelas legadas sem rolagem interna e persistência de sort',
+  ];
+
   return (
     <div className="space-y-6">
       <Card className="border-0 shadow-md">
@@ -460,6 +497,39 @@ export default function MatrizAdequacaoFase3() {
             <Badge variant="outline">components/lib/useContextoVisual</Badge>
             <Badge variant="outline">functions/sanitizeOnWrite</Badge>
             <Badge variant="outline">functions/auditEntityEvents</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* FASE 1 — Relatório consolidado */}
+      <Card className="border-0 shadow-md">
+        <CardHeader className="pb-3">
+          <CardTitle>Fase 1 — Mapeamento Técnico Completo</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 text-sm">
+          <div>
+            <p className="text-slate-500 mb-2">Arquivos críticos</p>
+            <ul className="list-disc ml-5 space-y-1 text-slate-700">
+              {arquivosCriticos.map((p,i)=>(<li key={i}>{p}</li>))}
+            </ul>
+          </div>
+          <div>
+            <p className="text-slate-500 mb-2">Riscos arquiteturais</p>
+            <ul className="list-disc ml-5 space-y-1 text-slate-700">
+              {riscosArquiteturais.map((r,i)=>(<li key={i}>{r}</li>))}
+            </ul>
+          </div>
+          <div>
+            <p className="text-slate-500 mb-2">Módulos a adequar</p>
+            <ul className="list-disc ml-5 space-y-1 text-slate-700">
+              {modulosAdequar.map((m,i)=>(<li key={i}>{m}</li>))}
+            </ul>
+          </div>
+          <div>
+            <p className="text-slate-500 mb-2">Violações Regra‑Mãe</p>
+            <ul className="list-disc ml-5 space-y-1 text-slate-700">
+              {violacoesRegraMae.map((v,i)=>(<li key={i}>{v}</li>))}
+            </ul>
           </div>
         </CardContent>
       </Card>
