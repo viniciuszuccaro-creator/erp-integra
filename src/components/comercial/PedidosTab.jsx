@@ -380,48 +380,19 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
               </AlertDescription>
             </Alert>
           )}
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead>
-                    <button className="hover:underline" onClick={() => {
-                      setSortField('numero_pedido');
-                      setSortDirection(prev => (sortField === 'numero_pedido' && prev === 'asc') ? 'desc' : 'asc');
-                    }}>Nº Pedido</button>
-                  </TableHead>
-                  <TableHead>
-                    <button className="hover:underline" onClick={() => {
-                      setSortField('cliente_nome');
-                      setSortDirection(prev => (sortField === 'cliente_nome' && prev === 'asc') ? 'desc' : 'asc');
-                    }}>Cliente</button>
-                  </TableHead>
-                  <TableHead>
-                    <button className="hover:underline" onClick={() => {
-                      setSortField('data_pedido');
-                      setSortDirection(prev => (sortField === 'data_pedido' && prev === 'asc') ? 'desc' : 'asc');
-                    }}>Data</button>
-                  </TableHead>
-                  <TableHead>Origem</TableHead>
-                  <TableHead>
-                    <button className="hover:underline" onClick={() => {
-                      setSortField('valor_total');
-                      setSortDirection(prev => (sortField === 'valor_total' && prev === 'asc') ? 'desc' : 'asc');
-                    }}>Valor</button>
-                  </TableHead>
-                  <TableHead>
-                    <button className="hover:underline" onClick={() => {
-                      setSortField('status');
-                      setSortDirection(prev => (sortField === 'status' && prev === 'asc') ? 'desc' : 'asc');
-                    }}>Status</button>
-                  </TableHead>
-                  <TableHead>Aprovação</TableHead>
-                  <TableHead className="min-w-[320px]">Ações Rápidas</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPedidos.map((pedido) => (
-                  <TableRow key={pedido.id} className="hover:bg-slate-50">
+          <ERPDataTable
+            columns={columns}
+            data={filteredPedidos}
+            entityName="Pedido"
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortChange={(sf, sd) => { setSortField(sf); setSortDirection(sd); }}
+            selectedIds={selectedPedidos}
+            allSelected={allSelected}
+            onToggleSelectAll={onToggleSelectAll}
+            onToggleItem={(id) => togglePedido(id)}
+            permission="Comercial.Pedido.visualizar"
+          />
                     <TableCell>
                       <Checkbox
                         checked={selectedPedidos.includes(pedido.id)}
