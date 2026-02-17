@@ -17,6 +17,18 @@ const Textarea = React.forwardRef(({ className, onChange, onBlur, ...props }, re
   // CORREÇÃO CRÍTICA: Remover __wrapped_audit antes de passar para elemento nativo
   const { __wrapped_audit, ...cleanProps } = props;
 
+  const perm = cleanProps?.['data-permission'];
+  if ('data-permission' in cleanProps) delete cleanProps['data-permission'];
+  if (perm) {
+    const [m,s,a] = String(perm).split('.');
+    const allowed = hasPermission(m, s || null, a || null);
+    if (!allowed) {
+      return (
+        <span className="inline-flex min-h-[60px] w-full items-center rounded-md border border-dashed px-3 py-2 text-xs text-slate-400 select-none">Acesso negado</span>
+      );
+    }
+  }
+
   return (
     <textarea
       className={cn(
