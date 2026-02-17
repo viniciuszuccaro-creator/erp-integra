@@ -93,6 +93,9 @@ function sanitizeMeta(meta) {
   }
 }
 
+// Fase 4: auditoria completa (verbose) por padrão
+const AUDIT_VERBOSE = true;
+
 // CORREÇÃO CRÍTICA: Wrap não-bloqueante para handlers de UI
 // Não usa async/await para evitar delays imperceptíveis que interferem na digitação
 export function uiAuditWrap(actionName, handler, baseMeta = {}) {
