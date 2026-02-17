@@ -110,7 +110,7 @@ export function uiAuditWrap(actionName, handler, baseMeta = {}) {
       
       // Log de sucesso não-bloqueante
       Promise.resolve().then(() => {
-        logUIAction({ component: inferComponent(actionName), action: actionName, status: "success", meta: baseMeta });
+        if (AUDIT_VERBOSE) logUIAction({ component: inferComponent(actionName), action: actionName, status: "success", meta: baseMeta });
         if (baseMeta && baseMeta.toastSuccess) {
           try { toast.success(`${actionName} concluído`); } catch (_) {}
         }
