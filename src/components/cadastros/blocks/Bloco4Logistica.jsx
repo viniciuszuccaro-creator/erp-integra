@@ -64,7 +64,7 @@ export default function Bloco4Logistica() {
                     App Motorista
                   </Button>
                 )}
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('expedicao','ver')}>
+                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('Expedição', null, 'visualizar')}>
                   Abrir
                 </Button>
               </div>

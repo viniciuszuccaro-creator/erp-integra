@@ -1,5 +1,24 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.6';
-import { getUserAndPerfil, assertPermission } from './_lib/guard';
+
+const MODULE_BY_ENTITY = {
+  Cliente: 'CRM',
+  Oportunidade: 'CRM',
+  Interacao: 'CRM',
+  Pedido: 'Comercial',
+  NotaFiscal: 'Fiscal',
+  Entrega: 'Expedição',
+  Fornecedor: 'Compras',
+  SolicitacaoCompra: 'Compras',
+  OrdemCompra: 'Compras',
+  Produto: 'Estoque',
+  MovimentacaoEstoque: 'Estoque',
+  ContaPagar: 'Financeiro',
+  ContaReceber: 'Financeiro',
+  CentroCusto: 'Financeiro',
+  PlanoDeContas: 'Financeiro',
+  PlanoContas: 'Financeiro',
+  User: 'Sistema',
+};
 
 /**
  * FUNÇÃO BACKEND: Contagem Eficiente de Entidades
@@ -22,11 +41,20 @@ Deno.serve(async (req) => {
 
     const { entityName, filter = {} } = await req.json();
 
-    const ctx = await getUserAndPerfil(base44);
-    const permErr = await assertPermission(base44, ctx, 'Sistema', 'Relatórios', 'visualizar');
-    if (permErr) return permErr;
-    if (!filter?.group_id && !filter?.empresa_id && !filter?.empresa_alocada_id && !filter?.empresa_dona_id) {
-      return Response.json({ error: 'Filtro sem contexto multiempresa (group_id, empresa_id, empresa_alocada_id ou empresa_dona_id obrigatório)' }, { status: 400 });
+    const mod = MODULE_BY_ENTITY[entityName] || 'Sistema';
+    try {
+      const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
+        module: mod,
+        section: entityName,
+        action: 'visualizar',
+        empresa_id: filter?.empresa_id || filter?.empresa_alocada_id || filter?.empresa_dona_id || null,
+        group_id: filter?.group_id || null,
+      });
+      if (!guard?.data?.allowed) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } catch (_) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     if (!entityName) {
