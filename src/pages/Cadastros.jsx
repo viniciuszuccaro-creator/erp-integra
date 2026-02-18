@@ -350,7 +350,8 @@ export default function Cadastros() {
     staleTime: 30000,
     gcTime: 60000,
     refetchOnWindowFocus: false,
-    retry: 1
+    retry: 1,
+    enabled: !bloqueadoSemEmpresa
   });
 
   const { count: totalProdutos = 0 } = useCountEntities('Produto', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
