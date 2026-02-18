@@ -263,7 +263,7 @@ export default function Cadastros() {
     queryKey: ['fornecedores', empresaAtual?.id],
     queryFn: async () => {
       try {
-        return await filterInContext('Fornecedor', {}, '-created_date', 100);
+        return await filterInContext('Fornecedor', {}, '-created_date', 100, 'empresa_dona_id');
       } catch (err) {
         console.error('Erro ao buscar fornecedores:', err);
         return [];
