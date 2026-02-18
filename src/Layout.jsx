@@ -499,18 +499,16 @@ function LayoutContent({ children, currentPageName }) {
 
       // Multiempresa em list/filter por padrão para não-admins
       if (orig.filter) {
-        api.filter = async (criteria = {}, order, limit, skip) => {
-          const isAdmin = user?.role === 'admin';
-          const hasScope = !!criteria?.empresa_id || !!criteria?.group_id;
-          const merged = (!isAdmin && !hasScope) ? { ...criteria, ...getScope() } : criteria;
-          return await orig.filter(merged, order, limit, skip);
-        };
+      api.filter = async (criteria = {}, order, limit, skip) => {
+        const hasScope = !!criteria?.empresa_id || !!criteria?.group_id;
+        const merged = (!hasScope) ? { ...criteria, ...getScope() } : criteria;
+        return await orig.filter(merged, order, limit, skip);
+      };
       }
 
       if (orig.list) {
         api.list = async (order, limit, skip) => {
-          const isAdmin = user?.role === 'admin';
-          if (!isAdmin && orig.filter) {
+          if (orig.filter) {
             return await orig.filter(getScope(), order, limit, skip);
           }
           return await orig.list(order, limit, skip);

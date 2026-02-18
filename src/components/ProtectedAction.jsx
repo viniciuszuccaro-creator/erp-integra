@@ -84,7 +84,7 @@ export function ProtectedAction({
 
     if (mode === "disable") {
       return (
-        <div className="w-full h-full opacity-50 pointer-events-none select-none" aria-disabled="true">
+        <div className="w-full h-full opacity-50 pointer-events-none select-none" aria-disabled="true" title="Sem permissão">
           {children ? (
             children
           ) : (
