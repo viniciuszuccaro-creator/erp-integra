@@ -24,7 +24,7 @@ import UnidadeMedidaForm from "@/components/cadastros/UnidadeMedidaForm";
 function CountBadge({ entityName }) {
   const { getFiltroContexto } = useContextoVisual();
   const { data: count = 0 } = useQuery({
-    queryKey: ['count', 'cadastros', entityName],
+    queryKey: ['count', 'cadastros', entityName, getFiltroContexto('empresa_id', true)],
     queryFn: async () => {
       const resp = await base44.functions.invoke('countEntities', {
         entityName,
@@ -32,7 +32,8 @@ function CountBadge({ entityName }) {
       });
       return resp?.data?.count || 0;
     },
-    staleTime: 60000
+    staleTime: 60000,
+    enabled: Object.keys(getFiltroContexto('empresa_id', true)).length > 0,
   });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }
@@ -68,8 +69,8 @@ export default function Bloco2Produtos() {
               <Package className="w-5 h-5 text-purple-600"/> Produtos
               <span className="ml-2"><CountBadge entityName="Produto" /></span>
             </CardTitle>
-            <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={openProdutos} disabled={!hasPermission('estoque','ver')}>
-              Abrir
+            <Button size="sm" className="bg-purple-600 hover:bg-purple-700" onClick={openProdutos} disabled={!hasPermission('Estoque', null, 'visualizar')}>
+             Abrir
             </Button>
           </div>
         </CardHeader>
@@ -84,8 +85,8 @@ export default function Bloco2Produtos() {
                 <Icon className="w-5 h-5 text-slate-600"/> {title}
                 <span className="ml-2"><CountBadge entityName={k} /></span>
               </CardTitle>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, title, Icon, campos, FormComp)} disabled={!hasPermission('cadastros','ver')}>
-                Abrir
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, title, Icon, campos, FormComp)} disabled={!hasPermission('Cadastros', null, 'visualizar')}>
+               Abrir
               </Button>
             </div>
           </CardHeader>

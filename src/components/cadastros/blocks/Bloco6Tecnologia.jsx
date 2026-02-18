@@ -98,7 +98,7 @@ export default function Bloco6Tecnologia() {
                       Ver Dashboard Chatbot
                     </Button>
                   )}
-                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('cadastros','ver')}>
+                  <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('Cadastros', null, 'visualizar')}>
                     Abrir
                   </Button>
                 </div>

@@ -67,8 +67,8 @@ export default function Bloco3Financeiro() {
                                 <Icon className="w-5 h-5 text-slate-600"/> {t}
                                 <span className="ml-2"><CountBadge entityName={k} /></span>
                               </CardTitle>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={custom ? (()=>openWindow(GestorGatewaysPagamento, { windowMode: true }, { title: t, width: 1200, height: 720 })) : openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('financeiro','ver')}>
-                Abrir
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={custom ? (()=>openWindow(GestorGatewaysPagamento, { windowMode: true }, { title: t, width: 1200, height: 720 })) : openList(k, t, Icon, c, FormComp)} disabled={!hasPermission('Financeiro', null, 'visualizar')}>
+               Abrir
               </Button>
             </div>
           </CardHeader>
