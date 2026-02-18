@@ -24,7 +24,7 @@ import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm"
 function CountBadge({ entityName }) {
   const { getFiltroContexto } = useContextoVisual();
   const { data: count = 0 } = useQuery({
-    queryKey: ['count', 'cadastros', entityName],
+    queryKey: ['count', 'cadastros', entityName, getFiltroContexto(entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id', true)],
     queryFn: async () => {
       const campo = entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id';
       const resp = await base44.functions.invoke('countEntities', {
