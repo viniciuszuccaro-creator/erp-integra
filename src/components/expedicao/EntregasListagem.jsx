@@ -101,7 +101,51 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
           <CardTitle className="text-sm">Lista de Entregas</CardTitle>
         </CardHeader>
         <CardContent className="p-0 flex-1 overflow-auto">
-          <Table>
+          <ERPDataTable
+            columns={[
+              { key: 'numero_pedido', label: 'Pedido', render: (e) => <span className="font-medium text-sm">{e.numero_pedido || '-'}</span> },
+              { key: 'cliente_nome', label: 'Cliente', render: (e) => {
+                const cliente = clientes.find(c => c.id === e.cliente_id);
+                return cliente ? <IconeAcessoCliente cliente={cliente} variant="badge" /> : <span className="text-sm">{e.cliente_nome}</span>;
+              } },
+              ...(estaNoGrupo ? [{ key: 'empresa', label: 'Empresa', render: (e) => <span className="text-xs">{obterNomeEmpresa(e.empresa_id)}</span> }] : []),
+              { key: 'destino', label: 'Destino', render: (e) => <span className="text-xs">{e.endereco_entrega_completo?.cidade || '-'}, {e.endereco_entrega_completo?.estado || '-'}</span> },
+              { key: 'transportadora', label: 'Transportadora', render: (e) => e.transportadora ? <IconeAcessoTransportadora transportadora={{ id: e.transportadora_id, nome: e.transportadora, razao_social: e.transportadora }} variant="badge" /> : <span className="text-xs">Própria</span> },
+              { key: 'data_previsao', label: 'Previsão', render: (e) => e.data_previsao ? new Date(e.data_previsao).toLocaleDateString('pt-BR') : '-' },
+              { key: 'status', label: 'Status', render: (e) => <Badge className={statusColors[e.status]} style={{ fontSize: '10px' }}>{e.status}</Badge> },
+              { key: 'actions', label: 'Ações', render: (e) => (
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => openWindow(DetalhesEntregaView, { entrega: e, estaNoGrupo, obterNomeEmpresa, statusColors, windowMode: true }, { title: `🚚 ${e.numero_pedido}`, width: 1000, height: 700 })} className="h-7 w-7">
+                    <Eye className="w-3 h-3" />
+                  </Button>
+                  {hasPermission('Expedição','Entrega','editar') && (
+                    <Button variant="ghost" size="icon" onClick={() => openWindow(FormularioEntrega, { formData: e, windowMode: true, isEditing: true }, { title: `✏️ ${e.numero_pedido}`, width: 1100, height: 650 })} className="h-7 w-7">
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+              ) }
+            ]}
+            data={filteredEntregas}
+            entityName="Entrega"
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortChange={(sf, sd) => { setSortField(sf); setSortDirection(sd); }}
+            selectedIds={selectedEntregas}
+            allSelected={selectedEntregas.length === filteredEntregas.length && filteredEntregas.length > 0}
+            onToggleSelectAll={() => {
+              const all = selectedEntregas.length === filteredEntregas.length && filteredEntregas.length > 0;
+              setSelectedEntregas(all ? [] : filteredEntregas.map(e=>e.id));
+            }}
+            onToggleItem={(id) => setSelectedEntregas(prev => prev.includes(id) ? prev.filter(x => x!==id) : [...prev, id])}
+            permission="Expedição.Entrega.visualizar"
+            page={page}
+            pageSize={pageSize}
+            totalItems={filteredEntregas.length}
+            onPageChange={(p) => setPage(p)}
+            onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
+          />
+          {false && (<Table>
             <TableHeader className="sticky top-0 bg-slate-50 z-10">
               <TableRow>
                 <TableHead className="w-10"><Checkbox /></TableHead>
@@ -167,7 +211,7 @@ export default function EntregasListagem({ entregas, clientes, pedidos, empresas
                 );
               })}
             </TableBody>
-          </Table>
+          </Table>)}
 
           {filteredEntregas.length === 0 && (
             <div className="text-center py-12 text-slate-500">
