@@ -516,20 +516,14 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
             }}
             onToggleItem={(id) => toggleNota(id)}
             permission="Fiscal.NotaFiscal.visualizar"
-            contextFilterKey="empresa_faturamento_id"
+            page={page}
+            pageSize={pageSize}
+            totalItems={page * pageSize + (notasBackend.length < pageSize ? 0 : 1)}
+            onPageChange={(p) => setPage(p)}
+            onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
           />
 
-          {/* Paginação backend simples */}
-          <div className="flex items-center justify-between pt-4">
-            <div className="text-sm text-slate-600">Página {page}</div>
-            <div className="flex items-center gap-2">
-              <select className="h-8 border rounded px-2" value={pageSize} onChange={(e)=>{ setPageSize(Number(e.target.value)); setPage(1); }}>
-                {[10,20,50,100].map(n => (<option key={n} value={n}>{n}/página</option>))}
-              </select>
-              <Button variant="outline" size="sm" onClick={()=>setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</Button>
-              <Button variant="outline" size="sm" onClick={()=>setPage(p => p+1)} disabled={notasBackend.length < pageSize}>Próxima</Button>
-            </div>
-          </div>
+{/* paginação integrada ao ERPDataTable */}
 
           {filteredNotas.length === 0 && (
             <div className="text-center py-8 text-slate-500">

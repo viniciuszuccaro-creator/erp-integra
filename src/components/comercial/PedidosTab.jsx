@@ -394,20 +394,14 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
             onToggleSelectAll={onToggleSelectAll}
             onToggleItem={(id) => togglePedido(id)}
             permission="Comercial.Pedido.visualizar"
-            contextFilterKey="empresa_id"
+            page={page}
+            pageSize={pageSize}
+            totalItems={page * pageSize + (pedidosBackend.length < pageSize ? 0 : 1)}
+            onPageChange={(p) => setPage(p)}
+            onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
           />
 
-          {/* Paginação backend simples */}
-          <div className="flex items-center justify-between p-4 border-t">
-            <div className="text-sm text-slate-600">Página {page}</div>
-            <div className="flex items-center gap-2">
-              <select className="h-8 border rounded px-2" value={pageSize} onChange={(e)=>{ setPageSize(Number(e.target.value)); setPage(1); }}>
-                {[10,20,50,100].map(n => (<option key={n} value={n}>{n}/página</option>))}
-              </select>
-              <Button variant="outline" size="sm" onClick={()=>setPage(p => Math.max(1, p-1))} disabled={page<=1}>Anterior</Button>
-              <Button variant="outline" size="sm" onClick={()=>setPage(p => p+1)} disabled={pedidosBackend.length < pageSize}>Próxima</Button>
-            </div>
-          </div>
+{/* paginação integrada ao ERPDataTable */}
 
           {filteredPedidos.length === 0 && (
             <div className="text-center py-12 text-slate-500">
