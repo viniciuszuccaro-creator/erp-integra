@@ -384,6 +384,7 @@ export default function Cadastros() {
     retry: 1
   });
 
+  // OBS: garantir consistência de filtros e contagens entre tiles e totais dos blocos
   const { data: gruposProduto = [] } = useQuery({
     queryKey: ['grupos-produto'],
     queryFn: async () => {
