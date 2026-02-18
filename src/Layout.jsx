@@ -563,6 +563,9 @@ function LayoutContent({ children, currentPageName }) {
 
           const result = await origInvoke(functionName, params);
           try { await base44.entities.AuditLog.create({
+            usuario: user?.full_name || user?.email || 'Usuário',
+            usuario_id: user?.id,
+            empresa_id: empresaAtual?.id || null,
             acao: 'Execução', modulo: currentModule || 'Sistema', tipo_auditoria: 'sistema',
             entidade: 'Function', descricao: `Função ${functionName} chamada`, dados_novos: { params }, data_hora: new Date().toISOString(),
           }); } catch {}
