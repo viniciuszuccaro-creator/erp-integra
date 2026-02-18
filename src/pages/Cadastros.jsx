@@ -678,14 +678,14 @@ export default function Cadastros() {
 
   // FASE 2: Novos cadastros
   const { data: locaisEstoque = [] } = useQuery({
-    queryKey: ['locais-estoque'],
-    queryFn: () => base44.entities.LocalEstoque.list('-created_date', 9999),
-  });
+        queryKey: ['locais-estoque'],
+        queryFn: () => filterInContext('LocalEstoque', {}, '-created_date', 9999),
+      });
 
   const { data: tabelasFiscais = [] } = useQuery({
-    queryKey: ['tabelas-fiscais'],
-    queryFn: () => base44.entities.TabelaFiscal.list('-created_date', 9999),
-  });
+        queryKey: ['tabelas-fiscais'],
+        queryFn: () => filterInContext('TabelaFiscal', {}, '-created_date', 9999),
+      });
 
   const { data: configuracao } = useQuery({
     queryKey: ['configuracaoSistema'],
@@ -696,12 +696,17 @@ export default function Cadastros() {
   });
 
   // V22.0: Cálculo de totais por bloco com contagens otimizadas
+  // Contagens adicionais para alinhar os totais dos blocos aos tiles
+  const { count: totalDespesasRecorrentes = 0 } = useCountEntities('ConfiguracaoDespesaRecorrente', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
+  const { count: totalConfigNFe = 0 } = useCountEntities('ConfiguracaoNFe', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
+  const { count: totalConfigBoletos = 0 } = useCountEntities('ConfiguracaoBoletos', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
+  const { count: totalConfigWhatsApp = 0 } = useCountEntities('ConfiguracaoWhatsApp', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
   const totalBloco1 = totalClientes + totalFornecedores + transportadoras.length + totalColaboradores + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
   const totalBloco2 = totalProdutos + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
-  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
+  const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length + operadoresCaixa.length + totalDespesasRecorrentes;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
-  const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length + usuarios.length + perfisAcesso.length;
-  const totalBloco6 = eventosNotificacao.length + configsIntegracao.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + apisExternas.length + jobsAgendados.length + parametrosPortal.length + parametrosOrigemPedido.length + parametrosRecebimentoNFe.length + parametrosRoteirizacao.length + parametrosConciliacao.length + parametrosCaixa.length;
+  const totalBloco5 = empresas.length + grupos.length + departamentos.length + cargos.length + turnos.length;
+  const totalBloco6 = eventosNotificacao.length + webhooks.length + chatbotIntents.length + chatbotCanais.length + apisExternas.length + jobsAgendados.length + totalConfigNFe + totalConfigBoletos + totalConfigWhatsApp + parametrosPortal.length + parametrosOrigemPedido.length + parametrosRecebimentoNFe.length + parametrosRoteirizacao.length + parametrosConciliacao.length + parametrosCaixa.length;
 
   // Filtrar itens pelo termo de busca
   const filtrarPorBusca = (lista, campos) => {

@@ -26,7 +26,7 @@ import OperadorCaixaForm from "@/components/cadastros/OperadorCaixaForm";
 function CountBadge({ entityName }) {
   const { getFiltroContexto } = useContextoVisual();
   const { data: count = 0 } = useQuery({
-    queryKey: ['count','cadastros',entityName],
+    queryKey: ['count','cadastros',entityName, getFiltroContexto('empresa_id', true)],
     queryFn: async () => {
       const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto('empresa_id', true) });
       return resp?.data?.count || 0;
