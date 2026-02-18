@@ -89,7 +89,25 @@ Deno.serve(async (req) => {
     const sanitize = (v) => typeof v === 'string' ? v.replace(/<\s*script[^>]*>[\s\S]*?<\s*\/\s*script\s*>/gi,'').replace(/javascript:\s*/gi,'') : v;
     const safeFilter = Object.fromEntries(Object.entries(filtros).map(([k,v])=>[k, Array.isArray(v)? v.map(sanitize): (v && typeof v==='object'? v : sanitize(v))]));
 
-    const raw = await base44.asServiceRole.entities[entityName].filter(safeFilter, orderHint, fetchLimit);
+    // Ajuste: converter operadores simples para compatibilidade ($in em arrays)
+    const normalizedFilter = (() => {
+      if (safeFilter && safeFilter.$or && Array.isArray(safeFilter.$or)) {
+        return {
+          ...safeFilter,
+          $or: safeFilter.$or.map(cond => {
+            if (cond && typeof cond === 'object' && 'empresas_compartilhadas_ids' in cond) {
+              const v = cond.empresas_compartilhadas_ids;
+              if (v && typeof v === 'object' && '$in' in v) return cond;
+              if (typeof v === 'string') return { empresas_compartilhadas_ids: { $in: [v] } };
+            }
+            return cond;
+          })
+        };
+      }
+      return safeFilter;
+    })();
+
+    const raw = await base44.asServiceRole.entities[entityName].filter(normalizedFilter, orderHint, fetchLimit);
     const rows = Array.isArray(raw) ? raw : [];
 
     // Case/acentos-insensível
