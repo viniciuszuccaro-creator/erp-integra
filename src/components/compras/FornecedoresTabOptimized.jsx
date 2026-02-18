@@ -37,13 +37,15 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
     queryFn: async () => {
       try {
         const skip = (currentPage - 1) * itemsPerPage;
-        const result = await base44.entities.Fornecedor.filter(
-          filtroBase,
-          '-created_date',
-          itemsPerPage,
+        const { data } = await base44.functions.invoke('entityListSorted', {
+          entityName: 'Fornecedor',
+          filter: filtroBase,
+          sortField: 'updated_date',
+          sortDirection: 'desc',
+          limit: itemsPerPage,
           skip
-        );
-        return result || [];
+        });
+        return Array.isArray(data) ? data : [];
       } catch (err) {
         console.error('Erro ao buscar fornecedores:', err);
         return [];
@@ -167,7 +169,7 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
           <option value="Bloqueado">Bloqueado</option>
         </select>
         {onCreate && (
-          <Button onClick={onCreate} className="bg-cyan-600 hover:bg-cyan-700">
+          <Button onClick={onCreate} className="bg-cyan-600 hover:bg-cyan-700" data-permission="Compras.Fornecedores.criar" data-sensitive>
             <Plus className="w-4 h-4 mr-2" />
             Novo Fornecedor
           </Button>
@@ -220,6 +222,8 @@ export default function FornecedoresTabOptimized({ onEdit, onCreate }) {
                         variant="ghost"
                         size="sm"
                         onClick={() => onEdit(fornecedor)}
+                        data-permission="Compras.Fornecedores.editar"
+                        data-sensitive
                       >
                         <Edit className="w-4 h-4 text-cyan-600" />
                       </Button>

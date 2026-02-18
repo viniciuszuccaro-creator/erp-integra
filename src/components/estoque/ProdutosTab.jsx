@@ -20,7 +20,7 @@ import VisualizadorUniversalEntidade from "@/components/cadastros/VisualizadorUn
 export default function ProdutosTab(props) {
   const { hasPermission } = usePermissions();
   const { openWindow } = useWindow();
-  const { getFiltroContexto } = useContextoVisual();
+  const { getFiltroContexto, createInContext } = useContextoVisual();
   const [filtroEstoqueBaixo, setFiltroEstoqueBaixo] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();

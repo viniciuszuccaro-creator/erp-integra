@@ -39,13 +39,15 @@ export default function ClientesTabOptimized({ onEdit, onCreate }) {
     queryFn: async () => {
       try {
         const skip = (currentPage - 1) * itemsPerPage;
-        const result = await base44.entities.Cliente.filter(
-          filtroBase,
-          '-created_date',
-          itemsPerPage,
+        const { data } = await base44.functions.invoke('entityListSorted', {
+          entityName: 'Cliente',
+          filter: filtroBase,
+          sortField: 'updated_date',
+          sortDirection: 'desc',
+          limit: itemsPerPage,
           skip
-        );
-        return result || [];
+        });
+        return Array.isArray(data) ? data : [];
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
         return [];
@@ -170,7 +172,7 @@ export default function ClientesTabOptimized({ onEdit, onCreate }) {
           <option value="Bloqueado">Bloqueado</option>
         </select>
         {onCreate && (
-          <Button onClick={onCreate} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={onCreate} className="bg-blue-600 hover:bg-blue-700" data-permission="CRM.Clientes.criar" data-sensitive>
             <Plus className="w-4 h-4 mr-2" />
             Novo Cliente
           </Button>
@@ -218,6 +220,8 @@ export default function ClientesTabOptimized({ onEdit, onCreate }) {
                         variant="ghost"
                         size="sm"
                         onClick={() => onEdit(cliente)}
+                        data-permission="CRM.Clientes.editar"
+                        data-sensitive
                       >
                         <Edit className="w-4 h-4 text-blue-600" />
                       </Button>
