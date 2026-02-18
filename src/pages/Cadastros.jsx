@@ -240,22 +240,7 @@ export default function Cadastros() {
   });
 
   // V22.0: Contagem total otimizada para grandes volumes
-  const { data: totalClientes = 0 } = useQuery({
-    queryKey: ['clientes-count', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Cliente',
-          filter: getFiltroContexto('empresa_id')
-        });
-        return response.data?.count || clientes.length;
-      } catch {
-        return clientes.length;
-      }
-    },
-    staleTime: 60000,
-    retry: 1
-  });
+  const { count: totalClientes = 0 } = useCountEntities('Cliente', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores', empresaAtual?.id],
