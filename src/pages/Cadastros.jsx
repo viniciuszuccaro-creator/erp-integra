@@ -347,23 +347,7 @@ export default function Cadastros() {
     retry: 1
   });
 
-  const { data: totalProdutos = 0 } = useQuery({
-    queryKey: ['produtos-count', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const filtro = empresaAtual?.id ? { empresa_id: empresaAtual.id } : {};
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Produto',
-          filter: filtro
-        });
-        return response.data?.count || produtos.length;
-      } catch {
-        return produtos.length;
-      }
-    },
-    staleTime: 60000,
-    retry: 1
-  });
+  const { count: totalProdutos = 0 } = useCountEntities('Produto', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
 
   const { data: servicos = [] } = useQuery({
     queryKey: ['servicos'],
