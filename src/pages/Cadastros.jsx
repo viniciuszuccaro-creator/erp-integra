@@ -354,7 +354,7 @@ export default function Cadastros() {
     enabled: !bloqueadoSemEmpresa
   });
 
-  const { count: totalProdutos = 0 } = useCountEntities('Produto', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
+  const { count: totalProdutos = 0 } = useCountEntities('Produto', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
 
   const { data: servicos = [] } = useQuery({
     queryKey: ['servicos'],
