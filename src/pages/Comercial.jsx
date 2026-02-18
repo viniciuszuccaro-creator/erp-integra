@@ -48,7 +48,7 @@ export default function Comercial() {
       try {
         const data = await filterInContext('Cliente', {}, '-created_date', 100);
         if (!data || data.length === 0) {
-          return await base44.entities.Cliente.list('-created_date', 100);
+          return await base44.entities.Cliente.filter(getFiltroContexto('empresa_id', true), '-created_date', 100);
         }
         return data;
       } catch (err) {
