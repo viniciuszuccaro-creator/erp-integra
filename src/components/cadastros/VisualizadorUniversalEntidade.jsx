@@ -318,10 +318,26 @@ export default function VisualizadorUniversalEntidade({
       Colaborador: 'empresa_alocada_id',
     };
     const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
-    const filtroContexto = getFiltroContexto(campoEmpresa, true);
+    const fc = getFiltroContexto(campoEmpresa, true) || {};
+
+    // Ajuste especial para Cliente em contexto de empresa: considerar dono/compartilhado
+    let filtroBase = { ...fc };
+    if (nomeEntidade === 'Cliente' && fc?.empresa_id) {
+      const empresaId = fc.empresa_id;
+      const rest = { ...fc };
+      delete rest.empresa_id;
+      filtroBase = {
+        ...rest,
+        $or: [
+          { empresa_id: empresaId },
+          { empresa_dona_id: empresaId },
+          { empresas_compartilhadas_ids: empresaId }
+        ]
+      };
+    }
     
     if (!buscaBackend.trim()) {
-      return filtroContexto;
+      return filtroBase;
     }
 
     const termoBusca = buscaBackend.trim();
@@ -350,7 +366,7 @@ export default function VisualizadorUniversalEntidade({
     });
 
     const filtrosColunas = Object.entries(columnFilters || {}).filter(([, v]) => String(v || '').trim() !== '').map(([campo, val]) => ({ [campo]: { $regex: String(val).trim(), $options: 'i' } }));
-    const combinado = { ...filtroContexto };
+    const combinado = { ...filtroBase };
     const and = [];
     if (buscaFiltros.length) and.push({ $or: buscaFiltros });
     if (filtrosColunas.length) and.push(...filtrosColunas);
