@@ -665,7 +665,7 @@ export default function VisualizadorUniversalEntidade({
                 <Download className="w-4 h-4 mr-2" />
                 Exportar
               </Button>
-              <ProtectedAction module={moduloPermissao} action="criar" mode="hide">
+              <ProtectedAction module={moduloPermissao} action="criar" mode="disable">
                 <Button variant="primary" size="sm" onClick={handleAbrirNovo}>
                   <Plus className="w-4 h-4 mr-2" />
                   Novo
@@ -674,7 +674,7 @@ export default function VisualizadorUniversalEntidade({
               <Button variant="outline" size="sm" onClick={toggleSelectAll}>
                 {allSelected ? 'Limpar' : 'Selecionar Todos'}
               </Button>
-              <ProtectedAction module={moduloPermissao} action="excluir" mode="hide">
+              <ProtectedAction module={moduloPermissao} action="excluir" mode="disable">
                 <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={selectedIds.size === 0} className="border-red-300 text-red-700">
                   <Trash2 className="w-4 h-4 mr-2" />
                   Excluir ({selectedIds.size})
@@ -829,7 +829,7 @@ export default function VisualizadorUniversalEntidade({
                             </Button>
                           )}
                           {componenteEdicao && (
-                            <ProtectedAction module={moduloPermissao} action="editar" mode="hide">
+                            <ProtectedAction module={moduloPermissao} action="editar" mode="disable">
                               <Button size="sm" onClick={() => abrirEdicao(item)} className="flex-1">
                                 <Edit2 className="w-3 h-3 mr-1" />
                                 Editar
@@ -872,7 +872,7 @@ export default function VisualizadorUniversalEntidade({
                               </Button>
                             )}
                             {componenteEdicao && (
-                              <ProtectedAction module={moduloPermissao} action="editar" mode="hide">
+                              <ProtectedAction module={moduloPermissao} action="editar" mode="disable">
                                 <Button size="sm" onClick={() => abrirEdicao(item)}>
                                   <Edit2 className="w-4 h-4" />
                                 </Button>
