@@ -19,7 +19,8 @@ import {
   XCircle, 
   Clock,
   ShoppingCart,
-  AlertCircle
+  AlertCircle,
+  Download
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import useContextoVisual from "@/components/lib/useContextoVisual";
@@ -27,8 +28,16 @@ import SolicitacaoCompraForm from "./SolicitacaoCompraForm";
 import { useWindow } from "@/components/lib/useWindow";
 import usePermissions from "@/components/lib/usePermissions";
 import { toast as sonnerToast } from "sonner";
+import ERPDataTable from "@/components/ui/erp/DataTable";
+import useEntityListSorted from "@/components/lib/useEntityListSorted";
+import useBackendPagination from "@/components/lib/useBackendPagination";
+import usePersistedSort from "@/components/lib/usePersistedSort";
 
 export default function SolicitacoesCompraTab({ solicitacoes, windowMode = false }) {
+  const { page, setPage, pageSize, setPageSize } = useBackendPagination('SolicitacaoCompra', 20);
+  const [sortField, setSortField, sortDirection, setSortDirection] = usePersistedSort('SolicitacaoCompra', 'data_solicitacao', 'desc');
+  const { data: solBackend = [] } = useEntityListSorted('SolicitacaoCompra', {}, { sortField, sortDirection, page, pageSize, limit: pageSize });
+  const solList = Array.isArray(solicitacoes) && solicitacoes.length ? solicitacoes : solBackend;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editando, setEditando] = useState(null);
   const { openWindow } = useWindow();
@@ -487,107 +496,66 @@ Retorne JSON com:
               </AlertDescription>
             </Alert>
           )}
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                <TableHead>Nº Solicitação</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Quantidade</TableHead>
-                <TableHead>Solicitante</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Prioridade</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {solicitacoes.map((sol) => (
-                <TableRow key={sol.id}>
-                  <TableCell>
-                  <Checkbox
-                    checked={selectedSolicitacoes.includes(sol.id)}
-                    onCheckedChange={() => toggleSolicitacao(sol.id)}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{sol.numero_solicitacao}</TableCell>
-                  <TableCell>{sol.produto_descricao}</TableCell>
-                  <TableCell>
-                    {sol.quantidade_solicitada} {sol.unidade_medida}
-                  </TableCell>
-                  <TableCell>{sol.solicitante}</TableCell>
-                  <TableCell>
-                    {new Date(sol.data_solicitacao).toLocaleDateString('pt-BR')}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={
-                      sol.prioridade === 'Urgente' ? 'border-red-300 text-red-700' :
-                      sol.prioridade === 'Alta' ? 'border-orange-300 text-orange-700' :
-                      'border-slate-300 text-slate-700'
-                    }>
-                      {sol.prioridade}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={statusColors[sol.status]}>
-                      {sol.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      {sol.status === 'Pendente' && (
-                        <>
-                          {hasPermission('Compras','SolicitacaoCompra','aprovar') && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              data-permission="Compras.SolicitacaoCompra.aprovar"
-                              data-permission="Compras.SolicitacaoCompra.aprovar"
-                              onClick={() => handleAprovar(sol)}
-                              title="Aprovar"
-                            >
-                              <CheckCircle2 className="w-4 h-4 text-green-600" />
-                            </Button>
-                          )}
-                          {hasPermission('Compras','SolicitacaoCompra','rejeitar') && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              data-permission="Compras.SolicitacaoCompra.rejeitar"
-                              data-permission="Compras.SolicitacaoCompra.rejeitar"
-                              onClick={() => handleRejeitar(sol)}
-                              title="Rejeitar"
-                            >
-                              <XCircle className="w-4 h-4 text-red-600" />
-                            </Button>
-                          )}
-                        </>
-                      )}
-                      {sol.status === 'Aprovada' && hasPermission('Compras','SolicitacaoCompra','gerar_oc') && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          data-permission="Compras.SolicitacaoCompra.gerar_oc"
-                          data-permission="Compras.SolicitacaoCompra.gerar_oc"
-                          onClick={() => handleGerarOC(sol)}
-                          className="text-purple-600"
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-1" />
-                          Gerar OC
+          <ERPDataTable
+            columns={[
+              { key: 'numero_solicitacao', label: 'Nº Solicitação', render: (s) => <span className="font-medium">{s.numero_solicitacao}</span> },
+              { key: 'produto_descricao', label: 'Produto' },
+              { key: 'quantidade_solicitada', label: 'Qtd', isNumeric: true, render: (s) => `${s.quantidade_solicitada} ${s.unidade_medida}` },
+              { key: 'solicitante', label: 'Solicitante' },
+              { key: 'data_solicitacao', label: 'Data', render: (s) => new Date(s.data_solicitacao).toLocaleDateString('pt-BR') },
+              { key: 'prioridade', label: 'Prioridade', render: (s) => (
+                <Badge variant="outline" className={
+                  s.prioridade === 'Urgente' ? 'border-red-300 text-red-700' :
+                  s.prioridade === 'Alta' ? 'border-orange-300 text-orange-700' :
+                  'border-slate-300 text-slate-700'
+                }>
+                  {s.prioridade}
+                </Badge>
+              ) },
+              { key: 'status', label: 'Status', render: (s) => <Badge className={statusColors[s.status]}>{s.status}</Badge> },
+              { key: 'actions', label: 'Ações', render: (s) => (
+                <div className="flex gap-1">
+                  {s.status === 'Pendente' && (
+                    <>
+                      {hasPermission('Compras','SolicitacaoCompra','aprovar') && (
+                        <Button variant="ghost" size="icon" data-permission="Compras.SolicitacaoCompra.aprovar" onClick={() => handleAprovar(s)} title="Aprovar">
+                          <CheckCircle2 className="w-4 h-4 text-green-600" />
                         </Button>
                       )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {solicitacoes.length === 0 && (
-            <div className="text-center py-8">
-              <FileText className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm text-slate-500">Nenhuma solicitação cadastrada</p>
-            </div>
-          )}
+                      {hasPermission('Compras','SolicitacaoCompra','rejeitar') && (
+                        <Button variant="ghost" size="icon" data-permission="Compras.SolicitacaoCompra.rejeitar" onClick={() => handleRejeitar(s)} title="Rejeitar">
+                          <XCircle className="w-4 h-4 text-red-600" />
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  {s.status === 'Aprovada' && hasPermission('Compras','SolicitacaoCompra','gerar_oc') && (
+                    <Button variant="ghost" size="sm" data-permission="Compras.SolicitacaoCompra.gerar_oc" onClick={() => handleGerarOC(s)} className="text-purple-600">
+                      <ShoppingCart className="w-4 h-4 mr-1" /> Gerar OC
+                    </Button>
+                  )}
+                </div>
+              ) }
+            ]}
+            data={solList}
+            entityName="SolicitacaoCompra"
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortChange={(sf, sd) => { setSortField(sf); setSortDirection(sd); }}
+            selectedIds={selectedSolicitacoes}
+            allSelected={selectedSolicitacoes.length === solList.length && solList.length > 0}
+            onToggleSelectAll={() => {
+              const all = selectedSolicitacoes.length === solList.length && solList.length > 0;
+              setSelectedSolicitacoes(all ? [] : solList.map(s=>s.id));
+            }}
+            onToggleItem={(id) => toggleSolicitacao(id)}
+            permission="Compras.SolicitacaoCompra.visualizar"
+            page={page}
+            pageSize={pageSize}
+            totalItems={page * pageSize + (solBackend.length < pageSize ? 0 : 1)}
+            onPageChange={(p) => setPage(p)}
+            onPageSizeChange={(n) => { setPageSize(n); setPage(1); }}
+          />
         </CardContent>
       </Card>
     </div>
