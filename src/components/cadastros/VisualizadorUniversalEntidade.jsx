@@ -380,7 +380,7 @@ export default function VisualizadorUniversalEntidade({
       const filtroBase = buildFilterWithSearch();
       // Ajuste especial Clientes: se só houver empresa_id, considerar dono/compartilhado
       const filtro = (nomeEntidade === 'Cliente' && filtroBase?.empresa_id)
-        ? (() => { const empresaId = filtroBase.empresa_id; const rest = { ...filtroBase }; delete rest.empresa_id; return { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: empresaId } ] }; })()
+        ? (() => { const empresaId = filtroBase.empresa_id; const rest = { ...filtroBase }; delete rest.empresa_id; return { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } } ] }; })()
         : filtroBase;
 
       const skip = (currentPage - 1) * itemsPerPage;
@@ -418,7 +418,7 @@ export default function VisualizadorUniversalEntidade({
         if (nomeEntidade === 'Cliente' && filtro?.empresa_id) {
           const empresaId = filtro.empresa_id; const rest = { ...filtro }; delete rest.empresa_id;
           try {
-            const alt = await base44.functions.invoke('countEntities', { entityName: nomeEntidade, filter: { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: empresaId } ] } });
+            const alt = await base44.functions.invoke('countEntities', { entityName: nomeEntidade, filter: { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } } ] } });
             return alt.data?.count || 0;
           } catch (_) { return 0; }
         }

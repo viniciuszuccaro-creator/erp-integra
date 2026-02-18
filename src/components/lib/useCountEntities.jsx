@@ -28,7 +28,7 @@ export function useCountEntities(entityName, filter = {}, options = {}) {
           delete rest.empresa_id;
           const alt = await base44.functions.invoke('countEntities', {
             entityName,
-            filter: { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: empresaId } ] }
+            filter: { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } } ] }
           });
           if (alt.data?.count !== undefined) return alt.data.count;
         }

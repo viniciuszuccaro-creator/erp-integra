@@ -232,7 +232,7 @@ export default function Cadastros() {
           const empresaId = fc.empresa_id;
           const rest = { ...fc };
           delete rest.empresa_id;
-          const filtro = { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: empresaId } ] };
+          const filtro = { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } } ] };
           const res = await base44.functions.invoke('entityListSorted', { entityName: 'Cliente', filter: filtro, sortField: 'updated_date', sortDirection: 'desc', limit: 100 });
           return res.data || [];
         }
@@ -255,7 +255,7 @@ export default function Cadastros() {
   const clienteEmpresaId = fcClientes?.empresa_id;
   const filtroClientesCount = clienteEmpresaId ? {
     ...(() => { const r = { ...fcClientes }; delete r.empresa_id; return r; })(),
-    $or: [ { empresa_id: clienteEmpresaId }, { empresa_dona_id: clienteEmpresaId }, { empresas_compartilhadas_ids: clienteEmpresaId } ]
+    $or: [ { empresa_id: clienteEmpresaId }, { empresa_dona_id: clienteEmpresaId }, { empresas_compartilhadas_ids: { $in: [clienteEmpresaId] } } ]
   } : fcClientes;
   const { count: totalClientes = 0 } = useCountEntities('Cliente', filtroClientesCount, { staleTime: 60000 });
 

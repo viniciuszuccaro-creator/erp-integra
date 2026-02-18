@@ -32,7 +32,7 @@ function CountBadge({ entityName }) {
 
       // Cliente pode estar em empresa_id, empresa_dona_id ou empresas_compartilhadas_ids
       const filtro = (entityName === 'Cliente' && fc?.empresa_id)
-        ? (() => { const empresaId = fc.empresa_id; const rest = { ...fc }; delete rest.empresa_id; return { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: empresaId } ] }; })()
+        ? (() => { const empresaId = fc.empresa_id; const rest = { ...fc }; delete rest.empresa_id; return { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: { $in: [empresaId] } } ] }; })()
         : fc;
 
       const resp = await base44.functions.invoke('countEntities', {
