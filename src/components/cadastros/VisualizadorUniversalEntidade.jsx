@@ -538,7 +538,9 @@ export default function VisualizadorUniversalEntidade({
       });
       return obj;
     });
-    await Promise.all(exemplos.map((e) => createInContext(nomeEntidade, e, nomeEntidade === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id')));
+    const ENTITY_CONTEXT_FIELD = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
+    const campoEmpresa = ENTITY_CONTEXT_FIELD[nomeEntidade] || 'empresa_id';
+    await Promise.all(exemplos.map((e) => createInContext(nomeEntidade, e, campoEmpresa)));
     await invalidateAllRelated();
   };
 
