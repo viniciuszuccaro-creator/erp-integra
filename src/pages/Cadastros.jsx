@@ -204,7 +204,7 @@ export default function Cadastros() {
     window.history.replaceState({}, '', url.toString());
     try { localStorage.setItem('Cadastros_subtab', value); } catch {}
   };
-  const { empresaAtual, filterInContext, createInContext, updateInContext, getFiltroContexto, estaNoGrupo } = useContextoVisual();
+  const { empresaAtual, grupoAtual, filterInContext, createInContext, updateInContext, getFiltroContexto, estaNoGrupo } = useContextoVisual();
   const bloqueadoSemEmpresa = !estaNoGrupo && !empresaAtual;
 
   // Seleções em massa (Clientes, Fornecedores, Produtos)
