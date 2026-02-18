@@ -260,7 +260,7 @@ export default function Cadastros() {
   });
 
   // Contagem consistente via hook (sempre mesmo campo por entidade)
-  const { count: totalFornecedores = 0 } = useCountEntities('Fornecedor', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
+  const { count: totalFornecedores = 0 } = useCountEntities('Fornecedor', getFiltroContexto('empresa_dona_id', true), { staleTime: 60000 });
 
   const { data: transportadoras = [] } = useQuery({
     queryKey: ['transportadoras', empresaAtual?.id],
@@ -278,6 +278,9 @@ export default function Cadastros() {
     retry: 1,
     enabled: !bloqueadoSemEmpresa
   });
+
+  // Contagem consistente para Transportadora usando empresa_dona_id
+  const { count: totalTransportadoras = 0 } = useCountEntities('Transportadora', getFiltroContexto('empresa_dona_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
 
   const { data: colaboradores = [] } = useQuery({
         queryKey: ['colaboradores', empresaAtual?.id],
@@ -703,7 +706,7 @@ export default function Cadastros() {
   const { count: totalConfigNFe = 0 } = useCountEntities('ConfiguracaoNFe', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
   const { count: totalConfigBoletos = 0 } = useCountEntities('ConfiguracaoBoletos', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
   const { count: totalConfigWhatsApp = 0 } = useCountEntities('ConfiguracaoWhatsApp', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
-  const totalBloco1 = totalClientes + totalFornecedores + transportadoras.length + totalColaboradores + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
+  const totalBloco1 = totalClientes + totalFornecedores + totalTransportadoras + totalColaboradores + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
   const totalBloco2 = totalProdutos + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length + operadoresCaixa.length + totalDespesasRecorrentes;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
