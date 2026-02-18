@@ -280,21 +280,24 @@ export default function Cadastros() {
   });
 
   const { data: colaboradores = [] } = useQuery({
-    queryKey: ['colaboradores', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        return await filterInContext('Colaborador', {}, '-created_date', 100, 'empresa_alocada_id');
-      } catch (err) {
-        console.error('Erro ao buscar colaboradores:', err);
-        return [];
-      }
-    },
-    staleTime: 30000,
-    gcTime: 60000,
-    refetchOnWindowFocus: false,
-    retry: 1,
-    enabled: !bloqueadoSemEmpresa
-  });
+        queryKey: ['colaboradores', empresaAtual?.id],
+        queryFn: async () => {
+          try {
+            return await filterInContext('Colaborador', {}, '-created_date', 100, 'empresa_alocada_id');
+          } catch (err) {
+            console.error('Erro ao buscar colaboradores:', err);
+            return [];
+          }
+        },
+        staleTime: 30000,
+        gcTime: 60000,
+        refetchOnWindowFocus: false,
+        retry: 1,
+        enabled: !bloqueadoSemEmpresa
+      });
+
+  // Contagem consistente para Colaborador usando empresa_alocada_id
+  const { count: totalColaboradores = 0 } = useCountEntities('Colaborador', getFiltroContexto('empresa_alocada_id', true), { staleTime: 60000 });
 
   const { data: representantes = [] } = useQuery({
     queryKey: ['representantes', empresaAtual?.id],
