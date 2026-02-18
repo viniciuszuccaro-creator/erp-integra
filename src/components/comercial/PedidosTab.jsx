@@ -367,6 +367,7 @@ export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onC
               <AlertDescription className="flex items-center justify-between">
                 <div className="text-blue-900 font-semibold">{selectedPedidos.length} pedido(s) selecionado(s)</div>
                 <div className="flex gap-2">
+                  <ProtectedAction module="Comercial" section="Pedido" action="exportar" mode="disable">
                   <Button variant="outline" onClick={() => {
                     const lista = filteredPedidos.filter(p => selectedPedidos.includes(p.id));
                     const headers = ['numero_pedido','cliente_nome','empresa_id','data_pedido','valor_total','status','status_aprovacao'];
