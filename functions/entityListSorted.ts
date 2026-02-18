@@ -107,7 +107,16 @@ Deno.serve(async (req) => {
       return safeFilter;
     })();
 
-    const raw = await base44.asServiceRole.entities[entityName].filter(normalizedFilter, orderHint, fetchLimit);
+    // Ajuste top-level para empresas_compartilhadas_ids
+    const normalizedTop = (() => {
+      if (normalizedFilter && typeof normalizedFilter === 'object' && 'empresas_compartilhadas_ids' in normalizedFilter) {
+        const v = normalizedFilter.empresas_compartilhadas_ids;
+        if (typeof v === 'string') return { ...normalizedFilter, empresas_compartilhadas_ids: { $in: [v] } };
+      }
+      return normalizedFilter;
+    })();
+
+    const raw = await base44.asServiceRole.entities[entityName].filter(normalizedTop, orderHint, fetchLimit);
     const rows = Array.isArray(raw) ? raw : [];
 
     // Case/acentos-insensível
