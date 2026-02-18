@@ -377,7 +377,12 @@ export default function VisualizadorUniversalEntidade({
   const { data: dados = [], isLoading, isFetching, refetch, error } = useQuery({
     queryKey: [...queryKey, empresaAtual?.id, buscaBackend, currentPage, itemsPerPage, sortField, sortDirection, JSON.stringify(columnFilters)],
     queryFn: async () => {
-      const filtro = buildFilterWithSearch();
+      const filtroBase = buildFilterWithSearch();
+      // Ajuste especial Clientes: se só houver empresa_id, considerar dono/compartilhado
+      const filtro = (nomeEntidade === 'Cliente' && filtroBase?.empresa_id)
+        ? (() => { const empresaId = filtroBase.empresa_id; const rest = { ...filtroBase }; delete rest.empresa_id; return { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: empresaId } ] }; })()
+        : filtroBase;
+
       const skip = (currentPage - 1) * itemsPerPage;
       const def = getDefaultSortForEntity();
       const sf = sortField || def.field;
