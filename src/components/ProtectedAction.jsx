@@ -14,7 +14,7 @@ export function ProtectedAction({
   section = null,
   action = "editar",
   fallback = null,
-  mode = "modal", // "modal" | "disable" | "hide"
+  mode = "disable", // "modal" | "disable" | "hide"
   auditDenied = true,
   auditMetadata = null,
 }) {
