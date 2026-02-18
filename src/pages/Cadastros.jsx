@@ -274,22 +274,8 @@ export default function Cadastros() {
     enabled: !bloqueadoSemEmpresa
   });
 
-  const { data: totalFornecedores = 0 } = useQuery({
-    queryKey: ['fornecedores-count', empresaAtual?.id],
-    queryFn: async () => {
-      try {
-        const response = await base44.functions.invoke('countEntities', {
-          entityName: 'Fornecedor',
-          filter: getFiltroContexto('empresa_dona_id')
-        });
-        return response.data?.count || fornecedores.length;
-      } catch {
-        return fornecedores.length;
-      }
-    },
-    staleTime: 60000,
-    retry: 1
-  });
+  // Contagem consistente via hook (sempre mesmo campo por entidade)
+  const { count: totalFornecedores = 0 } = useCountEntities('Fornecedor', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
 
   const { data: transportadoras = [] } = useQuery({
     queryKey: ['transportadoras', empresaAtual?.id],
