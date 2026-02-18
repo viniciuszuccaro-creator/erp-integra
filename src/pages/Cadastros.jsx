@@ -695,7 +695,7 @@ export default function Cadastros() {
   });
 
   // V22.0: Cálculo de totais por bloco com contagens otimizadas
-  const totalBloco1 = totalClientes + totalFornecedores + transportadoras.length + colaboradores.length + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
+  const totalBloco1 = totalClientes + totalFornecedores + transportadoras.length + totalColaboradores + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
   const totalBloco2 = totalProdutos + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length;
   const totalBloco4 = veiculos.length + motoristas.length + tiposFrete.length + locaisEstoque.length + rotasPadrao.length + modelosDocumento.length;
