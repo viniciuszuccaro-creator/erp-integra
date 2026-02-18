@@ -226,6 +226,16 @@ export default function Cadastros() {
     queryKey: ['clientes', empresaAtual?.id],
     queryFn: async () => {
       try {
+        // Cliente pode estar em empresa_id, empresa_dona_id ou compartilhado
+        const fc = getFiltroContexto('empresa_id', true) || {};
+        if (fc?.empresa_id) {
+          const empresaId = fc.empresa_id;
+          const rest = { ...fc };
+          delete rest.empresa_id;
+          const filtro = { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: empresaId } ] };
+          const res = await base44.functions.invoke('entityListSorted', { entityName: 'Cliente', filter: filtro, sortField: 'updated_date', sortDirection: 'desc', limit: 100 });
+          return res.data || [];
+        }
         return await filterInContext('Cliente', {}, '-created_date', 100);
       } catch (err) {
         console.error('Erro ao buscar clientes:', err);
