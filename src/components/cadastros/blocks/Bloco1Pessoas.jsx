@@ -24,9 +24,10 @@ import RegiaoAtendimentoForm from "@/components/cadastros/RegiaoAtendimentoForm"
 function CountBadge({ entityName }) {
   const { getFiltroContexto } = useContextoVisual();
   const { data: count = 0 } = useQuery({
-    queryKey: ['count', 'cadastros', entityName, getFiltroContexto(entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id', true)],
+    queryKey: ['count', 'cadastros', entityName, (() => { const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; const c=m[entityName]||'empresa_id'; return getFiltroContexto(c, true); })()],
     queryFn: async () => {
-      const campo = entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id';
+      const campoMap = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
+      const campo = campoMap[entityName] || 'empresa_id';
       const resp = await base44.functions.invoke('countEntities', {
         entityName,
         filter: getFiltroContexto(campo, true)
@@ -34,7 +35,7 @@ function CountBadge({ entityName }) {
       return resp?.data?.count || 0;
     },
     staleTime: 60000,
-    enabled: Object.keys(getFiltroContexto(entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id', true)).length > 0,
+    enabled: (() => { const m={Fornecedor:'empresa_dona_id',Transportadora:'empresa_dona_id',Colaborador:'empresa_alocada_id'}; const c=m[entityName]||'empresa_id'; return Object.keys(getFiltroContexto(c, true)).length>0; })(),
   });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }

@@ -21,13 +21,15 @@ import ModeloDocumentoForm from "@/components/cadastros/ModeloDocumentoForm";
 function CountBadge({ entityName }) {
   const { getFiltroContexto } = useContextoVisual();
   const { data: count = 0 } = useQuery({
-    queryKey: ['count','cadastros',entityName, getFiltroContexto('empresa_id', true)],
+    queryKey: ['count','cadastros',entityName, (() => { const m={Transportadora:'empresa_dona_id'}; const c=m[entityName]||'empresa_id'; return getFiltroContexto(c, true); })()],
     queryFn: async () => {
-      const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto('empresa_id', true) });
+      const campoMap = { Transportadora: 'empresa_dona_id' };
+      const campo = campoMap[entityName] || 'empresa_id';
+      const resp = await base44.functions.invoke('countEntities', { entityName, filter: getFiltroContexto(campo, true) });
       return resp?.data?.count || 0;
     },
     staleTime: 60000,
-    enabled: Object.keys(getFiltroContexto('empresa_id', true)).length > 0,
+    enabled: (() => { const m={Transportadora:'empresa_dona_id'}; const c=m[entityName]||'empresa_id'; return Object.keys(getFiltroContexto(c, true)).length > 0; })(),
   });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }

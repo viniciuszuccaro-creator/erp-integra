@@ -274,32 +274,40 @@ export function useContextoVisual() {
           };
 
           const filterInContext = async (entityName, criterios = {}, order = undefined, limit = undefined, campo = 'empresa_id') => {
-            const filtro = { ...criterios, ...getFiltroContexto(campo, true) };
-            if (!filtro.group_id && !filtro[campo]) {
-              return [];
-            }
+                    // Mapeamento de campo de contexto por entidade (multiempresa)
+                    const ENTITY_CONTEXT_FIELD = {
+                      Fornecedor: 'empresa_dona_id',
+                      Transportadora: 'empresa_dona_id',
+                      Colaborador: 'empresa_alocada_id',
+                    };
+                    const ctxCampo = ENTITY_CONTEXT_FIELD[entityName] || campo || 'empresa_id';
 
-            // Derivar sort
-            let sortField, sortDirection;
-            if (typeof order === 'string' && order.length) {
-              sortDirection = order.startsWith('-') ? 'desc' : 'asc';
-              sortField = order.replace(/^-/, '');
-              setLastSort(entityName, { sortField, sortDirection });
-            } else {
-              const last = getLastSort(entityName);
-              sortField = last?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
-              sortDirection = last?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc';
-            }
+                    const filtro = { ...criterios, ...getFiltroContexto(ctxCampo, true) };
+                    if (!filtro.group_id && !filtro[ctxCampo]) {
+                      return [];
+                    }
 
-            const res = await base44.functions.invoke('entityListSorted', {
-              entityName,
-              filter: filtro,
-              sortField,
-              sortDirection,
-              limit: limit || 500,
-            });
-            return Array.isArray(res?.data) ? res.data : [];
-          };
+                    // Derivar sort
+                    let sortField, sortDirection;
+                    if (typeof order === 'string' && order.length) {
+                      sortDirection = order.startsWith('-') ? 'desc' : 'asc';
+                      sortField = order.replace(/^-/, '');
+                      setLastSort(entityName, { sortField, sortDirection });
+                    } else {
+                      const last = getLastSort(entityName);
+                      sortField = last?.sortField || DEFAULT_SORTS[entityName]?.field || 'updated_date';
+                      sortDirection = last?.sortDirection || DEFAULT_SORTS[entityName]?.direction || 'desc';
+                    }
+
+                    const res = await base44.functions.invoke('entityListSorted', {
+                      entityName,
+                      filter: filtro,
+                      sortField,
+                      sortDirection,
+                      limit: limit || 500,
+                    });
+                    return Array.isArray(res?.data) ? res.data : [];
+                  };
 
   return {
     contexto,
