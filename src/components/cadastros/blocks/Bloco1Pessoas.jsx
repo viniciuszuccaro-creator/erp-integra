@@ -33,7 +33,8 @@ function CountBadge({ entityName }) {
       });
       return resp?.data?.count || 0;
     },
-    staleTime: 60000
+    staleTime: 60000,
+    enabled: Object.keys(getFiltroContexto(entityName === 'Colaborador' ? 'empresa_alocada_id' : 'empresa_id', true)).length > 0,
   });
   return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{count}</Badge>;
 }

@@ -297,7 +297,7 @@ export default function Cadastros() {
       });
 
   // Contagem consistente para Colaborador usando empresa_alocada_id
-  const { count: totalColaboradores = 0 } = useCountEntities('Colaborador', getFiltroContexto('empresa_alocada_id', true), { staleTime: 60000 });
+  const { count: totalColaboradores = 0 } = useCountEntities('Colaborador', getFiltroContexto('empresa_alocada_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
 
   const { data: representantes = [] } = useQuery({
     queryKey: ['representantes', empresaAtual?.id],
@@ -350,7 +350,7 @@ export default function Cadastros() {
     retry: 1
   });
 
-  const { count: totalProdutos = 0 } = useCountEntities('Produto', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
+  const { count: totalProdutos = 0 } = useCountEntities('Produto', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
 
   const { data: servicos = [] } = useQuery({
     queryKey: ['servicos'],
@@ -680,11 +680,13 @@ export default function Cadastros() {
   const { data: locaisEstoque = [] } = useQuery({
         queryKey: ['locais-estoque'],
         queryFn: () => filterInContext('LocalEstoque', {}, '-created_date', 9999),
+        enabled: !!grupoAtual?.id || !!empresaAtual?.id,
       });
 
   const { data: tabelasFiscais = [] } = useQuery({
         queryKey: ['tabelas-fiscais'],
         queryFn: () => filterInContext('TabelaFiscal', {}, '-created_date', 9999),
+        enabled: !!grupoAtual?.id || !!empresaAtual?.id,
       });
 
   const { data: configuracao } = useQuery({
@@ -697,10 +699,10 @@ export default function Cadastros() {
 
   // V22.0: Cálculo de totais por bloco com contagens otimizadas
   // Contagens adicionais para alinhar os totais dos blocos aos tiles
-  const { count: totalDespesasRecorrentes = 0 } = useCountEntities('ConfiguracaoDespesaRecorrente', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
-  const { count: totalConfigNFe = 0 } = useCountEntities('ConfiguracaoNFe', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
-  const { count: totalConfigBoletos = 0 } = useCountEntities('ConfiguracaoBoletos', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
-  const { count: totalConfigWhatsApp = 0 } = useCountEntities('ConfiguracaoWhatsApp', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
+  const { count: totalDespesasRecorrentes = 0 } = useCountEntities('ConfiguracaoDespesaRecorrente', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
+  const { count: totalConfigNFe = 0 } = useCountEntities('ConfiguracaoNFe', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
+  const { count: totalConfigBoletos = 0 } = useCountEntities('ConfiguracaoBoletos', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
+  const { count: totalConfigWhatsApp = 0 } = useCountEntities('ConfiguracaoWhatsApp', getFiltroContexto('empresa_id', true), { staleTime: 60000, enabled: !!grupoAtual?.id || !!empresaAtual?.id });
   const totalBloco1 = totalClientes + totalFornecedores + transportadoras.length + totalColaboradores + representantes.length + contatosB2B.length + segmentosCliente.length + regioesAtendimento.length;
   const totalBloco2 = totalProdutos + servicos.length + setoresAtividade.length + gruposProduto.length + marcas.length + tabelasPreco.length + catalogoWeb.length + kits.length + unidadesMedida.length;
   const totalBloco3 = bancos.length + formasPagamento.length + planoContas.length + centrosCusto.length + centrosResultado.length + tiposDespesa.length + moedasIndices.length + condicoesComerciais.length + tabelasFiscais.length + operadoresCaixa.length + totalDespesasRecorrentes;
