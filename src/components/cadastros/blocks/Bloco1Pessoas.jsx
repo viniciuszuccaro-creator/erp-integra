@@ -28,9 +28,16 @@ function CountBadge({ entityName }) {
     queryFn: async () => {
       const campoMap = { Fornecedor: 'empresa_dona_id', Transportadora: 'empresa_dona_id', Colaborador: 'empresa_alocada_id' };
       const campo = campoMap[entityName] || 'empresa_id';
+      const fc = getFiltroContexto(campo, true) || {};
+
+      // Cliente pode estar em empresa_id, empresa_dona_id ou empresas_compartilhadas_ids
+      const filtro = (entityName === 'Cliente' && fc?.empresa_id)
+        ? (() => { const empresaId = fc.empresa_id; const rest = { ...fc }; delete rest.empresa_id; return { ...rest, $or: [ { empresa_id: empresaId }, { empresa_dona_id: empresaId }, { empresas_compartilhadas_ids: empresaId } ] }; })()
+        : fc;
+
       const resp = await base44.functions.invoke('countEntities', {
         entityName,
-        filter: getFiltroContexto(campo, true)
+        filter: filtro
       });
       return resp?.data?.count || 0;
     },
