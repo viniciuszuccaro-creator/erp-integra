@@ -250,7 +250,14 @@ export default function Cadastros() {
   });
 
   // V22.0: Contagem total otimizada para grandes volumes
-  const { count: totalClientes = 0 } = useCountEntities('Cliente', getFiltroContexto('empresa_id', true), { staleTime: 60000 });
+  // Clientes podem pertencer a empresa_id, empresa_dona_id ou estar compartilhados
+  const fcClientes = getFiltroContexto('empresa_id', true) || {};
+  const clienteEmpresaId = fcClientes?.empresa_id;
+  const filtroClientesCount = clienteEmpresaId ? {
+    ...(() => { const r = { ...fcClientes }; delete r.empresa_id; return r; })(),
+    $or: [ { empresa_id: clienteEmpresaId }, { empresa_dona_id: clienteEmpresaId }, { empresas_compartilhadas_ids: clienteEmpresaId } ]
+  } : fcClientes;
+  const { count: totalClientes = 0 } = useCountEntities('Cliente', filtroClientesCount, { staleTime: 60000 });
 
   const { data: fornecedores = [] } = useQuery({
     queryKey: ['fornecedores', empresaAtual?.id],
