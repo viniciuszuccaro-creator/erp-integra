@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
         module: mod,
         section: entityName,
         action: 'visualizar',
-        empresa_id: filtros?.empresa_id || null,
+        empresa_id: filtros?.empresa_id || filtros?.empresa_alocada_id || filtros?.empresa_dona_id || null,
         group_id: filtros?.group_id || null,
       });
       if (!guard?.data?.allowed) {
