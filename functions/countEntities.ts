@@ -67,14 +67,31 @@ Deno.serve(async (req) => {
       return f;
     })();
 
+    // Expansão multiempresa para entidades com compartilhamento quando só empresa_id é passado
+    const EXPAND_SET = new Set(['Cliente','Fornecedor','Transportadora']);
+    const expandedFilter = (() => {
+      if (EXPAND_SET.has(entityName) && normalizedFilter?.empresa_id && !normalizedFilter?.$or) {
+        const { empresa_id, ...rest } = normalizedFilter;
+        return {
+          ...rest,
+          $or: [
+            { empresa_id },
+            { empresa_dona_id: empresa_id },
+            { empresas_compartilhadas_ids: { $in: [empresa_id] } }
+          ]
+        };
+      }
+      return normalizedFilter;
+    })();
+
     const mod = MODULE_BY_ENTITY[entityName] || 'Sistema';
     try {
       const guard = await base44.asServiceRole.functions.invoke('entityGuard', {
         module: mod,
         section: entityName,
         action: 'visualizar',
-        empresa_id: normalizedFilter?.empresa_id || normalizedFilter?.empresa_alocada_id || normalizedFilter?.empresa_dona_id || null,
-        group_id: normalizedFilter?.group_id || null,
+        empresa_id: expandedFilter?.empresa_id || expandedFilter?.empresa_alocada_id || expandedFilter?.empresa_dona_id || null,
+        group_id: expandedFilter?.group_id || null,
       });
       if (!guard?.data?.allowed) {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -96,7 +113,7 @@ Deno.serve(async (req) => {
     try {
       // Busca em lotes até obter todos os registros
       while (hasMore) {
-        const batch = await base44.entities[entityName].filter(normalizedFilter, undefined, BATCH_SIZE, skip);
+        const batch = await base44.entities[entityName].filter(expandedFilter, undefined, BATCH_SIZE, skip);
         
         if (!batch || batch.length === 0) {
           hasMore = false;
@@ -116,7 +133,7 @@ Deno.serve(async (req) => {
         count: totalCount,
         isEstimate: false,
         entityName,
-        filter: normalizedFilter
+        filter: expandedFilter
         });
 
     } catch (error) {

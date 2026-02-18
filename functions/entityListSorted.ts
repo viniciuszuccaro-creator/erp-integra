@@ -116,7 +116,24 @@ Deno.serve(async (req) => {
       return normalizedFilter;
     })();
 
-    const raw = await base44.asServiceRole.entities[entityName].filter(normalizedTop, orderHint, fetchLimit);
+    // Expansão multiempresa para entidades com compartilhamento quando só empresa_id é passado
+    const EXPAND_SET = new Set(['Cliente','Fornecedor','Transportadora']);
+    const expandedTop = (() => {
+      if (EXPAND_SET.has(entityName) && normalizedTop?.empresa_id && !normalizedTop?.$or) {
+        const { empresa_id, ...rest } = normalizedTop;
+        return {
+          ...rest,
+          $or: [
+            { empresa_id },
+            { empresa_dona_id: empresa_id },
+            { empresas_compartilhadas_ids: { $in: [empresa_id] } }
+          ]
+        };
+      }
+      return normalizedTop;
+    })();
+
+    const raw = await base44.asServiceRole.entities[entityName].filter(expandedTop, orderHint, fetchLimit);
     const rows = Array.isArray(raw) ? raw : [];
 
     // Case/acentos-insensível
