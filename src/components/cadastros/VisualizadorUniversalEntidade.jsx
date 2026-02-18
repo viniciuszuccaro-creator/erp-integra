@@ -661,10 +661,12 @@ export default function VisualizadorUniversalEntidade({
                 <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
                 Atualizar
               </Button>
-              <Button variant="outline" size="sm" onClick={exportarDados}>
-                <Download className="w-4 h-4 mr-2" />
-                Exportar
-              </Button>
+              <ProtectedAction module={moduloPermissao} action="exportar" mode="disable">
+                <Button variant="outline" size="sm" onClick={exportarDados}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar
+                </Button>
+              </ProtectedAction>
               <ProtectedAction module={moduloPermissao} action="criar" mode="disable">
                 <Button variant="primary" size="sm" onClick={handleAbrirNovo}>
                   <Plus className="w-4 h-4 mr-2" />
