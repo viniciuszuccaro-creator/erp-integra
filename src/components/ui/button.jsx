@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import usePermissions from "@/components/lib/usePermissions";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
@@ -51,16 +52,20 @@ const Button = React.forwardRef(({ className, variant, size, asChild = false, ..
   if ('data-sensitive' in passProps) delete passProps['data-sensitive'];
 
   if (perm && !isAllowed) {
-          // Placeholder visual quando sem permissão
+          // Placeholder visual quando sem permissão (desabilitado com tooltip + auditoria)
           return (
-            <button
-              className={cn(buttonVariants({ variant: "outline", size })) + " pointer-events-none opacity-50 cursor-not-allowed"}
-              aria-disabled="true"
-              type="button"
-              title="Acesso negado"
-            >
-              Acesso negado
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  className={cn(buttonVariants({ variant: "outline", size })) + " pointer-events-none opacity-50 cursor-not-allowed"}
+                  aria-disabled="true"
+                  type="button"
+                >
+                  Acesso negado
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Acesso negado • ação auditada</TooltipContent>
+            </Tooltip>
           );
         }
 

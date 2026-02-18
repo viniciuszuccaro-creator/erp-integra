@@ -6,6 +6,7 @@ import { base44 } from "@/api/base44Client";
 import { useUser } from "@/components/lib/UserContext";
 import { useContextoVisual } from "@/components/lib/useContextoVisual";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 // ProtectedAction v2 - suporta modos: "modal" (padrão), "disable" e "hide" + auditoria opcional
 export function ProtectedAction({
@@ -84,16 +85,21 @@ export function ProtectedAction({
 
     if (mode === "disable") {
       return (
-        <div className="w-full h-full opacity-50 pointer-events-none select-none" aria-disabled="true" title="Sem permissão">
-          {children ? (
-            children
-          ) : (
-            <Button variant="ghost" size="sm" disabled>
-              <Lock className="w-4 h-4 mr-2" />
-              Sem permissão
-            </Button>
-          )}
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="w-full h-full opacity-50 pointer-events-none select-none" aria-disabled="true">
+              {children ? (
+                children
+              ) : (
+                <Button variant="ghost" size="sm" disabled>
+                  <Lock className="w-4 h-4 mr-2" />
+                  Sem permissão
+                </Button>
+              )}
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>Sem permissão • ação auditada</TooltipContent>
+        </Tooltip>
       );
     }
 

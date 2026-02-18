@@ -665,13 +665,13 @@ export default function VisualizadorUniversalEntidade({
                 Atualizar
               </Button>
               <ProtectedAction module={moduloPermissao} action="exportar" mode="disable">
-                <Button variant="outline" size="sm" onClick={exportarDados}>
+                <Button variant="outline" size="sm" onClick={exportarDados} data-permission={`${moduloPermissao}.Relatorios.exportar`} data-sensitive>
                   <Download className="w-4 h-4 mr-2" />
                   Exportar
                 </Button>
               </ProtectedAction>
               <ProtectedAction module={moduloPermissao} action="criar" mode="disable">
-                <Button variant="primary" size="sm" onClick={handleAbrirNovo}>
+                <Button variant="primary" size="sm" onClick={handleAbrirNovo} data-permission={`${moduloPermissao}.Cadastro.criar`} data-sensitive>
                   <Plus className="w-4 h-4 mr-2" />
                   Novo
                 </Button>
@@ -680,7 +680,7 @@ export default function VisualizadorUniversalEntidade({
                 {allSelected ? 'Limpar' : 'Selecionar Todos'}
               </Button>
               <ProtectedAction module={moduloPermissao} action="excluir" mode="disable">
-                <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={selectedIds.size === 0} className="border-red-300 text-red-700">
+                <Button variant="outline" size="sm" onClick={excluirSelecionados} disabled={selectedIds.size === 0} className="border-red-300 text-red-700" data-permission={`${moduloPermissao}.Cadastro.excluir`} data-sensitive>
                   <Trash2 className="w-4 h-4 mr-2" />
                   Excluir ({selectedIds.size})
                 </Button>
