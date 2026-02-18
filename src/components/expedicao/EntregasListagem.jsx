@@ -12,6 +12,7 @@ import IconeAcessoCliente from "@/components/cadastros/IconeAcessoCliente";
 import IconeAcessoTransportadora from "@/components/cadastros/IconeAcessoTransportadora";
 import { useWindow } from '@/components/lib/useWindow';
 import usePermissions from '@/components/lib/usePermissions';
+import { ProtectedAction } from '@/components/ProtectedAction';
 import FormularioEntrega from './FormularioEntrega';
 import DetalhesEntregaView from './DetalhesEntregaView';
 

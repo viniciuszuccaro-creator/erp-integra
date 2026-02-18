@@ -314,6 +314,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
             {onCreateNFe && hasPermission('Fiscal','NotaFiscal','criar') && (
               <Button 
                 className="bg-blue-600 hover:bg-blue-700"
+                data-permission="Fiscal.NotaFiscal.criar"
                 onClick={onCreateNFe}
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -446,9 +447,11 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
               <AlertDescription className="flex items-center justify-between">
                 <div className="text-blue-900 font-semibold">{selectedNotas.length} NF selecionada(s)</div>
                 <div className="flex gap-2">
-                  <Button variant="outline" onClick={() => exportarNotasCSV(filteredNotas.filter(n => selectedNotas.includes(n.id)))}>
-                    <Download className="w-4 h-4 mr-2" /> Exportar CSV
-                  </Button>
+                  <ProtectedAction module="Fiscal" section="NotaFiscal" action="exportar" mode="disable">
+                    <Button variant="outline" onClick={() => exportarNotasCSV(filteredNotas.filter(n => selectedNotas.includes(n.id)))}>
+                      <Download className="w-4 h-4 mr-2" /> Exportar CSV
+                    </Button>
+                  </ProtectedAction>
                   <Button variant="ghost" onClick={() => setSelectedNotas([])}>Limpar Seleção</Button>
                 </div>
               </AlertDescription>
@@ -494,7 +497,7 @@ export default function NotasFiscaisTab({ notasFiscais, pedidos, clientes, onCre
                     </Button>
                   )}
                   {nota.status === 'Autorizada' && (
-                    <ProtectedAction permission="Fiscal.NotaFiscal.cancelar">
+                    <ProtectedAction module="Fiscal" section="NotaFiscal" action="cancelar" mode="disable">
                       <Button variant="ghost" size="sm" onClick={() => handleCancelarNFe(nota)} className="h-8 px-2 text-red-600" title="Cancelar NF-e">
                         <XCircle className="w-3 h-3 mr-1" /> <span className="text-xs">Cancelar</span>
                       </Button>

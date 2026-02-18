@@ -39,6 +39,7 @@ import useEntityListSorted from "@/components/lib/useEntityListSorted";
 import usePersistedSort from "@/components/lib/usePersistedSort";
 import AutomacaoFluxoPedido from "./AutomacaoFluxoPedido";
 import useBackendPagination from "@/components/lib/useBackendPagination";
+import { ProtectedAction } from "@/components/ProtectedAction";
 
 export default function PedidosTab({ pedidos, clientes, isLoading, empresas, onCreatePedido, onEditPedido, empresaId = null }) {
   const { canEdit, canCreate, canApprove, canDelete } = usePermissions();
