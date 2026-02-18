@@ -90,8 +90,8 @@ Deno.serve(async (req) => {
         module: mod,
         section: entityName,
         action: 'visualizar',
-        empresa_id: expandedFilter?.empresa_id || expandedFilter?.empresa_alocada_id || expandedFilter?.empresa_dona_id || null,
-        group_id: expandedFilter?.group_id || null,
+        empresa_id: filter?.empresa_id || filter?.empresa_alocada_id || filter?.empresa_dona_id || null,
+        group_id: filter?.group_id || null,
       });
       if (!guard?.data?.allowed) {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
     try {
       // Busca em lotes até obter todos os registros
       while (hasMore) {
-        const batch = await base44.entities[entityName].filter(expandedFilter, undefined, BATCH_SIZE, skip);
+        const batch = await base44.asServiceRole.entities[entityName].filter(expandedFilter, undefined, BATCH_SIZE, skip);
         
         if (!batch || batch.length === 0) {
           hasMore = false;
